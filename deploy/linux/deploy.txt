@@ -1,0 +1,16 @@
+Сборка приложения:
+./deploy.sh /home/user/qtExamples/builds2/WalletMetahash
+Если в plugins нету каталога xcbglintegrations и файлов из каталогов lib, iconengines, imageformats, скопировать их
+Копировать каталог pages
+Скопировать файл run.sh
+Скопировать файлы из libssl в корневую для приложения папку
+Запуск ./run.sh
+
+Сборка для автоупдайтера:
+В папку builds2 поместить файлы из updater
+Выполнить ./create-packages.rb -p linux -v "1.1.0" /home/user/qtExamples/builds2 ./config-template.js /home/user/updater/download/
+где 
+-v версия
+/home/user/qtExamples/builds2 путь к каталогу builds2
+/home/user/updater/download/ Путь с результирующими файлами
+Получившиеся файлы app.zip, file_list.xml и updater запаковать в архив без промежуточных каталогов и отдать на заливку

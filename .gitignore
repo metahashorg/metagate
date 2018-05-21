@@ -1,0 +1,12 @@
+pages/*
+quazip-0.7.3/quazip.pro.user.*
+
+cryptopp/.vs/
+cryptopp/Win32/
+cryptopp/adhoc.cpp.copied
+cryptopp/cryptdll.vcxproj.user
+cryptopp/cryptest.VC.db
+cryptopp/ipch/
+cryptopp/x64/
+WalletMetahash.pro.user
+WalletMetahash.pro.user.*

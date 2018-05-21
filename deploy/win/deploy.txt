@@ -1,0 +1,16 @@
+Сборка приложения:
+Обязательно удалить каталог сборки qt
+cd "C:\Qt\5.9.1\msvc2015_64\bin"
+.\windeployqt.exe D:\qt\release3\WalletMetahash.exe
+Копировать в каталог D:\qt\release3\WalletMetahash.exe файлы:
+deploy/win/lib/*
+cryptopp/lib/windows/cryptopp.dll
+quazip-0.7.3/libs/win/quazip.dll
+secp256k1/lib/windows/secp256k1.dll
+и папку
+pages/
+
+Структура архива для автоупдейтера:
+Каталог 7z с программой 7z
+Файл release.zip
+Файл unpack.bat

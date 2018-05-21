@@ -1,0 +1,13 @@
+1.Скачиваем msys2 отсюда http://www.msys2.org/.
+2.В окне msys2 выполняем команды:
+	1)pacman -Syu
+	2)pacman -S mingw-w64-x86_64-gcc
+	3)pacman -S autoconf perl automake-wrapper libtool make
+3.В окне msys2 переходим в папку с исходниками https://github.com/bitcoin-core/secp256k1 и выполняем:
+	1)./autogen.sh
+	2)./configure --with-bignum=none --enable-module-recovery
+	3)make
+4.В резултате будет получен .a-файл библиотеки.
+5.Для линковки dll-файла на его основе можно воспользоваться способом, описанным в архиве secp256k1_win.zip.
+
+
