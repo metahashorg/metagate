@@ -1,0 +1,2 @@
+development http://127.0.0.1/
+production http://127.0.0.1/
