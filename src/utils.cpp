@@ -51,6 +51,23 @@ bool isDecimal(const std::string &str) {
     return true;
 }
 
+bool isHex(const std::string &str) {
+    if (str.size() < 2) {
+        return false;
+    }
+    if (str.substr(0, 2) != "0x") {
+        return false;
+    }
+    for (const char c: str.substr(2)) {
+        if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')) {
+            // ok
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 void writeToFile(const QString &pathToFile, const std::string &data, bool isCheck) {
     QFile file(pathToFile);
     if (isCheck) {

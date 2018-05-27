@@ -15,6 +15,8 @@ std::string fromHex(const std::string &value);
 
 bool isDecimal(const std::string &str);
 
+bool isHex(const std::string &str);
+
 void writeToFile(const QString &pathToFile, const std::string &data, bool isCheck);
 
 void writeToFileBinary(const QString &pathToFile, const std::string &data, bool isCheck);

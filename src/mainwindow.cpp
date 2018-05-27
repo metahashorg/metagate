@@ -50,8 +50,6 @@ const static QString WALLET_PATH_MTH = "mhc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
-const static QString METAGATE_URL = "/MetaGate/";
-
 const static size_t INDEX_DESCRIPTION_LIST_ITEM = Qt::UserRole + 5;
 
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
@@ -235,16 +233,20 @@ void MainWindow::configureMenu() {
 
     CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect");
 
+    CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
+        lineEditReturnPressed("Settings");
+    }), "not connect");
+
     CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed(METAGATE_URL + "BuyMHC");
+        lineEditReturnPressed("BuyMHC");
     }), "Not connect");
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed(METAGATE_URL + "Wallet");
+        lineEditReturnPressed("Wallet");
     }), "Not connect");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed(METAGATE_URL + "Apps");
+        lineEditReturnPressed("Apps");
     }), "Not connect");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
@@ -281,6 +283,7 @@ void MainWindow::lineEditReturnPressed(const QString &text) {
 
 void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory) {
     const QString METAHASH_URL = "mh://";
+    const QString APP_URL = "app://";
 
     LOG << "command line " << text1;
 
@@ -304,7 +307,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
             }
         }
         if (link.isNull() || link.isEmpty()) {
-            LOG << "Error. Not found url " << url << " in mappings. Plained: " << plained;
+            LOG << "Error. Not found search url in mappings.";
             return;
         }
         link += plained;
@@ -314,22 +317,57 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         hardReloadPage(link);
     };
 
-    const QString url = text;
-    if (url.startsWith(METAGATE_URL)) {
-        const auto found = mappingsPages.find(url);
-        if (found == mappingsPages.end()) {
-            runSearch(url);
-            return;
+    auto isFullUrl = [](const QString &text) {
+        if (text.size() != 52) {
+            return false;
         }
-        if (found->second.isExternal) {
-            qtOpenInBrowser(found->second.page);
-            return;
+        if (!isHex(text.toStdString())) {
+            return false;
+        }
+        return true;
+    };
+
+    QString reference;
+    bool isExternal = false;
+    if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
+        if (isFullUrl(text)) {
+            const QString appUrl = APP_URL + text;
+            const auto found = mappingsPages.find(appUrl);
+            if (found != mappingsPages.end()) {
+                reference = found->second.page;
+                isExternal = found->second.isExternal;
+            } else {
+                reference = METAHASH_URL + text;
+            }
         } else {
-            setCommandLineText2(text, isAddToHistory);
-            hardReloadPage(found->second.page);
+            const auto found = mappingsPages.find(text);
+            if (found != mappingsPages.end()) {
+                reference = found->second.page;
+                isExternal = found->second.isExternal;
+            } else {
+                const auto found2 = mappingsPages.find(APP_URL + text);
+                if (found2 != mappingsPages.end()) {
+                    reference = found2->second.page;
+                    isExternal = found2->second.isExternal;
+                }
+            }
         }
-    } else if (url.startsWith(METAHASH_URL)) {
-        QString uri = url.mid(METAHASH_URL.size());
+    } else if (text.startsWith(METAHASH_URL)){
+        reference = text;
+    } else {
+        const auto found = mappingsPages.find(text);
+        if (found != mappingsPages.end()) {
+            reference = found->second.page;
+            isExternal = found->second.isExternal;
+        } else {
+            text = text.mid(APP_URL.size());
+        }
+    }
+
+    if (reference.isNull() || reference.isEmpty()) {
+        runSearch(text);
+    } else if (reference.startsWith(METAHASH_URL)) {
+        QString uri = reference.mid(METAHASH_URL.size());
         const size_t pos1 = uri.indexOf('/');
         const size_t pos2 = uri.indexOf('?');
         const size_t min = std::min(pos1, pos2);
@@ -346,9 +384,12 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         setCommandLineText2(text, isAddToHistory);
         hardReloadPage2(req);
     } else {
-        runSearch(url);
-        /*setCommandLineText(text);
-        hardReloadPage2(url);*/
+        if (isExternal) {
+            qtOpenInBrowser(reference);
+        } else {
+            setCommandLineText2(text, isAddToHistory);
+            hardReloadPage(reference);
+        }
     }
 }
 
