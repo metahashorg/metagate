@@ -50,6 +50,9 @@ const static QString WALLET_PATH_MTH = "mhc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
+const static QString METAHASH_URL = "mh://";
+const static QString APP_URL = "app://";
+
 const static size_t INDEX_DESCRIPTION_LIST_ITEM = Qt::UserRole + 5;
 
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
@@ -285,10 +288,41 @@ void MainWindow::lineEditReturnPressed3(const QString &text) {
     lineEditReturnPressed2(text, true, true);
 }
 
-void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory, bool isLineEditPressed) {
-    const QString METAHASH_URL = "mh://";
-    const QString APP_URL = "app://";
+struct PathParsed {
+    enum class Type {
+        METAHASH, APP, NONE
+    };
 
+    QString path;
+
+    Type type;
+
+    PathParsed(const QString &url) {
+        if (url.startsWith(METAHASH_URL)) {
+            type = Type::METAHASH;
+            path = url.mid(METAHASH_URL.size());
+        } else if (url.startsWith(APP_URL)) {
+            type = Type::APP;
+            path = url.mid(APP_URL.size());
+        } else {
+            type = Type::NONE;
+            path = url;
+        }
+    }
+};
+
+static bool compareTwoPaths(const QString &path1, const QString &path2) {
+    PathParsed p1(path1);
+    PathParsed p2(path2);
+
+    if (p1.type == p2.type || p1.type == PathParsed::Type::NONE || p2.type == PathParsed::Type::NONE) {
+        return p1.path == p2.path;
+    } else {
+        return false;
+    }
+}
+
+void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory, bool isLineEditPressed) {
     LOG << "command line " << text1;
 
     QString text = text1;
@@ -1237,7 +1271,7 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
     const QString currText = ui->commandLine->currentText();
     if (!currText.isEmpty()) {
         if (ui->commandLine->count() >= 1) {
-            if (ui->commandLine->itemText(ui->commandLine->count() - 1) != currText) {
+            if (!compareTwoPaths(ui->commandLine->itemText(ui->commandLine->count() - 1), currText)) {
                 ui->commandLine->addItem(currText);
             }
         } else {
