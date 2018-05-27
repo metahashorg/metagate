@@ -262,7 +262,7 @@ void MainWindow::configureMenu() {
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed(const QString&))), "not connect");
+    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed3(const QString&))), "not connect");
     /*CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this](){
         LOG << "Ya tuta " << ui->commandLine->lineEdit()->text().toStdString() << " " << currentTextCommandLine.toStdString() << std::endl;
         if (ui->commandLine->lineEdit()->text() == currentTextCommandLine) {
@@ -273,7 +273,7 @@ void MainWindow::registerCommandLine() {
 }
 
 void MainWindow::unregisterCommandLine() {
-    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed(const QString&))), "not connect");
+    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed3(const QString&))), "not connect");
     //CHECK(disconnect(ui->commandLine->lineEdit(), SIGNAL(returnPressed(const QString&))), "not connect");
 }
 
@@ -281,7 +281,11 @@ void MainWindow::lineEditReturnPressed(const QString &text) {
     lineEditReturnPressed2(text);
 }
 
-void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory) {
+void MainWindow::lineEditReturnPressed3(const QString &text) {
+    lineEditReturnPressed2(text, true, true);
+}
+
+void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory, bool isLineEditPressed) {
     const QString METAHASH_URL = "mh://";
     const QString APP_URL = "app://";
 
@@ -292,7 +296,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         text = text.left(text.size() - 1);
     }
 
-    if (text == currentTextCommandLine) {
+    if (isLineEditPressed && text == currentTextCommandLine) {
         return;
     }
 

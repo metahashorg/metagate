@@ -87,9 +87,11 @@ public slots:
 
     void updateAppEvent(const QString appVersion, const QString reference, const QString message);
 
-    void lineEditReturnPressed2(const QString &text1, bool isAddToHistory=true);
+    void lineEditReturnPressed2(const QString &text1, bool isAddToHistory=true, bool isLineEditPressed=false);
 
     void lineEditReturnPressed(const QString &text);
+
+    void lineEditReturnPressed3(const QString &text);
 
 public slots:
 
