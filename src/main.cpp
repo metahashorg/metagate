@@ -18,7 +18,9 @@
 #include "openssl_wrapper/openssl_wrapper.h"
 
 #include "uploader.h"
+#include "NsLookup.h"
 #include "StopApplication.h"
+#include "WebSocketClient.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -67,16 +69,22 @@ int main(int argc, char *argv[]) {
             typeString = "prod";
         }
 
-        LOG << "Version " << versionString << " " << typeString << " " << GIT_CURRENT_SHA1 << std::endl;
+        LOG << "Version " << versionString << " " << typeString << " " << GIT_CURRENT_SHA1;
         //app.setApplicationDisplayName(QString::fromStdString(versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
-        LOG << "Platform " << osName.toStdString() << std::endl;
+        LOG << "Platform " << osName;
 
-        LOG << "Machine uid " << getMachineUid() << std::endl;
+        LOG << "Machine uid " << getMachineUid();
 
         while (true) {
             ServerName serverName;
 
-            MainWindow mainWindow(serverName);
+            NsLookup nsLookup(Uploader::getPagesPath());
+            nsLookup.start();
+
+            WebSocketClient webSocketClient;
+            webSocketClient.start();
+
+            MainWindow mainWindow(serverName, nsLookup, webSocketClient);
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
@@ -92,11 +100,11 @@ int main(int argc, char *argv[]) {
 
         return 0;
     } catch (const Exception &e) {
-        LOG << "Error " << e << std::endl;
+        LOG << "Error " << e;
     } catch (const std::exception &e) {
-        LOG << "Error " << e.what() << std::endl;
+        LOG << "Error " << e.what();
     } catch (...) {
-        LOG << "Unknown error" << std::endl;
+        LOG << "Unknown error";
     }
 
     return -1;

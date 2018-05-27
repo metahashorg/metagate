@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <memory>
+#include <map>
 
 #include <QMainWindow>
 #include <QWebChannel>
@@ -13,10 +14,26 @@
 #include "WindowEvents.h"
 
 class ServerName;
+class NsLookup;
+class WebSocketClient;
 
 namespace Ui {
     class MainWindow;
 }
+
+struct PageInfo {
+    QString page;
+    bool isExternal;
+    bool isDefault = false;
+
+    PageInfo() = default;
+
+    PageInfo(const QString &page, bool isExternal, bool isDefault)
+        : page(page)
+        , isExternal(isExternal)
+        , isDefault(isDefault)
+    {}
+};
 
 class EvFilter: public QObject {
     Q_OBJECT
@@ -39,13 +56,13 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(ServerName &serverName, QWidget *parent = 0);
+    explicit MainWindow(ServerName &serverName, NsLookup &nsLookup, WebSocketClient &webSocketClient, QWidget *parent = 0);
 
     void showExpanded();
 
     void softReloadPage();
 
-    void hardReloadPage();
+    void hardReloadPage(const QString &pageName);
 
     void softReloadApp();
 
@@ -70,6 +87,8 @@ public slots:
 
     void updateAppEvent(const QString appVersion, const QString reference, const QString message);
 
+    void lineEditReturnPressed2(const QString &text1, bool isAddToHistory=true);
+
     void lineEditReturnPressed(const QString &text);
 
 public slots:
@@ -82,6 +101,17 @@ public slots:
 
     Q_INVOKABLE void signMessage(QString requestId, QString keyName, QString text, QString password);
 
+public slots:
+
+    Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
+
+    Q_INVOKABLE QString getAllMHCWalletsJson();
+
+    Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
+
+    Q_INVOKABLE void signMessageMHC(QString requestId, QString keyName, QString text, QString password);
+
+public slots:
 
     Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
 
@@ -143,6 +173,22 @@ public slots:
 
     Q_INVOKABLE void openWalletPathInStandartExplorer();
 
+    Q_INVOKABLE void setPagesMapping(QString mapping);
+
+    Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
+
+private:
+
+    void setCommandLineText2(const QString &text, bool isAddToHistory=true);
+
+    void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
+
+    QString getAllMTHSWalletsJson(QString walletPath);
+
+    QString getAllMTHSWalletsAndPathsJson(QString walletPath);
+
+    void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
+
 public slots:
 
     void ShowContextMenu(const QPoint &point);
@@ -152,10 +198,6 @@ public slots:
     void contextMenuCopy();
 
     void contextMenuPaste();
-
-    void listSettingsClicked(const QModelIndex &index);
-
-    void listUserClicked(const QModelIndex &index);
 
 signals:
 
@@ -171,6 +213,10 @@ private:
 
     ServerName &serverName;
 
+    NsLookup &nsLookup;
+
+    WebSocketClient &webSocketClient;
+
     QString savedToken;
 
     QString currentBeginPath;
@@ -183,12 +229,26 @@ private:
 
     QString walletPathMth;
 
+    QString walletPathOldTmh;
+
+    QString walletPathTmh;
+
     QString walletPathEth;
 
     QString walletPathBtc;
 
     QString userName;
 
+    QString currentTextCommandLine;
+
+    std::map<QString, PageInfo> mappingsPages;
+
+    QString hardwareId;
+
+    size_t countFocusLineEditChanged = 0;
+
+    std::vector<QString> history;
+    size_t historyPos = 0;
 };
 
 #endif // MAINWINDOW_H

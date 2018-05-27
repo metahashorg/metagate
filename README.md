@@ -21,7 +21,7 @@ alert(returnValue);
 });
 
 
-Работа с Metahash кошельками
+Работа с TMH Metahash кошельками
 
 Q_INVOKABLE void createWallet(QString requestId, QString password);
 Создает metahash кошелек, ложит созданный кошелек в ~/.metahash_wallets/ с именем address
@@ -52,25 +52,25 @@ Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString passwor
 decryptMessageResultJs(requestId, message, errorNum, errorMessage)
 
 
-Работа с TMH кошельками
+Работа с MHC Metahash кошельками
 
-Q_INVOKABLE void createWalletTMH(QString requestId, QString password);
+Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
 Создает metahash кошелек, ложит созданный кошелек в ~/.metahash_wallets/ с именем address
 По окончанию работы функции вызывается javascript
-createWalletTmhResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
+createWalletMHCResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
 
-Q_INVOKABLE QString getAllTMHWalletsJson();
+Q_INVOKABLE QString getAllMHCWalletsJson();
 Получает список всех metahash аккаунтов.
 Результат возвращается в виде json массива
 
-Q_INVOKABLE QString getAllTMHWalletsAndPathsJson();
+Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
 Получает список всех metahash аккаунтов.
 Результат возвращается в виде json массива [{"address":"addr","path":"path"}]
 
-Q_INVOKABLE void signMessageTMH(QString requestId, QString address, QString text, QString password);
+Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text, QString password);
 Подпись сообщения.
 По окончанию работы функции вызывается javascript
-signMessageTmhResultJs(requestId, signature, publicKey, errorNum, errorMessage)
+signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
 
 Работа с Ethereum кошельками
@@ -182,5 +182,19 @@ Q_INVOKABLE void setCommandLineText(const QString &text);
 
 Q_INVOKABLE void openWalletPathInStandartExplorer();
 открыть каталог с ключами в стандартном explorer-е
+
+Q_INVOKABLE void setPagesMapping(QString mapping);
+Установить соответствие между ссылками metagate и страницами. Формат
+{"routes":[{"url":"login.html", "name":"/MetaGate/Login""isExternal":false},{"url":"login.html", "name":"/MetaGate/Login""isExternal":true}]}
+
+Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
+Запросить список ip из топа по пингу
+type тип ноды: torrent, proxy
+length ограничение на массив. Элементы будут выбираться из диапазона [0, length - 1]
+count количество возвращаемых элементов.
+После выполнения функции ответ придет в 
+getIpsServersJs(requestId, json, errorInt, errorString)
+Формат json-а
+"[\"206.189.14.22:9999\", \"206.189.14.52:9999\"]"
 
 ```

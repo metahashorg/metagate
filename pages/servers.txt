@@ -1,2 +1,2 @@
-development http://127.0.0.1/
-production http://127.0.0.1/
+development http://app-dev.metahash.org/api/
+production http://app.metahash.org/api/

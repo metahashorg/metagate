@@ -20,7 +20,7 @@ static const QString pathToUpdater = "updater";
 static const QString pathToNewApplication = "{A}";
 
 void updateAndRestart() {
-    const QString thisName = "WalletMetahash.exe";
+    const QString thisName = "MetaGate.exe";
 
     const QString autoupdateFolder = Uploader::getTmpAutoupdaterPath();
 
@@ -60,8 +60,8 @@ void updateAndRestart() {
 
 
     const QString thisPath = QCoreApplication::applicationDirPath();
-    LOG << "paths for restart " << tmpPath.toStdString() << " " << thisPath.toStdString() << std::endl;
-    LOG << "New app path " << newAppPath.toStdString() << std::endl;
+    LOG << "paths for restart " << tmpPath << " " << thisPath;
+    LOG << "New app path " << newAppPath;
 
     QProcess process;
     std::cout << "Tt " << ("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\"").toStdString() << std::endl;
@@ -117,9 +117,9 @@ void updateAndRestart() {
         thisPath = QDir(thisPath).filePath("../..");
     }
 #endif
-    LOG << "paths for restart " << tmpPath.toStdString() << " \"" << thisPath.toStdString() << "\"" << std::endl;
-    LOG << "Updater path " << updaterPath.toStdString() << std::endl;
-    LOG << "New app path " << newAppPath.toStdString() << std::endl;
+    LOG << "paths for restart " << tmpPath << " \"" << thisPath << "\"";
+    LOG << "Updater path " << updaterPath;
+    LOG << "New app path " << newAppPath;
 
     CHECK(QFile(updaterPath).exists(), "updater path not exist");
     CHECK(QDir(newAppPath).exists(), "newAppPath path not exist");

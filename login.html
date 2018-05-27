@@ -1,0 +1,46 @@
+<link rel="stylesheet" type="text/css" href="example3.css" media="screen" />
+
+<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+<script>
+    
+    function reloadMeJs() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.signMessageBtcPswd(0, "1CKZ3fJrojYauQHUZiuSKeuvw1AwBVUwHX", "1234", "abc", "10000", 1000, "") ;
+        });
+    }
+    
+</script>
+
+<body onload="generateAllWalletsJs();"></body>
+
+<div class="back">
+
+  <div id="two" class="abs block">
+    <a href="#one">создание счета</a>
+    <b><a href="#two">подпись данных</a></b>
+    <p class="abs">
+        <center>
+            <a href="#" onclick='reloadPage();'>Reload page</a><br/>
+        </center>
+        <left>
+            <FORM name="sign">
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+  <div id="one" class="abs block">
+    <b><a href="#one">создание счета</a></b>
+    <a href="#two">подпись данных</a>
+    <p class="abs">
+        <left>
+            <FORM name="createWalletForm">
+            <input type="button" value="reload Me" onclick="reloadMeJs()"><br>
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+</div>

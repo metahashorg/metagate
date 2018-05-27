@@ -141,11 +141,11 @@ Uploader::Uploader(MainWindow *mainWindow, ServerName &serverName)
 
     const Servers servers = getServers();
     if (isProductionSetup) {
-        LOG << "Set production server " << servers.prod << std::endl;
+        LOG << "Set production server " << servers.prod;
         CHECK(!servers.prod.empty(), "Empty server name");
         serverName.setServerName(QString::fromStdString(servers.prod));
     } else {
-        LOG << "Set development server " << servers.dev << std::endl;
+        LOG << "Set development server " << servers.dev;
         CHECK(!servers.dev.empty(), "Empty server name");
         serverName.setServerName(QString::fromStdString(servers.dev));
     }
@@ -195,11 +195,11 @@ void Uploader::callbackCall(ReturnCallback callback) {
     try {
         callback();
     } catch (const Exception &e) {
-        LOG << "Error " << e << std::endl;
+        LOG << "Error " << e;
     } catch (const std::exception &e) {
-        LOG << "Error " << e.what() << std::endl;
+        LOG << "Error " << e.what();
     } catch (...) {
-        LOG << "Unknown error" << std::endl;
+        LOG << "Unknown error";
     }
 }
 
@@ -233,7 +233,7 @@ void Uploader::timerEvent() {
             CHECK(dataJson.contains("hash") && dataJson.value("hash").isString(), "hash field not found");
             const QString hash = dataJson.value("hash").toString();
 
-            LOG << "Server html version " << version.toStdString() << " " << hash.toStdString() << ". Current version " << lastVersion.toStdString() << std::endl;
+            LOG << "Server html version " << version << " " << hash << ". Current version " << lastVersion;
 
             const QString folderServer = toHash(UPDATE_API);
 
@@ -255,7 +255,7 @@ void Uploader::timerEvent() {
                 hashAlg.addData(result.data(), result.size());
                 const QString hashStr(hashAlg.result().toHex());
                 if (hashStr != hash) {
-                    LOG << "hashStr != hash " << hashStr.toStdString() << " " << hash.toStdString() << std::endl;
+                    LOG << "hashStr != hash " << hashStr << " " << hash;
                     return;
                 }
 
@@ -264,7 +264,7 @@ void Uploader::timerEvent() {
 
                 const QString extractedPath = QDir(QDir(currentBeginPath).filePath(folderServer)).filePath(version);
                 extractDir(archiveFilePath, extractedPath);
-                LOG << "Extracted " << extractedPath.toStdString() << "." << std::endl;
+                LOG << "Extracted " << extractedPath << ".";
 
                 Uploader::setLastVersion(currentBeginPath, folderServer, version);
 
@@ -307,7 +307,7 @@ void Uploader::timerEvent() {
 
             const Version nextVersion(version.toStdString());
 
-            LOG << "New app version " << nextVersion.makeStr() << " " << reference.toStdString() << " " << autoupdater.toStdString().substr(0, autoupdater.toStdString().find("?secure")) << ". Current app version " << currentAppVersion.makeStr() << std::endl;
+            LOG << "New app version " << nextVersion.makeStr() << " " << reference << " " << autoupdater.toStdString().substr(0, autoupdater.toStdString().find("?secure")) << ". Current app version " << currentAppVersion.makeStr();
 
             if (reference == "false") {
                 return;
@@ -317,7 +317,7 @@ void Uploader::timerEvent() {
             }
 
             auto autoupdateGetCallback = [this, nextVersion, version, reference](const std::string &result) {
-                LOG << "autoupdater callback" << std::endl;
+                LOG << "autoupdater callback";
                 if (result == SimpleClient::ERROR_BAD_REQUEST) {
                     isGetRequest = false;
                     return;
@@ -328,7 +328,7 @@ void Uploader::timerEvent() {
                 writeToFileBinary(archiveFilePath, result, false);
 
                 extractDir(archiveFilePath, getTmpAutoupdaterPath());
-                LOG << "Extracted autoupdater " << (getTmpAutoupdaterPath()).toStdString() << " " << std::endl;
+                LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();
 
                 emit generateUpdateApp(version, reference, "");
             };
@@ -345,10 +345,10 @@ void Uploader::timerEvent() {
         }
         id++;
     } catch (const Exception &e) {
-        LOG << "Error " << e << std::endl;
+        LOG << "Error " << e;
     } catch (const std::exception &e) {
-        LOG << "Error " << e.what() << std::endl;
+        LOG << "Error " << e.what();
     } catch (...) {
-        LOG << "Unknown error" << std::endl;
+        LOG << "Unknown error";
     }
 }

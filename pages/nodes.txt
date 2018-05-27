@@ -1,0 +1,2 @@
+torrent tor.net-dev.metahash.org 5795
+proxy proxy.net-dev.metahash.org 9999

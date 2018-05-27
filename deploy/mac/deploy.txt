@@ -1,20 +1,19 @@
 Сборка приложения:
-0. готовим плацдарм: закрываем проект в куте,сносим папку с проектом, сносим папку сборки, очищаем папку WalletMetahash, в которую потом будем копировать  WalletMetahash.app для пункта 5
+0. готовим плацдарм: закрываем проект в куте,сносим папку с проектом, сносим папку сборки, очищаем папку WalletMetahash, в которую потом будем копировать  MetaGate.app для пункта 5
 1. открыли проект в qt
 2. поменяли тип сборки на выпуск
 3. собрали проект
-4. скопировали из папки с проектом папку pages в папку, которую qt создает при сборке рядом с исполняемым файлом (в build-WalletMetahash-Desktop_Qt_5_9_1_clang_64bit-Release/WalletMetahash.app/Contents/MacOS/) 
-5. скорировали из build-WalletMetahash-Desktop_Qt_5_9_1_clang_64bit-Release/  “WalletMetahash.app” в отдельную произвольную папку WalletMetahash
+4. скопировали из папки с проектом папку pages в папку, которую qt создает при сборке рядом с исполняемым файлом (в build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/MetaGate.app/Contents/MacOS/) 
+5. скорировали из build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/  MetaGate.app” в отдельную произвольную папку WalletMetahash
 6. запустили macdeployqt. 
-/Users/daria/Qt/5.9.1/clang_64/bin/macdeployqt /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/WalletMetahash.app -executable=/Users/daria/Downloads/blabla/for_dmg/WalletMetahash/WalletMetahash.app/Contents/MacOS/WalletMetahash
-(флаг dmg???)
+/Users/daria/Qt/5.9.1/clang_64/bin/macdeployqt /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app -executable=/Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/Contents/MacOS/MetaGate
 7. теперь у нас готовый под сборку dmg. дальше запуск дропдмг 
 
 Сборка для автоупдайтера:
-В папку WalletMetahash.app поместить файлы из updater
-Выполнить ./create-packages.rb -p macosx -v "1.1.0" /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/WalletMetahash.app/ ./config-template.js /Users/daria/Documents/tmp/
+В папку MetaGate.app поместить файлы из updater
+Выполнить ./create-packages.rb -p macosx -v "1.1.0" /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/ ./config-template.js /Users/daria/Documents/tmp/
 где 
 -v версия
-/Users/daria/Downloads/blabla/for_dmg/WalletMetahash/WalletMetahash.app/ путь к каталогу WalletMetahash c окончательным слэшем
+/Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/ путь к каталогу WalletMetahash c окончательным слэшем
 /Users/daria/Documents/tmp/ Путь с результирующими файлами c окончательным слэшем
 Получившиеся файлы app.zip, file_list.xml и updater запаковать в архив без промежуточных каталогов и отдать на заливку

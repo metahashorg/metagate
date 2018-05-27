@@ -151,13 +151,13 @@ std::string BtcWallet::encode(
     const std::string &toAddress,
     const std::vector<BtcInput> &utxos
 ) {
-    LOG << "Utxos size " + std::to_string(utxos.size()) << std::endl;
+    LOG << "Utxos size " + std::to_string(utxos.size());
 
     std::vector<BtcInput> newUtxos;
     if (!allMoney) {
         const int64_t allValue = value + fees;
         newUtxos = greedyAlg(utxos, allValue);
-        LOG << "Utxos size2 " + std::to_string(newUtxos.size()) << std::endl;
+        LOG << "Utxos size2 " + std::to_string(newUtxos.size());
     } else {
         newUtxos = utxos;
     }
@@ -210,7 +210,7 @@ std::string BtcWallet::buildTransaction(
     } else {
         CHECK(estimateComissionInSatoshi > 0, "Uncnown estimate comission " + std::to_string(estimateComissionInSatoshi));
         feesEstimate = estimateComissionInSatoshi;
-        LOG << "estimated fees1 " + std::to_string(feesEstimate) << std::endl;
+        LOG << "estimated fees1 " + std::to_string(feesEstimate);
     }
     int maxIterations = 10;
     std::string oldTransaction;
@@ -239,11 +239,11 @@ std::string BtcWallet::buildTransaction(
             throwErr("I can not estimate fees");
         }
     }
-    LOG << "estimated fees2 " + std::to_string(feesEstimate) << std::endl;
+    LOG << "estimated fees2 " + std::to_string(feesEstimate);
 
     const std::string &encodedTransaction = oldTransaction;
 
-    LOG << "transaction size " + std::to_string(calcSizeTransaction(encodedTransaction)) << std::endl;
+    LOG << "transaction size " + std::to_string(calcSizeTransaction(encodedTransaction));
     //LOGDEBUG << encodedTransaction;
 
     CHECK(!encodedTransaction.empty(), "Not encode transactions");

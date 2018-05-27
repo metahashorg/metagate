@@ -12,5 +12,5 @@
 
 	// the name of the main binary to launch when the
 	// application starts
-	"main-binary" : "WalletMetahash"
+	"main-binary" : "MetaGate"
 }

@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-DEFINES += VERSION_STRING=\\\"1.8.2\\\"
+DEFINES += VERSION_STRING=\\\"1.10.0\\\"
 DEFINES += DEVELOPMENT
 # DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -39,7 +39,12 @@ SOURCES += src/main.cpp src/mainwindow.cpp \
     src/openssl_wrapper/openssl_wrapper.cpp \
     src/utils.cpp \
     src/ethtx/utils2.cpp \
-    src/tests2.cpp
+    src/tests2.cpp \
+    src/NsLookup.cpp \
+    src/dns/datatransformer.cpp \
+    src/dns/dnspacket.cpp \
+    src/dns/resourcerecord.cpp \
+    src/WebSocketClient.cpp
 
 unix: SOURCES += src/machine_uid_unix.cpp
 
@@ -76,11 +81,16 @@ HEADERS += src/mainwindow.h \
     src/openssl_wrapper/openssl_wrapper.h \
     src/utils.h \
     src/ethtx/utils2.h \
-    src/tests2.h
+    src/tests2.h \
+    src/NsLookup.h \
+    src/dns/datatransformer.h \
+    src/dns/dnspacket.h \
+    src/dns/resourcerecord.h \
+    src/WebSocketClient.h
 
 FORMS += src/mainwindow.ui
 
-QT += webengine webenginewidgets network
+QT += webengine webenginewidgets network websockets
 
 CONFIG += static
 CONFIG += c++14

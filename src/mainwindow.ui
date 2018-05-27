@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1058</width>
-    <height>782</height>
+    <width>1024</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="palette">
@@ -441,6 +441,18 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>1024</width>
+     <height>761</height>
+    </size>
+   </property>
    <property name="contextMenuPolicy">
     <enum>Qt::CustomContextMenu</enum>
    </property>
@@ -458,7 +470,7 @@
      <number>0</number>
     </property>
     <item>
-     <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+     <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
       <property name="sizeConstraint">
        <enum>QLayout::SetDefaultConstraint</enum>
       </property>
@@ -468,23 +480,7 @@
       <property name="verticalSpacing">
        <number>0</number>
       </property>
-      <item row="0" column="3">
-       <spacer name="horizontalSpacer_5">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>8</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="10">
+      <item row="0" column="9">
        <spacer name="horizontalSpacer_8">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -494,14 +490,14 @@
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>12</width>
+          <width>0</width>
           <height>20</height>
          </size>
         </property>
        </spacer>
       </item>
-      <item row="0" column="5">
-       <spacer name="horizontalSpacer_6">
+      <item row="0" column="17">
+       <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -510,33 +506,93 @@
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>10</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1">
-       <spacer name="horizontalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>19</width>
+          <width>15</width>
           <height>41</height>
          </size>
         </property>
        </spacer>
       </item>
-      <item row="0" column="2">
-       <widget class="QToolButton" name="settingsButton">
+      <item row="0" column="7">
+       <spacer name="horizontalSpacer_7">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>0</width>
+          <height>41</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="6">
+       <widget class="QToolButton" name="metaAppsButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>96</width>
+          <height>31</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string>MetaApps</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../svg1.qrc">
+          <normaloff>:/resources/svg/MetaApps.svg</normaloff>
+          <activeoff>:/resources/svg/MetaApps_white.svg</activeoff>:/resources/svg/MetaApps.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>19</width>
+          <height>19</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextBesideIcon</enum>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="11">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>2</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="3">
+       <widget class="QToolButton" name="userButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>1</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
@@ -552,6 +608,12 @@
           <height>31</height>
          </size>
         </property>
+        <property name="sizeIncrement">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
@@ -559,31 +621,108 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset>
-          <normaloff>:/resources/svg/menu.svg</normaloff>
-          <activeoff>:/resources/svg/menu_white.svg</activeoff>:/resources/svg/menu.svg</iconset>
+         <iconset resource="../svg1.qrc">
+          <normaloff>:/resources/svg/user.svg</normaloff>
+          <activeoff>:/resources/svg/user_white.svg</activeoff>:/resources/svg/user.svg</iconset>
         </property>
         <property name="iconSize">
          <size>
-          <width>17</width>
-          <height>17</height>
+          <width>18</width>
+          <height>18</height>
          </size>
         </property>
-        <property name="popupMode">
-         <enum>QToolButton::InstantPopup</enum>
-        </property>
         <property name="toolButtonStyle">
-         <enum>Qt::ToolButtonIconOnly</enum>
+         <enum>Qt::ToolButtonTextBesideIcon</enum>
         </property>
         <property name="autoRaise">
          <bool>false</bool>
         </property>
-        <property name="arrowType">
-         <enum>Qt::NoArrow</enum>
+       </widget>
+      </item>
+      <item row="0" column="14">
+       <widget class="QToolButton" name="refreshButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>35</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../svg1.qrc">
+          <normaloff>:/resources/svg/update.svg</normaloff>:/resources/svg/update.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>21</width>
+          <height>21</height>
+         </size>
         </property>
        </widget>
       </item>
-      <item row="0" column="16">
+      <item row="0" column="1">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>15</width>
+          <height>41</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="4">
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>0</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="2">
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>0</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="15">
        <widget class="QToolButton" name="forwardButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -607,7 +746,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../svg1.qrc">
           <normaloff>:/resources/svg/forward.svg</normaloff>:/resources/svg/forward.svg</iconset>
         </property>
         <property name="iconSize">
@@ -618,83 +757,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="18">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>15</width>
-          <height>41</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="14">
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>41</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="7">
-       <widget class="QToolButton" name="metaAppsButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>117</width>
-          <height>31</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string>MetaApps</string>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normaloff>:/resources/svg/MetaApps.svg</normaloff>
-          <activeoff>:/resources/svg/MetaApps_white.svg</activeoff>:/resources/svg/MetaApps.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>19</width>
-          <height>19</height>
-         </size>
-        </property>
-        <property name="toolButtonStyle">
-         <enum>Qt::ToolButtonTextBesideIcon</enum>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="17">
+      <item row="0" column="16">
        <widget class="QToolButton" name="backButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -718,7 +781,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../svg1.qrc">
           <normaloff>:/resources/svg/back.svg</normaloff>:/resources/svg/back.svg</iconset>
         </property>
         <property name="iconSize">
@@ -729,7 +792,67 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="11">
+      <item row="0" column="13">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>2</width>
+          <height>41</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="8">
+       <widget class="QToolButton" name="metaWalletButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>102</width>
+          <height>31</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string>MetaWallet</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../svg1.qrc">
+          <normaloff>:/resources/svg/MetaWallet.svg</normaloff>
+          <activeoff>:/resources/svg/MetaWallet_white.svg</activeoff>:/resources/svg/MetaWallet.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>22</width>
+          <height>22</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextBesideIcon</enum>
+        </property>
+        <property name="autoRaise">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="10">
        <widget class="QToolButton" name="buyButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -764,7 +887,7 @@
          <string>Buy#MHC</string>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../svg1.qrc">
           <normaloff>:/resources/svg/Buy_MHC.svg</normaloff>
           <normalon>:/resources/svg/Buy_MHC_white.svg</normalon>
           <disabledoff>:/resources/svg/Buy_MHC_white.svg</disabledoff>
@@ -813,179 +936,17 @@
         </property>
        </spacer>
       </item>
-      <item row="0" column="15">
-       <widget class="QToolButton" name="refreshButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>30</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>35</width>
-          <height>30</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normaloff>:/resources/svg/update.svg</normaloff>:/resources/svg/update.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>21</width>
-          <height>21</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="8">
-       <spacer name="horizontalSpacer_7">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>14</width>
-          <height>41</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
       <item row="0" column="12">
-       <spacer name="horizontalSpacer_4">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>12</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="4">
-       <widget class="QToolButton" name="userButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>1</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>31</width>
-          <height>31</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>31</width>
-          <height>31</height>
-         </size>
-        </property>
-        <property name="sizeIncrement">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normaloff>:/resources/svg/user.svg</normaloff>
-          <activeoff>:/resources/svg/user_white.svg</activeoff>:/resources/svg/user.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>18</width>
-          <height>18</height>
-         </size>
-        </property>
-        <property name="toolButtonStyle">
-         <enum>Qt::ToolButtonTextBesideIcon</enum>
-        </property>
-        <property name="autoRaise">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="9">
-       <widget class="QToolButton" name="metaWalletButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>116</width>
-          <height>31</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string>MetaWallet</string>
-        </property>
-        <property name="icon">
-         <iconset>
-          <normaloff>:/resources/svg/MetaWallet.svg</normaloff>
-          <activeoff>:/resources/svg/MetaWallet_white.svg</activeoff>:/resources/svg/MetaWallet.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>22</width>
-          <height>22</height>
-         </size>
-        </property>
-        <property name="toolButtonStyle">
-         <enum>Qt::ToolButtonTextBesideIcon</enum>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="13">
        <widget class="QComboBox" name="commandLine">
         <property name="minimumSize">
          <size>
-          <width>354</width>
+          <width>300</width>
           <height>30</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>16777215</width>
+          <width>2000</width>
           <height>30</height>
          </size>
         </property>
@@ -1002,10 +963,10 @@
          <bool>true</bool>
         </property>
         <property name="insertPolicy">
-         <enum>QComboBox::InsertAtTop</enum>
+         <enum>QComboBox::InsertAtBottom</enum>
         </property>
         <property name="duplicatesEnabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -1019,13 +980,19 @@
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
+        <verstretch>1</verstretch>
        </sizepolicy>
       </property>
       <property name="minimumSize">
        <size>
-        <width>854</width>
-        <height>721</height>
+        <width>1024</width>
+        <height>707</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>16777215</height>
        </size>
       </property>
       <property name="contextMenuPolicy">
@@ -1033,7 +1000,7 @@
       </property>
       <property name="url" stdset="0">
        <url>
-        <string>about:blank</string>
+        <string/>
        </url>
       </property>
      </widget>
@@ -1049,6 +1016,8 @@
    <header location="global">qwebengineview.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../svg1.qrc"/>
+ </resources>
  <connections/>
 </ui>

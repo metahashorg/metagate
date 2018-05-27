@@ -76,7 +76,7 @@ void writeToFileBinary(const QString &pathToFile, const std::string &data, bool 
 
 std::string readFile(const QString &pathToFile) {
     QFile file(pathToFile);
-    CHECK(file.open(QIODevice::ReadOnly), "File not open");
+    CHECK(file.open(QIODevice::ReadOnly), "File not open " + pathToFile.toStdString());
     QTextStream in(&file);
     QString str = in.readAll();
     return str.toStdString();

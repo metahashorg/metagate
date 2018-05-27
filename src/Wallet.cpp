@@ -82,7 +82,7 @@ static void getPublicKey2(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>
 static void printPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
     std::string publicKeyStr;
     getPublicKey(privateKey, publicKeyStr);
-    LOG << "publicKey: " << publicKeyStr << std::endl;
+    LOG << "publicKey: " << publicKeyStr;
 }
 
 std::string Wallet::createAddress(const std::string &publicKeyBinary) {
@@ -143,7 +143,13 @@ void Wallet::createWallet(const QString &folder, const std::string &password, st
     const std::string hexAddr = createAddress(pubKeyBinary);
 
     const QString filePath = makeFullWalletPath(folder, hexAddr);
-    CryptoPP::FileSink fs(filePath.toStdString().c_str(), true /*binary*/);
+#ifdef TARGET_WINDOWS
+    auto fileNameCStr = filePath.toStdWString();
+#else
+    auto fileNameCStr = filePath.toStdString();
+#endif
+    std::ofstream file1(fileNameCStr);
+    CryptoPP::FileSink fs(file1);
     CryptoPP::PEM_Save(fs, prng, privateKey, "AES-128-CBC", password.c_str(), password.size());
 
     addr = hexAddr;
@@ -171,7 +177,13 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     CHECK(!password.empty(), "Empty password");
     fullPath = makeFullWalletPath(folder, name);
     try {
-        CryptoPP::FileSource fs(fullPath.toStdString().c_str(), true /*binary*/);
+#ifdef TARGET_WINDOWS
+        auto fileNameCStr = fullPath.toStdWString();
+#else
+        auto fileNameCStr = fullPath.toStdString();
+#endif
+        std::ifstream file1(fileNameCStr);
+        CryptoPP::FileSource fs(file1, true /*binary*/);
         CryptoPP::PEM_Load(fs, privateKey, password.c_str(), password.size());
         CryptoPP::AutoSeededRandomPool prng;
         privateKey.Validate(prng, 3);

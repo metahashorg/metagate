@@ -5,6 +5,8 @@
 #include <iostream>
 #include <ctime>
 
+#include <QString>
+
 #include "duration.h"
 
 extern std::ofstream __log_file__;
@@ -17,6 +19,28 @@ struct Log_ {
 
     template<typename T>
     Log_& operator <<(T t) {
+        print(t);
+        return *this;
+    }
+
+    Log_& operator <<(const QString &s) {
+        print(s.toStdString());
+        return *this;
+    }
+
+    void finalize(std::ostream&(*pManip)(std::ostream&)) {
+        std::cout << *pManip;
+        __log_file__ << *pManip;
+    }
+
+    ~Log_() {
+        finalize(std::endl);
+    }
+
+private:
+
+    template<typename T>
+    void print(T t) {
         std::cout << t;
         if (isSetTimestamp) {
             const auto p = std::chrono::system_clock::now();
@@ -29,13 +53,6 @@ struct Log_ {
         }
         __log_file__ << t;
         isSetTimestamp = false;
-        return *this;
-    }
-
-    Log_& operator<<(std::ostream&(*pManip)(std::ostream&)) {
-        std::cout << *pManip;
-        __log_file__ << *pManip;
-        return *this;
     }
 
 };
