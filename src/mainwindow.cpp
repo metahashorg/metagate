@@ -123,10 +123,6 @@ void MainWindow::configureMenu() {
 
     QFontDatabase::addApplicationFont(":/resources/Roboto-Regular.ttf");
 
-    settingsList = new QMenu(this);
-    logoutMenu = new QMenu(this);
-    loginMenu = new QMenu(this);
-
 #ifdef TARGET_OS_MAC
     const int fontSize = 12;
 #else
@@ -174,17 +170,6 @@ void MainWindow::configureMenu() {
     ui->commandLine->setAttribute(Qt::WA_MacShowFocusRect, 0);
 
     registerCommandLine();
-
-    auto configureMenu = [this, &font](QMenu *menu) {
-        menu->setFont(font);
-        menu->setStyleSheet("QMenu {color: rgb(51, 122, 183); border-radius: 0; background-color: white; } QMenu::item { background-color: white; } QMenu::item:selected { background-color: #e6e6e6; } QMenu::item { height: 200%;}");
-        menu->setVisible(false);
-        menu->setLayoutDirection(Qt::RightToLeft);
-    };
-
-    configureMenu(settingsList);
-    configureMenu(loginMenu);
-    configureMenu(logoutMenu);
 
     CHECK(connect(ui->backButton, &QToolButton::pressed, [this] {
         historyPos--;

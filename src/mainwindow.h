@@ -130,12 +130,6 @@ signals:
 
 private:
 
-    QMenu *settingsList;
-
-    QMenu *logoutMenu;
-
-    QMenu *loginMenu;
-
     WebSocketClient &webSocketClient;
 
     JavascriptWrapper &jsWrapper;
