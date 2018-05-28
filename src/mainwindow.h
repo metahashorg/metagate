@@ -96,13 +96,7 @@ private:
 
     void setCommandLineText2(const QString &text, bool isAddToHistory=true);
 
-    void setUserName(const QString &userName);
-
     void qtOpenInBrowser(QString url);
-
-    void setHasNativeToolbarVariable();
-
-    void setPagesMapping(QString mapping);
 
 public slots:
 
@@ -120,9 +114,9 @@ public slots:
 
     void onSetCommandLineText(QString text);
 
-    void onSetUserName(QString name);
+    void onSetUserName(QString userName);
 
-    void onSetMappings(QString json);
+    void onSetMappings(QString mapping);
 
 signals:
 

@@ -36,8 +36,6 @@
 const static QString METAHASH_URL = "mh://";
 const static QString APP_URL = "app://";
 
-const static size_t INDEX_DESCRIPTION_LIST_ITEM = Qt::UserRole + 5;
-
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     QToolButton * button = qobject_cast<QToolButton*>(watched);
     if (!button) {
@@ -102,20 +100,6 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ShowContextMenu(const QPoint &))), "not connect");
-}
-
-void MainWindow::setUserName(const QString &userName) {
-    ui->userButton->setText(userName);
-    ui->userButton->adjustSize();
-
-    auto *button = ui->userButton;
-    const auto textSize = button->fontMetrics().size(button->font().style(), button->text());
-    QStyleOptionButton opt;
-    opt.initFrom(button);
-    opt.rect.setSize(textSize);
-    const size_t estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
-    button->setMaximumWidth(estimatedWidth);
-    button->setMinimumWidth(estimatedWidth);
 }
 
 void MainWindow::configureMenu() {
@@ -521,10 +505,6 @@ void MainWindow::hardReloadPage(const QString &pageName) {
     hardReloadPage2("file:///" + QDir(QDir(QDir(currentBeginPath).filePath(folderName)).filePath(lastVersion)).filePath(pageName));
 }
 
-void MainWindow::setHasNativeToolbarVariable() {
-    ui->webView->page()->runJavaScript("window.hasNativeToolbar = true;");
-}
-
 void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
     LOG << "scl " << text;
 
@@ -563,14 +543,24 @@ void MainWindow::onSetCommandLineText(QString text) {
 }
 
 void MainWindow::onSetHasNativeToolbarVariable() {
-    setHasNativeToolbarVariable();
+    ui->webView->page()->runJavaScript("window.hasNativeToolbar = true;");
 }
 
-void MainWindow::onSetUserName(QString name) {
-    setUserName(name);
+void MainWindow::onSetUserName(QString userName) {
+    ui->userButton->setText(userName);
+    ui->userButton->adjustSize();
+
+    auto *button = ui->userButton;
+    const auto textSize = button->fontMetrics().size(button->font().style(), button->text());
+    QStyleOptionButton opt;
+    opt.initFrom(button);
+    opt.rect.setSize(textSize);
+    const size_t estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
+    button->setMaximumWidth(estimatedWidth);
+    button->setMinimumWidth(estimatedWidth);
 }
 
-void MainWindow::setPagesMapping(QString mapping) {
+void MainWindow::onSetMappings(QString mapping) {
     try {
         LOG << "Set mappings " << mapping;
 
@@ -599,10 +589,6 @@ void MainWindow::setPagesMapping(QString mapping) {
     } catch (...) {
         LOG << "Unknown error";
     }
-}
-
-void MainWindow::onSetMappings(QString json) {
-    setPagesMapping(json);
 }
 
 void MainWindow::onJsRun(QString jsString) {
