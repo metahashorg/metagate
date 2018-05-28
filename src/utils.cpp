@@ -125,3 +125,9 @@ bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, boo
     }
     return true;
 }
+
+void createFolder(const QString &folder) {
+    QDir dir(folder);
+    const bool resultCreate = dir.mkpath(folder);
+    CHECK(resultCreate, "dont create folder " + folder.toStdString());
+}

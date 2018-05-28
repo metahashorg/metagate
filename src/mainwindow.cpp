@@ -74,12 +74,6 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-static void createFolder(const QString &folder) {
-    QDir dir(folder);
-    const bool resultCreate = dir.mkpath(folder);
-    CHECK(resultCreate, "dont create folder " + folder.toStdString());
-}
-
 static QString makeMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter) {
     CHECK(!hardwareId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
     CHECK(!userId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
@@ -452,66 +446,24 @@ void MainWindow::ShowContextMenu(const QPoint &point) {
 void MainWindow::contextMenuCut() {
     QWidget* focused = QApplication::focusWidget();
     if(focused != 0) {
-        QApplication::postEvent(
-            focused,
-            new QKeyEvent(
-                QEvent::KeyPress,
-                Qt::Key_X,
-                Qt::ControlModifier
-            )
-        );
-        QApplication::postEvent(
-            focused,
-            new QKeyEvent(
-                QEvent::KeyRelease,
-                Qt::Key_X,
-                Qt::ControlModifier
-            )
-        );
+        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_X, Qt::ControlModifier));
+        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_X, Qt::ControlModifier));
     }
 }
 
 void MainWindow::contextMenuCopy() {
     QWidget* focused = QApplication::focusWidget();
     if(focused != 0) {
-        QApplication::postEvent(
-            focused,
-            new QKeyEvent(
-                QEvent::KeyPress,
-                Qt::Key_C,
-                Qt::ControlModifier
-            )
-        );
-        QApplication::postEvent(
-            focused,
-            new QKeyEvent(
-                QEvent::KeyRelease,
-                Qt::Key_C,
-                Qt::ControlModifier
-            )
-        );
+        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_C, Qt::ControlModifier));
+        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_C, Qt::ControlModifier));
     }
 }
 
 void MainWindow::contextMenuPaste() {
     QWidget* focused = QApplication::focusWidget();
     if(focused != 0) {
-        QApplication::postEvent(
-            focused,
-            new QKeyEvent(
-                QEvent::KeyPress,
-                Qt::Key_V,
-                Qt::ControlModifier
-            )
-        );
-        QApplication::postEvent(
-            focused,
-            new QKeyEvent(
-                QEvent::KeyRelease,
-                Qt::Key_V,
-                Qt::ControlModifier
-            )
-        );
+        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_V, Qt::ControlModifier));
+        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_V, Qt::ControlModifier));
     }
 }
 

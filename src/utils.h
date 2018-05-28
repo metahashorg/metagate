@@ -25,4 +25,6 @@ std::string readFile(const QString &pathToFile);
 
 bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs = true);
 
+void createFolder(const QString &folder);
+
 #endif // UTILS_H
