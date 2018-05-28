@@ -127,62 +127,64 @@ Q_INVOKABLE QString getAllBtcWalletsJson();
 Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
 Получает список всех metahash аккаунтов.
 Результат возвращается в виде json массива [{"address":"addr","path":"path"}]
-
+```
 
 Общие функции
-
+```shell
 Q_INVOKABLE void updateAndReloadApplication();
-Перезапускает кошелек с установкой обновлений
+# Restarts wallet installing updates
 
 Q_INVOKABLE void qtOpenInBrowser(QString url);
-Открывает ссылку в браузере по умолчанию
+# Opens link in default browser
 
 Q_INVOKABLE void getWalletFolders();
-Функция вызывает javascript
+# Function calls javascript
 walletFoldersJs(walletDefaultPath, walletCurrentPath, userName, errorNum, errorMessage)
 
 Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-Установить текущий walletPath. newUserName к путю не прописывается! Нужен только для справочной информации
-По окончанию работы функции вызывается javascript
+# Set current walletPath.  newUserName to the path  has not to be written! It is needed for reference only.
+# javascript is called after completion of this function
 setPathsJs(result("Ok", "Not ok"), errorNum, errorMessage)
 
 Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption);
-Показывает пользователю диалоговое окно с возможностью выбора каталога.
-beginPath - первоначальное расположение каталога
-caption - название диалогового окна
-Возвращает путь к выбранному пользователем каталогу или пустую строку, если пользователь отказался от выбора каталога
+# Shows to user the dialog box providing the ability to select a directory. 
+beginPath # initial directory location
+caption # name of the dialog box
+#  Returns the path to the selected by user directory or an empty string, if user declines selecting directory.
 
 Q_INVOKABLE bool migrateKeysToPath(QString newPath);
-Переносит ключи из предыдущего каталога пользователя (home/user/.metahash_wallets) в указанный каталог
+# Moves keys from the previous user's directory (home/user/.metahash_wallets) to the specified directory.
 
 Q_INVOKABLE void exitApplication();
-Останавливает приложение
+# Stops the app.
 
 Q_INVOKABLE QString backupKeys(QString caption);
-Бэкапит ключи в файл. Перед бэкапом пользователю показывается диалог с возможностью выбора пути
-caption - заголовок диалога
-Возвращается описание ошибки или пустая строка в случае успеха
+# Backs up keys to the file. Before backup, user is shown a dialog box providing ability to select a path.
+caption # name of the dialog 
+# Returns error description or empty string, if successful.
 
 Q_INVOKABLE QString restoreKeys(QString caption);
-Восстанавливает ключи из файла. Перед восстановлением пользователю показывается диалог с возможностью выбора файла бэкапа
-caption - заголовок диалога
-Возвращается описание ошибки или пустая строка в случае успеха
+# Recovers keys from a file. Before recovery, user is shown a dialog box providing ability to select backup file.
+caption # name of the dialog
+#  Returns error description or empty string, if successful.
 
 Q_INVOKABLE void getMachineUid();
-Возвращает в функцию machineUidJs(uid) уникальный id машины
+# Returns unique machine ID to the machineUidJs(uid) function.
 
 Q_INVOKABLE void setUserName(const QString &userName);
-Устанавливает имя пользователя для кнопки user
+# Sets username for the user button.
 
 Q_INVOKABLE void setHasNativeToolbarVariable()
-устанавливает javascript переменную window.hasNativeToolbar в true
+# Sets window.hasNativeToolbar javascript variable to true.
 
 Q_INVOKABLE void setCommandLineText(const QString &text);
-Устанавливает текст в command line
+# Sets text to command line.
 
 Q_INVOKABLE void openWalletPathInStandartExplorer();
-открыть каталог с ключами в стандартном explorer-е
+# Open directory containing keys in standard explorer.
+```
 
+```shell
 Q_INVOKABLE void setPagesMapping(QString mapping);
 Установить соответствие между ссылками metagate и страницами. Формат
 {"routes":[{"url":"login.html", "name":"/MetaGate/Login""isExternal":false},{"url":"login.html", "name":"/MetaGate/Login""isExternal":true}]}
