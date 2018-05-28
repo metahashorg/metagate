@@ -4,35 +4,22 @@
 #include <fstream>
 #include <map>
 
-#include <QWebEnginePage>
 #include <QApplication>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QStandardPaths>
-#include <QTextDocument>
-#include <QLineEdit>
-#include <QDir>
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QWebEngineProfile>
-#include <QWebEngineUrlRequestInterceptor>
-#include <QKeyEvent>
-#include <QMenu>
-#include <QStandardItemModel>
-#include <QFontDatabase>
-#include <QWebEngineHistory>
 
 #include "Wallet.h"
 #include "EthWallet.h"
 #include "BtcWallet.h"
 
 #include "NsLookup.h"
-#include "WebSocketClient.h"
 
-#include "uploader.h"
 #include "unzip.h"
 #include "check.h"
 #include "StopApplication.h"
@@ -51,9 +38,8 @@ const static QString WALLET_PATH_MTH = "mhc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
-JavascriptWrapper::JavascriptWrapper(ServerName &serverName, NsLookup &nsLookup, QObject */*parent*/)
-    : serverName(serverName)
-    , nsLookup(nsLookup)
+JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
+    : nsLookup(nsLookup)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 

@@ -13,8 +13,6 @@
 
 #include "WindowEvents.h"
 
-class ServerName;
-class NsLookup;
 class WebSocketClient;
 class JavascriptWrapper;
 
@@ -57,7 +55,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(ServerName &serverName, NsLookup &nsLookup, WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent = 0);
+    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent = 0);
 
     void showExpanded();
 
@@ -138,21 +136,13 @@ private:
 
     QMenu *loginMenu;
 
-    ServerName &serverName;
-
-    NsLookup &nsLookup;
-
     WebSocketClient &webSocketClient;
 
     JavascriptWrapper &jsWrapper;
 
-    QString savedToken;
-
     QString currentBeginPath;
 
     QString lastVersion;
-
-    QString userName;
 
     QString currentTextCommandLine;
 

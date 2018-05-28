@@ -4,14 +4,13 @@
 #include <QObject>
 #include <QString>
 
-class ServerName;
 class NsLookup;
 
 class JavascriptWrapper : public QObject
 {
     Q_OBJECT
 public:
-    explicit JavascriptWrapper(ServerName &serverName, NsLookup &nsLookup, QObject *parent = nullptr);
+    explicit JavascriptWrapper(NsLookup &nsLookup, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -126,8 +125,6 @@ private:
     void runJs(const QString &script);
 
 private:
-
-    ServerName &serverName;
 
     NsLookup &nsLookup;
 

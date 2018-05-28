@@ -9,13 +9,10 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
-#include <QStandardPaths>
 #include <QTextDocument>
 #include <QLineEdit>
-#include <QDir>
 #include <QDesktopServices>
-#include <QFileDialog>
-#include <QMessageBox>
+#include <QDir>
 #include <QWebEngineProfile>
 #include <QWebEngineUrlRequestInterceptor>
 #include <QKeyEvent>
@@ -24,22 +21,15 @@
 #include <QFontDatabase>
 #include <QWebEngineHistory>
 
-#include "Wallet.h"
-#include "EthWallet.h"
-#include "BtcWallet.h"
-
-#include "NsLookup.h"
 #include "WebSocketClient.h"
 #include "JavascriptWrapper.h"
 
 #include "uploader.h"
-#include "unzip.h"
 #include "check.h"
 #include "StopApplication.h"
 #include "duration.h"
 #include "Log.h"
 #include "utils.h"
-#include "TypedException.h"
 
 #include "machine_uid.h"
 
@@ -82,11 +72,9 @@ static QString makeMessageForWss(const QString &hardwareId, const QString &userI
     return json.toJson(QJsonDocument::Compact);
 }
 
-MainWindow::MainWindow(ServerName &serverName, NsLookup &nsLookup, WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent)
+MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , serverName(serverName)
-    , nsLookup(nsLookup)
     , webSocketClient(webSocketClient)
     , jsWrapper(jsWrapper)
 {
