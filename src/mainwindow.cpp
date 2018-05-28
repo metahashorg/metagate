@@ -532,6 +532,8 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
             historyPos++;
 
             ui->backButton->setEnabled(history.size() > 1);
+        } else if (compareTwoPaths(history[historyPos - 1], text)) {
+            history.at(historyPos - 1) = text;
         }
     }
 
