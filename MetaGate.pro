@@ -44,7 +44,8 @@ SOURCES += src/main.cpp src/mainwindow.cpp \
     src/dns/datatransformer.cpp \
     src/dns/dnspacket.cpp \
     src/dns/resourcerecord.cpp \
-    src/WebSocketClient.cpp
+    src/WebSocketClient.cpp \
+    src/JavascriptWrapper.cpp
 
 unix: SOURCES += src/machine_uid_unix.cpp
 
@@ -86,7 +87,8 @@ HEADERS += src/mainwindow.h \
     src/dns/datatransformer.h \
     src/dns/dnspacket.h \
     src/dns/resourcerecord.h \
-    src/WebSocketClient.h
+    src/WebSocketClient.h \
+    src/JavascriptWrapper.h
 
 FORMS += src/mainwindow.ui
 

@@ -21,6 +21,7 @@
 #include "NsLookup.h"
 #include "StopApplication.h"
 #include "WebSocketClient.h"
+#include "JavascriptWrapper.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -84,7 +85,9 @@ int main(int argc, char *argv[]) {
             WebSocketClient webSocketClient;
             webSocketClient.start();
 
-            MainWindow mainWindow(serverName, nsLookup, webSocketClient);
+            JavascriptWrapper jsWrapper(serverName, nsLookup);
+
+            MainWindow mainWindow(serverName, nsLookup, webSocketClient, jsWrapper);
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

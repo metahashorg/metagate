@@ -16,6 +16,7 @@
 class ServerName;
 class NsLookup;
 class WebSocketClient;
+class JavascriptWrapper;
 
 namespace Ui {
     class MainWindow;
@@ -56,7 +57,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(ServerName &serverName, NsLookup &nsLookup, WebSocketClient &webSocketClient, QWidget *parent = 0);
+    explicit MainWindow(ServerName &serverName, NsLookup &nsLookup, WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent = 0);
 
     void showExpanded();
 
@@ -93,103 +94,17 @@ public slots:
 
     void lineEditReturnPressed3(const QString &text);
 
-public slots:
-
-    Q_INVOKABLE void createWallet(QString requestId, QString password);
-
-    Q_INVOKABLE QString getAllWalletsJson();
-
-    Q_INVOKABLE QString getAllWalletsAndPathsJson();
-
-    Q_INVOKABLE void signMessage(QString requestId, QString keyName, QString text, QString password);
-
-public slots:
-
-    Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
-
-    Q_INVOKABLE QString getAllMHCWalletsJson();
-
-    Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
-
-    Q_INVOKABLE void signMessageMHC(QString requestId, QString keyName, QString text, QString password);
-
-public slots:
-
-    Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
-
-    Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex);
-
-public slots:
-
-    Q_INVOKABLE void createWalletEth(QString requestId, QString password);
-
-    Q_INVOKABLE void signMessageEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString to, QString value, QString data);
-
-    //Q_INVOKABLE void signMessageTokensEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString contractAddress, QString to, QString value);
-
-    Q_INVOKABLE QString getAllEthWalletsJson();
-
-    Q_INVOKABLE QString getAllEthWalletsAndPathsJson();
-
-public slots:
-
-    Q_INVOKABLE void createWalletBtc(QString requestId);
-
-    Q_INVOKABLE void createWalletBtcPswd(QString requestId, QString password);
-
-    Q_INVOKABLE void signMessageBtc(QString requestId, QString address, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees);
-
-    Q_INVOKABLE void signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees);
-
-    Q_INVOKABLE QString getAllBtcWalletsJson();
-
-    Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
-
-public slots:
-
-    Q_INVOKABLE bool migrateKeysToPath(QString newPath);
-
-    Q_INVOKABLE void updateAndReloadApplication();
-
-    Q_INVOKABLE void qtOpenInBrowser(QString url);
-
-    Q_INVOKABLE void getWalletFolders();
-
-    Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-
-    Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption);
-
-    Q_INVOKABLE void exitApplication();
-
-    Q_INVOKABLE QString backupKeys(QString caption);
-
-    Q_INVOKABLE QString restoreKeys(QString caption);
-
-    Q_INVOKABLE void getMachineUid();
-
-    Q_INVOKABLE void setUserName(const QString &userName);
-
-    Q_INVOKABLE void setHasNativeToolbarVariable();
-
-    Q_INVOKABLE void setCommandLineText(const QString &text);
-
-    Q_INVOKABLE void openWalletPathInStandartExplorer();
-
-    Q_INVOKABLE void setPagesMapping(QString mapping);
-
-    Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
-
 private:
 
     void setCommandLineText2(const QString &text, bool isAddToHistory=true);
 
-    void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
+    void setUserName(const QString &userName);
 
-    QString getAllMTHSWalletsJson(QString walletPath);
+    void qtOpenInBrowser(QString url);
 
-    QString getAllMTHSWalletsAndPathsJson(QString walletPath);
+    void setHasNativeToolbarVariable();
 
-    void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
+    void setPagesMapping(QString mapping);
 
 public slots:
 
@@ -200,6 +115,16 @@ public slots:
     void contextMenuCopy();
 
     void contextMenuPaste();
+
+    void onJsRun(QString jsString);
+
+    void onSetHasNativeToolbarVariable();
+
+    void onSetCommandLineText(QString text);
+
+    void onSetUserName(QString name);
+
+    void onSetMappings(QString json);
 
 signals:
 
@@ -219,25 +144,13 @@ private:
 
     WebSocketClient &webSocketClient;
 
+    JavascriptWrapper &jsWrapper;
+
     QString savedToken;
 
     QString currentBeginPath;
 
     QString lastVersion;
-
-    QString walletDefaultPath;
-
-    QString walletPath;
-
-    QString walletPathMth;
-
-    QString walletPathOldTmh;
-
-    QString walletPathTmh;
-
-    QString walletPathEth;
-
-    QString walletPathBtc;
 
     QString userName;
 
