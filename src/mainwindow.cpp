@@ -1284,7 +1284,7 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
     currentTextCommandLine = text;
 
     if (isAddToHistory) {
-        if (historyPos == 0 || history[historyPos - 1] != text) {
+        if (historyPos == 0 || !compareTwoPaths(history[historyPos - 1], text)) {
             history.insert(history.begin() + historyPos, text);
             historyPos++;
 
