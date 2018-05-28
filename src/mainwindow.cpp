@@ -264,7 +264,7 @@ static bool compareTwoPaths(const QString &path1, const QString &path2) {
     PathParsed p2(path2);
 
     if (p1.type == p2.type || p1.type == PathParsed::Type::NONE || p2.type == PathParsed::Type::NONE) {
-        return p1.path == p2.path;
+        return p1.path.toLower() == p2.path.toLower();
     } else {
         return false;
     }
@@ -318,7 +318,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
     if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
         if (isFullUrl(text)) {
             const QString appUrl = APP_URL + text;
-            const auto found = mappingsPages.find(appUrl);
+            const auto found = mappingsPages.find(appUrl.toLower());
             if (found != mappingsPages.end()) {
                 reference = found->second.page;
                 isExternal = found->second.isExternal;
@@ -326,12 +326,12 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
                 reference = METAHASH_URL + text;
             }
         } else {
-            const auto found = mappingsPages.find(text);
+            const auto found = mappingsPages.find(text.toLower());
             if (found != mappingsPages.end()) {
                 reference = found->second.page;
                 isExternal = found->second.isExternal;
             } else {
-                const auto found2 = mappingsPages.find(APP_URL + text);
+                const auto found2 = mappingsPages.find(APP_URL + text.toLower());
                 if (found2 != mappingsPages.end()) {
                     reference = found2->second.page;
                     isExternal = found2->second.isExternal;
@@ -341,7 +341,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
     } else if (text.startsWith(METAHASH_URL)){
         reference = text;
     } else {
-        const auto found = mappingsPages.find(text);
+        const auto found = mappingsPages.find(text.toLower());
         if (found != mappingsPages.end()) {
             reference = found->second.page;
             isExternal = found->second.isExternal;
@@ -582,7 +582,7 @@ void MainWindow::onSetMappings(QString mapping) {
                 isDefault = element.value("isDefault").toBool();
             }
 
-            mappingsPages[name] = PageInfo(url, isExternal, isDefault);
+            mappingsPages[name.toLower()] = PageInfo(url, isExternal, isDefault);
         }
     } catch (const Exception &e) {
         LOG << "Error: " + e;
