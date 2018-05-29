@@ -212,5 +212,8 @@ Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int 
 # count - the amount of return elements.
 # After completion of this function, response will arrive to getIpsServersJs(requestId, json, errorInt, errorString)
 # Json format: "[\"127.0.0.1:9999\", \"127.0.0.1:9999\"]"
+
+Q_INVOKABLE void lineEditReturnPressed(QString text);
+Сэмулировать ввод текста в lineEdit
 ```
 
