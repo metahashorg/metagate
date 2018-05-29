@@ -100,6 +100,8 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ShowContextMenu(const QPoint &))), "not connect");
+
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
 }
 
 void MainWindow::configureMenu() {
@@ -279,6 +281,9 @@ bool MainWindow::compareTwoPaths(const QString &path1, const QString &path2) {
 void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory, bool isLineEditPressed) {
     LOG << "command line " << text1;
 
+    const QString HTTP_1_PREFIX = "http://";
+    const QString HTTP_2_PREFIX = "https://";
+
     QString text = text1;
     if (text.endsWith('/')) {
         text = text.left(text.size() - 1);
@@ -319,42 +324,38 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         return true;
     };
 
-    QString reference;
-    bool isExternal = false;
+    PageInfo pageInfo;
     if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
         if (isFullUrl(text)) {
             const QString appUrl = APP_URL + text;
             const auto found = mappingsPages.find(appUrl.toLower());
             if (found != mappingsPages.end()) {
-                reference = found->second.page;
-                isExternal = found->second.isExternal;
+                pageInfo = found->second;
             } else {
-                reference = METAHASH_URL + text;
+                pageInfo.page = METAHASH_URL + text;
             }
         } else {
             const auto found = mappingsPages.find(text.toLower());
             if (found != mappingsPages.end()) {
-                reference = found->second.page;
-                isExternal = found->second.isExternal;
+                pageInfo = found->second;
             } else {
                 const auto found2 = mappingsPages.find(APP_URL + text.toLower());
                 if (found2 != mappingsPages.end()) {
-                    reference = found2->second.page;
-                    isExternal = found2->second.isExternal;
+                    pageInfo = found2->second;
                 }
             }
         }
     } else if (text.startsWith(METAHASH_URL)){
-        reference = text;
+        pageInfo.page = text;
     } else {
         const auto found = mappingsPages.find(text.toLower());
         if (found != mappingsPages.end()) {
-            reference = found->second.page;
-            isExternal = found->second.isExternal;
+            pageInfo = found->second;
         } else {
             text = text.mid(APP_URL.size());
         }
     }
+    const QString &reference = pageInfo.page;
 
     if (reference.isNull() || reference.isEmpty()) {
         runSearch(text);
@@ -376,8 +377,11 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         setCommandLineText2(text, isAddToHistory);
         hardReloadPage2(req);
     } else {
-        if (isExternal) {
+        if (pageInfo.isExternal) {
             qtOpenInBrowser(reference);
+        } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
+            setCommandLineText2(text, isAddToHistory);
+            hardReloadPage2(reference);
         } else {
             setCommandLineText2(text, isAddToHistory);
             hardReloadPage(reference);
@@ -546,6 +550,18 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
     registerCommandLine();
 }
 
+void MainWindow::browserLoadFinished(bool result) {
+    if (!result) {
+        return;
+    }
+    const QString url = ui->webView->url().toString();
+    auto found = urlToName.find(url);
+    if (found != urlToName.end()) {
+        LOG << "Set address after load " << found->second;
+        setCommandLineText2(found->second);
+    }
+}
+
 void MainWindow::onSetCommandLineText(QString text) {
     setCommandLineText2(text);
 }
@@ -572,6 +588,9 @@ void MainWindow::onSetMappings(QString mapping) {
     try {
         LOG << "Set mappings " << mapping;
 
+        mappingsPages.clear();
+        urlToName.clear();
+
         const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("routes") && root.value("routes").isArray(), "routes field not found");
@@ -589,8 +608,23 @@ void MainWindow::onSetMappings(QString mapping) {
             if (element.contains("isDefault") && element.value("isDefault").isBool()) {
                 isDefault = element.value("isDefault").toBool();
             }
+            bool isPreferred = false;
+            if (element.contains("isPreferred") && element.value("isPreferred").isBool()) {
+                isPreferred = element.value("isPreferred").toBool();
+            }
+            bool isLocalFile = true;
+            if (element.contains("isLocalFile") && element.value("isLocalFile").isBool()) {
+                isLocalFile = element.value("isLocalFile").toBool();
+            }
 
-            mappingsPages[name.toLower()] = PageInfo(url, isExternal, isDefault);
+            mappingsPages[name.toLower()] = PageInfo(url, isExternal, isDefault, isLocalFile);
+
+            auto foundUrlToName = urlToName.find(url);
+            if (foundUrlToName == urlToName.end()) {
+                urlToName[url] = name;
+            } else if (isPreferred) {
+                urlToName[url] = name;
+            }
         }
     } catch (const Exception &e) {
         LOG << "Error: " + e;

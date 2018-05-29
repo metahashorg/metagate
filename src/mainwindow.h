@@ -24,13 +24,15 @@ struct PageInfo {
     QString page;
     bool isExternal;
     bool isDefault = false;
+    bool isLocalFile = true;
 
     PageInfo() = default;
 
-    PageInfo(const QString &page, bool isExternal, bool isDefault)
+    PageInfo(const QString &page, bool isExternal, bool isDefault, bool isLocalFile)
         : page(page)
         , isExternal(isExternal)
         , isDefault(isDefault)
+        , isLocalFile(isLocalFile)
     {}
 };
 
@@ -92,6 +94,8 @@ public slots:
 
     void lineEditReturnPressed3(const QString &text);
 
+    void browserLoadFinished(bool result);
+
 private:
 
     void setCommandLineText2(const QString &text, bool isAddToHistory=true);
@@ -137,6 +141,8 @@ private:
     QString currentTextCommandLine;
 
     std::map<QString, PageInfo> mappingsPages;
+
+    std::map<QString, QString> urlToName;
 
     QString hardwareId;
 
