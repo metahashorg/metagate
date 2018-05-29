@@ -211,6 +211,6 @@ Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int 
 # length restriction to the array. Elements will be selected from the range [0, length — 1]
 # count - the amount of return elements.
 # After completion of this function, response will arrive to getIpsServersJs(requestId, json, errorInt, errorString)
-# Json format: "[\"206.189.14.22:9999\", \"206.189.14.52:9999\"]"
+# Json format: "[\"127.0.0.1:9999\", \"127.0.0.1:9999\"]"
 ```
 
