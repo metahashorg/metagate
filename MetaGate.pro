@@ -88,7 +88,8 @@ HEADERS += src/mainwindow.h \
     src/dns/dnspacket.h \
     src/dns/resourcerecord.h \
     src/WebSocketClient.h \
-    src/JavascriptWrapper.h
+    src/JavascriptWrapper.h \
+    src/algorithms.h
 
 FORMS += src/mainwindow.ui
 

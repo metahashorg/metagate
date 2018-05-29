@@ -8,6 +8,9 @@
 #include <QWebChannel>
 #include <QStandardItem>
 #include <QListView>
+#include <QTimer>
+
+#include "client.h"
 
 #include "ui_mainwindow.h"
 
@@ -22,9 +25,12 @@ namespace Ui {
 
 struct PageInfo {
     QString page;
+    QString printedMhName;
     bool isExternal;
     bool isDefault = false;
     bool isLocalFile = true;
+
+    std::vector<QString> ips;
 
     PageInfo() = default;
 
@@ -104,7 +110,13 @@ private:
 
     bool compareTwoPaths(const QString &path1, const QString &path2);
 
+    void onSetMappingsMh(QString mapping);
+
 public slots:
+
+    void callbackCall(ReturnCallback callback);
+
+    void updateMhsReferences();
 
     void ShowContextMenu(const QPoint &point);
 
@@ -142,6 +154,8 @@ private:
 
     std::map<QString, PageInfo> mappingsPages;
 
+    std::vector<QString> defaultMhIps;
+
     std::map<QString, QString> urlToName;
 
     QString hardwareId;
@@ -150,6 +164,10 @@ private:
 
     std::vector<QString> history;
     size_t historyPos = 0;
+
+    SimpleClient client;
+
+    QTimer qtimer;
 };
 
 #endif // MAINWINDOW_H

@@ -5,14 +5,13 @@
 #include <QCoreApplication>
 #include <QUdpSocket>
 
-#include <algorithm>
-#include <random>
-
 #include "dns/dnspacket.h"
 #include "check.h"
 #include "utils.h"
 #include "duration.h"
 #include "Log.h"
+
+#include "algorithms.h"
 
 const static QString NODES_FILE = "nodes.txt";
 
@@ -256,15 +255,5 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     }
     const auto &nodes = found->second;
 
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::vector<unsigned int> indices(std::min(limit, nodes.size()));
-    std::iota(indices.begin(), indices.end(), 0);
-    std::shuffle(indices.begin(), indices.end(), g);
-
-    std::vector<QString> result;
-    for (size_t i = 0; i < count; i++) {
-        result.emplace_back(nodes[indices[i]].get().ipAndPort);
-    }
-    return result;
+    return ::getRandom<QString>(nodes, limit, count, [](const auto &node) {return node.get().ipAndPort;});
 }

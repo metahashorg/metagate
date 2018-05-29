@@ -30,6 +30,7 @@
 #include "duration.h"
 #include "Log.h"
 #include "utils.h"
+#include "algorithms.h"
 
 #include "machine_uid.h"
 
@@ -88,6 +89,9 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     jsWrapper.setWidget(this);
 
+    client.setParent(this);
+    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect");
+
     CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect");
@@ -102,6 +106,38 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ShowContextMenu(const QPoint &))), "not connect");
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
+
+    /*CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, [this](const QUrl &url) {
+        if (url.toString().startsWith(METAHASH_URL)) {
+            LOG << "Url changed!!! " << url.toString();
+            lineEditReturnPressed(url.toString());
+        }
+        LOG << "Url not changed!!! " << url.toString();
+    }), "not connect");*/
+
+    qtimer.setInterval(hours(1).count());
+    qtimer.setSingleShot(false);
+    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(updateMhsReferences())), "not connect");
+
+    emit updateMhsReferences();
+}
+
+void MainWindow::updateMhsReferences() {
+    client.sendMessageGet(QUrl("http://127.0.0.1:2223/routes"), [this](const std::string &response) {
+        onSetMappingsMh(QString::fromStdString(response));
+    });
+}
+
+void MainWindow::callbackCall(ReturnCallback callback) {
+    try {
+        callback();
+    } catch (const Exception &e) {
+        LOG << "Error " << e;
+    } catch (const std::exception &e) {
+        LOG << "Error " << e.what();
+    } catch (...) {
+        LOG << "Unknown error";
+    }
 }
 
 void MainWindow::configureMenu() {
@@ -211,6 +247,7 @@ void MainWindow::configureMenu() {
     }), "Not connect");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
         emit webSocketClient.sendMessage(makeMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true));
+        ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     }), "Not connect");
 }
 
@@ -325,41 +362,22 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
     };
 
     PageInfo pageInfo;
-    if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
-        if (isFullUrl(text)) {
-            const QString appUrl = APP_URL + text;
-            const auto found = mappingsPages.find(appUrl.toLower());
-            if (found != mappingsPages.end()) {
-                pageInfo = found->second;
-            } else {
-                pageInfo.page = METAHASH_URL + text;
-            }
-        } else {
-            const auto found = mappingsPages.find(text.toLower());
-            if (found != mappingsPages.end()) {
-                pageInfo = found->second;
-            } else {
-                const auto found2 = mappingsPages.find(APP_URL + text.toLower());
-                if (found2 != mappingsPages.end()) {
-                    pageInfo = found2->second;
-                }
-            }
+    const auto found = mappingsPages.find(text.toLower());
+    if (found != mappingsPages.end()) {
+        pageInfo = found->second;
+    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
+        const QString appUrl = APP_URL + text.toLower();
+        const auto found2 = mappingsPages.find(appUrl);
+        if (found2 != mappingsPages.end()) {
+            pageInfo = found2->second;
+        } else if (isFullUrl(text)) {
+            pageInfo.page = METAHASH_URL + text;
         }
     } else if (text.startsWith(METAHASH_URL)){
-        const auto found = mappingsPages.find(text.toLower());
-        if (found != mappingsPages.end()) {
-            pageInfo = found->second;
-        } else {
-            pageInfo.page = text;
-        }
+        pageInfo.page = text;
     } else {
         CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
-        const auto found = mappingsPages.find(text.toLower());
-        if (found != mappingsPages.end()) {
-            pageInfo = found->second;
-        } else {
-            text = text.mid(APP_URL.size());
-        }
+        text = text.mid(APP_URL.size());
     }
     const QString &reference = pageInfo.page;
 
@@ -378,9 +396,24 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
 
         LOG << "switch to url " << uri;
         LOG << "other " << other;
-        QWebEngineHttpRequest req("http://31.172.81.6" + other);
+        QString ip;
+        if (!pageInfo.ips.empty()) {
+            ip = ::getRandom(pageInfo.ips);
+        } else {
+            CHECK(!defaultMhIps.empty(), "defaults mh ips empty");
+            ip = ::getRandom(defaultMhIps);
+        }
+        LOG << "ip " << ip;
+        QWebEngineHttpRequest req(ip + other);
         req.setHeader("host", uri.toUtf8());
-        setCommandLineText2(text, isAddToHistory);
+        QString clText;
+        if (pageInfo.printedMhName.isNull() || pageInfo.printedMhName.isEmpty()) {
+            LOG << "Empyt!!!";
+            clText = text;
+        } else {
+            clText = pageInfo.printedMhName;
+        }
+        setCommandLineText2(clText, isAddToHistory);
         hardReloadPage2(req);
     } else {
         if (pageInfo.isExternal) {
@@ -594,9 +627,6 @@ void MainWindow::onSetMappings(QString mapping) {
     try {
         LOG << "Set mappings " << mapping;
 
-        mappingsPages.clear();
-        urlToName.clear();
-
         const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("routes") && root.value("routes").isArray(), "routes field not found");
@@ -636,6 +666,80 @@ void MainWindow::onSetMappings(QString mapping) {
         LOG << "Error: " + e;
     } catch (...) {
         LOG << "Unknown error";
+    }
+}
+
+static QString ipToHttp(const QString &ip) {
+    const static QString HTTP = "http://";
+    if (ip.startsWith(HTTP)) {
+        return ip;
+    } else {
+        return HTTP + ip;
+    }
+}
+
+void MainWindow::onSetMappingsMh(QString mapping) {
+    LOG << "Set mappings mh " << mapping;
+
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8(), &parseError);
+    CHECK(parseError.error == QJsonParseError::NoError, "Json parse error: " + parseError.errorString().toStdString());
+    const QJsonObject root = document.object();
+    CHECK(root.contains("ext") && root.value("ext").isArray(), "ext field not found ");
+    const QJsonArray &routes = root.value("ext").toArray();
+    for (const QJsonValue &value: routes) {
+        CHECK(value.isObject(), "value array incorrect type");
+        const QJsonObject &element = value.toObject();
+        CHECK(element.contains("type") && element.value("type").isString(), "type field not found");
+        const QString type = element.value("type").toString();
+        const bool isDefault = type == "defaultGateway";
+        if (!isDefault) {
+            CHECK(element.contains("url") && element.value("url").isString(), "url field not found");
+            const QString url = element.value("url").toString();
+            CHECK(element.contains("name") && element.value("name").isString(), "name field not found");
+            const QString name = element.value("name").toString();
+            CHECK(element.contains("isExternal") && element.value("isExternal").isBool(), "isExternal field not found");
+            const bool isExternal = element.value("isExternal").toBool();
+            std::vector<QString> ips;
+            if (element.contains("ip") && element.value("ip").isArray()) {
+                for (const QJsonValue &ip: element.value("ip").toArray()) {
+                    CHECK(ip.isString(), "ips array incorrect type");
+                    ips.emplace_back(ipToHttp(ip.toString()));
+                }
+            }
+
+            PageInfo page(url, isExternal, isDefault, false);
+            page.printedMhName = METAHASH_URL + name;
+            page.ips = ips;
+
+            auto addToMap = [this](auto &map, const QString &key, const PageInfo &page) {
+                const QString lowerKey = key.toLower();
+                auto found = map.find(lowerKey);
+                if (found == map.end() || found->second.page.startsWith(METAHASH_URL)) { // Данные из javascript имеют приоритет
+                    map[lowerKey] = page;
+                }
+            };
+
+            addToMap(mappingsPages, name, page); // TODO заменить на shared_ptr или придумать другую схему
+            addToMap(mappingsPages, url, page);
+            addToMap(mappingsPages, page.printedMhName, page);
+
+            if (element.contains("aliases") && element.value("aliases").isArray()) {
+                for (const QJsonValue &alias: element.value("aliases").toArray()) {
+                    CHECK(alias.isString(), "aliases array incorrect type");
+                    addToMap(mappingsPages, alias.toString(), page);
+                }
+            }
+        } else {
+            if (element.contains("ip") && element.value("ip").isArray()) {
+                std::vector<QString> ips;
+                for (const QJsonValue &ip: element.value("ip").toArray()) {
+                    CHECK(ip.isString(), "ips array incorrect type");
+                    ips.emplace_back(ipToHttp(ip.toString()));
+                }
+                defaultMhIps = ips;
+            }
+        }
     }
 }
 
