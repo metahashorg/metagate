@@ -26,6 +26,8 @@ signals:
 
     void setMappingsSig(QString name);
 
+    void lineEditReturnPressedSig(QString text);
+
 public slots:
 
     Q_INVOKABLE void createWallet(QString requestId, QString password);
@@ -103,6 +105,8 @@ public slots:
     Q_INVOKABLE void setUserName(const QString &userName);
 
     Q_INVOKABLE void setHasNativeToolbarVariable();
+
+    Q_INVOKABLE void lineEditReturnPressed(QString text);
 
     Q_INVOKABLE void setCommandLineText(const QString &text);
 

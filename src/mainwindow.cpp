@@ -97,6 +97,7 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect");
+    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(lineEditReturnPressed(QString))), "not connect");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
@@ -268,7 +269,7 @@ void MainWindow::unregisterCommandLine() {
 }
 
 void MainWindow::lineEditReturnPressed(const QString &text) {
-    lineEditReturnPressed2(text);
+    lineEditReturnPressed2(text, true, false);
 }
 
 void MainWindow::lineEditReturnPressed3(const QString &text) {

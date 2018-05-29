@@ -721,6 +721,10 @@ void JavascriptWrapper::setHasNativeToolbarVariable() {
     emit setHasNativeToolbarVariableSig();
 }
 
+void JavascriptWrapper::lineEditReturnPressed(QString text) {
+    emit lineEditReturnPressedSig(text);
+}
+
 void JavascriptWrapper::setCommandLineText(const QString &text) {
     emit setCommandLineTextSig(text);
 }
