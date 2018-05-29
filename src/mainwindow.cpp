@@ -346,8 +346,14 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
             }
         }
     } else if (text.startsWith(METAHASH_URL)){
-        pageInfo.page = text;
+        const auto found = mappingsPages.find(text.toLower());
+        if (found != mappingsPages.end()) {
+            pageInfo = found->second;
+        } else {
+            pageInfo.page = text;
+        }
     } else {
+        CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
         const auto found = mappingsPages.find(text.toLower());
         if (found != mappingsPages.end()) {
             pageInfo = found->second;
