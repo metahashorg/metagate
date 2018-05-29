@@ -105,7 +105,7 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ShowContextMenu(const QPoint &))), "not connect");
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
+    //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
 
     /*CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, [this](const QUrl &url) {
         if (url.toString().startsWith(METAHASH_URL)) {
@@ -123,7 +123,7 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 }
 
 void MainWindow::updateMhsReferences() {
-    client.sendMessageGet(QUrl("http://127.0.0.1:2223/routes"), [this](const std::string &response) {
+    client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response) {
         onSetMappingsMh(QString::fromStdString(response));
     });
 }
@@ -408,8 +408,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         req.setHeader("host", uri.toUtf8());
         QString clText;
         if (pageInfo.printedMhName.isNull() || pageInfo.printedMhName.isEmpty()) {
-            LOG << "Empyt!!!";
-            clText = text;
+            clText = reference;
         } else {
             clText = pageInfo.printedMhName;
         }
@@ -713,7 +712,10 @@ void MainWindow::onSetMappingsMh(QString mapping) {
             page.ips = ips;
 
             auto addToMap = [this](auto &map, const QString &key, const PageInfo &page) {
-                const QString lowerKey = key.toLower();
+                QString lowerKey = key.toLower();
+                if (lowerKey.endsWith('/')) {
+                    lowerKey = lowerKey.left(lowerKey.size() - 1);
+                }
                 auto found = map.find(lowerKey);
                 if (found == map.end() || found->second.page.startsWith(METAHASH_URL)) { // Данные из javascript имеют приоритет
                     map[lowerKey] = page;
