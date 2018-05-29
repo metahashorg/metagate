@@ -259,12 +259,18 @@ struct PathParsed {
     }
 };
 
-static bool compareTwoPaths(const QString &path1, const QString &path2) {
+bool MainWindow::compareTwoPaths(const QString &path1, const QString &path2) {
     PathParsed p1(path1);
     PathParsed p2(path2);
 
     if (p1.type == p2.type || p1.type == PathParsed::Type::NONE || p2.type == PathParsed::Type::NONE) {
-        return p1.path.toLower() == p2.path.toLower();
+        const auto found1 = mappingsPages.find(p1.path.toLower());
+        const auto found2 = mappingsPages.find(p2.path.toLower());
+        if (found1 == mappingsPages.end() || found2 == mappingsPages.end()) {
+            return p1.path.toLower() == p2.path.toLower();
+        } else {
+            return found1->second.page == found2->second.page;
+        }
     } else {
         return false;
     }

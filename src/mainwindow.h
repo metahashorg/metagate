@@ -98,6 +98,8 @@ private:
 
     void qtOpenInBrowser(QString url);
 
+    bool compareTwoPaths(const QString &path1, const QString &path2);
+
 public slots:
 
     void ShowContextMenu(const QPoint &point);
