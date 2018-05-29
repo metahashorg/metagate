@@ -235,7 +235,7 @@ void MainWindow::configureMenu() {
     }), "Not connect");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed("Apps");
+        lineEditReturnPressed("MetaApps");
     }), "Not connect");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
