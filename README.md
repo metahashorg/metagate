@@ -12,124 +12,128 @@ git clone https://github.com/metahashorg/metagate
 
 Detailed instructions for the project build on linux, mac or win can be found in the [deploy folder](https://github.com/metahashorg/metagate/tree/master/deploy).
 
-```
-Api для общения с javascript
+## Api to connect with javascript
 
-Если qt-функция Q_INVOKABLE возвращает какой-то результат, то в javascript его нужно ловить через callback, например так
+When `Q_INVOKABLE` qt-function returns some result, in javascript it must be got via callback, e.g.: 
+```shell
 mainWindow.openFolderDialog(beginPath, caption, function(returnValue) {
 alert(returnValue);
 });
+```
 
+### How to work with TMH wallets
 
-Работа с TMH Metahash кошельками
-
-Q_INVOKABLE void createWallet(QString requestId, QString password);
-Создает metahash кошелек, ложит созданный кошелек в ~/.metahash_wallets/ с именем address
-По окончанию работы функции вызывается javascript
+```shell
+Q_INVOKABLE void createWallet(QString requestId, QString password);`
+# Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address. 
+# javascript is called after completion of this function
 createWalletResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
 
 Q_INVOKABLE QString getAllWalletsJson();
-Получает список всех metahash аккаунтов.
-Результат возвращается в виде json массива
+# Gets the list of all metahash accounts. 
+# Result returns as a json array
 
 Q_INVOKABLE QString getAllWalletsAndPathsJson();
-Получает список всех metahash аккаунтов.
-Результат возвращается в виде json массива [{"address":"addr","path":"path"}]
+# Gets the list of all metahash accounts. Result returns as a json array [{"address":"addr","path":"path"}]
 
 Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, QString password);
-Подпись сообщения.
-По окончанию работы функции вызывается javascript
+# Message's signing.
+# javascript is called after completion of this function 
 signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
 Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
-Создает rsa ключ для указанного адреса.
-По окончанию работы функции вызывается javascript
+# Generates rsa key for specified address.
+# javascript is called after completion of this function 
 createRsaKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 
 Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex);
-Расшифровывает сообщение, созданное rsa ключем
-По окончанию работы функции вызывается javascript
+# Decrypts message generated via rsa key
+# javascript is called after completion of this function 
 decryptMessageResultJs(requestId, message, errorNum, errorMessage)
+```
 
+### How to work with MHC Metahash wallets
 
-Работа с MHC Metahash кошельками
-
+```shell
 Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
-Создает metahash кошелек, ложит созданный кошелек в ~/.metahash_wallets/ с именем address
-По окончанию работы функции вызывается javascript
+# Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address
+# javascript is called after completion of this function 
 createWalletMHCResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
 
 Q_INVOKABLE QString getAllMHCWalletsJson();
-Получает список всех metahash аккаунтов.
-Результат возвращается в виде json массива
+# Gets the list of all metahash accounts. 
+# Result returns as a json array
 
 Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
-Получает список всех metahash аккаунтов.
-Результат возвращается в виде json массива [{"address":"addr","path":"path"}]
+# Gets the list of all metahash accounts. 
+# Result returns as a json array [{"address":"addr","path":"path"}]
 
 Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text, QString password);
-Подпись сообщения.
-По окончанию работы функции вызывается javascript
+# Message's signing.
+# javascript is called after completion of this function 
 signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
+```
 
+### How to work with Ethereum wallets
 
-Работа с Ethereum кошельками
-
+```shell
 Q_INVOKABLE void createWalletEth(QString requestId, QString password);
-Создает Ethereum wallet. Файл кладет в ~/.metahash_wallets/eth/
-По окончанию работы функции вызывается javascript
+# Generates Ethereum wallet, puts the file to ~/.metahash_wallets/eth/
+# javascript is called after completion of this function 
 createWalletEthResultJs(requestId, address, errorNum, errorMessage, fullKeyPath)
 
 Q_INVOKABLE void signMessageEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString to, QString value, QString data);
-Создает подписанную Ethereum транзакцию.
-Параметры:
-address - адрес аккаунта
-password - пароль аккаунта
-Дальнейшие параметры - это шестнадцатеричные значения, начинающиеся с 0x.
-В случае отправки токенов, to должно быть адресом токена, value == 0x0 (обычно), получатель токена и количество токенов должны быть закодированы в параметре data
-В случае обычной транзакции параметр data, как правило равен 0x
-По окончанию работы функции вызывается javascript
+# Generates the signed Ethereum transaction
+# Parameters:
+  # address — address of the account
+  # password — password of the account
+  Further parameters are hexadecimal values prefixed with 0x
+# When transferring tokens, "to" should be the token address, "value" == 0x0 (commonly), recipient and amount of tokens must be encoded in the data parameter
+# Usually data parameter is equal to 0x
+# javascript is called after completion of this function 
 signMessageEthResultJs(requestId, result, errorNum, errorMessage)
 
 Q_INVOKABLE QString getAllEthWalletsJson();
-Получает список всех ethereum аккаунтов.
-Результат возвращается в виде json массива
+# Gets the list of all ethereum accounts. 
+# Result returns as a json array
 
 Q_INVOKABLE QString getAllEthWalletsAndPathsJson();
-Получает список всех metahash аккаунтов.
-Результат возвращается в виде json массива [{"address":"addr","path":"path"}]
+# Gets the list of all metahash accounts. 
+# Result returns as a json array
+[{"address":"addr","path":"path"}]
+```
 
+### How to work with Bitcoin wallet
 
-
-Работа с Bitcoin кошельком
-
+```shell
 Q_INVOKABLE void createWalletBtc(QString requestId);
 Q_INVOKABLE void createWalletBtcPswd(QString requestId, QString password);
-Создает Bitcoin wallet. Файл кладет в ~/.metahash_wallets/btc/
-По окончанию работы функции вызывается javascript
+# Generates Bitcoin wallet, puts file to ~/.metahash_wallets/btc/
+# javascript is called after completion of this function 
 createWalletBtcResultJs(requestId, address, errorNum, errorMessage, fullKeyPath)
 
 Q_INVOKABLE void signMessageBtc(QString requestId, QString address, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees);
 Q_INVOKABLE void signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees);
-Генерация bitcoin транзакции
-Параметры:
-jsonInputs - utxos в формате [{"tx_hash": "string", "tx_index": число, "scriptPubKey": "string", "value": "число в строке 10-м формате"}]
-value значение для отправки. Возможные варианты: "all" или десятичное число
-fees Размер комиссии. Возможные варианты "auto" или десятичное число
-estimateComissionInSatoshi в случае, если предыдущий вариант auto, должно быть указано десятичное число
-По окончанию работы функции вызывается javascript
+# Generating Bitcoin transaction
+# Parameters:
+  # jsonInputs - utxos in the format [{"tx_hash": "string", "tx_index": figure, "scriptPubKey": "string", "value": "figure in the string in decimal format"}]
+  # value - is needed for sending. Possible variants: "all" or decimal number
+  # fees - Possible variants: "auto" or decimal number
+  # estimateComissionInSatoshi if there was "auto", here must be specified a decimal number
+# javascript is called after completion of this function 
 signMessageBtcResultJs(requestId, result, errorNum, errorMessage)
 
 Q_INVOKABLE QString getAllBtcWalletsJson();
-Получает список всех bitcoin аккаунтов.
-Результат возвращается в виде json массива
+# Gets the list of all bitcoin accounts. 
+# Result returns as a json array
 
 Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
-Получает список всех metahash аккаунтов.
-Результат возвращается в виде json массива [{"address":"addr","path":"path"}]
+# Gets the list of all metahash accounts. 
+# Result returns as a json array [{"address":"addr","path":"path"}]
 ```
 
-Общие функции
+### General functions
+
 ```shell
 Q_INVOKABLE void updateAndReloadApplication();
 # Restarts wallet installing updates
@@ -182,21 +186,31 @@ Q_INVOKABLE void setCommandLineText(const QString &text);
 
 Q_INVOKABLE void openWalletPathInStandartExplorer();
 # Open directory containing keys in standard explorer.
-```
 
-```shell
 Q_INVOKABLE void setPagesMapping(QString mapping);
-Установить соответствие между ссылками metagate и страницами. Формат
-{"routes":[{"url":"login.html", "name":"/MetaGate/Login""isExternal":false},{"url":"login.html", "name":"/MetaGate/Login""isExternal":true}]}
+# Set up correspondence between metagate links and pages. Format:
+{
+  "routes": 
+  [
+    {
+      "url":"login.html", 
+      "name":"/MetaGate/Login",
+      "isExternal":false
+    },
+    {
+      "url":"login.html", 
+      "name":"/MetaGate/Login",
+      "isExternal":true
+     }
+  ]
+}
 
 Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
-Запросить список ip из топа по пингу
-type тип ноды: torrent, proxy
-length ограничение на массив. Элементы будут выбираться из диапазона [0, length - 1]
-count количество возвращаемых элементов.
-После выполнения функции ответ придет в 
-getIpsServersJs(requestId, json, errorInt, errorString)
-Формат json-а
-"[\"206.189.14.22:9999\", \"206.189.14.52:9999\"]"
-
+# Request ip list from top to ping
+# type node type: torrent, proxy
+# length restriction to the array. Elements will be selected from the range [0, length — 1]
+# count - the amount of return elements.
+# After completion of this function, response will arrive to getIpsServersJs(requestId, json, errorInt, errorString)
+# Json format: "[\"206.189.14.22:9999\", \"206.189.14.52:9999\"]"
 ```
+
