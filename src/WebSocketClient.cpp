@@ -23,6 +23,8 @@ WebSocketClient::WebSocketClient(QObject *parent)
 
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect");
 
+    CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect");
+
     moveToThread(&thread1);
     m_webSocket.moveToThread(&thread1);
 
@@ -64,13 +66,20 @@ void WebSocketClient::start() {
 void WebSocketClient::onConnected() {
     LOG << "Wss client connected. Thread " << std::this_thread::get_id();
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect");
-
-    CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect");
+    isConnected = true;
 }
 
 void WebSocketClient::onSendMessage(QString message) {
     LOG << "Wss client send message. Thread " << std::this_thread::get_id() << " " << message;
-    m_webSocket.sendTextMessage(message);
+    if (!isConnected) {
+        messageQueue.emplace_back(message);
+    } else {
+        for (const QString &m: messageQueue) {
+            m_webSocket.sendTextMessage(m);
+        }
+        messageQueue.clear();
+        m_webSocket.sendTextMessage(message);
+    }
 }
 
 void WebSocketClient::onTextMessageReceived(QString message) {

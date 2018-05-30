@@ -37,6 +37,10 @@ private:
 
     bool isStopped = false;
 
+    bool isConnected = false;
+
+    std::vector<QString> messageQueue;
+
     QThread thread1;
 };
 
