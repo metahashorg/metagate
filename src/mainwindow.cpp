@@ -60,13 +60,16 @@ static QString makeMessageForWss(const QString &hardwareId, const QString &userI
     CHECK(!hardwareId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
     CHECK(!userId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
 
-    QJsonObject obj;
-    obj.insert("machine_uid", hardwareId);
-    obj.insert("user_id", userId);
-    obj.insert("focus_release_count", (int)focusCount);
-    obj.insert("text", QString(line.toUtf8().toHex()));
-    obj.insert("is_enter_pressed", isEnter);
-    QJsonDocument json(obj);
+    QJsonObject allJson;
+    allJson.insert("app", "MetaSearch");
+    QJsonObject data;
+    data.insert("machine_uid", hardwareId);
+    data.insert("user_id", userId);
+    data.insert("focus_release_count", (int)focusCount);
+    data.insert("text", QString(line.toUtf8().toHex()));
+    data.insert("is_enter_pressed", isEnter);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
 
     return json.toJson(QJsonDocument::Compact);
 }
