@@ -148,6 +148,8 @@ private:
 
     QString currentBeginPath;
 
+    QString folderName;
+
     QString lastVersion;
 
     QString currentTextCommandLine;

@@ -87,6 +87,9 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     configureMenu();
 
     currentBeginPath = Uploader::getPagesPath();
+    const auto &lastVersionPair = Uploader::getLastVersion(currentBeginPath);
+    folderName = lastVersionPair.first;
+    lastVersion = lastVersionPair.second;
 
     hardReloadPage("login.html");
 
@@ -548,10 +551,6 @@ void MainWindow::hardReloadPage2(const QWebEngineHttpRequest &url) {
 }
 
 void MainWindow::hardReloadPage(const QString &pageName) {
-    const auto &lastVersionPair = Uploader::getLastVersion(currentBeginPath);
-    const auto &folderName = lastVersionPair.first;
-    const auto &lastVersion = lastVersionPair.second;
-
     LOG << "Reload. Last version " << lastVersion;
     ui->webView->page()->profile()->setRequestInterceptor(nullptr);
     hardReloadPage2("file:///" + QDir(QDir(QDir(currentBeginPath).filePath(folderName)).filePath(lastVersion)).filePath(pageName));
