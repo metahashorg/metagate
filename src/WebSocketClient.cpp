@@ -25,6 +25,21 @@ WebSocketClient::WebSocketClient(QObject *parent)
 
     CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect");
 
+    CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect");
+    CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect");
+    CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
+        LOG << "Wss client disconnected. Thread " << std::this_thread::get_id();
+        m_webSocket.close();
+        if (!isStopped) {
+            QTimer::singleShot(milliseconds(10s).count(), this, SLOT(onStarted()));
+        }
+        isConnected = false;
+    }), "not connect");
+    CHECK(connect(&thread1, &QThread::finished, [this]{
+        LOG << "Wss client finished";
+        m_webSocket.close();
+    }), "not connect");
+
     moveToThread(&thread1);
     m_webSocket.moveToThread(&thread1);
 
@@ -32,30 +47,8 @@ WebSocketClient::WebSocketClient(QObject *parent)
 }
 
 void WebSocketClient::onStarted() {
-    try {
-        CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect");
-        CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
-            try {
-                LOG << "Wss client disconnected. Thread " << std::this_thread::get_id();
-                CHECK(disconnect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect");
-                CHECK(disconnect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect");
-                m_webSocket.close();
-                if (!isStopped) {
-                    m_webSocket.open(m_url);
-                }
-            } catch (const Exception &e) {
-                LOG << "Wss error: " << e;
-            }
-        }), "not connect");
-        CHECK(connect(&thread1, &QThread::finished, [this]{
-            m_webSocket.close();
-        }), "not connect");
-        m_webSocket.open(m_url);
-
-        LOG << "Wss client started2. Thread " << std::this_thread::get_id() << ". Url " << m_url.toString();
-    } catch (const Exception &e) {
-        LOG << "Wss error: " << e;
-    }
+    m_webSocket.open(m_url);
+    LOG << "Wss client started2. Thread " << std::this_thread::get_id() << ". Url " << m_url.toString();
 }
 
 WebSocketClient::~WebSocketClient() {
@@ -73,7 +66,6 @@ void WebSocketClient::start() {
 
 void WebSocketClient::onConnected() {
     LOG << "Wss client connected. Thread " << std::this_thread::get_id();
-    CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect");
     isConnected = true;
 }
 
