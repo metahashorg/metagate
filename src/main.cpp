@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
             JavascriptWrapper jsWrapper(nsLookup);
 
-            MainWindow mainWindow(webSocketClient, jsWrapper);
+            MainWindow mainWindow(webSocketClient, jsWrapper, QString::fromStdString(versionString));
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

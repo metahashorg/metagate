@@ -63,7 +63,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent = 0);
+    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent = 0);
 
     void showExpanded();
 
@@ -87,6 +87,8 @@ private:
     void registerCommandLine();
 
     void unregisterCommandLine();
+
+    void sendAppInfoToWss();
 
 public slots:
 
@@ -145,6 +147,8 @@ private:
     WebSocketClient &webSocketClient;
 
     JavascriptWrapper &jsWrapper;
+
+    const QString applicationVersion;
 
     QString currentBeginPath;
 

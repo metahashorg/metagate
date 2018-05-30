@@ -74,11 +74,29 @@ static QString makeMessageForWss(const QString &hardwareId, const QString &userI
     return json.toJson(QJsonDocument::Compact);
 }
 
-MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, QWidget *parent)
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion) {
+    CHECK(!hardwareId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
+    CHECK(!userId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
+
+    QJsonObject allJson;
+    allJson.insert("app", "MetaGate");
+    QJsonObject data;
+    data.insert("machine_uid", hardwareId);
+    data.insert("user_id", userId);
+    data.insert("application_ver", applicationVersion);
+    data.insert("interface_ver", interfaceVersion);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+}
+
+MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , webSocketClient(webSocketClient)
     , jsWrapper(jsWrapper)
+    , applicationVersion(applicationVersion)
 {
     ui->setupUi(this);
 
@@ -127,6 +145,12 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(updateMhsReferences())), "not connect");
 
     emit updateMhsReferences();
+
+    sendAppInfoToWss();
+}
+
+void MainWindow::sendAppInfoToWss() {
+    emit webSocketClient.sendMessage(makeMessageApplicationForWss(hardwareId, ui->userButton->text(), applicationVersion, lastVersion));
 }
 
 void MainWindow::updateMhsReferences() {
@@ -623,6 +647,8 @@ void MainWindow::onSetUserName(QString userName) {
     const size_t estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
     button->setMaximumWidth(estimatedWidth);
     button->setMinimumWidth(estimatedWidth);
+
+    sendAppInfoToWss();
 }
 
 void MainWindow::onSetMappings(QString mapping) {
