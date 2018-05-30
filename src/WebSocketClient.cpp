@@ -70,10 +70,10 @@ void WebSocketClient::onConnected() {
 }
 
 void WebSocketClient::onSendMessage(QString message) {
-    LOG << "Wss client send message. Thread " << std::this_thread::get_id() << " " << message;
     if (!isConnected) {
         messageQueue.emplace_back(message);
     } else {
+        LOG << "Wss client send message. Thread " << std::this_thread::get_id() << " " << message;
         for (const QString &m: messageQueue) {
             m_webSocket.sendTextMessage(m);
         }
