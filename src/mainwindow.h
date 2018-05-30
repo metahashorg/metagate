@@ -88,7 +88,7 @@ private:
 
     void unregisterCommandLine();
 
-    void sendAppInfoToWss();
+    void sendAppInfoToWss(bool force);
 
 public slots:
 
@@ -147,6 +147,8 @@ private:
     WebSocketClient &webSocketClient;
 
     JavascriptWrapper &jsWrapper;
+
+    QString sendedUserName;
 
     const QString applicationVersion;
 

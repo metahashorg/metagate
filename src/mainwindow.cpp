@@ -146,11 +146,15 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     emit updateMhsReferences();
 
-    sendAppInfoToWss();
+    sendAppInfoToWss(true);
 }
 
-void MainWindow::sendAppInfoToWss() {
-    emit webSocketClient.sendMessage(makeMessageApplicationForWss(hardwareId, ui->userButton->text(), applicationVersion, lastVersion));
+void MainWindow::sendAppInfoToWss(bool force) {
+    const QString newUserName = ui->userButton->text();
+    if (force || newUserName != sendedUserName) {
+        emit webSocketClient.sendMessage(makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastVersion));
+        sendedUserName = newUserName;
+    }
 }
 
 void MainWindow::updateMhsReferences() {
@@ -648,7 +652,7 @@ void MainWindow::onSetUserName(QString userName) {
     button->setMaximumWidth(estimatedWidth);
     button->setMinimumWidth(estimatedWidth);
 
-    sendAppInfoToWss();
+    sendAppInfoToWss(false);
 }
 
 void MainWindow::onSetMappings(QString mapping) {
