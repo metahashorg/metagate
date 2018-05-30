@@ -776,7 +776,7 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
         );
     }
 
-    LOG << "Create wallet ok " << requestId;
+    LOG << "get ips servers ok " << requestId;
 }
 
 void JavascriptWrapper::setUserName(const QString &userName) {
