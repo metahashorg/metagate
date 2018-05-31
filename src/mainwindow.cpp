@@ -54,7 +54,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-static QString makeMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter) {
+static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter) {
     QJsonObject allJson;
     allJson.insert("app", "MetaSearch");
     QJsonObject data;
@@ -180,14 +180,6 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect");
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect");
-
-    /*CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, [this](const QUrl &url) {
-        if (url.toString().startsWith(METAHASH_URL)) {
-            LOG << "Url changed!!! " << url.toString();
-            lineEditReturnPressed(url.toString());
-        }
-        LOG << "Url not changed!!! " << url.toString();
-    }), "not connect");*/
 
     qtimer.setInterval(hours(1).count());
     qtimer.setSingleShot(false);
@@ -315,10 +307,10 @@ void MainWindow::configureMenu() {
     }), "Not connect");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
-        emit webSocketClient.sendMessage(makeMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false));
+        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false));
     }), "Not connect");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
-        emit webSocketClient.sendMessage(makeMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true));
+        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true));
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     }), "Not connect");
 }
@@ -462,67 +454,49 @@ void MainWindow::onShowContextMenu(const QPoint &point) {
 BEGIN_SLOT_WRAPPER
     QMenu contextMenu(tr("Context menu"), this);
 
-    QAction action1("cut", this);
-    connect(&action1, &QAction::triggered, []{
+    contextMenu.addAction("cut", []{
         QWidget* focused = QApplication::focusWidget();
         if(focused != 0) {
             QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_X, Qt::ControlModifier));
             QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_X, Qt::ControlModifier));
         }
     });
-    contextMenu.addAction(&action1);
 
-    QAction action2("copy", this);
-    connect(&action2, &QAction::triggered, []{
+    contextMenu.addAction("copy", []{
         QWidget* focused = QApplication::focusWidget();
         if(focused != 0) {
             QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_C, Qt::ControlModifier));
             QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_C, Qt::ControlModifier));
         }
     });
-    contextMenu.addAction(&action2);
 
-    QAction action3("paste", this);
-    connect(&action3, &QAction::triggered, []{
+    contextMenu.addAction("paste", []{
         QWidget* focused = QApplication::focusWidget();
         if(focused != 0) {
             QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_V, Qt::ControlModifier));
             QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_V, Qt::ControlModifier));
         }
     });
-    contextMenu.addAction(&action3);
 
     contextMenu.exec(mapToGlobal(point));
 END_SLOT_WRAPPER
 }
 
 void MainWindow::processEvent(WindowEvent event) {
-    try {
-        if (event == WindowEvent::RELOAD_PAGE) {
-            softReloadPage();
-        }
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-    } catch (...) {
-        LOG << "Unknown error";
+BEGIN_SLOT_WRAPPER
+    if (event == WindowEvent::RELOAD_PAGE) {
+        softReloadPage();
     }
+END_SLOT_WRAPPER
 }
 
 void MainWindow::updateAppEvent(const QString appVersion, const QString reference, const QString message) {
-    try {
-        const QString currentVersion = VERSION_STRING;
-        const QString jsScript = "window.onQtAppUpdate  && window.onQtAppUpdate(\"" + appVersion + "\", \"" + reference + "\", \"" + currentVersion + "\", \"" + message + "\");";
-        LOG << "Update script " << jsScript;
-        ui->webView->page()->runJavaScript(jsScript);
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-    } catch (...) {
-        LOG << "Unknown error";
-    }
+BEGIN_SLOT_WRAPPER
+    const QString currentVersion = VERSION_STRING;
+    const QString jsScript = "window.onQtAppUpdate  && window.onQtAppUpdate(\"" + appVersion + "\", \"" + reference + "\", \"" + currentVersion + "\", \"" + message + "\");";
+    LOG << "Update script " << jsScript;
+    ui->webView->page()->runJavaScript(jsScript);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::softReloadPage() {
