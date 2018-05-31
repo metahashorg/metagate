@@ -91,7 +91,8 @@ HEADERS += src/mainwindow.h \
     src/WebSocketClient.h \
     src/JavascriptWrapper.h \
     src/algorithms.h \
-    src/PagesMappings.h
+    src/PagesMappings.h \
+    src/SlotWrapper.h
 
 FORMS += src/mainwindow.ui
 

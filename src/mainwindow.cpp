@@ -31,6 +31,7 @@
 #include "Log.h"
 #include "utils.h"
 #include "algorithms.h"
+#include "SlotWrapper.h"
 
 #include "machine_uid.h"
 
@@ -206,22 +207,18 @@ void MainWindow::sendAppInfoToWss(bool force) {
 }
 
 void MainWindow::onUpdateMhsReferences() {
+BEGIN_SLOT_WRAPPER
     client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response) {
         LOG << "Set mappings mh " << response;
         pagesMappings.setMappingsMh(QString::fromStdString(response));
     });
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onCallbackCall(ReturnCallback callback) {
-    try {
-        callback();
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-    } catch (...) {
-        LOG << "Unknown error";
-    }
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
 void MainWindow::configureMenu() {
@@ -335,11 +332,15 @@ void MainWindow::unregisterCommandLine() {
 }
 
 void MainWindow::onEnterCommandAndAddToHistory(const QString &text) {
+BEGIN_SLOT_WRAPPER
     enterCommandAndAddToHistory(text, true, false);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onEnterCommandAndAddToHistoryNoDuplicate(const QString &text) {
+BEGIN_SLOT_WRAPPER
     enterCommandAndAddToHistory(text, true, true);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
@@ -462,6 +463,7 @@ void MainWindow::qtOpenInBrowser(QString url) {
 }
 
 void MainWindow::onShowContextMenu(const QPoint &point) {
+BEGIN_SLOT_WRAPPER
     QMenu contextMenu(tr("Context menu"), this);
 
     QAction action1("cut", this);
@@ -495,6 +497,7 @@ void MainWindow::onShowContextMenu(const QPoint &point) {
     contextMenu.addAction(&action3);
 
     contextMenu.exec(mapToGlobal(point));
+END_SLOT_WRAPPER
 }
 
 void MainWindow::processEvent(WindowEvent event) {
@@ -610,6 +613,7 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
 }
 
 void MainWindow::onBrowserLoadFinished(bool result) {
+BEGIN_SLOT_WRAPPER
     if (!result) {
         return;
     }
@@ -629,17 +633,23 @@ void MainWindow::onBrowserLoadFinished(bool result) {
     }
     prevUrl = url;
     prevTextCommandLine = currentTextCommandLine;
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onSetCommandLineText(QString text) {
+BEGIN_SLOT_WRAPPER
     addElementToHistoryAndCommandLine(text, true, true);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onSetHasNativeToolbarVariable() {
+BEGIN_SLOT_WRAPPER
     ui->webView->page()->runJavaScript("window.hasNativeToolbar = true;");
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onSetUserName(QString userName) {
+BEGIN_SLOT_WRAPPER
     ui->userButton->setText(userName);
     ui->userButton->adjustSize();
 
@@ -653,21 +663,20 @@ void MainWindow::onSetUserName(QString userName) {
     button->setMinimumWidth(estimatedWidth);
 
     sendAppInfoToWss(false);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onSetMappings(QString mapping) {
-    try {
-        LOG << "Set mappings " << mapping;
-        pagesMappings.setMappings(mapping);
-    } catch (const Exception &e) {
-        LOG << "Error: " + e;
-    } catch (...) {
-        LOG << "Unknown error";
-    }
+BEGIN_SLOT_WRAPPER
+    LOG << "Set mappings " << mapping;
+    pagesMappings.setMappings(mapping);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onJsRun(QString jsString) {
+BEGIN_SLOT_WRAPPER
     ui->webView->page()->runJavaScript(jsString);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::showExpanded() {
