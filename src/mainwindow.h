@@ -25,7 +25,7 @@ namespace Ui {
 
 struct PageInfo {
     QString page;
-    QString printedMhName;
+    QString printedName;
     bool isExternal;
     bool isDefault = false;
     bool isLocalFile = true;
@@ -106,7 +106,7 @@ public slots:
 
 private:
 
-    void setCommandLineText2(const QString &text, bool isAddToHistory=true);
+    void setCommandLineText2(const QString &text, bool isAddToHistory, bool isReplace);
 
     void qtOpenInBrowser(QString url);
 

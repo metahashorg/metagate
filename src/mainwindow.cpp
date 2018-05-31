@@ -104,6 +104,7 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     lastVersion = lastVersionPair.second;
 
     hardReloadPage("login.html");
+    setCommandLineText2("app://Login", true, true);
 
     jsWrapper.setWidget(this);
 
@@ -124,7 +125,7 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ShowContextMenu(const QPoint &))), "not connect");
 
-    //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
 
     /*CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, [this](const QUrl &url) {
         if (url.toString().startsWith(METAHASH_URL)) {
@@ -349,9 +350,11 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         td.setHtml(url);
         const QString plained = td.toPlainText();
         QString link = "";
+        QString printedName;
         for (const auto pageInfoIt: mappingsPages) {
             if (pageInfoIt.second.isDefault) {
                 link = pageInfoIt.second.page;
+                printedName = pageInfoIt.second.printedName;
             }
         }
         if (link.isNull() || link.isEmpty()) {
@@ -360,7 +363,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         }
         link += plained;
         LOG << "Founded page " << link;
-        setCommandLineText2(url, isAddToHistory);
+        setCommandLineText2(printedName + ":" + url, isAddToHistory, true);
         //currentTextCommandLine = url;
         hardReloadPage(link);
     };
@@ -421,21 +424,28 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         QWebEngineHttpRequest req(ip + other);
         req.setHeader("host", uri.toUtf8());
         QString clText;
-        if (pageInfo.printedMhName.isNull() || pageInfo.printedMhName.isEmpty()) {
+        if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
             clText = reference;
         } else {
-            clText = pageInfo.printedMhName;
+            clText = pageInfo.printedName;
         }
-        setCommandLineText2(clText, isAddToHistory);
+        setCommandLineText2(clText, isAddToHistory, true);
         hardReloadPage2(req);
     } else {
+        QString clText;
+        if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
+            clText = text;
+        } else {
+            clText = pageInfo.printedName;
+        }
+
         if (pageInfo.isExternal) {
             qtOpenInBrowser(reference);
         } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
-            setCommandLineText2(text, isAddToHistory);
+            setCommandLineText2(clText, isAddToHistory, true);
             hardReloadPage2(reference);
         } else {
-            setCommandLineText2(text, isAddToHistory);
+            setCommandLineText2(clText, isAddToHistory, true);
             hardReloadPage(reference);
         }
     }
@@ -563,13 +573,12 @@ void MainWindow::hardReloadPage(const QString &pageName) {
     hardReloadPage2("file:///" + QDir(QDir(QDir(currentBeginPath).filePath(folderName)).filePath(lastVersion)).filePath(pageName));
 }
 
-void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
+void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory, bool isReplace) {
     LOG << "scl " << text;
 
     unregisterCommandLine();
-    /*ui->commandLine->setItemText(ui->commandLine->currentIndex(), text);
-    ui->commandLine->addItem(text);*/
     const QString currText = ui->commandLine->currentText();
+    bool isSetText = true;
     if (!currText.isEmpty()) {
         if (ui->commandLine->count() >= 1) {
             if (!compareTwoPaths(ui->commandLine->itemText(ui->commandLine->count() - 1), currText)) {
@@ -579,12 +588,16 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory) {
             ui->commandLine->addItem(currText);
         }
     }
-    ui->commandLine->setCurrentText(text);
-    //ui->commandLine->addItem(text);
+    if (compareTwoPaths(currText, text)) {
+        isSetText = isReplace;
+    }
+    if (isSetText) {
+        ui->commandLine->setCurrentText(text);
+    }
 
     currentTextCommandLine = text;
 
-    if (isAddToHistory) {
+    if (isAddToHistory && isSetText) {
         if (historyPos == 0 || !compareTwoPaths(history[historyPos - 1], text)) {
             history.insert(history.begin() + historyPos, text);
             historyPos++;
@@ -604,14 +617,21 @@ void MainWindow::browserLoadFinished(bool result) {
     }
     const QString url = ui->webView->url().toString();
     auto found = urlToName.find(url);
+    if (found == urlToName.end()) {
+        const int find = url.lastIndexOf('/');
+        if (find != -1) {
+            const QString lastUrl = url.mid(find + 1);
+            found = urlToName.find(lastUrl);
+        }
+    }
     if (found != urlToName.end()) {
         LOG << "Set address after load " << found->second;
-        setCommandLineText2(found->second);
+        setCommandLineText2(found->second, true, false);
     }
 }
 
 void MainWindow::onSetCommandLineText(QString text) {
-    setCommandLineText2(text);
+    setCommandLineText2(text, true, true);
 }
 
 void MainWindow::onSetHasNativeToolbarVariable() {
@@ -664,13 +684,19 @@ void MainWindow::onSetMappings(QString mapping) {
                 isLocalFile = element.value("isLocalFile").toBool();
             }
 
-            mappingsPages[name.toLower()] = PageInfo(url, isExternal, isDefault, isLocalFile);
+            PageInfo pageInfo(url, isExternal, isDefault, isLocalFile);
+            if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL)) {
+                pageInfo.printedName = APP_URL + name;
+            } else {
+                pageInfo.printedName = name;
+            }
+            mappingsPages[name.toLower()] = pageInfo;
 
             auto foundUrlToName = urlToName.find(url);
             if (foundUrlToName == urlToName.end()) {
-                urlToName[url] = name;
+                urlToName[url] = pageInfo.printedName;
             } else if (isPreferred) {
-                urlToName[url] = name;
+                urlToName[url] = pageInfo.printedName;
             }
         }
     } catch (const Exception &e) {
@@ -720,7 +746,7 @@ void MainWindow::onSetMappingsMh(QString mapping) {
             }
 
             PageInfo page(url, isExternal, isDefault, false);
-            page.printedMhName = METAHASH_URL + name;
+            page.printedName = METAHASH_URL + name;
             page.ips = ips;
 
             auto addToMap = [this](auto &map, const QString &key, const PageInfo &page) {
@@ -736,7 +762,7 @@ void MainWindow::onSetMappingsMh(QString mapping) {
 
             addToMap(mappingsPages, name, page); // TODO заменить на shared_ptr или придумать другую схему
             addToMap(mappingsPages, url, page);
-            addToMap(mappingsPages, page.printedMhName, page);
+            addToMap(mappingsPages, page.printedName, page);
 
             if (element.contains("aliases") && element.value("aliases").isArray()) {
                 for (const QJsonValue &alias: element.value("aliases").toArray()) {

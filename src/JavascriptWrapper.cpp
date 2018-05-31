@@ -726,7 +726,7 @@ void JavascriptWrapper::lineEditReturnPressed(QString text) {
 }
 
 void JavascriptWrapper::setCommandLineText(const QString &text) {
-    emit setCommandLineTextSig(text);
+    //emit setCommandLineTextSig(text);
 }
 
 void JavascriptWrapper::openWalletPathInStandartExplorer() {
