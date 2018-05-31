@@ -116,7 +116,7 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(lineEditReturnPressed(QString))), "not connect");
+    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(enterCommandAndAddToHistory(QString))), "not connect");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
@@ -227,7 +227,7 @@ void MainWindow::configureMenu() {
 
     CHECK(connect(ui->backButton, &QToolButton::pressed, [this] {
         historyPos--;
-        lineEditReturnPressed2(history.at(historyPos - 1), false);
+        enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
     }), "not connect");
@@ -235,7 +235,7 @@ void MainWindow::configureMenu() {
 
     CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
         historyPos++;
-        lineEditReturnPressed2(history.at(historyPos - 1), false);
+        enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
     }), "not connect");
@@ -244,19 +244,19 @@ void MainWindow::configureMenu() {
     CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed("Settings");
+        enterCommandAndAddToHistory("Settings");
     }), "not connect");
 
     CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed("BuyMHC");
+        enterCommandAndAddToHistory("BuyMHC");
     }), "Not connect");
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed("Wallet");
+        enterCommandAndAddToHistory("Wallet");
     }), "Not connect");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
-        lineEditReturnPressed("MetaApps");
+        enterCommandAndAddToHistory("MetaApps");
     }), "Not connect");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
@@ -273,19 +273,19 @@ void MainWindow::configureMenu() {
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed3(const QString&))), "not connect");
+    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(enterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
 }
 
 void MainWindow::unregisterCommandLine() {
-    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed3(const QString&))), "not connect");
+    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(enterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
 }
 
-void MainWindow::lineEditReturnPressed(const QString &text) {
-    lineEditReturnPressed2(text, true, false);
+void MainWindow::enterCommandAndAddToHistory(const QString &text) {
+    enterCommandAndAddToHistory(text, true, false);
 }
 
-void MainWindow::lineEditReturnPressed3(const QString &text) {
-    lineEditReturnPressed2(text, true, true);
+void MainWindow::enterCommandAndAddToHistoryNoDuplicate(const QString &text) {
+    enterCommandAndAddToHistory(text, true, true);
 }
 
 struct PathParsed {
@@ -330,7 +330,7 @@ bool MainWindow::compareTwoPaths(const QString &path1, const QString &path2) {
     }
 }
 
-void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistory, bool isLineEditPressed) {
+void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
     LOG << "command line " << text1;
 
     const QString HTTP_1_PREFIX = "http://";
@@ -341,7 +341,7 @@ void MainWindow::lineEditReturnPressed2(const QString &text1, bool isAddToHistor
         text = text.left(text.size() - 1);
     }
 
-    if (isLineEditPressed && text == currentTextCommandLine) {
+    if (isNoEnterDuplicate && text == currentTextCommandLine) {
         return;
     }
 
