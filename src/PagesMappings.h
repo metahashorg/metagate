@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <QString>
 
@@ -97,7 +98,7 @@ public:
 
 private:
 
-    std::map<Name, PageInfo> mappingsPages;
+    std::map<Name, std::shared_ptr<PageInfo>> mappingsPages;
 
     std::vector<QString> defaultMhIps;
 

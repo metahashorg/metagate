@@ -68,21 +68,21 @@ void PagesMappings::setMappingsMh(QString mapping) {
                 }
             }
 
-            PageInfo page(url, isExternal, isDefault, false);
-            page.printedName = METAHASH_URL + name;
-            page.ips = ips;
+            std::shared_ptr<PageInfo> page = std::make_shared<PageInfo>(url, isExternal, isDefault, false);
+            page->printedName = METAHASH_URL + name;
+            page->ips = ips;
 
-            auto addToMap = [this](auto &map, const QString &key, const PageInfo &page) {
+            auto addToMap = [this](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
                 const Name name(key);
                 auto found = map.find(name);
-                if (found == map.end() || found->second.page.startsWith(METAHASH_URL)) { // Данные из javascript имеют приоритет
+                if (found == map.end() || found->second->page.startsWith(METAHASH_URL)) { // Данные из javascript имеют приоритет
                     map[name] = page;
                 }
             };
 
-            addToMap(mappingsPages, name, page); // TODO заменить на shared_ptr или придумать другую схему
+            addToMap(mappingsPages, name, page);
             addToMap(mappingsPages, url, page);
-            addToMap(mappingsPages, page.printedName, page);
+            addToMap(mappingsPages, page->printedName, page);
 
             if (element.contains("aliases") && element.value("aliases").isArray()) {
                 for (const QJsonValue &alias: element.value("aliases").toArray()) {
@@ -92,19 +92,19 @@ void PagesMappings::setMappingsMh(QString mapping) {
             }
         } else {
             if (element.contains("ip") && element.value("ip").isArray()) {
-                std::vector<QString> ips;
                 for (const QJsonValue &ip: element.value("ip").toArray()) {
                     CHECK(ip.isString(), "ips array incorrect type");
-                    ips.emplace_back(ipToHttp(ip.toString()));
+                    defaultMhIps.emplace_back(ipToHttp(ip.toString()));
                 }
-                defaultMhIps = ips;
             }
         }
     }
 }
 
 void PagesMappings::setMappings(QString mapping) {
-    const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8());
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8(), &parseError);
+    CHECK(parseError.error == QJsonParseError::NoError, "Json parse error: " + parseError.errorString().toStdString());
     const QJsonObject root = document.object();
     CHECK(root.contains("routes") && root.value("routes").isArray(), "routes field not found");
     const QJsonArray &routes = root.value("routes").toArray();
@@ -130,19 +130,17 @@ void PagesMappings::setMappings(QString mapping) {
             isLocalFile = element.value("isLocalFile").toBool();
         }
 
-        PageInfo pageInfo(url, isExternal, isDefault, isLocalFile);
+        std::shared_ptr<PageInfo> pageInfo = std::make_shared<PageInfo>(url, isExternal, isDefault, isLocalFile);
         if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL)) {
-            pageInfo.printedName = APP_URL + name;
+            pageInfo->printedName = APP_URL + name;
         } else {
-            pageInfo.printedName = name;
+            pageInfo->printedName = name;
         }
         mappingsPages[Name(name)] = pageInfo;
 
         auto foundUrlToName = urlToName.find(url);
-        if (foundUrlToName == urlToName.end()) {
-            urlToName[url] = pageInfo.printedName;
-        } else if (isPreferred) {
-            urlToName[url] = pageInfo.printedName;
+        if (foundUrlToName == urlToName.end() || isPreferred) {
+            urlToName[url] = pageInfo->printedName;
         }
     }
 }
@@ -175,14 +173,14 @@ bool PagesMappings::compareTwoPaths(const QString &path1, const QString &path2) 
     PathParsed p2(path2);
 
     if (p1.type == p2.type || p1.type == PathParsed::Type::NONE || p2.type == PathParsed::Type::NONE) {
-        const Name lowerPath1(p1.path.toLower());
-        const Name lowerPath2(p2.path.toLower());
+        const Name lowerPath1(p1.path);
+        const Name lowerPath2(p2.path);
         const auto found1 = mappingsPages.find(lowerPath1);
         const auto found2 = mappingsPages.find(lowerPath2);
         if (found1 == mappingsPages.end() || found2 == mappingsPages.end()) {
             return lowerPath1 == lowerPath2;
         } else {
-            return found1->second.page == found2->second.page;
+            return found1->second->page == found2->second->page;
         }
     } else {
         return false;
@@ -190,9 +188,10 @@ bool PagesMappings::compareTwoPaths(const QString &path1, const QString &path2) 
 }
 
 const PageInfo& PagesMappings::getSearchPage() const {
+    // TODO оптимизировать
     for (const auto &pageInfoIt: mappingsPages) {
-        if (pageInfoIt.second.isDefault) {
-            return pageInfoIt.second;
+        if (pageInfoIt.second->isDefault) {
+            return *pageInfoIt.second;
         }
     }
     throwErr("Not found search page");
@@ -203,7 +202,7 @@ Optional<PageInfo> PagesMappings::find(const QString &url) const {
     if (found == mappingsPages.end()) {
         return Optional<PageInfo>();
     } else {
-        return Optional<PageInfo>(found->second);
+        return Optional<PageInfo>(*found->second);
     }
 }
 
