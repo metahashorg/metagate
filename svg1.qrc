@@ -38,5 +38,6 @@
         <file>resources/svg/Portugales.svg</file>
         <file>resources/svg/Turce.svg</file>
         <file>resources/svg/arrow.svg</file>
+        <file>WalletMetahash.icns</file>
     </qresource>
 </RCC>
