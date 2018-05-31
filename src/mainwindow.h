@@ -11,6 +11,7 @@
 #include <QTimer>
 
 #include "client.h"
+#include "uploader.h"
 
 #include "ui_mainwindow.h"
 
@@ -50,20 +51,17 @@ public:
 
     void showExpanded();
 
-    void softReloadPage();
+private:
 
-    void hardReloadPage(const QString &pageName);
+    void softReloadPage();
 
     void softReloadApp();
 
-private:
-    std::unique_ptr<Ui::MainWindow> ui;
+    void loadUrl(const QString &page);
 
-    std::unique_ptr<QWebChannel> channel;
+    void loadUrl(const QWebEngineHttpRequest &page);
 
-    void hardReloadPage2(const QString &page);
-
-    void hardReloadPage2(const QWebEngineHttpRequest &page);
+    void loadFile(const QString &pageName);
 
     void configureMenu();
 
@@ -73,33 +71,25 @@ private:
 
     void sendAppInfoToWss(bool force);
 
+    void enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate);
+
+    void addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace);
+
+    void qtOpenInBrowser(QString url);
+
 public slots:
 
     void processEvent(WindowEvent event);
 
     void updateAppEvent(const QString appVersion, const QString reference, const QString message);
 
-    void enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate);
+private slots:
 
-    void enterCommandAndAddToHistory(const QString &text);
+    void onCallbackCall(ReturnCallback callback);
 
-    void enterCommandAndAddToHistoryNoDuplicate(const QString &text);
+    void onUpdateMhsReferences();
 
-    void browserLoadFinished(bool result);
-
-private:
-
-    void setCommandLineText2(const QString &text, bool isAddToHistory, bool isReplace);
-
-    void qtOpenInBrowser(QString url);
-
-public slots:
-
-    void callbackCall(ReturnCallback callback);
-
-    void updateMhsReferences();
-
-    void ShowContextMenu(const QPoint &point);
+    void onShowContextMenu(const QPoint &point);
 
     void onJsRun(QString jsString);
 
@@ -111,11 +101,17 @@ public slots:
 
     void onSetMappings(QString mapping);
 
-signals:
+    void onEnterCommandAndAddToHistory(const QString &text);
 
-    void newUpdate();
+    void onEnterCommandAndAddToHistoryNoDuplicate(const QString &text);
+
+    void onBrowserLoadFinished(bool result);
 
 private:
+
+    std::unique_ptr<Ui::MainWindow> ui;
+
+    std::unique_ptr<QWebChannel> channel;
 
     WebSocketClient &webSocketClient;
 
@@ -125,11 +121,7 @@ private:
 
     const QString applicationVersion;
 
-    QString currentBeginPath;
-
-    QString folderName;
-
-    QString lastVersion;
+    LastHtmlVersion lastHtmls;
 
     QString currentTextCommandLine;
 

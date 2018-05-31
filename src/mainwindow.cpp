@@ -154,34 +154,31 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     configureMenu();
 
-    currentBeginPath = Uploader::getPagesPath();
-    const auto &lastVersionPair = Uploader::getLastVersion(currentBeginPath);
-    folderName = lastVersionPair.first;
-    lastVersion = lastVersionPair.second;
+    lastHtmls = Uploader::getLastHtmlVersion();
 
-    hardReloadPage("login.html");
-    setCommandLineText2("app://Login", true, true);
+    loadFile("login.html");
+    addElementToHistoryAndCommandLine("app://Login", true, true);
 
     jsWrapper.setWidget(this);
 
     client.setParent(this);
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect");
+    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect");
 
     CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect");
     CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(enterCommandAndAddToHistory(QString))), "not connect");
+    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
     channel->registerObject(QString("mainWindow"), &jsWrapper);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
-    CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ShowContextMenu(const QPoint &))), "not connect");
+    CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect");
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::browserLoadFinished), "not connect");
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect");
 
     /*CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, [this](const QUrl &url) {
         if (url.toString().startsWith(METAHASH_URL)) {
@@ -193,9 +190,9 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     qtimer.setInterval(hours(1).count());
     qtimer.setSingleShot(false);
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(updateMhsReferences())), "not connect");
+    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect");
 
-    emit updateMhsReferences();
+    emit onUpdateMhsReferences();
 
     sendAppInfoToWss(true);
 }
@@ -203,19 +200,19 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 void MainWindow::sendAppInfoToWss(bool force) {
     const QString newUserName = ui->userButton->text();
     if (force || newUserName != sendedUserName) {
-        emit webSocketClient.sendMessage(makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastVersion));
+        emit webSocketClient.sendMessage(makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion));
         sendedUserName = newUserName;
     }
 }
 
-void MainWindow::updateMhsReferences() {
+void MainWindow::onUpdateMhsReferences() {
     client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response) {
         LOG << "Set mappings mh " << response;
         pagesMappings.setMappingsMh(QString::fromStdString(response));
     });
 }
 
-void MainWindow::callbackCall(ReturnCallback callback) {
+void MainWindow::onCallbackCall(ReturnCallback callback) {
     try {
         callback();
     } catch (const Exception &e) {
@@ -301,19 +298,19 @@ void MainWindow::configureMenu() {
     CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
-        enterCommandAndAddToHistory("Settings");
+        onEnterCommandAndAddToHistory("Settings");
     }), "not connect");
 
     CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
-        enterCommandAndAddToHistory("BuyMHC");
+        onEnterCommandAndAddToHistory("BuyMHC");
     }), "Not connect");
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
-        enterCommandAndAddToHistory("Wallet");
+        onEnterCommandAndAddToHistory("Wallet");
     }), "Not connect");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
-        enterCommandAndAddToHistory("MetaApps");
+        onEnterCommandAndAddToHistory("MetaApps");
     }), "Not connect");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
@@ -330,18 +327,18 @@ void MainWindow::configureMenu() {
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(enterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
+    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
 }
 
 void MainWindow::unregisterCommandLine() {
-    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(enterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
+    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
 }
 
-void MainWindow::enterCommandAndAddToHistory(const QString &text) {
+void MainWindow::onEnterCommandAndAddToHistory(const QString &text) {
     enterCommandAndAddToHistory(text, true, false);
 }
 
-void MainWindow::enterCommandAndAddToHistoryNoDuplicate(const QString &text) {
+void MainWindow::onEnterCommandAndAddToHistoryNoDuplicate(const QString &text) {
     enterCommandAndAddToHistory(text, true, true);
 }
 
@@ -372,9 +369,8 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         QString link = searchPage.page;
         link += plained;
         LOG << "Founded page " << link;
-        setCommandLineText2(searchPage.printedName + ":" + url, isAddToHistory, true);
-        //currentTextCommandLine = url;
-        hardReloadPage(link);
+        addElementToHistoryAndCommandLine(searchPage.printedName + ":" + url, isAddToHistory, true);
+        loadFile(link);
     };
 
     auto isFullUrl = [](const QString &text) {
@@ -438,8 +434,8 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         } else {
             clText = pageInfo.printedName + other;
         }
-        setCommandLineText2(clText, isAddToHistory, true);
-        hardReloadPage2(req);
+        addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+        loadUrl(req);
     } else {
         QString clText;
         if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
@@ -451,11 +447,11 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         if (pageInfo.isExternal) {
             qtOpenInBrowser(reference);
         } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
-            setCommandLineText2(clText, isAddToHistory, true);
-            hardReloadPage2(reference);
+            addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+            loadUrl(reference);
         } else {
-            setCommandLineText2(clText, isAddToHistory, true);
-            hardReloadPage(reference);
+            addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+            loadFile(reference);
         }
     }
 }
@@ -465,7 +461,7 @@ void MainWindow::qtOpenInBrowser(QString url) {
     QDesktopServices::openUrl(QUrl(url));
 }
 
-void MainWindow::ShowContextMenu(const QPoint &point) {
+void MainWindow::onShowContextMenu(const QPoint &point) {
     QMenu contextMenu(tr("Context menu"), this);
 
     QAction action1("cut", this);
@@ -539,7 +535,7 @@ void MainWindow::softReloadApp() {
     QApplication::exit(RESTART_BROWSER);
 }
 
-void MainWindow::hardReloadPage2(const QString &page) {
+void MainWindow::loadUrl(const QString &page) {
     ui->webView->page()->profile()->setRequestInterceptor(nullptr);
     ui->webView->load(page);
     LOG << "Reload ok";
@@ -562,25 +558,23 @@ private:
     const QString hostName;
 };
 
-void MainWindow::hardReloadPage2(const QWebEngineHttpRequest &url) {
+void MainWindow::loadUrl(const QWebEngineHttpRequest &url) {
     RequestInterceptor *interceptor = new RequestInterceptor(ui->webView, url.header("host"));
     ui->webView->page()->profile()->setRequestInterceptor(interceptor);
-
     ui->webView->load(url);
     LOG << "Reload ok";
 }
 
-void MainWindow::hardReloadPage(const QString &pageName) {
-    LOG << "Reload. Last version " << lastVersion;
-    hardReloadPage2("file:///" + QDir(QDir(QDir(currentBeginPath).filePath(folderName)).filePath(lastVersion)).filePath(pageName));
+void MainWindow::loadFile(const QString &pageName) {
+    LOG << "Reload. Last version " << lastHtmls.lastVersion;
+    loadUrl("file:///" + QDir(QDir(QDir(lastHtmls.htmlsRootPath).filePath(lastHtmls.folderName)).filePath(lastHtmls.lastVersion)).filePath(pageName));
 }
 
-void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory, bool isReplace) {
+void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
     LOG << "scl " << text;
 
     unregisterCommandLine();
     const QString currText = ui->commandLine->currentText();
-    bool isSetText = true;
     if (!currText.isEmpty()) {
         if (ui->commandLine->count() >= 1) {
             if (!pagesMappings.compareTwoPaths(ui->commandLine->itemText(ui->commandLine->count() - 1), currText)) {
@@ -590,6 +584,8 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory, b
             ui->commandLine->addItem(currText);
         }
     }
+
+    bool isSetText = true;
     if (pagesMappings.compareTwoPaths(currText, text)) {
         isSetText = isReplace;
     }
@@ -613,7 +609,7 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory, b
     registerCommandLine();
 }
 
-void MainWindow::browserLoadFinished(bool result) {
+void MainWindow::onBrowserLoadFinished(bool result) {
     if (!result) {
         return;
     }
@@ -621,12 +617,12 @@ void MainWindow::browserLoadFinished(bool result) {
     const auto found = pagesMappings.findName(url);
     if (found.has_value()) {
         LOG << "Set address after load " << found.value();
-        setCommandLineText2(found.value(), true, false);
+        addElementToHistoryAndCommandLine(found.value(), true, false);
     } else {
         if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
             const QString request = url.mid(prevUrl.size());
             LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
-            setCommandLineText2(prevTextCommandLine + request, true, false);
+            addElementToHistoryAndCommandLine(prevTextCommandLine + request, true, false);
         } else {
             LOG << "not set address after load " << url << " " << currentTextCommandLine << " " ;
         }
@@ -636,7 +632,7 @@ void MainWindow::browserLoadFinished(bool result) {
 }
 
 void MainWindow::onSetCommandLineText(QString text) {
-    setCommandLineText2(text, true, true);
+    addElementToHistoryAndCommandLine(text, true, true);
 }
 
 void MainWindow::onSetHasNativeToolbarVariable() {
@@ -662,7 +658,6 @@ void MainWindow::onSetUserName(QString userName) {
 void MainWindow::onSetMappings(QString mapping) {
     try {
         LOG << "Set mappings " << mapping;
-
         pagesMappings.setMappings(mapping);
     } catch (const Exception &e) {
         LOG << "Error: " + e;

@@ -77,6 +77,15 @@ QString Uploader::getPagesPath() {
     return currentBeginPath;
 }
 
+LastHtmlVersion Uploader::getLastHtmlVersion() {
+    LastHtmlVersion result;
+    result.htmlsRootPath = getPagesPath();
+    const auto &last = getLastVersion(result.htmlsRootPath);
+    result.folderName = last.first;
+    result.lastVersion = last.second;
+    return result;
+}
+
 QString Uploader::getAutoupdaterPath() {
     const QString path1(QDir(QApplication::applicationDirPath()).filePath("autoupdater/"));
     QDir dirTmp(path1);
@@ -167,8 +176,6 @@ Uploader::Uploader(MainWindow *mainWindow, ServerName &serverName)
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect");
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect");
 
-    CHECK(QObject::connect(mainWindow,SIGNAL(newUpdate()),this,SLOT(newUpdate())), "not connect");
-
     const milliseconds msTimer = 10s;
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
@@ -201,10 +208,6 @@ void Uploader::callbackCall(ReturnCallback callback) {
     } catch (...) {
         LOG << "Unknown error";
     }
-}
-
-void Uploader::newUpdate() {
-    emit timerEvent();
 }
 
 void Uploader::run() {

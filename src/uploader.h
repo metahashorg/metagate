@@ -38,6 +38,14 @@ private:
 
 };
 
+struct LastHtmlVersion {
+    QString htmlsRootPath;
+
+    QString folderName;
+
+    QString lastVersion;
+};
+
 class Uploader : public QObject {
 Q_OBJECT
 
@@ -70,6 +78,8 @@ public:
 
     static Servers getServers();
 
+    static LastHtmlVersion getLastHtmlVersion();
+
 public:
 
     void start();
@@ -79,8 +89,6 @@ public slots:
     void run();
 
     void callbackCall(ReturnCallback callback);
-
-    void newUpdate();
 
     void timerEvent();
 
