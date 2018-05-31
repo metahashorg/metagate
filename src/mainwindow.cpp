@@ -377,7 +377,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
             clText = reference;
         } else {
-            clText = pageInfo.printedName;
+            clText = pageInfo.printedName + other;
         }
         setCommandLineText2(clText, isAddToHistory, true);
         hardReloadPage2(req);
@@ -571,7 +571,7 @@ void MainWindow::browserLoadFinished(bool result) {
         LOG << "Set address after load " << found.value();
         setCommandLineText2(found.value(), true, false);
     } else {
-        LOG << "not set address after load " << url;
+        LOG << "not set address after load " << url << " " << currentTextCommandLine << " " ;
     }
 }
 

@@ -60,17 +60,22 @@ void PagesMappings::setMappingsMh(QString mapping) {
             const QString name = element.value("name").toString();
             CHECK(element.contains("isExternal") && element.value("isExternal").isBool(), "isExternal field not found");
             const bool isExternal = element.value("isExternal").toBool();
-            std::vector<QString> ips;
-            if (element.contains("ip") && element.value("ip").isArray()) {
-                for (const QJsonValue &ip: element.value("ip").toArray()) {
-                    CHECK(ip.isString(), "ips array incorrect type");
-                    ips.emplace_back(ipToHttp(ip.toString()));
-                }
-            }
 
             std::shared_ptr<PageInfo> page = std::make_shared<PageInfo>(url, isExternal, isDefault, false);
             page->printedName = METAHASH_URL + name;
-            page->ips = ips;
+
+            if (element.contains("ip") && element.value("ip").isArray()) {
+                for (const QJsonValue &ip: element.value("ip").toArray()) {
+                    CHECK(ip.isString(), "ips array incorrect type");
+                    const QString ipHttp = ipToHttp(ip.toString());
+                    page->ips.emplace_back(ipHttp);
+
+                    auto foundUrlToName = urlToName.find(ipHttp);
+                    if (foundUrlToName == urlToName.end()) {
+                        urlToName[ipHttp] = page->printedName;
+                    }
+                }
+            }
 
             auto addToMap = [this](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
                 const Name name(key);
@@ -94,7 +99,8 @@ void PagesMappings::setMappingsMh(QString mapping) {
             if (element.contains("ip") && element.value("ip").isArray()) {
                 for (const QJsonValue &ip: element.value("ip").toArray()) {
                     CHECK(ip.isString(), "ips array incorrect type");
-                    defaultMhIps.emplace_back(ipToHttp(ip.toString()));
+                    const QString ipHttp = ipToHttp(ip.toString());
+                    defaultMhIps.emplace_back(ipHttp);
                 }
             }
         }
@@ -200,7 +206,30 @@ const PageInfo& PagesMappings::getSearchPage() const {
 Optional<PageInfo> PagesMappings::find(const QString &url) const {
     const auto found = mappingsPages.find(Name(url));
     if (found == mappingsPages.end()) {
-        return Optional<PageInfo>();
+        int foundSlash = -1;
+        if (url.startsWith(METAHASH_URL)) {
+            foundSlash = url.indexOf('/', METAHASH_URL.size() + 1);
+        } else if (url.startsWith(APP_URL)) {
+            foundSlash = url.indexOf('/', APP_URL.size() + 1);
+        } else {
+            foundSlash = url.indexOf('/', 1);
+        }
+        if (foundSlash != -1) {
+            const QString url2 = url.left(foundSlash);
+            const auto found2 = mappingsPages.find(Name(url2));
+            if (found2 == mappingsPages.end()) {
+                return Optional<PageInfo>();
+            } else {
+                PageInfo page = *found2->second;
+                if (page.page.endsWith('/')) {
+                    page.page = page.page.left(page.page.size() - 1);
+                }
+                page.page += url.mid(foundSlash);
+                return Optional<PageInfo>(page);
+            }
+        } else {
+            return Optional<PageInfo>();
+        }
     } else {
         return Optional<PageInfo>(*found->second);
     }
@@ -211,6 +240,9 @@ const std::vector<QString>& PagesMappings::getDefaultIps() const {
 }
 
 Optional<QString> PagesMappings::findName(const QString &url) const {
+    const static QString HTTP_1 = "http://";
+    const static QString HTTP_2 = "https://";
+
     auto found = urlToName.find(url);
     if (found == urlToName.end()) {
         const int find = url.lastIndexOf('/');
@@ -220,7 +252,28 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
         }
     }
     if (found == urlToName.end()) {
-        return Optional<QString>();
+        int foundSlash = -1;
+        if (url.startsWith(HTTP_1)) {
+            foundSlash = url.indexOf('/', HTTP_1.size() + 1);
+        } else if (url.startsWith(HTTP_2)) {
+            foundSlash = url.indexOf('/', HTTP_2.size() + 1);
+        }
+        if (foundSlash != -1) {
+            const QString url2 = url.left(foundSlash);
+            const auto found2 = urlToName.find(url2);
+            if (found2 == urlToName.end()) {
+                return Optional<QString>();
+            } else {
+                QString page = found2->second;
+                if (page.endsWith('/')) {
+                    page = page.left(page.size() - 1);
+                }
+                page += url.mid(foundSlash);
+                return Optional<QString>(page);
+            }
+        } else {
+            return Optional<QString>();
+        }
     } else {
         return Optional<QString>(found->second);
     }
