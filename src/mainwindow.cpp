@@ -57,9 +57,6 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 }
 
 static QString makeMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter) {
-    CHECK(!hardwareId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
-    CHECK(!userId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
-
     QJsonObject allJson;
     allJson.insert("app", "MetaSearch");
     QJsonObject data;
@@ -75,9 +72,6 @@ static QString makeMessageForWss(const QString &hardwareId, const QString &userI
 }
 
 static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion) {
-    CHECK(!hardwareId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
-    CHECK(!userId.contains(' '), "Incorrect symbol int string " + hardwareId.toStdString());
-
     QJsonObject allJson;
     allJson.insert("app", "MetaGate");
     QJsonObject data;
@@ -179,7 +173,6 @@ void MainWindow::configureMenu() {
     this->setStyleSheet("QMainWindow {background: rgb(242,242,242);}");
 
     QFontDatabase::addApplicationFont(":/resources/Roboto-Regular.ttf");
-
 #ifdef TARGET_OS_MAC
     const int fontSize = 12;
 #else
@@ -201,7 +194,7 @@ void MainWindow::configureMenu() {
         button->setFont(font);
         button->setStyleSheet(
             "QAbstractButton {color: rgb(99, 99, 99); background-color: transparent; border-radius: 5px;} "
-            "QAbstractButton:hover { background-color: #4F4F4F; color: white; border-radius: 5px;}"
+            "QAbstractButton:hover { background-color: #4F4F4F; color: white; border-radius: 5px;} "
             "QToolButton::menu-indicator { image: none; }"
         );
 
@@ -223,7 +216,10 @@ void MainWindow::configureMenu() {
     fontCommandLine.setKerning(false);
 
     ui->commandLine->setFont(fontCommandLine);
-    ui->commandLine->setStyleSheet("QComboBox {color: rgb(99, 99, 99); border-radius: 14px; padding-left: 14px; padding-right: 14px; } QComboBox::drop-down {padding-top: 10px; padding-right: 10px; width: 10px; height: 10px; image: url(:/resources/svg/arrow.svg);}");
+    ui->commandLine->setStyleSheet(
+        "QComboBox {color: rgb(99, 99, 99); border-radius: 14px; padding-left: 14px; padding-right: 14px; } "
+        "QComboBox::drop-down {padding-top: 10px; padding-right: 10px; width: 10px; height: 10px; image: url(:/resources/svg/arrow.svg);}"
+    );
     ui->commandLine->setAttribute(Qt::WA_MacShowFocusRect, 0);
 
     registerCommandLine();
@@ -235,25 +231,14 @@ void MainWindow::configureMenu() {
         ui->forwardButton->setEnabled(historyPos < history.size());
     }), "not connect");
     ui->backButton->setEnabled(false);
-    /*QAction *action = ui->webView->page()->action(QWebEnginePage::Back);
-    CHECK(connect(action, &QAction::changed, [this, action, btn=ui->backButton]{
-        if (ui->webView->history()->itemAt(0).url().toString() == "about:blank") {
-            ui->webView->history()->clear();
-        }
-        btn->setEnabled(action->isEnabled() && ui->webView->history()->items().size() > 0);
-    }), "Not connect");*/
 
     CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
         historyPos++;
         lineEditReturnPressed2(history.at(historyPos - 1), false);
-        ui->forwardButton->setEnabled(historyPos < history.size());
         ui->backButton->setEnabled(historyPos > 1);
+        ui->forwardButton->setEnabled(historyPos < history.size());
     }), "not connect");
     ui->forwardButton->setEnabled(false);
-    /*QAction *action2 = ui->webView->page()->action(QWebEnginePage::Forward);
-    CHECK(connect(action2, &QAction::changed, [action2, btn=ui->forwardButton]{
-        btn->setEnabled(action2->isEnabled());
-    }), "Not connect");*/
 
     CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect");
 
@@ -288,18 +273,10 @@ void MainWindow::configureMenu() {
 
 void MainWindow::registerCommandLine() {
     CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed3(const QString&))), "not connect");
-    /*CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this](){
-        LOG << "Ya tuta " << ui->commandLine->lineEdit()->text().toStdString() << " " << currentTextCommandLine.toStdString() << std::endl;
-        if (ui->commandLine->lineEdit()->text() == currentTextCommandLine) {
-            LOG << "refresh" << std::endl;
-            emit ui->refreshButton->pressed();
-        }
-    }), "not connect");*/
 }
 
 void MainWindow::unregisterCommandLine() {
     CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(lineEditReturnPressed3(const QString&))), "not connect");
-    //CHECK(disconnect(ui->commandLine->lineEdit(), SIGNAL(returnPressed(const QString&))), "not connect");
 }
 
 void MainWindow::lineEditReturnPressed(const QString &text) {
@@ -338,10 +315,12 @@ bool MainWindow::compareTwoPaths(const QString &path1, const QString &path2) {
     PathParsed p2(path2);
 
     if (p1.type == p2.type || p1.type == PathParsed::Type::NONE || p2.type == PathParsed::Type::NONE) {
-        const auto found1 = mappingsPages.find(p1.path.toLower());
-        const auto found2 = mappingsPages.find(p2.path.toLower());
+        const QString lowerPath1 = p1.path.toLower();
+        const QString lowerPath2 = p2.path.toLower();
+        const auto found1 = mappingsPages.find(lowerPath1);
+        const auto found2 = mappingsPages.find(lowerPath2);
         if (found1 == mappingsPages.end() || found2 == mappingsPages.end()) {
-            return p1.path.toLower() == p2.path.toLower();
+            return lowerPath1 == lowerPath2;
         } else {
             return found1->second.page == found2->second.page;
         }
