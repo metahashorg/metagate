@@ -145,6 +145,10 @@ private:
     SimpleClient client;
 
     QTimer qtimer;
+
+    QString prevUrl;
+
+    QString prevTextCommandLine;
 };
 
 #endif // MAINWINDOW_H

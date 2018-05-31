@@ -623,8 +623,16 @@ void MainWindow::browserLoadFinished(bool result) {
         LOG << "Set address after load " << found.value();
         setCommandLineText2(found.value(), true, false);
     } else {
-        LOG << "not set address after load " << url << " " << currentTextCommandLine << " " ;
+        if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
+            const QString request = url.mid(prevUrl.size());
+            LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
+            setCommandLineText2(prevTextCommandLine + request, true, false);
+        } else {
+            LOG << "not set address after load " << url << " " << currentTextCommandLine << " " ;
+        }
     }
+    prevUrl = url;
+    prevTextCommandLine = currentTextCommandLine;
 }
 
 void MainWindow::onSetCommandLineText(QString text) {
