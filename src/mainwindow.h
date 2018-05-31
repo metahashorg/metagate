@@ -14,6 +14,8 @@
 
 #include "ui_mainwindow.h"
 
+#include "PagesMappings.h"
+
 #include "WindowEvents.h"
 
 class WebSocketClient;
@@ -22,25 +24,6 @@ class JavascriptWrapper;
 namespace Ui {
     class MainWindow;
 }
-
-struct PageInfo {
-    QString page;
-    QString printedName;
-    bool isExternal;
-    bool isDefault = false;
-    bool isLocalFile = true;
-
-    std::vector<QString> ips;
-
-    PageInfo() = default;
-
-    PageInfo(const QString &page, bool isExternal, bool isDefault, bool isLocalFile)
-        : page(page)
-        , isExternal(isExternal)
-        , isDefault(isDefault)
-        , isLocalFile(isLocalFile)
-    {}
-};
 
 class EvFilter: public QObject {
     Q_OBJECT
@@ -110,10 +93,6 @@ private:
 
     void qtOpenInBrowser(QString url);
 
-    bool compareTwoPaths(const QString &path1, const QString &path2);
-
-    void onSetMappingsMh(QString mapping);
-
 public slots:
 
     void callbackCall(ReturnCallback callback);
@@ -160,11 +139,7 @@ private:
 
     QString currentTextCommandLine;
 
-    std::map<QString, PageInfo> mappingsPages;
-
-    std::vector<QString> defaultMhIps;
-
-    std::map<QString, QString> urlToName;
+    PagesMappings pagesMappings;
 
     QString hardwareId;
 

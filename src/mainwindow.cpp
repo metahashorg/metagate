@@ -34,9 +34,6 @@
 
 #include "machine_uid.h"
 
-const static QString METAHASH_URL = "mh://";
-const static QString APP_URL = "app://";
-
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     QToolButton * button = qobject_cast<QToolButton*>(watched);
     if (!button) {
@@ -154,7 +151,8 @@ void MainWindow::sendAppInfoToWss(bool force) {
 
 void MainWindow::updateMhsReferences() {
     client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response) {
-        onSetMappingsMh(QString::fromStdString(response));
+        LOG << "Set mappings mh " << response;
+        pagesMappings.setMappingsMh(QString::fromStdString(response));
     });
 }
 
@@ -288,48 +286,6 @@ void MainWindow::enterCommandAndAddToHistoryNoDuplicate(const QString &text) {
     enterCommandAndAddToHistory(text, true, true);
 }
 
-struct PathParsed {
-    enum class Type {
-        METAHASH, APP, NONE
-    };
-
-    QString path;
-
-    Type type;
-
-    PathParsed(const QString &url) {
-        if (url.startsWith(METAHASH_URL)) {
-            type = Type::METAHASH;
-            path = url.mid(METAHASH_URL.size());
-        } else if (url.startsWith(APP_URL)) {
-            type = Type::APP;
-            path = url.mid(APP_URL.size());
-        } else {
-            type = Type::NONE;
-            path = url;
-        }
-    }
-};
-
-bool MainWindow::compareTwoPaths(const QString &path1, const QString &path2) {
-    PathParsed p1(path1);
-    PathParsed p2(path2);
-
-    if (p1.type == p2.type || p1.type == PathParsed::Type::NONE || p2.type == PathParsed::Type::NONE) {
-        const QString lowerPath1 = p1.path.toLower();
-        const QString lowerPath2 = p2.path.toLower();
-        const auto found1 = mappingsPages.find(lowerPath1);
-        const auto found2 = mappingsPages.find(lowerPath2);
-        if (found1 == mappingsPages.end() || found2 == mappingsPages.end()) {
-            return lowerPath1 == lowerPath2;
-        } else {
-            return found1->second.page == found2->second.page;
-        }
-    } else {
-        return false;
-    }
-}
-
 void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
     LOG << "command line " << text1;
 
@@ -349,21 +305,15 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         QTextDocument td;
         td.setHtml(url);
         const QString plained = td.toPlainText();
-        QString link = "";
-        QString printedName;
-        for (const auto pageInfoIt: mappingsPages) {
-            if (pageInfoIt.second.isDefault) {
-                link = pageInfoIt.second.page;
-                printedName = pageInfoIt.second.printedName;
-            }
-        }
-        if (link.isNull() || link.isEmpty()) {
+        const PageInfo &searchPage = pagesMappings.getSearchPage();
+        if (searchPage.page.isNull() || searchPage.page.isEmpty()) {
             LOG << "Error. Not found search url in mappings.";
             return;
         }
+        QString link = searchPage.page;
         link += plained;
         LOG << "Founded page " << link;
-        setCommandLineText2(printedName + ":" + url, isAddToHistory, true);
+        setCommandLineText2(searchPage.printedName + ":" + url, isAddToHistory, true);
         //currentTextCommandLine = url;
         hardReloadPage(link);
     };
@@ -379,14 +329,14 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     };
 
     PageInfo pageInfo;
-    const auto found = mappingsPages.find(text.toLower());
-    if (found != mappingsPages.end()) {
-        pageInfo = found->second;
+    const auto found = pagesMappings.find(text);
+    if (found.has_value()) {
+        pageInfo = found.value();
     } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
-        const QString appUrl = APP_URL + text.toLower();
-        const auto found2 = mappingsPages.find(appUrl);
-        if (found2 != mappingsPages.end()) {
-            pageInfo = found2->second;
+        const QString appUrl = APP_URL + text;
+        const auto found2 = pagesMappings.find(appUrl);
+        if (found2.has_value()) {
+            pageInfo = found2.value();
         } else if (isFullUrl(text)) {
             pageInfo.page = METAHASH_URL + text;
         }
@@ -417,8 +367,8 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         if (!pageInfo.ips.empty()) {
             ip = ::getRandom(pageInfo.ips);
         } else {
-            CHECK(!defaultMhIps.empty(), "defaults mh ips empty");
-            ip = ::getRandom(defaultMhIps);
+            CHECK(!pagesMappings.getDefaultIps().empty(), "defaults mh ips empty");
+            ip = ::getRandom(pagesMappings.getDefaultIps());
         }
         LOG << "ip " << ip;
         QWebEngineHttpRequest req(ip + other);
@@ -581,14 +531,14 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory, b
     bool isSetText = true;
     if (!currText.isEmpty()) {
         if (ui->commandLine->count() >= 1) {
-            if (!compareTwoPaths(ui->commandLine->itemText(ui->commandLine->count() - 1), currText)) {
+            if (!pagesMappings.compareTwoPaths(ui->commandLine->itemText(ui->commandLine->count() - 1), currText)) {
                 ui->commandLine->addItem(currText);
             }
         } else {
             ui->commandLine->addItem(currText);
         }
     }
-    if (compareTwoPaths(currText, text)) {
+    if (pagesMappings.compareTwoPaths(currText, text)) {
         isSetText = isReplace;
     }
     if (isSetText) {
@@ -598,12 +548,12 @@ void MainWindow::setCommandLineText2(const QString &text, bool isAddToHistory, b
     currentTextCommandLine = text;
 
     if (isAddToHistory && isSetText) {
-        if (historyPos == 0 || !compareTwoPaths(history[historyPos - 1], text)) {
+        if (historyPos == 0 || !pagesMappings.compareTwoPaths(history[historyPos - 1], text)) {
             history.insert(history.begin() + historyPos, text);
             historyPos++;
 
             ui->backButton->setEnabled(history.size() > 1);
-        } else if (compareTwoPaths(history[historyPos - 1], text)) {
+        } else if (pagesMappings.compareTwoPaths(history[historyPos - 1], text)) {
             history.at(historyPos - 1) = text;
         }
     }
@@ -616,17 +566,12 @@ void MainWindow::browserLoadFinished(bool result) {
         return;
     }
     const QString url = ui->webView->url().toString();
-    auto found = urlToName.find(url);
-    if (found == urlToName.end()) {
-        const int find = url.lastIndexOf('/');
-        if (find != -1) {
-            const QString lastUrl = url.mid(find + 1);
-            found = urlToName.find(lastUrl);
-        }
-    }
-    if (found != urlToName.end()) {
-        LOG << "Set address after load " << found->second;
-        setCommandLineText2(found->second, true, false);
+    const auto found = pagesMappings.findName(url);
+    if (found.has_value()) {
+        LOG << "Set address after load " << found.value();
+        setCommandLineText2(found.value(), true, false);
+    } else {
+        LOG << "not set address after load " << url;
     }
 }
 
@@ -658,128 +603,11 @@ void MainWindow::onSetMappings(QString mapping) {
     try {
         LOG << "Set mappings " << mapping;
 
-        const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8());
-        const QJsonObject root = document.object();
-        CHECK(root.contains("routes") && root.value("routes").isArray(), "routes field not found");
-        const QJsonArray &routes = root.value("routes").toArray();
-        for (const QJsonValue &value: routes) {
-            CHECK(value.isObject(), "value array incorrect type");
-            const QJsonObject &element = value.toObject();
-            CHECK(element.contains("url") && element.value("url").isString(), "url field not found");
-            const QString url = element.value("url").toString();
-            CHECK(element.contains("name") && element.value("name").isString(), "name field not found");
-            const QString name = element.value("name").toString();
-            CHECK(element.contains("isExternal") && element.value("isExternal").isBool(), "isExternal field not found");
-            const bool isExternal = element.value("isExternal").toBool();
-            bool isDefault = false;
-            if (element.contains("isDefault") && element.value("isDefault").isBool()) {
-                isDefault = element.value("isDefault").toBool();
-            }
-            bool isPreferred = false;
-            if (element.contains("isPreferred") && element.value("isPreferred").isBool()) {
-                isPreferred = element.value("isPreferred").toBool();
-            }
-            bool isLocalFile = true;
-            if (element.contains("isLocalFile") && element.value("isLocalFile").isBool()) {
-                isLocalFile = element.value("isLocalFile").toBool();
-            }
-
-            PageInfo pageInfo(url, isExternal, isDefault, isLocalFile);
-            if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL)) {
-                pageInfo.printedName = APP_URL + name;
-            } else {
-                pageInfo.printedName = name;
-            }
-            mappingsPages[name.toLower()] = pageInfo;
-
-            auto foundUrlToName = urlToName.find(url);
-            if (foundUrlToName == urlToName.end()) {
-                urlToName[url] = pageInfo.printedName;
-            } else if (isPreferred) {
-                urlToName[url] = pageInfo.printedName;
-            }
-        }
+        pagesMappings.setMappings(mapping);
     } catch (const Exception &e) {
         LOG << "Error: " + e;
     } catch (...) {
         LOG << "Unknown error";
-    }
-}
-
-static QString ipToHttp(const QString &ip) {
-    const static QString HTTP = "http://";
-    if (ip.startsWith(HTTP)) {
-        return ip;
-    } else {
-        return HTTP + ip;
-    }
-}
-
-void MainWindow::onSetMappingsMh(QString mapping) {
-    LOG << "Set mappings mh " << mapping;
-
-    QJsonParseError parseError;
-    const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8(), &parseError);
-    CHECK(parseError.error == QJsonParseError::NoError, "Json parse error: " + parseError.errorString().toStdString());
-    const QJsonObject root = document.object();
-    CHECK(root.contains("ext") && root.value("ext").isArray(), "ext field not found ");
-    const QJsonArray &routes = root.value("ext").toArray();
-    for (const QJsonValue &value: routes) {
-        CHECK(value.isObject(), "value array incorrect type");
-        const QJsonObject &element = value.toObject();
-        CHECK(element.contains("type") && element.value("type").isString(), "type field not found");
-        const QString type = element.value("type").toString();
-        const bool isDefault = type == "defaultGateway";
-        if (!isDefault) {
-            CHECK(element.contains("url") && element.value("url").isString(), "url field not found");
-            const QString url = element.value("url").toString();
-            CHECK(element.contains("name") && element.value("name").isString(), "name field not found");
-            const QString name = element.value("name").toString();
-            CHECK(element.contains("isExternal") && element.value("isExternal").isBool(), "isExternal field not found");
-            const bool isExternal = element.value("isExternal").toBool();
-            std::vector<QString> ips;
-            if (element.contains("ip") && element.value("ip").isArray()) {
-                for (const QJsonValue &ip: element.value("ip").toArray()) {
-                    CHECK(ip.isString(), "ips array incorrect type");
-                    ips.emplace_back(ipToHttp(ip.toString()));
-                }
-            }
-
-            PageInfo page(url, isExternal, isDefault, false);
-            page.printedName = METAHASH_URL + name;
-            page.ips = ips;
-
-            auto addToMap = [this](auto &map, const QString &key, const PageInfo &page) {
-                QString lowerKey = key.toLower();
-                if (lowerKey.endsWith('/')) {
-                    lowerKey = lowerKey.left(lowerKey.size() - 1);
-                }
-                auto found = map.find(lowerKey);
-                if (found == map.end() || found->second.page.startsWith(METAHASH_URL)) { // Данные из javascript имеют приоритет
-                    map[lowerKey] = page;
-                }
-            };
-
-            addToMap(mappingsPages, name, page); // TODO заменить на shared_ptr или придумать другую схему
-            addToMap(mappingsPages, url, page);
-            addToMap(mappingsPages, page.printedName, page);
-
-            if (element.contains("aliases") && element.value("aliases").isArray()) {
-                for (const QJsonValue &alias: element.value("aliases").toArray()) {
-                    CHECK(alias.isString(), "aliases array incorrect type");
-                    addToMap(mappingsPages, alias.toString(), page);
-                }
-            }
-        } else {
-            if (element.contains("ip") && element.value("ip").isArray()) {
-                std::vector<QString> ips;
-                for (const QJsonValue &ip: element.value("ip").toArray()) {
-                    CHECK(ip.isString(), "ips array incorrect type");
-                    ips.emplace_back(ipToHttp(ip.toString()));
-                }
-                defaultMhIps = ips;
-            }
-        }
     }
 }
 
