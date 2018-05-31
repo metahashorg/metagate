@@ -82,6 +82,63 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
+class ExternWebPage : public QWebEnginePage {
+private:
+
+    class ExternWebPage2 : public QWebEnginePage {
+    public:
+
+        ExternWebPage2(ExternWebPage *p, QObject* parent = 0)
+            : QWebEnginePage(parent)
+            , p(p)
+        {}
+
+        QWebEnginePage *createWindow(QWebEnginePage::WebWindowType type) override {
+            if (type == QWebEnginePage::WebBrowserTab) {
+                return this;
+            } else if (type == QWebEnginePage::WebBrowserWindow) {
+                return this;
+            } else {
+                return p;
+            }
+        }
+
+        bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame) override {
+            if (type == NavigationType::NavigationTypeLinkClicked) {
+                QDesktopServices::openUrl(url);
+                return false;
+            } else {
+                return QWebEnginePage::acceptNavigationRequest(url, type, isMainFrame);
+            }
+        }
+    private:
+
+        ExternWebPage *p;
+    };
+
+public:
+
+    ExternWebPage(QObject* parent = 0)
+        : QWebEnginePage(parent)
+    {
+        p = new ExternWebPage2(this, parent);
+    }
+
+    QWebEnginePage *createWindow(QWebEnginePage::WebWindowType type) override {
+        if (type == QWebEnginePage::WebBrowserTab) {
+            return p;
+        } else if (type == QWebEnginePage::WebBrowserWindow) {
+            return p;
+        } else {
+            return this;
+        }
+    }
+
+private:
+
+    ExternWebPage2 *p;
+};
+
 MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
@@ -90,6 +147,8 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     , applicationVersion(applicationVersion)
 {
     ui->setupUi(this);
+
+    //ui->webView->setPage(new ExternWebPage());
 
     hardwareId = QString::fromStdString(::getMachineUid());
 
