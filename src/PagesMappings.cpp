@@ -144,6 +144,10 @@ void PagesMappings::setMappings(QString mapping) {
         }
         mappingsPages[Name(name)] = pageInfo;
 
+        if (isDefault) {
+            searchPage = *pageInfo;
+        }
+
         auto foundUrlToName = urlToName.find(url);
         if (foundUrlToName == urlToName.end() || isPreferred) {
             urlToName[url] = pageInfo->printedName;
@@ -194,13 +198,7 @@ bool PagesMappings::compareTwoPaths(const QString &path1, const QString &path2) 
 }
 
 const PageInfo& PagesMappings::getSearchPage() const {
-    // TODO оптимизировать
-    for (const auto &pageInfoIt: mappingsPages) {
-        if (pageInfoIt.second->isDefault) {
-            return *pageInfoIt.second;
-        }
-    }
-    throwErr("Not found search page");
+    return searchPage;
 }
 
 Optional<PageInfo> PagesMappings::find(const QString &url) const {

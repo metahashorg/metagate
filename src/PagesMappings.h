@@ -104,6 +104,8 @@ private:
 
     std::map<QString, QString> urlToName;
 
+    PageInfo searchPage;
+
 };
 
 #endif // PAGESMAPPINGS_H
