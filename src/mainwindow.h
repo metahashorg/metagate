@@ -101,12 +101,6 @@ public slots:
 
     void ShowContextMenu(const QPoint &point);
 
-    void contextMenuCut();
-
-    void contextMenuCopy();
-
-    void contextMenuPaste();
-
     void onJsRun(QString jsString);
 
     void onSetHasNativeToolbarVariable();

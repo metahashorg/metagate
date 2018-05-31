@@ -410,42 +410,36 @@ void MainWindow::ShowContextMenu(const QPoint &point) {
     QMenu contextMenu(tr("Context menu"), this);
 
     QAction action1("cut", this);
-    connect(&action1, SIGNAL(triggered()), this, SLOT(contextMenuCut()));
+    connect(&action1, &QAction::triggered, []{
+        QWidget* focused = QApplication::focusWidget();
+        if(focused != 0) {
+            QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_X, Qt::ControlModifier));
+            QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_X, Qt::ControlModifier));
+        }
+    });
     contextMenu.addAction(&action1);
 
     QAction action2("copy", this);
-    connect(&action2, SIGNAL(triggered()), this, SLOT(contextMenuCopy()));
+    connect(&action2, &QAction::triggered, []{
+        QWidget* focused = QApplication::focusWidget();
+        if(focused != 0) {
+            QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_C, Qt::ControlModifier));
+            QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_C, Qt::ControlModifier));
+        }
+    });
     contextMenu.addAction(&action2);
 
     QAction action3("paste", this);
-    connect(&action3, SIGNAL(triggered()), this, SLOT(contextMenuPaste()));
+    connect(&action3, &QAction::triggered, []{
+        QWidget* focused = QApplication::focusWidget();
+        if(focused != 0) {
+            QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_V, Qt::ControlModifier));
+            QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_V, Qt::ControlModifier));
+        }
+    });
     contextMenu.addAction(&action3);
 
     contextMenu.exec(mapToGlobal(point));
-}
-
-void MainWindow::contextMenuCut() {
-    QWidget* focused = QApplication::focusWidget();
-    if(focused != 0) {
-        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_X, Qt::ControlModifier));
-        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_X, Qt::ControlModifier));
-    }
-}
-
-void MainWindow::contextMenuCopy() {
-    QWidget* focused = QApplication::focusWidget();
-    if(focused != 0) {
-        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_C, Qt::ControlModifier));
-        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_C, Qt::ControlModifier));
-    }
-}
-
-void MainWindow::contextMenuPaste() {
-    QWidget* focused = QApplication::focusWidget();
-    if(focused != 0) {
-        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyPress, Qt::Key_V, Qt::ControlModifier));
-        QApplication::postEvent(focused, new QKeyEvent(QEvent::KeyRelease, Qt::Key_V, Qt::ControlModifier));
-    }
 }
 
 void MainWindow::processEvent(WindowEvent event) {
@@ -519,7 +513,6 @@ void MainWindow::hardReloadPage2(const QWebEngineHttpRequest &url) {
 
 void MainWindow::hardReloadPage(const QString &pageName) {
     LOG << "Reload. Last version " << lastVersion;
-    ui->webView->page()->profile()->setRequestInterceptor(nullptr);
     hardReloadPage2("file:///" + QDir(QDir(QDir(currentBeginPath).filePath(folderName)).filePath(lastVersion)).filePath(pageName));
 }
 
