@@ -363,10 +363,6 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         td.setHtml(url);
         const QString plained = td.toPlainText();
         const PageInfo &searchPage = pagesMappings.getSearchPage();
-        if (searchPage.page.isNull() || searchPage.page.isEmpty()) {
-            LOG << "Error. Not found search url in mappings.";
-            return;
-        }
         QString link = searchPage.page;
         link += plained;
         LOG << "Founded page " << link;

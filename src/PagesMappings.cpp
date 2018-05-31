@@ -198,6 +198,7 @@ bool PagesMappings::compareTwoPaths(const QString &path1, const QString &path2) 
 }
 
 const PageInfo& PagesMappings::getSearchPage() const {
+    CHECK(!searchPage.page.isNull() && !searchPage.page.isEmpty(), "search page not found");
     return searchPage;
 }
 
