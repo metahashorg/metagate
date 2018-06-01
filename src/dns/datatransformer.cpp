@@ -83,7 +83,8 @@ DnsDataStream &DnsDataStream::resourceData(DnsResourceRecord &resData )
         QString domain = fromDomainToString( *m_dnsPacket, m_position + 2 );
         resData.setVariantResourceData( QVariant::fromValue<Preference_Domain>( qMakePair(preference, domain) ) );
         break;
-    }
+    } default :
+        break;
     }
 
     //QString domain = fromDomainToString( *m_dnsPacket, m_position + 2 );

@@ -105,7 +105,7 @@ std::string PackInteger(uint64_t value)
     std::string varint = "";
     uint8_t buf[9] = {0};
     std::string bigint = "";
-    if (value >= 0 && value <= 252)
+    if (value <= 252)
     {
         buf[0] = (uint8_t)value;
         varint = std::string((char*)buf, 1);

@@ -159,6 +159,8 @@ QString DnsResourceRecord::toString() const
                           Preference_Domain data = variantResourceData().value<Preference_Domain>();
                           return QString::number(data.first) + " " + data.second;
     }
+    default:
+        break;
     }
     return QString();
 }
