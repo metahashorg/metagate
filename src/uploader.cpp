@@ -26,6 +26,7 @@
 #include "Log.h"
 #include "utils.h"
 #include "stringUtils.h"
+#include "SlotWrapper.h"
 
 constexpr auto * metahashWalletPagesPathEnv = "METAHASH_WALLET_PAGES_PATH";
 
@@ -199,15 +200,9 @@ void Uploader::start() {
 }
 
 void Uploader::callbackCall(ReturnCallback callback) {
-    try {
-        callback();
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-    } catch (...) {
-        LOG << "Unknown error";
-    }
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
 void Uploader::run() {
@@ -215,122 +210,116 @@ void Uploader::run() {
 }
 
 void Uploader::timerEvent() {
-    try {
-        const QString UPDATE_API = serverName.getServerName();
+BEGIN_SLOT_WRAPPER
+    const QString UPDATE_API = serverName.getServerName();
 
-        if (UPDATE_API == "") {
+    if (UPDATE_API == "") {
+        return;
+    }
+
+    auto callbackGetHtmls = [this, UPDATE_API](const std::string &result) {
+        CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "incorrect result");
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
+        const QJsonObject root = document.object();
+        CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+        const auto &dataJson = root.value("data").toObject();
+        CHECK(dataJson.contains("version") && dataJson.value("version").isString(), "version field not found");
+        const QString version = dataJson.value("version").toString();
+        CHECK(dataJson.contains("hash") && dataJson.value("hash").isString(), "hash field not found");
+        const QString hash = dataJson.value("hash").toString();
+
+        LOG << "Server html version " << version << " " << hash << ". Current version " << lastVersion;
+
+        const QString folderServer = toHash(UPDATE_API);
+
+        if (hash == "false") {
+            return;
+        }
+        if (version == lastVersion && folderServer == currFolder) {
             return;
         }
 
-        auto callbackGetHtmls = [this, UPDATE_API](const std::string &result) {
-            CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "incorrect result");
-            const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
-            const QJsonObject root = document.object();
-            CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
-            const auto &dataJson = root.value("data").toObject();
-            CHECK(dataJson.contains("version") && dataJson.value("version").isString(), "version field not found");
-            const QString version = dataJson.value("version").toString();
-            CHECK(dataJson.contains("hash") && dataJson.value("hash").isString(), "hash field not found");
-            const QString hash = dataJson.value("hash").toString();
+        auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result) {
+            CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Bad request");
 
-            LOG << "Server html version " << version << " " << hash << ". Current version " << lastVersion;
-
-            const QString folderServer = toHash(UPDATE_API);
-
-            if (hash == "false") {
-                return;
-            }
-            if (version == lastVersion && folderServer == currFolder) {
+            if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
                 return;
             }
 
-            auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result) {
-                CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Bad request");
+            QCryptographicHash hashAlg(QCryptographicHash::Md5);
+            hashAlg.addData(result.data(), result.size());
+            const QString hashStr(hashAlg.result().toHex());
+            if (hashStr != hash) {
+                LOG << "hashStr != hash " << hashStr << " " << hash;
+                return;
+            }
 
-                if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
-                    return;
-                }
+            const QString archiveFilePath = QDir(currentBeginPath).filePath(version + ".zip");
+            writeToFileBinary(archiveFilePath, result, false);
 
-                QCryptographicHash hashAlg(QCryptographicHash::Md5);
-                hashAlg.addData(result.data(), result.size());
-                const QString hashStr(hashAlg.result().toHex());
-                if (hashStr != hash) {
-                    LOG << "hashStr != hash " << hashStr << " " << hash;
-                    return;
-                }
+            const QString extractedPath = QDir(QDir(currentBeginPath).filePath(folderServer)).filePath(version);
+            extractDir(archiveFilePath, extractedPath);
+            LOG << "Extracted " << extractedPath << ".";
 
-                const QString archiveFilePath = QDir(currentBeginPath).filePath(version + ".zip");
-                writeToFileBinary(archiveFilePath, result, false);
+            Uploader::setLastVersion(currentBeginPath, folderServer, version);
 
-                const QString extractedPath = QDir(QDir(currentBeginPath).filePath(folderServer)).filePath(version);
-                extractDir(archiveFilePath, extractedPath);
-                LOG << "Extracted " << extractedPath << ".";
+            lastVersion = version;
+            currFolder = folderServer;
 
-                Uploader::setLastVersion(currentBeginPath, folderServer, version);
-
-                lastVersion = version;
-                currFolder = folderServer;
-
-                emit generateEvent(WindowEvent::RELOAD_PAGE);
-            };
-            client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get\", \"token\":\"\", \"params\":[]}"), interfaceGetCallback);
-            id++;
+            emit generateEvent(WindowEvent::RELOAD_PAGE);
         };
-
-        client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
+        client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get\", \"token\":\"\", \"params\":[]}"), interfaceGetCallback);
         id++;
+    };
 
-        auto callbackAppVersion = [this, UPDATE_API](const std::string &result) {
+    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
+    id++;
+
+    auto callbackAppVersion = [this, UPDATE_API](const std::string &result) {
+        CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
+
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
+        const QJsonObject root = document.object();
+        CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+        const auto &dataJson = root.value("data").toObject();
+        CHECK(dataJson.contains("version") && dataJson.value("version").isString(), "version field not found");
+        const QString version = dataJson.value("version").toString();
+        CHECK(dataJson.contains("reference") && dataJson.value("reference").isString(), "reference field not found");
+        const QString reference = dataJson.value("reference").toString();
+        CHECK(dataJson.contains("autoupdate_reference") && dataJson.value("autoupdate_reference").isString(), "autoupdate_reference field not found");
+        const QString autoupdater = dataJson.value("autoupdate_reference").toString();
+
+        const Version nextVersion(version.toStdString());
+
+        LOG << "New app version " << nextVersion.makeStr() << " " << reference << " " << autoupdater.toStdString().substr(0, autoupdater.toStdString().find("?secure")) << ". Current app version " << currentAppVersion.makeStr();
+
+        if (reference == "false") {
+            return;
+        }
+        if (nextVersion <= currentAppVersion || version == versionForUpdate) {
+            return;
+        }
+
+        auto autoupdateGetCallback = [this, nextVersion, version, reference](const std::string &result) {
+            LOG << "autoupdater callback";
             CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
 
-            const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
-            const QJsonObject root = document.object();
-            CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
-            const auto &dataJson = root.value("data").toObject();
-            CHECK(dataJson.contains("version") && dataJson.value("version").isString(), "version field not found");
-            const QString version = dataJson.value("version").toString();
-            CHECK(dataJson.contains("reference") && dataJson.value("reference").isString(), "reference field not found");
-            const QString reference = dataJson.value("reference").toString();
-            CHECK(dataJson.contains("autoupdate_reference") && dataJson.value("autoupdate_reference").isString(), "autoupdate_reference field not found");
-            const QString autoupdater = dataJson.value("autoupdate_reference").toString();
+            const QString autoupdaterPath = getAutoupdaterPath();
+            const QString archiveFilePath = QDir(autoupdaterPath).filePath(version + ".zip");
+            writeToFileBinary(archiveFilePath, result, false);
 
-            const Version nextVersion(version.toStdString());
+            extractDir(archiveFilePath, getTmpAutoupdaterPath());
+            LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();
 
-            LOG << "New app version " << nextVersion.makeStr() << " " << reference << " " << autoupdater.toStdString().substr(0, autoupdater.toStdString().find("?secure")) << ". Current app version " << currentAppVersion.makeStr();
-
-            if (reference == "false") {
-                return;
-            }
-            if (nextVersion <= currentAppVersion || version == versionForUpdate) {
-                return;
-            }
-
-            auto autoupdateGetCallback = [this, nextVersion, version, reference](const std::string &result) {
-                LOG << "autoupdater callback";
-                CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
-
-                const QString autoupdaterPath = getAutoupdaterPath();
-                const QString archiveFilePath = QDir(autoupdaterPath).filePath(version + ".zip");
-                writeToFileBinary(archiveFilePath, result, false);
-
-                extractDir(archiveFilePath, getTmpAutoupdaterPath());
-                LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();
-
-                emit generateUpdateApp(version, reference, "");
-            };
-
-            client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback);
-
-            versionForUpdate = version;
+            emit generateUpdateApp(version, reference, "");
         };
 
-        client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion);
-        id++;
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-    } catch (...) {
-        LOG << "Unknown error";
-    }
+        client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback);
+
+        versionForUpdate = version;
+    };
+
+    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion);
+    id++;
+END_SLOT_WRAPPER
 }
