@@ -108,8 +108,6 @@ private:
 
     int id = 1;
 
-    bool isGetRequest = false;
-
     SimpleClient client;
 
     QString currentBeginPath;

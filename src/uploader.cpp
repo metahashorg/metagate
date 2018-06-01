@@ -223,10 +223,7 @@ void Uploader::timerEvent() {
         }
 
         auto callbackGetHtmls = [this, UPDATE_API](const std::string &result) {
-            if (result == SimpleClient::ERROR_BAD_REQUEST) {
-                isGetRequest = false;
-                return;
-            }
+            CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "incorrect result");
             const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
             const QJsonObject root = document.object();
             CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
@@ -276,26 +273,15 @@ void Uploader::timerEvent() {
 
                 emit generateEvent(WindowEvent::RELOAD_PAGE);
             };
-            if (isGetRequest) {
-                client.sendMessageGet(QUrl(UPDATE_API + "?method=interface.get"), interfaceGetCallback);
-            } else {
-                client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get\", \"token\":\"\", \"params\":[]}"), interfaceGetCallback);
-            }
+            client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get\", \"token\":\"\", \"params\":[]}"), interfaceGetCallback);
             id++;
         };
 
-        if (isGetRequest) {
-            client.sendMessageGet(QUrl(UPDATE_API + "?method=interface"), callbackGetHtmls);
-        } else {
-            client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
-        }
+        client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
         id++;
 
         auto callbackAppVersion = [this, UPDATE_API](const std::string &result) {
-            if (result == SimpleClient::ERROR_BAD_REQUEST) {
-                isGetRequest = false;
-                return;
-            }
+            CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
 
             const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
             const QJsonObject root = document.object();
@@ -321,10 +307,7 @@ void Uploader::timerEvent() {
 
             auto autoupdateGetCallback = [this, nextVersion, version, reference](const std::string &result) {
                 LOG << "autoupdater callback";
-                if (result == SimpleClient::ERROR_BAD_REQUEST) {
-                    isGetRequest = false;
-                    return;
-                }
+                CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
 
                 const QString autoupdaterPath = getAutoupdaterPath();
                 const QString archiveFilePath = QDir(autoupdaterPath).filePath(version + ".zip");
@@ -341,11 +324,7 @@ void Uploader::timerEvent() {
             versionForUpdate = version;
         };
 
-        if (isGetRequest) {
-            client.sendMessageGet(QUrl(UPDATE_API + "?method=app.version&platform=" + osName), callbackAppVersion);
-        } else {
-            client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion);
-        }
+        client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion);
         id++;
     } catch (const Exception &e) {
         LOG << "Error " << e;
