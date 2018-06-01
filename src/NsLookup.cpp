@@ -107,6 +107,7 @@ void NsLookup::finalizeLookup() {
 }
 
 void NsLookup::timerEvent() {
+BEGIN_SLOT_WRAPPER
     qtimer.setInterval(UPDATE_PERIOD.count());
     qtimer.setSingleShot(false);
 
@@ -118,6 +119,7 @@ void NsLookup::timerEvent() {
 
     LOG << "Dns scan start";
     continueResolve();
+END_SLOT_WRAPPER
 }
 
 void NsLookup::continueResolve() {

@@ -5,6 +5,7 @@
 #include "Log.h"
 #include "check.h"
 #include "utils.h"
+#include "SlotWrapper.h"
 
 #include "uploader.h"
 
@@ -48,8 +49,10 @@ WebSocketClient::WebSocketClient(QObject *parent)
 }
 
 void WebSocketClient::onStarted() {
+BEGIN_SLOT_WRAPPER
     m_webSocket.open(m_url);
     LOG << "Wss client onStarted. Url " << m_url.toString();
+END_SLOT_WRAPPER
 }
 
 WebSocketClient::~WebSocketClient() {
@@ -66,6 +69,7 @@ void WebSocketClient::start() {
 }
 
 void WebSocketClient::onConnected() {
+BEGIN_SLOT_WRAPPER
     LOG << "Wss client connected";
     isConnected = true;
     if (!helloString.isNull() && !helloString.isEmpty()) {
@@ -73,9 +77,11 @@ void WebSocketClient::onConnected() {
         m_webSocket.sendTextMessage(helloString);
     }
     emit sendMessage("");
+END_SLOT_WRAPPER
 }
 
 void WebSocketClient::onSendMessage(QString message) {
+BEGIN_SLOT_WRAPPER
     if (!isConnected) {
         if (!message.isNull() && !message.isEmpty()) {
             messageQueue.emplace_back(message);
@@ -90,12 +96,17 @@ void WebSocketClient::onSendMessage(QString message) {
             m_webSocket.sendTextMessage(message);
         }
     }
+END_SLOT_WRAPPER
 }
 
 void WebSocketClient::onSetHelloString(QString message) {
+BEGIN_SLOT_WRAPPER
     helloString = message;
+END_SLOT_WRAPPER
 }
 
 void WebSocketClient::onTextMessageReceived(QString message) {
+BEGIN_SLOT_WRAPPER
     LOG << "Wss received " << message;
+END_SLOT_WRAPPER
 }
