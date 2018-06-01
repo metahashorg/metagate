@@ -193,7 +193,9 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 void MainWindow::sendAppInfoToWss(bool force) {
     const QString newUserName = ui->userButton->text();
     if (force || newUserName != sendedUserName) {
-        emit webSocketClient.sendMessage(makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion));
+        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion);
+        emit webSocketClient.sendMessage(message);
+        emit webSocketClient.setHelloString(message);
         sendedUserName = newUserName;
     }
 }

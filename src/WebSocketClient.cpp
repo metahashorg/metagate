@@ -24,6 +24,7 @@ WebSocketClient::WebSocketClient(QObject *parent)
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
 
     CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect sendMessage");
+    CHECK(connect(this, SIGNAL(setHelloString(QString)), this, SLOT(onSetHelloString(QString))), "not connect setHelloString");
 
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
@@ -67,19 +68,32 @@ void WebSocketClient::start() {
 void WebSocketClient::onConnected() {
     LOG << "Wss client connected";
     isConnected = true;
+    if (!helloString.isNull() && !helloString.isEmpty()) {
+        LOG << "Wss Set hello message " << helloString;
+        m_webSocket.sendTextMessage(helloString);
+    }
+    emit sendMessage("");
 }
 
 void WebSocketClient::onSendMessage(QString message) {
     if (!isConnected) {
-        messageQueue.emplace_back(message);
+        if (!message.isNull() && !message.isEmpty()) {
+            messageQueue.emplace_back(message);
+        }
     } else {
         LOG << "Wss client send message " << message;
         for (const QString &m: messageQueue) {
             m_webSocket.sendTextMessage(m);
         }
         messageQueue.clear();
-        m_webSocket.sendTextMessage(message);
+        if (!message.isNull() && !message.isEmpty()) {
+            m_webSocket.sendTextMessage(message);
+        }
     }
+}
+
+void WebSocketClient::onSetHelloString(QString message) {
+    helloString = message;
 }
 
 void WebSocketClient::onTextMessageReceived(QString message) {

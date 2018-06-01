@@ -21,6 +21,8 @@ signals:
 
     void sendMessage(QString message);
 
+    void setHelloString(QString message);
+
 public slots:
 
     void onStarted();
@@ -29,6 +31,8 @@ public slots:
     void onTextMessageReceived(QString message);
 
     void onSendMessage(QString message);
+
+    void onSetHelloString(QString message);
 
 private:
 
@@ -42,6 +46,8 @@ private:
     std::vector<QString> messageQueue;
 
     QThread thread1;
+
+    QString helloString;
 };
 
 #endif // WEBSOCKETCLIENT_H
