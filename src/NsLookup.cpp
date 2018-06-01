@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "duration.h"
 #include "Log.h"
+#include "SlotWrapper.h"
 
 #include "algorithms.h"
 
@@ -49,8 +50,8 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     const system_time_point now = system_now();
     const milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
 
-    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect");
-    CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect");
+    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect started");
+    CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect finished");
 
     milliseconds msTimer;
     if (passedTime >= UPDATE_PERIOD) {
@@ -67,7 +68,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
     client.setParent(this);
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect");
+    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect callbackCall");
 
     moveToThread(&thread1);
 }
@@ -81,15 +82,9 @@ NsLookup::~NsLookup() {
 }
 
 void NsLookup::callbackCall(ReturnCallback callback) {
-    try {
-        callback();
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-    } catch (...) {
-        LOG << "Unknown error";
-    }
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
 void NsLookup::start() {
@@ -121,6 +116,7 @@ void NsLookup::timerEvent() {
     allNodesForTypesNew.clear();
     allNodesNew.clear();
 
+    LOG << "Dns scan start";
     continueResolve();
 }
 
@@ -133,7 +129,7 @@ void NsLookup::continueResolve() {
     const NodeType &node = nodes[posInNodes];
     posInNodes++;
 
-    QUdpSocket  udp;
+    QUdpSocket udp;
 
     DnsPacket requestPacket;
     requestPacket.addQuestion(DnsQuestion::getIp(node.node));
@@ -141,7 +137,7 @@ void NsLookup::continueResolve() {
     udp.writeDatagram(requestPacket.toByteArray(), QHostAddress("8.8.8.8"), 53);
 
     udp.waitForReadyRead();
-    std::vector<char> data(512 * 100, 0);
+    std::vector<char> data(512 * 1000, 0);
     const int size = udp.readDatagram(data.data(), data.size());
     DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size ));
 

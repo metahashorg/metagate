@@ -55,7 +55,7 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback) {
     request.setAttribute(QNetworkRequest::Attribute(QNetworkRequest::User + 1), QString::fromStdString(std::to_string(timeBegin)));
     QNetworkReply* reply = manager->get(request);
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onPingReceived()), Qt::QueuedConnection), "not connect");
-    LOG << "ping message sended ";
+    //LOG << "ping message sended ";
 }
 
 template<class Callbacks, typename Message>
@@ -80,7 +80,7 @@ void SimpleClient::onPingReceived() {
         runCallback(pingCallbacks_, requestId, duration);
 
         reply->deleteLater();
-        LOG << "Reply deleted";
+        //LOG << "Reply deleted";
     } catch (const Exception &e) {
         LOG << "Error " << e;
     } catch (const std::exception &e) {
