@@ -65,9 +65,9 @@ int main(int argc, char *argv[]) {
 
         std::string typeString;
         if (isProductionSetup) {
-            typeString = "dev";
-        } else {
             typeString = "prod";
+        } else {
+            typeString = "dev";
         }
 
         LOG << "Version " << versionString << " " << typeString << " " << GIT_CURRENT_SHA1;
