@@ -120,6 +120,8 @@ private:
 
     QString versionForUpdate = "";
 
+    QString versionHtmlForUpdate = "";
+
     QThread thread1;
 
     QTimer qtimer;

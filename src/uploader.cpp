@@ -227,19 +227,22 @@ BEGIN_SLOT_WRAPPER
         const QString version = dataJson.value("version").toString();
         CHECK(dataJson.contains("hash") && dataJson.value("hash").isString(), "hash field not found");
         const QString hash = dataJson.value("hash").toString();
+        CHECK(dataJson.contains("url") && dataJson.value("url").isString(), "url field not found");
+        const QString url = dataJson.value("url").toString();
 
-        LOG << "Server html version " << version << " " << hash << ". Current version " << lastVersion;
+        LOG << "Server html version " << version << " " << hash << " " << url << ". Current version " << lastVersion;
 
         const QString folderServer = toHash(UPDATE_API);
 
         if (hash == "false") {
             return;
         }
-        if (version == lastVersion && folderServer == currFolder) {
+        if ((version == lastVersion && folderServer == currFolder) || version == versionHtmlForUpdate) {
             return;
         }
 
         auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result) {
+            versionHtmlForUpdate = "";
             CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Bad request");
 
             if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
@@ -249,10 +252,7 @@ BEGIN_SLOT_WRAPPER
             QCryptographicHash hashAlg(QCryptographicHash::Md5);
             hashAlg.addData(result.data(), result.size());
             const QString hashStr(hashAlg.result().toHex());
-            if (hashStr != hash) {
-                LOG << "hashStr != hash " << hashStr << " " << hash;
-                return;
-            }
+            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
 
             const QString archiveFilePath = QDir(currentBeginPath).filePath(version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);
@@ -268,11 +268,14 @@ BEGIN_SLOT_WRAPPER
 
             emit generateEvent(WindowEvent::RELOAD_PAGE);
         };
-        client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get\", \"token\":\"\", \"params\":[]}"), interfaceGetCallback);
+
+        LOG << "download html";
+        versionHtmlForUpdate = version;
+        client.sendMessageGet(url, interfaceGetCallback);
         id++;
     };
 
-    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
+    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
     id++;
 
     auto callbackAppVersion = [this, UPDATE_API](const std::string &result) {
@@ -301,6 +304,7 @@ BEGIN_SLOT_WRAPPER
         }
 
         auto autoupdateGetCallback = [this, nextVersion, version, reference](const std::string &result) {
+            versionForUpdate.clear();
             LOG << "autoupdater callback";
             CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
 
@@ -314,6 +318,7 @@ BEGIN_SLOT_WRAPPER
             emit generateUpdateApp(version, reference, "");
         };
 
+        LOG << "New app version download";
         client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback);
 
         versionForUpdate = version;
