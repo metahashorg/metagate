@@ -163,27 +163,27 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     jsWrapper.setWidget(this);
 
     client.setParent(this);
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect");
+    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect callbackCall");
 
-    CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect");
-    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect");
+    CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
+    CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
+    CHECK(connect(&jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect setUserNameSig");
+    CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
+    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
     channel->registerObject(QString("mainWindow"), &jsWrapper);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
-    CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect");
+    CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect");
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
     qtimer.setInterval(hours(1).count());
     qtimer.setSingleShot(false);
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect");
+    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
 
     emit onUpdateMhsReferences();
 
@@ -273,7 +273,7 @@ void MainWindow::configureMenu() {
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
-    }), "not connect");
+    }), "not connect backButton::pressed");
     ui->backButton->setEnabled(false);
 
     CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
@@ -281,46 +281,46 @@ void MainWindow::configureMenu() {
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
-    }), "not connect");
+    }), "not connect forwardButton::pressed");
     ui->forwardButton->setEnabled(false);
 
-    CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect");
+    CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect refreshButton::pressed");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("Settings");
-    }), "not connect");
+    }), "not connect userButton::pressed");
 
     CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("BuyMHC");
-    }), "Not connect");
+    }), "not connect buyButton::pressed");
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("Wallet");
-    }), "Not connect");
+    }), "not connect metaWalletButton::pressed");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("MetaApps");
-    }), "Not connect");
+    }), "not connect metaAppsButton::pressed");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
         countFocusLineEditChanged++;
-    }), "Not connect");
+    }), "Not connect editingFinished");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
         emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false));
-    }), "Not connect");
+    }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
         emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true));
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
-    }), "Not connect");
+    }), "Not connect returnPressed");
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
+    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect currentIndexChanged");
 }
 
 void MainWindow::unregisterCommandLine() {
-    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect");
+    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not disconnect currentIndexChanged");
 }
 
 void MainWindow::onEnterCommandAndAddToHistory(const QString &text) {
@@ -357,7 +357,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         const PageInfo &searchPage = pagesMappings.getSearchPage();
         QString link = searchPage.page;
         link += plained;
-        LOG << "Founded page " << link;
+        LOG << "Search page " << link;
         addElementToHistoryAndCommandLine(searchPage.printedName + ":" + url, isAddToHistory, true);
         loadFile(link);
     };
@@ -405,8 +405,6 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             uri = uri.left(min);
         }
 
-        LOG << "switch to url " << uri;
-        LOG << "other " << other;
         QString ip;
         if (!pageInfo.ips.empty()) {
             ip = ::getRandom(pageInfo.ips);
@@ -414,7 +412,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             CHECK(!pagesMappings.getDefaultIps().empty(), "defaults mh ips empty");
             ip = ::getRandom(pagesMappings.getDefaultIps());
         }
-        LOG << "ip " << ip;
+        LOG << "Switch to host " << uri << " ip " << ip << " paramethers " << other;
         QWebEngineHttpRequest req(ip + other);
         req.setHeader("host", uri.toUtf8());
         QString clText;
@@ -446,7 +444,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
 }
 
 void MainWindow::qtOpenInBrowser(QString url) {
-    LOG << "Open another url " << url;
+    LOG << "Open url in default browser " << url;
     QDesktopServices::openUrl(QUrl(url));
 }
 
@@ -598,7 +596,7 @@ BEGIN_SLOT_WRAPPER
             LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
             addElementToHistoryAndCommandLine(prevTextCommandLine + request, true, false);
         } else {
-            LOG << "not set address after load " << url << " " << currentTextCommandLine << " " ;
+            LOG << "not set address after load " << url << " " << currentTextCommandLine;
         }
     }
     prevUrl = url;
@@ -620,6 +618,7 @@ END_SLOT_WRAPPER
 
 void MainWindow::onSetUserName(QString userName) {
 BEGIN_SLOT_WRAPPER
+    LOG << "Set user name " << userName;
     ui->userButton->setText(userName);
     ui->userButton->adjustSize();
 
