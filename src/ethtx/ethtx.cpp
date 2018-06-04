@@ -37,6 +37,7 @@ std::string SignTransaction(std::string rawprivkey,
     CHECK(gasPrice.find("0x") == 0, "Incorrect gasPrice " + gasPrice);
     CHECK(gasLimit.find("0x") == 0, "Incorrect gasLimit " + gasLimit);
     CHECK(to.find("0x") == 0, "Incorrect to " + to);
+    CHECK(to.size() == 42, "Incorrect to " + to);
     CHECK(value.find("0x") == 0, "Incorrect value " + value);
     if (!data.empty()) {
         CHECK(data.find("0x") == 0, "Incorrect value " + value);
