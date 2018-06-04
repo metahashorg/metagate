@@ -107,7 +107,7 @@ DEFINES += QUAZIP_STATIC
 #QMAKE_CXXFLAGS += -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 QMAKE_LFLAGS += -rdynamic
-QMAKE_CXXFLAGS += -Wall -Werror
+#QMAKE_CXXFLAGS += -Wall -Werror
 
 unix:!macx: INCLUDEPATH += /usr/include /usr/include/x86_64-linux-gnu/ /usr/include/x86_64-linux-gnu/openssl/
 unix:!macx: LIBS += -L/usr/lib -lssl -lcrypto

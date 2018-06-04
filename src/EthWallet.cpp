@@ -83,6 +83,7 @@ std::string EthWallet::makeErc20Data(const std::string &valueHex, const std::str
     std::string result = "0xa9059cbb";
 
     CHECK(address.substr(0, 2) == "0x", "Incorrect address " + address);
+    CHECK(address.size() == 42, "Incorrect address " + address);
     CHECK(valueHex.substr(0, 2) == "0x", "Incorrect address " + valueHex);
 
     std::string param1 = address.substr(2);
