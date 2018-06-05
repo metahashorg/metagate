@@ -184,6 +184,8 @@ Uploader::Uploader(MainWindow *mainWindow, ServerName &serverName)
     CHECK(qtimer.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
+    client.moveToThread(&thread1);
+
     moveToThread(&thread1);
 }
 

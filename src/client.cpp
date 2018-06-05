@@ -9,6 +9,7 @@ using namespace std::placeholders;
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QThread>
 
 QT_USE_NAMESPACE
 
@@ -20,10 +21,49 @@ void SimpleClient::setParent(QObject *obj) {
     manager->setParent(obj);
 }
 
+void SimpleClient::moveToThread(QThread *thread) {
+    thread1 = thread;
+    QObject::moveToThread(thread);
+}
+
+void SimpleClient::startTimer() {
+    if (timer == nullptr) {
+        timer = new QTimer(this);
+        CHECK(connect(timer, SIGNAL(timeout()), this, SLOT(onTimerEvent())), "not connect timeout");
+        if (thread1 != nullptr) {
+            CHECK(timer->connect(thread1, SIGNAL(finished()), SLOT(stop())), "not connect finished");
+        }
+        timer->setInterval(milliseconds(1s).count());
+        timer->start();
+    }
+}
+
 const std::string SimpleClient::ERROR_BAD_REQUEST = "Error bad request";
+
+void SimpleClient::onTimerEvent() {
+BEGIN_SLOT_WRAPPER
+    const time_point timeEnd = ::now();
+    for (auto &iter: requests) {
+        auto *reply = iter.second;
+
+        if (reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 2)).userType() == QMetaType::QString) {
+            const milliseconds timeout(std::stol(reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 2)).toString().toStdString()));
+            const size_t timeBegin = std::stoull(reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 1)).toString().toStdString());
+            const time_point timeBeginTp = intToTimePoint(timeBegin);
+            const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBeginTp);
+            if (duration >= timeout) {
+                LOG << "Timeout request";
+                reply->abort();
+            }
+        }
+    }
+END_SLOT_WRAPPER
+}
 
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
     const std::string requestId = std::to_string(id++);
+
+    startTimer();
 
     callbacks_[requestId] = callback;
     QNetworkRequest request(url);
@@ -37,6 +77,8 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
     const std::string requestId = std::to_string(id++);
 
+    startTimer();
+
     callbacks_[requestId] = callback;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -46,8 +88,10 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
     LOG << "get message sended";
 }
 
-void SimpleClient::ping(const QString &address, const PingCallback &callback) {
+void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {
     const std::string requestId = std::to_string(id++);
+
+    startTimer();
 
     pingCallbacks_[requestId] = std::bind(callback, address, _1);
     QNetworkRequest request("http://" + address);
@@ -56,8 +100,11 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback) {
     const size_t timeBegin = timePointToInt(time);
     request.setAttribute(QNetworkRequest::User, QString::fromStdString(requestId));
     request.setAttribute(QNetworkRequest::Attribute(QNetworkRequest::User + 1), QString::fromStdString(std::to_string(timeBegin)));
+    request.setAttribute(QNetworkRequest::Attribute(QNetworkRequest::User + 2), QString::fromStdString(std::to_string(timeout.count())));
     QNetworkReply* reply = manager->get(request);
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onPingReceived()), Qt::QueuedConnection), "not connect");
+
+    requests[requestId] = reply;
     //LOG << "ping message sended ";
 }
 
@@ -68,6 +115,7 @@ void SimpleClient::runCallback(Callbacks &callbacks, const std::string &id, cons
     const auto callback = std::bind(foundCallback->second, message);
     emit callbackCall(callback);
     callbacks.erase(foundCallback);
+    requests.erase(id);
 }
 
 void SimpleClient::onPingReceived() {

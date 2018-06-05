@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QNetworkAccessManager>
+#include <QTimer>
 
 #include <memory>
 #include <functional>
@@ -40,9 +41,11 @@ public:
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
 
     // ping хорошо работает только с максимум одним одновременным запросом
-    void ping(const QString &address, const PingCallback &callback);
+    void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
 
     void setParent(QObject *obj);
+
+    void moveToThread(QThread *thread);
 
 Q_SIGNALS:
 
@@ -56,15 +59,25 @@ private Q_SLOTS:
 
     void onPingReceived();
 
+    void onTimerEvent();
+
 private:
 
     template<class Callbacks, typename Message>
     void runCallback(Callbacks &callbacks, const std::string &id, const Message &message);
 
+    void startTimer();
+
 private:
     std::unique_ptr<QNetworkAccessManager> manager;
     std::unordered_map<std::string, ClientCallback> callbacks_;
     std::unordered_map<std::string, PingCallbackInternal> pingCallbacks_;
+
+    std::unordered_map<std::string, QNetworkReply*> requests;
+
+    QTimer* timer = nullptr;
+
+    QThread *thread1 = nullptr;
 
     int id = 0;
 };

@@ -70,6 +70,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     client.setParent(this);
     CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect callbackCall");
 
+    client.moveToThread(&thread1);
     moveToThread(&thread1);
 }
 
@@ -176,7 +177,7 @@ void NsLookup::continuePing() {
             if (requestsInProcess == 0) {
                 continuePing();
             }
-        });
+        }, 1s);
     }
 }
 
