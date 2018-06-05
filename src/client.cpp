@@ -13,6 +13,10 @@ using namespace std::placeholders;
 
 QT_USE_NAMESPACE
 
+const static QNetworkRequest::Attribute REQUEST_ID_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 0);
+const static QNetworkRequest::Attribute TIME_BEGIN_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 1);
+const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 2);
+
 SimpleClient::SimpleClient() {
     manager = std::make_unique<QNetworkAccessManager>(this);
 }
@@ -38,22 +42,62 @@ void SimpleClient::startTimer() {
     }
 }
 
+static void addRequestId(QNetworkRequest &request, const std::string &id) {
+    request.setAttribute(REQUEST_ID_FIELD, QString::fromStdString(id));
+}
+
+static bool isRequestId(QNetworkReply &reply) {
+    return reply.request().attribute(REQUEST_ID_FIELD).userType() == QMetaType::QString;
+}
+
+static std::string getRequestId(QNetworkReply &reply) {
+    CHECK(isRequestId(reply), "Request id field not set");
+    return reply.request().attribute(REQUEST_ID_FIELD).toString().toStdString();
+}
+
+static void addBeginTime(QNetworkRequest &request, time_point tp) {
+    request.setAttribute(TIME_BEGIN_FIELD, QString::fromStdString(std::to_string(timePointToInt(tp))));
+}
+
+static bool isBeginTime(QNetworkReply &reply) {
+    return reply.request().attribute(TIME_BEGIN_FIELD).userType() == QMetaType::QString;
+}
+
+static time_point getBeginTime(QNetworkReply &reply) {
+    CHECK(isBeginTime(reply), "begin time field not set");
+    const size_t timeBegin = std::stoull(reply.request().attribute(TIME_BEGIN_FIELD).toString().toStdString());
+    const time_point timeBeginTp = intToTimePoint(timeBegin);
+    return timeBeginTp;
+}
+
+static void addTimeout(QNetworkRequest &request, milliseconds timeout) {
+    request.setAttribute(TIMOUT_FIELD, QString::fromStdString(std::to_string(timeout.count())));
+}
+
+static bool isTimeout(QNetworkReply &reply) {
+    return reply.request().attribute(TIMOUT_FIELD).userType() == QMetaType::QString;
+}
+
+static milliseconds getTimeout(QNetworkReply &reply) {
+    CHECK(isTimeout(reply), "Timeout field not set");
+    return milliseconds(std::stol(reply.request().attribute(TIMOUT_FIELD).toString().toStdString()));
+}
+
 const std::string SimpleClient::ERROR_BAD_REQUEST = "Error bad request";
 
 void SimpleClient::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     const time_point timeEnd = ::now();
     for (auto &iter: requests) {
-        auto *reply = iter.second;
+        auto &reply = *iter.second;
 
-        if (reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 2)).userType() == QMetaType::QString) {
-            const milliseconds timeout(std::stol(reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 2)).toString().toStdString()));
-            const size_t timeBegin = std::stoull(reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 1)).toString().toStdString());
-            const time_point timeBeginTp = intToTimePoint(timeBegin);
-            const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBeginTp);
+        if (isTimeout(reply)) {
+            const milliseconds timeout = getTimeout(reply);
+            const time_point timeBegin = getBeginTime(reply);
+            const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
             if (duration >= timeout) {
                 LOG << "Timeout request";
-                reply->abort();
+                reply.abort();
             }
         }
     }
@@ -68,7 +112,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     callbacks_[requestId] = callback;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    request.setAttribute(QNetworkRequest::User, QString::fromStdString(requestId));
+    addRequestId(request, requestId);
     QNetworkReply* reply = manager->post(request, message.toUtf8());
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
     LOG << "post message sended";
@@ -82,7 +126,7 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
     callbacks_[requestId] = callback;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    request.setAttribute(QNetworkRequest::User, QString::fromStdString(requestId));
+    addRequestId(request, requestId);
     QNetworkReply* reply = manager->get(request);
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
     LOG << "get message sended";
@@ -98,9 +142,9 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     const time_point time = ::now();
     const size_t timeBegin = timePointToInt(time);
-    request.setAttribute(QNetworkRequest::User, QString::fromStdString(requestId));
-    request.setAttribute(QNetworkRequest::Attribute(QNetworkRequest::User + 1), QString::fromStdString(std::to_string(timeBegin)));
-    request.setAttribute(QNetworkRequest::Attribute(QNetworkRequest::User + 2), QString::fromStdString(std::to_string(timeout.count())));
+    addRequestId(request, requestId);
+    addBeginTime(request, time);
+    addTimeout(request, timeout);
     QNetworkReply* reply = manager->get(request);
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onPingReceived()), Qt::QueuedConnection), "not connect");
 
@@ -122,11 +166,10 @@ void SimpleClient::onPingReceived() {
 BEGIN_SLOT_WRAPPER
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
-    const std::string requestId = reply->request().attribute(QNetworkRequest::User).toString().toStdString();
-    const size_t timeBegin = std::stoull(reply->request().attribute(QNetworkRequest::Attribute(QNetworkRequest::User + 1)).toString().toStdString());
+    const std::string requestId = getRequestId(*reply);
+    const time_point timeBegin = getBeginTime(*reply);
     const time_point timeEnd = ::now();
-    const time_point timeBeginTp = intToTimePoint(timeBegin);
-    const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBeginTp);
+    const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
 
     runCallback(pingCallbacks_, requestId, duration);
 
@@ -138,7 +181,7 @@ void SimpleClient::onTextMessageReceived() {
 BEGIN_SLOT_WRAPPER
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
-    const std::string requestId = reply->request().attribute(QNetworkRequest::User).toString().toStdString();
+    const std::string requestId = getRequestId(*reply);
 
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray content = reply->readAll();
