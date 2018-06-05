@@ -171,6 +171,18 @@ std::string CreateWIF(bool isTestnet, bool isCompressed) {
     return privateKeyToWif(privateKeyStr, isTestnet, isCompressed);
 }
 
+void checkAddressBase56(const std::string &address) {
+    std::vector<unsigned char> addr;
+    const bool res = DecodeBase58(address.c_str(), addr);
+    CHECK(res, "Incorrect address " + address);
+    CHECK(addr.size() == 25, "Incorrect address " + address);
+    const std::string data(addr.begin(), addr.begin() + 21);
+    const std::string addrHash = doubleHash(data);
+    for (size_t i = 0; i < 4; i++) {
+        CHECK(addr.at(21 + i) == (unsigned char)addrHash.at(i), "Incorrect address " + address);
+    }
+}
+
 std::string getAddress(const std::string &wif, bool &isCompressed, bool isTestnet) {
     const std::string privKey = WIFToPrivkey(wif, isCompressed);
     std::string address;

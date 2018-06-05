@@ -11,6 +11,8 @@ std::string AddressToPubkeyScript(const std::string& address);
 std::string CreateWIF(bool isTestnet, bool isCompressed);
 std::string PrivKeyToCompressedPubKey(const std::string& rawprivkey);
 
+void checkAddressBase56(const std::string &address);
+
 std::string getAddress(const std::string &wif, bool &isCompressed, bool isTestnet);
 
 std::string encryptWif(const std::string &wif, const std::string &normalizedPassphraze);

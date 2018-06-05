@@ -99,6 +99,8 @@ const std::string& BtcWallet::getAddress() const {
 }
 
 std::string BtcWallet::genTransaction(const std::vector<BtcInput> &inputs, uint64_t transferAmount, uint64_t fee, const std::string &receiveAddress, bool isTestnet) {
+    checkAddressBase56(receiveAddress);
+
     std::vector<Input> inputs2;
     for (const BtcInput &input: inputs) {
         Input input2;
