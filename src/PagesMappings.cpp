@@ -208,10 +208,25 @@ Optional<PageInfo> PagesMappings::find(const QString &url) const {
         int foundSlash = -1;
         if (url.startsWith(METAHASH_URL)) {
             foundSlash = url.indexOf('/', METAHASH_URL.size() + 1);
+            int found2 = url.indexOf('#', METAHASH_URL.size() + 1);
+            if (found2 == -1) {
+                found2 = url.size();
+            }
+            foundSlash = std::min(foundSlash, found2);
         } else if (url.startsWith(APP_URL)) {
             foundSlash = url.indexOf('/', APP_URL.size() + 1);
+            int found2 = url.indexOf('#', APP_URL.size() + 1);
+            if (found2 == -1) {
+                found2 = url.size();
+            }
+            foundSlash = std::min(foundSlash, found2);
         } else {
             foundSlash = url.indexOf('/', 1);
+            int found2 = url.indexOf('#', 1);
+            if (found2 == -1) {
+                found2 = url.size();
+            }
+            foundSlash = std::min(foundSlash, found2);
         }
         if (foundSlash != -1) {
             const QString url2 = url.left(foundSlash);
@@ -244,10 +259,21 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
 
     auto found = urlToName.find(url);
     if (found == urlToName.end()) {
-        const int find = url.lastIndexOf('/');
+        // Скорее всего, это file://. Попробуем его распарсить
+        int findSharp = url.indexOf('#');
+        if (findSharp == -1) {
+            findSharp = url.size();
+        }
+        const QString url3 = url.left(findSharp);
+        const int find = url3.lastIndexOf('/');
         if (find != -1) {
-            const QString lastUrl = url.mid(find + 1);
+            const QString lastUrl = url3.mid(find + 1);
             found = urlToName.find(lastUrl);
+            QString page = found->second;
+            page += url.mid(findSharp);
+            if (found != urlToName.end()) {
+                return Optional<QString>(page);
+            }
         }
     }
     if (found == urlToName.end()) {

@@ -179,7 +179,9 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
+    //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
+
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
     qtimer.setInterval(hours(1).count());
     qtimer.setSingleShot(false);
@@ -398,13 +400,11 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         runSearch(text);
     } else if (reference.startsWith(METAHASH_URL)) {
         QString uri = reference.mid(METAHASH_URL.size());
-        const size_t pos1 = uri.indexOf('/');
-        const size_t pos2 = uri.indexOf('?');
-        const size_t min = std::min(pos1, pos2);
+        const size_t pos = uri.indexOf('/');
         QString other;
-        if (min != size_t(-1)) {
-            other = uri.mid(min);
-            uri = uri.left(min);
+        if (pos != size_t(-1)) {
+            other = uri.mid(pos);
+            uri = uri.left(pos);
         }
 
         QString ip;
@@ -582,12 +582,9 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
     registerCommandLine();
 }
 
-void MainWindow::onBrowserLoadFinished(bool result) {
+void MainWindow::onBrowserLoadFinished(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
-    if (!result) {
-        return;
-    }
-    const QString url = ui->webView->url().toString();
+    const QString url = url2.toString();
     const auto found = pagesMappings.findName(url);
     if (found.has_value()) {
         LOG << "Set address after load " << found.value();
