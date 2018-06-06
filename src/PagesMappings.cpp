@@ -269,9 +269,9 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
         if (find != -1) {
             const QString lastUrl = url3.mid(find + 1);
             found = urlToName.find(lastUrl);
-            QString page = found->second;
-            page += url.mid(findSharp);
             if (found != urlToName.end()) {
+                QString page = found->second;
+                page += url.mid(findSharp);
                 return Optional<QString>(page);
             }
         }
