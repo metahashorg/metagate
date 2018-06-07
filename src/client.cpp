@@ -137,7 +137,7 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
 
     startTimer();
 
-    pingCallbacks_[requestId] = std::bind(callback, address, _1);
+    pingCallbacks_[requestId] = std::bind(callback, address, _1, _2);
     QNetworkRequest request("http://" + address);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     const time_point time = ::now();
@@ -152,11 +152,11 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
     //LOG << "ping message sended ";
 }
 
-template<class Callbacks, typename Message>
-void SimpleClient::runCallback(Callbacks &callbacks, const std::string &id, const Message &message) {
+template<class Callbacks, typename... Message>
+void SimpleClient::runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages) {
     const auto foundCallback = callbacks.find(id);
     CHECK(foundCallback != callbacks.end(), "not found callback on id " + id);
-    const auto callback = std::bind(foundCallback->second, message);
+    const auto callback = std::bind(foundCallback->second, std::forward<Message>(messages)...);
     emit callbackCall(callback);
     callbacks.erase(foundCallback);
     requests.erase(id);
@@ -171,7 +171,13 @@ BEGIN_SLOT_WRAPPER
     const time_point timeEnd = ::now();
     const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
 
-    runCallback(pingCallbacks_, requestId, duration);
+    std::string response;
+    if (reply->isReadable()) {
+        QByteArray content = reply->readAll();
+        response = std::string(content.data(), content.size());
+    }
+
+    runCallback(pingCallbacks_, requestId, duration, response);
 
     reply->deleteLater();
 END_SLOT_WRAPPER

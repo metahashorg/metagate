@@ -4,6 +4,10 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QUdpSocket>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonObject>
 
 #include "dns/dnspacket.h"
 #include "check.h"
@@ -171,17 +175,29 @@ void NsLookup::continuePing() {
     for (size_t i = 0; i < countSteps; i++) {
         const QString &ip = ipsTemp[posInIpsTemp];
         posInIpsTemp++;
-        client.ping(ip + ":" + nodeType.port, [this, type=nodeType.type](const QString &address, const milliseconds &time) {
+        client.ping(ip + ":" + nodeType.port, [this, type=nodeType.type](const QString &address, const milliseconds &time, const std::string &message) {
+            const milliseconds MAX_PING = 100s;
             NodeInfo info;
             info.ipAndPort = address;
             info.ping = time.count();
+
+            if (message.empty()) {
+                info.ping = MAX_PING.count();
+            } else {
+                QJsonParseError parseError;
+                QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
+                if (parseError.error != QJsonParseError::NoError) {
+                    info.ping = MAX_PING.count();
+                }
+            }
+
             addNode(type, info, true);
 
             requestsInProcess--;
             if (requestsInProcess == 0) {
                 continuePing();
             }
-        }, 1s);
+        }, 2s);
     }
 }
 

@@ -14,7 +14,7 @@
 
 using ClientCallback = std::function<void(const std::string &response)>;
 
-using PingCallback = std::function<void(const QString &address, const milliseconds &time)>;
+using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
 
 using ReturnCallback = std::function<void()>;
 
@@ -27,7 +27,7 @@ class SimpleClient : public QObject
 
 private:
 
-    using PingCallbackInternal = std::function<void(const milliseconds &time)>;
+    using PingCallbackInternal = std::function<void(const milliseconds &time, const std::string &response)>;
 
 public:
 
@@ -63,8 +63,8 @@ private Q_SLOTS:
 
 private:
 
-    template<class Callbacks, typename Message>
-    void runCallback(Callbacks &callbacks, const std::string &id, const Message &message);
+    template<class Callbacks, typename... Message>
+    void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);
 
     void startTimer();
 
