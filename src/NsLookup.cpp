@@ -48,7 +48,11 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     savedNodesPath = QDir(QCoreApplication::applicationDirPath()).filePath(FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath);
     const system_time_point now = system_now();
-    const milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
+    milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
+    if (lastFill - now >= hours(1)) {
+        // Защита от перевода времени назад
+        passedTime = UPDATE_PERIOD;
+    }
 
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect started");
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect finished");
