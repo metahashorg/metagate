@@ -54,7 +54,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter) {
+static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
     QJsonObject allJson;
     allJson.insert("app", "MetaSearch");
     QJsonObject data;
@@ -63,6 +63,7 @@ static QString makeCommandLineMessageForWss(const QString &hardwareId, const QSt
     data.insert("focus_release_count", (int)focusCount);
     data.insert("text", QString(line.toUtf8().toHex()));
     data.insert("is_enter_pressed", isEnter);
+    data.insert("is_user_text", isUserText);
     allJson.insert("data", data);
     QJsonDocument json(allJson);
 
@@ -310,13 +311,22 @@ void MainWindow::configureMenu() {
         countFocusLineEditChanged++;
     }), "Not connect editingFinished");
 
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        lineEditUserChanged = true;
+        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true));
+    }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
-        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false));
+        if (!lineEditUserChanged) {
+            emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false));
+        }
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
-        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true));
+        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true));
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     }), "Not connect returnPressed");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
+        lineEditUserChanged = false;
+    }), "Not connect textChanged");
 }
 
 void MainWindow::registerCommandLine() {

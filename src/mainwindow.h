@@ -141,6 +141,8 @@ private:
     QString prevUrl;
 
     QString prevTextCommandLine;
+
+    bool lineEditUserChanged = false;
 };
 
 #endif // MAINWINDOW_H
