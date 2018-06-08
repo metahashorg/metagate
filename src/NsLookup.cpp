@@ -150,7 +150,8 @@ void NsLookup::continueResolve() {
     udp.waitForReadyRead();
     std::vector<char> data(512 * 1000, 0);
     const int size = udp.readDatagram(data.data(), data.size());
-    DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size ));
+    CHECK(size > 0, "Incorrect response dns");
+    DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
 
     LOG << "dns ok " << node.type << ". " << packet.answers().size();
     ipsTemp.clear();

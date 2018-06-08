@@ -232,7 +232,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(dataJson.contains("url") && dataJson.value("url").isString(), "url field not found");
         const QString url = dataJson.value("url").toString();
 
-        LOG << "Server html version " << version << " " << hash << " " << url << ". Current version " << lastVersion;
+        LOG << "Server html version " << version << " " << hash << " " << url.toStdString().substr(0, url.toStdString().find("?secure")) << ". Current version " << lastVersion;
 
         const QString folderServer = toHash(UPDATE_API);
 
