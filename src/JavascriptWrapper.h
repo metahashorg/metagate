@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QString>
 
+#include "client.h"
+
 class NsLookup;
 
 class JavascriptWrapper : public QObject
@@ -116,6 +118,12 @@ public slots:
 
     Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
 
+    Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
+
+private slots:
+
+    void onCallbackCall(ReturnCallback callback);
+
 private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
@@ -127,6 +135,8 @@ private:
     void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
 
     void runJs(const QString &script);
+
+    void openFolderInStandartExplored(const QString &folder);
 
 private:
 
@@ -151,6 +161,8 @@ private:
     QString userName;
 
     QWidget *widget_ = nullptr;
+
+    SimpleClient client;
 
 };
 

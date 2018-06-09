@@ -215,5 +215,8 @@ Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int 
 
 Q_INVOKABLE void lineEditReturnPressed(QString text);
 # Emulate text input to lineEdit.
+
+Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
+Показывает диалог сохранения файла, после чего выкачивает файл и сохраняет
 ```
 

@@ -27,6 +27,7 @@
 #include "Log.h"
 #include "utils.h"
 #include "TypedException.h"
+#include "SlotWrapper.h"
 
 #include "machine_uid.h"
 
@@ -47,6 +48,14 @@ JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
     LOG << "Wallets default path " << walletPath;
 
     setPaths(walletDefaultPath, "");
+
+    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect callbackCall");
+}
+
+void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::setWidget(QWidget *widget) {
@@ -729,8 +738,12 @@ void JavascriptWrapper::setCommandLineText(const QString &/*text*/) {
     //emit setCommandLineTextSig(text);
 }
 
+void JavascriptWrapper::openFolderInStandartExplored(const QString &folder) {
+    QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
+}
+
 void JavascriptWrapper::openWalletPathInStandartExplorer() {
-    QDesktopServices::openUrl(QUrl::fromLocalFile(walletPath));
+    openFolderInStandartExplored(walletPath);
 }
 
 void JavascriptWrapper::setPagesMapping(QString mapping) {
@@ -781,6 +794,22 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
 
 void JavascriptWrapper::setUserName(const QString &userName) {
     emit setUserNameSig(userName);
+}
+
+void JavascriptWrapper::saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave) {
+BEGIN_SLOT_WRAPPER
+    const QString beginPath = QDir(walletPath).filePath(fileName);
+    const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
+    CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
+
+    client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response) {
+        CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
+        writeToFileBinary(file, response, false);
+        if (openAfterSave) {
+            openFolderInStandartExplored(QFileInfo(file).dir().path());
+        }
+    });
+END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::runJs(const QString &script) {
