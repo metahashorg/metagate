@@ -364,50 +364,22 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         return;
     }
 
-    auto runSearch = [&, this](const QString &url) {
+    const PageInfo pageInfo = pagesMappings.find(text);
+    const QString &reference = pageInfo.page;
+
+    if (reference.isNull() || reference.isEmpty()) {
+        if (text.startsWith(APP_URL)) {
+            text = text.mid(APP_URL.size());
+        }
         QTextDocument td;
-        td.setHtml(url);
+        td.setHtml(text);
         const QString plained = td.toPlainText();
         const PageInfo &searchPage = pagesMappings.getSearchPage();
         QString link = searchPage.page;
         link += plained;
         LOG << "Search page " << link;
-        addElementToHistoryAndCommandLine(searchPage.printedName + ":" + url, isAddToHistory, true);
+        addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text, isAddToHistory, true);
         loadFile(link);
-    };
-
-    auto isFullUrl = [](const QString &text) {
-        if (text.size() != 52) {
-            return false;
-        }
-        if (!isHex(text.toStdString())) {
-            return false;
-        }
-        return true;
-    };
-
-    PageInfo pageInfo;
-    const auto found = pagesMappings.find(text);
-    if (found.has_value()) {
-        pageInfo = found.value();
-    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
-        const QString appUrl = APP_URL + text;
-        const auto found2 = pagesMappings.find(appUrl);
-        if (found2.has_value()) {
-            pageInfo = found2.value();
-        } else if (isFullUrl(text)) {
-            pageInfo.page = METAHASH_URL + text;
-        }
-    } else if (text.startsWith(METAHASH_URL)){
-        pageInfo.page = text;
-    } else {
-        CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
-        text = text.mid(APP_URL.size());
-    }
-    const QString &reference = pageInfo.page;
-
-    if (reference.isNull() || reference.isEmpty()) {
-        runSearch(text);
     } else if (reference.startsWith(METAHASH_URL)) {
         QString uri = reference.mid(METAHASH_URL.size());
         const size_t pos = uri.indexOf('/');

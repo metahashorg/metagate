@@ -16,7 +16,7 @@ public:
 
     Optional() = default;
 
-    explicit Optional(const T &t)
+    Optional(const T &t)
         : isSet(true)
         , t(t)
     {}
@@ -90,11 +90,15 @@ public:
 
     const PageInfo& getSearchPage() const;
 
-    Optional<PageInfo> find(const QString &url) const;
+    PageInfo find(const QString &text) const;
 
     const std::vector<QString>& getDefaultIps() const;
 
     Optional<QString> findName(const QString &url) const;
+
+private:
+
+    Optional<PageInfo> findInternal(const QString &url) const;
 
 private:
 

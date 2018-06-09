@@ -2,6 +2,7 @@
 
 #include "Log.h"
 #include "check.h"
+#include "utils.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -13,6 +14,14 @@ const QString APP_URL = "app://";
 
 PagesMappings::PagesMappings(){
 
+}
+
+static QString concatenateTwoPath(const QString &path1, const QString &path2) {
+    QString path = path1;
+    if (path.endsWith('/')) {
+        path = path.left(path.size() - 1);
+    }
+    return path + path2;
 }
 
 PagesMappings::Name::Name(const QString &text) {
@@ -202,31 +211,26 @@ const PageInfo& PagesMappings::getSearchPage() const {
     return searchPage;
 }
 
-Optional<PageInfo> PagesMappings::find(const QString &url) const {
+Optional<PageInfo> PagesMappings::findInternal(const QString &url) const {
     const auto found = mappingsPages.find(Name(url));
     if (found == mappingsPages.end()) {
         int foundSlash = -1;
+        auto findSymbols = [](const QString &url, const QString &prefix) {
+            int foundSlash = url.indexOf('/', prefix.size() + 1);
+            int found2 = url.indexOf('#', prefix.size() + 1);
+            if (found2 == -1) {
+                found2 = url.size();
+            }
+            foundSlash = std::min(foundSlash, found2);
+            return foundSlash;
+        };
+
         if (url.startsWith(METAHASH_URL)) {
-            foundSlash = url.indexOf('/', METAHASH_URL.size() + 1);
-            int found2 = url.indexOf('#', METAHASH_URL.size() + 1);
-            if (found2 == -1) {
-                found2 = url.size();
-            }
-            foundSlash = std::min(foundSlash, found2);
+            foundSlash = findSymbols(url, METAHASH_URL);
         } else if (url.startsWith(APP_URL)) {
-            foundSlash = url.indexOf('/', APP_URL.size() + 1);
-            int found2 = url.indexOf('#', APP_URL.size() + 1);
-            if (found2 == -1) {
-                found2 = url.size();
-            }
-            foundSlash = std::min(foundSlash, found2);
+            foundSlash = findSymbols(url, APP_URL);
         } else {
-            foundSlash = url.indexOf('/', 1);
-            int found2 = url.indexOf('#', 1);
-            if (found2 == -1) {
-                found2 = url.size();
-            }
-            foundSlash = std::min(foundSlash, found2);
+            foundSlash = findSymbols(url, "");
         }
         if (foundSlash != -1) {
             const QString url2 = url.left(foundSlash);
@@ -235,17 +239,14 @@ Optional<PageInfo> PagesMappings::find(const QString &url) const {
                 return Optional<PageInfo>();
             } else {
                 PageInfo page = *found2->second;
-                if (page.page.endsWith('/')) {
-                    page.page = page.page.left(page.page.size() - 1);
-                }
-                page.page += url.mid(foundSlash);
-                return Optional<PageInfo>(page);
+                page.page = concatenateTwoPath(page.page, url.mid(foundSlash));
+                return page;
             }
         } else {
             return Optional<PageInfo>();
         }
     } else {
-        return Optional<PageInfo>(*found->second);
+        return *found->second;
     }
 }
 
@@ -258,8 +259,20 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
     const static QString HTTP_2 = "https://";
 
     auto found = urlToName.find(url);
-    if (found == urlToName.end()) {
-        // Скорее всего, это file://. Попробуем его распарсить
+    if (found != urlToName.end()) {
+        return found->second;
+    }
+
+    auto findUrl = [this](const QString &findTxt, const QString &parameters) -> Optional<QString> {
+        auto found = urlToName.find(findTxt);
+        if (found != urlToName.end()) {
+            return concatenateTwoPath(found->second, parameters);
+        } else {
+            return Optional<QString>();
+        }
+    };
+
+    if (url.startsWith("file:")) {
         int findSharp = url.indexOf('#');
         if (findSharp == -1) {
             findSharp = url.size();
@@ -267,16 +280,12 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
         const QString url3 = url.left(findSharp);
         const int find = url3.lastIndexOf('/');
         if (find != -1) {
-            const QString lastUrl = url3.mid(find + 1);
-            found = urlToName.find(lastUrl);
-            if (found != urlToName.end()) {
-                QString page = found->second;
-                page += url.mid(findSharp);
-                return Optional<QString>(page);
+            Optional<QString> found = findUrl(url3.mid(find + 1), url.mid(findSharp));
+            if (found.has_value()) {
+                return found.value();
             }
         }
-    }
-    if (found == urlToName.end()) {
+    } else {
         int foundSlash = -1;
         if (url.startsWith(HTTP_1)) {
             foundSlash = url.indexOf('/', HTTP_1.size() + 1);
@@ -284,22 +293,43 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
             foundSlash = url.indexOf('/', HTTP_2.size() + 1);
         }
         if (foundSlash != -1) {
-            const QString url2 = url.left(foundSlash);
-            const auto found2 = urlToName.find(url2);
-            if (found2 == urlToName.end()) {
-                return Optional<QString>();
-            } else {
-                QString page = found2->second;
-                if (page.endsWith('/')) {
-                    page = page.left(page.size() - 1);
-                }
-                page += url.mid(foundSlash);
-                return Optional<QString>(page);
+            Optional<QString> found = findUrl(url.left(foundSlash), url.mid(foundSlash));
+            if (found.has_value()) {
+                return found.value();
             }
-        } else {
-            return Optional<QString>();
         }
-    } else {
-        return Optional<QString>(found->second);
     }
+
+    return Optional<QString>();
+}
+
+PageInfo PagesMappings::find(const QString &text) const {
+    auto isFullUrl = [](const QString &text) {
+        if (text.size() != 52) {
+            return false;
+        }
+        if (!isHex(text.toStdString())) {
+            return false;
+        }
+        return true;
+    };
+
+    PageInfo pageInfo;
+    const auto found = findInternal(text);
+    if (found.has_value()) {
+        pageInfo = found.value();
+    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
+        const QString appUrl = APP_URL + text;
+        const auto found2 = findInternal(appUrl);
+        if (found2.has_value()) {
+            pageInfo = found2.value();
+        } else if (isFullUrl(text)) {
+            pageInfo.page = METAHASH_URL + text;
+        }
+    } else if (text.startsWith(METAHASH_URL)){
+        pageInfo.page = text;
+    } else {
+        CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
+    }
+    return pageInfo;
 }
