@@ -120,6 +120,8 @@ public slots:
 
     Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
 
+    Q_INVOKABLE void printUrl(QString url, QString printWindowCaption, QString text);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);

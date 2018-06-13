@@ -13,6 +13,9 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QPrinter>
+#include <QPrintDialog>
+#include <QPainter>
 
 #include "Wallet.h"
 #include "EthWallet.h"
@@ -808,6 +811,40 @@ BEGIN_SLOT_WRAPPER
         if (openAfterSave) {
             openFolderInStandartExplored(QFileInfo(file).dir().path());
         }
+    });
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
+BEGIN_SLOT_WRAPPER
+    client.sendMessageGet(url, [this, printWindowCaption, text](const std::string &response) {
+        CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
+
+        QImage image;
+        image.loadFromData((const unsigned char*)response.data(), (int)response.size());
+
+        QPrinter printer;
+
+        QPrintDialog *dialog = new QPrintDialog(&printer);
+        dialog->setWindowTitle(printWindowCaption);
+
+        if (dialog->exec() != QDialog::Accepted)
+            return -1;
+
+        QPainter painter;
+        painter.begin(&printer);
+
+        const int printerWidth = printer.pageRect().width();
+        const int printerHeight = printer.pageRect().height();
+        const int imageWidth = image.size().width();
+        const int imageHeight = image.size().height();
+        const int paddingX = (printerWidth - imageWidth) / 2;
+        const int paddingY = (printerHeight - imageHeight) / 2;
+
+        painter.drawText(100, 100, 500, 500, Qt::AlignLeft|Qt::AlignTop, text);
+        painter.drawImage(QRect(paddingX, paddingY, imageWidth, imageHeight), image);
+
+        painter.end();
     });
 END_SLOT_WRAPPER
 }
