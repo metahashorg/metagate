@@ -558,7 +558,7 @@ void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey,
 
         LOG << "Save private key eth";
 
-        EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
+        EthWallet::savePrivateKey(walletPathEth, privateKey.toStdString(), password.toStdString());
 
         jsRunSig(JS_NAME_RESULT + "(" +
             "\"" + requestId + "\", " +
@@ -709,6 +709,69 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
+    }
+}
+
+void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) {
+    const QString JS_NAME_RESULT = "getOnePrivateKeyBtcResultJs";
+
+    LOG << "get one private key eth";
+
+    const TypedException &exception = apiVrapper([&, this]() {
+        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
+
+        const std::string privKey = BtcWallet::getOneKey(walletPathBtc, keyName.toStdString());
+
+        QString result = QString::fromStdString(privKey);
+        result.replace("\n", "\\n");
+
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + result + "\", " +
+            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
+            "\"" + "" + "\"" +
+            ");"
+        );
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "" + "\", " +
+            QString::fromStdString(std::to_string(exception.numError)) + ", " +
+            "\"" + QString::fromStdString(exception.description) + "\"" +
+            ");"
+        );
+    }
+}
+
+void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey, QString password) {
+    const QString JS_NAME_RESULT = "savePrivateKeyBtcResultJs";
+
+    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &privateKey, &password]() {
+        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
+
+        LOG << "Save private key eth";
+
+        BtcWallet::savePrivateKey(walletPathBtc, privateKey.toStdString(), password);
+
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "ok" + "\", " +
+            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
+            "\"" + "" + "\"" +
+            ");"
+        );
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "" + "\", " +
+            QString::fromStdString(std::to_string(exception.numError)) + ", " +
+            "\"" + QString::fromStdString(exception.description) + "\"" +
+            ");"
+        );
     }
 }
 

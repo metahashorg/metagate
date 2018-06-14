@@ -28,24 +28,28 @@ QString BtcWallet::getFullPath(const QString &folder, const std::string &address
     return pathToFile;
 }
 
-static std::pair<std::string, std::string> getWifAndAddress(const QString &folder, const std::string &addr, bool isNoEncrypted) {
-    const QString pathToFile = BtcWallet::getFullPath(folder, addr);
-    const std::string wifAndAddress = readFile(pathToFile);
-    const size_t foundDelimiter = wifAndAddress.find(WIF_AND_ADDRESS_DELIMITER);
+static std::pair<std::string, std::string> getWifAndAddress(const std::string &data, bool isNoEncrypted) {
+    const size_t foundDelimiter = data.find(WIF_AND_ADDRESS_DELIMITER);
     std::string wif;
     std::string address;
-    if (foundDelimiter == wifAndAddress.npos) {
-        wif = wifAndAddress;
+    if (foundDelimiter == data.npos) {
+        wif = data;
         if (isNoEncrypted) {
             bool tmp;
             address = ::getAddress(wif, tmp, false);
         }
     } else {
-        wif = wifAndAddress.substr(0, foundDelimiter);
-        address = wifAndAddress.substr(foundDelimiter + 1);
+        wif = data.substr(0, foundDelimiter);
+        address = data.substr(foundDelimiter + 1);
     }
 
     return std::make_pair(wif, address);
+}
+
+static std::pair<std::string, std::string> getWifAndAddress(const QString &folder, const std::string &addr, bool isNoEncrypted) {
+    const QString pathToFile = BtcWallet::getFullPath(folder, addr);
+    const std::string wifAndAddress = readFile(pathToFile);
+    return getWifAndAddress(wifAndAddress, isNoEncrypted);
 }
 
 std::pair<std::string, std::string> BtcWallet::genPrivateKey(const QString &folder, const QString &password) {
@@ -265,4 +269,16 @@ std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const 
     }
 
     return result;
+}
+
+std::string BtcWallet::getOneKey(const QString &folder, const std::string &address) {
+    const QString filePath = getFullPath(folder, address);
+    return readFile(filePath);
+}
+
+void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
+    const std::string addressBase58 = getWifAndAddress(data, true).second;
+    const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
+    writeToFile(pathToFile, data, true);
+    BtcWallet wallet(folder, addressBase58, password); // Проверяем пароль
 }

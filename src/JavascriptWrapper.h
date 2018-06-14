@@ -94,6 +94,10 @@ public slots:
 
     Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
 
+    Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
+
+    Q_INVOKABLE void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+
 public slots:
 
     Q_INVOKABLE bool migrateKeysToPath(QString newPath);

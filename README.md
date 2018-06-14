@@ -124,6 +124,16 @@ Q_INVOKABLE QString getAllEthWalletsAndPathsJson();
 # Gets the list of all metahash accounts. 
 # Result returns as a json array
 [{"address":"addr","path":"path"}]
+
+Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
+В функцию 
+getOnePrivateKeyEthResultJs(requestId, key, errorNum, errorMessage)
+возвращает приватный ключ. 
+
+Q_INVOKABLE void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
+Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
+По окончании работы вызывает функцию
+savePrivateKeyEthResultJs(requestId, "ok", errorNum, errorMessage)
 ```
 
 ### How to work with Bitcoin wallet
@@ -153,6 +163,16 @@ Q_INVOKABLE QString getAllBtcWalletsJson();
 Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
 # Gets the list of all metahash accounts. 
 # Result returns as a json array [{"address":"addr","path":"path"}]
+
+Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
+В функцию 
+getOnePrivateKeyBtcResultJs(requestId, key, errorNum, errorMessage)
+возвращает приватный ключ. 
+
+Q_INVOKABLE void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
+По окончании работы вызывает функцию
+savePrivateKeyBtcResultJs(requestId, "ok", errorNum, errorMessage)
 ```
 
 ### General functions
