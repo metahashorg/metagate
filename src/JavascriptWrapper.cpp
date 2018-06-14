@@ -257,6 +257,85 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     }
 }
 
+void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult) {
+    const TypedException &exception = apiVrapper([this, &jsNameResult, &requestId, &keyName, &isCompact, &walletPath]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact);
+
+        QString result = QString::fromStdString(privKey);
+        result.replace("\n", "\\n");
+
+        LOG << "Getted private key " << result;
+
+        jsRunSig(jsNameResult + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + result + "\", " +
+            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
+            "\"" + "" + "\"" +
+            ");"
+        );
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        jsRunSig(jsNameResult + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "" + "\", " +
+            QString::fromStdString(std::to_string(exception.numError)) + ", " +
+            "\"" + QString::fromStdString(exception.description) + "\"" +
+            ");"
+        );
+    }
+}
+
+void JavascriptWrapper::getOnePrivateKey(QString requestId, QString keyName, bool isCompact) {
+    const QString JS_NAME_RESULT = "getOnePrivateKeyResultJs";
+    getOnePrivateKeyMTHS(requestId, keyName, isCompact, walletPathTmh, JS_NAME_RESULT);
+}
+
+void JavascriptWrapper::getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact) {
+    const QString JS_NAME_RESULT = "getOnePrivateKeyMHCResultJs";
+    getOnePrivateKeyMTHS(requestId, keyName, isCompact, walletPathMth, JS_NAME_RESULT);
+}
+
+void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult) {
+    const TypedException &exception = apiVrapper([this, &jsNameResult, &requestId, &privateKey, &password, &walletPath]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        LOG << "Save private key";
+
+        Wallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
+
+        jsRunSig(jsNameResult + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "ok" + "\", " +
+            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
+            "\"" + "" + "\"" +
+            ");"
+        );
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        jsRunSig(jsNameResult + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "" + "\", " +
+            QString::fromStdString(std::to_string(exception.numError)) + ", " +
+            "\"" + QString::fromStdString(exception.description) + "\"" +
+            ");"
+        );
+    }
+}
+
+void JavascriptWrapper::savePrivateKey(QString requestId, QString privateKey, QString password) {
+    const QString JS_NAME_RESULT = "savePrivateKeyResultJs";
+    savePrivateKeyMTHS(requestId, privateKey, password, walletPathTmh, JS_NAME_RESULT);
+}
+
+void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey, QString password) {
+    const QString JS_NAME_RESULT = "savePrivateKeyMHCResultJs";
+    savePrivateKeyMTHS(requestId, privateKey, password, walletPathMth, JS_NAME_RESULT);
+}
+
 void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
     const QString JS_NAME_RESULT = "createRsaKeyResultJs";
     const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &address, &requestId, &password]() {

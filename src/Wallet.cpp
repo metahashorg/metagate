@@ -29,6 +29,12 @@ const static QString FOLDER_RSA_KEYS("rsa/");
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
 const static QString FILE_PRIV_KEY_SUFFIX(".rsa.priv");
 
+const std::string PRIV_KEY_PREFIX = "-----BEGIN EC PRIVATE KEY-----\n";
+const std::string PRIV_KEY_SUFFIX = "\n-----END EC PRIVATE KEY-----";
+
+const std::string COMPACT_FORMAT = "f:";
+const std::string CURRENT_COMPACT_FORMAT = "1";
+
 QString Wallet::makeFullWalletPath(const QString &folder, const std::string &addr) {
     return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_PRIV_KEY_SUFFIX));
 }
@@ -247,4 +253,56 @@ std::string Wallet::decryptMessage(const QString &folder, const std::string &add
 
 std::string Wallet::encryptMessage(const std::string &publicKeyHex, const std::string &message) {
     return encrypt(publicKeyHex, message);
+}
+
+std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact) {
+    const QString fullPath = makeFullWalletPath(folder, addr);
+    std::string privKey = readFile(fullPath);
+
+    if (isCompact) {
+        CHECK(privKey.size() > PRIV_KEY_PREFIX.size() + PRIV_KEY_SUFFIX.size(), "Incorrect private key");
+        if (privKey.compare(0, PRIV_KEY_PREFIX.size(), PRIV_KEY_PREFIX) == 0) {
+            privKey = privKey.substr(PRIV_KEY_PREFIX.size());
+        } else {
+            throwErr("Incorrect private key");
+        }
+
+        const size_t found = privKey.find(PRIV_KEY_SUFFIX);
+        CHECK(found != privKey.npos, "Incorrect private key");
+        privKey = privKey.substr(0, found);
+
+        privKey = COMPACT_FORMAT + CURRENT_COMPACT_FORMAT + "\n" + privKey;
+    }
+    return privKey;
+}
+
+void Wallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
+    std::string result = data;
+    if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
+        result = result.substr(COMPACT_FORMAT.size());
+        CHECK(result.compare(0, CURRENT_COMPACT_FORMAT.size() + 1, CURRENT_COMPACT_FORMAT + "\n") == 0, "Incorrect private key");
+        result = result.substr(CURRENT_COMPACT_FORMAT.size() + 1);
+
+        const size_t found = result.find(PRIV_KEY_SUFFIX);
+        if (found == result.npos) {
+            result += PRIV_KEY_SUFFIX + "\n\n";
+        }
+        if (result.compare(0, PRIV_KEY_PREFIX.size(), PRIV_KEY_PREFIX) != 0) {
+            result = PRIV_KEY_PREFIX + result;
+        }
+    }
+
+    CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
+    CryptoPP::StringSource fs(result, true /*binary*/);
+    CryptoPP::PEM_Load(fs, privateKey, password.c_str(), password.size());
+    CryptoPP::AutoSeededRandomPool prng;
+    privateKey.Validate(prng, 3);
+
+    std::string pubKeyElements;
+    getPublicKey2(privateKey, pubKeyElements);
+    const std::string pubKeyBinary = fromHex(pubKeyElements);
+    const std::string hexAddr = createAddress(pubKeyBinary);
+
+    const QString filePath = makeFullWalletPath(folder, hexAddr);
+    writeToFile(filePath, result, true);
 }

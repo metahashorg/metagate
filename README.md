@@ -41,6 +41,17 @@ Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, Q
 # javascript is called after completion of this function 
 signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
+Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
+В функцию 
+getOnePrivateKeyResultJs(requestId, key, errorNum, errorMessage)
+возвращает приватный ключ. 
+Параметр isCompact, если нужен более компактный формат
+
+Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
+Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
+По окончании работы вызывает функцию
+savePrivateKeyResultJs(requestId, "ok", errorNum, errorMessage)
+
 Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
 # Generates rsa key for specified address.
 # javascript is called after completion of this function 
@@ -72,6 +83,18 @@ Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text
 # Message's signing.
 # javascript is called after completion of this function 
 signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
+
+Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
+В функцию 
+getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
+возвращает приватный ключ. 
+Параметр isCompact, если нужен более компактный формат
+
+Q_INVOKABLE void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
+Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
+По окончании работы вызывает функцию
+savePrivateKeyMHCResultJs(requestId, "ok", errorNum, errorMessage)
+
 ```
 
 ### How to work with Ethereum wallets

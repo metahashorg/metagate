@@ -16,6 +16,10 @@ public:
 
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder);
 
+    static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact);
+
+    static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
+
     /*
        Возвращает публичный ключ в base16
     */

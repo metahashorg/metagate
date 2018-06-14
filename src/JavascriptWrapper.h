@@ -40,6 +40,10 @@ public slots:
 
     Q_INVOKABLE void signMessage(QString requestId, QString keyName, QString text, QString password);
 
+    Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
+
+    Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
+
 public slots:
 
     Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
@@ -49,6 +53,10 @@ public slots:
     Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
 
     Q_INVOKABLE void signMessageMHC(QString requestId, QString keyName, QString text, QString password);
+
+    Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
+
+    Q_INVOKABLE void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
 
 public slots:
 
@@ -129,6 +137,10 @@ private slots:
 private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
+
+    void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult);
+
+    void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult);
 
     QString getAllMTHSWalletsJson(QString walletPath);
 
