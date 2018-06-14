@@ -52,6 +52,18 @@ static std::pair<std::string, std::string> getWifAndAddress(const QString &folde
     return getWifAndAddress(wifAndAddress, isNoEncrypted);
 }
 
+static std::string decodeWif(const std::string &wifEncrypted, const QString &password) {
+    std::string wif = wifEncrypted;
+    if (!password.isNull() && !password.isEmpty()) {
+        if (wifEncrypted.substr(0, 2) == "6P") {
+            wif = decryptWif(wifEncrypted, password.normalized(QString::NormalizationForm_C).toStdString());
+        }
+    } else {
+        CHECK(wifEncrypted.substr(0, 2) != "6P", "Incorrect encrypted wif " + wifEncrypted);
+    }
+    return wif;
+}
+
 std::pair<std::string, std::string> BtcWallet::genPrivateKey(const QString &folder, const QString &password) {
     const bool isCompressed = true;
     const bool isTestnet = false;
@@ -77,14 +89,7 @@ BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const Q
     const std::string wifEncrypted = pair.first;
     address = pair.second;
 
-    wif = wifEncrypted;
-    if (!password.isNull() && !password.isEmpty()) {
-        if (wifEncrypted.substr(0, 2) == "6P") {
-            wif = decryptWif(wifEncrypted, password.normalized(QString::NormalizationForm_C).toStdString());
-        }
-    } else {
-        CHECK(wifEncrypted.substr(0, 2) != "6P", "Incorrect encrypted wif " + wifEncrypted);
-    }
+    wif = decodeWif(wifEncrypted, password);
 
     if (address.empty()) {
         bool tmp;
@@ -277,8 +282,10 @@ std::string BtcWallet::getOneKey(const QString &folder, const std::string &addre
 }
 
 void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
-    const std::string addressBase58 = getWifAndAddress(data, true).second;
+    const auto pair = getWifAndAddress(data, true);
+    const std::string &addressBase58 = pair.second;
+    const std::string &encodedWif = pair.first;
+    decodeWif(encodedWif, password);
     const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
     writeToFile(pathToFile, data, true);
-    BtcWallet wallet(folder, addressBase58, password); // Проверяем пароль
 }

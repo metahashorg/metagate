@@ -715,7 +715,7 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
 void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) {
     const QString JS_NAME_RESULT = "getOnePrivateKeyBtcResultJs";
 
-    LOG << "get one private key eth";
+    LOG << "get one private key btc";
 
     const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
@@ -751,7 +751,7 @@ void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey,
     const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &privateKey, &password]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
 
-        LOG << "Save private key eth";
+        LOG << "Save private key btc";
 
         BtcWallet::savePrivateKey(walletPathBtc, privateKey.toStdString(), password);
 
