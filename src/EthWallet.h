@@ -32,6 +32,10 @@ public:
 
     static std::string makeErc20Data(const std::string &valueHex, const std::string &address);
 
+    static std::string getOneKey(const QString &folder, const std::string &address);
+
+    static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
+
 private:
 
     std::vector<uint8_t> rawprivkey;

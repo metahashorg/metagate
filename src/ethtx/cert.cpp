@@ -30,6 +30,8 @@ static void ParseCert(const char* certContent, CertParams& params) {
     const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(std::string(certContent)).toUtf8());
     const QJsonObject root = document.object();
 
+    CHECK(root.contains("address") && root.value("address").isString(), "address field not found in private key");
+    params.address = ("0x" + root.value("address").toString()).toStdString();
     CHECK(root.contains("version") && root.value("version").isDouble(), "version field not found in private key");
     params.version = root.value("version").toInt();
     CHECK(root.contains("crypto") && root.value("crypto").isObject(), "crypto field not found in private key");
@@ -100,7 +102,7 @@ std::string DecodePrivateKey(const std::string& derivedkey, CertParams& params)
     return privkey;
 }
 
-CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey DecodeCert(const char* certContent, std::string& pass, uint8_t* rawkey)
+CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey DecodeCert(const char* certContent, const std::string& pass, uint8_t* rawkey)
 {
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey pk;
     CertParams params;
@@ -113,4 +115,10 @@ CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey DecodeCert(const ch
     memcpy(rawkey, privkey.c_str(), 32);
     pk = LoadPrivateKey((uint8_t*)privkey.c_str(), privkey.size());
     return pk;
+}
+
+std::string getAddressFromFile(const char* certContent) {
+    CertParams params;
+    ParseCert(certContent, params);
+    return params.address;
 }

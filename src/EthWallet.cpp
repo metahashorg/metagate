@@ -34,7 +34,7 @@ EthWallet::EthWallet(
     const std::string certcontent = readFile(pathToFile);
     CHECK(!certcontent.empty(), "private file empty");
     rawprivkey.resize(EC_KEY_LENGTH);
-    CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privkey = DecodeCert(certcontent.c_str(), password, rawprivkey.data());
+    DecodeCert(certcontent.c_str(), password, rawprivkey.data());
 }
 
 std::string EthWallet::SignTransaction(
@@ -93,4 +93,18 @@ std::string EthWallet::makeErc20Data(const std::string &valueHex, const std::str
     param2.insert(param2.begin(), 64 - param2.size(), '0');
 
     return result + param1 + param2;
+}
+
+std::string EthWallet::getOneKey(const QString &folder, const std::string &address) {
+    const QString pathToFile = getFullPath(folder, address);
+    return readFile(pathToFile);
+}
+
+void EthWallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
+    std::vector<uint8_t> tmp(1000, 0);
+    DecodeCert(data.c_str(), password, tmp.data()); // Проверяем пароль
+    const std::string address = getAddressFromFile(data.c_str());
+
+    const QString pathToFile = getFullPath(folder, address);
+    writeToFile(pathToFile, data, true);
 }

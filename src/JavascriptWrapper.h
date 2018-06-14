@@ -76,6 +76,10 @@ public slots:
 
     Q_INVOKABLE QString getAllEthWalletsAndPathsJson();
 
+    Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
+
+    Q_INVOKABLE void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
+
 public slots:
 
     Q_INVOKABLE void createWalletBtc(QString requestId);

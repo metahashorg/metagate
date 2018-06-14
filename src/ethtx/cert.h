@@ -21,10 +21,12 @@ struct CertParams
     std::string address;
 };
 
-CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey DecodeCert(const char* certContent, std::string& pass, uint8_t* rawkey);
+CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey DecodeCert(const char* certContent, const std::string& pass, uint8_t* rawkey);
 std::pair<std::string, std::string> CreateNewKey(const std::string& password);
 std::string AddressFromPrivateKey(const std::string& privkey);
 std::string DeriveAESKeyFromPassword(const std::string& password, CertParams& params);
 std::string MixedCaseEncoding(const std::string& binaryAddress);
+
+std::string getAddressFromFile(const char* certContent);
 
 #endif

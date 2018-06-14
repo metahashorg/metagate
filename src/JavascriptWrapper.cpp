@@ -516,6 +516,70 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
     }
 }
 
+void JavascriptWrapper::getOnePrivateKeyEth(QString requestId, QString keyName) {
+    const QString JS_NAME_RESULT = "getOnePrivateKeyEthResultJs";
+
+    LOG << "get one private key eth";
+
+    const TypedException &exception = apiVrapper([&, this]() {
+        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
+
+        const std::string privKey = EthWallet::getOneKey(walletPathEth, keyName.toStdString());
+
+        QString result = QString::fromStdString(privKey);
+        result.replace("\"", "\\\"");
+        result.replace("\n", "\\n");
+
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + result + "\", " +
+            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
+            "\"" + "" + "\"" +
+            ");"
+        );
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "" + "\", " +
+            QString::fromStdString(std::to_string(exception.numError)) + ", " +
+            "\"" + QString::fromStdString(exception.description) + "\"" +
+            ");"
+        );
+    }
+}
+
+void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey, QString password) {
+    const QString JS_NAME_RESULT = "savePrivateKeyEthResultJs";
+
+    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &privateKey, &password]() {
+        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
+
+        LOG << "Save private key eth";
+
+        EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
+
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "ok" + "\", " +
+            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
+            "\"" + "" + "\"" +
+            ");"
+        );
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        jsRunSig(JS_NAME_RESULT + "(" +
+            "\"" + requestId + "\", " +
+            "\"" + "" + "\", " +
+            QString::fromStdString(std::to_string(exception.numError)) + ", " +
+            "\"" + QString::fromStdString(exception.description) + "\"" +
+            ");"
+        );
+    }
+}
+
 ///////////////
 /// BITCOIN ///
 ///////////////
