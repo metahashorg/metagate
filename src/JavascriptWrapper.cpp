@@ -85,50 +85,46 @@ static TypedException apiVrapper(const Function &func) {
     }
 }
 
-QString toJsString(const QString &arg) {
+static QString toJsString(const QString &arg) {
     return "\"" + arg + "\"";
 }
 
-QString toJsString(const std::string &arg) {
+static QString toJsString(const std::string &arg) {
     return "\"" + QString::fromStdString(arg) + "\"";
 }
 
-QString toJsString(const char *arg) {
+static QString toJsString(const char *arg) {
     return "\"" + QString(arg) + "\"";
 }
 
-QString toJsString(const int &arg) {
+static QString toJsString(const int &arg) {
     return QString::fromStdString(std::to_string(arg));
 }
 
-QString toJsString(const size_t &arg) {
+static QString toJsString(const size_t &arg) {
     return QString::fromStdString(std::to_string(arg));
 }
 
 template<typename Arg>
-QString append(const Arg &arg);
+static QString append(const Arg &arg) {
+    return toJsString(arg);
+}
 
 template<typename Arg, typename... Args>
-QString append(const Arg &arg, Args&& ...args) {
+static QString append(const Arg &arg, Args&& ...args) {
     return toJsString(arg) + ", " + append(std::forward<Args>(args)...);
-}
-
-template<typename Arg>
-QString append(const Arg &arg) {
-    return toJsString(arg);
 }
 
 template<typename... Args>
 void JavascriptWrapper::runJsFunc(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
     QString jScript = function + "(";
     jScript += append(std::forward<Args>(args)...) + ", ";
-    jScript += QString::fromStdString(std::to_string(exception.numError)) + ", " +
-        "\"" + QString::fromStdString(exception.description) + "\"";
+    jScript += append(exception.numError, exception.description);
     if (!lastArg.isNull() && !lastArg.isEmpty()) {
         jScript += ", \"" + lastArg + "\"";
     }
     jScript += ");";
-    LOG << "JScript " << jScript;
+    //LOG << "JScript " << jScript;
     runJs(jScript);
 }
 
@@ -259,7 +255,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 
     const std::string textStr = text.toStdString();
 
-    const TypedException &exception = apiVrapper([this, &jsNameResult, &requestId, &keyName, &textStr, &password, &walletPath]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
@@ -274,7 +270,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 }
 
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult) {
-    const TypedException &exception = apiVrapper([this, &jsNameResult, &requestId, &keyName, &isCompact, &walletPath]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact);
@@ -303,7 +299,7 @@ void JavascriptWrapper::getOnePrivateKeyMHC(QString requestId, QString keyName, 
 }
 
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult) {
-    const TypedException &exception = apiVrapper([this, &jsNameResult, &requestId, &privateKey, &password, &walletPath]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key";
@@ -330,7 +326,7 @@ void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey,
 
 void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
     const QString JS_NAME_RESULT = "createRsaKeyResultJs";
-    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &address, &requestId, &password]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string publicKey = Wallet::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
 
@@ -365,7 +361,7 @@ void JavascriptWrapper::createWalletEth(QString requestId, QString password) {
 
     LOG << "Create wallet eth " << requestId;
 
-    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &password]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
 
@@ -482,7 +478,7 @@ void JavascriptWrapper::getOnePrivateKeyEth(QString requestId, QString keyName) 
 void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey, QString password) {
     const QString JS_NAME_RESULT = "savePrivateKeyEthResultJs";
 
-    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &privateKey, &password]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key eth";
@@ -506,7 +502,7 @@ void JavascriptWrapper::createWalletBtcPswd(QString requestId, QString password)
 
     LOG << "Create wallet btc " << requestId;
 
-    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &password]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = BtcWallet::genPrivateKey(walletPathBtc, password).first;
 
@@ -626,7 +622,7 @@ void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) 
 void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey, QString password) {
     const QString JS_NAME_RESULT = "savePrivateKeyBtcResultJs";
 
-    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &privateKey, &password]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key btc";
@@ -803,7 +799,7 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
 
     LOG << "get ips servers " << requestId;
 
-    const TypedException &exception = apiVrapper([this, &JS_NAME_RESULT, &requestId, &type, length, count]() {
+    const TypedException &exception = apiVrapper([&, this]() {
         const std::vector<QString> result = nsLookup.getRandom(type, length, count);
 
         QString resultStr = "[";
