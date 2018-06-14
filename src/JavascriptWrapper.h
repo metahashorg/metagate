@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QString>
 
+#include "TypedException.h"
+
 #include "client.h"
 
 class NsLookup;
@@ -155,6 +157,12 @@ private:
     QString getAllMTHSWalletsAndPathsJson(QString walletPath);
 
     void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
+
+    template<typename... Args>
+    void runJsFunc(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
+
+    template<typename... Args>
+    void runJsFunc(const QString &function, const TypedException &exception, Args&& ...args);
 
     void runJs(const QString &script);
 

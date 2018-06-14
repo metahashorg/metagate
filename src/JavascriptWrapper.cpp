@@ -85,6 +85,58 @@ static TypedException apiVrapper(const Function &func) {
     }
 }
 
+QString toJsString(const QString &arg) {
+    return "\"" + arg + "\"";
+}
+
+QString toJsString(const std::string &arg) {
+    return "\"" + QString::fromStdString(arg) + "\"";
+}
+
+QString toJsString(const char *arg) {
+    return "\"" + QString(arg) + "\"";
+}
+
+QString toJsString(const int &arg) {
+    return QString::fromStdString(std::to_string(arg));
+}
+
+QString toJsString(const size_t &arg) {
+    return QString::fromStdString(std::to_string(arg));
+}
+
+template<typename Arg>
+QString append(const Arg &arg);
+
+template<typename Arg, typename... Args>
+QString append(const Arg &arg, Args&& ...args) {
+    return toJsString(arg) + ", " + append(std::forward<Args>(args)...);
+}
+
+template<typename Arg>
+QString append(const Arg &arg) {
+    return toJsString(arg);
+}
+
+template<typename... Args>
+void JavascriptWrapper::runJsFunc(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
+    QString jScript = function + "(";
+    jScript += append(std::forward<Args>(args)...) + ", ";
+    jScript += QString::fromStdString(std::to_string(exception.numError)) + ", " +
+        "\"" + QString::fromStdString(exception.description) + "\"";
+    if (!lastArg.isNull() && !lastArg.isEmpty()) {
+        jScript += ", \"" + lastArg + "\"";
+    }
+    jScript += ");";
+    LOG << "JScript " << jScript;
+    runJs(jScript);
+}
+
+template<typename... Args>
+void JavascriptWrapper::runJsFunc(const QString &function, const TypedException &exception, Args&& ...args) {
+    runJsFunc(function, "", exception, std::forward<Args>(args)...);
+}
+
 ////////////////
 /// METAHASH ///
 ////////////////
@@ -105,33 +157,11 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         Wallet wallet(walletPath, addr, password.toStdString());
         signature = wallet.sign(exampleMessage, publicKey);
 
-        const QString jScript = jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(publicKey) + "\", " +
-            "\"" + QString::fromStdString(addr) + "\", " +
-            "\"" + QString::fromStdString(exampleMessage) + "\", " +
-            "\"" + QString::fromStdString(signature) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\", " +
-            "\"" + wallet.getFullPath() + "\"" +
-            ");";
-        //LOG << jScript.toStdString() << std::endl;
-        jsRunSig(jScript);
+        runJsFunc(jsNameResult, wallet.getFullPath(), TypedException(), requestId, publicKey, addr, exampleMessage, signature);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            "\"" + "" + "\", " +
-            "\"" + "" + "\", " +
-            "\"" + "" + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, "", exception, requestId, "", "", "", "");
     }
 
     LOG << "Create wallet ok " << requestId;
@@ -235,25 +265,11 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
         std::string publicKey;
         const std::string signature = wallet.sign(textStr, publicKey);
 
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(signature) + "\", " +
-            "\"" + QString::fromStdString(publicKey) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, TypedException(), requestId, signature, publicKey);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, exception, requestId, "", "");
     }
 }
 
@@ -268,23 +284,11 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
 
         LOG << "Getted private key " << result;
 
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + result + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, TypedException(), requestId, result);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, exception, requestId, "");
     }
 }
 
@@ -306,23 +310,11 @@ void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey
 
         Wallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
 
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "ok" + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, TypedException(), requestId, "ok");
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(jsNameResult + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(jsNameResult, exception, requestId, "");
     }
 }
 
@@ -342,23 +334,11 @@ void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string publicKey = Wallet::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(publicKey) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, publicKey);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -368,23 +348,11 @@ void JavascriptWrapper::decryptMessage(QString requestId, QString addr, QString 
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string message = Wallet::decryptMessage(walletPathMth, addr.toStdString(), password.toStdString(), encryptedMessageHex.toStdString());
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(message) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, message);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -401,26 +369,11 @@ void JavascriptWrapper::createWalletEth(QString requestId, QString password) {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
 
-        const QString jScript = JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(address) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\", " +
-            "\"" + EthWallet::getFullPath(walletPathEth, address) + "\"" +
-            ");";
-        //LOG << jScript.toStdString() << std::endl;
-        jsRunSig(jScript);
+        runJsFunc(JS_NAME_RESULT, EthWallet::getFullPath(walletPathEth, address), TypedException(), requestId, address);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, "", exception, requestId, "");
     }
 
     LOG << "Create eth wallet ok " << requestId;
@@ -443,23 +396,11 @@ void JavascriptWrapper::signMessageEth(QString requestId, QString address, QStri
             data.toStdString()
         );
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(result) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -530,23 +471,11 @@ void JavascriptWrapper::getOnePrivateKeyEth(QString requestId, QString keyName) 
         result.replace("\"", "\\\"");
         result.replace("\n", "\\n");
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + result + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -560,23 +489,11 @@ void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey,
 
         EthWallet::savePrivateKey(walletPathEth, privateKey.toStdString(), password.toStdString());
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "ok" + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -593,26 +510,11 @@ void JavascriptWrapper::createWalletBtcPswd(QString requestId, QString password)
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = BtcWallet::genPrivateKey(walletPathBtc, password).first;
 
-        const QString jScript = JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(address) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\", " +
-            "\"" + BtcWallet::getFullPath(walletPathBtc, address) + "\"" +
-            ");";
-        //LOG << jScript.toStdString() << std::endl;
-        jsRunSig(jScript);
+        runJsFunc(JS_NAME_RESULT, BtcWallet::getFullPath(walletPathBtc, address), TypedException(), requestId, address);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, "", exception, requestId, "");
     }
 
     LOG << "Create btc wallet ok " << requestId;
@@ -656,23 +558,11 @@ void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, Q
         }
         const std::string result = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + QString::fromStdString(result) + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -725,23 +615,11 @@ void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) 
         QString result = QString::fromStdString(privKey);
         result.replace("\n", "\\n");
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + result + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -755,23 +633,11 @@ void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey,
 
         BtcWallet::savePrivateKey(walletPathBtc, privateKey.toStdString(), password);
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "ok" + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 }
 
@@ -787,21 +653,11 @@ void JavascriptWrapper::updateAndReloadApplication() {
     const TypedException &exception = apiVrapper([&, this]() {
         updateAndRestart();
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + "Ok" + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), "Ok");
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + "Not ok" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, "Not ok");
     }
 }
 
@@ -813,14 +669,7 @@ void JavascriptWrapper::qtOpenInBrowser(QString url) {
 void JavascriptWrapper::getWalletFolders() {
     LOG << "getWalletFolders ";
     const QString JS_NAME_RESULT = "walletFoldersJs";
-    jsRunSig(JS_NAME_RESULT + "(" +
-        "\"" + walletDefaultPath + "\", " +
-        "\"" + walletPath + "\", " +
-        "\"" + userName + "\", " +
-        QString::fromStdString(std::to_string(0)) + ", " +
-        "\"" + QString::fromStdString("") + "\"" +
-        ");"
-    );
+    runJsFunc(JS_NAME_RESULT, TypedException(), walletDefaultPath, walletPath, userName);
 }
 
 bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
@@ -862,21 +711,11 @@ void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
             oldTmhPath.removeRecursively();
         }
 
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + "Ok" + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, TypedException(), "Ok");
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        jsRunSig(JS_NAME_RESULT + "(" +
-            "\"" + "Not ok" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, "Not ok");
     }
 }
 
@@ -929,7 +768,7 @@ void JavascriptWrapper::getMachineUid() {
     const QString JS_NAME_RESULT = "machineUidJs";
 
     const QString uid = "\"" + hardwareId + "\"";
-    jsRunSig(JS_NAME_RESULT + "(" +
+    runJs(JS_NAME_RESULT + "(" +
         uid + "" +
         ");"
     );
@@ -978,24 +817,11 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
         }
         resultStr += "]";
 
-        const QString jScript = JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + resultStr + "\", " +
-            QString::fromStdString(std::to_string(TypeErrors::NOT_ERROR)) + ", " +
-            "\"" + "" + "\"" +
-            ");";
-        //LOG << jScript.toStdString() << std::endl;
-        jsRunSig(jScript);
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, resultStr);
     });
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJs(JS_NAME_RESULT + "(" +
-            "\"" + requestId + "\", " +
-            "\"" + "" + "\", " +
-            QString::fromStdString(std::to_string(exception.numError)) + ", " +
-            "\"" + QString::fromStdString(exception.description) + "\"" +
-            ");"
-        );
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
     }
 
     LOG << "get ips servers ok " << requestId;

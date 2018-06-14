@@ -14,6 +14,11 @@ struct TypedException {
     TypeErrors numError;
     std::string description;
 
+    TypedException()
+        : numError(TypeErrors::NOT_ERROR)
+        , description("")
+    {}
+
     TypedException(const TypeErrors &numError, const std::string &description)
         : numError(numError)
         , description(description)
