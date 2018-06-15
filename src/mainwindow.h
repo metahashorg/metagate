@@ -51,6 +51,8 @@ public:
 
     void showExpanded();
 
+    QString getServerIp(const QString &text) const;
+
 private:
 
     void softReloadPage();

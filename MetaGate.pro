@@ -7,7 +7,8 @@ DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
 
 DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 
-unix:INCLUDEPATH = /usr/local/include/c++/7.1/ ./src ./quazip-0.7.3/quazip/
+unix:INCLUDEPATH = ./src
+#unix:INCLUDEPATH = /usr/local/include/c++/7.1/ ./src ./quazip-0.7.3/quazip/
 win32:INCLUDEPATH += C:/Qt/5.9.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
 
 INCLUDEPATH += $$PWD/ $$PWD/quazip-0.7.3/
@@ -46,7 +47,8 @@ SOURCES += src/main.cpp src/mainwindow.cpp \
     src/dns/resourcerecord.cpp \
     src/WebSocketClient.cpp \
     src/JavascriptWrapper.cpp \
-    src/PagesMappings.cpp
+    src/PagesMappings.cpp \
+    src/mhurlschemehandler.cpp
 
 unix: SOURCES += src/machine_uid_unix.cpp
 
@@ -92,7 +94,8 @@ HEADERS += src/mainwindow.h \
     src/JavascriptWrapper.h \
     src/algorithms.h \
     src/PagesMappings.h \
-    src/SlotWrapper.h
+    src/SlotWrapper.h \
+    src/mhurlschemehandler.h
 
 FORMS += src/mainwindow.ui
 
@@ -109,7 +112,7 @@ DEFINES += QUAZIP_STATIC
 QMAKE_LFLAGS += -rdynamic
 #QMAKE_CXXFLAGS += -Wall -Werror
 
-unix:!macx: INCLUDEPATH += /usr/include /usr/include/x86_64-linux-gnu/ /usr/include/x86_64-linux-gnu/openssl/
+#unix:!macx: INCLUDEPATH += /usr/include /usr/include/x86_64-linux-gnu/ /usr/include/x86_64-linux-gnu/openssl/
 unix:!macx: LIBS += -L/usr/lib -lssl -lcrypto
 unix:!macx: LIBS += -L$$PWD/cryptopp/lib/linux/ -lcryptopp -L$$PWD/quazip-0.7.3/libs/linux/ -lquazip -lz
 unix:!macx: LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
