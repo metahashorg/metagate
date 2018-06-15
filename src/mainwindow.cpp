@@ -33,6 +33,8 @@
 #include "algorithms.h"
 #include "SlotWrapper.h"
 
+#include "mhurlschemehandler.h"
+
 #include "machine_uid.h"
 
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
@@ -141,6 +143,20 @@ private:
     ExternWebPage2 *p;
 };
 
+
+class RequestInterceptor : public QWebEngineUrlRequestInterceptor {
+public:
+
+    explicit RequestInterceptor(QObject * parent)
+        : QWebEngineUrlRequestInterceptor(parent)
+    {}
+
+    virtual void interceptRequest(QWebEngineUrlRequestInfo & info) Q_DECL_OVERRIDE {
+        qDebug() << "URL >> " << info.requestUrl();
+        qDebug() << "r >> " << info.resourceType();
+    }
+};
+
 MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
@@ -150,6 +166,11 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 {
     ui->setupUi(this);
 
+
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), new MHUrlSchemeHandler(this));
+    RequestInterceptor *interceptor = new RequestInterceptor(ui->webView);
+    //QWebEngineProfile::defaultProfile()->setRequestInterceptor(interceptor);
+    ui->webView->page()->profile()->setRequestInterceptor(interceptor);
     //ui->webView->setPage(new ExternWebPage());
 
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -388,7 +409,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             other = uri.mid(pos);
             uri = uri.left(pos);
         }
-
+/*
         QString ip;
         if (!pageInfo.ips.empty()) {
             ip = ::getRandom(pageInfo.ips);
@@ -398,7 +419,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         }
         LOG << "Switch to host " << uri << " ip " << ip << " paramethers " << other;
         QWebEngineHttpRequest req(ip + other);
-        req.setHeader("host", uri.toUtf8());
+        //req.setHeader("Host", uri.toUtf8());
+        req.setHeader("Host", "tux.test");*/
+
         QString clText;
         if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
             clText = reference;
@@ -406,7 +429,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             clText = pageInfo.printedName + other;
         }
         addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
-        loadUrl(req);
+        ui->webView->load(reference);
     } else {
         QString clText;
         if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
@@ -496,27 +519,14 @@ void MainWindow::loadUrl(const QString &page) {
     LOG << "Reload ok";
 }
 
-class RequestInterceptor : public QWebEngineUrlRequestInterceptor {
-public:
-
-    explicit RequestInterceptor(QObject * parent, const QString &hostName)
-        : QWebEngineUrlRequestInterceptor(parent)
-        , hostName(hostName)
-    {}
-
-    virtual void interceptRequest(QWebEngineUrlRequestInfo & info) Q_DECL_OVERRIDE {
-        info.setHttpHeader("host", hostName.toUtf8());
-    }
-
-private:
-
-    const QString hostName;
-};
-
+// TODO remove
 void MainWindow::loadUrl(const QWebEngineHttpRequest &url) {
-    RequestInterceptor *interceptor = new RequestInterceptor(ui->webView, url.header("host"));
-    ui->webView->page()->profile()->setRequestInterceptor(interceptor);
-    ui->webView->load(url);
+    //RequestInterceptor *interceptor = new RequestInterceptor(ui->webView, url.header("Host"));
+    //ui->webView->page()->profile()->setRequestInterceptor(interceptor);
+    //ui->webView->load(QString("mh://0x00ad7aaa01cc0bbbaf438ef7b1d14aaa557497a4ea64393786/unicorn.jpg"));
+    //ui->webView->load(QString("mh://0x00ad7aaa01cc0bbbaf438ef7b1d14aaa557497a4ea64393786"));
+
+    //ui->webView->load(url);
     LOG << "Reload ok";
 }
 
@@ -631,4 +641,18 @@ END_SLOT_WRAPPER
 
 void MainWindow::showExpanded() {
     show();
+}
+
+QString MainWindow::getServerIp(const QString &text) const
+{
+    const PageInfo pageInfo = pagesMappings.find(text);
+    QString ip;
+    if (!pageInfo.ips.empty()) {
+        ip = ::getRandom(pageInfo.ips);
+    } else {
+        CHECK(!pagesMappings.getDefaultIps().empty(), "defaults mh ips empty");
+        ip = ::getRandom(pagesMappings.getDefaultIps());
+    }
+    QUrl url(ip);
+    return url.host();
 }
