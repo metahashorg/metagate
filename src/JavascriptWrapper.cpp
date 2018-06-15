@@ -249,9 +249,7 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath) {
 }
 
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult) {
-    LOG << requestId;
-    LOG << keyName;
-    LOG << text;
+    LOG << "Sign message " << requestId << keyName << text;
 
     const std::string textStr = text.toStdString();
 
@@ -278,7 +276,7 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
         QString result = QString::fromStdString(privKey);
         result.replace("\n", "\\n");
 
-        LOG << "Getted private key " << result;
+        LOG << "Getted private key";
 
         runJsFunc(jsNameResult, TypedException(), requestId, result);
     });
@@ -325,6 +323,8 @@ void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey,
 }
 
 void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
+    LOG << "Create rsa key";
+
     const QString JS_NAME_RESULT = "createRsaKeyResultJs";
     const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
@@ -339,6 +339,8 @@ void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString
 }
 
 void JavascriptWrapper::decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex) {
+    LOG << "decrypt message";
+
     const QString JS_NAME_RESULT = "decryptMessageResultJs";
     const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
@@ -727,6 +729,7 @@ void JavascriptWrapper::exitApplication() {
 
 QString JavascriptWrapper::backupKeys(QString caption) {
     try {
+        LOG << "Backup keys";
         const QString beginPath = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)).filePath("backup.zip");
         const QString file = QFileDialog::getSaveFileName(widget_, caption, beginPath);
         ::backupKeys(walletPath, file);
@@ -742,6 +745,7 @@ QString JavascriptWrapper::backupKeys(QString caption) {
 
 QString JavascriptWrapper::restoreKeys(QString caption) {
     try {
+        LOG << "Restore keys";
         const QString beginPath = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)).filePath("backup.zip");
         const QString file = QFileDialog::getOpenFileName(widget_, caption, beginPath, "*.zip;;*.*");
         const std::string text = checkBackupFile(file);
@@ -829,6 +833,7 @@ void JavascriptWrapper::setUserName(const QString &userName) {
 
 void JavascriptWrapper::saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave) {
 BEGIN_SLOT_WRAPPER
+    LOG << "Save file from url";
     const QString beginPath = QDir(walletPath).filePath(fileName);
     const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
     CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
@@ -845,6 +850,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
 BEGIN_SLOT_WRAPPER
+    LOG << "print url";
     client.sendMessageGet(url, [this, printWindowCaption, text](const std::string &response) {
         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
 
@@ -856,8 +862,9 @@ BEGIN_SLOT_WRAPPER
         QPrintDialog *dialog = new QPrintDialog(&printer);
         dialog->setWindowTitle(printWindowCaption);
 
-        if (dialog->exec() != QDialog::Accepted)
-            return -1;
+        if (dialog->exec() != QDialog::Accepted) {
+            return;
+        }
 
         QPainter painter;
         painter.begin(&printer);
