@@ -21,7 +21,7 @@ void compressDir(QString dir, QString fileCompressed) {
 }
 
 void backupKeys(QString dir, QString fileCompressed) {
-    const QString backupFileIdent = QDir(dir).filePath("meta.info");
+    const QString backupFileIdent = makePath(dir, "meta.info");
     const QDateTime time = QDateTime::currentDateTime();
     writeToFile(backupFileIdent, time.toString().toStdString(), false);
     compressDir(dir, fileCompressed);
@@ -29,7 +29,7 @@ void backupKeys(QString dir, QString fileCompressed) {
 }
 
 std::string checkBackupFile(QString fileCompressed) {
-    const QString metaFile = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).filePath("meta.info");
+    const QString metaFile = makePath(QStandardPaths::writableLocation(QStandardPaths::TempLocation), "meta.info");
     const QString tempFile = JlCompress::extractFile(fileCompressed, "meta.info", metaFile);
     CHECK(!tempFile.isNull() && !tempFile.isEmpty(), "Not supported backup file format");
     const std::string content = readFile(tempFile);
@@ -38,6 +38,6 @@ std::string checkBackupFile(QString fileCompressed) {
 
 void restoreKeys(QString fileCompressed, QString dir) {
     extractDir(fileCompressed, dir);
-    const QString backupFileIdent = QDir(dir).filePath("meta.info");
+    const QString backupFileIdent = makePath(dir, "meta.info");
     QDir().remove(backupFileIdent);
 }

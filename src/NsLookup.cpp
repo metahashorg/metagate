@@ -28,7 +28,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     : QObject(parent)
     , pagesPath(pagesPath)
 {
-    const QString nodesFile = QDir(pagesPath).filePath(NODES_FILE);
+    const QString nodesFile = makePath(pagesPath, NODES_FILE);
     QFile inputFile(nodesFile);
     CHECK(inputFile.open(QIODevice::ReadOnly), "Not open file " + nodesFile.toStdString());
     QTextStream in(&inputFile);
@@ -49,7 +49,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
         }
     }
 
-    savedNodesPath = QDir(QCoreApplication::applicationDirPath()).filePath(FILL_NODES_PATH);
+    savedNodesPath = makePath(QCoreApplication::applicationDirPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath);
     const system_time_point now = system_now();
     milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);

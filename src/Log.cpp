@@ -3,13 +3,15 @@
 #include <QApplication>
 #include <QDir>
 
+#include "utils.h"
+
 std::ofstream __log_file__;
 
 void initLog() {
 #ifdef TARGET_WINDOWS
-    auto path = QDir(QApplication::applicationDirPath()).filePath("log.txt").toStdWString();
+    auto path = makePath(QApplication::applicationDirPath(), "log.txt").toStdWString();
 #else
-    auto path = QDir(QApplication::applicationDirPath()).filePath("log.txt").toStdString();
+    auto path = makePath(QApplication::applicationDirPath(), "log.txt").toStdString();
 #endif
     __log_file__.open(path, std::ios_base::trunc);
 }

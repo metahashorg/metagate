@@ -47,7 +47,7 @@ JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 
-    walletDefaultPath = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)).filePath(WALLET_PATH_DEFAULT);
+    walletDefaultPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PATH_DEFAULT);
     LOG << "Wallets default path " << walletPath;
 
     setPaths(walletDefaultPath, "");
@@ -673,13 +673,13 @@ void JavascriptWrapper::getWalletFolders() {
 bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
     LOG << "Migrate keys to path " << newPath;
 
-    const QString prevPath = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)).filePath(WALLET_PREV_PATH);
+    const QString prevPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PREV_PATH);
 
-    copyRecursively(QDir(prevPath).filePath(WALLET_PATH_ETH), QDir(newPath).filePath(WALLET_PATH_ETH), false);
-    copyRecursively(QDir(prevPath).filePath(WALLET_PATH_BTC), QDir(newPath).filePath(WALLET_PATH_BTC), false);
-    copyRecursively(QDir(prevPath).filePath(WALLET_PATH_MTH), QDir(newPath).filePath(WALLET_PATH_MTH), false);
-    copyRecursively(QDir(prevPath).filePath(WALLET_PATH_TMH), QDir(newPath).filePath(WALLET_PATH_TMH), false);
-    copyRecursively(prevPath, QDir(newPath).filePath(WALLET_PATH_TMH), false);
+    copyRecursively(makePath(prevPath, WALLET_PATH_ETH), makePath(newPath, WALLET_PATH_ETH), false);
+    copyRecursively(makePath(prevPath, WALLET_PATH_BTC), makePath(newPath, WALLET_PATH_BTC), false);
+    copyRecursively(makePath(prevPath, WALLET_PATH_MTH), makePath(newPath, WALLET_PATH_MTH), false);
+    copyRecursively(makePath(prevPath, WALLET_PATH_TMH), makePath(newPath, WALLET_PATH_TMH), false);
+    copyRecursively(prevPath, makePath(newPath, WALLET_PATH_TMH), false);
 
     return true;
 }
@@ -692,15 +692,15 @@ void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
         walletPath = newPatch;
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         createFolder(walletPath);
-        walletPathEth = QDir(walletPath).filePath(WALLET_PATH_ETH);
+        walletPathEth = makePath(walletPath, WALLET_PATH_ETH);
         createFolder(walletPathEth);
-        walletPathBtc = QDir(walletPath).filePath(WALLET_PATH_BTC);
+        walletPathBtc = makePath(walletPath, WALLET_PATH_BTC);
         createFolder(walletPathBtc);
-        walletPathMth = QDir(walletPath).filePath(WALLET_PATH_MTH);
+        walletPathMth = makePath(walletPath, WALLET_PATH_MTH);
         createFolder(walletPathMth);
-        walletPathTmh = QDir(walletPath).filePath(WALLET_PATH_TMH);
+        walletPathTmh = makePath(walletPath, WALLET_PATH_TMH);
         createFolder(walletPathTmh);
-        walletPathOldTmh = QDir(walletPath).filePath(WALLET_PATH_TMH_OLD);
+        walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);
         LOG << "Wallets path " << walletPath;
 
         QDir oldTmhPath(walletPathOldTmh);
@@ -730,7 +730,7 @@ void JavascriptWrapper::exitApplication() {
 QString JavascriptWrapper::backupKeys(QString caption) {
     try {
         LOG << "Backup keys";
-        const QString beginPath = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)).filePath("backup.zip");
+        const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
         const QString file = QFileDialog::getSaveFileName(widget_, caption, beginPath);
         ::backupKeys(walletPath, file);
         return "";
@@ -746,7 +746,7 @@ QString JavascriptWrapper::backupKeys(QString caption) {
 QString JavascriptWrapper::restoreKeys(QString caption) {
     try {
         LOG << "Restore keys";
-        const QString beginPath = QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)).filePath("backup.zip");
+        const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
         const QString file = QFileDialog::getOpenFileName(widget_, caption, beginPath, "*.zip;;*.*");
         const std::string text = checkBackupFile(file);
         QMessageBox::StandardButton reply;
@@ -834,7 +834,7 @@ void JavascriptWrapper::setUserName(const QString &userName) {
 void JavascriptWrapper::saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave) {
 BEGIN_SLOT_WRAPPER
     LOG << "Save file from url";
-    const QString beginPath = QDir(walletPath).filePath(fileName);
+    const QString beginPath = makePath(walletPath, fileName);
     const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
     CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
 

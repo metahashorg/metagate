@@ -522,7 +522,7 @@ void MainWindow::loadUrl(const QWebEngineHttpRequest &url) {
 
 void MainWindow::loadFile(const QString &pageName) {
     LOG << "Reload. Last version " << lastHtmls.lastVersion;
-    loadUrl("file:///" + QDir(QDir(QDir(lastHtmls.htmlsRootPath).filePath(lastHtmls.folderName)).filePath(lastHtmls.lastVersion)).filePath(pageName));
+    loadUrl("file:///" + makePath(lastHtmls.htmlsRootPath, lastHtmls.folderName, lastHtmls.lastVersion, pageName));
 }
 
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {

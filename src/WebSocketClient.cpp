@@ -18,7 +18,7 @@ WebSocketClient::WebSocketClient(QObject *parent)
 {
     qRegisterMetaType<QAbstractSocket::SocketState>();
 
-    const QString pathToWebSServer = QDir(Uploader::getPagesPath()).filePath(WEB_SOCKET_SERVER_FILE);
+    const QString pathToWebSServer = makePath(Uploader::getPagesPath(), WEB_SOCKET_SERVER_FILE);
     const std::string &fileData = readFile(pathToWebSServer);
     m_url = QString::fromStdString(fileData).trimmed();
 

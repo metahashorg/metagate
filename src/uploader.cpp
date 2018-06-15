@@ -40,7 +40,7 @@ static QString toHash(const QString &valueQ) {
 
 std::pair<QString, QString> Uploader::getLastVersion(const QString &pagesPath) {
     std::lock_guard<std::mutex> lock(lastVersionMut);
-    const QString filePath = QDir(pagesPath).filePath("lastVersion.txt");
+    const QString filePath = makePath(pagesPath, "lastVersion.txt");
     QFile inputFile(filePath);
     CHECK(inputFile.open(QIODevice::ReadOnly), "Not open file " + filePath.toStdString());
     QTextStream in(&inputFile);
@@ -53,7 +53,7 @@ std::pair<QString, QString> Uploader::getLastVersion(const QString &pagesPath) {
 
 void Uploader::setLastVersion(const QString &pagesPath, const QString &folderName, const QString &version) {
     std::lock_guard<std::mutex> lock(lastVersionMut);
-    const QString filePath = QDir(pagesPath).filePath("lastVersion.txt");
+    const QString filePath = makePath(pagesPath, "lastVersion.txt");
     writeToFile(filePath, (version + "\n" + folderName + "\n").toStdString(), false);
 }
 
@@ -62,9 +62,9 @@ QString Uploader::getPagesPath() {
     if (!path.isEmpty())
         return QString(path);
 
-    const QString path1(QDir(QApplication::applicationDirPath()).filePath("pages/"));
-    const QString path2(QDir(QApplication::applicationDirPath()).filePath("../WalletMetahash/pages/"));
-    const QString path3(QDir(QApplication::applicationDirPath()).filePath("../../WalletMetahash/pages/"));
+    const QString path1(makePath(QApplication::applicationDirPath(), "pages/"));
+    const QString path2(makePath(QApplication::applicationDirPath(), "../WalletMetahash/pages/"));
+    const QString path3(makePath(QApplication::applicationDirPath(), "../../WalletMetahash/pages/"));
     QString currentBeginPath;
     QDir dirTmp;
     if (dirTmp.exists(path1)) {
@@ -88,7 +88,7 @@ LastHtmlVersion Uploader::getLastHtmlVersion() {
 }
 
 QString Uploader::getAutoupdaterPath() {
-    const QString path1(QDir(QApplication::applicationDirPath()).filePath("autoupdater/"));
+    const QString path1(makePath(QApplication::applicationDirPath(), "autoupdater/"));
     QDir dirTmp(path1);
     if (!dirTmp.exists()) {
         CHECK(dirTmp.mkpath(path1), "dont create autoupdater path");
@@ -97,7 +97,7 @@ QString Uploader::getAutoupdaterPath() {
 }
 
 QString Uploader::getTmpAutoupdaterPath() {
-    return QDir(getAutoupdaterPath()).filePath("folder/");
+    return makePath(getAutoupdaterPath(), "folder/");
 }
 
 static std::pair<bool, std::string> parseServer(const std::string &str) {
@@ -118,7 +118,7 @@ static std::pair<bool, std::string> parseServer(const std::string &str) {
 }
 
 Uploader::Servers Uploader::getServers() {
-    const QString currentBeginPath = QDir(getPagesPath()).filePath("servers.txt");
+    const QString currentBeginPath = makePath(getPagesPath(), "servers.txt");
 
     Servers servers;
     QFile inputFile(currentBeginPath);
@@ -256,10 +256,10 @@ BEGIN_SLOT_WRAPPER
             const QString hashStr(hashAlg.result().toHex());
             CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
 
-            const QString archiveFilePath = QDir(currentBeginPath).filePath(version + ".zip");
+            const QString archiveFilePath = makePath(currentBeginPath, version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);
 
-            const QString extractedPath = QDir(QDir(currentBeginPath).filePath(folderServer)).filePath(version);
+            const QString extractedPath = makePath(currentBeginPath, folderServer, version);
             extractDir(archiveFilePath, extractedPath);
             LOG << "Extracted " << extractedPath << ".";
 
@@ -311,7 +311,7 @@ BEGIN_SLOT_WRAPPER
             CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
 
             const QString autoupdaterPath = getAutoupdaterPath();
-            const QString archiveFilePath = QDir(autoupdaterPath).filePath(version + ".zip");
+            const QString archiveFilePath = makePath(autoupdaterPath, version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);
 
             extractDir(archiveFilePath, getTmpAutoupdaterPath());

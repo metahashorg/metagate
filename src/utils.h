@@ -4,6 +4,7 @@
 #include <string>
 
 #include <QString>
+#include <QDir>
 
 std::string toHex(const std::string &data);
 
@@ -26,5 +27,21 @@ std::string readFile(const QString &pathToFile);
 bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs = true);
 
 void createFolder(const QString &folder);
+
+inline QString makePath(const QString &arg) {
+    return arg;
+}
+
+template<typename... Args>
+inline QString makePath(const QString &arg, const Args& ...args) {
+    auto removeSlash = [](const QString &str) {
+        if (str.startsWith('/')) {
+            return str.mid(1);
+        } else {
+            return str;
+        }
+    };
+    return QDir(arg).filePath(removeSlash(makePath(args...)));
+}
 
 #endif // UTILS_H
