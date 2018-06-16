@@ -87,6 +87,7 @@ const std::string SimpleClient::ERROR_BAD_REQUEST = "Error bad request";
 
 void SimpleClient::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
+    std::vector<std::reference_wrapper<QNetworkReply>> toDelete;
     const time_point timeEnd = ::now();
     for (auto &iter: requests) {
         auto &reply = *iter.second;
@@ -97,9 +98,13 @@ BEGIN_SLOT_WRAPPER
             const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
             if (duration >= timeout) {
                 LOG << "Timeout request";
-                reply.abort();
+                toDelete.emplace_back(reply);
             }
         }
+    }
+
+    for (QNetworkReply& reply: toDelete) {
+        reply.abort();
     }
 END_SLOT_WRAPPER
 }
