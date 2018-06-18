@@ -66,7 +66,6 @@ void MHUrlSchemeHandler::onRequestFinished()
                         i.first.data(),
                         i.second.data());
     }
-    //contentMimeType.toByteArray()
+    reply->setParent(job);
     job->reply(mime, reply);
-    //reply->deleteLater();
 }
