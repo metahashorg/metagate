@@ -53,6 +53,8 @@ public:
 
     static void savePrivateKey(const QString &folder, const std::string &data, const QString &password);
 
+    static void checkAddress(const std::string &address);
+
 private:
 
     std::string encode(

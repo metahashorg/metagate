@@ -108,3 +108,13 @@ void EthWallet::savePrivateKey(const QString &folder, const std::string &data, c
     const QString pathToFile = getFullPath(folder, address);
     writeToFile(pathToFile, data, true);
 }
+
+void EthWallet::checkAddress(const std::string &address) {
+    CHECK(address.size() == 42, "Incorrect address");
+    CHECK(address.compare(0, 2, "0x") == 0, "Incorrect address");
+
+    const std::string addressPart = address.substr(2);
+
+    const std::string addressMixed = "0x" + MixedCaseEncoding(HexStringToDump(addressPart));
+    CHECK(addressMixed == address, "Incorrect Address");
+}

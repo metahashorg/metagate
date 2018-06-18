@@ -91,6 +91,20 @@ static void printPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256
     LOG << "publicKey: " << publicKeyStr;
 }
 
+static std::string doubleSha(const std::string &str) {
+    CryptoPP::SHA256 sha256hashAlg2;
+    std::string sha256Hash2;
+    sha256Hash2.reserve(500);
+    CryptoPP::StringSource ss3(str, true, new CryptoPP::HashFilter(sha256hashAlg2, new CryptoPP::StringSink(sha256Hash2)));
+
+    CryptoPP::SHA256 sha256hashAlg3;
+    std::string sha256Hash3;
+    sha256Hash3.reserve(500);
+    CryptoPP::StringSource ss4(sha256Hash2, true, new CryptoPP::HashFilter(sha256hashAlg3, new CryptoPP::StringSink(sha256Hash3)));
+
+    return sha256Hash3;
+}
+
 std::string Wallet::createAddress(const std::string &publicKeyBinary) {
     CryptoPP::SHA256 sha256hashAlg;
     std::string sha256Hash;
@@ -103,22 +117,30 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
     CryptoPP::StringSource ss2(sha256Hash, true, new CryptoPP::HashFilter(ripemdHashAlg, new CryptoPP::StringSink(ripemdHash)));
     ripemdHash = '\0' + ripemdHash;
 
-    CryptoPP::SHA256 sha256hashAlg2;
-    std::string sha256Hash2;
-    sha256Hash2.reserve(500);
-    CryptoPP::StringSource ss3(ripemdHash, true, new CryptoPP::HashFilter(sha256hashAlg2, new CryptoPP::StringSink(sha256Hash2)));
-
-    CryptoPP::SHA256 sha256hashAlg3;
-    std::string sha256Hash3;
-    sha256Hash3.reserve(500);
-    CryptoPP::StringSource ss4(sha256Hash2, true, new CryptoPP::HashFilter(sha256hashAlg3, new CryptoPP::StringSink(sha256Hash3)));
+    const std::string sha256Hash3 = doubleSha(ripemdHash);
     ripemdHash += sha256Hash3.substr(0, 4);
 
     const std::string hexAddr = "0x" + toHex(ripemdHash);
 
+    CHECK(hexAddr.size() == 52, "Incorrect address");
+
     //std::cout << hexAddr << std::endl;
 
     return hexAddr;
+}
+
+void Wallet::checkAddress(const std::string &address) {
+    std::string addr = address;
+    CHECK(addr.size() == 52, "Incorrect address");
+    CHECK(addr.compare(0, 2, "0x") == 0, "Incorrect address");
+    addr = addr.substr(2);
+
+    const std::string binAddress = fromHex(addr);
+    const std::string payload = binAddress.substr(0, binAddress.size() - 4);
+    const std::string hash = binAddress.substr(binAddress.size() - 4);
+
+    const std::string doubleHash = doubleSha(payload);
+    CHECK(doubleHash.substr(0, hash.size()) == hash, "Incorrect address");
 }
 
 void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){

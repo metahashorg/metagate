@@ -40,6 +40,8 @@ public slots:
 
     Q_INVOKABLE QString getAllWalletsAndPathsJson();
 
+    Q_INVOKABLE void checkAddress(QString requestId, QString address);
+
     Q_INVOKABLE void signMessage(QString requestId, QString keyName, QString text, QString password);
 
     Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
@@ -72,6 +74,8 @@ public slots:
 
     Q_INVOKABLE void signMessageEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString to, QString value, QString data);
 
+    Q_INVOKABLE void checkAddressEth(QString requestId, QString address);
+
     //Q_INVOKABLE void signMessageTokensEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString contractAddress, QString to, QString value);
 
     Q_INVOKABLE QString getAllEthWalletsJson();
@@ -87,6 +91,8 @@ public slots:
     Q_INVOKABLE void createWalletBtc(QString requestId);
 
     Q_INVOKABLE void createWalletBtcPswd(QString requestId, QString password);
+
+    Q_INVOKABLE void checkAddressBtc(QString requestId, QString address);
 
     Q_INVOKABLE void signMessageBtc(QString requestId, QString address, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees);
 

@@ -41,6 +41,10 @@ Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, Q
 # javascript is called after completion of this function 
 signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
+Q_INVOKABLE void checkAddress(QString requestId, QString address);
+Проверить адрес на корректность. Результат вернется в функцию 
+checkAddressResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
+
 Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
 В функцию 
 getOnePrivateKeyResultJs(requestId, key, errorNum, errorMessage)
@@ -84,6 +88,10 @@ Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text
 # javascript is called after completion of this function 
 signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
+Q_INVOKABLE void checkAddress(QString requestId, QString address);
+Проверить адрес на корректность. Результат вернется в функцию 
+checkAddressResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
+
 Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
 В функцию 
 getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
@@ -125,6 +133,10 @@ Q_INVOKABLE QString getAllEthWalletsAndPathsJson();
 # Result returns as a json array
 [{"address":"addr","path":"path"}]
 
+Q_INVOKABLE void checkAddressEth(QString requestId, QString address);
+Проверить адрес на корректность. Результат вернется в функцию 
+checkAddressEthResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
+
 Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
 В функцию 
 getOnePrivateKeyEthResultJs(requestId, key, errorNum, errorMessage)
@@ -163,6 +175,10 @@ Q_INVOKABLE QString getAllBtcWalletsJson();
 Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
 # Gets the list of all metahash accounts. 
 # Result returns as a json array [{"address":"addr","path":"path"}]
+
+Q_INVOKABLE void checkAddressBtc(QString requestId, QString address);
+Проверить адрес на корректность. Результат вернется в функцию 
+checkAddressBtcResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
 В функцию 

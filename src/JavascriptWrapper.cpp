@@ -248,6 +248,26 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath) {
     }
 }
 
+void JavascriptWrapper::checkAddress(QString requestId, QString address) {
+    LOG << "Check address " << address;
+    const QString JS_NAME_RESULT = "checkAddressResultJs";
+    const TypedException &exception = apiVrapper([&, this]() {
+        try {
+            Wallet::checkAddress(address.toStdString());
+        } catch (const Exception &e) {
+            runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "not valid");
+        } catch (...) {
+            throw;
+        }
+
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
+    }
+}
+
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult) {
     LOG << "Sign message " << requestId << keyName << text;
 
@@ -402,6 +422,26 @@ void JavascriptWrapper::signMessageEth(QString requestId, QString address, QStri
     }
 }
 
+void JavascriptWrapper::checkAddressEth(QString requestId, QString address) {
+    LOG << "Check address eth " << address;
+    const QString JS_NAME_RESULT = "checkAddressEthResultJs";
+    const TypedException &exception = apiVrapper([&, this]() {
+        try {
+            EthWallet::checkAddress(address.toStdString());
+        } catch (const Exception &e) {
+            runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "not valid");
+        } catch (...) {
+            throw;
+        }
+
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
+    }
+}
+
 /*void JavascriptWrapper::signMessageTokensEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString contractAddress, QString to, QString value) {
     const QString JS_NAME_RESULT = "signMessageEthResultJs";
 
@@ -520,6 +560,26 @@ void JavascriptWrapper::createWalletBtcPswd(QString requestId, QString password)
 
 void JavascriptWrapper::createWalletBtc(QString requestId) {
     createWalletBtcPswd(requestId, "");
+}
+
+void JavascriptWrapper::checkAddressBtc(QString requestId, QString address) {
+    LOG << "Check address btc " << address;
+    const QString JS_NAME_RESULT = "checkAddressBtcResultJs";
+    const TypedException &exception = apiVrapper([&, this]() {
+        try {
+            BtcWallet::checkAddress(address.toStdString());
+        } catch (const Exception &e) {
+            runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "not valid");
+        } catch (...) {
+            throw;
+        }
+
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
+    }
 }
 
 void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees) {

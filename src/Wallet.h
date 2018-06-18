@@ -20,6 +20,8 @@ public:
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
 
+    static void checkAddress(const std::string &address);
+
     /*
        Возвращает публичный ключ в base16
     */

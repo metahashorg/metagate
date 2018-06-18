@@ -289,3 +289,7 @@ void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, c
     const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
     writeToFile(pathToFile, data, true);
 }
+
+void BtcWallet::checkAddress(const std::string &address) {
+    checkAddressBase56(address);
+}

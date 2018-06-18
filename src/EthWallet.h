@@ -24,6 +24,8 @@ public:
         std::string data
     );
 
+    static void checkAddress(const std::string &address);
+
     static QString getFullPath(const QString &folder, const std::string &address);
 
     static std::string genPrivateKey(const QString &folder, const std::string &password);
