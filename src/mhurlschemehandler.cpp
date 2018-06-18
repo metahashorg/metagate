@@ -26,6 +26,7 @@ void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
     MainWindow *win = qobject_cast<MainWindow *>(parent());
     CHECK(win, "mainwin cast");
     ip = win->getServerIp(url.toString());
+    qDebug() << "ip " << ip;
 
     QUrl newurl(url);
     newurl.setScheme(QStringLiteral("http"));
@@ -52,7 +53,11 @@ void MHUrlSchemeHandler::onRequestFinished()
     }
 
     QVariant contentMimeType = reply->header(QNetworkRequest::ContentTypeHeader);
-    qDebug() << contentMimeType;
+    QByteArray mime = contentMimeType.toByteArray();
+    const int pos = mime.indexOf(';');
+    if (pos != -1)
+        mime = mime.left(pos);
+    qDebug() << mime;
 
     for (auto &i : reply->rawHeaderPairs()) {
         QString str;
@@ -61,6 +66,7 @@ void MHUrlSchemeHandler::onRequestFinished()
                         i.first.data(),
                         i.second.data());
     }
-    job->reply(contentMimeType.toByteArray(), reply);
+    //contentMimeType.toByteArray()
+    job->reply(mime, reply);
     //reply->deleteLater();
 }
