@@ -917,10 +917,8 @@ BEGIN_SLOT_WRAPPER
     const TypedException &exception = apiVrapper([&, this]() {
         const QString beginPath = makePath(walletPath, fileName);
         const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
-        const std::string fileData = readFile(file);
+        const std::string fileData = readFileBinary(file);
         const std::string base64Data = toBase64(fileData);
-
-        LOG << "data " << base64Data;
 
         runJsFunc(JS_NAME_RESULT, TypedException(), requestId, base64Data);
     });

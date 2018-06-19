@@ -10,6 +10,8 @@ std::string toHex(const std::string &data);
 
 std::string toBase64(const std::string &value);
 
+std::string fromBase64(const std::string &value);
+
 std::string base58ToHex(const std::string &value);
 
 std::string fromHex(const std::string &value);
@@ -23,6 +25,8 @@ void writeToFile(const QString &pathToFile, const std::string &data, bool isChec
 void writeToFileBinary(const QString &pathToFile, const std::string &data, bool isCheck);
 
 std::string readFile(const QString &pathToFile);
+
+std::string readFileBinary(const QString &pathToFile);
 
 bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs = true);
 
