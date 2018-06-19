@@ -146,6 +146,8 @@ public slots:
 
     Q_INVOKABLE void printUrl(QString url, QString printWindowCaption, QString text);
 
+    Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);

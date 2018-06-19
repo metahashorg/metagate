@@ -908,6 +908,29 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "loadFileResultJs";
+
+    LOG << "change file and load " << requestId;
+
+    const TypedException &exception = apiVrapper([&, this]() {
+        const QString beginPath = makePath(walletPath, fileName);
+        const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
+        const std::string fileData = readFile(file);
+        const std::string base64Data = toBase64(fileData);
+
+        LOG << "data " << base64Data;
+
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, base64Data);
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
+    }
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
 BEGIN_SLOT_WRAPPER
     LOG << "print url";

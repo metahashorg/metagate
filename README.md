@@ -277,5 +277,10 @@ Q_INVOKABLE void lineEditReturnPressed(QString text);
 
 Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
 Показывает диалог сохранения файла, после чего выкачивает файл и сохраняет
+
+Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName);
+Показывает диалог выбора файла, после чего кодирует выбранный файл в base64 и отправляет в функцию
+loadFileResultJs(requestId, result, errorNum, errorMessage)
+
 ```
 
