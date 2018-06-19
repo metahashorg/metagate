@@ -112,8 +112,8 @@ DEFINES += QUAZIP_STATIC
 QMAKE_LFLAGS += -rdynamic
 #QMAKE_CXXFLAGS += -Wall -Werror
 
-#unix:!macx: INCLUDEPATH += /usr/include /usr/include/x86_64-linux-gnu/ /usr/include/x86_64-linux-gnu/openssl/
-unix:!macx: LIBS += -L/usr/lib -lssl -lcrypto
+unix:!macx: INCLUDEPATH += /usr/local/include
+unix:!macx: LIBS += -L/usr/local/lib -lssl -lcrypto
 unix:!macx: LIBS += -L$$PWD/cryptopp/lib/linux/ -lcryptopp -L$$PWD/quazip-0.7.3/libs/linux/ -lquazip -lz
 unix:!macx: LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
 
