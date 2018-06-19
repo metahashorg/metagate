@@ -37,6 +37,10 @@ public:
 
     std::string sign(const std::string &message, std::string &publicKey);
 
+    static std::string genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data);
+
+    void sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey);
+
     const QString& getFullPath() const {
         return fullPath;
     }

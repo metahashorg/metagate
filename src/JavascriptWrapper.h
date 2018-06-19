@@ -44,6 +44,8 @@ public slots:
 
     Q_INVOKABLE void signMessage(QString requestId, QString keyName, QString text, QString password);
 
+    Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+
     Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
 
     Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
@@ -57,6 +59,8 @@ public slots:
     Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
 
     Q_INVOKABLE void signMessageMHC(QString requestId, QString keyName, QString text, QString password);
+
+    Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
 
     Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
 
@@ -165,6 +169,8 @@ private:
     QString getAllMTHSWalletsAndPathsJson(QString walletPath);
 
     void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
+
+    void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult);
 
     template<typename... Args>
     void runJsFunc(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);

@@ -41,6 +41,11 @@ Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, Q
 # javascript is called after completion of this function 
 signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
+Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+Подписывает транзакцию в новом бинарном формате
+Результат возвращается в 
+signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
+
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 Проверить адрес на корректность. Результат вернется в функцию 
 checkAddressResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
@@ -87,6 +92,11 @@ Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text
 # Message's signing.
 # javascript is called after completion of this function 
 signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+Подписывает транзакцию в новом бинарном формате
+Результат возвращается в 
+signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 Проверить адрес на корректность. Результат вернется в функцию 

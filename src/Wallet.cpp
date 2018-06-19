@@ -6,6 +6,8 @@
 #include <memory>
 #include <sstream>
 #include <algorithm>
+#include <limits>
+#include <array>
 
 #include <cryptopp/rsa.h>
 #include <cryptopp/cryptlib.h>
@@ -103,6 +105,28 @@ static std::string doubleSha(const std::string &str) {
     CryptoPP::StringSource ss4(sha256Hash2, true, new CryptoPP::HashFilter(sha256hashAlg3, new CryptoPP::StringSink(sha256Hash3)));
 
     return sha256Hash3;
+}
+
+template<typename Integer>
+static std::string toLittleEndian(Integer integer) {
+    std::array<unsigned char, sizeof(integer)> arr;
+    for (size_t i = 0; i < arr.size(); i++) {
+        arr[i] = integer % 256;
+        integer /= 256;
+    }
+    return std::string(arr.begin(), arr.end());
+}
+
+static std::string packInteger(uint64_t value) {
+    if (value <= 249) {
+        return toLittleEndian(uint8_t(value));
+    } else if (value <= std::numeric_limits<uint16_t>::max()) {
+        return toLittleEndian(uint8_t(250)) + toLittleEndian(uint16_t(value));
+    } else if (value <= std::numeric_limits<uint32_t>::max()) {
+        return toLittleEndian(uint8_t(251)) + toLittleEndian(uint32_t(value));
+    } else {
+        return toLittleEndian(uint8_t(252)) + toLittleEndian(uint64_t(value));
+    }
 }
 
 std::string Wallet::createAddress(const std::string &publicKeyBinary) {
@@ -248,6 +272,25 @@ std::string Wallet::sign(const std::string &message, std::string &publicKey){
     } catch (const std::exception &e) {
         throw TypedException(TypeErrors::DONT_SIGN, std::string("dont sign ") + e.what());
     }
+}
+
+std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data) {
+    checkAddress(toAddress);
+    std::string result;
+    result += fromHex(toAddress.substr(2));
+    result += packInteger(value);
+    result += packInteger(fee);
+    result += packInteger(nonce);
+    CHECK(data.empty(), "Data not empty");
+    result += packInteger(data.size());
+
+    return result;
+}
+
+void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey) {
+    const std::string txBinary = genTx(toAddress, value, fee, nonce, data);
+    signature = sign(txBinary, publicKey);
+    txHex = toHex(txBinary);
 }
 
 std::string Wallet::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {

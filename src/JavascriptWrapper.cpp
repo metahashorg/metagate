@@ -191,8 +191,16 @@ void JavascriptWrapper::signMessage(QString requestId, QString keyName, QString 
     signMessageMTHS(requestId, keyName, text, password, walletPathTmh, "signMessageResultJs");
 }
 
+void JavascriptWrapper::signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data) {
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, data, walletPathTmh, "signMessageV2ResultJs");
+}
+
 void JavascriptWrapper::signMessageMHC(QString requestId, QString keyName, QString text, QString password) {
     signMessageMTHS(requestId, keyName, text, password, walletPathMth, "signMessageMHCResultJs");
+}
+
+void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data) {
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, data, walletPathMth, "signMessageMHCV2ResultJs");
 }
 
 static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &wallets) {
@@ -284,6 +292,26 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 
     if (exception.numError != TypeErrors::NOT_ERROR) {
         runJsFunc(jsNameResult, exception, requestId, "", "");
+    }
+}
+
+void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message " << requestId << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
+
+    const TypedException &exception = apiVrapper([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        std::string publicKey;
+        std::string tx;
+        std::string signature;
+        bool tmp;
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), data.toStdString(), tx, signature, publicKey);
+
+        runJsFunc(jsNameResult, TypedException(), requestId, signature, publicKey, tx);
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        runJsFunc(jsNameResult, exception, requestId, "", "", "");
     }
 }
 
