@@ -3,6 +3,7 @@
 #include "Log.h"
 #include "check.h"
 #include "utils.h"
+#include "algorithms.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -85,6 +86,7 @@ void PagesMappings::setMappingsMh(QString mapping) {
                     }
                 }
             }
+            page->changeDefaultIp();
 
             auto addToMap = [this](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
                 const Name name(key);
@@ -112,6 +114,10 @@ void PagesMappings::setMappingsMh(QString mapping) {
                     defaultMhIps.emplace_back(ipHttp);
                 }
             }
+            if (defaultMhIp.size())
+                defaultMhIp = ::getRandom(defaultMhIps);
+            else
+                defaultMhIp = QString();
         }
     }
 }
@@ -303,6 +309,15 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
     return Optional<QString>();
 }
 
+QString PagesMappings::getIp(const QString &text) const
+{
+    const PageInfo pageInfo = find(text);
+    QString ip = pageInfo.getIp();
+    if (ip.isNull())
+        return defaultMhIp;
+    return ip;
+}
+
 PageInfo PagesMappings::find(const QString &text) const {
     auto isFullUrl = [](const QString &text) {
         if (text.size() != 52) {
@@ -332,4 +347,17 @@ PageInfo PagesMappings::find(const QString &text) const {
         CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
     }
     return pageInfo;
+}
+
+QString PageInfo::getIp() const
+{
+    return defaultIp;
+}
+
+void PageInfo::changeDefaultIp()
+{
+    if (ips.size())
+        defaultIp = ::getRandom(ips);
+    else
+        defaultIp = QString();
 }

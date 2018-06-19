@@ -47,8 +47,11 @@ struct PageInfo {
     bool isExternal;
     bool isDefault = false;
     bool isLocalFile = true;
+    QString defaultIp;
 
     std::vector<QString> ips;
+    QString getIp() const;
+    void changeDefaultIp();
 
     PageInfo() = default;
 
@@ -96,6 +99,8 @@ public:
 
     Optional<QString> findName(const QString &url) const;
 
+    QString getIp(const QString &text) const;
+
 private:
 
     Optional<PageInfo> findInternal(const QString &url) const;
@@ -105,6 +110,7 @@ private:
     std::map<Name, std::shared_ptr<PageInfo>> mappingsPages;
 
     std::vector<QString> defaultMhIps;
+    QString defaultMhIp;
 
     std::map<QString, QString> urlToName;
 
