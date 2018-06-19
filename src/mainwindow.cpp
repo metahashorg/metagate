@@ -645,14 +645,7 @@ void MainWindow::showExpanded() {
 
 QString MainWindow::getServerIp(const QString &text) const
 {
-    const PageInfo pageInfo = pagesMappings.find(text);
-    QString ip;
-    if (!pageInfo.ips.empty()) {
-        ip = ::getRandom(pageInfo.ips);
-    } else {
-        CHECK(!pagesMappings.getDefaultIps().empty(), "defaults mh ips empty");
-        ip = ::getRandom(pagesMappings.getDefaultIps());
-    }
+    QString ip = pagesMappings.getIp(text);
     QUrl url(ip);
     return url.host();
 }
