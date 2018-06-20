@@ -333,3 +333,11 @@ PageInfo PagesMappings::find(const QString &text) const {
     }
     return pageInfo;
 }
+
+PagesMappings::UrlName::UrlName(const QString &name)
+    : name(name.toLower())
+{}
+
+bool PagesMappings::UrlName::operator<(const PagesMappings::UrlName &second) const {
+    return this->name < second.name;
+}
