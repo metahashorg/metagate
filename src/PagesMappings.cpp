@@ -114,10 +114,11 @@ void PagesMappings::setMappingsMh(QString mapping) {
                     defaultMhIps.emplace_back(ipHttp);
                 }
             }
-            if (defaultMhIp.size())
+            if (!defaultMhIps.empty()) {
                 defaultMhIp = ::getRandom(defaultMhIps);
-            else
+            } else {
                 defaultMhIp = QString();
+            }
         }
     }
 }
@@ -313,8 +314,9 @@ QString PagesMappings::getIp(const QString &text) const
 {
     const PageInfo pageInfo = find(text);
     QString ip = pageInfo.getIp();
-    if (ip.isNull())
+    if (ip.isNull()) {
         return defaultMhIp;
+    }
     return ip;
 }
 
@@ -356,8 +358,9 @@ QString PageInfo::getIp() const
 
 void PageInfo::changeDefaultIp()
 {
-    if (ips.size())
+    if (!ips.empty()) {
         defaultIp = ::getRandom(ips);
-    else
+    } else {
         defaultIp = QString();
+    }
 }

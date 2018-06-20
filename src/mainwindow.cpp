@@ -14,7 +14,6 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QWebEngineProfile>
-#include <QWebEngineUrlRequestInterceptor>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QStandardItemModel>
@@ -143,20 +142,6 @@ private:
     ExternWebPage2 *p;
 };
 
-
-class RequestInterceptor : public QWebEngineUrlRequestInterceptor {
-public:
-
-    explicit RequestInterceptor(QObject * parent)
-        : QWebEngineUrlRequestInterceptor(parent)
-    {}
-
-    virtual void interceptRequest(QWebEngineUrlRequestInfo & info) Q_DECL_OVERRIDE {
-        qDebug() << "URL >> " << info.requestUrl();
-        qDebug() << "r >> " << info.resourceType();
-    }
-};
-
 MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
@@ -168,10 +153,6 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
 
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), new MHUrlSchemeHandler(this));
-    RequestInterceptor *interceptor = new RequestInterceptor(ui->webView);
-    //QWebEngineProfile::defaultProfile()->setRequestInterceptor(interceptor);
-    ui->webView->page()->profile()->setRequestInterceptor(interceptor);
-    //ui->webView->setPage(new ExternWebPage());
 
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -409,18 +390,6 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             other = uri.mid(pos);
             uri = uri.left(pos);
         }
-/*
-        QString ip;
-        if (!pageInfo.ips.empty()) {
-            ip = ::getRandom(pageInfo.ips);
-        } else {
-            CHECK(!pagesMappings.getDefaultIps().empty(), "defaults mh ips empty");
-            ip = ::getRandom(pagesMappings.getDefaultIps());
-        }
-        LOG << "Switch to host " << uri << " ip " << ip << " paramethers " << other;
-        QWebEngineHttpRequest req(ip + other);
-        //req.setHeader("Host", uri.toUtf8());
-        req.setHeader("Host", "tux.test");*/
 
         QString clText;
         if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
@@ -429,7 +398,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             clText = pageInfo.printedName + other;
         }
         addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
-        ui->webView->load(reference);
+        loadUrl(reference);
     } else {
         QString clText;
         if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
@@ -514,19 +483,7 @@ void MainWindow::softReloadApp() {
 }
 
 void MainWindow::loadUrl(const QString &page) {
-    ui->webView->page()->profile()->setRequestInterceptor(nullptr);
     ui->webView->load(page);
-    LOG << "Reload ok";
-}
-
-// TODO remove
-void MainWindow::loadUrl(const QWebEngineHttpRequest &url) {
-    //RequestInterceptor *interceptor = new RequestInterceptor(ui->webView, url.header("Host"));
-    //ui->webView->page()->profile()->setRequestInterceptor(interceptor);
-    //ui->webView->load(QString("mh://0x00ad7aaa01cc0bbbaf438ef7b1d14aaa557497a4ea64393786/unicorn.jpg"));
-    //ui->webView->load(QString("mh://0x00ad7aaa01cc0bbbaf438ef7b1d14aaa557497a4ea64393786"));
-
-    //ui->webView->load(url);
     LOG << "Reload ok";
 }
 

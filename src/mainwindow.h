@@ -61,8 +61,6 @@ private:
 
     void loadUrl(const QString &page);
 
-    void loadUrl(const QWebEngineHttpRequest &page);
-
     void loadFile(const QString &pageName);
 
     void configureMenu();

@@ -4,7 +4,6 @@
 #include <QWebEngineUrlSchemeHandler>
 
 class QNetworkAccessManager;
-class QNetworkReply;
 class QWebEngineUrlRequestJob;
 
 class MHUrlSchemeHandler : public QWebEngineUrlSchemeHandler
@@ -19,7 +18,6 @@ private slots:
 
 private:
     QNetworkAccessManager *m_manager;
-    QWebEngineUrlRequestJob *m_job;
 };
 
 #endif // MHURLSCHEMEHANDLER_H
