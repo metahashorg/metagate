@@ -1,6 +1,6 @@
 Сборка приложения:
 Обязательно удалить каталог сборки qt
-cd "C:\Qt\5.9.1\msvc2015_64\bin"
+cd "C:\Qt\5.10.1\msvc2015_64\bin"
 .\windeployqt.exe D:\qt\MetaGate\MetaGate.exe
 Копировать в каталог D:\qt\MetaGate\MetaGate.exe файлы:
 deploy/win/lib/*

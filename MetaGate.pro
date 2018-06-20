@@ -8,7 +8,7 @@ DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
 DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 
 unix:INCLUDEPATH = /usr/local/include/c++/7.1/ ./src ./quazip-0.7.3/quazip/
-win32:INCLUDEPATH += C:/Qt/5.9.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
+win32:INCLUDEPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
 
 INCLUDEPATH += $$PWD/ $$PWD/quazip-0.7.3/
 DEPENDPATH += $$PWD/ $$PWD/quazip-0.7.3/
