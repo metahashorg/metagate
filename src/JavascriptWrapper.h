@@ -48,7 +48,7 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
 
-    Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
+    void savePrivateKey(QString requestId, QString privateKey, QString password);
 
 public slots:
 
@@ -64,7 +64,7 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
 
-    Q_INVOKABLE void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
+    void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
 
 public slots:
 
@@ -88,7 +88,7 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
 
-    Q_INVOKABLE void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
+    void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
 
 public slots:
 
@@ -108,7 +108,11 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
 
-    Q_INVOKABLE void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+    void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+
+public slots:
+
+    Q_INVOKABLE void savePrivateKeyAny(QString requestId, QString privateKey, QString password);
 
 public slots:
 
@@ -160,7 +164,7 @@ private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
 
-    void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult);
+    void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh);
 
     void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult);
 

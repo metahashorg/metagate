@@ -14,6 +14,8 @@
 
 #include <QDir>
 
+const std::string BtcWallet::PREFIX_ONE_KEY = "btc:";
+
 const static std::string WIF_AND_ADDRESS_DELIMITER = " ";
 
 static QString convertAddressToFileName(const std::string &address) {
@@ -278,16 +280,20 @@ std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const 
 
 std::string BtcWallet::getOneKey(const QString &folder, const std::string &address) {
     const QString filePath = getFullPath(folder, address);
-    return readFile(filePath);
+    return PREFIX_ONE_KEY + readFile(filePath);
 }
 
 void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
-    const auto pair = getWifAndAddress(data, true);
+    CHECK(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, "Incorrect data");
+
+    const std::string result = data.substr(PREFIX_ONE_KEY.size());
+
+    const auto pair = getWifAndAddress(result, true);
     const std::string &addressBase58 = pair.second;
     const std::string &encodedWif = pair.first;
     decodeWif(encodedWif, password);
     const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
-    writeToFile(pathToFile, data, true);
+    writeToFile(pathToFile, result, true);
 }
 
 void BtcWallet::checkAddress(const std::string &address) {

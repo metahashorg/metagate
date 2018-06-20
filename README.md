@@ -56,11 +56,6 @@ getOnePrivateKeyResultJs(requestId, key, errorNum, errorMessage)
 возвращает приватный ключ. 
 Параметр isCompact, если нужен более компактный формат
 
-Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
-Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
-По окончании работы вызывает функцию
-savePrivateKeyResultJs(requestId, "ok", errorNum, errorMessage)
-
 Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
 # Generates rsa key for specified address.
 # javascript is called after completion of this function 
@@ -108,11 +103,6 @@ getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
 возвращает приватный ключ. 
 Параметр isCompact, если нужен более компактный формат
 
-Q_INVOKABLE void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
-Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
-По окончании работы вызывает функцию
-savePrivateKeyMHCResultJs(requestId, "ok", errorNum, errorMessage)
-
 ```
 
 ### How to work with Ethereum wallets
@@ -152,10 +142,6 @@ Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
 getOnePrivateKeyEthResultJs(requestId, key, errorNum, errorMessage)
 возвращает приватный ключ. 
 
-Q_INVOKABLE void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
-Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
-По окончании работы вызывает функцию
-savePrivateKeyEthResultJs(requestId, "ok", errorNum, errorMessage)
 ```
 
 ### How to work with Bitcoin wallet
@@ -195,15 +181,16 @@ Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
 getOnePrivateKeyBtcResultJs(requestId, key, errorNum, errorMessage)
 возвращает приватный ключ. 
 
-Q_INVOKABLE void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
-Сохраняет приватный ключ, полученный предыдущим методом. Имя файла генерирует из приватного ключа
-По окончании работы вызывает функцию
-savePrivateKeyBtcResultJs(requestId, "ok", errorNum, errorMessage)
 ```
 
 ### General functions
 
 ```shell
+Q_INVOKABLE void savePrivateKeyAny(QString requestId, QString privateKey, QString password);
+Пытается распознать тип ключа и сохраняет ключ в нужное место
+По окончании работы вызывает функцию
+savePrivateKeyAnyResultJs(requestId, "ok", errorNum, errorMessage)
+
 Q_INVOKABLE void updateAndReloadApplication();
 # Restarts wallet installing updates
 

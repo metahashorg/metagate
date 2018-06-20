@@ -20,6 +20,8 @@
 
 #include <QDir>
 
+const std::string EthWallet::PREFIX_ONE_KEY = "eth:";
+
 QString EthWallet::getFullPath(const QString &folder, const std::string &address) {
     return QDir(folder).filePath(QString::fromStdString(address).toLower());
 }
@@ -97,16 +99,20 @@ std::string EthWallet::makeErc20Data(const std::string &valueHex, const std::str
 
 std::string EthWallet::getOneKey(const QString &folder, const std::string &address) {
     const QString pathToFile = getFullPath(folder, address);
-    return readFile(pathToFile);
+    return PREFIX_ONE_KEY + readFile(pathToFile);
 }
 
 void EthWallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
+    CHECK(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, "Incorrect data");
+
+    const std::string content = data.substr(PREFIX_ONE_KEY.size());
+
     std::vector<uint8_t> tmp(1000, 0);
-    DecodeCert(data.c_str(), password, tmp.data()); // Проверяем пароль
-    const std::string address = getAddressFromFile(data.c_str());
+    DecodeCert(content.c_str(), password, tmp.data()); // Проверяем пароль
+    const std::string address = getAddressFromFile(content.c_str());
 
     const QString pathToFile = getFullPath(folder, address);
-    writeToFile(pathToFile, data, true);
+    writeToFile(pathToFile, content, true);
 }
 
 void EthWallet::checkAddress(const std::string &address) {

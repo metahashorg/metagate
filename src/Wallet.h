@@ -10,13 +10,19 @@
 class Wallet {
 public:
 
+    const static std::string PREFIX_ONE_KEY_MTH;
+
+    const static std::string PREFIX_ONE_KEY_TMH;
+
+public:
+
     static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);
 
     static QString makeFullWalletPath(const QString &folder, const std::string &addr);
 
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder);
 
-    static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact);
+    static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH);
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
 

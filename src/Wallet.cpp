@@ -27,6 +27,9 @@
 #include "utils.h"
 #include "TypedException.h"
 
+const std::string Wallet::PREFIX_ONE_KEY_MTH = "mth:";
+const std::string Wallet::PREFIX_ONE_KEY_TMH = "tmh:";
+
 const static QString FOLDER_RSA_KEYS("rsa/");
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
 const static QString FILE_PRIV_KEY_SUFFIX(".rsa.priv");
@@ -320,7 +323,7 @@ std::string Wallet::encryptMessage(const std::string &publicKeyHex, const std::s
     return encrypt(publicKeyHex, message);
 }
 
-std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact) {
+std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH) {
     const QString fullPath = makeFullWalletPath(folder, addr);
     std::string privKey = readFile(fullPath);
 
@@ -338,11 +341,26 @@ std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr
 
         privKey = COMPACT_FORMAT + CURRENT_COMPACT_FORMAT + "\n" + privKey;
     }
-    return privKey;
+
+    std::string result;
+    if (isTMH) {
+        result = PREFIX_ONE_KEY_TMH + privKey;
+    } else {
+        result = PREFIX_ONE_KEY_MTH + privKey;
+    }
+    return result;
 }
 
 void Wallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
-    std::string result = data;
+    std::string result;
+    if (data.compare(0, PREFIX_ONE_KEY_MTH.size(), PREFIX_ONE_KEY_MTH) == 0) {
+        result = data.substr(PREFIX_ONE_KEY_MTH.size());
+    } else if (data.compare(0, PREFIX_ONE_KEY_TMH.size(), PREFIX_ONE_KEY_TMH) == 0) {
+        result = data.substr(PREFIX_ONE_KEY_TMH.size());
+    } else {
+        throwErr("Incorrect data");
+    }
+
     if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
         result = result.substr(COMPACT_FORMAT.size());
         CHECK(result.compare(0, CURRENT_COMPACT_FORMAT.size() + 1, CURRENT_COMPACT_FORMAT + "\n") == 0, "Incorrect private key");
