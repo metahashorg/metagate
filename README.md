@@ -43,6 +43,7 @@ signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
 Подписывает транзакцию в новом бинарном формате
+value, fee, nonce - строка с числом в 10-м формате
 Результат возвращается в 
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
@@ -90,6 +91,7 @@ signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
 Подписывает транзакцию в новом бинарном формате
+value, fee, nonce - строка с числом в 10-м формате
 Результат возвращается в 
 signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
