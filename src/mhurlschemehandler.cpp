@@ -9,8 +9,6 @@
 #include "SlotWrapper.h"
 #include "check.h"
 
-Q_DECLARE_METATYPE(QWebEngineUrlRequestJob *)
-
 MHUrlSchemeHandler::MHUrlSchemeHandler(QObject *parent)
     : QWebEngineUrlSchemeHandler(parent)
 {
