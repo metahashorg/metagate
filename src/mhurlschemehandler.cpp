@@ -33,7 +33,7 @@ void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
     QNetworkRequest req(newurl);
     req.setRawHeader(QByteArray("Host"), host.toUtf8());
     QNetworkReply *reply = m_manager->get(req);
-    reply->setProperty("job", QVariant::fromValue(job));
+    reply->setParent(job);
     CHECK(connect(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished), "connect fail");
 }
 
@@ -44,10 +44,12 @@ BEGIN_SLOT_WRAPPER
     if (!reply) {
         return;
     }
-    QWebEngineUrlRequestJob *job = reply->property("job").value<QWebEngineUrlRequestJob *>();
+    QWebEngineUrlRequestJob *job = qobject_cast<QWebEngineUrlRequestJob *>(reply->parent());
+    if (!job) {
+        return;
+    }
     if (reply->error()) {
         job->fail(QWebEngineUrlRequestJob::UrlNotFound);
-        reply->deleteLater();
         return;
     }
 
@@ -58,7 +60,6 @@ BEGIN_SLOT_WRAPPER
         mime = mime.left(pos);
     }
 
-    reply->setParent(job);
     job->reply(mime, reply);
 END_SLOT_WRAPPER
 }
