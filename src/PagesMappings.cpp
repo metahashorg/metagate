@@ -87,6 +87,13 @@ void PagesMappings::setMappingsMh(QString mapping) {
                 }
             }
             page->changeDefaultIp();
+            QString urlName = page->printedName;
+            if (url.endsWith('/')) {
+                if (!urlName.endsWith('/')) {
+                    urlName += "/";
+                }
+            }
+            urlToName[url] = urlName;
 
             auto addToMap = [this](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
                 const Name name(key);
