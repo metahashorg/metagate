@@ -23,6 +23,11 @@ std::string toBase64(const std::string &value) {
     return QString(array.toBase64()).toStdString();
 }
 
+std::string fromBase64(const std::string &value) {
+    QByteArray pubKeyArray(value.data(), value.size());
+    return QByteArray::fromBase64(pubKeyArray).toStdString();
+}
+
 std::string base58ToHex(const std::string &value) {
     std::vector<unsigned char> decoded;
     DecodeBase58(value.data(), decoded);
@@ -97,6 +102,12 @@ std::string readFile(const QString &pathToFile) {
     QTextStream in(&file);
     QString str = in.readAll();
     return str.toStdString();
+}
+
+std::string readFileBinary(const QString &pathToFile) {
+    QFile file(pathToFile);
+    CHECK(file.open(QIODevice::ReadOnly), "File not open " + pathToFile.toStdString());
+    return file.readAll().toStdString();
 }
 
 bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs) {

@@ -9,6 +9,10 @@
 class EthWallet {
 public:
 
+    const static std::string PREFIX_ONE_KEY;
+
+public:
+
     EthWallet(
         const QString &folder,
         const std::string &address,

@@ -1,6 +1,5 @@
 Сборка приложения:
 ./deploy.sh /home/user/qtExamples/MetaGate/MetaGate
-Если в plugins нету каталога xcbglintegrations и файлов из каталогов lib, iconengines, imageformats, скопировать их
 Копировать каталог pages
 Скопировать файл run.sh
 Скопировать файлы из libssl в корневую для приложения папку

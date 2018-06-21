@@ -107,12 +107,24 @@ private:
 
 private:
 
+    struct UrlName {
+        QString name;
+
+        UrlName() = default;
+
+        /*explicit*/ UrlName(const QString &name);
+
+        bool operator<(const UrlName &second) const;
+    };
+
+private:
+
     std::map<Name, std::shared_ptr<PageInfo>> mappingsPages;
 
     std::vector<QString> defaultMhIps;
     QString defaultMhIp;
 
-    std::map<QString, QString> urlToName;
+    std::map<UrlName, QString> urlToName;
 
     PageInfo searchPage;
 
