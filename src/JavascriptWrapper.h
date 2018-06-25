@@ -156,6 +156,8 @@ public slots:
 
     Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName);
 
+    Q_INVOKABLE void getAppInfo(const QString requestId);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);

@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "TypedException.h"
 #include "SlotWrapper.h"
+#include "platform.h"
 
 #include "machine_uid.h"
 
@@ -99,6 +100,14 @@ static QString toJsString(const char *arg) {
 
 static QString toJsString(const int &arg) {
     return QString::fromStdString(std::to_string(arg));
+}
+
+static QString toJsString(bool arg) {
+    if (arg) {
+        return "true";
+    } else {
+        return "false";
+    }
 }
 
 static QString toJsString(const size_t &arg) {
@@ -1003,6 +1012,18 @@ BEGIN_SLOT_WRAPPER
 
         painter.end();
     });
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::getAppInfo(const QString requestId) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "getAppInfoResultJs";
+
+    LOG << "get app info";
+
+    const std::string versionString = VERSION_STRING;
+    const std::string gitCommit = GIT_CURRENT_SHA1;
+    runJsFunc(JS_NAME_RESULT, TypedException(), requestId, isProductionSetup, versionString, gitCommit);
 END_SLOT_WRAPPER
 }
 

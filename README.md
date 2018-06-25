@@ -278,5 +278,10 @@ Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCapt
 # Shows the file selection dialog, then encodes the selected file in base64 and sends it to the function
 loadFileResultJs(requestId, result, errorNum, errorMessage)
 
+Q_INVOKABLE void getAppInfo(const QString requestId);
+Отдает версию приложения и другую информацию.
+Результат возвращается в функцию
+getAppInfoResultJs(requestId, isProduction, version, gitCommit);
+
 ```
 
