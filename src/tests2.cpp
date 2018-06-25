@@ -199,8 +199,22 @@ static void testBitcoinTransaction4() {
     }
 }
 
+static void testCreateBinTransaction(const std::string &address, uint64_t amount, uint64_t fee, uint64_t nonce, const std::string &answer) {
+    const std::string result = toHex(Wallet::genTx(address, amount, fee, nonce, ""));
+    if (result == answer) {
+        std::cout << "Ok" << std::endl;
+    } else {
+        std::cout << "Not ok bin " << result << std::endl;
+    }
+}
+
 void allTests() {
     testEncryptBtc();
+
+    testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 126894, 55647, 255, "009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
+    testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 0, 0, 0, "009806da73b1589f38630649bdee48467946d118059efd6aab00000000");
+    testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 4294967295, 65535, 249, "009806da73b1589f38630649bdee48467946d118059efd6aabfbfffffffffafffff900");
+    testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 4294967296ull, 65536, 250, "009806da73b1589f38630649bdee48467946d118059efd6aabfc0000000001000000fb00000100fafa0000");
 
     testSsl("", "Message 1");
     testSsl("1", "Message 2");
