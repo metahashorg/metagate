@@ -42,19 +42,19 @@ Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, Q
 signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
-Подписывает транзакцию в новом бинарном формате
-Результат возвращается в 
+# signs the transaction in a new binary format
+# value, fee, nonce - a string with decimal number
+# Result returns to 
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
-Проверить адрес на корректность. Результат вернется в функцию 
+# To check the address for correctness. The result will return to the function:
 checkAddressResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
-В функцию 
+# Returns private key to the function
 getOnePrivateKeyResultJs(requestId, key, errorNum, errorMessage)
-возвращает приватный ключ. 
-Параметр isCompact, если нужен более компактный формат
+# The isCompact parameter is used if you need a more compact format.
 
 Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
 # Generates rsa key for specified address.
@@ -89,19 +89,19 @@ Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text
 signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
-Подписывает транзакцию в новом бинарном формате
-Результат возвращается в 
+# signs the transaction in a new binary format
+# value, fee, nonce - a string with decimal number
+# Result returns to 
 signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
-Проверить адрес на корректность. Результат вернется в функцию 
+# To check the address for correctness. The result will return to the function:
 checkAddressResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
-В функцию 
+# Returns private key to the function
 getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
-возвращает приватный ключ. 
-Параметр isCompact, если нужен более компактный формат
+# The isCompact parameter is used if you need a more compact format.
 
 ```
 
@@ -134,13 +134,12 @@ Q_INVOKABLE QString getAllEthWalletsAndPathsJson();
 [{"address":"addr","path":"path"}]
 
 Q_INVOKABLE void checkAddressEth(QString requestId, QString address);
-Проверить адрес на корректность. Результат вернется в функцию 
+# To check the address for correctness. The result will return to the function:
 checkAddressEthResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
-В функцию 
+# Returns private key to the function
 getOnePrivateKeyEthResultJs(requestId, key, errorNum, errorMessage)
-возвращает приватный ключ. 
 
 ```
 
@@ -173,13 +172,12 @@ Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
 # Result returns as a json array [{"address":"addr","path":"path"}]
 
 Q_INVOKABLE void checkAddressBtc(QString requestId, QString address);
-Проверить адрес на корректность. Результат вернется в функцию 
+# To check the address for correctness. The result will return to the function:
 checkAddressBtcResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
-В функцию 
+# Returns private key to the function
 getOnePrivateKeyBtcResultJs(requestId, key, errorNum, errorMessage)
-возвращает приватный ключ. 
 
 ```
 
@@ -187,8 +185,8 @@ getOnePrivateKeyBtcResultJs(requestId, key, errorNum, errorMessage)
 
 ```shell
 Q_INVOKABLE void savePrivateKeyAny(QString requestId, QString privateKey, QString password);
-Пытается распознать тип ключа и сохраняет ключ в нужное место
-По окончании работы вызывает функцию
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
 savePrivateKeyAnyResultJs(requestId, "ok", errorNum, errorMessage)
 
 Q_INVOKABLE void updateAndReloadApplication();
@@ -273,10 +271,10 @@ Q_INVOKABLE void lineEditReturnPressed(QString text);
 # Emulate text input to lineEdit.
 
 Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
-Показывает диалог сохранения файла, после чего выкачивает файл и сохраняет
+# Shows file save dialog, then downloads the file and saves it.
 
 Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName);
-Показывает диалог выбора файла, после чего кодирует выбранный файл в base64 и отправляет в функцию
+# Shows the file selection dialog, then encodes the selected file in base64 and sends it to the function
 loadFileResultJs(requestId, result, errorNum, errorMessage)
 
 ```
