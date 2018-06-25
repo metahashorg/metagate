@@ -10,6 +10,7 @@ git clone https://github.com/metahashorg/metagate
 
 ## Build
 
+Current Qt version - 10.1. For Windows, Qt 10.1 with visual studio 2015 compiler.
 Detailed instructions for the project build on linux, mac or win can be found in the [deploy folder](https://github.com/metahashorg/metagate/tree/master/deploy).
 
 ## Api to connect with javascript
