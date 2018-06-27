@@ -154,6 +154,7 @@ void NsLookup::continueResolve() {
     DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
 
     LOG << "dns ok " << node.type << ". " << packet.answers().size();
+    CHECK(!packet.answers().empty(), "Empty dns response");
     ipsTemp.clear();
     for (const auto &record : packet.answers()) {
         ipsTemp.emplace_back(record.toString());
