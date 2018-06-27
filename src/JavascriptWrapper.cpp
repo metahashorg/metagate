@@ -837,6 +837,11 @@ void JavascriptWrapper::exitApplication() {
     QApplication::exit(SIMPLE_EXIT);
 }
 
+void JavascriptWrapper::restartBrowser() {
+    LOG << "Restart browser";
+    QApplication::exit(RESTART_BROWSER);
+}
+
 QString JavascriptWrapper::backupKeys(QString caption) {
     try {
         LOG << "Backup keys";

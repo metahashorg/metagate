@@ -130,6 +130,8 @@ public slots:
 
     Q_INVOKABLE void exitApplication();
 
+    Q_INVOKABLE void restartBrowser();
+
     Q_INVOKABLE QString backupKeys(QString caption);
 
     Q_INVOKABLE QString restoreKeys(QString caption);

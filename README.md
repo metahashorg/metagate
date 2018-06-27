@@ -217,6 +217,9 @@ Q_INVOKABLE bool migrateKeysToPath(QString newPath);
 Q_INVOKABLE void exitApplication();
 # Stops the app.
 
+Q_INVOKABLE void restartBrowser();
+# restart browser
+
 Q_INVOKABLE QString backupKeys(QString caption);
 # Backs up keys to the file. Before backup, user is shown a dialog box providing ability to select a path.
 caption # name of the dialog 
