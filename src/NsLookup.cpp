@@ -1,7 +1,5 @@
 #include "NsLookup.h"
 
-#include <QHostAddress>
-#include <QDir>
 #include <QCoreApplication>
 #include <QUdpSocket>
 #include <QJsonDocument>
@@ -121,7 +119,7 @@ void NsLookup::finalizeLookup() {
 void NsLookup::timerEvent() {
 BEGIN_SLOT_WRAPPER
     qtimer.setSingleShot(true);
-    qtimer.start(milliseconds(10min).count());
+    qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
 
     startScanTime = ::now();
 
