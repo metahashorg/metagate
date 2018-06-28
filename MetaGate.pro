@@ -8,7 +8,6 @@ DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
 DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 
 unix:INCLUDEPATH = /usr/local/include/c++/7.1/ ./src ./quazip-0.7.3/quazip/
-win32:INCLUDEPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
 
 INCLUDEPATH += $$PWD/ $$PWD/quazip-0.7.3/
 DEPENDPATH += $$PWD/ $$PWD/quazip-0.7.3/
@@ -116,11 +115,22 @@ unix:!macx: LIBS += -L/usr/lib -lssl -lcrypto
 unix:!macx: LIBS += -L$$PWD/cryptopp/lib/linux/ -lcryptopp -L$$PWD/quazip-0.7.3/libs/linux/ -lquazip -lz
 unix:!macx: LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
 
-win32: LIBS += -L$$PWD/secp256k1/lib/windows/ -ladvapi32 -lOle32 -llibsecp256k1
-win32: LIBS += -L$$PWD/cryptopp/lib/windows/ -lcryptopp -lcryptlib -L$$PWD/quazip-0.7.3/libs/win/ -lquazip
-win32: LIBS += -L$$PWD/openssl-1.0.2o-x64/lib/ -llibeay32 -lssleay32 -lws2_32 -lshell32 -ladvapi32 -lgdi32 -lUser32 -lIphlpapi
+win32
+{
+    DEFINES += TARGET_WINDOWS
+    INCLUDEPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
 
-win32: DEFINES += TARGET_WINDOWS
+    contains(QT_ARCH, i386) {
+        LIBS += -L$$PWD/secp256k1/lib/windows32/ -ladvapi32 -lOle32 -llibsecp256k1
+        LIBS += -L$$PWD/cryptopp/lib/windows32/ -lcryptopp -lcryptlib -L$$PWD/quazip-0.7.3/libs/win32/ -lquazip
+        LIBS += -L$$PWD/openssl-1.0.2o-x64/lib32/ -llibeay32 -lssleay32 -lws2_32 -lshell32 -ladvapi32 -lgdi32 -lUser32 -lIphlpapi
+
+    } else {
+        LIBS += -L$$PWD/secp256k1/lib/windows/ -ladvapi32 -lOle32 -llibsecp256k1
+        LIBS += -L$$PWD/cryptopp/lib/windows/ -lcryptopp -lcryptlib -L$$PWD/quazip-0.7.3/libs/win/ -lquazip
+        LIBS += -L$$PWD/openssl-1.0.2o-x64/lib/ -llibeay32 -lssleay32 -lws2_32 -lshell32 -ladvapi32 -lgdi32 -lUser32 -lIphlpapi
+    }
+}
 
 macx: QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../,-rpath,@executable_path/../,-rpath,@executable_path/../Frameworks
 
