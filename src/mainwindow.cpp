@@ -186,9 +186,10 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
-    qtimer.setInterval(hours(1).count());
+    qtimer.setInterval(milliseconds(hours(1)).count());
     qtimer.setSingleShot(false);
     CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
+    qtimer.start();
 
     emit onUpdateMhsReferences();
 

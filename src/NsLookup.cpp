@@ -1,7 +1,5 @@
 #include "NsLookup.h"
 
-#include <QHostAddress>
-#include <QDir>
 #include <QCoreApplication>
 #include <QUdpSocket>
 #include <QJsonDocument>
@@ -113,12 +111,15 @@ void NsLookup::finalizeLookup() {
 
     const time_point stopScan = ::now();
     LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
+
+    qtimer.setInterval(UPDATE_PERIOD.count());
+    qtimer.setSingleShot(true);
 }
 
 void NsLookup::timerEvent() {
 BEGIN_SLOT_WRAPPER
-    qtimer.setInterval(UPDATE_PERIOD.count());
-    qtimer.setSingleShot(false);
+    qtimer.setSingleShot(true);
+    qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
 
     startScanTime = ::now();
 
