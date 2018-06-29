@@ -119,6 +119,7 @@ unix:!macx: LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
 
 win32 {
     DEFINES += TARGET_WINDOWS
+    RC_ICONS = WalletMetahash.ico
     INCLUDEPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
 
     contains(QT_ARCH, i386) {
