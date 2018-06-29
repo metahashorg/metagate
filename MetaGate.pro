@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-DEFINES += VERSION_STRING=\\\"1.14.0\\\"
+DEFINES += VERSION_STRING=\\\"1.14.1\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -112,7 +112,7 @@ QMAKE_LFLAGS += -rdynamic
 
 #QMAKE_CXXFLAGS += -H
 
-unix:!macx: INCLUDEPATH += ./openssl_linux/include/
+unix:!macx: INCLUDEPATH += $$PWD/openssl_linux/include/
 unix:!macx: LIBS += -L$$PWD/openssl_linux/lib -lssl -lcrypto
 unix:!macx: LIBS += -L$$PWD/cryptopp/lib/linux/ -lcryptopp -L$$PWD/quazip-0.7.3/libs/linux/ -lquazip -lz
 unix:!macx: LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
