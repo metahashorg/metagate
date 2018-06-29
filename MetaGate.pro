@@ -117,8 +117,7 @@ unix:!macx: LIBS += -L$$PWD/openssl_linux/lib -lssl -lcrypto
 unix:!macx: LIBS += -L$$PWD/cryptopp/lib/linux/ -lcryptopp -L$$PWD/quazip-0.7.3/libs/linux/ -lquazip -lz
 unix:!macx: LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
 
-win32
-{
+win32 {
     DEFINES += TARGET_WINDOWS
     INCLUDEPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib ./src ./openssl-1.0.2o-x64/include
 
