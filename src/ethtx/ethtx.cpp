@@ -33,14 +33,14 @@ std::string SignTransaction(std::string rawprivkey,
                             std::string value,
                             std::string data)
 {
-    CHECK(nonce.find("0x") == 0, "Incorrect nonce " + nonce);
-    CHECK(gasPrice.find("0x") == 0, "Incorrect gasPrice " + gasPrice);
-    CHECK(gasLimit.find("0x") == 0, "Incorrect gasLimit " + gasLimit);
-    CHECK(to.find("0x") == 0, "Incorrect to " + to);
-    CHECK(to.size() == 42, "Incorrect to " + to);
-    CHECK(value.find("0x") == 0, "Incorrect value " + value);
+    CHECK_TYPED(nonce.find("0x") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect nonce " + nonce);
+    CHECK_TYPED(gasPrice.find("0x") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect gasPrice " + gasPrice);
+    CHECK_TYPED(gasLimit.find("0x") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect gasLimit " + gasLimit);
+    CHECK_TYPED(to.find("0x") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect to " + to);
+    CHECK_TYPED(to.size() == 42, TypeErrors::INCORRECT_USER_DATA, "Incorrect to " + to);
+    CHECK_TYPED(value.find("0x") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect value " + value);
     if (!data.empty()) {
-        CHECK(data.find("0x") == 0, "Incorrect value " + value);
+        CHECK_TYPED(data.find("0x") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect value " + value);
     }
     nonce = nonce.substr(2);
     gasPrice = gasPrice.substr(2);
@@ -69,12 +69,12 @@ std::string SignTransaction(std::string rawprivkey,
     auto* ctx = getCtx();
     secp256k1_ecdsa_recoverable_signature rawSig;
     const bool res1 = secp256k1_ecdsa_sign_recoverable(ctx, &rawSig, (const unsigned char*)hs, (const unsigned char*)rawprivkey.c_str(), nullptr, nullptr);
-    CHECK(res1, "secp256k1_ecdsa_sign_recoverable error");
+    CHECK_TYPED(res1, TypeErrors::DONT_SIGN, "secp256k1_ecdsa_sign_recoverable error");
 
     uint8_t signature[64] = {0};
     int v = 0;
     const bool res2 = secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, signature, &v, &rawSig);
-    CHECK(res2, "secp256k1_ecdsa_recoverable_signature_serialize_compact error");
+    CHECK_TYPED(res2, TypeErrors::DONT_SIGN, "secp256k1_ecdsa_recoverable_signature_serialize_compact error");
     if (v == 0 || v == 1) {
         v += 37;
     }
