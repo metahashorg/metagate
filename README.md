@@ -286,5 +286,8 @@ Q_INVOKABLE void getAppInfo(const QString requestId);
 Результат возвращается в функцию
 getAppInfoResultJs(requestId, isProduction, version, gitCommit);
 
+В момент изменения содержимого одного из каталогов с ключами будет вызываться функция
+directoryChangedResultJs(path, ethName);
+
 ```
 

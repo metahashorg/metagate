@@ -54,6 +54,8 @@ JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
     setPaths(walletDefaultPath, "");
 
     CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect callbackCall");
+
+    CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
@@ -802,14 +804,24 @@ void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
         walletPath = newPatch;
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         createFolder(walletPath);
-        walletPathEth = makePath(walletPath, WALLET_PATH_ETH);
-        createFolder(walletPathEth);
-        walletPathBtc = makePath(walletPath, WALLET_PATH_BTC);
-        createFolder(walletPathBtc);
-        walletPathMth = makePath(walletPath, WALLET_PATH_MTH);
-        createFolder(walletPathMth);
-        walletPathTmh = makePath(walletPath, WALLET_PATH_TMH);
-        createFolder(walletPathTmh);
+
+        for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
+            fileSystemWatcher.removePath(folderInfo.walletPath.absolutePath());
+        }
+        folderWalletsInfos.clear();
+
+        auto setPathToWallet = [this](QString &curPath, const QString &suffix, const QString &name) {
+            curPath = makePath(walletPath, suffix);
+            createFolder(curPath);
+            folderWalletsInfos.emplace_back(curPath, name);
+            fileSystemWatcher.addPath(curPath);
+        };
+
+        setPathToWallet(walletPathEth, WALLET_PATH_ETH, "eth");
+        setPathToWallet(walletPathBtc, WALLET_PATH_BTC, "btc");
+        setPathToWallet(walletPathMth, WALLET_PATH_MTH, "mth");
+        setPathToWallet(walletPathTmh, WALLET_PATH_TMH, "tmh");
+
         walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);
         LOG << "Wallets path " << walletPath;
 
@@ -1029,6 +1041,20 @@ BEGIN_SLOT_WRAPPER
     const std::string versionString = VERSION_STRING;
     const std::string gitCommit = GIT_CURRENT_SHA1;
     runJsFunc(JS_NAME_RESULT, TypedException(), requestId, isProductionSetup, versionString, gitCommit);
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::onDirChanged(const QString &dir) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "directoryChangedResultJs";
+    const QDir d(dir);
+    for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
+        if (folderInfo.walletPath == d) {
+            LOG << "folder changed " << folderInfo.nameWallet << " " << d.absolutePath();
+            runJsFunc(JS_NAME_RESULT, TypedException(), d.absolutePath(), folderInfo.nameWallet);
+            return;
+        }
+    }
 END_SLOT_WRAPPER
 }
 

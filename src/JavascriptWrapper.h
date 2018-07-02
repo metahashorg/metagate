@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QString>
+#include <QFileSystemWatcher>
+#include <QDir>
 
 #include "TypedException.h"
 
@@ -164,6 +166,8 @@ private slots:
 
     void onCallbackCall(ReturnCallback callback);
 
+    void onDirChanged(const QString &dir);
+
 private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
@@ -215,6 +219,20 @@ private:
     QWidget *widget_ = nullptr;
 
     SimpleClient client;
+
+    struct FolderWalletInfo {
+        QDir walletPath;
+        QString nameWallet;
+
+        FolderWalletInfo(const QDir &walletPath, const QString &nameWallet)
+            : walletPath(walletPath)
+            , nameWallet(nameWallet)
+        {}
+    };
+
+    std::vector<FolderWalletInfo> folderWalletsInfos;
+
+    QFileSystemWatcher fileSystemWatcher;
 
 };
 
