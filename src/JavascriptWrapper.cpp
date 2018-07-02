@@ -819,7 +819,7 @@ void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
 
         setPathToWallet(walletPathEth, WALLET_PATH_ETH, "eth");
         setPathToWallet(walletPathBtc, WALLET_PATH_BTC, "btc");
-        setPathToWallet(walletPathMth, WALLET_PATH_MTH, "mth");
+        setPathToWallet(walletPathMth, WALLET_PATH_MTH, "mhc");
         setPathToWallet(walletPathTmh, WALLET_PATH_TMH, "tmh");
 
         walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);
