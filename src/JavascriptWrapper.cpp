@@ -397,6 +397,22 @@ void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString
     }
 }
 
+void JavascriptWrapper::encryptMessage(QString requestId, QString publicKey, QString message) {
+    LOG << "encrypt message";
+
+    const QString JS_NAME_RESULT = "encryptMessageResultJs";
+    const TypedException &exception = apiVrapper([&, this]() {
+        CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
+        const std::string answer = Wallet::encryptMessage(publicKey.toStdString(), message.toStdString());
+
+        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, answer);
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
+    }
+}
+
 void JavascriptWrapper::decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex) {
     LOG << "decrypt message";
 
