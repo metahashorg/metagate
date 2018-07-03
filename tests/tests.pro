@@ -3,6 +3,7 @@ QT       -= gui
 QT += widgets
 TARGET = tst_metagate
 CONFIG   += testcase
+CONFIG += c++14
 
 TEMPLATE = app
 

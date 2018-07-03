@@ -8,7 +8,7 @@
 #include "BtcWallet.h"
 #include "utils.h"
 #include "openssl_wrapper/openssl_wrapper.h"
-#include "SlotWrapper.h"
+
 Q_DECLARE_METATYPE(std::string)
 
 
@@ -183,21 +183,6 @@ void tst_Metagate::testEthWallet()
     QCOMPARE(result, std::string("0xf899018506c088e200828208948d78b1ab426dc9daa7427b7a60e64633f62e645f85746a528800b001010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010126a047dd9f6ebce749230df9ac9d57db85f948db0775882cb63565501fe95ddfcb58a07c7020426395bc781fc06e4fbb5cffc5c4d8b77d37596b1c83fa0c21ce37cfb3"));
 }
 
-static void testEthWallet() {
-    writeToFile("./123", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
-    const std::string password = "1";
-    EthWallet wallet("./", "123", password);
-    const std::string result = wallet.SignTransaction(
-        "0x01",
-        "0x6C088E200",
-        "0x8208",
-        "0x8D78B1Ab426dc9daa7427b7A60E64633f62E645F",
-        "0x746A528800",
-        "0x010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101"
-    );
-    CHECK(result == "0xf899018506c088e200828208948d78b1ab426dc9daa7427b7a60e64633f62e645f85746a528800b001010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010126a047dd9f6ebce749230df9ac9d57db85f948db0775882cb63565501fe95ddfcb58a07c7020426395bc781fc06e4fbb5cffc5c4d8b77d37596b1c83fa0c21ce37cfb3", "Incorrect result: " + result);
-}
-
 void tst_Metagate::testBitcoinTransaction_data()
 {
     QTest::addColumn<std::string>("wif");
@@ -250,7 +235,6 @@ void tst_Metagate::testBitcoinTransaction_data()
 
 void tst_Metagate::testBitcoinTransaction()
 {
-    BEGIN_SLOT_WRAPPER
     QFETCH(std::string, wif);
     QFETCH(std::string, address);
     QFETCH(uint64_t, amount);
@@ -272,7 +256,6 @@ void tst_Metagate::testBitcoinTransaction()
     BtcWallet wallet(wif);
     const std::string tx = wallet.genTransaction(is, amount, fee, address, true);
     QCOMPARE(tx, answer);
-    END_SLOT_WRAPPER
 }
 
 QTEST_MAIN(tst_Metagate)

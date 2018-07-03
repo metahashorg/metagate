@@ -1,9 +1,9 @@
 macx: QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../,-rpath,@executable_path/../,-rpath,@executable_path/../Frameworks
 macx: DEFINES += TARGET_OS_MAC
-INCLUDEPATH += $$PWD/quazip-0.7.3/quazip/
+INCLUDEPATH += $$PWD/quazip-0.7.3/ $$PWD
 macx: INCLUDEPATH += /usr/local/opt/openssl/include
 macx: LIBS += -L$$PWD/cryptopp/lib/mac/ -lcryptopp -L$$PWD/quazip-0.7.3/libs/mac/ -lquazip -lz
 macx: LIBS += -L$$PWD/secp256k1/lib/macx/ -lsecp256k1
 macx: PRE_TARGETDEPS += $$PWD/cryptopp/lib/mac/libcryptopp.a $$PWD/quazip-0.7.3/libs/mac/libquazip.a
 macx: LIBS += /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a
-DEPENDPATH += $$PWD/quazip-0.7.3/quazip/ /usr/local/opt/openssl/include
+DEPENDPATH += $$PWD/quazip-0.7.3/ /usr/local/opt/openssl/include
