@@ -1,4 +1,4 @@
-#include "tst_metagate.h"
+#include "tst_wallet.h"
 
 #include <QDebug>
 
@@ -12,13 +12,13 @@
 Q_DECLARE_METATYPE(std::string)
 
 
-tst_Metagate::tst_Metagate(QObject *parent)
+tst_Wallet::tst_Wallet(QObject *parent)
     : QObject(parent)
 {
     InitOpenSSL();
 }
 
-void tst_Metagate::testEncryptBtc_data()
+void tst_Wallet::testEncryptBtc_data()
 {
     QTest::addColumn<std::string>("wif");
     QTest::addColumn<std::string>("encriptedWif");
@@ -39,7 +39,7 @@ void tst_Metagate::testEncryptBtc_data()
 #endif
 }
 
-void tst_Metagate::testEncryptBtc()
+void tst_Wallet::testEncryptBtc()
 {
     QFETCH(std::string, wif);
     QFETCH(std::string, encriptedWif);
@@ -48,7 +48,7 @@ void tst_Metagate::testEncryptBtc()
     QCOMPARE(decryptWif(encriptedWif, npassphraze), wif);
 }
 
-void tst_Metagate::testCreateBinTransaction_data()
+void tst_Wallet::testCreateBinTransaction_data()
 {
     QTest::addColumn<std::string>("address");
     QTest::addColumn<uint64_t>("amount");
@@ -70,7 +70,7 @@ void tst_Metagate::testCreateBinTransaction_data()
                                             << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfc0000000001000000fb00000100fafa0000");
 }
 
-void tst_Metagate::testCreateBinTransaction()
+void tst_Wallet::testCreateBinTransaction()
 {
     QFETCH(std::string, address);
     QFETCH(uint64_t, amount);
@@ -81,7 +81,7 @@ void tst_Metagate::testCreateBinTransaction()
     QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, "")), answer);
 }
 
-void tst_Metagate::testSsl_data()
+void tst_Wallet::testSsl_data()
 {
     QTest::addColumn<std::string>("password");
     QTest::addColumn<std::string>("message");
@@ -98,7 +98,7 @@ void tst_Metagate::testSsl_data()
                            << std::string("Message 4");
 }
 
-void tst_Metagate::testSsl()
+void tst_Wallet::testSsl()
 {
     QFETCH(std::string, password);
     QFETCH(std::string, message);
@@ -112,7 +112,7 @@ void tst_Metagate::testSsl()
     QCOMPARE(decryptMsg, message);
 }
 
-void tst_Metagate::testCreateMth_data()
+void tst_Wallet::testCreateMth_data()
 {
     QTest::addColumn<std::string>("passwd");
 
@@ -122,7 +122,7 @@ void tst_Metagate::testCreateMth_data()
     QTest::newRow("CreateMth 4") << std::string("Password 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 }
 
-void tst_Metagate::testCreateMth()
+void tst_Wallet::testCreateMth()
 {
     QFETCH(std::string, passwd);
     std::string tmp;
@@ -131,7 +131,7 @@ void tst_Metagate::testCreateMth()
     Wallet wallet("./", address, passwd);
 }
 
-void tst_Metagate::testCreateEth_data()
+void tst_Wallet::testCreateEth_data()
 {
     QTest::addColumn<std::string>("passwd");
 
@@ -141,14 +141,14 @@ void tst_Metagate::testCreateEth_data()
     QTest::newRow("CreateEth 4") << std::string("Password 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 }
 
-void tst_Metagate::testCreateEth()
+void tst_Wallet::testCreateEth()
 {
     QFETCH(std::string, passwd);
     const std::string address = EthWallet::genPrivateKey("./", passwd);
     EthWallet wallet("./", address, passwd);
 }
 
-void tst_Metagate::testCreateBtc_data()
+void tst_Wallet::testCreateBtc_data()
 {
     QTest::addColumn<QString>("passwd");
 
@@ -159,7 +159,7 @@ void tst_Metagate::testCreateBtc_data()
     QTest::newRow("CreateBtc 4") << QStringLiteral("Password 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 }
 
-void tst_Metagate::testCreateBtc()
+void tst_Wallet::testCreateBtc()
 {
     QFETCH(QString, passwd);
     const std::string address = BtcWallet::genPrivateKey("./", passwd).first;
@@ -167,7 +167,7 @@ void tst_Metagate::testCreateBtc()
     QCOMPARE(address, wallet.getAddress());
 }
 
-void tst_Metagate::testEthWallet()
+void tst_Wallet::testEthWallet()
 {
     writeToFile("./123", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
     const std::string password = "1";
@@ -183,7 +183,7 @@ void tst_Metagate::testEthWallet()
     QCOMPARE(result, std::string("0xf899018506c088e200828208948d78b1ab426dc9daa7427b7a60e64633f62e645f85746a528800b001010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010126a047dd9f6ebce749230df9ac9d57db85f948db0775882cb63565501fe95ddfcb58a07c7020426395bc781fc06e4fbb5cffc5c4d8b77d37596b1c83fa0c21ce37cfb3"));
 }
 
-void tst_Metagate::testBitcoinTransaction_data()
+void tst_Wallet::testBitcoinTransaction_data()
 {
     QTest::addColumn<std::string>("wif");
     QTest::addColumn<std::string>("address");
@@ -233,7 +233,7 @@ void tst_Metagate::testBitcoinTransaction_data()
                                             << std::string("0100000003b82277b5cd2078fb5a3ede37a14c34f0b2061a5579d8c479688f175af2daec72010000006b483045022100e331f87c1da0dc1f25bcd28ffd61e96339666fc5ca4729e89b2e940061fcdd6d022011748b41655046934c9e124a4ae307eb8f67a8c61b9d957e2cca0b95fcb21397012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffffca98bd72ad549bb5f1b8de8cb7f45301f3f0e510994eb85900bd5800ae6d0294000000006b483045022100938db1a910e54efdf55cc5228bb7c77b5e40b19ef30eaa60ca45d40fab7f316602202bf5298ad3cfc0cb461491b31303138ad74ff61537193cb4d9b24d50a4a3a36e012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffff84e35228ba3c2dfd6b396d340249d25911f83db5081c0b43070abf6e4b63480c010000006b483045022100ff7bc69634e30b614068733750e7c6e8a6906f3116f26bf9d010289bc5b185fb0220467427fd7fce3fb97f217716c00f764354ad929fb527d3b57448667b222080fc012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffff0280f0fa02000000001976a91433869dcc29235cd6d3369de263f1ab54463ee65688ac38be2e03000000001976a9145e05738474a2d065b554bd8564857e166031570688ac00000000");
 }
 
-void tst_Metagate::testBitcoinTransaction()
+void tst_Wallet::testBitcoinTransaction()
 {
     QFETCH(std::string, wif);
     QFETCH(std::string, address);
@@ -258,4 +258,4 @@ void tst_Metagate::testBitcoinTransaction()
     QCOMPARE(tx, answer);
 }
 
-QTEST_MAIN(tst_Metagate)
+QTEST_MAIN(tst_Wallet)

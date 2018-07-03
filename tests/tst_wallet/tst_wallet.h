@@ -1,15 +1,15 @@
-#ifndef TST_METAGATE_H
-#define TST_METAGATE_H
+#ifndef TST_WALLET_H
+#define TST_WALLET_H
 
 #include <QObject>
 #include <QTest>
 
 
-class tst_Metagate : public QObject
+class tst_Wallet : public QObject
 {
     Q_OBJECT
 public:
-    explicit tst_Metagate(QObject *parent = nullptr);
+    explicit tst_Wallet(QObject *parent = nullptr);
 
 private slots:
 
@@ -37,4 +37,4 @@ private slots:
     void testBitcoinTransaction();
 };
 
-#endif // TST_METAGATE_H
+#endif // TST_WALLET_H
