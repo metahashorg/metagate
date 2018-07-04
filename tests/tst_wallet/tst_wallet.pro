@@ -4,6 +4,7 @@ QT += widgets
 TARGET = tst_wallet
 CONFIG   += testcase
 CONFIG += c++14
+CONFIG += static
 
 TEMPLATE = app
 
@@ -35,6 +36,10 @@ SOURCES += \
 HEADERS += \
     tst_wallet.h
 
+DEFINES += CRYPTOPP_IMPORTS
+DEFINES += QUAZIP_STATIC
+
+QMAKE_LFLAGS += -rdynamic
 unix:!macx: include(../../libs-unix.pri)
 win32: include(../../libs-win.pri)
 macx: include(../../libs-macos.pri)
