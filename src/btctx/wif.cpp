@@ -26,9 +26,9 @@ secp256k1_context const* getCtx();
 std::string WIFToPrivkey(const std::string& wif, bool& isCompressed) {
     std::vector<unsigned char> decoded;
     const bool res = DecodeBase58(wif.c_str(), decoded);
-    CHECK(res, "dont decode wif key");
+    CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "dont decode wif key");
     isCompressed = (decoded.size() == 38 && decoded[33] == 0x1);
-    CHECK(decoded.size() >= 33, "dont decode wif key");
+    CHECK_TYPED(decoded.size() >= 33, TypeErrors::PRIVATE_KEY_ERROR, "dont decode wif key");
     const std::string rawprivkey = std::string((char*)decoded.data() + 1, 32);
     return rawprivkey;
 }
@@ -36,7 +36,7 @@ std::string WIFToPrivkey(const std::string& wif, bool& isCompressed) {
 std::string PrivKeyToPubKey(const std::string& rawprivkey) {
     secp256k1_pubkey pubkey;
     const bool res = secp256k1_ec_pubkey_create(getCtx(), &pubkey, (const uint8_t*)rawprivkey.data());
-    CHECK(res, "dont create pubkey");
+    CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "dont create pubkey");
     uint8_t keybuf[EC_PUB_KEY_LENGTH];
     size_t keybufsize = EC_PUB_KEY_LENGTH;
     secp256k1_ec_pubkey_serialize(getCtx(), keybuf, &keybufsize, &pubkey, SECP256K1_EC_UNCOMPRESSED);
@@ -47,7 +47,7 @@ std::string PrivKeyToPubKey(const std::string& rawprivkey) {
 std::string PrivKeyToCompressedPubKey(const std::string& rawprivkey) {
     secp256k1_pubkey pubkey;
     const bool res = secp256k1_ec_pubkey_create(getCtx(), &pubkey, (const uint8_t*)rawprivkey.data());
-    CHECK(res, "dont create compressed pubkey");
+    CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "dont create compressed pubkey");
     uint8_t keybuf[EC_KEY_LENGTH+1];
     size_t keybufsize = EC_KEY_LENGTH+1;
     secp256k1_ec_pubkey_serialize(getCtx(), keybuf, &keybufsize, &pubkey, SECP256K1_EC_COMPRESSED);
@@ -65,11 +65,11 @@ static std::string doubleHash(const std::string &str) {
 }
 
 std::string PubkeyToAddress(const std::string& rawpubkey, bool testnet) {
-    CHECK(rawpubkey.size() == EC_PUB_KEY_LENGTH, "Incorrect pub key");
+    CHECK_TYPED(rawpubkey.size() == EC_PUB_KEY_LENGTH, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect pub key");
     const size_t ADDRESS_LENGTH = 25;
     uint8_t address[ADDRESS_LENGTH] = {0};
     uint8_t* pk = (uint8_t*)rawpubkey.data();
-    CHECK(pk[0] == 0x04, "incorrect pub key");
+    CHECK_TYPED(pk[0] == 0x04, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "incorrect pub key");
     CryptoPP::SHA256 sha256;
     uint8_t sha256hash[CryptoPP::SHA256::DIGESTSIZE] = {0};
     //Подсчитываем первый sha256-хэш.
@@ -81,7 +81,7 @@ std::string PubkeyToAddress(const std::string& rawpubkey, bool testnet) {
         address[0] = 0;
     }
     //RIPEMD160-хэш от предыдущего
-    CHECK(ADDRESS_LENGTH >= CryptoPP::RIPEMD160::DIGESTSIZE + 1, "Ups");
+    CHECK_TYPED(ADDRESS_LENGTH >= CryptoPP::RIPEMD160::DIGESTSIZE + 1, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Ups");
     CryptoPP::RIPEMD160 ripemd;
     ripemd.CalculateDigest(&address[1], sha256hash, CryptoPP::SHA256::DIGESTSIZE);
     const std::string finalhash = doubleHash(std::string((const char*)address, CryptoPP::RIPEMD160::DIGESTSIZE + 1));
@@ -94,11 +94,11 @@ std::string PubkeyToAddress(const std::string& rawpubkey, bool testnet) {
 }
 
 std::string CompressedPubkeyToAddress(const std::string& rawpubkey, bool testnet) {
-    CHECK(rawpubkey.size() == EC_KEY_LENGTH+1, "Incorrect pub key");
+    CHECK_TYPED(rawpubkey.size() == EC_KEY_LENGTH+1, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect pub key");
     const size_t ADDRESS_LENGTH = 25;
     uint8_t address[ADDRESS_LENGTH] = {0};
     uint8_t* pk = (uint8_t*)rawpubkey.data();
-    CHECK(pk[0] == 0x03 || pk[0] == 0x02, "Incorrect pub key");
+    CHECK_TYPED(pk[0] == 0x03 || pk[0] == 0x02, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect pub key");
     CryptoPP::SHA256 sha256;
     uint8_t sha256hash[CryptoPP::SHA256::DIGESTSIZE] = {0};
     //Подсчитываем первый sha256-хэш.
@@ -129,8 +129,8 @@ std::string AddressToPubkeyScript(const std::string& address) {
 
     std::vector<unsigned char> addr;
     const bool res = DecodeBase58(address.c_str(), addr);
-    CHECK(res, "Incorrect address " + address);
-    CHECK(addr.size() == 25, "Incorrect address " + address);
+    CHECK_TYPED(res, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+    CHECK_TYPED(addr.size() == 25, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     const std::string script = prefix + std::string((char*)addr.data()+1, 20) + suffix;
     return script;
 }
@@ -156,7 +156,7 @@ std::string CreateWIF(bool isTestnet, bool isCompressed) {
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
     privateKey.Initialize(prng, CryptoPP::ASN1::secp256k1());
-    CHECK(privateKey.Validate(prng, 3), "dont create wif");
+    CHECK_TYPED(privateKey.Validate(prng, 3), TypeErrors::PRIVATE_KEY_ERROR, "dont create wif");
 
     std::stringstream ss;
     CryptoPP::Integer exp = privateKey.GetPrivateExponent();
@@ -174,12 +174,12 @@ std::string CreateWIF(bool isTestnet, bool isCompressed) {
 void checkAddressBase56(const std::string &address) {
     std::vector<unsigned char> addr;
     const bool res = DecodeBase58(address.c_str(), addr);
-    CHECK(res, "Incorrect address " + address);
-    CHECK(addr.size() == 25, "Incorrect address " + address);
+    CHECK_TYPED(res, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+    CHECK_TYPED(addr.size() == 25, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     const std::string data(addr.begin(), addr.begin() + 21);
     const std::string addrHash = doubleHash(data);
     for (size_t i = 0; i < 4; i++) {
-        CHECK(addr.at(21 + i) == (unsigned char)addrHash.at(i), "Incorrect address " + address);
+        CHECK_TYPED(addr.at(21 + i) == (unsigned char)addrHash.at(i), TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     }
 }
 
@@ -201,7 +201,7 @@ std::string encryptWif(const std::string &wif, const std::string &normalizedPass
     bool isCompressed;
     const std::string addressBase58 = getAddress(wif, isCompressed, false);
     const std::string privKey = WIFToPrivkey(wif, isCompressed);
-    CHECK(privKey.size() == 32, "Incorrect private key");
+    CHECK_TYPED(privKey.size() == 32, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
 
     const unsigned char firstByte = 0x01;
     const unsigned char secondByte = 0x42;
@@ -215,12 +215,13 @@ std::string encryptWif(const std::string &wif, const std::string &normalizedPass
     const int p=8;
     std::array<uint8_t, 64> derivedkey;
 
-    libscrypt_scrypt(
+    const int res = libscrypt_scrypt(
         (const uint8_t*)normalizedPassphraze.c_str(), normalizedPassphraze.size(),
         (const uint8_t*)salt.data(), salt.size(),
         n, r, p,
         derivedkey.data(), derivedkey.size()
     );
+    CHECK_TYPED(res == 0, TypeErrors::INCORRECT_PASSWORD, "Incorrect password");
     const std::string derivedHalfStr1(derivedkey.begin(), derivedkey.begin() + derivedkey.size() / 2);
     const std::string derivedHalfStr2(derivedkey.begin() + derivedkey.size() / 2, derivedkey.end());
 
@@ -234,7 +235,7 @@ std::string encryptWif(const std::string &wif, const std::string &normalizedPass
             CryptoPP::StreamTransformationFilter::NO_PADDING
         )
     );
-    CHECK(ciphertext.size() == 16, "Incorrect cbc result");
+    CHECK_TYPED(ciphertext.size() == 16, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect cbc result");
 
     std::string ciphertext2;
     ciphertext2.reserve(1000);
@@ -246,10 +247,10 @@ std::string encryptWif(const std::string &wif, const std::string &normalizedPass
             CryptoPP::StreamTransformationFilter::NO_PADDING
         )
     );
-    CHECK(ciphertext2.size() == 16, "Incorrect cbc result");
+    CHECK_TYPED(ciphertext2.size() == 16, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect cbc result");
 
     std::string result = std::string("") + (char)firstByte + (char)secondByte + (char)thirdByte + salt + ciphertext + ciphertext2;
-    CHECK(result.size() == 39, "Incorrect result");
+    CHECK_TYPED(result.size() == 39, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect result");
 
     const std::string checksumResult = doubleHash(result);
     result += checksumResult.substr(0, 4);
@@ -258,34 +259,35 @@ std::string encryptWif(const std::string &wif, const std::string &normalizedPass
 }
 
 std::string decryptWif(const std::string &encryptedWifBase64, const std::string &normalizedPassphraze) {
-    CHECK(encryptedWifBase64.size() == 58, "Incorrect encripted wif size " + std::to_string(encryptedWifBase64.size()));
+    CHECK_TYPED(encryptedWifBase64.size() == 58, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encripted wif size " + std::to_string(encryptedWifBase64.size()));
     std::vector<unsigned char> encryptedWifVect;
     const bool res = DecodeBase58(encryptedWifBase64.c_str(), encryptedWifVect);
-    CHECK(res, "Incorrect encrypted wif key");
+    CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif key");
     const std::string encryptedWif(encryptedWifVect.begin(), encryptedWifVect.end());
     const unsigned char firstByte = encryptedWif[0];
     const unsigned char secondByte = encryptedWif[1];
     const unsigned char thirdByte = encryptedWif[2];
-    CHECK(firstByte == 0x01 && secondByte == 0x42, "Incorrect encrypted wif");
+    CHECK_TYPED(firstByte == 0x01 && secondByte == 0x42, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif");
     const bool isCompressed = (thirdByte & 0x20) != 0;
 
     const std::string salt = encryptedWif.substr(3, 4);
     const std::string encryptedhalf1 = encryptedWif.substr(7, 16);
     const std::string encryptedhalf2 = encryptedWif.substr(23, 16);
     const std::string checksum = encryptedWif.substr(39);
-    CHECK(checksum == doubleHash(encryptedWif.substr(0, 39)).substr(0, 4), "Incorrect encrypted wif");
+    CHECK_TYPED(checksum == doubleHash(encryptedWif.substr(0, 39)).substr(0, 4), TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif");
 
     const int n=16384;
     const int r=8;
     const int p=8;
     std::array<uint8_t, 64> derivedkey;
 
-    libscrypt_scrypt(
+    const int res8 = libscrypt_scrypt(
         (const uint8_t*)normalizedPassphraze.c_str(), normalizedPassphraze.size(),
         (const uint8_t*)salt.data(), salt.size(),
         n, r, p,
         derivedkey.data(), derivedkey.size()
     );
+    CHECK_TYPED(res8 == 0, TypeErrors::INCORRECT_PASSWORD, "Incorrect password");
     const std::string derivedHalfStr1(derivedkey.begin(), derivedkey.begin() + derivedkey.size() / 2);
     const std::string derivedHalfStr2(derivedkey.begin() + derivedkey.size() / 2, derivedkey.end());
 
@@ -299,7 +301,7 @@ std::string decryptWif(const std::string &encryptedWifBase64, const std::string 
             CryptoPP::StreamTransformationFilter::NO_PADDING
         )
     );
-    CHECK(ciphertext.size() == 16, "Incorrect cbc operation result");
+    CHECK_TYPED(ciphertext.size() == 16, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect cbc operation result");
 
     std::string ciphertext2;
     ciphertext2.reserve(1000);
@@ -311,7 +313,7 @@ std::string decryptWif(const std::string &encryptedWifBase64, const std::string 
             CryptoPP::StreamTransformationFilter::NO_PADDING
         )
     );
-    CHECK(ciphertext2.size() == 16, "Incorrect cbc operation result");
+    CHECK_TYPED(ciphertext2.size() == 16, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect cbc operation result");
 
     const std::string privkey = ciphertext + ciphertext2;
     const std::string wif = privateKeyToWif(privkey, false, isCompressed);
@@ -319,6 +321,6 @@ std::string decryptWif(const std::string &encryptedWifBase64, const std::string 
     bool tmp;
     const std::string validAddress = getAddress(wif, tmp, false);
     const std::string doubleHashAddress = doubleHash(validAddress);
-    CHECK(doubleHashAddress.substr(0, salt.size()) == salt, "Incorrect private key");
+    CHECK_TYPED(doubleHashAddress.substr(0, salt.size()) == salt, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
     return wif;
 }

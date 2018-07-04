@@ -31,10 +31,10 @@ EthWallet::EthWallet(
     const std::string &address,
     std::string password
 ) {
-    CHECK(!password.empty(), "Empty password");
+    CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
     const QString pathToFile = getFullPath(folder, address);
     const std::string certcontent = readFile(pathToFile);
-    CHECK(!certcontent.empty(), "private file empty");
+    CHECK_TYPED(!certcontent.empty(), TypeErrors::PRIVATE_KEY_ERROR, "private file empty");
     rawprivkey.resize(EC_KEY_LENGTH);
     DecodeCert(certcontent.c_str(), password, rawprivkey.data());
 }
@@ -52,12 +52,12 @@ std::string EthWallet::SignTransaction(
 }
 
 std::string EthWallet::genPrivateKey(const QString &folder, const std::string &password) {
-    CHECK(!password.empty(), "Empty password");
+    CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
     const auto pair = CreateNewKey(password);
     const std::string &address = pair.first;
     const std::string &keyValue = pair.second;
 
-    CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
+    CHECK_TYPED(!folder.isNull() && !folder.isEmpty(), TypeErrors::DONT_CREATE_FOLDER, "Incorrect path to wallet: empty");
     const QString fileName = getFullPath(folder, address);
     writeToFile(fileName, keyValue, true);
 
@@ -84,9 +84,9 @@ std::vector<std::pair<QString, QString>> EthWallet::getAllWalletsInFolder(const 
 std::string EthWallet::makeErc20Data(const std::string &valueHex, const std::string &address) {
     std::string result = "0xa9059cbb";
 
-    CHECK(address.substr(0, 2) == "0x", "Incorrect address " + address);
-    CHECK(address.size() == 42, "Incorrect address " + address);
-    CHECK(valueHex.substr(0, 2) == "0x", "Incorrect address " + valueHex);
+    CHECK_TYPED(address.substr(0, 2) == "0x", TypeErrors::INCORRECT_USER_DATA, "Incorrect address " + address);
+    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_USER_DATA, "Incorrect address " + address);
+    CHECK_TYPED(valueHex.substr(0, 2) == "0x", TypeErrors::INCORRECT_USER_DATA, "Incorrect address " + valueHex);
 
     std::string param1 = address.substr(2);
     param1.insert(param1.begin(), 64 - param1.size(), '0');
@@ -103,7 +103,7 @@ std::string EthWallet::getOneKey(const QString &folder, const std::string &addre
 }
 
 void EthWallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
-    CHECK(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, "Incorrect data");
+    CHECK_TYPED(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect data");
 
     const std::string content = data.substr(PREFIX_ONE_KEY.size());
 
@@ -116,11 +116,11 @@ void EthWallet::savePrivateKey(const QString &folder, const std::string &data, c
 }
 
 void EthWallet::checkAddress(const std::string &address) {
-    CHECK(address.size() == 42, "Incorrect address");
-    CHECK(address.compare(0, 2, "0x") == 0, "Incorrect address");
+    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+    CHECK_TYPED(address.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
 
     const std::string addressPart = address.substr(2);
 
     const std::string addressMixed = "0x" + MixedCaseEncoding(HexStringToDump(addressPart));
-    CHECK(addressMixed == address, "Incorrect Address");
+    CHECK_TYPED(addressMixed == address, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect Address");
 }

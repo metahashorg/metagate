@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <random>
 
+#include "check.h"
+
 template<typename ReturnElement, typename Element, class ExtractInfo>
 std::vector<ReturnElement> getRandom(const std::vector<Element> &elements, size_t limit, size_t count, const ExtractInfo &extracter) {
     CHECK(count <= limit, "Incorrect count value");

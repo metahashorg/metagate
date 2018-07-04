@@ -85,7 +85,7 @@ static void getPublicKey2(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>
     }
 
     std::string ttt2 = "04" + xStr + yStr;
-    CHECK(ttt2.size() == 65 * 2, "Ups " + std::to_string(ttt2.size()));
+    CHECK_TYPED(ttt2.size() == 65 * 2, TypeErrors::DONT_CREATE_KEY, "Ups " + std::to_string(ttt2.size()));
 
     result = ttt2;
 }
@@ -149,7 +149,7 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
 
     const std::string hexAddr = "0x" + toHex(ripemdHash);
 
-    CHECK(hexAddr.size() == 52, "Incorrect address");
+    CHECK_TYPED(hexAddr.size() == 52, TypeErrors::DONT_CREATE_KEY, "Incorrect address");
 
     //std::cout << hexAddr << std::endl;
 
@@ -158,8 +158,8 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
 
 void Wallet::checkAddress(const std::string &address) {
     std::string addr = address;
-    CHECK(addr.size() == 52, "Incorrect address");
-    CHECK(addr.compare(0, 2, "0x") == 0, "Incorrect address");
+    CHECK_TYPED(addr.size() == 52, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+    CHECK_TYPED(addr.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
     addr = addr.substr(2);
 
     const std::string binAddress = fromHex(addr);
@@ -167,26 +167,22 @@ void Wallet::checkAddress(const std::string &address) {
     const std::string hash = binAddress.substr(binAddress.size() - 4);
 
     const std::string doubleHash = doubleSha(payload);
-    CHECK(doubleHash.substr(0, hash.size()) == hash, "Incorrect address");
+    CHECK_TYPED(doubleHash.substr(0, hash.size()) == hash, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
 }
 
 void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){
-    CHECK(!password.empty(), "Empty password");
+    CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
 
     QDir dir(folder);
     const bool resultCreate = dir.mkpath(folder);
-    if (!resultCreate) {
-        throw TypedException(TypeErrors::DONT_CREATE_FOLDER, "dont create folder");
-    }
+    CHECK_TYPED(resultCreate, TypeErrors::DONT_CREATE_FOLDER, "dont create folder");
 
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     privateKey.Initialize(prng, CryptoPP::ASN1::secp256r1());
     const bool resultCreatePrivate = privateKey.Validate(prng, 3);
-    if (!resultCreatePrivate) {
-        throw TypedException(TypeErrors::DONT_CREATE_PUBLIC_KEY, "dont create public key");
-    }
+    CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create public key");
 
     std::string pubKey;
     getPublicKey(privateKey, pubKey);
@@ -229,7 +225,7 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     : folder(folder)
     , name(name)
 {
-    CHECK(!password.empty(), "Empty password");
+    CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
     fullPath = makeFullWalletPath(folder, name);
     try {
 #ifdef TARGET_WINDOWS
@@ -243,7 +239,7 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
         CryptoPP::AutoSeededRandomPool prng;
         privateKey.Validate(prng, 3);
     } catch (const std::exception &e) {
-        throw TypedException(TypeErrors::DONT_LOAD_PRIVATE_KEY, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
+        throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
     }
 }
 
@@ -273,7 +269,7 @@ std::string Wallet::sign(const std::string &message, std::string &publicKey){
 
         return toHex(signature2);
     } catch (const std::exception &e) {
-        throw TypedException(TypeErrors::DONT_SIGN, std::string("dont sign ") + e.what());
+        throwErrTyped(TypeErrors::DONT_SIGN, std::string("dont sign ") + e.what());
     }
 }
 
@@ -284,7 +280,7 @@ std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t
     result += packInteger(value);
     result += packInteger(fee);
     result += packInteger(nonce);
-    CHECK(data.empty(), "Data not empty");
+    CHECK_TYPED(data.empty(), TypeErrors::INCORRECT_USER_DATA, "Data not empty");
     result += packInteger(data.size());
 
     return result;
@@ -328,15 +324,12 @@ std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr
     std::string privKey = readFile(fullPath);
 
     if (isCompact) {
-        CHECK(privKey.size() > PRIV_KEY_PREFIX.size() + PRIV_KEY_SUFFIX.size(), "Incorrect private key");
-        if (privKey.compare(0, PRIV_KEY_PREFIX.size(), PRIV_KEY_PREFIX) == 0) {
-            privKey = privKey.substr(PRIV_KEY_PREFIX.size());
-        } else {
-            throwErr("Incorrect private key");
-        }
+        CHECK_TYPED(privKey.size() > PRIV_KEY_PREFIX.size() + PRIV_KEY_SUFFIX.size(), TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
+        CHECK_TYPED(privKey.compare(0, PRIV_KEY_PREFIX.size(), PRIV_KEY_PREFIX) == 0, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
+        privKey = privKey.substr(PRIV_KEY_PREFIX.size());
 
         const size_t found = privKey.find(PRIV_KEY_SUFFIX);
-        CHECK(found != privKey.npos, "Incorrect private key");
+        CHECK_TYPED(found != privKey.npos, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
         privKey = privKey.substr(0, found);
 
         privKey = COMPACT_FORMAT + CURRENT_COMPACT_FORMAT + "\n" + privKey;
@@ -358,12 +351,12 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
     } else if (data.compare(0, PREFIX_ONE_KEY_TMH.size(), PREFIX_ONE_KEY_TMH) == 0) {
         result = data.substr(PREFIX_ONE_KEY_TMH.size());
     } else {
-        throwErr("Incorrect data");
+        throwErrTyped(TypeErrors::INCORRECT_USER_DATA, "Incorrect data");
     }
 
     if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
         result = result.substr(COMPACT_FORMAT.size());
-        CHECK(result.compare(0, CURRENT_COMPACT_FORMAT.size() + 1, CURRENT_COMPACT_FORMAT + "\n") == 0, "Incorrect private key");
+        CHECK_TYPED(result.compare(0, CURRENT_COMPACT_FORMAT.size() + 1, CURRENT_COMPACT_FORMAT + "\n") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect private key");
         result = result.substr(CURRENT_COMPACT_FORMAT.size() + 1);
 
         const size_t found = result.find(PRIV_KEY_SUFFIX);

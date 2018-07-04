@@ -3,8 +3,10 @@
 
 #include <QString>
 
-#if defined(Q_OS_WIN32)
+#if defined(Q_OS_WIN64)
 const QString osName = "win";
+#elif defined(Q_OS_WIN32)
+const QString osName = "win32";
 #elif defined(Q_OS_LINUX)
 const QString osName = "linux";
 #elif defined(Q_OS_MACX)
