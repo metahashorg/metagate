@@ -1,0 +1,15 @@
+Сборка приложения:
+Обязательно удалить каталог сборки qt
+cd "C:\Qt\5.10.1\msvc2015\bin"
+.\windeployqt.exe D:\qt\MetaGate\MetaGate.exe
+Копировать в каталог D:\qt\MetaGate\MetaGate.exe файлы:
+deploy/win/lib32/*
+cryptopp/lib/windows32/cryptopp.dll
+secp256k1/lib/windows32/secp256k1.dll
+и папку
+pages/
+
+Структура архива для автоупдейтера:
+Каталог 7z с программой 7z
+Файл release.zip
+Файл unpack.bat

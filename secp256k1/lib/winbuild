@@ -5,9 +5,17 @@
 	3)pacman -S autoconf perl automake-wrapper libtool make
 3.В окне msys2 переходим в папку с исходниками https://github.com/bitcoin-core/secp256k1 и выполняем:
 	1)./autogen.sh
-	2)./configure --with-bignum=none --enable-module-recovery
+	2)./configure --with-bignum=no --enable-module-recovery
+            Добавляем опции для сборки, если нужен релиз, иначе собирает с флагом -g
+            Например, CFLAGS="-O3 -Wall -DNDEBUG"
 	3)make
-4.В резултате будет получен .a-файл библиотеки.
-5.Для линковки dll-файла на его основе можно воспользоваться способом, описанным в архиве secp256k1_win.zip.
-
-
+4.В результате будет получен .a-файл библиотеки.
+5.Линкуем dll-файл на его основе с помощью кода из secp256k1_win
+        1)В lib кладем готовую .a библиотеку (libsecp256k1.a  libsecp256k1.la  libsecp256k1.lai)
+        2)Запускаем build_dll.bat
+6.Создаем .lib-файл для линковки в VS
+        Процесс описан, например, тут
+        http://xbb.uz/dev/Gjenjeracija-.lib-iz-DLL-s-pomoshhju-Visual-Studio
+        1) Берем готовый secp256k1.def или создаем новый с помощью dumpbin /exports libsecp256k1.lib, как указано в описании
+        2) Выполняем lib /def:secp256k1.def /out:libsecp256k1.lib /machine:x86 для 32 бит
+                     lib /def:secp256k1.def /out:libsecp256k1.lib /machine:x64 для 64 бит

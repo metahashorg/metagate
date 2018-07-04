@@ -61,7 +61,7 @@ static std::string decodeWif(const std::string &wifEncrypted, const QString &pas
             wif = decryptWif(wifEncrypted, password.normalized(QString::NormalizationForm_C).toStdString());
         }
     } else {
-        CHECK(wifEncrypted.substr(0, 2) != "6P", "Incorrect encrypted wif " + wifEncrypted);
+        CHECK_TYPED(wifEncrypted.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + wifEncrypted);
     }
     return wif;
 }
@@ -75,9 +75,9 @@ std::pair<std::string, std::string> BtcWallet::genPrivateKey(const QString &fold
     CHECK(isCompressed == tmp, "ups");
     if (!password.isNull() && !password.isEmpty()) {
         wif = encryptWif(wif, password.normalized(QString::NormalizationForm_C).toStdString());
-        CHECK(wif.substr(0, 2) == "6P", "Incorrect encrypted wif " + wif);
+        CHECK_TYPED(wif.substr(0, 2) == "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + wif);
     } else {
-        CHECK(wif.substr(0, 2) != "6P", "Incorrect encrypted wif " + wif);
+        CHECK_TYPED(wif.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + wif);
     }
 
     const QString fileName = QDir(folder).filePath(convertAddressToFileName(addressBase58));
@@ -102,7 +102,7 @@ BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const Q
 BtcWallet::BtcWallet(const std::string &decryptedWif)
     : wif(decryptedWif)
 {
-    CHECK(decryptedWif.substr(0, 2) != "6P", "Incorrect encrypted wif " + decryptedWif);
+    CHECK_TYPED(decryptedWif.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + decryptedWif);
 }
 
 const std::string& BtcWallet::getAddress() const {
@@ -180,7 +180,7 @@ std::string BtcWallet::encode(
         allUtxoValue += utxo.outBalance;
     }
 
-    CHECK(allUtxoValue >= value + fees, "Not enough money. Balance " + std::to_string(allUtxoValue) + ". Value to send " + std::to_string(value) + ". Fees " + std::to_string(fees));
+    CHECK_TYPED(allUtxoValue >= value + fees, TypeErrors::INCORRECT_USER_DATA, "Not enough money. Balance " + std::to_string(allUtxoValue) + ". Value to send " + std::to_string(value) + ". Fees " + std::to_string(fees));
 
     int64_t feesValue = fees;
     int64_t valueToSend;
@@ -190,7 +190,7 @@ std::string BtcWallet::encode(
         valueToSend = value;
     }
 
-    CHECK(valueToSend > 0, "Not enough money. Balance " + std::to_string(allUtxoValue) + ". Value to send " + std::to_string(value) + ". Fees " + std::to_string(fees));
+    CHECK_TYPED(valueToSend > 0, TypeErrors::INCORRECT_USER_DATA, "Not enough money. Balance " + std::to_string(allUtxoValue) + ". Value to send " + std::to_string(value) + ". Fees " + std::to_string(fees));
 
     const std::string encodedTransaction = genTransaction(newUtxos, valueToSend, feesValue, toAddress, false);
 
@@ -210,7 +210,7 @@ std::string BtcWallet::buildTransaction(
         allMoney = true;
         value = 0;
     } else {
-        CHECK(isDecimal(valueStr), "Not hex number value");
+        CHECK_TYPED(isDecimal(valueStr), TypeErrors::INCORRECT_USER_DATA, "Not hex number value");
         allMoney = false;
         value = std::stoll(valueStr);
     }
@@ -218,10 +218,10 @@ std::string BtcWallet::buildTransaction(
     int64_t feesEstimate = 0;
     int64_t fees = 0;
     if (feesStr != "auto") {
-        CHECK(isDecimal(feesStr), "Not hex number fees");
+        CHECK_TYPED(isDecimal(feesStr), TypeErrors::INCORRECT_USER_DATA, "Not hex number fees");
         fees = std::stoll(feesStr);
     } else {
-        CHECK(estimateComissionInSatoshi > 0, "Uncnown estimate comission " + std::to_string(estimateComissionInSatoshi));
+        CHECK_TYPED(estimateComissionInSatoshi > 0, TypeErrors::INCORRECT_USER_DATA, "Uncnown estimate comission " + std::to_string(estimateComissionInSatoshi));
         feesEstimate = estimateComissionInSatoshi;
         LOG << "estimated fees1 " + std::to_string(feesEstimate);
     }
@@ -259,7 +259,7 @@ std::string BtcWallet::buildTransaction(
     LOG << "transaction size " + std::to_string(calcSizeTransaction(encodedTransaction));
     //LOGDEBUG << encodedTransaction;
 
-    CHECK(!encodedTransaction.empty(), "Not encode transactions");
+    CHECK_TYPED(!encodedTransaction.empty(), TypeErrors::DONT_SIGN, "Not encode transactions");
 
     return encodedTransaction;
 }
@@ -271,7 +271,7 @@ std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const 
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         const std::string address = getWifAndAddress(folder, file.toStdString(), true).second;
-        CHECK(!address.empty(), "empty result");
+        CHECK_TYPED(!address.empty(), TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "empty result");
         result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
     }
 
@@ -284,7 +284,7 @@ std::string BtcWallet::getOneKey(const QString &folder, const std::string &addre
 }
 
 void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
-    CHECK(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, "Incorrect data");
+    CHECK_TYPED(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect data");
 
     const std::string result = data.substr(PREFIX_ONE_KEY.size());
 

@@ -130,7 +130,8 @@ QMAKE_LFLAGS += -rdynamic
 #macx: PRE_TARGETDEPS += $$PWD/cryptopp/lib/mac/libcryptopp.a $$PWD/quazip-0.7.3/libs/mac/libquazip.a
 #macx: LIBS += /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a
 
-#macx: ICON = $${PWD}/WalletMetahash.icns
+win32: RC_ICONS = WalletMetahash.ico
+macx: ICON = $${PWD}/WalletMetahash.icns
 
 unix:!macx: include(../libs-unix.pri)
 win32: include(../libs-win.pri)

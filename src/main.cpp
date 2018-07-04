@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+#include <QSurfaceFormat>
+
 #include "check.h"
 #include "Log.h"
 #include "platform.h"
@@ -52,6 +54,10 @@ int main(int argc, char *argv[]) {
         }
 
         QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+        QGuiApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+        QSurfaceFormat format;
+        format.setColorSpace(QSurfaceFormat::sRGBColorSpace);
+        QSurfaceFormat::setDefaultFormat(format);
 
         QApplication app(argc, argv);
 
