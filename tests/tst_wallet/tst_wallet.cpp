@@ -51,9 +51,9 @@ void tst_Wallet::testEncryptBtc()
 void tst_Wallet::testCreateBinTransaction_data()
 {
     QTest::addColumn<std::string>("address");
-    QTest::addColumn<uint64_t>("amount");
-    QTest::addColumn<uint64_t>("fee");
-    QTest::addColumn<uint64_t>("nonce");
+    QTest::addColumn<unsigned long>("amount");
+    QTest::addColumn<unsigned long>("fee");
+    QTest::addColumn<unsigned long>("nonce");
     QTest::addColumn<std::string>("answer");
 
     QTest::newRow("CreateBinTransaction 1") << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
@@ -73,9 +73,9 @@ void tst_Wallet::testCreateBinTransaction_data()
 void tst_Wallet::testCreateBinTransaction()
 {
     QFETCH(std::string, address);
-    QFETCH(uint64_t, amount);
-    QFETCH(uint64_t, fee);
-    QFETCH(uint64_t, nonce);
+    QFETCH(unsigned long, amount);
+    QFETCH(unsigned long, fee);
+    QFETCH(unsigned long, nonce);
     QFETCH(std::string, answer);
 
     QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, "")), answer);
@@ -187,8 +187,8 @@ void tst_Wallet::testBitcoinTransaction_data()
 {
     QTest::addColumn<std::string>("wif");
     QTest::addColumn<std::string>("address");
-    QTest::addColumn<uint64_t>("amount");
-    QTest::addColumn<uint64_t>("fee");
+    QTest::addColumn<unsigned long>("amount");
+    QTest::addColumn<unsigned long>("fee");
     QTest::addColumn<QVariantList>("ins");
     QTest::addColumn<std::string>("answer");
 
@@ -237,8 +237,8 @@ void tst_Wallet::testBitcoinTransaction()
 {
     QFETCH(std::string, wif);
     QFETCH(std::string, address);
-    QFETCH(uint64_t, amount);
-    QFETCH(uint64_t, fee);
+    QFETCH(unsigned long, amount);
+    QFETCH(unsigned long, fee);
     QFETCH(QVariantList, ins);
     QFETCH(std::string, answer);
 
