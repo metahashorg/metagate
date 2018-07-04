@@ -2,14 +2,14 @@
 #define CHECK_H_
 
 #include <string>
+#include "TypedException.h"
 
 using Exception = std::string;
 
 #define throwErr(s) { \
 { \
-    std::string result_ = s + std::string(". Error at file ") \
-        + std::string(__FILE__) + std::string(" line ") + std::to_string(__LINE__); \
-    throw ::Exception(result_); \
+    throw ::Exception(s + std::string(". Error at file ") \
+        + std::string(__FILE__) + std::string(" line ") + std::to_string(__LINE__)); \
 } \
 }
 
