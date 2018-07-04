@@ -58,31 +58,31 @@ void tst_Wallet::testEncryptBtc()
 void tst_Wallet::testCreateBinTransaction_data()
 {
     QTest::addColumn<std::string>("address");
-    QTest::addColumn<unsigned long>("amount");
-    QTest::addColumn<unsigned long>("fee");
-    QTest::addColumn<unsigned long>("nonce");
+    QTest::addColumn<unsigned long long>("amount");
+    QTest::addColumn<unsigned long long>("fee");
+    QTest::addColumn<unsigned long long>("nonce");
     QTest::addColumn<std::string>("answer");
 
     QTest::newRow("CreateBinTransaction 1") << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
-                                            << 126894UL << 55647UL << 255UL
+                                            << 126894ULL << 55647ULL << 255ULL
                                             << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
     QTest::newRow("CreateBinTransaction 2") << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
-                                            << 0UL << 0UL << 0UL
+                                            << 0ULL << 0ULL << 0ULL
                                             << std::string("009806da73b1589f38630649bdee48467946d118059efd6aab00000000");
     QTest::newRow("CreateBinTransaction 3") << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
-                                            << 4294967295UL << 65535UL << 249UL
+                                            << 4294967295ULL << 65535ULL << 249ULL
                                             << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbfffffffffafffff900");
     QTest::newRow("CreateBinTransaction 4") << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
-                                            << 4294967296UL << 65536UL << 250UL
+                                            << 4294967296ULL << 65536ULL << 250ULL
                                             << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfc0000000001000000fb00000100fafa0000");
 }
 
 void tst_Wallet::testCreateBinTransaction()
 {
     QFETCH(std::string, address);
-    QFETCH(unsigned long, amount);
-    QFETCH(unsigned long, fee);
-    QFETCH(unsigned long, nonce);
+    QFETCH(unsigned long long, amount);
+    QFETCH(unsigned long long, fee);
+    QFETCH(unsigned long long, nonce);
     QFETCH(std::string, answer);
 
     QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, "")), answer);
@@ -194,14 +194,14 @@ void tst_Wallet::testBitcoinTransaction_data()
 {
     QTest::addColumn<std::string>("wif");
     QTest::addColumn<std::string>("address");
-    QTest::addColumn<unsigned long>("amount");
-    QTest::addColumn<unsigned long>("fee");
+    QTest::addColumn<unsigned long long>("amount");
+    QTest::addColumn<unsigned long long>("fee");
     QTest::addColumn<QVariantList>("ins");
     QTest::addColumn<std::string>("answer");
 
     QTest::newRow("BitcoinTransaction 1") << std::string("cUzkK2uj56xSuwY2Ha9TMjKgwPr1uBwNKXbSB3eGbcSbZ77YwQRG")
                                             << std::string("mkDQ29a4WtweYxagdhwuTx8P6BtsTnkJwi")
-                                            << 13240000UL << 10000UL
+                                            << 13240000ULL << 10000ULL
                                             << QVariantList{
                                                     QVariant(QVariantList{QVariant::fromValue(std::string("f49da89eba6ef0d4935bf2edf54700710327be0bbdc5db411ad7f016e51ef922")), QVariant(0U),
                                                         QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(13250000ULL)})}
@@ -209,7 +209,7 @@ void tst_Wallet::testBitcoinTransaction_data()
 
     QTest::newRow("BitcoinTransaction 2") << std::string("cUzkK2uj56xSuwY2Ha9TMjKgwPr1uBwNKXbSB3eGbcSbZ77YwQRG")
                                             << std::string("mkDQ29a4WtweYxagdhwuTx8P6BtsTnkJwi")
-                                            << 2000000UL << 10000UL
+                                            << 2000000ULL << 10000ULL
                                             << QVariantList{
                                                     QVariant(QVariantList{QVariant::fromValue(std::string("90ecb1c712d4d9eb831d13db141726460578718382587b1ab1a3cfeaa8c472d5")), QVariant(0U),
                                                         QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(4000000ULL)})}
@@ -217,7 +217,7 @@ void tst_Wallet::testBitcoinTransaction_data()
 
     QTest::newRow("BitcoinTransaction 3") << std::string("cUzkK2uj56xSuwY2Ha9TMjKgwPr1uBwNKXbSB3eGbcSbZ77YwQRG")
                                             << std::string("mkDQ29a4WtweYxagdhwuTx8P6BtsTnkJwi")
-                                            << 6920000UL << 10000UL
+                                            << 6920000ULL << 10000ULL
                                             << QVariantList{
                                                     QVariant(QVariantList{QVariant::fromValue(std::string("6c11ec775245041f7679d4bace0525312dc9583dede012109e8b100e6b867dce")), QVariant(0U),
                                                         QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1220000ULL)}),
@@ -229,7 +229,7 @@ void tst_Wallet::testBitcoinTransaction_data()
 
     QTest::newRow("BitcoinTransaction 4") << std::string("cUzkK2uj56xSuwY2Ha9TMjKgwPr1uBwNKXbSB3eGbcSbZ77YwQRG")
                                             << std::string("mkDQ29a4WtweYxagdhwuTx8P6BtsTnkJwi")
-                                            << 50000000UL << 10000UL
+                                            << 50000000ULL << 10000ULL
                                             << QVariantList{
                                                     QVariant(QVariantList{QVariant::fromValue(std::string("72ecdaf25a178f6879c4d879551a06b2f0344ca137de3e5afb7820cdb57722b8")), QVariant(1U),
                                                         QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1990000ULL)}),
@@ -244,8 +244,8 @@ void tst_Wallet::testBitcoinTransaction()
 {
     QFETCH(std::string, wif);
     QFETCH(std::string, address);
-    QFETCH(unsigned long, amount);
-    QFETCH(unsigned long, fee);
+    QFETCH(unsigned long long, amount);
+    QFETCH(unsigned long long, fee);
     QFETCH(QVariantList, ins);
     QFETCH(std::string, answer);
 
