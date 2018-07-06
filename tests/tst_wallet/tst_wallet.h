@@ -19,11 +19,16 @@ private slots:
     void testCreateBinMthTransaction_data();
     void testCreateBinMthTransaction();
 
+    void testNotCreateBinMthTransaction_data();
+    void testNotCreateBinMthTransaction();
+
     void testSsl_data();
     void testSsl();
 
     void testCreateMth_data();
     void testCreateMth();
+
+    void testNotCreateMth();
 
     void testMthSignTransaction_data();
     void testMthSignTransaction();
@@ -36,8 +41,18 @@ private slots:
 
     void testEthWallet();
 
+    void testNotCreateEthTransaction_data();
+    void testNotCreateEthTransaction();
+
     void testBitcoinTransaction_data();
     void testBitcoinTransaction();
+
+    void testNotCreateBtcTransaction_data();
+    void testNotCreateBtcTransaction();
+
+    void testNotCreateBtcTransaction2_data();
+    void testNotCreateBtcTransaction2();
+
 };
 
 #endif // TST_WALLET_H
