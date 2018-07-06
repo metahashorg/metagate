@@ -273,6 +273,38 @@ std::string Wallet::sign(const std::string &message, std::string &publicKey){
     }
 }
 
+bool Wallet::verify(const std::string &message, const std::string &signature, const std::string &publicKey) {
+    try {
+        std::string signatureBinary = fromHex(signature);
+
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PublicKey publicK;
+        publicK.AccessGroupParameters().SetEncodeAsOID(true);
+        std::string publicKeyStr;
+        publicKeyStr.reserve(1000);
+        CryptoPP::StringSource sss(publicKey, true, new CryptoPP::HexDecoder());
+        publicK.Load(sss);
+
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::Verifier verifier(publicK);
+
+        std::string signature2(128 / 2, 0);
+        const size_t resultSize = CryptoPP::DSAConvertSignatureFormat(
+            (byte*)signature2.data(), signature2.size(), CryptoPP::DSASignatureFormat::DSA_P1363,
+            (const byte*)signatureBinary.data(), signatureBinary.size(), CryptoPP::DSASignatureFormat::DSA_DER
+        );
+        signature2.resize(resultSize);
+
+        CryptoPP::StringSource ss2(message + signature2, true,
+            new CryptoPP::SignatureVerificationFilter(
+                verifier, nullptr, CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
+           )
+        );
+
+        return true;
+    } catch (const std::exception &e) {
+        return false;
+    }
+}
+
 std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data) {
     checkAddress(toAddress);
     std::string result;

@@ -77,6 +77,26 @@ void tst_Wallet::testCreateMth() {
     Wallet wallet("./", address, passwd);
 }
 
+void tst_Wallet::testMthSignTransaction_data() {
+    QTest::addColumn<std::string>("message");
+
+    QTest::newRow("MthSign 1") << std::string("1");
+    QTest::newRow("MthSign 1") << std::string("1565144654fdsfadsafs");
+    QTest::newRow("MthSign 1") << std::string("1dsfadsfdasfdsafdsafe3234543tdfsdt435234adsfear34554tgdfasdf435234tgfdsafadsf4t54tdfsadsf4tdfsdafjhlkjhdsf745739485hlhjhl");
+}
+
+void tst_Wallet::testMthSignTransaction() {
+    QFETCH(std::string, message);
+    std::string tmp;
+    std::string address;
+    Wallet::createWallet("./", "123", tmp, address);
+    Wallet wallet("./", address, "123");
+    std::string pubkey;
+    const std::string result = wallet.sign(message, pubkey);
+    const bool res = Wallet::verify(message, result, pubkey);
+    QCOMPARE(res, true);
+}
+
 ///////////
 /// BTC ///
 ///////////

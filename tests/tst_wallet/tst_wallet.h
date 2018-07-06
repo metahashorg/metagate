@@ -25,6 +25,9 @@ private slots:
     void testCreateMth_data();
     void testCreateMth();
 
+    void testMthSignTransaction_data();
+    void testMthSignTransaction();
+
     void testCreateEth_data();
     void testCreateEth();
     
