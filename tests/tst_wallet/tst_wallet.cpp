@@ -297,11 +297,12 @@ void tst_Wallet::testSsl() {
     QFETCH(std::string, password);
     QFETCH(std::string, message);
 
-    const auto pair = createRsaKey(password);
+    const std::string privateKey = createRsaKey(password);
+    const std::string publicKey = getPublic(privateKey, password);
     //qDebug() << QString::fromStdString(pair.first) << QString::fromStdString(pair.second);
 
-    const std::string encryptedMsg = encrypt(pair.second, message);
-    const std::string decryptMsg = decrypt(pair.first, password, encryptedMsg);
+    const std::string encryptedMsg = encrypt(publicKey, message);
+    const std::string decryptMsg = decrypt(privateKey, password, encryptedMsg);
 
     QCOMPARE(decryptMsg, message);
 }

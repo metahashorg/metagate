@@ -72,6 +72,8 @@ public slots:
 
     Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString password);
 
+    Q_INVOKABLE void getRsaPublicKey(QString requestId, QString address);
+
     Q_INVOKABLE void encryptMessage(QString requestId, QString publicKey, QString message);
 
     Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex);

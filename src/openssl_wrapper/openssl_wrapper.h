@@ -7,7 +7,10 @@ void InitOpenSSL();
 
 using PrivateKey = std::string;
 using PublikKey = std::string;
-std::pair<PrivateKey, PublikKey> createRsaKey(const std::string &password);
+
+PublikKey getPublic(const std::string &privKey, const std::string &password);
+
+PrivateKey createRsaKey(const std::string &password);
 
 std::string encrypt(const std::string &pubkey, const std::string &message);
 

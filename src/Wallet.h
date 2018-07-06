@@ -31,7 +31,9 @@ public:
     /*
        Возвращает публичный ключ в base16
     */
-    static std::string createRsaKey(const QString &folder, const std::string &addr, const std::string &password);
+    static void createRsaKey(const QString &folder, const std::string &addr, const std::string &password);
+
+    static std::string getPublicKeyMessage(const QString &folder, const std::string &addr);
 
     static std::string decryptMessage(const QString &folder, const std::string &addr, const std::string &password, const std::string &encryptedMessageHex);
 

@@ -33,6 +33,7 @@ const std::string Wallet::PREFIX_ONE_KEY_TMH = "tmh:";
 const static QString FOLDER_RSA_KEYS("rsa/");
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
 const static QString FILE_PRIV_KEY_SUFFIX(".rsa.priv");
+const static QString FILE_PUB_KEY_SUFFIX(".rsa.pub");
 
 const std::string PRIV_KEY_PREFIX = "-----BEGIN EC PRIVATE KEY-----\n";
 const std::string PRIV_KEY_SUFFIX = "\n-----END EC PRIVATE KEY-----";
@@ -324,15 +325,27 @@ void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, ui
     txHex = toHex(txBinary);
 }
 
-std::string Wallet::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {
+void Wallet::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
     const QString folderKey = QDir(folder).filePath(FOLDER_RSA_KEYS);
-    const auto pair = ::createRsaKey(password);
+    const std::string privateKey = ::createRsaKey(password);
 
     const QString fileName = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PRIV_KEY_SUFFIX));
-    writeToFile(fileName, pair.first, true);
+    writeToFile(fileName, privateKey, true);
 
-    return pair.second;
+    const QString fileNamePub = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX));
+    const std::string publicKey = ::getPublic(privateKey, password);
+    writeToFile(fileNamePub, publicKey, true);
+}
+
+std::string Wallet::getPublicKeyMessage(const QString &folder, const std::string &addr) {
+    CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
+    const QString folderKey = QDir(folder).filePath(FOLDER_RSA_KEYS);
+
+    const QString fileName = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX));
+    const std::string publicKeyHex = readFile(fileName);
+
+    return publicKeyHex;
 }
 
 std::string Wallet::decryptMessage(const QString &folder, const std::string &addr, const std::string &password, const std::string &encryptedMessageHex) {

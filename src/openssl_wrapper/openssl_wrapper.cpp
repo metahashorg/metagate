@@ -26,7 +26,44 @@ void InitOpenSSL() {
     isInitialized = true;
 }
 
-std::pair<PrivateKey, PublikKey> createRsaKey(const std::string &password) {
+static std::unique_ptr<RSA, std::function<void(RSA*)>> getRsa(const std::string &privKey, const std::string &password) {
+    CHECK(isInitialized, "Not initialized");
+
+    std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new_mem_buf((void*)privKey.data(), (int)privKey.size()), BIO_free);
+    CHECK(bio != nullptr, "Incorrect BIO_new_mem_buf");
+
+    const char *pswd = nullptr;
+    if (!password.empty()) {
+       pswd = password.data();
+    }
+    std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> evp(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, (void*)pswd), EVP_PKEY_free);
+    CHECK(evp != nullptr, "Incorrect password");
+
+    std::unique_ptr<RSA, std::function<void(RSA*)>> rsa(EVP_PKEY_get1_RSA(evp.get()), RSA_free);
+    CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
+
+    return rsa;
+}
+
+PublikKey getPublic(const std::string &privKey, const std::string &password) {
+    CHECK(isInitialized, "Not initialized");
+
+    std::unique_ptr<RSA, std::function<void(RSA*)>> rsa = getRsa(privKey, password);
+    CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
+
+    std::unique_ptr<BIO, std::function<void(BIO*)>> bioPub(BIO_new(BIO_s_mem()), BIO_free);
+    const bool res5 = i2d_RSA_PUBKEY_bio(bioPub.get(), rsa.get());
+    CHECK(res5, "Incorrect i2d_RSA_PUBKEY_bio");
+
+    const int keylenPub = BIO_pending(bioPub.get());
+    std::vector<unsigned char> pem_key_pub(keylenPub);
+    const bool res6 = BIO_read(bioPub.get(), pem_key_pub.data(), keylenPub);
+    CHECK(res6, "Incorrect BIO_read");
+
+    return toHex(std::string(pem_key_pub.begin(), pem_key_pub.end()));
+}
+
+PrivateKey createRsaKey(const std::string &password) {
     CHECK(isInitialized, "Not initialized");
 
     CHECK(password.find('\0') == password.npos, "Incorrect password");
@@ -55,16 +92,7 @@ std::pair<PrivateKey, PublikKey> createRsaKey(const std::string &password) {
     const bool res4 = BIO_read(bio.get(), pem_key.data(), keylen);
     CHECK(res4, "Incorrect BIO_read");
 
-    std::unique_ptr<BIO, std::function<void(BIO*)>> bioPub(BIO_new(BIO_s_mem()), BIO_free);
-    const bool res5 = i2d_RSA_PUBKEY_bio(bioPub.get(), rsa.get());
-    CHECK(res5, "Incorrect i2d_RSA_PUBKEY_bio");
-
-    const int keylenPub = BIO_pending(bioPub.get());
-    std::vector<unsigned char> pem_key_pub(keylenPub);
-    const bool res6 = BIO_read(bioPub.get(), pem_key_pub.data(), keylenPub);
-    CHECK(res6, "Incorrect BIO_read");
-
-    return std::make_pair(std::string(pem_key.begin(), pem_key.end()), toHex(std::string(pem_key_pub.begin(), pem_key_pub.end())));
+    return std::string(pem_key.begin(), pem_key.end());
 }
 
 std::string encrypt(const std::string &pubkey, const std::string &message) {
@@ -90,17 +118,7 @@ std::string decrypt(const std::string &privkey, const std::string &password, con
 
     const std::string normMessage = fromHex(message);
 
-    std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new_mem_buf((void*)privkey.data(), (int)privkey.size()), BIO_free);
-    CHECK(bio != nullptr, "Incorrect BIO_new_mem_buf");
-
-    const char *pswd = nullptr;
-    if (!password.empty()) {
-        pswd = password.data();
-    }
-    std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> evp(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, (void*)pswd), EVP_PKEY_free);
-    CHECK(evp != nullptr, "Incorrect password");
-
-    std::unique_ptr<RSA, std::function<void(RSA*)>> rsa(EVP_PKEY_get1_RSA(evp.get()), RSA_free);
+    std::unique_ptr<RSA, std::function<void(RSA*)>> rsa = getRsa(privkey, password);
     CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
 
     std::vector<unsigned char> encrypt(RSA_size(rsa.get()));

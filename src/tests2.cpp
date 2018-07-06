@@ -20,18 +20,6 @@
 
 #include "btctx/wif.h"
 
-static void testSsl(const std::string &password, const std::string &message) {
-    const auto pair = createRsaKey(password);
-    //std::cout << pair.first << "\n" << pair.second << std::endl;
-
-    const std::string encryptedMsg = encrypt(pair.second, message);
-    //std::cout << encryptedMsg << std::endl;
-
-    const std::string decryptMsg = decrypt(pair.first, password, encryptedMsg);
-    CHECK(decryptMsg == message, "Ups " + decryptMsg);
-    std::cout << "Ok" << std::endl;
-}
-
 static void testEncryptBtc() {
     const std::string result = encryptWif("5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR", QString("TestingOneTwoThree").normalized(QString::NormalizationForm_C).toStdString());
     CHECK(result == "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg", "Incorrect result: " + result);
@@ -215,12 +203,6 @@ void allTests() {
     testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 0, 0, 0, "009806da73b1589f38630649bdee48467946d118059efd6aab00000000");
     testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 4294967295, 65535, 249, "009806da73b1589f38630649bdee48467946d118059efd6aabfbfffffffffafffff900");
     testCreateBinTransaction("0x009806da73b1589f38630649bdee48467946d118059efd6aab", 4294967296ull, 65536, 250, "009806da73b1589f38630649bdee48467946d118059efd6aabfc0000000001000000fb00000100fafa0000");
-
-    testSsl("", "Message 1");
-    testSsl("1", "Message 2");
-    testSsl("123", "Message 3");
-    testSsl("Password 1", "Message 4");
-    testSsl("Password 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", "Message 4");
 
     //testCreateMth("");
     testCreateMth("1");
