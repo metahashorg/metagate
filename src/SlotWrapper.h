@@ -3,6 +3,7 @@
 
 #include "check.h"
 #include "Log.h"
+#include "TypedException.h"
 
 template<class Function>
 void slotWrapper(const Function &function) {
@@ -12,6 +13,8 @@ void slotWrapper(const Function &function) {
         LOG << "Error " << e;
     } catch (const std::exception &e) {
         LOG << "Error " << e.what();
+    } catch (const TypedException &e) {
+           LOG << "TypedException " << e.description;
     } catch (...) {
         LOG << "Unknown error";
     }

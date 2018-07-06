@@ -24,6 +24,7 @@
 #include "StopApplication.h"
 #include "WebSocketClient.h"
 #include "JavascriptWrapper.h"
+#include "TypedException.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -60,7 +61,6 @@ int main(int argc, char *argv[]) {
         QSurfaceFormat::setDefaultFormat(format);
 
         QApplication app(argc, argv);
-
         initLog();
         InitOpenSSL();
 
@@ -112,6 +112,8 @@ int main(int argc, char *argv[]) {
         LOG << "Error " << e;
     } catch (const std::exception &e) {
         LOG << "Error " << e.what();
+    } catch (const TypedException &e) {
+           LOG << "TypedException " << e.description;
     } catch (...) {
         LOG << "Unknown error";
     }
