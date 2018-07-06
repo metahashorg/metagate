@@ -62,7 +62,7 @@ Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString passwo
 # javascript is called after completion of this function 
 createRsaKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 
-Q_INVOKABLE void decryptMessage(QString requestId, QString publicKeyHex, QString message);
+Q_INVOKABLE void encryptMessage(QString requestId, QString publicKeyHex, QString message);
 # Encrypt message generated via rsa public key
 # javascript is called after completion of this function 
 encryptMessageResultJs(requestId, message, errorNum, errorMessage)

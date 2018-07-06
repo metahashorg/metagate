@@ -16,8 +16,8 @@ private slots:
     void testEncryptBtc_data();
     void testEncryptBtc();
 
-    void testCreateBinTransaction_data();
-    void testCreateBinTransaction();
+    void testCreateBinMthTransaction_data();
+    void testCreateBinMthTransaction();
 
     void testSsl_data();
     void testSsl();
