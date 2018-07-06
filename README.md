@@ -287,8 +287,8 @@ Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCapt
 loadFileResultJs(requestId, result, errorNum, errorMessage)
 
 Q_INVOKABLE void getAppInfo(const QString requestId);
-Отдает версию приложения и другую информацию.
-Результат возвращается в функцию
+# Returns version of application and other information. 
+# Result returns to the function:
 getAppInfoResultJs(requestId, isProduction, version, gitCommit);
 
 В момент изменения содержимого одного из каталогов с ключами будет вызываться функция
