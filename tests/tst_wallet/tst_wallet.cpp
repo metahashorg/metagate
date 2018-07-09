@@ -69,16 +69,19 @@ void tst_Wallet::testNotCreateBinMthTransaction_data() {
     QTest::addColumn<unsigned long long>("nonce");
     QTest::addColumn<std::string>("answer");
 
+    // incorrect address
     QTest::newRow("NotCreateBinTransaction 1")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aa")
         << 126894ULL << 55647ULL << 255ULL
         << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
 
+    // incorrect address
     QTest::newRow("NotCreateBinTransaction 2")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6a")
         << 126894ULL << 55647ULL << 255ULL
         << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
 
+    // incorrect address
     QTest::newRow("NotCreateBinTransaction 3")
         << std::string("0x009806d22a73b1589f38630649bdee48467946d118059efd6aa")
         << 126894ULL << 55647ULL << 255ULL
@@ -144,6 +147,9 @@ void tst_Wallet::testMthSignTransaction() {
     const std::string result = wallet.sign(message, pubkey);
     const bool res = Wallet::verify(message, result, pubkey);
     QCOMPARE(res, true);
+
+    const bool res2 = Wallet::verify(message.substr(0, message.size() / 2), result, pubkey);
+    QCOMPARE(res2, false);
 }
 
 ///////////
@@ -399,7 +405,7 @@ void tst_Wallet::testCreateEth() {
     EthWallet wallet("./", address, passwd);
 }
 
-void tst_Wallet::testEthWallet()
+void tst_Wallet::testEthWalletTransaction()
 {
     writeToFile("./123", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
     const std::string password = "1";
@@ -423,16 +429,19 @@ void tst_Wallet::testNotCreateEthTransaction_data() {
     QTest::addColumn<std::string>("value");
     QTest::addColumn<std::string>("data");
 
+    // Incorrect address
     QTest::newRow("NotCreateEthTransaction 1")
         << std::string("0x8D78B1Ab426dc9daa7427b7A60E64633f62E645")
         << std::string("0x01") << std::string("0x6C088E200") << std::string("0x8208") << std::string("0x746A528800")
         << std::string("0x010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101");
 
+    // Incorrect value
     QTest::newRow("NotCreateEthTransaction 2")
         << std::string("0x8D78B1Ab426dc9daa7427b7A60E64633f62E645F")
         << std::string("0x01") << std::string("6C088E200") << std::string("0x8208") << std::string("0x746A528800")
         << std::string("0x010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101");
 
+    // Incorrect data
     QTest::newRow("NotCreateEthTransaction 3")
         << std::string("0x8D78B1Ab426dc9daa7427b7A60E64633f62E645F")
         << std::string("0x01") << std::string("0x6C088E200") << std::string("0x8208") << std::string("0x746A528800")
@@ -491,7 +500,6 @@ void tst_Wallet::testSsl() {
 
     const std::string privateKey = createRsaKey(password);
     const std::string publicKey = getPublic(privateKey, password);
-    //qDebug() << QString::fromStdString(pair.first) << QString::fromStdString(pair.second);
 
     const std::string encryptedMsg = encrypt(publicKey, message);
     const std::string decryptMsg = decrypt(privateKey, password, encryptedMsg);

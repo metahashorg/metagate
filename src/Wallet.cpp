@@ -45,23 +45,21 @@ QString Wallet::makeFullWalletPath(const QString &folder, const std::string &add
     return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_PRIV_KEY_SUFFIX));
 }
 
-static void getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey, std::string &result) {
+static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PublicKey publicKey;
     privateKey.MakePublicKey(publicKey);
     publicKey.AccessGroupParameters().SetEncodeAsOID(true);
 
     std::string publicKeyStr;
-    publicKeyStr.reserve(1000);
+    publicKeyStr.reserve(1000); // Обязательно для windows
     CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(publicKeyStr), true);
     publicKey.DEREncode(encoder);
     encoder.MessageEnd();
 
-    //publicKeyStr.erase(std::remove(publicKeyStr.begin(), publicKeyStr.end(), '\n'), publicKeyStr.end());
-    //publicKeyStr = toBase64(publicKeyStr).toStdString();
-    result = publicKeyStr;
+    return publicKeyStr;
 }
 
-static void getPublicKey2(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey, std::string &result) {
+static std::string getPublicKeyElements(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PublicKey publicKey;
     privateKey.MakePublicKey(publicKey);
 
@@ -88,13 +86,7 @@ static void getPublicKey2(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>
     std::string ttt2 = "04" + xStr + yStr;
     CHECK_TYPED(ttt2.size() == 65 * 2, TypeErrors::DONT_CREATE_KEY, "Ups " + std::to_string(ttt2.size()));
 
-    result = ttt2;
-}
-
-static void printPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
-    std::string publicKeyStr;
-    getPublicKey(privateKey, publicKeyStr);
-    LOG << "publicKey: " << publicKeyStr;
+    return ttt2;
 }
 
 static std::string doubleSha(const std::string &str) {
@@ -152,8 +144,6 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
 
     CHECK_TYPED(hexAddr.size() == 52, TypeErrors::DONT_CREATE_KEY, "Incorrect address");
 
-    //std::cout << hexAddr << std::endl;
-
     return hexAddr;
 }
 
@@ -174,22 +164,15 @@ void Wallet::checkAddress(const std::string &address) {
 void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
 
-    QDir dir(folder);
-    const bool resultCreate = dir.mkpath(folder);
-    CHECK_TYPED(resultCreate, TypeErrors::DONT_CREATE_FOLDER, "dont create folder");
-
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     privateKey.Initialize(prng, CryptoPP::ASN1::secp256r1());
     const bool resultCreatePrivate = privateKey.Validate(prng, 3);
-    CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create public key");
+    CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create private key");
 
-    std::string pubKey;
-    getPublicKey(privateKey, pubKey);
-    publicKey = pubKey;
-    std::string pubKeyElements;
-    getPublicKey2(privateKey, pubKeyElements);
+    publicKey = getPublicKey(privateKey);
+    const std::string pubKeyElements = getPublicKeyElements(privateKey);
     const std::string pubKeyBinary = fromHex(pubKeyElements);
 
     const std::string hexAddr = createAddress(pubKeyBinary);
@@ -238,7 +221,8 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
         CryptoPP::FileSource fs(file1, true /*binary*/);
         CryptoPP::PEM_Load(fs, privateKey, password.c_str(), password.size());
         CryptoPP::AutoSeededRandomPool prng;
-        privateKey.Validate(prng, 3);
+        const bool res = privateKey.Validate(prng, 1);
+        CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
     } catch (const std::exception &e) {
         throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
     }
@@ -246,8 +230,6 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
 
 std::string Wallet::sign(const std::string &message, std::string &publicKey){
     try {
-        printPublicKey(privateKey);
-
         CryptoPP::AutoSeededRandomPool prng;
         CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::Signer signer(privateKey);
 
@@ -264,9 +246,7 @@ std::string Wallet::sign(const std::string &message, std::string &publicKey){
         );
         signature2.resize(resultSize);
 
-        std::string pubKey;
-        getPublicKey(privateKey, pubKey);
-        publicKey = pubKey;
+        publicKey = getPublicKey(privateKey);
 
         return toHex(signature2);
     } catch (const std::exception &e) {
@@ -276,18 +256,16 @@ std::string Wallet::sign(const std::string &message, std::string &publicKey){
 
 bool Wallet::verify(const std::string &message, const std::string &signature, const std::string &publicKey) {
     try {
-        std::string signatureBinary = fromHex(signature);
+        const std::string signatureBinary = fromHex(signature);
 
         CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PublicKey publicK;
         publicK.AccessGroupParameters().SetEncodeAsOID(true);
-        std::string publicKeyStr;
-        publicKeyStr.reserve(1000);
         CryptoPP::StringSource sss(publicKey, true, new CryptoPP::HexDecoder());
         publicK.Load(sss);
 
         CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::Verifier verifier(publicK);
 
-        std::string signature2(128 / 2, 0);
+        std::string signature2(64, 0);
         const size_t resultSize = CryptoPP::DSAConvertSignatureFormat(
             (byte*)signature2.data(), signature2.size(), CryptoPP::DSASignatureFormat::DSA_P1363,
             (const byte*)signatureBinary.data(), signatureBinary.size(), CryptoPP::DSASignatureFormat::DSA_DER
@@ -327,22 +305,22 @@ void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, ui
 
 void Wallet::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
-    const QString folderKey = QDir(folder).filePath(FOLDER_RSA_KEYS);
+    const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
     const std::string privateKey = ::createRsaKey(password);
 
-    const QString fileName = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PRIV_KEY_SUFFIX));
+    const QString fileName = makePath(folderKey, QString::fromStdString(addr).toLower() + FILE_PRIV_KEY_SUFFIX);
     writeToFile(fileName, privateKey, true);
 
-    const QString fileNamePub = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX));
+    const QString fileNamePub = makePath(folderKey, QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX);
     const std::string publicKey = ::getPublic(privateKey, password);
     writeToFile(fileNamePub, publicKey, true);
 }
 
-std::string Wallet::getPublicKeyMessage(const QString &folder, const std::string &addr) {
+std::string Wallet::getPublicRsaKey(const QString &folder, const std::string &addr) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
-    const QString folderKey = QDir(folder).filePath(FOLDER_RSA_KEYS);
+    const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
 
-    const QString fileName = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX));
+    const QString fileName = makePath(folderKey, QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX);
     const std::string publicKeyHex = readFile(fileName);
 
     return publicKeyHex;
@@ -350,12 +328,11 @@ std::string Wallet::getPublicKeyMessage(const QString &folder, const std::string
 
 std::string Wallet::decryptMessage(const QString &folder, const std::string &addr, const std::string &password, const std::string &encryptedMessageHex) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
-    const QString folderKey = QDir(folder).filePath(FOLDER_RSA_KEYS);
+    const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
 
-    const QString fileName = (QDir(folderKey).filePath(QString::fromStdString(addr).toLower() + FILE_PRIV_KEY_SUFFIX));
-    const std::string wifStr = readFile(fileName);
+    const QString fileName = makePath(folderKey, QString::fromStdString(addr).toLower() + FILE_PRIV_KEY_SUFFIX);
 
-    const std::string privateKey = wifStr;
+    const std::string privateKey = readFile(fileName);
     const std::string decryptMsg = decrypt(privateKey, password, encryptedMessageHex);
     return decryptMsg;
 }
@@ -419,8 +396,7 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
     CryptoPP::AutoSeededRandomPool prng;
     privateKey.Validate(prng, 3);
 
-    std::string pubKeyElements;
-    getPublicKey2(privateKey, pubKeyElements);
+    const std::string pubKeyElements = getPublicKeyElements(privateKey);
     const std::string pubKeyBinary = fromHex(pubKeyElements);
     const std::string hexAddr = createAddress(pubKeyBinary);
 

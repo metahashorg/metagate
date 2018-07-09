@@ -388,7 +388,7 @@ void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString
     const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         Wallet::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
-        const std::string publicKey = Wallet::getPublicKeyMessage(walletPathMth, address.toStdString());
+        const std::string publicKey = Wallet::getPublicRsaKey(walletPathMth, address.toStdString());
 
         runJsFunc(JS_NAME_RESULT, TypedException(), requestId, publicKey);
     });
@@ -404,7 +404,7 @@ void JavascriptWrapper::getRsaPublicKey(QString requestId, QString address) {
     const QString JS_NAME_RESULT = "getRsaPublicKeyResultJs";
     const TypedException &exception = apiVrapper([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        const std::string publicKey = Wallet::getPublicKeyMessage(walletPathMth, address.toStdString());
+        const std::string publicKey = Wallet::getPublicRsaKey(walletPathMth, address.toStdString());
 
         runJsFunc(JS_NAME_RESULT, TypedException(), requestId, publicKey);
     });

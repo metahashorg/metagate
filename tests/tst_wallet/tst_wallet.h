@@ -39,7 +39,7 @@ private slots:
     void testCreateBtc_data();
     void testCreateBtc();
 
-    void testEthWallet();
+    void testEthWalletTransaction();
 
     void testNotCreateEthTransaction_data();
     void testNotCreateEthTransaction();
