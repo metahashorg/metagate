@@ -394,7 +394,8 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
     CryptoPP::StringSource fs(result, true /*binary*/);
     CryptoPP::PEM_Load(fs, privateKey, password.c_str(), password.size());
     CryptoPP::AutoSeededRandomPool prng;
-    privateKey.Validate(prng, 3);
+    const bool res = privateKey.Validate(prng, 1);
+    CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "Not validate private key");
 
     const std::string pubKeyElements = getPublicKeyElements(privateKey);
     const std::string pubKeyBinary = fromHex(pubKeyElements);

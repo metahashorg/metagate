@@ -14,7 +14,6 @@
 #include "Log.h"
 #include "platform.h"
 #include "tests.h"
-#include "tests2.h"
 
 #include "machine_uid.h"
 #include "openssl_wrapper/openssl_wrapper.h"
@@ -64,8 +63,8 @@ int main(int argc, char *argv[]) {
         initLog();
         InitOpenSSL();
 
-        /*allTests();
-        return 0;*/
+        tests2();
+        return 0;
 
         const std::string versionString = VERSION_STRING;
 

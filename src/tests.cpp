@@ -109,6 +109,7 @@ void testBitcoinTransaction01() {
 void testCreateMetahashWallet() {
     std::string pubkey;
     std::string address;
+    createFolder("./mth");
     Wallet::createWallet("./mth", "1", pubkey, address);
     std::cout << address.substr(2) << std::endl;
 }
