@@ -1,6 +1,5 @@
 #include "uploader.h"
 
-#include <iostream>
 #include <thread>
 
 #include <QThread>
@@ -13,7 +12,6 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
-//#include <QByteArray>
 #include <QCryptographicHash>
 
 #include "mainwindow.h"

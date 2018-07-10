@@ -12,8 +12,6 @@
 #include <algorithm>
 #include <iostream>
 
-#include <QDir>
-
 const std::string BtcWallet::PREFIX_ONE_KEY = "btc:";
 
 const static std::string WIF_AND_ADDRESS_DELIMITER = " ";

@@ -1,7 +1,5 @@
 #include "WebSocketClient.h"
 
-#include <QDir>
-
 #include "Log.h"
 #include "check.h"
 #include "utils.h"

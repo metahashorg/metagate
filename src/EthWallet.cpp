@@ -18,8 +18,6 @@
 
 #include <iostream>
 
-#include <QDir>
-
 const std::string EthWallet::PREFIX_ONE_KEY = "eth:";
 
 QString EthWallet::getFullPath(const QString &folder, const std::string &address) {

@@ -6,8 +6,6 @@
 
 #include <QMainWindow>
 #include <QWebChannel>
-#include <QStandardItem>
-#include <QListView>
 #include <QTimer>
 
 #include "client.h"

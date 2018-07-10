@@ -1,7 +1,6 @@
 #include "Log.h"
 
 #include <QApplication>
-#include <QDir>
 
 #include "utils.h"
 

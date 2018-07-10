@@ -1,7 +1,5 @@
 #include "JavascriptWrapper.h"
 
-#include <iostream>
-#include <fstream>
 #include <map>
 
 #include <QApplication>

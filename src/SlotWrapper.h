@@ -14,7 +14,7 @@ void slotWrapper(const Function &function) {
     } catch (const std::exception &e) {
         LOG << "Error " << e.what();
     } catch (const TypedException &e) {
-           LOG << "TypedException " << e.description;
+        LOG << "Error typed " << e.description;
     } catch (...) {
         LOG << "Unknown error";
     }
