@@ -63,8 +63,8 @@ int main(int argc, char *argv[]) {
         initLog();
         InitOpenSSL();
 
-        tests2();
-        return 0;
+        /*tests2();
+        return 0;*/
 
         const std::string versionString = VERSION_STRING;
 
