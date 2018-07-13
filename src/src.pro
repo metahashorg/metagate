@@ -42,7 +42,8 @@ SOURCES += main.cpp mainwindow.cpp \
     WebSocketClient.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
-    mhurlschemehandler.cpp
+    mhurlschemehandler.cpp \
+    Paths.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -88,7 +89,8 @@ HEADERS += mainwindow.h \
     algorithms.h \
     PagesMappings.h \
     SlotWrapper.h \
-    mhurlschemehandler.h
+    mhurlschemehandler.h \
+    Paths.h
 
 FORMS += mainwindow.ui
 

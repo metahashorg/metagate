@@ -31,7 +31,8 @@ SOURCES += \
     ../../src/openssl_wrapper/openssl_wrapper.cpp \
     ../../src/utils.cpp \
     ../../src/ethtx/utils2.cpp \
-    ../../src/Log.cpp
+    ../../src/Log.cpp \
+    ../../src/Paths.cpp
 
 HEADERS += \
     tst_wallet.h

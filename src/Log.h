@@ -10,6 +10,7 @@
 #include "duration.h"
 
 extern std::ofstream __log_file__;
+extern std::ofstream __log_file2__;
 
 struct Log_ {
 
@@ -31,6 +32,7 @@ struct Log_ {
     void finalize(std::ostream&(*pManip)(std::ostream&)) {
         std::cout << *pManip;
         __log_file__ << *pManip;
+        __log_file2__ << *pManip;
     }
 
     ~Log_() {
@@ -50,8 +52,10 @@ private:
                 cTime = cTime.substr(0, cTime.size() - 1);
             }
             __log_file__ << cTime << " ";
+            __log_file2__ << cTime << " ";
         }
         __log_file__ << t;
+        __log_file2__ << t;
         isSetTimestamp = false;
     }
 

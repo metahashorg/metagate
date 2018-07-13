@@ -1,7 +1,7 @@
 #include "NsLookup.h"
 
-#include <QCoreApplication>
 #include <QUdpSocket>
+#include <QApplication>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
@@ -13,6 +13,7 @@
 #include "duration.h"
 #include "Log.h"
 #include "SlotWrapper.h"
+#include "Paths.h"
 
 #include "algorithms.h"
 
@@ -47,7 +48,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
         }
     }
 
-    savedNodesPath = makePath(QCoreApplication::applicationDirPath(), FILL_NODES_PATH);
+    savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath);
     const system_time_point now = system_now();
     milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
@@ -224,6 +225,11 @@ void NsLookup::sortAll() {
     }
 }
 
+static void createSymlink(const QString &file) {
+    const QString symlink = makePath(QApplication::applicationDirPath(), "fill_nodes_symlink");
+    QFile::link(file, symlink);
+}
+
 system_time_point NsLookup::fillNodesFromFile(const QString &file) {
     QFile inputFile(file);
     if(!inputFile.open(QIODevice::ReadOnly)) {
@@ -250,6 +256,9 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file) {
     }
 
     sortAll();
+
+    createSymlink(file);
+
     return timePoint;
 }
 
@@ -265,6 +274,8 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp) {
     }
 
     writeToFile(file, content, false);
+
+    createSymlink(file);
 }
 
 std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count) const {

@@ -30,11 +30,11 @@
 #include "TypedException.h"
 #include "SlotWrapper.h"
 #include "platform.h"
+#include "Paths.h"
 
 #include "machine_uid.h"
 
 const static QString WALLET_PREV_PATH = ".metahash_wallets/";
-const static QString WALLET_PATH_DEFAULT = ".metahash_wallets/";
 const static QString WALLET_PATH_ETH = "eth/";
 const static QString WALLET_PATH_BTC = "btc/";
 const static QString WALLET_PATH_MTH = "mhc/";
@@ -46,7 +46,7 @@ JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 
-    walletDefaultPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PATH_DEFAULT);
+    walletDefaultPath = getWalletPath();
     LOG << "Wallets default path " << walletPath;
 
     setPaths(walletDefaultPath, "");
