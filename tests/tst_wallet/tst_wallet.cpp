@@ -492,7 +492,18 @@ void tst_Wallet::testSsl_data() {
     QTest::newRow("Ssl 5")
         << std::string("Password 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")
         << std::string("Message 4");
+
+    std::string rr;
+    for (size_t i = 0; i < 10000; i++) {
+        rr += (char)(i % 256);
+    }
+
+    QTest::newRow("Ssl 6")
+        << std::string("Password 1")
+        << rr;
 }
+
+#include <iostream>
 
 void tst_Wallet::testSsl() {
     QFETCH(std::string, password);
