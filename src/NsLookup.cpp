@@ -226,7 +226,7 @@ void NsLookup::sortAll() {
 }
 
 static void createSymlink(const QString &file) {
-    const QString symlink = makePath(QApplication::applicationDirPath(), "fill_nodes_symlink");
+    const QString symlink = makePath(QApplication::applicationDirPath(), "fill_nodes_symlink.lnk");
     QFile::link(file, symlink);
 }
 
