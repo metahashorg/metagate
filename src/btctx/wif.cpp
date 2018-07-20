@@ -123,16 +123,29 @@ std::string CompressedPubkeyToAddress(const std::string& rawpubkey, bool testnet
     return btcaddress;
 }
 
-std::string AddressToPubkeyScript(const std::string& address) {
-    const std::string prefix = HexStringToDump("76a914");
-    const std::string suffix = HexStringToDump("88ac");
-
+std::string AddressToPubkeyScript(const std::string& address, bool isDecode) {
     std::vector<unsigned char> addr;
-    const bool res = DecodeBase58(address.c_str(), addr);
-    CHECK_TYPED(res, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+    if (isDecode) {
+        const bool res = DecodeBase58(address.c_str(), addr);
+        CHECK_TYPED(res, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+    } else {
+        addr.assign(address.begin(), address.end());
+    }
     CHECK_TYPED(addr.size() == 25, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
-    const std::string script = prefix + std::string((char*)addr.data()+1, 20) + suffix;
-    return script;
+
+    if (addr[0] == 111 || addr[0] == 0) {
+        const std::string prefix = HexStringToDump("76a914");
+        const std::string suffix = HexStringToDump("88ac");
+        const std::string script = prefix + std::string((char*)addr.data()+1, 20) + suffix;
+        return script;
+    } else if (addr[0] == 5 || addr[0] == 5) {
+        const std::string prefix = HexStringToDump("a914");
+        const std::string suffix = HexStringToDump("87");
+        const std::string script = prefix + std::string((char*)addr.data()+1, 20) + suffix;
+        return script;
+    } else {
+        throwErrTyped(TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + EncodeBase58BTC(addr.data(), addr.data() + addr.size()));
+    }
 }
 
 static std::string privateKeyToWif(const std::string &privateKey, bool isTestnet, bool isCompressed) {

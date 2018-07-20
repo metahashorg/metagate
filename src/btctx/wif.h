@@ -7,7 +7,7 @@ std::string WIFToPrivkey(const std::string& wif, bool& isCompressed);
 std::string PrivKeyToPubKey(const std::string& rawprivkey);
 std::string PubkeyToAddress(const std::string& rawpubkey, bool testnet);
 std::string CompressedPubkeyToAddress(const std::string& rawpubkey, bool testnet);
-std::string AddressToPubkeyScript(const std::string& address);
+std::string AddressToPubkeyScript(const std::string& address, bool isDecode=true);
 std::string CreateWIF(bool isTestnet, bool isCompressed);
 std::string PrivKeyToCompressedPubKey(const std::string& rawprivkey);
 

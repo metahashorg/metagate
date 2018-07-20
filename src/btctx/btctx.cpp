@@ -135,8 +135,7 @@ std::string BTCTransaction::buildSignedDump(uint64_t fee, uint64_t transferAmoun
         } else {
             senderaddr = CompressedPubkeyToAddress(m_Transfers[0].pubkey, isTestnet);
         }
-        CHECK(senderaddr.size() >= 21, "Incorrect senderaddr");
-        const std::string outpubkeyscript2 = HexStringToDump("76a914") + std::string((char*)senderaddr.c_str()+1, 20) + HexStringToDump("88ac");
+        const std::string outpubkeyscript2 = AddressToPubkeyScript(senderaddr, false);
         dump += PackInteger(outpubkeyscript2.size());
         dump += outpubkeyscript2;
     }
