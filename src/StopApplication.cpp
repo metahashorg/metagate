@@ -23,7 +23,7 @@ static const QString pathToNewApplication = "{A}";
 void updateAndRestart() {
     const QString thisName = "MetaGate.exe";
 
-    const QString autoupdateFolder = Uploader::getTmpAutoupdaterPath();
+    const QString autoupdateFolder = getTmpAutoupdaterPath();
 
     const QString updaterName = "unpack.bat";
     const QString zipName = "release.zip";
