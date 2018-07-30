@@ -22,6 +22,7 @@
 #include <objbase.h>
 
 static const QString pathToUpdater = "updater";
+static const QString pathToUpdater2 = "updater2";
 static const QString pathToNewApplication = "{A}";
 static const QString pathToNewApplication2 = "{A2}";
 
@@ -50,7 +51,7 @@ void updateAndRestart() {
     CHECK(QDir(sevenZipFolderOld).exists(), "sevenZipFolder path not exist");
 
     const QString tmpPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    const QString updaterFolder = QDir(tmpPath).filePath(pathToUpdater);
+    const QString updaterFolder = QDir(tmpPath).filePath(!isUac ? pathToUpdater : pathToUpdater2);
     CHECK(QDir(updaterFolder).mkpath(updaterFolder), "dont create updater folder");
     const QString updaterPath = QDir(updaterFolder).filePath(updaterName);
     const QString newAppPath = QDir(tmpPath).filePath(!isUac ? pathToNewApplication : pathToNewApplication2);
