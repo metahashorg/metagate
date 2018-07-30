@@ -43,7 +43,8 @@ SOURCES += main.cpp mainwindow.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
-    Paths.cpp
+    Paths.cpp \
+    RunGuard.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -90,7 +91,8 @@ HEADERS += mainwindow.h \
     PagesMappings.h \
     SlotWrapper.h \
     mhurlschemehandler.h \
-    Paths.h
+    Paths.h \
+    RunGuard.h
 
 FORMS += mainwindow.ui
 

@@ -10,6 +10,8 @@
 
 #include <QSurfaceFormat>
 
+#include "RunGuard.h"
+
 #include "check.h"
 #include "Log.h"
 #include "platform.h"
@@ -41,6 +43,12 @@ int main(int argc, char *argv[]) {
 #ifndef _WIN32
     signal(SIGSEGV, crash_handler);
 #endif
+
+    RunGuard guard("MetaGate");
+    if (!guard.tryToRun()) {
+        std::cout << "Programm already running" << std::endl;
+        return 0;
+    }
 
     try {
         qRegisterMetaType<ReturnCallback>("ReturnCallback");
