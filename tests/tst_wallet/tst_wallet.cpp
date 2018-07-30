@@ -154,6 +154,39 @@ void tst_Wallet::testMthSignTransaction() {
     QCOMPARE(res2, false);
 }
 
+void tst_Wallet::testHashMth_data() {
+    QTest::addColumn<std::string>("transaction");
+    QTest::addColumn<std::string>("answer");
+
+    QTest::newRow("hashMth 1")
+        << std::string("00e1c97266d97bf475ee6128f1ad1e8de33cfcc8da0927fc4bfb00286bee0000000000")
+        << std::string("c9b70ccdb83fce54a80038b32513b23b08152573c58efc48a24aea64a4a2e758");
+
+    QTest::newRow("hashMth 2")
+        << std::string("0052fa7e6e55c8cd2b7ed9552b57074e71c791352a601f7d1cfb00286bee0000000000")
+        << std::string("091ae3f829c28c0c158f5764592393a79d9f2cf62a9ced7250537fec32d04de9");
+
+    QTest::newRow("hashMth 3")
+        << std::string("008b09aaaa52cf75ef2cfb9dbfff27456d603580fa2b4b79d0fb00286bee0000000000")
+        << std::string("676c93644afd5715bf7d7d136b1157d66c346709bd3ba87a2f0b3792694502ca");
+
+    QTest::newRow("hashMth 4")
+        << std::string("00c44b358872bd6eba5d82f61769276e8954eb3c46bb3ba451fb00286bee0000000000")
+        << std::string("37193cede0bacfd28567fd4b8a87cff9474ffc846cd5fdba499ed8900b2876e1");
+
+    QTest::newRow("hashMth 5")
+        << std::string("0066433cf1d4ba40e8aac98d874447d6c1a4982ea56fc26a61fb00286bee0000000000")
+        << std::string("a4d0246668398310111e89b401cee3b028cf3dba3045f76d6d4488271685d47f");
+}
+
+void tst_Wallet::testHashMth() {
+    QFETCH(std::string, transaction);
+    QFETCH(std::string, answer);
+
+    const std::string result = Wallet::calcHash(transaction);
+    QCOMPARE(result, answer);
+}
+
 ///////////
 /// BTC ///
 ///////////

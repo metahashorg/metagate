@@ -303,6 +303,10 @@ void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, ui
     txHex = toHex(txBinary);
 }
 
+std::string Wallet::calcHash(const std::string &txHex) {
+    return toHex(doubleSha(fromHex(txHex)));
+}
+
 void Wallet::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
     const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);

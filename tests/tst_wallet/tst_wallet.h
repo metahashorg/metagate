@@ -22,6 +22,9 @@ private slots:
     void testHashEth_data();
     void testHashEth();
 
+    void testHashMth_data();
+    void testHashMth();
+
     void testCreateBinMthTransaction_data();
     void testCreateBinMthTransaction();
 
