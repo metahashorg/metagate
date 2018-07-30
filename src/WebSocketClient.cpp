@@ -4,6 +4,7 @@
 #include "check.h"
 #include "utils.h"
 #include "SlotWrapper.h"
+#include "Paths.h"
 
 #include "uploader.h"
 
@@ -16,7 +17,7 @@ WebSocketClient::WebSocketClient(QObject *parent)
 {
     qRegisterMetaType<QAbstractSocket::SocketState>();
 
-    const QString pathToWebSServer = makePath(Uploader::getPagesPath(), WEB_SOCKET_SERVER_FILE);
+    const QString pathToWebSServer = makePath(getSettingsPath(), WEB_SOCKET_SERVER_FILE);
     const std::string &fileData = readFile(pathToWebSServer);
     m_url = QString::fromStdString(fileData).trimmed();
 

@@ -142,3 +142,8 @@ void createFolder(const QString &folder) {
     const bool resultCreate = dir.mkpath(folder);
     CHECK(resultCreate, "dont create folder " + folder.toStdString());
 }
+
+bool isExistFolder(const QString &folder) {
+    QDir dir(folder);
+    return dir.exists();
+}

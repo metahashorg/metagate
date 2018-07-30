@@ -70,12 +70,6 @@ public:
 
     static void setLastVersion(const QString &pagesPath, const QString &folder, const QString &version);
 
-    static QString getPagesPath();
-
-    static QString getAutoupdaterPath();
-
-    static QString getTmpAutoupdaterPath();
-
     static Servers getServers();
 
     static LastHtmlVersion getLastHtmlVersion();

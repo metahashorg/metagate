@@ -25,8 +25,7 @@
 #include "utils.h"
 #include "stringUtils.h"
 #include "SlotWrapper.h"
-
-constexpr auto * metahashWalletPagesPathEnv = "METAHASH_WALLET_PAGES_PATH";
+#include "Paths.h"
 
 std::mutex Uploader::lastVersionMut;
 
@@ -55,27 +54,6 @@ void Uploader::setLastVersion(const QString &pagesPath, const QString &folderNam
     writeToFile(filePath, (version + "\n" + folderName + "\n").toStdString(), false);
 }
 
-QString Uploader::getPagesPath() {
-    const auto path = qgetenv(metahashWalletPagesPathEnv);
-    if (!path.isEmpty())
-        return QString(path);
-
-    const QString path1(makePath(QApplication::applicationDirPath(), "pages/"));
-    const QString path2(makePath(QApplication::applicationDirPath(), "../WalletMetahash/pages/"));
-    const QString path3(makePath(QApplication::applicationDirPath(), "../../WalletMetahash/pages/"));
-    QString currentBeginPath;
-    QDir dirTmp;
-    if (dirTmp.exists(path1)) {
-        currentBeginPath = path1;
-    } else if (dirTmp.exists(path2)){
-        currentBeginPath = path2;
-    } else {
-        currentBeginPath = path3;
-    }
-
-    return currentBeginPath;
-}
-
 LastHtmlVersion Uploader::getLastHtmlVersion() {
     LastHtmlVersion result;
     result.htmlsRootPath = getPagesPath();
@@ -83,19 +61,6 @@ LastHtmlVersion Uploader::getLastHtmlVersion() {
     result.folderName = last.first;
     result.lastVersion = last.second;
     return result;
-}
-
-QString Uploader::getAutoupdaterPath() {
-    const QString path1(makePath(QApplication::applicationDirPath(), "autoupdater/"));
-    QDir dirTmp(path1);
-    if (!dirTmp.exists()) {
-        CHECK(dirTmp.mkpath(path1), "dont create autoupdater path");
-    }
-    return path1;
-}
-
-QString Uploader::getTmpAutoupdaterPath() {
-    return makePath(getAutoupdaterPath(), "folder/");
 }
 
 static std::pair<bool, std::string> parseServer(const std::string &str) {
@@ -116,7 +81,7 @@ static std::pair<bool, std::string> parseServer(const std::string &str) {
 }
 
 Uploader::Servers Uploader::getServers() {
-    const QString currentBeginPath = makePath(getPagesPath(), "servers.txt");
+    const QString currentBeginPath = makePath(getSettingsPath(), "servers.txt");
 
     Servers servers;
     QFile inputFile(currentBeginPath);
@@ -308,6 +273,7 @@ BEGIN_SLOT_WRAPPER
             LOG << "autoupdater callback";
             CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
 
+            clearAutoupdatersPath();
             const QString autoupdaterPath = getAutoupdaterPath();
             const QString archiveFilePath = makePath(autoupdaterPath, version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);

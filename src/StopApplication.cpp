@@ -11,6 +11,7 @@
 #include "utils.h"
 #include "check.h"
 #include "Log.h"
+#include "Paths.h"
 
 #include <iostream>
 
@@ -76,7 +77,7 @@ static const QString pathToUpdater = "updater";
 static const QString pathToNewApplication = "WalletMetahashUpdater";
 
 void updateAndRestart() {
-    const QString autoupdateFolder = Uploader::getTmpAutoupdaterPath();
+    const QString autoupdateFolder = getTmpAutoupdaterPath();
 
     const QString updaterName = "updater";
     const QString xmlName = "file_list.xml";

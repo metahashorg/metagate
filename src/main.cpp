@@ -26,6 +26,7 @@
 #include "WebSocketClient.h"
 #include "JavascriptWrapper.h"
 #include "TypedException.h"
+#include "Paths.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
         while (true) {
             ServerName serverName;
 
-            NsLookup nsLookup(Uploader::getPagesPath());
+            NsLookup nsLookup(getSettingsPath());
             nsLookup.start();
 
             WebSocketClient webSocketClient;
