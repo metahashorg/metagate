@@ -262,6 +262,12 @@ std::string BtcWallet::buildTransaction(
     return encodedTransaction;
 }
 
+std::string BtcWallet::calcHashNotWitness(const std::string &txHex) {
+    std::string result = calcHashTxNotWitness(fromHex(txHex));
+    std::reverse(result.begin(), result.end());
+    return toHex(result);
+}
+
 std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const QString &folder) {
     std::vector<std::pair<QString, QString>> result;
 

@@ -49,6 +49,8 @@ public:
         const std::string &receiveAddress
     );
 
+    static std::string calcHashNotWitness(const std::string &txHex);
+
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder);
 
     const std::string& getAddress() const;

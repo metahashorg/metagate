@@ -57,7 +57,6 @@ public:
 private:
     std::string buildSignedDump(uint64_t fee, uint64_t transferAmount);
     std::string signAllInputs(const std::string& signingdump);
-    std::string doubleHash(const std::string& str);
     std::string removeScripts(const std::string& signingdump, size_t scriptIdx, const std::vector<TransferInfo>& ti);
 
     std::vector<TransferInfo> m_Transfers;
@@ -68,5 +67,7 @@ private:
     std::string locktime;
     bool isTestnet;
 };
+
+std::string calcHashTxNotWitness(const std::string &tx);
 
 #endif

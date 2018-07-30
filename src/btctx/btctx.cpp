@@ -50,7 +50,7 @@ std::string BTCTransaction::BuildTransaction(uint64_t fee, uint64_t transferAmou
     return signAllInputs(signingdump);
 }
 
-std::string BTCTransaction::doubleHash(const std::string& str) {
+static std::string doubleHash(const std::string& str) {
     //2 раза подсчитываем sha256-хэш от строки
     CryptoPP::SHA256 sha256;
     uint8_t sha256hash[CryptoPP::SHA256::DIGESTSIZE] = {0};
@@ -209,4 +209,8 @@ std::string BuildBTCTransaction(
         );
     }
     return transaction.BuildTransaction(fee, transferAmount);
+}
+
+std::string calcHashTxNotWitness(const std::string &tx) {
+    return doubleHash(tx);
 }
