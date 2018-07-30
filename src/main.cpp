@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
             uploader.start();
 
             const int returnCode = app.exec();
+            LOG << "Return code " << returnCode;
             if (returnCode != RESTART_BROWSER) {
                 break;
             }
