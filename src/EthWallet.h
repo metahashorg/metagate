@@ -28,6 +28,8 @@ public:
         std::string data
     );
 
+    static std::string calcHash(const std::string &txHex);
+
     static void checkAddress(const std::string &address);
 
     static QString getFullPath(const QString &folder, const std::string &address);

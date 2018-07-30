@@ -94,3 +94,13 @@ std::string SignTransaction(std::string rawprivkey,
 
     return transaction;
 }
+
+std::string createHashTx(const std::string &tx) {
+    std::array<uint8_t, EC_KEY_LENGTH> hs;
+
+    CryptoPP::Keccak k(hs.size());
+    k.Update((const uint8_t*)tx.data(), tx.size());
+    k.TruncatedFinal(hs.data(), hs.size());
+
+    return std::string(hs.begin(), hs.end());
+}

@@ -19,6 +19,9 @@ private slots:
     void testHashBtc_data();
     void testHashBtc();
 
+    void testHashEth_data();
+    void testHashEth();
+
     void testCreateBinMthTransaction_data();
     void testCreateBinMthTransaction();
 

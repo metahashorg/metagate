@@ -49,6 +49,11 @@ std::string EthWallet::SignTransaction(
     return transaction;
 }
 
+std::string EthWallet::calcHash(const std::string &txHex) {
+    CHECK(txHex.size() > 2 && txHex.compare(0, 2, "0x") == 0, "Incorrect tx");
+    return "0x" + toHex(createHashTx(fromHex(txHex.substr(2))));
+}
+
 std::string EthWallet::genPrivateKey(const QString &folder, const std::string &password) {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
     const auto pair = CreateNewKey(password);

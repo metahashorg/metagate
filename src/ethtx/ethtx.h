@@ -15,4 +15,6 @@ std::string SignTransaction(std::string rawprivkey,
                             std::string value,
                             std::string data);
 
+std::string createHashTx(const std::string &tx);
+
 #endif // ETH_TX_H_

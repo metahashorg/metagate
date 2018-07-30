@@ -212,5 +212,7 @@ std::string BuildBTCTransaction(
 }
 
 std::string calcHashTxNotWitness(const std::string &tx) {
-    return doubleHash(tx);
+    std::string result = doubleHash(tx);
+    std::reverse(result.begin(), result.end());
+    return result;
 }
