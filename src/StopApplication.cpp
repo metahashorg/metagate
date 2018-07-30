@@ -17,13 +17,25 @@
 
 #ifdef TARGET_WINDOWS
 
+#include <shlobj.h>
+#include <shlwapi.h>
+#include <objbase.h>
+
 static const QString pathToUpdater = "updater";
 static const QString pathToNewApplication = "{A}";
+static const QString pathToNewApplication2 = "{A2}";
 
 void updateAndRestart() {
     const QString thisName = "MetaGate.exe";
 
     const QString autoupdateFolder = getTmpAutoupdaterPath();
+
+    const QString thisPath = QCoreApplication::applicationDirPath();
+
+    const QString tmpFilePath = makePath(thisPath, "tmp.txt");
+    QFile::remove(tmpFilePath);
+    QFile file(tmpFilePath);
+    const bool isUac = !file.open(QFile::WriteOnly);
 
     const QString updaterName = "unpack.bat";
     const QString zipName = "release.zip";
@@ -41,9 +53,9 @@ void updateAndRestart() {
     const QString updaterFolder = QDir(tmpPath).filePath(pathToUpdater);
     CHECK(QDir(updaterFolder).mkpath(updaterFolder), "dont create updater folder");
     const QString updaterPath = QDir(updaterFolder).filePath(updaterName);
-    const QString newAppPath = QDir(tmpPath).filePath(pathToNewApplication);
+    const QString newAppPath = QDir(tmpPath).filePath(!isUac ? pathToNewApplication : pathToNewApplication2);
     QDir(newAppPath).removeRecursively();
-    CHECK(QDir(newAppPath).mkpath(newAppPath), "dont create new app folder");
+    CHECK(QDir(newAppPath).mkpath(newAppPath), ("dont create new app folder " + newAppPath).toStdString());
     const QString zipAppPath = QDir(newAppPath).filePath(zipName);
 
     QFile::remove(updaterPath);
@@ -59,16 +71,33 @@ void updateAndRestart() {
     QDir(autoupdateFolder).removeRecursively();
 
 
-
-    const QString thisPath = QCoreApplication::applicationDirPath();
     LOG << "paths for restart " << tmpPath << " " << thisPath;
     LOG << "New app path " << newAppPath;
 
-    QProcess process;
-    std::cout << "Tt " << ("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\"").toStdString() << std::endl;
-    CHECK(process.startDetached("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\""), "dont start updater process");
-    //process.waitForFinished();
-    //process.close();
+    if (!isUac) {
+        QProcess process;
+        std::cout << "Tt " << ("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\"").toStdString() << std::endl;
+        CHECK(process.startDetached("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\""), "dont start updater process");
+    } else {
+        LOG << "UAC mode";
+
+        SHELLEXECUTEINFO shExInfo = {0};
+        shExInfo.cbSize = sizeof(shExInfo);
+        shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+        shExInfo.hwnd = 0;
+        auto tt1 = QString("runas").toStdWString();
+        shExInfo.lpVerb = tt1.c_str();                // Operation to perform
+        auto tt2 = QString("powershell.exe").toStdWString();
+        shExInfo.lpFile = tt2.c_str();       // Application to start
+        auto tt3 = QString("-WindowStyle Hidden -Command \"" + updaterPath + "\" \\\"" + newAppPath + "\\\" \\\"" + zipAppPath + "\\\" " + thisName + " \\\"" + thisPath + "\\\"").toStdWString();
+        LOG << QString("-WindowStyle Hidden -Command \"" + updaterPath + "\" \\\"" + newAppPath + "\\\" \\\"" + zipAppPath + "\\\" " + thisName + " \\\"" + thisPath + "\\\"");
+        shExInfo.lpParameters = tt3.c_str();                  // Additional parameters
+        shExInfo.lpDirectory = 0;
+        shExInfo.nShow = SW_SHOW;
+        shExInfo.hInstApp = 0;
+
+        CHECK(ShellExecuteEx(&shExInfo), "Not execute");
+    }
     QApplication::exit(SIMPLE_EXIT);
 }
 #else
