@@ -7,7 +7,8 @@ deploy/win/lib32/*
 cryptopp/lib/windows32/cryptopp.dll
 secp256k1/lib/windows32/secp256k1.dll
 и папку
-pages/
+startSettings/
+Копировать каталог ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt с заменой в startSettings
 
 Структура архива для автоупдейтера:
 Каталог 7z с программой 7z

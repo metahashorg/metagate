@@ -8,7 +8,8 @@ cryptopp/lib/windows/cryptopp.dll
 quazip-0.7.3/libs/win/quazip.dll
 secp256k1/lib/windows/secp256k1.dll
 и папку
-pages/
+startSettings/
+Копировать каталог ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt с заменой в startSettings
 
 Структура архива для автоупдейтера:
 Каталог 7z с программой 7z

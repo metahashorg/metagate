@@ -3,7 +3,8 @@
 1. открыли проект в qt
 2. поменяли тип сборки на выпуск
 3. собрали проект
-4. скопировали из папки с проектом папку pages в папку, которую qt создает при сборке рядом с исполняемым файлом (в build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/MetaGate.app/Contents/MacOS/) 
+4. скопировали из папки с проектом папку startSettings в папку, которую qt создает при сборке рядом с исполняемым файлом (в build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/MetaGate.app/Contents/MacOS/) 
+4.1 Копировать каталог ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt с заменой в startSettings
 5. скорировали из build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/  MetaGate.app” в отдельную произвольную папку WalletMetahash
 6. запустили macdeployqt. 
 /Users/daria/Qt/5.9.1/clang_64/bin/macdeployqt /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app -executable=/Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/Contents/MacOS/MetaGate

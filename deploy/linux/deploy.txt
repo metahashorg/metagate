@@ -1,6 +1,7 @@
 Сборка приложения:
 ./deploy.sh /home/user/qtExamples/MetaGate/MetaGate
-Копировать каталог pages
+Копировать каталог startSettings
+Копировать каталог ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt с заменой в startSettings
 Скопировать файл run.sh
 Скопировать файлы из libssl в корневую для приложения папку
 Запуск ./run.sh

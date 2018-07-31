@@ -44,9 +44,9 @@ static QString getOldPagesPath() {
     if (!path.isEmpty())
         return QString(path);
 
-    const QString path1(makePath(QApplication::applicationDirPath(), "pages/"));
-    const QString path2(makePath(QApplication::applicationDirPath(), "../WalletMetahash/pages/"));
-    const QString path3(makePath(QApplication::applicationDirPath(), "../../WalletMetahash/pages/"));
+    const QString path1(makePath(QApplication::applicationDirPath(), "startSettings/"));
+    const QString path2(makePath(QApplication::applicationDirPath(), "../WalletMetahash/startSettings/"));
+    const QString path3(makePath(QApplication::applicationDirPath(), "../../WalletMetahash/startSettings/"));
     QString currentBeginPath;
     QDir dirTmp;
     if (dirTmp.exists(path1)) {
