@@ -3,6 +3,8 @@
 #include <QStandardPaths>
 #include <QApplication>
 
+#include <mutex>
+
 #include "utils.h"
 #include "check.h"
 #include "Log.h"
@@ -61,9 +63,13 @@ static QString getOldPagesPath() {
 }
 
 QString getPagesPath() {
+    static std::mutex mut;
+
     const QString oldPagesPath = getOldPagesPath();
 
     const QString newPagesPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, PAGES_PATH);
+
+    std::lock_guard<std::mutex> lock(mut);
     if (!isExistFolder(newPagesPath)) {
         LOG << "Create pages folder: " << newPagesPath << " " << oldPagesPath;
         CHECK(copyRecursively(oldPagesPath, newPagesPath), "not copy pages");
