@@ -208,7 +208,6 @@ BEGIN_SLOT_WRAPPER
         LOG << "Server html version " << version << " " << hash << " " << url.toStdString().substr(0, url.toStdString().find("?secure")) << ". Current version " << lastVersion;
 
         const QString folderServer = toHash(UPDATE_API);
-
         if (hash == "false") {
             return;
         }

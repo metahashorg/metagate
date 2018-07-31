@@ -77,6 +77,8 @@ private:
 
     MainWindow *mainWindow;
 
+    QString serverName;
+
     int id = 1;
 
     SimpleClient client;
@@ -100,8 +102,6 @@ private:
 private:
 
     static std::mutex lastVersionMut;
-
-    QString serverName;
 
 };
 
