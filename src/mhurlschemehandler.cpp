@@ -28,15 +28,13 @@ void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
     MainWindow *win = qobject_cast<MainWindow *>(parent());
     CHECK(win, "mainwin cast");
     ip = win->getServerIp(url.toString());
-
-    if (isLog) {
-        LOG << "MHUrlSchemeHandler: " << url.toString() << " " << ip << " " << host;
-        isLog = false;
-    }
-
     QUrl newurl(url);
     newurl.setScheme(QStringLiteral("http"));
     newurl.setHost(ip);
+    if (isLog) {
+        LOG << "MHUrlSchemeHandler: " << url.toString() << " " << ip << " " << host << " " << newurl.toString();
+        isLog = false;
+    }
     QNetworkRequest req(newurl);
     req.setRawHeader(QByteArray("Host"), host.toUtf8());
     QNetworkReply *reply = m_manager->get(req);
