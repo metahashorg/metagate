@@ -17,27 +17,6 @@
 
 class MainWindow;
 
-class ServerName {
-public:
-
-    void setServerName(const QString &serverName) {
-        std::lock_guard<std::mutex> lock(mut);
-        updateServerName = serverName;
-    }
-
-    QString getServerName() const {
-        std::lock_guard<std::mutex> lock(mut);
-        return updateServerName;
-    }
-
-private:
-
-    QString updateServerName = "";
-
-    mutable std::mutex mut;
-
-};
-
 struct LastHtmlVersion {
     QString htmlsRootPath;
 
@@ -58,7 +37,7 @@ private:
 
 public:
 
-    Uploader(MainWindow *mainWindow, ServerName &serverName);
+    explicit Uploader(MainWindow *mainWindow);
 
     ~Uploader() override;
 
@@ -98,8 +77,6 @@ private:
 
     MainWindow *mainWindow;
 
-    ServerName &serverName;
-
     int id = 1;
 
     SimpleClient client;
@@ -123,6 +100,8 @@ private:
 private:
 
     static std::mutex lastVersionMut;
+
+    QString serverName;
 
 };
 

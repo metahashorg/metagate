@@ -91,8 +91,6 @@ int main(int argc, char *argv[]) {
         LOG << "Machine uid " << getMachineUid();
 
         while (true) {
-            ServerName serverName;
-
             NsLookup nsLookup(getSettingsPath());
             nsLookup.start();
 
@@ -106,7 +104,7 @@ int main(int argc, char *argv[]) {
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
 
-            Uploader uploader(&mainWindow, serverName);
+            Uploader uploader(&mainWindow);
             uploader.start();
 
             const int returnCode = app.exec();

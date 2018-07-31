@@ -106,9 +106,8 @@ Uploader::Servers Uploader::getServers() {
     return servers;
 }
 
-Uploader::Uploader(MainWindow *mainWindow, ServerName &serverName)
+Uploader::Uploader(MainWindow *mainWindow)
     : mainWindow(mainWindow)
-    , serverName(serverName)
 {
     CHECK(mainWindow != nullptr, "maiWindow == nullptr");
 
@@ -116,11 +115,11 @@ Uploader::Uploader(MainWindow *mainWindow, ServerName &serverName)
     if (isProductionSetup) {
         LOG << "Set production server " << servers.prod;
         CHECK(!servers.prod.empty(), "Empty server name");
-        serverName.setServerName(QString::fromStdString(servers.prod));
+        serverName = QString::fromStdString(servers.prod);
     } else {
         LOG << "Set development server " << servers.dev;
         CHECK(!servers.dev.empty(), "Empty server name");
-        serverName.setServerName(QString::fromStdString(servers.dev));
+        serverName = QString::fromStdString(servers.dev);
     }
 
     CHECK(connect(this, SIGNAL(generateEvent(WindowEvent)), mainWindow, SLOT(processEvent(WindowEvent))), "not connect");
@@ -187,7 +186,7 @@ static void clearFolderHtmls(const QString &folderHtmls, const QString &currentV
 
 void Uploader::timerEvent() {
 BEGIN_SLOT_WRAPPER
-    const QString UPDATE_API = serverName.getServerName();
+    const QString UPDATE_API = serverName;
 
     if (UPDATE_API == "") {
         return;
