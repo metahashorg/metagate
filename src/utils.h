@@ -34,6 +34,10 @@ void createFolder(const QString &folder);
 
 bool isExistFolder(const QString &folder);
 
+void removeFile(const QString &file);
+
+bool isPathEquals(const QString &path1, const QString &path2);
+
 inline QString makePath(const QString &arg) {
     return arg;
 }

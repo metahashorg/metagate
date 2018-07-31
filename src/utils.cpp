@@ -147,3 +147,21 @@ bool isExistFolder(const QString &folder) {
     QDir dir(folder);
     return dir.exists();
 }
+
+void removeFile(const QString &file) {
+    QFile::remove(file);
+}
+
+bool isPathEquals(const QString &path1, const QString &path2) {
+    QString p1(path1);
+    QString p2(path2);
+
+    if (p1.endsWith("/") || p1.endsWith("\\")) {
+        p1.remove(p1.size() - 1, 1);
+    }
+    if (p2.endsWith("/") || p2.endsWith("\\")) {
+        p2.remove(p1.size() - 1, 1);
+    }
+
+    return p1 == p2;
+}
