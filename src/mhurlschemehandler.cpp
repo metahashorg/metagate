@@ -15,6 +15,10 @@ MHUrlSchemeHandler::MHUrlSchemeHandler(QObject *parent)
     m_manager = new QNetworkAccessManager(this);
 }
 
+void MHUrlSchemeHandler::setLog() {
+    isLog = true;
+}
+
 void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
 {
     const QUrl url = job->requestUrl();
@@ -24,6 +28,11 @@ void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
     MainWindow *win = qobject_cast<MainWindow *>(parent());
     CHECK(win, "mainwin cast");
     ip = win->getServerIp(url.toString());
+
+    if (isLog) {
+        LOG << "MHUrlSchemeHandler: " << url.toString() << " " << ip << " " << host;
+        isLog = false;
+    }
 
     QUrl newurl(url);
     newurl.setScheme(QStringLiteral("http"));

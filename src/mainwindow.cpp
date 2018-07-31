@@ -90,8 +90,8 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
 {
     ui->setupUi(this);
 
-
-    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), new MHUrlSchemeHandler(this));
+    shemeHandler = new MHUrlSchemeHandler(this);
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
 
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -423,6 +423,7 @@ void MainWindow::softReloadApp() {
 }
 
 void MainWindow::loadUrl(const QString &page) {
+    shemeHandler->setLog();
     ui->webView->load(page);
     LOG << "Reload ok";
 }

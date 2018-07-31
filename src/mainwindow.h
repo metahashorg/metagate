@@ -19,6 +19,7 @@
 
 class WebSocketClient;
 class JavascriptWrapper;
+class MHUrlSchemeHandler;
 
 namespace Ui {
     class MainWindow;
@@ -106,6 +107,8 @@ private slots:
     void onBrowserLoadFinished(const QUrl &url2);
 
 private:
+
+    MHUrlSchemeHandler *shemeHandler = nullptr;
 
     std::unique_ptr<Ui::MainWindow> ui;
 
