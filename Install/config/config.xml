@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>MetaGate Installer</Name>
+    <Version>1.0.0</Version>
+    <Title>MetaGate Installer</Title>
+    <Publisher>MetaGate</Publisher>
+    <StartMenuDir>MetaGate</StartMenuDir>
+    <TargetDir>@HomeDir@/MetaGate</TargetDir>
+    <RemoteRepositories>
+        <Repository>
+            <Url>http://localhost/repository</Url>
+        </Repository>
+    </RemoteRepositories>
+</Installer>
