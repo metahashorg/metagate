@@ -13,6 +13,9 @@
 class NsLookup;
 class WebSocketClient;
 
+template<bool isLastArg, typename... Args>
+struct JsFunc;
+
 class JavascriptWrapper : public QObject
 {
     Q_OBJECT
@@ -193,11 +196,17 @@ private:
 
     void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult);
 
-    template<typename... Args>
-    void runJsFunc(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
+    template<class Function>
+    void apiVrapper(const QString &javascriptFunctionName, const Function &func);
+
+    template<class Function>
+    void apiVrapper(const QString &javascriptFunctionName, const QString &requestId, const Function &func);
 
     template<typename... Args>
-    void runJsFunc(const QString &function, const TypedException &exception, Args&& ...args);
+    JsFunc<true, Args...> makeJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
+
+    template<typename... Args>
+    JsFunc<false, Args...> makeJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 
     void runJs(const QString &script);
 
