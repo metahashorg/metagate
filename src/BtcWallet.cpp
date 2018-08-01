@@ -94,6 +94,10 @@ BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const Q
     if (address.empty()) {
         bool tmp;
         address = ::getAddress(wif, tmp, false);
+    } else {
+        bool tmp;
+        const std::string calcAddress = ::getAddress(wif, tmp, false);
+        CHECK_TYPED(calcAddress == address, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif: address calc incorrect");
     }
 }
 

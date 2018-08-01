@@ -28,13 +28,21 @@ EthWallet::EthWallet(
     const QString &folder,
     const std::string &address,
     std::string password
-) {
+)
+    : address(address)
+{
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
     const QString pathToFile = getFullPath(folder, address);
     const std::string certcontent = readFile(pathToFile);
     CHECK_TYPED(!certcontent.empty(), TypeErrors::PRIVATE_KEY_ERROR, "private file empty");
     rawprivkey.resize(EC_KEY_LENGTH);
     DecodeCert(certcontent.c_str(), password, rawprivkey.data());
+    const std::string calcAddress = "0x" + MixedCaseEncoding(AddressFromPrivateKey(std::string(rawprivkey.begin(), rawprivkey.end())));
+    CHECK_TYPED(toLower(calcAddress) == toLower(address), TypeErrors::PRIVATE_KEY_ERROR, "private key error: address calc error");
+}
+
+std::string EthWallet::getAddress() const {
+    return address;
 }
 
 std::string EthWallet::SignTransaction(

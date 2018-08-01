@@ -28,6 +28,8 @@ public:
         std::string data
     );
 
+    std::string getAddress() const;
+
     static std::string calcHash(const std::string &txHex);
 
     static void checkAddress(const std::string &address);
@@ -47,6 +49,8 @@ public:
 private:
 
     std::vector<uint8_t> rawprivkey;
+
+    std::string address;
 
 };
 

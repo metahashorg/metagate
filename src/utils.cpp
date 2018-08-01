@@ -73,6 +73,10 @@ bool isHex(const std::string &str) {
     return true;
 }
 
+std::string toLower(const std::string &str) {
+    return QString::fromStdString(str).toLower().toStdString();
+}
+
 void writeToFile(const QString &pathToFile, const std::string &data, bool isCheck) {
     QFile file(pathToFile);
     if (isCheck) {

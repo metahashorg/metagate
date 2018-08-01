@@ -226,6 +226,11 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     } catch (const std::exception &e) {
         throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
     }
+
+    const std::string pubKeyElements = getPublicKeyElements(privateKey);
+    const std::string pubKeyBinary = fromHex(pubKeyElements);
+    const std::string hexAddr = createAddress(pubKeyBinary);
+    CHECK_TYPED(hexAddr == name, TypeErrors::PRIVATE_KEY_ERROR, "Private key error: address calc incorrect");
 }
 
 std::string Wallet::sign(const std::string &message, std::string &publicKey){
