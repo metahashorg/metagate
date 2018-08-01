@@ -92,7 +92,8 @@ HEADERS += mainwindow.h \
     SlotWrapper.h \
     mhurlschemehandler.h \
     Paths.h \
-    RunGuard.h
+    RunGuard.h \
+    makeJsFunc.h
 
 FORMS += mainwindow.ui
 
