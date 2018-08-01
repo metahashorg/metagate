@@ -21,9 +21,9 @@ static QString convertAddressToFileName(const std::string &address) {
 }
 
 QString BtcWallet::getFullPath(const QString &folder, const std::string &address) {
-    QString pathToFile = QDir(folder).filePath(QString::fromStdString(address).toLower());
+    QString pathToFile = makePath(folder, QString::fromStdString(address).toLower());
     if (!QFile(pathToFile).exists()) {
-        pathToFile = QDir(folder).filePath(convertAddressToFileName(address));
+        pathToFile = makePath(folder, convertAddressToFileName(address));
     }
     return pathToFile;
 }
@@ -52,11 +52,11 @@ static std::pair<std::string, std::string> getWifAndAddress(const QString &folde
     return getWifAndAddress(wifAndAddress, isNoEncrypted);
 }
 
-static std::string decodeWif(const std::string &wifEncrypted, const QString &password) {
+static std::string decryptWif(const std::string &wifEncrypted, const QString &password) {
     std::string wif = wifEncrypted;
     if (!password.isNull() && !password.isEmpty()) {
         if (wifEncrypted.substr(0, 2) == "6P") {
-            wif = decryptWif(wifEncrypted, password.normalized(QString::NormalizationForm_C).toStdString());
+            wif = ::decryptWif(wifEncrypted, password.normalized(QString::NormalizationForm_C).toStdString());
         }
     } else {
         CHECK_TYPED(wifEncrypted.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + wifEncrypted);
@@ -89,7 +89,7 @@ BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const Q
     const std::string wifEncrypted = pair.first;
     address = pair.second;
 
-    wif = decodeWif(wifEncrypted, password);
+    wif = decryptWif(wifEncrypted, password);
 
     if (address.empty()) {
         bool tmp;
@@ -297,7 +297,7 @@ void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, c
     const auto pair = getWifAndAddress(result, true);
     const std::string &addressBase58 = pair.second;
     const std::string &encodedWif = pair.first;
-    decodeWif(encodedWif, password);
+    decryptWif(encodedWif, password);
     const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
     writeToFile(pathToFile, result, true);
 }
