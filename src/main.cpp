@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
             WebSocketClient webSocketClient;
             webSocketClient.start();
 
-            JavascriptWrapper jsWrapper(nsLookup);
+            JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
 
             MainWindow mainWindow(webSocketClient, jsWrapper, QString::fromStdString(versionString));
             mainWindow.showExpanded();

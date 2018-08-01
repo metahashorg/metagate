@@ -11,12 +11,13 @@
 #include "client.h"
 
 class NsLookup;
+class WebSocketClient;
 
 class JavascriptWrapper : public QObject
 {
     Q_OBJECT
 public:
-    explicit JavascriptWrapper(NsLookup &nsLookup, QObject *parent = nullptr);
+    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -166,11 +167,15 @@ public slots:
 
     Q_INVOKABLE void getAppInfo(const QString requestId);
 
+    Q_INVOKABLE void metaOnline();
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
 
     void onDirChanged(const QString &dir);
+
+    void onWssMessageReceived(QString message);
 
 private:
 
@@ -199,6 +204,8 @@ private:
     void openFolderInStandartExplored(const QString &folder);
 
 private:
+
+    WebSocketClient &wssClient;
 
     NsLookup &nsLookup;
 

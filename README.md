@@ -298,5 +298,10 @@ getAppInfoResultJs(requestId, isProduction, version, gitCommit);
 # When changing the contents of one of the directories with keys, the following function will be called
 directoryChangedResultJs(path, ethName);
 
+Q_INVOKABLE void metaOnline();
+Запрос статистики нахождения приложения online
+Ответ вернется в функцию
+onlineResultJs(jsonResult, errorNum, errorMessage);
+
 ```
 

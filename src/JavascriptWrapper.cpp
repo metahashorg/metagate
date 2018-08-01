@@ -20,6 +20,7 @@
 #include "BtcWallet.h"
 
 #include "NsLookup.h"
+#include "WebSocketClient.h"
 
 #include "unzip.h"
 #include "check.h"
@@ -41,8 +42,9 @@ const static QString WALLET_PATH_MTH = "mhc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
-JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
-    : nsLookup(nsLookup)
+JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, QObject */*parent*/)
+    : wssClient(wssClient)
+    , nsLookup(nsLookup)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -54,6 +56,8 @@ JavascriptWrapper::JavascriptWrapper(NsLookup &nsLookup, QObject */*parent*/)
     CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect callbackCall");
 
     CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
+
+    CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect wssClient");
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
@@ -84,6 +88,12 @@ static TypedException apiVrapper(const Function &func) {
         LOG << "Unknown error";
         return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
     }
+}
+
+static QString toJsString(const QJsonDocument &arg) {
+    QString json = arg.toJson(QJsonDocument::Compact);
+    json.replace('\"', "\\\"");
+    return "\"" + json + "\"";
 }
 
 static QString toJsString(const QString &arg) {
@@ -1089,6 +1099,28 @@ BEGIN_SLOT_WRAPPER
             runJsFunc(JS_NAME_RESULT, TypedException(), d.absolutePath(), folderInfo.nameWallet);
             return;
         }
+    }
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::metaOnline() {
+    emit wssClient.sendMessage("{\"app\":\"MetaOnline\"}");
+}
+
+void JavascriptWrapper::onWssMessageReceived(QString message) {
+BEGIN_SLOT_WRAPPER
+    const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
+    CHECK(document.isObject(), "Message not is object");
+    const QJsonObject root = document.object();
+    CHECK(root.contains("app") && root.value("app").isString(), "app field not found");
+    const std::string appType = root.value("app").toString().toStdString();
+
+    if (appType == "MetaOnline") {
+        const QString JS_NAME_RESULT = "onlineResultJs";
+        CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+        const QJsonObject data = root.value("data").toObject();
+        LOG << "Meta online response: " << QString(QJsonDocument(data).toJson(QJsonDocument::Compact));
+        runJsFunc(JS_NAME_RESULT, TypedException(), QJsonDocument(data));
     }
 END_SLOT_WRAPPER
 }

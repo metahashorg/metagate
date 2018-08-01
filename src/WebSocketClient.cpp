@@ -107,5 +107,6 @@ END_SLOT_WRAPPER
 void WebSocketClient::onTextMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     LOG << "Wss received " << message;
+    emit messageReceived(message);
 END_SLOT_WRAPPER
 }

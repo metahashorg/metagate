@@ -23,6 +23,10 @@ signals:
 
     void setHelloString(QString message);
 
+signals:
+
+    void messageReceived(QString message);
+
 public slots:
 
     void onStarted();
