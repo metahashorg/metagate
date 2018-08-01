@@ -53,6 +53,7 @@ std::string EthWallet::SignTransaction(
     std::string value,
     std::string data
 ) {
+    baseCheckAddress(to);
     const std::string transaction = ::SignTransaction(std::string((char*)rawprivkey.data(), rawprivkey.size()), nonce, gasPrice, gasLimit, to, value, data);
     return transaction;
 }
@@ -95,8 +96,7 @@ std::vector<std::pair<QString, QString>> EthWallet::getAllWalletsInFolder(const 
 std::string EthWallet::makeErc20Data(const std::string &valueHex, const std::string &address) {
     std::string result = "0xa9059cbb";
 
-    CHECK_TYPED(address.substr(0, 2) == "0x", TypeErrors::INCORRECT_USER_DATA, "Incorrect address " + address);
-    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_USER_DATA, "Incorrect address " + address);
+    baseCheckAddress(address);
     CHECK_TYPED(valueHex.substr(0, 2) == "0x", TypeErrors::INCORRECT_USER_DATA, "Incorrect address " + valueHex);
 
     std::string param1 = address.substr(2);
@@ -126,9 +126,13 @@ void EthWallet::savePrivateKey(const QString &folder, const std::string &data, c
     writeToFile(pathToFile, content, true);
 }
 
+void EthWallet::baseCheckAddress(const std::string &address) {
+    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address size");
+    CHECK_TYPED(address.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address. 0x missed");
+}
+
 void EthWallet::checkAddress(const std::string &address) {
-    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
-    CHECK_TYPED(address.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+    baseCheckAddress(address);
 
     const std::string addressPart = address.substr(2);
 
