@@ -49,7 +49,7 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     hardwareId = QString::fromStdString(::getMachineUid());
 
     walletDefaultPath = getWalletPath();
-    LOG << "Wallets default path " << walletPath;
+    LOG << "Wallets default path " << walletDefaultPath;
 
     setPaths(walletDefaultPath, "");
 
