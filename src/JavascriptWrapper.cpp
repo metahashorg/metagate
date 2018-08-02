@@ -1022,6 +1022,5 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::runJs(const QString &script) {
-    LOG << "Js run " << script;
     emit jsRunSig(script);
 }
