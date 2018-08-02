@@ -935,7 +935,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
 BEGIN_SLOT_WRAPPER
     LOG << "print url";
-    client.sendMessageGet(url, [this, printWindowCaption, text](const std::string &response) {
+    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response) {
         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
 
         QImage image;

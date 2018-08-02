@@ -60,7 +60,7 @@ struct appendT0 { // TODO переписать на if constexpr, когда б�
 
 template<typename... Args>
 struct appendT0<0, Args...> {
-    QString operator()(const std::tuple<std::decay_t<Args>...> &args) {
+    QString operator()(const std::tuple<std::decay_t<Args>...> &/*args*/) {
         return "";
     }
 };
