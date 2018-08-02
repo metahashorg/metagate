@@ -22,6 +22,8 @@ bool isHex(const std::string &str);
 
 std::string toLower(const std::string &str);
 
+std::string trim(const std::string &str);
+
 void writeToFile(const QString &pathToFile, const std::string &data, bool isCheck);
 
 void writeToFileBinary(const QString &pathToFile, const std::string &data, bool isCheck);

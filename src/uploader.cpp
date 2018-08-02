@@ -23,7 +23,6 @@
 #include "VersionWrapper.h"
 #include "Log.h"
 #include "utils.h"
-#include "stringUtils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
 
