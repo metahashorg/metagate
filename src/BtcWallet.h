@@ -63,6 +63,10 @@ public:
 
 private:
 
+    BtcWallet(const std::string &fileData, const QString &password);
+
+private:
+
     std::string encode(
         bool allMoney, const int64_t &value, const int64_t &fees,
         const std::string &toAddress,

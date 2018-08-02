@@ -24,22 +24,25 @@ QString EthWallet::getFullPath(const QString &folder, const std::string &address
     return QDir(folder).filePath(QString::fromStdString(address).toLower());
 }
 
-EthWallet::EthWallet(
-    const QString &folder,
-    const std::string &address,
-    std::string password
-)
+EthWallet::EthWallet(const std::string &fileData, const std::string &address, const std::string &password, bool /*tmp*/)
     : address(address)
 {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
-    const QString pathToFile = getFullPath(folder, address);
-    const std::string certcontent = readFile(pathToFile);
+    const std::string &certcontent = fileData;
     CHECK_TYPED(!certcontent.empty(), TypeErrors::PRIVATE_KEY_ERROR, "private file empty");
     rawprivkey.resize(EC_KEY_LENGTH);
     DecodeCert(certcontent.c_str(), password, rawprivkey.data());
     const std::string calcAddress = "0x" + MixedCaseEncoding(AddressFromPrivateKey(std::string(rawprivkey.begin(), rawprivkey.end())));
     CHECK_TYPED(toLower(calcAddress) == toLower(address), TypeErrors::PRIVATE_KEY_ERROR, "private key error: address calc error");
 }
+
+EthWallet::EthWallet(
+    const QString &folder,
+    const std::string &address,
+    std::string password
+)
+    : EthWallet(readFile(getFullPath(folder, address)), address, password, true)
+{}
 
 std::string EthWallet::getAddress() const {
     return address;
@@ -71,6 +74,8 @@ std::string EthWallet::genPrivateKey(const QString &folder, const std::string &p
 
     CHECK_TYPED(!folder.isNull() && !folder.isEmpty(), TypeErrors::DONT_CREATE_FOLDER, "Incorrect path to wallet: empty");
     const QString fileName = getFullPath(folder, address);
+    EthWallet checkWallet(keyValue, address, password, true);
+    CHECK_TYPED(!checkWallet.getAddress().empty(), TypeErrors::PRIVATE_KEY_ERROR, "dont check private key");
     writeToFile(fileName, keyValue, true);
 
     return address;

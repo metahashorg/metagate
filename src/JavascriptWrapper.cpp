@@ -411,8 +411,6 @@ void JavascriptWrapper::createWalletEth(QString requestId, QString password) {
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
-        EthWallet wallet(walletPathEth, address, password.toStdString());
-        CHECK(!wallet.getAddress().empty(), "Incorrect wallet");
 
         return makeJsFuncParams(JS_NAME_RESULT, EthWallet::getFullPath(walletPathEth, address), TypedException(), requestId, address);
     });
@@ -554,8 +552,6 @@ void JavascriptWrapper::createWalletBtcPswd(QString requestId, QString password)
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = BtcWallet::genPrivateKey(walletPathBtc, password).first;
-        BtcWallet wallet(walletPathBtc, address, password);
-        CHECK(!wallet.getAddress().empty(), "Incorrect btc wallet");
 
         return makeJsFuncParams(JS_NAME_RESULT, BtcWallet::getFullPath(walletPathBtc, address), TypedException(), requestId, address);
     });

@@ -79,13 +79,16 @@ std::pair<std::string, std::string> BtcWallet::genPrivateKey(const QString &fold
     }
 
     const QString fileName = QDir(folder).filePath(convertAddressToFileName(addressBase58));
-    writeToFile(fileName, wif + WIF_AND_ADDRESS_DELIMITER + addressBase58, true);
+    const std::string fileData = wif + WIF_AND_ADDRESS_DELIMITER + addressBase58;
+    BtcWallet checkWallet(fileData, password);
+    CHECK_TYPED(!checkWallet.getAddress().empty(), TypeErrors::PRIVATE_KEY_ERROR, "dont check private key");
+    writeToFile(fileName, fileData, true);
 
     return std::make_pair(addressBase58, wif);
 }
 
-BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const QString &password) {
-    const auto pair = getWifAndAddress(folder, address_, false);
+BtcWallet::BtcWallet(const std::string &fileData, const QString &password) {
+    const auto pair = getWifAndAddress(fileData, false);
     const std::string wifEncrypted = pair.first;
     address = pair.second;
 
@@ -100,6 +103,10 @@ BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const Q
         CHECK_TYPED(calcAddress == address, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif: address calc incorrect");
     }
 }
+
+BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const QString &password)
+    : BtcWallet(readFile(getFullPath(folder, address_)), password)
+{}
 
 BtcWallet::BtcWallet(const std::string &decryptedWif)
     : wif(decryptedWif)
