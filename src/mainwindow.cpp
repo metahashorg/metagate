@@ -324,9 +324,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         loadFile(link);
     } else if (reference.startsWith(METAHASH_URL)) {
         QString uri = reference.mid(METAHASH_URL.size());
-        const size_t pos = uri.indexOf('/');
+        const int pos = uri.indexOf('/');
         QString other;
-        if (pos != size_t(-1)) {
+        if (pos != -1) {
             other = uri.mid(pos);
             uri = uri.left(pos);
         }
@@ -516,7 +516,7 @@ BEGIN_SLOT_WRAPPER
     QStyleOptionButton opt;
     opt.initFrom(button);
     opt.rect.setSize(textSize);
-    const size_t estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
+    const int estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
     button->setMaximumWidth(estimatedWidth);
     button->setMinimumWidth(estimatedWidth);
 
