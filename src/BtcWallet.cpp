@@ -168,7 +168,7 @@ static std::vector<Element> greedyAlg(const std::vector<Element> &elements, cons
     return result;
 }
 
-std::string BtcWallet::encode(
+std::pair<std::string, std::set<std::string>> BtcWallet::encode(
     bool allMoney, const int64_t &value, const int64_t &fees,
     const std::string &toAddress,
     const std::vector<BtcInput> &utxos
@@ -203,7 +203,18 @@ std::string BtcWallet::encode(
 
     const std::string encodedTransaction = genTransaction(newUtxos, valueToSend, feesValue, toAddress, false);
 
-    return encodedTransaction;
+    std::set<std::string> usedUtxos;
+    std::transform(newUtxos.begin(), newUtxos.end(), std::inserter(usedUtxos, usedUtxos.begin()), [](const BtcInput &input){return input.spendtxid;});
+
+    return std::make_pair(encodedTransaction, usedUtxos);
+}
+
+std::vector<BtcInput> BtcWallet::reduceInputs(const std::vector<BtcInput> &inputs, const std::set<std::string> &usedTxs) {
+    std::vector<BtcInput> result;
+    std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(result), [&usedTxs](const BtcInput &input) {
+        return usedTxs.find(input.spendtxid) == usedTxs.end();
+    });
+    return result;
 }
 
 std::string BtcWallet::buildTransaction(
@@ -236,6 +247,7 @@ std::string BtcWallet::buildTransaction(
     }
     int maxIterations = 10;
     std::string oldTransaction;
+    std::set<std::string> oldUsedTransactions;
     while (true) {
         const size_t oldTransactionSize = calcSizeTransaction(oldTransaction);
         if (feesStr == "auto") {
@@ -245,12 +257,15 @@ std::string BtcWallet::buildTransaction(
             fees = oldTransactionSize + 30;
         }
 
-        const std::string tmpTransaction = encode(allMoney, value, fees, receiveAddress, utxos);
+        const auto tmpTransactionPair = encode(allMoney, value, fees, receiveAddress, utxos);
+        const std::string &tmpTransaction = tmpTransactionPair.first;
+        const std::set<std::string> &tmpUsedUtxos = tmpTransactionPair.second;
         if (tmpTransaction.empty()) {
             break;
         }
 
         oldTransaction = tmpTransaction;
+        oldUsedTransactions = tmpUsedUtxos;
 
         if (std::abs((int)calcSizeTransaction(tmpTransaction) - (int)oldTransactionSize) <= 30) { // Проверяем, что размер транзакции не изменился после рассчета fees-а.
             break;
@@ -264,8 +279,9 @@ std::string BtcWallet::buildTransaction(
     LOG << "estimated fees2 " + std::to_string(feesEstimate);
 
     const std::string &encodedTransaction = oldTransaction;
+    const std::set<std::string> &usedTransactions = oldUsedTransactions;
 
-    LOG << "transaction size " + std::to_string(calcSizeTransaction(encodedTransaction));
+    LOG << "transaction size " + std::to_string(calcSizeTransaction(encodedTransaction)) << " count used transactions " << usedTransactions.size();
     //LOGDEBUG << encodedTransaction;
 
     CHECK_TYPED(!encodedTransaction.empty(), TypeErrors::DONT_SIGN, "Not encode transactions");

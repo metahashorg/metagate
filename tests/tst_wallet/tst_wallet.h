@@ -16,6 +16,9 @@ private slots:
     void testEncryptBtc_data();
     void testEncryptBtc();
 
+    void testReduceUtxosBtc_data();
+    void testReduceUtxosBtc();
+
     void testHashBtc_data();
     void testHashBtc();
 

@@ -357,6 +357,66 @@ void tst_Wallet::testBitcoinTransaction() {
     QCOMPARE(tx, answer);
 }
 
+void tst_Wallet::testReduceUtxosBtc_data() {
+    QTest::addColumn<QVariantList>("ins");
+    QTest::addColumn<QVariantList>("usedUtxos");
+    QTest::addColumn<QVariantList>("answer");
+
+    QTest::newRow("ReduceUtxos 3")
+        << QVariantList{
+                QVariant(QVariantList{QVariant::fromValue(std::string("6c11ec775245041f7679d4bace0525312dc9583dede012109e8b100e6b867dce")), QVariant(0U),
+                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1220000ULL)}),
+                QVariant(QVariantList{QVariant::fromValue(std::string("9f032eb20006520da112364bd91c8e0e75809aab3160fb99a78df40e783064e0")), QVariant(0U),
+                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(4470000ULL)}),
+                QVariant(QVariantList{QVariant::fromValue(std::string("0afece19c37770b3be801cf8305666fc1cb2a5fd3d8989cf46a3a4298a39c3c3")), QVariant(0U),
+                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1240000ULL)})}
+        << QVariantList{QVariant::fromValue(std::string("6c11ec775245041f7679d4bace0525312dc9583dede012109e8b100e6b867dce"))}
+        << QVariantList{
+           QVariant(QVariantList{QVariant::fromValue(std::string("9f032eb20006520da112364bd91c8e0e75809aab3160fb99a78df40e783064e0")), QVariant(0U),
+               QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(4470000ULL)}),
+           QVariant(QVariantList{QVariant::fromValue(std::string("0afece19c37770b3be801cf8305666fc1cb2a5fd3d8989cf46a3a4298a39c3c3")), QVariant(0U),
+               QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1240000ULL)})};
+}
+
+void tst_Wallet::testReduceUtxosBtc() {
+    QFETCH(QVariantList, ins);
+    QFETCH(QVariantList, usedUtxos);
+    QFETCH(QVariantList, answer);
+
+    auto varlistToBtcInputs = [](const QVariantList &varlist) {
+        std::vector<BtcInput> is;
+        BtcInput input;
+        foreach (const QVariant &vin, varlist) {
+            QVariantList in = vin.toList();
+            input.spendtxid = in.at(0).value<std::string>();
+            input.spendoutnum = in.at(1).toUInt();
+            input.scriptPubkey = in.at(2).value<std::string>();
+            input.outBalance = in.at(3).toULongLong();
+            is.push_back(input);
+        }
+        return is;
+    };
+
+    std::set<std::string> usedTxs;
+    for (const QVariant &u: usedUtxos) {
+        usedTxs.insert(u.value<std::string>());
+    }
+
+    const std::vector<BtcInput> is = varlistToBtcInputs(ins);
+    const std::vector<BtcInput> ans = varlistToBtcInputs(answer);
+
+    const std::vector<BtcInput> result = BtcWallet::reduceInputs(is, usedTxs);
+    QCOMPARE(result.size(), ans.size());
+    for (size_t i = 0; i < result.size(); i++) {
+        const BtcInput &first = result[i];
+        const BtcInput &second = ans[i];
+        QCOMPARE(first.spendtxid, second.spendtxid);
+        QCOMPARE(first.spendoutnum, second.spendoutnum);
+        QCOMPARE(first.scriptPubkey, second.scriptPubkey);
+        QCOMPARE(first.outBalance, second.outBalance);
+    }
+}
+
 void tst_Wallet::testNotCreateBtcTransaction_data() {
     QTest::addColumn<std::string>("wif");
     QTest::addColumn<std::string>("address");
