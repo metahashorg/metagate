@@ -102,6 +102,7 @@ void JavascriptWrapper::apiVrapper(const QString &javascriptFunctionName, const 
 
 template<class Function>
 void JavascriptWrapper::apiVrapper(const QString &javascriptFunctionName, const Function &func) {
+    // TODO когда будет if constexpr, объединить обе функции в одну
     using TypeReturn = typename std::result_of<decltype(func)()>::type;
     TypeReturn ret;
     try {
@@ -157,10 +158,10 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         Wallet wallet(walletPath, addr, password.toStdString());
         signature = wallet.sign(exampleMessage, publicKey);
 
+        LOG << "Create wallet ok " << requestId << " " << addr;
+
         return makeJsFuncParams(jsNameResult, wallet.getFullPath(), TypedException(), requestId, publicKey, addr, exampleMessage, signature);
     });
-
-    LOG << "Create wallet ok " << requestId;
 }
 
 void JavascriptWrapper::createWallet(QString requestId, QString password) {
@@ -273,7 +274,7 @@ void JavascriptWrapper::checkAddress(QString requestId, QString address) {
 }
 
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << keyName << text;
+    LOG << "Sign message " << requestId << " " << keyName << " " << text;
 
     const std::string textStr = text.toStdString();
 
@@ -288,7 +289,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 }
 
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
 
     apiVrapper(jsNameResult, requestId, [&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
@@ -312,7 +313,7 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
         QString result = QString::fromStdString(privKey);
         result.replace("\n", "\\n");
 
-        LOG << "Getted private key";
+        LOG << "Getted private key " << keyName;
 
         return makeJsFuncParams(jsNameResult, TypedException(), requestId, result);
     });
@@ -351,7 +352,7 @@ void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey,
 }
 
 void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
-    LOG << "Create rsa key";
+    LOG << "Create rsa key " << address;
 
     const QString JS_NAME_RESULT = "createRsaKeyResultJs";
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
@@ -364,7 +365,7 @@ void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString
 }
 
 void JavascriptWrapper::getRsaPublicKey(QString requestId, QString address) {
-    LOG << "Get rsa key";
+    LOG << "Get rsa key " << address;
 
     const QString JS_NAME_RESULT = "getRsaPublicKeyResultJs";
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
@@ -388,7 +389,7 @@ void JavascriptWrapper::encryptMessage(QString requestId, QString publicKey, QSt
 }
 
 void JavascriptWrapper::decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex) {
-    LOG << "decrypt message";
+    LOG << "decrypt message " << addr;
 
     const QString JS_NAME_RESULT = "decryptMessageResultJs";
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
@@ -412,16 +413,16 @@ void JavascriptWrapper::createWalletEth(QString requestId, QString password) {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
 
+        LOG << "Create eth wallet ok " << requestId << " " << address;
+
         return makeJsFuncParams(JS_NAME_RESULT, EthWallet::getFullPath(walletPathEth, address), TypedException(), requestId, address);
     });
-
-    LOG << "Create eth wallet ok " << requestId;
 }
 
 void JavascriptWrapper::signMessageEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString to, QString value, QString data) {
     const QString JS_NAME_RESULT = "signMessageEthResultJs";
 
-    LOG << "Sign message eth";
+    LOG << "Sign message eth " << address << " " << nonce << " " << gasPrice << " " << gasLimit << " " << to << " " << value << " " << data;
 
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
@@ -511,7 +512,7 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
 void JavascriptWrapper::getOnePrivateKeyEth(QString requestId, QString keyName) {
     const QString JS_NAME_RESULT = "getOnePrivateKeyEthResultJs";
 
-    LOG << "get one private key eth";
+    LOG << "get one private key eth " << keyName;
 
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
@@ -553,10 +554,10 @@ void JavascriptWrapper::createWalletBtcPswd(QString requestId, QString password)
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = BtcWallet::genPrivateKey(walletPathBtc, password).first;
 
+        LOG << "Create btc wallet ok " << requestId << " " << address;
+
         return makeJsFuncParams(JS_NAME_RESULT, BtcWallet::getFullPath(walletPathBtc, address), TypedException(), requestId, address);
     });
-
-    LOG << "Create btc wallet ok " << requestId;
 }
 
 void JavascriptWrapper::createWalletBtc(QString requestId) {
@@ -583,7 +584,7 @@ void JavascriptWrapper::checkAddressBtc(QString requestId, QString address) {
 void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees) {
     const QString JS_NAME_RESULT = "signMessageBtcResultJs";
 
-    LOG << "Sign message btc";
+    LOG << "Sign message btc " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
 
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         std::vector<BtcInput> btcInputs;
@@ -622,7 +623,7 @@ void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, Q
 void JavascriptWrapper::signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos) {
     const QString JS_NAME_RESULT = "signMessageBtcUsedUtxosResultJs";
 
-    LOG << "Sign message btc utxos ";
+    LOG << "Sign message btc utxos " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
 
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         std::vector<BtcInput> btcInputs;
@@ -719,7 +720,7 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
 void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) {
     const QString JS_NAME_RESULT = "getOnePrivateKeyBtcResultJs";
 
-    LOG << "get one private key btc";
+    LOG << "get one private key btc " << keyName;
 
     apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
@@ -849,6 +850,7 @@ QString JavascriptWrapper::openFolderDialog(QString beginPath, QString caption) 
 }
 
 void JavascriptWrapper::exitApplication() {
+    LOG << "Exit";
     QApplication::exit(SIMPLE_EXIT);
 }
 
@@ -862,6 +864,7 @@ QString JavascriptWrapper::backupKeys(QString caption) {
         LOG << "Backup keys";
         const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
         const QString file = QFileDialog::getSaveFileName(widget_, caption, beginPath);
+        LOG << "Backup keys to file " << file;
         ::backupKeys(walletPath, file);
         return "";
     } catch (const Exception &e) {
@@ -878,6 +881,7 @@ QString JavascriptWrapper::restoreKeys(QString caption) {
         LOG << "Restore keys";
         const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
         const QString file = QFileDialog::getOpenFileName(widget_, caption, beginPath, "*.zip;;*.*");
+        LOG << "Restore keys from file " << file;
         const std::string text = checkBackupFile(file);
         QMessageBox::StandardButton reply;
         reply = QMessageBox::question(widget_, "caption", "Restore backup " + QString::fromStdString(text) + "?", QMessageBox::Yes|QMessageBox::No);
