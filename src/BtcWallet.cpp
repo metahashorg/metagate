@@ -217,7 +217,7 @@ std::vector<BtcInput> BtcWallet::reduceInputs(const std::vector<BtcInput> &input
     return result;
 }
 
-std::string BtcWallet::buildTransaction(
+std::pair<std::string, std::set<std::string>> BtcWallet::buildTransaction(
     const std::vector<BtcInput> &utxos,
     size_t estimateComissionInSatoshi,
     const std::string &valueStr,
@@ -286,7 +286,7 @@ std::string BtcWallet::buildTransaction(
 
     CHECK_TYPED(!encodedTransaction.empty(), TypeErrors::DONT_SIGN, "Not encode transactions");
 
-    return encodedTransaction;
+    return std::make_pair(encodedTransaction, usedTransactions);
 }
 
 std::string BtcWallet::calcHashNotWitness(const std::string &txHex) {

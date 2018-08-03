@@ -44,7 +44,7 @@ public:
 
     static std::vector<BtcInput> reduceInputs(const std::vector<BtcInput> &inputs, const std::set<std::string> &usedTxs);
 
-    std::string buildTransaction(
+    std::pair<std::string, std::set<std::string>> buildTransaction(
         const std::vector<BtcInput> &utxos,
         size_t estimateComissionInSatoshi,
         const std::string &valueStr,

@@ -579,6 +579,7 @@ void JavascriptWrapper::checkAddressBtc(QString requestId, QString address) {
     });
 }
 
+// deprecated
 void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees) {
     const QString JS_NAME_RESULT = "signMessageBtcResultJs";
 
@@ -611,12 +612,74 @@ void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, Q
             CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
             estimateComissionInSatoshiInt = std::stoll(estimateComissionInSatoshi.toStdString());
         }
-        const std::string result = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const std::string &result = resultPair.first;
 
         return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result);
     });
 }
 
+void JavascriptWrapper::signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos) {
+    const QString JS_NAME_RESULT = "signMessageBtcUsedUtxosResultJs";
+
+    LOG << "Sign message btc utxos ";
+
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
+        std::vector<BtcInput> btcInputs;
+
+        const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
+        CHECK(document.isArray(), "jsonInputs not array");
+        const QJsonArray root = document.array();
+        for (const auto &jsonObj2: root) {
+            const QJsonObject jsonObj = jsonObj2.toObject();
+            BtcInput input;
+            CHECK(jsonObj.contains("value") && jsonObj.value("value").isString(), "value field not found");
+            input.outBalance = std::stoull(jsonObj.value("value").toString().toStdString());
+            CHECK(jsonObj.contains("scriptPubKey") && jsonObj.value("scriptPubKey").isString(), "scriptPubKey field not found");
+            input.scriptPubkey = jsonObj.value("scriptPubKey").toString().toStdString();
+            CHECK(jsonObj.contains("tx_index") && jsonObj.value("tx_index").isDouble(), "tx_index field not found");
+            input.spendoutnum = jsonObj.value("tx_index").toInt();
+            CHECK(jsonObj.contains("tx_hash") && jsonObj.value("tx_hash").isString(), "tx_hash field not found");
+            input.spendtxid = jsonObj.value("tx_hash").toString().toStdString();
+            btcInputs.emplace_back(input);
+        }
+
+        std::set<std::string> usedUtxos;
+        const QJsonDocument documentUsed = QJsonDocument::fromJson(jsonUsedUtxos.toUtf8());
+        CHECK(documentUsed.isArray(), "jsonInputs not array");
+        const QJsonArray rootUsed = documentUsed.array();
+        for (const auto &jsonUsedUtxo: rootUsed) {
+            CHECK(jsonUsedUtxo.isString(), "value field not found");
+            usedUtxos.insert(jsonUsedUtxo.toString().toStdString());
+        }
+        btcInputs = BtcWallet::reduceInputs(btcInputs, usedUtxos);
+        LOG << "Used utxos: " << usedUtxos.size();
+
+        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
+        BtcWallet wallet(walletPathBtc, address.toStdString(), password);
+        size_t estimateComissionInSatoshiInt = 0;
+        if (!estimateComissionInSatoshi.isEmpty()) {
+            CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
+            estimateComissionInSatoshiInt = std::stoll(estimateComissionInSatoshi.toStdString());
+        }
+        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const std::string &result = resultPair.first;
+        const std::set<std::string> &thisUsedTxs = resultPair.second;
+        usedUtxos.insert(thisUsedTxs.begin(), thisUsedTxs.end());
+
+        QJsonArray jsonArrayUtxos;
+        for (const std::string &r: usedUtxos) {
+            jsonArrayUtxos.push_back(QString::fromStdString(r));
+        }
+        QJsonDocument jsonUtxos(jsonArrayUtxos);
+
+        const std::string &transactionHash = BtcWallet::calcHashNotWitness(result);
+
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result, jsonUtxos, transactionHash);
+    });
+}
+
+// deprecated
 void JavascriptWrapper::signMessageBtc(QString requestId, QString address, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees) {
     signMessageBtcPswd(requestId, address, "", jsonInputs, toAddress, value, estimateComissionInSatoshi, fees);
 }

@@ -112,6 +112,8 @@ public slots:
 
     Q_INVOKABLE void signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees);
 
+    Q_INVOKABLE void signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos);
+
     Q_INVOKABLE QString getAllBtcWalletsJson();
 
     Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
