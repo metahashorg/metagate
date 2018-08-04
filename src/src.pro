@@ -44,7 +44,8 @@ SOURCES += main.cpp mainwindow.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
     Paths.cpp \
-    RunGuard.cpp
+    RunGuard.cpp \
+    qrcoder.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -93,7 +94,8 @@ HEADERS += mainwindow.h \
     mhurlschemehandler.h \
     Paths.h \
     RunGuard.h \
-    makeJsFunc.h
+    makeJsFunc.h \
+    qrcoder.h
 
 FORMS += mainwindow.ui
 
