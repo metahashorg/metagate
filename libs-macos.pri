@@ -7,3 +7,6 @@ LIBS += -L$$PWD/secp256k1/lib/macx/ -lsecp256k1
 PRE_TARGETDEPS += $$PWD/cryptopp/lib/mac/libcryptopp.a $$PWD/quazip-0.7.3/libs/mac/libquazip.a
 LIBS += /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a
 DEPENDPATH += $$PWD/quazip-0.7.3/ /usr/local/opt/openssl/include
+#QR coder libs
+INCLUDEPATH += $$PWD/3rdparty/QrCode/include/ $$PWD/3rdparty/ZBar/include/
+LIBS += -L$$PWD/3rdparty/QrCode/macos/ -L$$PWD/3rdparty/ZBar/macos/ -lQrCode -lzbar -liconv
