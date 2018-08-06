@@ -50,6 +50,10 @@ public:
 
 private:
 
+    EthWallet(const std::string &fileData, const std::string &address, const std::string &password, bool tmp);
+
+private:
+
     std::vector<uint8_t> rawprivkey;
 
     std::string address;

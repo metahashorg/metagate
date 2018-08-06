@@ -72,34 +72,70 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
 }
 
 template<class Function>
-static TypedException apiVrapper(const Function &func) {
+void JavascriptWrapper::apiVrapper(const QString &javascriptFunctionName, const QString &requestId, const Function &func) {
+    // TODO когда будет if constexpr, объединить обе функции в одну
+    using TypeReturn = typename std::result_of<decltype(func)()>::type;
+    TypeReturn ret;
     try {
-        func();
-        return TypedException(TypeErrors::NOT_ERROR, "");
+        const TypeReturn ret = func();
+        const QString result = ret.invoke();
+        runJs(result);
+        return;
     } catch (const TypedException &e) {
         LOG << "Error " << std::to_string(e.numError) << ". " << e.description;
-        return e;
+        ret = TypeReturn(javascriptFunctionName, e);
     } catch (const Exception &e) {
         LOG << "Error " << e;
-        return TypedException(TypeErrors::OTHER_ERROR, e);
+        ret = TypeReturn(javascriptFunctionName, TypedException(TypeErrors::OTHER_ERROR, e));
     } catch (const std::exception &e) {
         LOG << "Error " << e.what();
-        return TypedException(TypeErrors::OTHER_ERROR, e.what());
+        ret = TypeReturn(javascriptFunctionName, TypedException(TypeErrors::OTHER_ERROR, e.what()));
     } catch (...) {
         LOG << "Unknown error";
-        return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
+        ret = TypeReturn(javascriptFunctionName, TypedException(TypeErrors::OTHER_ERROR, "Unknown error"));
     }
+
+    ret.setFirstArgument(requestId);
+    const QString result = ret.invoke();
+    runJs(result);
+}
+
+template<class Function>
+void JavascriptWrapper::apiVrapper(const QString &javascriptFunctionName, const Function &func) {
+    // TODO когда будет if constexpr, объединить обе функции в одну
+    using TypeReturn = typename std::result_of<decltype(func)()>::type;
+    TypeReturn ret;
+    try {
+        const TypeReturn ret = func();
+        const QString result = ret.invoke();
+        runJs(result);
+        return;
+    } catch (const TypedException &e) {
+        LOG << "Error " << std::to_string(e.numError) << ". " << e.description;
+        ret = TypeReturn(javascriptFunctionName, e);
+    } catch (const Exception &e) {
+        LOG << "Error " << e;
+        ret = TypeReturn(javascriptFunctionName, TypedException(TypeErrors::OTHER_ERROR, e));
+    } catch (const std::exception &e) {
+        LOG << "Error " << e.what();
+        ret = TypeReturn(javascriptFunctionName, TypedException(TypeErrors::OTHER_ERROR, e.what()));
+    } catch (...) {
+        LOG << "Unknown error";
+        ret = TypeReturn(javascriptFunctionName, TypedException(TypeErrors::OTHER_ERROR, "Unknown error"));
+    }
+
+    const QString result = ret.invoke();
+    runJs(result);
 }
 
 template<typename... Args>
-void JavascriptWrapper::runJsFunc(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
-    const QString jScript = makeJsFunc(function, lastArg, exception, std::forward<Args>(args)...);
-    runJs(jScript);
+JsFunc<true, Args...> JavascriptWrapper::makeJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
+    return makeJsFunc<true>(function, lastArg, exception, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
-void JavascriptWrapper::runJsFunc(const QString &function, const TypedException &exception, Args&& ...args) {
-    runJsFunc(function, "", exception, std::forward<Args>(args)...);
+JsFunc<false, Args...> JavascriptWrapper::makeJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
+    return makeJsFunc<false>(function, "", exception, std::forward<Args>(args)...);
 }
 
 ////////////////
@@ -109,7 +145,7 @@ void JavascriptWrapper::runJsFunc(const QString &function, const TypedException 
 void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult) {
     LOG << "Create wallet " << requestId;
 
-    const TypedException &exception = apiVrapper([this, &jsNameResult, &requestId, &password, &walletPath]() {
+    apiVrapper(jsNameResult, requestId, [&, this](){
         std::string publicKey;
         std::string addr;
         const std::string exampleMessage = "Example message " + std::to_string(rand());
@@ -122,14 +158,10 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         Wallet wallet(walletPath, addr, password.toStdString());
         signature = wallet.sign(exampleMessage, publicKey);
 
-        runJsFunc(jsNameResult, wallet.getFullPath(), TypedException(), requestId, publicKey, addr, exampleMessage, signature);
+        LOG << "Create wallet ok " << requestId << " " << addr;
+
+        return makeJsFuncParams(jsNameResult, wallet.getFullPath(), TypedException(), requestId, publicKey, addr, exampleMessage, signature);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(jsNameResult, "", exception, requestId, "", "", "", "");
-    }
-
-    LOG << "Create wallet ok " << requestId;
 }
 
 void JavascriptWrapper::createWallet(QString requestId, QString password) {
@@ -228,46 +260,38 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath) {
 void JavascriptWrapper::checkAddress(QString requestId, QString address) {
     LOG << "Check address " << address;
     const QString JS_NAME_RESULT = "checkAddressResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         try {
             Wallet::checkAddress(address.toStdString());
         } catch (const Exception &e) {
-            runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "not valid");
+            return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("not valid"));
         } catch (...) {
             throw;
         }
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("ok"));
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << keyName << text;
+    LOG << "Sign message " << requestId << " " << keyName << " " << text;
 
     const std::string textStr = text.toStdString();
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(jsNameResult, requestId, [&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
         const std::string signature = wallet.sign(textStr, publicKey);
 
-        runJsFunc(jsNameResult, TypedException(), requestId, signature, publicKey);
+        return makeJsFuncParams(jsNameResult, TypedException(), requestId, signature, publicKey);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(jsNameResult, exception, requestId, "", "");
-    }
 }
 
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(jsNameResult, requestId, [&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
@@ -276,16 +300,12 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
         bool tmp;
         wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), data.toStdString(), tx, signature, publicKey);
 
-        runJsFunc(jsNameResult, TypedException(), requestId, signature, publicKey, tx);
+        return makeJsFuncParams(jsNameResult, TypedException(), requestId, signature, publicKey, tx);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(jsNameResult, exception, requestId, "", "", "");
-    }
 }
 
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh) {
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(jsNameResult, requestId, [&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact, isTmh);
@@ -293,14 +313,10 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
         QString result = QString::fromStdString(privKey);
         result.replace("\n", "\\n");
 
-        LOG << "Getted private key";
+        LOG << "Getted private key " << keyName;
 
-        runJsFunc(jsNameResult, TypedException(), requestId, result);
+        return makeJsFuncParams(jsNameResult, TypedException(), requestId, result);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(jsNameResult, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::getOnePrivateKey(QString requestId, QString keyName, bool isCompact) {
@@ -314,19 +330,15 @@ void JavascriptWrapper::getOnePrivateKeyMHC(QString requestId, QString keyName, 
 }
 
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult) {
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(jsNameResult, requestId, [&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key";
 
         Wallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
 
-        runJsFunc(jsNameResult, TypedException(), requestId, "ok");
+        return makeJsFuncParams(jsNameResult, TypedException(), requestId, "ok");
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(jsNameResult, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::savePrivateKey(QString requestId, QString privateKey, QString password) {
@@ -340,68 +352,52 @@ void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey,
 }
 
 void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
-    LOG << "Create rsa key";
+    LOG << "Create rsa key " << address;
 
     const QString JS_NAME_RESULT = "createRsaKeyResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         Wallet::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
         const std::string publicKey = Wallet::getPublicRsaKey(walletPathMth, address.toStdString());
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, publicKey);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, publicKey);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::getRsaPublicKey(QString requestId, QString address) {
-    LOG << "Get rsa key";
+    LOG << "Get rsa key " << address;
 
     const QString JS_NAME_RESULT = "getRsaPublicKeyResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string publicKey = Wallet::getPublicRsaKey(walletPathMth, address.toStdString());
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, publicKey);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, publicKey);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::encryptMessage(QString requestId, QString publicKey, QString message) {
     LOG << "encrypt message";
 
     const QString JS_NAME_RESULT = "encryptMessageResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string answer = Wallet::encryptMessage(publicKey.toStdString(), message.toStdString());
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, answer);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, answer);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex) {
-    LOG << "decrypt message";
+    LOG << "decrypt message " << addr;
 
     const QString JS_NAME_RESULT = "decryptMessageResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string message = Wallet::decryptMessage(walletPathMth, addr.toStdString(), password.toStdString(), encryptedMessageHex.toStdString());
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, message);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, message);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 ////////////////
@@ -413,28 +409,22 @@ void JavascriptWrapper::createWalletEth(QString requestId, QString password) {
 
     LOG << "Create wallet eth " << requestId;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
-        EthWallet wallet(walletPathEth, address, password.toStdString());
-        CHECK(!wallet.getAddress().empty(), "Incorrect wallet");
 
-        runJsFunc(JS_NAME_RESULT, EthWallet::getFullPath(walletPathEth, address), TypedException(), requestId, address);
+        LOG << "Create eth wallet ok " << requestId << " " << address;
+
+        return makeJsFuncParams(JS_NAME_RESULT, EthWallet::getFullPath(walletPathEth, address), TypedException(), requestId, address);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, "", exception, requestId, "");
-    }
-
-    LOG << "Create eth wallet ok " << requestId;
 }
 
 void JavascriptWrapper::signMessageEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString to, QString value, QString data) {
     const QString JS_NAME_RESULT = "signMessageEthResultJs";
 
-    LOG << "Sign message eth";
+    LOG << "Sign message eth " << address << " " << nonce << " " << gasPrice << " " << gasLimit << " " << to << " " << value << " " << data;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         EthWallet wallet(walletPathEth, address.toStdString(), password.toStdString());
         const std::string result = wallet.SignTransaction(
@@ -446,32 +436,24 @@ void JavascriptWrapper::signMessageEth(QString requestId, QString address, QStri
             data.toStdString()
         );
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::checkAddressEth(QString requestId, QString address) {
     LOG << "Check address eth " << address;
     const QString JS_NAME_RESULT = "checkAddressEthResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         try {
             EthWallet::checkAddress(address.toStdString());
         } catch (const Exception &e) {
-            runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "not valid");
+            return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("not valid"));
         } catch (...) {
             throw;
         }
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("ok"));
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 /*void JavascriptWrapper::signMessageTokensEth(QString requestId, QString address, QString password, QString nonce, QString gasPrice, QString gasLimit, QString contractAddress, QString to, QString value) {
@@ -530,9 +512,9 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
 void JavascriptWrapper::getOnePrivateKeyEth(QString requestId, QString keyName) {
     const QString JS_NAME_RESULT = "getOnePrivateKeyEthResultJs";
 
-    LOG << "get one private key eth";
+    LOG << "get one private key eth " << keyName;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
 
         const std::string privKey = EthWallet::getOneKey(walletPathEth, keyName.toStdString());
@@ -541,30 +523,22 @@ void JavascriptWrapper::getOnePrivateKeyEth(QString requestId, QString keyName) 
         result.replace("\"", "\\\"");
         result.replace("\n", "\\n");
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey, QString password) {
     const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key eth";
 
         EthWallet::savePrivateKey(walletPathEth, privateKey.toStdString(), password.toStdString());
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, "ok");
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 ///////////////
@@ -576,20 +550,14 @@ void JavascriptWrapper::createWalletBtcPswd(QString requestId, QString password)
 
     LOG << "Create wallet btc " << requestId;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::string address = BtcWallet::genPrivateKey(walletPathBtc, password).first;
-        BtcWallet wallet(walletPathBtc, address, password);
-        CHECK(!wallet.getAddress().empty(), "Incorrect btc wallet");
 
-        runJsFunc(JS_NAME_RESULT, BtcWallet::getFullPath(walletPathBtc, address), TypedException(), requestId, address);
+        LOG << "Create btc wallet ok " << requestId << " " << address;
+
+        return makeJsFuncParams(JS_NAME_RESULT, BtcWallet::getFullPath(walletPathBtc, address), TypedException(), requestId, address);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, "", exception, requestId, "");
-    }
-
-    LOG << "Create btc wallet ok " << requestId;
 }
 
 void JavascriptWrapper::createWalletBtc(QString requestId) {
@@ -599,29 +567,26 @@ void JavascriptWrapper::createWalletBtc(QString requestId) {
 void JavascriptWrapper::checkAddressBtc(QString requestId, QString address) {
     LOG << "Check address btc " << address;
     const QString JS_NAME_RESULT = "checkAddressBtcResultJs";
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         try {
             BtcWallet::checkAddress(address.toStdString());
         } catch (const Exception &e) {
-            runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "not valid");
+            return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("not valid"));
         } catch (...) {
             throw;
         }
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("ok"));
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
+// deprecated
 void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees) {
     const QString JS_NAME_RESULT = "signMessageBtcResultJs";
 
-    LOG << "Sign message btc";
+    LOG << "Sign message btc " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         std::vector<BtcInput> btcInputs;
 
         const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
@@ -648,16 +613,74 @@ void JavascriptWrapper::signMessageBtcPswd(QString requestId, QString address, Q
             CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
             estimateComissionInSatoshiInt = std::stoll(estimateComissionInSatoshi.toStdString());
         }
-        const std::string result = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const std::string &result = resultPair.first;
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
+void JavascriptWrapper::signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos) {
+    const QString JS_NAME_RESULT = "signMessageBtcUsedUtxosResultJs";
+
+    LOG << "Sign message btc utxos " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
+
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
+        std::vector<BtcInput> btcInputs;
+
+        const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
+        CHECK(document.isArray(), "jsonInputs not array");
+        const QJsonArray root = document.array();
+        for (const auto &jsonObj2: root) {
+            const QJsonObject jsonObj = jsonObj2.toObject();
+            BtcInput input;
+            CHECK(jsonObj.contains("value") && jsonObj.value("value").isString(), "value field not found");
+            input.outBalance = std::stoull(jsonObj.value("value").toString().toStdString());
+            CHECK(jsonObj.contains("scriptPubKey") && jsonObj.value("scriptPubKey").isString(), "scriptPubKey field not found");
+            input.scriptPubkey = jsonObj.value("scriptPubKey").toString().toStdString();
+            CHECK(jsonObj.contains("tx_index") && jsonObj.value("tx_index").isDouble(), "tx_index field not found");
+            input.spendoutnum = jsonObj.value("tx_index").toInt();
+            CHECK(jsonObj.contains("tx_hash") && jsonObj.value("tx_hash").isString(), "tx_hash field not found");
+            input.spendtxid = jsonObj.value("tx_hash").toString().toStdString();
+            btcInputs.emplace_back(input);
+        }
+
+        std::set<std::string> usedUtxos;
+        const QJsonDocument documentUsed = QJsonDocument::fromJson(jsonUsedUtxos.toUtf8());
+        CHECK(documentUsed.isArray(), "jsonInputs not array");
+        const QJsonArray rootUsed = documentUsed.array();
+        for (const auto &jsonUsedUtxo: rootUsed) {
+            CHECK(jsonUsedUtxo.isString(), "value field not found");
+            usedUtxos.insert(jsonUsedUtxo.toString().toStdString());
+        }
+        btcInputs = BtcWallet::reduceInputs(btcInputs, usedUtxos);
+        LOG << "Used utxos: " << usedUtxos.size();
+
+        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
+        BtcWallet wallet(walletPathBtc, address.toStdString(), password);
+        size_t estimateComissionInSatoshiInt = 0;
+        if (!estimateComissionInSatoshi.isEmpty()) {
+            CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
+            estimateComissionInSatoshiInt = std::stoll(estimateComissionInSatoshi.toStdString());
+        }
+        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const std::string &result = resultPair.first;
+        const std::set<std::string> &thisUsedTxs = resultPair.second;
+        usedUtxos.insert(thisUsedTxs.begin(), thisUsedTxs.end());
+
+        QJsonArray jsonArrayUtxos;
+        for (const std::string &r: usedUtxos) {
+            jsonArrayUtxos.push_back(QString::fromStdString(r));
+        }
+        QJsonDocument jsonUtxos(jsonArrayUtxos);
+
+        const std::string &transactionHash = BtcWallet::calcHashNotWitness(result);
+
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result, jsonUtxos, transactionHash);
+    });
+}
+
+// deprecated
 void JavascriptWrapper::signMessageBtc(QString requestId, QString address, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees) {
     signMessageBtcPswd(requestId, address, "", jsonInputs, toAddress, value, estimateComissionInSatoshi, fees);
 }
@@ -697,9 +720,9 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
 void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) {
     const QString JS_NAME_RESULT = "getOnePrivateKeyBtcResultJs";
 
-    LOG << "get one private key btc";
+    LOG << "get one private key btc " << keyName;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
 
         const std::string privKey = BtcWallet::getOneKey(walletPathBtc, keyName.toStdString());
@@ -707,30 +730,22 @@ void JavascriptWrapper::getOnePrivateKeyBtc(QString requestId, QString keyName) 
         QString result = QString::fromStdString(privKey);
         result.replace("\n", "\\n");
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, result);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, result);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey, QString password) {
     const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key btc";
 
         BtcWallet::savePrivateKey(walletPathBtc, privateKey.toStdString(), password);
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, "ok");
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 }
 
 void JavascriptWrapper::savePrivateKeyAny(QString requestId, QString privateKey, QString password) {
@@ -755,15 +770,11 @@ void JavascriptWrapper::updateAndReloadApplication() {
 
     LOG << "Reload application ";
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, [&, this]() {
         updateAndRestart();
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), "Ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), "Ok");
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, "Not ok");
-    }
 }
 
 void JavascriptWrapper::qtOpenInBrowser(QString url) {
@@ -774,7 +785,9 @@ void JavascriptWrapper::qtOpenInBrowser(QString url) {
 void JavascriptWrapper::getWalletFolders() {
     LOG << "getWalletFolders ";
     const QString JS_NAME_RESULT = "walletFoldersJs";
-    runJsFunc(JS_NAME_RESULT, TypedException(), walletDefaultPath, walletPath, userName);
+    apiVrapper(JS_NAME_RESULT, [&, this]() {
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), walletDefaultPath, walletPath, userName);
+    });
 }
 
 bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
@@ -794,7 +807,7 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
 void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
     const QString JS_NAME_RESULT = "setPathsJs";
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, QString("Not ok"), [&, this]() {
         userName = newUserName;
         walletPath = newPatch;
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
@@ -826,12 +839,8 @@ void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
             oldTmhPath.removeRecursively();
         }
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), "Ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), QString("Ok"));
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, "Not ok");
-    }
 }
 
 QString JavascriptWrapper::openFolderDialog(QString beginPath, QString caption) {
@@ -841,6 +850,7 @@ QString JavascriptWrapper::openFolderDialog(QString beginPath, QString caption) 
 }
 
 void JavascriptWrapper::exitApplication() {
+    LOG << "Exit";
     QApplication::exit(SIMPLE_EXIT);
 }
 
@@ -854,6 +864,7 @@ QString JavascriptWrapper::backupKeys(QString caption) {
         LOG << "Backup keys";
         const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
         const QString file = QFileDialog::getSaveFileName(widget_, caption, beginPath);
+        LOG << "Backup keys to file " << file;
         ::backupKeys(walletPath, file);
         return "";
     } catch (const Exception &e) {
@@ -870,6 +881,7 @@ QString JavascriptWrapper::restoreKeys(QString caption) {
         LOG << "Restore keys";
         const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
         const QString file = QFileDialog::getOpenFileName(widget_, caption, beginPath, "*.zip;;*.*");
+        LOG << "Restore keys from file " << file;
         const std::string text = checkBackupFile(file);
         QMessageBox::StandardButton reply;
         reply = QMessageBox::question(widget_, "caption", "Restore backup " + QString::fromStdString(text) + "?", QMessageBox::Yes|QMessageBox::No);
@@ -925,7 +937,7 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
 
     LOG << "get ips servers " << requestId;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         const std::vector<QString> result = nsLookup.getRandom(type, length, count);
 
         QString resultStr = "[";
@@ -939,12 +951,8 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
         }
         resultStr += "]";
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, resultStr);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, resultStr);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 
     LOG << "get ips servers ok " << requestId;
 }
@@ -976,25 +984,21 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "change file and load " << requestId;
 
-    const TypedException &exception = apiVrapper([&, this]() {
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this]() {
         const QString beginPath = makePath(walletPath, fileName);
         const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
         const std::string fileData = readFileBinary(file);
         const std::string base64Data = toBase64(fileData);
 
-        runJsFunc(JS_NAME_RESULT, TypedException(), requestId, base64Data);
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, base64Data);
     });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        runJsFunc(JS_NAME_RESULT, exception, requestId, "");
-    }
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
 BEGIN_SLOT_WRAPPER
     LOG << "print url";
-    client.sendMessageGet(url, [this, printWindowCaption, text](const std::string &response) {
+    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response) {
         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
 
         QImage image;
@@ -1033,9 +1037,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get app info";
 
-    const std::string versionString = VERSION_STRING;
-    const std::string gitCommit = GIT_CURRENT_SHA1;
-    runJsFunc(JS_NAME_RESULT, TypedException(), requestId, isProductionSetup, versionString, gitCommit);
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this](){
+        const std::string versionString = VERSION_STRING;
+        const std::string gitCommit = GIT_CURRENT_SHA1;
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, isProductionSetup, versionString, gitCommit);
+    });
 END_SLOT_WRAPPER
 }
 
@@ -1046,8 +1052,9 @@ BEGIN_SLOT_WRAPPER
     for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
         if (folderInfo.walletPath == d) {
             LOG << "folder changed " << folderInfo.nameWallet << " " << d.absolutePath();
-            runJsFunc(JS_NAME_RESULT, TypedException(), d.absolutePath(), folderInfo.nameWallet);
-            return;
+            const auto ret = makeJsFuncParams(JS_NAME_RESULT, TypedException(), d.absolutePath(), folderInfo.nameWallet);
+            const QString result = ret.invoke();
+            runJs(result);
         }
     }
 END_SLOT_WRAPPER
@@ -1067,10 +1074,12 @@ BEGIN_SLOT_WRAPPER
 
     if (appType == "MetaOnline") {
         const QString JS_NAME_RESULT = "onlineResultJs";
-        CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
-        const QJsonObject data = root.value("data").toObject();
-        LOG << "Meta online response: " << QString(QJsonDocument(data).toJson(QJsonDocument::Compact));
-        runJsFunc(JS_NAME_RESULT, TypedException(), QJsonDocument(data));
+        apiVrapper(JS_NAME_RESULT, [&, this](){
+            CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+            const QJsonObject data = root.value("data").toObject();
+            LOG << "Meta online response: " << QString(QJsonDocument(data).toJson(QJsonDocument::Compact));
+            return makeJsFuncParams(JS_NAME_RESULT, TypedException(), QJsonDocument(data));
+        });
     }
 END_SLOT_WRAPPER
 }

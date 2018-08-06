@@ -50,7 +50,7 @@ public slots:
 
     void run();
 
-    void timerEvent();
+    void uploadEvent();
 
     void callbackCall(ReturnCallback callback);
 

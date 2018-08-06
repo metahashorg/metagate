@@ -146,7 +146,6 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
     QNetworkRequest request("http://" + address);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     const time_point time = ::now();
-    const size_t timeBegin = timePointToInt(time);
     addRequestId(request, requestId);
     addBeginTime(request, time);
     addTimeout(request, timeout);

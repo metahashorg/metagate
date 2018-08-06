@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <QString>
 
@@ -41,7 +42,9 @@ public:
 
     std::string genTransaction(const std::vector<BtcInput> &inputs, uint64_t transferAmount, uint64_t fee, const std::string &receiveAddress, bool isTestnet);
 
-    std::string buildTransaction(
+    static std::vector<BtcInput> reduceInputs(const std::vector<BtcInput> &inputs, const std::set<std::string> &usedTxs);
+
+    std::pair<std::string, std::set<std::string>> buildTransaction(
         const std::vector<BtcInput> &utxos,
         size_t estimateComissionInSatoshi,
         const std::string &valueStr,
@@ -63,7 +66,11 @@ public:
 
 private:
 
-    std::string encode(
+    BtcWallet(const std::string &fileData, const QString &password);
+
+private:
+
+    std::pair<std::string, std::set<std::string>> encode(
         bool allMoney, const int64_t &value, const int64_t &fees,
         const std::string &toAddress,
         const std::vector<BtcInput> &utxos

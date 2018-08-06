@@ -23,7 +23,6 @@
 #include "VersionWrapper.h"
 #include "Log.h"
 #include "utils.h"
-#include "stringUtils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
 
@@ -142,7 +141,7 @@ Uploader::Uploader(MainWindow *mainWindow)
     const milliseconds msTimer = 10s;
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(timerEvent())), "not connect");
+    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(uploadEvent())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
@@ -170,7 +169,7 @@ END_SLOT_WRAPPER
 }
 
 void Uploader::run() {
-    emit timerEvent();
+    emit uploadEvent();
 }
 
 static void clearFolderHtmls(const QString &folderHtmls, const QString &currentVersion) {
@@ -184,7 +183,7 @@ static void clearFolderHtmls(const QString &folderHtmls, const QString &currentV
     }
 }
 
-void Uploader::timerEvent() {
+void Uploader::uploadEvent() {
 BEGIN_SLOT_WRAPPER
     const QString UPDATE_API = serverName;
 
@@ -280,7 +279,7 @@ BEGIN_SLOT_WRAPPER
             return;
         }
 
-        auto autoupdateGetCallback = [this, nextVersion, version, reference](const std::string &result) {
+        auto autoupdateGetCallback = [this, version, reference](const std::string &result) {
             versionForUpdate.clear();
             LOG << "autoupdater callback";
             CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");

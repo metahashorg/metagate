@@ -24,7 +24,7 @@ std::string EncodeField(std::string field) {
             rslt += field;
         }
     } else if (fs <= 55) {
-        char sz = 0x80 + fs;
+        char sz = 0x80 + char(fs);
         rslt += sz;
         rslt += field;
     } else if (fs > 55 && fs < 0xFFFFFFFFFFFFFFFF) {
@@ -32,7 +32,7 @@ std::string EncodeField(std::string field) {
 
         const std::string bigint = IntegerToBuffer(fs);
 
-        char prefix = 0xB7 + sizelen;
+        char prefix = 0xB7 + char(sizelen);
         rslt += prefix;
         rslt += bigint.substr(0, sizelen);
         rslt += field;
@@ -45,7 +45,7 @@ std::string CalcTotalSize(std::string dump) {
     std::string rslt = "";
     size_t ds = dump.size();
     if (ds <= 55) {
-        char sz = 0xC0 + ds;
+        char sz = 0xC0 + char(ds);
         rslt += sz;
         rslt += dump;
     } else {
@@ -53,7 +53,7 @@ std::string CalcTotalSize(std::string dump) {
 
         const std::string bigint = IntegerToBuffer(ds);
 
-        char prefix = 0xF7 + sizelen;
+        char prefix = 0xF7 + char(sizelen);
         rslt += prefix;
         rslt += bigint.substr(0, sizelen);
         rslt += dump;

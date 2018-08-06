@@ -63,7 +63,7 @@ public slots:
 
     void callbackCall(ReturnCallback callback);
 
-    void timerEvent();
+    void uploadEvent();
 
 signals:
 

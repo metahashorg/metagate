@@ -77,6 +77,10 @@ std::string toLower(const std::string &str) {
     return QString::fromStdString(str).toLower().toStdString();
 }
 
+std::string trim(const std::string &str) {
+    return QString::fromStdString(str).trimmed().toStdString();
+}
+
 void writeToFile(const QString &pathToFile, const std::string &data, bool isCheck) {
     QFile file(pathToFile);
     if (isCheck) {

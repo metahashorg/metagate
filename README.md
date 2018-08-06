@@ -173,6 +173,17 @@ Q_INVOKABLE void signMessageBtcPswd(QString requestId, QString address, QString 
 # javascript is called after completion of this function 
 signMessageBtcResultJs(requestId, result, errorNum, errorMessage)
 
+Q_INVOKABLE void signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos);
+Генерирует bitcoin транзакцию
+# Parameters:
+  # jsonInputs - utxos in the format [{"tx_hash": "string", "tx_index": figure, "scriptPubKey": "string", "value": "figure in the string in decimal format"}]
+  # value - is needed for sending. Possible variants: "all" or decimal number
+  # fees - Possible variants: "auto" or decimal number
+  # estimateComissionInSatoshi if there was "auto", here must be specified a decimal number
+  # jsonUsedUtxos использованные транзакции. Пустой массив или значение из предыдущего результата вызова функции
+# javascript is called after completion of this function 
+signMessageBtcUsedUtxosResultJs(requestId, transaction, jsonUsedUtxos, transactionHash, errorNum, errorMessage)
+
 Q_INVOKABLE QString getAllBtcWalletsJson();
 # Gets the list of all bitcoin accounts. 
 # Result returns as a json array

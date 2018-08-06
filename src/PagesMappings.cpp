@@ -95,7 +95,7 @@ void PagesMappings::setMappingsMh(QString mapping) {
             }
             urlToName[url] = urlName;
 
-            auto addToMap = [this](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
+            auto addToMap = [](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
                 const Name name(key);
                 auto found = map.find(name);
                 if (found == map.end() || found->second->page.startsWith(METAHASH_URL)) { // Данные из javascript имеют приоритет

@@ -70,7 +70,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
     qtimer.setSingleShot(true);
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(timerEvent())), "not connect");
+    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(uploadEvent())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
@@ -117,7 +117,7 @@ void NsLookup::finalizeLookup() {
     qtimer.setSingleShot(true);
 }
 
-void NsLookup::timerEvent() {
+void NsLookup::uploadEvent() {
 BEGIN_SLOT_WRAPPER
     qtimer.setSingleShot(true);
     qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
