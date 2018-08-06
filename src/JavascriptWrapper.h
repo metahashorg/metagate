@@ -172,6 +172,10 @@ public slots:
 
     Q_INVOKABLE void getAppInfo(const QString requestId);
 
+    Q_INVOKABLE void qrEncode(QString requestId, QString textHex);
+
+    Q_INVOKABLE void qrDecode(QString requestId, QString pngBase64);
+
     Q_INVOKABLE void metaOnline();
 
 private slots:

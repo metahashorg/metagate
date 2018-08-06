@@ -10,6 +10,9 @@ enum TypeErrors {
     INCORRECT_USER_DATA = 5,
     INCORRECT_ADDRESS_OR_PUBLIC_KEY = 6,
     PRIVATE_KEY_ERROR = 7,
+
+    QR_ENCODE_ERROR = 8,
+
     OTHER_ERROR = 1000
 };
 

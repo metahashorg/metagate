@@ -33,6 +33,7 @@
 #include "platform.h"
 #include "Paths.h"
 #include "makeJsFunc.h"
+#include "qrcoder.h"
 
 #include "machine_uid.h"
 
@@ -1029,6 +1030,36 @@ BEGIN_SLOT_WRAPPER
         painter.end();
     });
 END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::qrEncode(QString requestId, QString textHex) {
+    const QString JS_NAME_RESULT = "qrEncodeResultJs";
+
+    LOG << "qr encode";
+
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this](){
+        CHECK_TYPED(!textHex.isEmpty(), TypeErrors::INCORRECT_USER_DATA, "text for encode empty");
+        const QByteArray data = QByteArray::fromHex(textHex.toUtf8());
+        const QByteArray result = QRCoder::encode(data);
+        CHECK_TYPED(result.size() > 0, TypeErrors::QR_ENCODE_ERROR, "Incorrect encoded qr: incorrect result");
+        const QByteArray check = QRCoder::decode(result);
+        CHECK_TYPED(check == data, TypeErrors::QR_ENCODE_ERROR, "Incorrect encoded qr: incorrect check result");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString(result.toBase64()));
+    });
+}
+
+void JavascriptWrapper::qrDecode(QString requestId, QString pngBase64) {
+    const QString JS_NAME_RESULT = "qrDecodeResultJs";
+
+    LOG << "qr decode";
+
+    apiVrapper(JS_NAME_RESULT, requestId, [&, this](){
+        CHECK_TYPED(!pngBase64.isEmpty(), TypeErrors::INCORRECT_USER_DATA, "text for encode empty");
+        const QByteArray data = QByteArray::fromBase64(pngBase64.toUtf8());
+        const QByteArray result = QRCoder::decode(data);
+        CHECK_TYPED(result.size() > 0, TypeErrors::QR_ENCODE_ERROR, "Incorrect encoded qr: incorrect result");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString(result.toHex()));
+    });
 }
 
 void JavascriptWrapper::getAppInfo(const QString requestId) {

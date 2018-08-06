@@ -309,6 +309,18 @@ getAppInfoResultJs(requestId, isProduction, version, gitCommit);
 # When changing the contents of one of the directories with keys, the following function will be called
 directoryChangedResultJs(path, ethName);
 
+Q_INVOKABLE void qrEncode(QString requestId, QString textHex);
+Кодирует текст в qr
+# Result returns to the function:
+qrEncodeResultJs(requestId, result);
+где result - png изображение в base64
+
+Q_INVOKABLE void qrEncode(QString requestId, QString pngBase64);
+декодирует текст из qr
+# Result returns to the function:
+qrDecodeResultJs(requestId, result);
+где result - текст в base16
+
 Q_INVOKABLE void metaOnline();
 Запрос статистики нахождения приложения online
 Ответ вернется в функцию
