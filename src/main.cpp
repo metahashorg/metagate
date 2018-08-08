@@ -99,9 +99,6 @@ int main(int argc, char *argv[]) {
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
 
-            jsWrapper.createWallet("1", "1");
-            return 0;
-
             MainWindow mainWindow(webSocketClient, jsWrapper, QString::fromStdString(versionString));
             mainWindow.showExpanded();
 
