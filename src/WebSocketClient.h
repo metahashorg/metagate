@@ -40,6 +40,10 @@ public slots:
 
 private:
 
+    void sendMessagesInternal();
+
+private:
+
     QWebSocket m_webSocket;
     QUrl m_url;
 
