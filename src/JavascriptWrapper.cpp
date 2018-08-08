@@ -338,7 +338,7 @@ void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey
 
         Wallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
 
-        return makeJsFuncParams(jsNameResult, TypedException(), requestId, "ok");
+        return makeJsFuncParams(jsNameResult, TypedException(), requestId, QString("ok"));
     });
 }
 
@@ -538,7 +538,7 @@ void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey,
 
         EthWallet::savePrivateKey(walletPathEth, privateKey.toStdString(), password.toStdString());
 
-        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("ok"));
     });
 }
 
@@ -745,7 +745,7 @@ void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey,
 
         BtcWallet::savePrivateKey(walletPathBtc, privateKey.toStdString(), password);
 
-        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, "ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), requestId, QString("ok"));
     });
 }
 
@@ -774,7 +774,7 @@ void JavascriptWrapper::updateAndReloadApplication() {
     apiVrapper(JS_NAME_RESULT, [&, this]() {
         updateAndRestart();
 
-        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), "Ok");
+        return makeJsFuncParams(JS_NAME_RESULT, TypedException(), QString("Ok"));
     });
 }
 

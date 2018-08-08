@@ -22,10 +22,6 @@ inline QString toJsString(const std::string &arg) {
     return "\"" + QString::fromStdString(arg) + "\"";
 }
 
-inline QString toJsString(const char *arg) {
-    return "\"" + QString(arg) + "\"";
-}
-
 inline QString toJsString(const int &arg) {
     return QString::fromStdString(std::to_string(arg));
 }
@@ -44,12 +40,13 @@ inline QString toJsString(const size_t &arg) {
 
 template<typename Arg>
 inline QString append(const Arg &arg) {
+    static_assert(!std::is_same<typename std::decay<decltype(arg)>::type, char const*>::value, "const char* not allowed");
     return toJsString(arg);
 }
 
 template<typename Arg, typename... Args>
 inline QString append(const Arg &arg, Args&& ...args) {
-    return toJsString(arg) + ", " + append(std::forward<Args>(args)...);
+    return append(arg) + ", " + append(std::forward<Args>(args)...);
 }
 
 template<size_t index, typename... Args>
@@ -68,6 +65,7 @@ struct appendT0<0, Args...> {
 template<typename... Args>
 struct appendT0<1, Args...> {
     QString operator()(const std::tuple<std::decay_t<Args>...> &args) {
+        static_assert(!std::is_same<typename std::decay<decltype(std::get<0>(args))>::type, char const*>::value, "const char* not allowed");
         return toJsString(std::get<0>(args));
     }
 };
