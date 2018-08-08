@@ -1254,6 +1254,5 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::runJs(const QString &script) {
-    LOG << "Ya tuta 1" << script;
     emit jsRunSig(script);
 }
