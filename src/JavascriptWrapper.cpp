@@ -129,6 +129,27 @@ void JavascriptWrapper::apiVrapper(const QString &javascriptFunctionName, const 
     runJs(result);
 }
 
+template<class Function>
+TypedException JavascriptWrapper::apiVrapper2(const Function &func) {
+    // TODO когда будет if constexpr, объединить обе функции в одну
+    try {
+        func();
+        return TypedException();
+    } catch (const TypedException &e) {
+        LOG << "Error " << std::to_string(e.numError) << ". " << e.description;
+        return e;
+    } catch (const Exception &e) {
+        LOG << "Error " << e;
+        return TypedException(TypeErrors::OTHER_ERROR, e);
+    } catch (const std::exception &e) {
+        LOG << "Error " << e.what();
+        return TypedException(TypeErrors::OTHER_ERROR, e.what());
+    } catch (...) {
+        LOG << "Unknown error";
+        return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
+    }
+}
+
 template<typename... Args>
 JsFunc<true, Args...> JavascriptWrapper::makeJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
     return makeJsFunc<true>(function, lastArg, exception, std::forward<Args>(args)...);
@@ -139,30 +160,53 @@ JsFunc<false, Args...> JavascriptWrapper::makeJsFuncParams(const QString &functi
     return makeJsFunc<false>(function, "", exception, std::forward<Args>(args)...);
 }
 
+template<typename... Args>
+void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
+    const QString res = makeJsFunc2<true>(function, lastArg, exception, std::forward<Args>(args)...);
+    runJs(res);
+}
+
+template<typename... Args>
+void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
+    const QString res = makeJsFunc2<false>(function, "", exception, std::forward<Args>(args)...);
+    runJs(res);
+}
+
 ////////////////
 /// METAHASH ///
 ////////////////
 
 void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult) {
+BEGIN_SLOT_WRAPPER
     LOG << "Create wallet " << requestId;
 
-    apiVrapper(jsNameResult, requestId, [&, this](){
-        std::string publicKey;
-        std::string addr;
-        const std::string exampleMessage = "Example message " + std::to_string(rand());
-        std::string signature;
+    Opt<QString> walletFullPath;
+    Opt<std::string> publicKey;
+    Opt<std::string> address;
+    Opt<std::string> exampleMessage;
+    Opt<std::string> signature;
+
+    const TypedException exception = apiVrapper2([&, this](){
+        exampleMessage = "Example message " + std::to_string(rand());
 
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet::createWallet(walletPath, password.toStdString(), publicKey, addr);
+        std::string pKey;
+        std::string addr;
+        Wallet::createWallet(walletPath, password.toStdString(), pKey, addr);
 
-        publicKey.clear();
+        pKey.clear();
         Wallet wallet(walletPath, addr, password.toStdString());
-        signature = wallet.sign(exampleMessage, publicKey);
+        signature = wallet.sign(exampleMessage.get(), pKey);
+        publicKey = pKey;
+        address = addr;
 
         LOG << "Create wallet ok " << requestId << " " << addr;
 
-        return makeJsFuncParams(jsNameResult, wallet.getFullPath(), TypedException(), requestId, publicKey, addr, exampleMessage, signature);
+        walletFullPath = wallet.getFullPath();
     });
+
+    makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
+END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::createWallet(QString requestId, QString password) {

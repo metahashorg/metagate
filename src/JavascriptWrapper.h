@@ -214,6 +214,15 @@ private:
     template<typename... Args>
     JsFunc<false, Args...> makeJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 
+    template<class Function>
+    TypedException apiVrapper2(const Function &func);
+
+    template<typename... Args>
+    void makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
+
+    template<typename... Args>
+    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
+
     void runJs(const QString &script);
 
     void openFolderInStandartExplored(const QString &folder);
