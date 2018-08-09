@@ -21,7 +21,13 @@ signals:
 
     void sendMessage(QString message);
 
+    void sendMessages(const std::vector<QString> &messages);
+
     void setHelloString(QString message);
+
+    void setHelloString(const std::vector<QString> &messages);
+
+    void addHelloString(QString message);
 
 signals:
 

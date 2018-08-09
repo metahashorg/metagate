@@ -20,7 +20,10 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
 
     CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect sendMessage");
+    CHECK(connect(this, SIGNAL(sendMessage(const std::vector<QString> &)), this, SLOT(onSendMessage(const std::vector<QString> &))), "not connect sendMessage");
     CHECK(connect(this, SIGNAL(setHelloString(QString)), this, SLOT(onSetHelloString(QString))), "not connect setHelloString");
+    CHECK(connect(this, SIGNAL(setHelloString(const std::vector<QString> &)), this, SLOT(onSetHelloString(const std::vector<QString> &))), "not connect setHelloString");
+    CHECK(connect(this, SIGNAL(addHelloString(QString)), this, SLOT(addHelloString(QString))), "not connect setHelloString");
 
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");

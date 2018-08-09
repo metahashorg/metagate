@@ -29,6 +29,8 @@
 #include "TypedException.h"
 #include "Paths.h"
 
+#include "Messenger/Messenger.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -100,6 +102,9 @@ int main(int argc, char *argv[]) {
         LOG << "Machine uid " << getMachineUid();
 
         while (true) {
+            Messenger messenger;
+            messenger.start();
+
             NsLookup nsLookup(getSettingsPath());
             nsLookup.start();
 
