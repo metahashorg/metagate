@@ -7,10 +7,19 @@
 
 #include "Messenger.h"
 
-const extern QString MSG_GET_MY_REQUEST;
-const extern QString MSG_GET_CHANNEL_REQUEST;
-const extern QString MSG_GET_CHANNELS_REQUEST;
-const extern QString MSG_APPEND_KEY_ONLINE_REQUEST;
+QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);
+
+QString makeTextForGetPubkeyRequest(const QString &address);
+
+QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee);
+
+QString makeTextForGetMyMessagesRequest();
+
+QString makeTextForGetChannelRequest();
+
+QString makeTextForGetChannelsRequest();
+
+QString makeTextForMsgAppendKeyOnlineRequest();
 
 QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee);
 

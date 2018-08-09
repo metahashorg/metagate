@@ -55,7 +55,15 @@ public:
 
     explicit Messenger(QObject *parent = nullptr);
 
+public:
+
     static std::vector<QString> stringsForSign();
+
+    static QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);
+
+    static QString makeTextForGetPubkeyRequest(const QString &address);
+
+    static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee);
 
 signals:
 

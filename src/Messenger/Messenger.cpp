@@ -12,7 +12,19 @@
 #include <QJsonObject>
 
 std::vector<QString> Messenger::stringsForSign() {
-    return {MSG_GET_MY_REQUEST, MSG_GET_CHANNEL_REQUEST, MSG_GET_CHANNELS_REQUEST, MSG_APPEND_KEY_ONLINE_REQUEST};
+    return {makeTextForGetMyMessagesRequest(), makeTextForGetChannelRequest(), makeTextForGetChannelsRequest(), makeTextForMsgAppendKeyOnlineRequest()};
+}
+
+QString Messenger::makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
+    return ::makeTextForSignRegisterRequest(address, rsaPubkeyHex, fee);
+}
+
+QString Messenger::makeTextForGetPubkeyRequest(const QString &address) {
+    return ::makeTextForGetPubkeyRequest(address);
+}
+
+QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee) {
+    return ::makeTextForSendMessageRequest(address, dataHex, fee);
 }
 
 Messenger::Messenger(QObject *parent)
@@ -81,6 +93,11 @@ QString Messenger::getPublicKeyFromMethod(const QString &address, const QString 
 
 void Messenger::onRun() {
 BEGIN_SLOT_WRAPPER
+    const std::vector<QString> monitoredAddresses = getMonitoredAddresses();
+    clearAddressesToMonitored();
+    for (const QString &address: monitoredAddresses) {
+        addAddressToMonitored(address);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -167,7 +184,7 @@ END_SLOT_WRAPPER
 
 void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee) {
 BEGIN_SLOT_WRAPPER
-    // Проверить в базе, если пользователь уже зарегистрирован, то больше не регестрировать. Также добавить pubkeyAddressHex в базу
+    // Проверить в базе, если пользователь уже зарегистрирован, то больше не регестрировать
     const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER

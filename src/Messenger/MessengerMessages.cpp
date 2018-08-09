@@ -6,10 +6,10 @@
 
 #include "check.h"
 
-const QString MSG_GET_MY_REQUEST = "msg_get_my";
-const QString MSG_GET_CHANNEL_REQUEST = "msg_get_channel";
-const QString MSG_GET_CHANNELS_REQUEST = "msg_get_channels";
-const QString MSG_APPEND_KEY_ONLINE_REQUEST = "msg_append_key_online";
+const static QString MSG_GET_MY_REQUEST = "msg_get_my";
+const static QString MSG_GET_CHANNEL_REQUEST = "msg_get_channel";
+const static QString MSG_GET_CHANNELS_REQUEST = "msg_get_channels";
+const static QString MSG_APPEND_KEY_ONLINE_REQUEST = "msg_append_key_online";
 
 const static QString APPEND_KEY_TO_ADDR_RESPONSE = "";
 const static QString GET_KEY_BY_ADDR_RESPONSE = "";
@@ -17,6 +17,34 @@ const static QString SEND_TO_ADDR_RESPONSE = "";
 const static QString NEW_MSGS_RESPONSE = "";
 const static QString NEW_MSG_RESPONSE = "";
 const static QString COUNT_MESSAGES_RESPONSE = "";
+
+QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
+    return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
+}
+
+QString makeTextForGetPubkeyRequest(const QString &address) {
+    return address;
+}
+
+QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee) {
+    return address + QString::fromStdString(std::to_string(fee)) + dataHex;
+}
+
+QString makeTextForGetMyMessagesRequest() {
+    return MSG_GET_MY_REQUEST;
+}
+
+QString makeTextForGetChannelRequest() {
+    return MSG_GET_CHANNEL_REQUEST;
+}
+
+QString makeTextForGetChannelsRequest() {
+    return MSG_GET_CHANNELS_REQUEST;
+}
+
+QString makeTextForMsgAppendKeyOnlineRequest() {
+    return MSG_APPEND_KEY_ONLINE_REQUEST;
+}
 
 QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee) {
     QJsonObject json;
