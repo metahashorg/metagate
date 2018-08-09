@@ -3,7 +3,9 @@
 
 #include <QObject>
 
-class Messenger : public QObject
+#include "TimerClass.h"
+
+class Messenger : public TimerClass
 {
     Q_OBJECT
 public:
@@ -12,6 +14,9 @@ public:
 signals:
 
 public slots:
+
+    void onTimerEvent();
+
 };
 
 #endif // MESSENGER_H
