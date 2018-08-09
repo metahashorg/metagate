@@ -70,7 +70,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-QString Messenger::getPublicKeyFromMethod(const QString &address, const QString &method) const {
+QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
     // Взять json из бд
     const QString jsonString = "";
     const QJsonDocument json = QJsonDocument::fromJson(jsonString.toUtf8());
@@ -128,11 +128,13 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
             // сохранить сообщение в бд
         } else {
             // Вычислить хэш сообщения, найти сообщение в bd, заменить у него counter
+            // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
         }
     }
 
     if (minCounterInServer > currCounter + 1) {
         deferredMessages[address].setDeferred(2s);
+        getMessagesFromAddressFromWss(address, currCounter + 1, minCounterInServer);
     } else {
         if (!deferredMessages[address].isDeferred()) {
             // Сказать javascript-у, что есть новые сообщения maxCounterInServer
@@ -157,11 +159,9 @@ BEGIN_SLOT_WRAPPER
         // Получить из бд количество сообщений для адреса
         const Counter currCounter = 0;
         const Counter messagesInServer = parseCountMessagesResponse(messageJson);
-        if (currCounter == messagesInServer) {
-            // Нету новых сообщений. Выходим
-            return;
+        if (currCounter < messagesInServer) {
+            getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer); // TODO уточнить, to - это включительно или нет
         }
-        getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer); // TODO уточнить, to - это включительно или нет
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
         const auto publicKeyPair = parseKeyMessageResponse(messageJson);
         const QString &address = publicKeyPair.first;
@@ -209,7 +209,7 @@ END_SLOT_WRAPPER
 void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Counter from, Counter to) {
     // Получаем sign и pubkey для данного типа сообщений из базы
     const QString pubkeyHex = "";
-    const QString signHex = "";
+    const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
     const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to);
     emit wssClient.sendMessage(message);
 }
@@ -221,7 +221,7 @@ void Messenger::clearAddressesToMonitored() {
 void Messenger::addAddressToMonitored(const QString &address) {
     // Получаем sign для данного типа сообщений из базы
     const QString pubkeyHex = "";
-    const QString signHex = "";
+    const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex);
     emit wssClient.addHelloString(message);
     emit wssClient.sendMessage(message);

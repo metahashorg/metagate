@@ -103,7 +103,7 @@ private:
 
     void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages);
 
-    QString getPublicKeyFromMethod(const QString &address, const QString &method) const;
+    QString getSignFromMethod(const QString &address, const QString &method) const;
 
     std::vector<QString> getMonitoredAddresses() const;
 
