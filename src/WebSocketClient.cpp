@@ -75,26 +75,28 @@ BEGIN_SLOT_WRAPPER
         LOG << "Wss Set hello message " << helloString;
         m_webSocket.sendTextMessage(helloString);
     }
-    emit sendMessage("");
+
+    sendMessagesInternal();
 END_SLOT_WRAPPER
 }
 
-void WebSocketClient::onSendMessage(QString message) {
-BEGIN_SLOT_WRAPPER
-    if (!isConnected) {
-        if (!message.isNull() && !message.isEmpty()) {
-            messageQueue.emplace_back(message);
-        }
-    } else {
-        LOG << "Wss client send message " << message;
+void WebSocketClient::sendMessagesInternal() {
+    if (isConnected) {
+        LOG << "Wss client send message " << (!messageQueue.empty() ? messageQueue.back() : "") << ". Count " << messageQueue.size();
         for (const QString &m: messageQueue) {
             m_webSocket.sendTextMessage(m);
         }
         messageQueue.clear();
-        if (!message.isNull() && !message.isEmpty()) {
-            m_webSocket.sendTextMessage(message);
-        }
     }
+}
+
+void WebSocketClient::onSendMessage(QString message) {
+BEGIN_SLOT_WRAPPER
+    if (!message.isNull() && !message.isEmpty()) {
+        messageQueue.emplace_back(message);
+    }
+
+    sendMessagesInternal();
 END_SLOT_WRAPPER
 }
 

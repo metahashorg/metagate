@@ -203,16 +203,13 @@ private:
     void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult);
 
     template<class Function>
-    void apiVrapper(const QString &javascriptFunctionName, const Function &func);
-
-    template<class Function>
-    void apiVrapper(const QString &javascriptFunctionName, const QString &requestId, const Function &func);
+    TypedException apiVrapper2(const Function &func);
 
     template<typename... Args>
-    JsFunc<true, Args...> makeJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
+    void makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
 
     template<typename... Args>
-    JsFunc<false, Args...> makeJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
+    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 
     void runJs(const QString &script);
 
