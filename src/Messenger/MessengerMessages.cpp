@@ -109,6 +109,7 @@ QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &sign
 }
 
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
+    // Может не быть адреса или метода, если ошибка
     ResponseType result;
     const QString type = "";
     if (type == APPEND_KEY_TO_ADDR_RESPONSE) {

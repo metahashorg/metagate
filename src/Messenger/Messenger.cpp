@@ -11,6 +11,12 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include <QCryptographicHash>
+
+static QString createHashMessage(const QString &message) {
+    return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
+}
+
 std::vector<QString> Messenger::stringsForSign() {
     return {makeTextForGetMyMessagesRequest(), makeTextForGetChannelRequest(), makeTextForGetChannelsRequest(), makeTextForMsgAppendKeyOnlineRequest()};
 }
@@ -149,7 +155,7 @@ BEGIN_SLOT_WRAPPER
 
     if (responseType.isError) {
         LOG << "Messenger response error " << responseType.error;
-        // Отправить ошибку в javascript
+        // Отправить ошибку в javascript, если есть address и type
         return;
     }
 
