@@ -9,7 +9,7 @@ class WebSocketClient : public QObject
 {
     Q_OBJECT
 public:
-    explicit WebSocketClient(QObject *parent = nullptr);
+    explicit WebSocketClient(const QString &url, QObject *parent = nullptr);
 
     ~WebSocketClient();
 
@@ -36,7 +36,13 @@ public slots:
 
     void onSendMessage(QString message);
 
+    void onSendMessages(const std::vector<QString> &messages);
+
     void onSetHelloString(QString message);
+
+    void onSetHelloString(const std::vector<QString> &messages);
+
+    void onAddHelloString(QString message);
 
 private:
 
@@ -55,7 +61,7 @@ private:
 
     QThread thread1;
 
-    QString helloString;
+    std::vector<QString> helloStrings;
 };
 
 #endif // WEBSOCKETCLIENT_H
