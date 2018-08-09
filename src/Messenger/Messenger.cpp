@@ -4,25 +4,15 @@
 #include "SlotWrapper.h"
 #include "Log.h"
 
+#include "MessengerMessages.h"
+
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
 
-const static QString APPEND_KEY_TO_ADDR_RESPONSE = "";
-const static QString GET_KEY_BY_ADDR_RESPONSE = "";
-const static QString SEND_TO_ADDR_RESPONSE = "";
-const static QString NEW_MSGS_RESPONSE = "";
-const static QString NEW_MSG_RESPONSE = "";
-const static QString COUNT_MESSAGES_RESPONSE = "";
-
-const static QString MSG_GET_MY_REQUEST = "msg_get_my";
-const static QString MSG_GET_CHANNEL = "msg_get_channel";
-const static QString MSG_GET_CHANNELS = "msg_get_channels";
-const static QString MSG_APPEND_KEY_ONLINE = "msg_append_key_online";
-
 std::vector<QString> Messenger::stringsForSign() {
-    return {MSG_GET_MY_REQUEST, MSG_GET_CHANNEL, MSG_GET_CHANNELS, MSG_APPEND_KEY_ONLINE};
+    return {MSG_GET_MY_REQUEST, MSG_GET_CHANNEL_REQUEST, MSG_GET_CHANNELS_REQUEST, MSG_APPEND_KEY_ONLINE_REQUEST};
 }
 
 Messenger::Messenger(QObject *parent)
@@ -39,124 +29,6 @@ Messenger::Messenger(QObject *parent)
     CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
 
     wssClient.start();
-}
-
-static QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee) {
-    QJsonObject json;
-    json.insert("jsonrpc", "2.0");
-    json.insert("method", "msg_append_key_to_addr");
-    QJsonObject params;
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
-    params.insert("rsa_pub_key", rsaPubkeyHex);
-    params.insert("pubkey", pubkeyAddressHex);
-    params.insert("sign", signHex);
-    json.insert("params", params);
-    return QJsonDocument(json).toJson(QJsonDocument::Compact);
-}
-
-static QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex) {
-    QJsonObject json;
-    json.insert("jsonrpc", "2.0");
-    json.insert("method", "msg_get_key_by_addr");
-    QJsonObject params;
-    params.insert("addr", address);
-    params.insert("pubkey", pubkeyHex);
-    params.insert("sign", signHex);
-    json.insert("params", params);
-    return QJsonDocument(json).toJson(QJsonDocument::Compact);
-}
-
-static QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee) {
-    QJsonObject json;
-    json.insert("jsonrpc", "2.0");
-    json.insert("method", "msg_send_to_addr");
-    QJsonObject params;
-    params.insert("to", toAddress);
-    params.insert("data", dataHex);
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
-    params.insert("pubkey", pubkeyHex);
-    params.insert("sign", signHex);
-    json.insert("params", params);
-    return QJsonDocument(json).toJson(QJsonDocument::Compact);
-}
-
-static QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Messenger::Counter from, Messenger::Counter to) {
-    QJsonObject json;
-    json.insert("jsonrpc", "2.0");
-    json.insert("method", "msg_get_my");
-    QJsonObject params;
-    params.insert("cnt", QString::fromStdString(std::to_string(from)));
-    params.insert("pubkey", pubkeyHex);
-    params.insert("sign", signHex);
-    json.insert("params", params);
-    return QJsonDocument(json).toJson(QJsonDocument::Compact);
-}
-
-static QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex) {
-    QJsonObject json;
-    json.insert("jsonrpc", "2.0");
-    json.insert("method", "msg_append_key_online");
-    QJsonObject params;
-    params.insert("pubkey", pubkeyHex);
-    params.insert("sign", signHex);
-    json.insert("params", params);
-    return QJsonDocument(json).toJson(QJsonDocument::Compact);
-}
-
-namespace {
-enum class METHOD: int {
-    APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5
-};
-
-struct ResponseType {
-    METHOD method;
-    QString address;
-    bool isError;
-    QString error;
-};
-
-ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
-    ResponseType result;
-    const QString type = "";
-    if (type == APPEND_KEY_TO_ADDR_RESPONSE) {
-        result.method = METHOD::APPEND_KEY_TO_ADDR;
-    } else if (type == GET_KEY_BY_ADDR_RESPONSE) {
-        result.method = METHOD::GET_KEY_BY_ADDR;
-    } else if (type == SEND_TO_ADDR_RESPONSE) {
-        result.method = METHOD::SEND_TO_ADDR;
-    } else if (type == NEW_MSGS_RESPONSE) {
-        result.method = METHOD::NEW_MSGS;
-    } else if (type == NEW_MSG_RESPONSE) {
-        result.method = METHOD::NEW_MSG;
-    } else if (type == COUNT_MESSAGES_RESPONSE) {
-        result.method = METHOD::COUNT_MESSAGES;
-    } else {
-        throwErr(("Incorrect response: " + type).toStdString());
-    }
-    return result;
-}
-}
-
-static Messenger::NewMessageResponse parseNewMessageResponse(const QJsonDocument &response) {
-    Messenger::NewMessageResponse result;
-    return result;
-}
-
-static std::vector<Messenger::NewMessageResponse> parseNewMessagesResponse(const QJsonDocument &response) {
-    std::vector<Messenger::NewMessageResponse> result;
-
-    std::sort(result.begin(), result.end());
-    return result;
-}
-
-static Messenger::Counter parseCountMessagesResponse(const QJsonDocument &response) {
-    return 0;
-}
-
-static std::pair<QString, QString> parseKeyMessageResponse(const QJsonDocument &response) {
-    const QString address = "";
-    const QString publicKey = "";
-    return std::make_pair(address, publicKey);
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {

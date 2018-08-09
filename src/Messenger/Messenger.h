@@ -8,6 +8,8 @@
 
 #include <map>
 
+struct NewMessageResponse;
+
 class Messenger : public TimerClass
 {
     Q_OBJECT
@@ -47,18 +49,6 @@ private:
         bool isDeferred_ = false;
         time_point begin_;
         milliseconds elapse_;
-    };
-
-public:
-
-    struct NewMessageResponse {
-        QString data;
-        bool isInput;
-        Messenger::Counter counter;
-
-        bool operator< (const NewMessageResponse &second) const {
-            return this->counter < second.counter;
-        }
     };
 
 public:
