@@ -29,6 +29,10 @@ struct TypedException {
         : numError(numError)
         , description(description)
     {}
+
+    bool isSet() const {
+        return numError != TypeErrors::NOT_ERROR;
+    }
 };
 
 #define throwErrTyped(type, s) { \

@@ -25,18 +25,18 @@ QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAd
 
 QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex);
 
-QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee);
+QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp);
 
 QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Messenger::Counter from, Messenger::Counter to);
 
 QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex);
 
-enum class METHOD: int {
-    APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5
+enum METHOD: int {
+    APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5, NOT_SET = 1000
 };
 
 struct ResponseType {
-    METHOD method;
+    METHOD method = METHOD::NOT_SET;
     QString address;
     bool isError;
     QString error;
@@ -46,6 +46,8 @@ struct NewMessageResponse {
     QString data;
     bool isInput;
     Messenger::Counter counter;
+    uint64_t timestamp;
+    QString collocutor;
 
     bool operator< (const NewMessageResponse &second) const {
         return this->counter < second.counter;

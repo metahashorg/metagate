@@ -107,6 +107,7 @@ int main(int argc, char *argv[]) {
 
             Messenger messenger(messengerJavascript);
             messenger.start();
+            messengerJavascript.setMessenger(messenger);
 
             NsLookup nsLookup(getSettingsPath());
             nsLookup.start();

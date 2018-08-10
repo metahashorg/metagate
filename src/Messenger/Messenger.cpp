@@ -48,6 +48,9 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress), "not connect onGetPubkeyAddress");
     CHECK(connect(this, &Messenger::sendMessage, this, &Messenger::onSendMessage), "not connect onSendMessage");
     CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
+    CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onSignedStrings");
+    CHECK(connect(this, &Messenger::getSavedPos, this, &Messenger::onGetSavedPos), "not connect onGetSavedPos");
+    CHECK(connect(this, &Messenger::savePos, this, &Messenger::onSavePos), "not connect onGetSavedPos");
 
     wssClient.start();
 }
@@ -76,6 +79,29 @@ BEGIN_SLOT_WRAPPER
 
     const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
     // Сохранить arr в бд
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetLastMessage(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    // Получить counter
+    Counter lastCounter = 0;
+    emit javascriptWrapper.lastMessageSig(address, lastCounter);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetSavedPos(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    // Получить counter
+    Counter lastCounter = 0;
+    emit javascriptWrapper.savedPosSig(address, lastCounter);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onSavePos(const QString &address, Counter pos) {
+BEGIN_SLOT_WRAPPER
+    // Сохранить позицию
+    emit javascriptWrapper.storePosSig(address);
 END_SLOT_WRAPPER
 }
 
@@ -119,7 +145,7 @@ BEGIN_SLOT_WRAPPER
             deferred.resetDeferred();
             // Взять последнее значение из бд
             const Counter lastCnt = 0;
-            // Послать сообщение в js
+            emit javascriptWrapper.newMessegesSig(address, lastCnt);
         }
     }
 END_SLOT_WRAPPER
@@ -146,7 +172,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         getMessagesFromAddressFromWss(address, currCounter + 1, minCounterInServer);
     } else {
         if (!deferredMessages[address].isDeferred()) {
-            // Сказать javascript-у, что есть новые сообщения maxCounterInServer
+            emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
         }
     }
 }
@@ -157,13 +183,15 @@ BEGIN_SLOT_WRAPPER
     const ResponseType responseType = getMethodAndAddressResponse(messageJson);
 
     if (responseType.isError) {
-        LOG << "Messenger response error " << responseType.error;
-        // Отправить ошибку в javascript, если есть address и type
+        LOG << "Messenger response error " << responseType.method << " " << responseType.address << " " << responseType.error;
+        if (responseType.method != METHOD::NOT_SET && !responseType.address.isEmpty() && !responseType.address.isNull()) {
+            emit javascriptWrapper.operationUnluckySig(responseType.method, responseType.address, responseType.error);
+        }
         return;
     }
 
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
-        // Вызвать javascript, что все ок
+        emit javascriptWrapper.addressAppendToMessengerSig(responseType.address);
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
         // Получить из бд количество сообщений для адреса
         const Counter currCounter = 0;
@@ -176,7 +204,7 @@ BEGIN_SLOT_WRAPPER
         const QString &address = publicKeyPair.first;
         const QString &pkey = publicKeyPair.second;
         // Сохранить в базу данных соответствие
-        // Вызвать javascript, что все ок
+        emit javascriptWrapper.publicKeyCollocutorGettedSig(responseType.address, address);
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
         processMessages(responseType.address, {messages});
@@ -184,7 +212,9 @@ BEGIN_SLOT_WRAPPER
         const std::vector<NewMessageResponse> messages = parseNewMessagesResponse(messageJson);
         processMessages(responseType.address, messages);
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
-        // Отправить javascript, что все ok
+        // Получить адрес получателя
+        const QString collocutor = "";
+        emit javascriptWrapper.messageSendedSig(responseType.address, collocutor);
     } else {
         throwErr("Incorrect response type");
     }
@@ -207,10 +237,10 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const QString &encryptedDataHex) {
+void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex) {
 BEGIN_SLOT_WRAPPER
     // Вычислить хэш dataHex, Поместить сообщение encryptedDataHex в базу данных под максимальным номером
-    const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee);
+    const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }

@@ -72,9 +72,15 @@ signals:
 
     void getPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex);
 
-    void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const QString &encryptedDataHex);
+    void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex);
 
     void signedStrings(const std::vector<QString> &signedHexs);
+
+    void getLastMessage(const QString &address);
+
+    void getSavedPos(const QString &address);
+
+    void savePos(const QString &address, Counter pos);
 
 private slots:
 
@@ -82,9 +88,15 @@ private slots:
 
     void onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex);
 
-    void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const QString &encryptedDataHex);
+    void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex);
 
     void onSignedStrings(const std::vector<QString> &signedHexs);
+
+    void onGetLastMessage(const QString &address);
+
+    void onGetSavedPos(const QString &address);
+
+    void onSavePos(const QString &address, Counter pos);
 
 private slots:
 

@@ -71,7 +71,7 @@ QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, c
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee) {
+QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_send_to_addr");
@@ -79,6 +79,7 @@ QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex,
     params.insert("to", toAddress);
     params.insert("data", dataHex);
     params.insert("fee", QString::fromStdString(std::to_string(fee)));
+    params.insert("timestamp", QString::fromStdString(std::to_string(timestamp)));
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
     json.insert("params", params);
