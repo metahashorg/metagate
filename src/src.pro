@@ -45,7 +45,10 @@ SOURCES += main.cpp mainwindow.cpp \
     mhurlschemehandler.cpp \
     Paths.cpp \
     RunGuard.cpp \
-    qrcoder.cpp
+    qrcoder.cpp \
+    Messenger/Messenger.cpp \
+    TimerClass.cpp \
+    Messenger/MessengerMessages.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -95,7 +98,10 @@ HEADERS += mainwindow.h \
     Paths.h \
     RunGuard.h \
     makeJsFunc.h \
-    qrcoder.h
+    qrcoder.h \
+    Messenger/Messenger.h \
+    TimerClass.h \
+    Messenger/MessengerMessages.h
 
 FORMS += mainwindow.ui
 

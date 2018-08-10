@@ -10,21 +10,20 @@
 
 #include <thread>
 
-const QString WEB_SOCKET_SERVER_FILE = "web_socket.txt";
-
-WebSocketClient::WebSocketClient(QObject *parent)
+WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     : QObject(parent)
 {
     qRegisterMetaType<QAbstractSocket::SocketState>();
 
-    const QString pathToWebSServer = makePath(getSettingsPath(), WEB_SOCKET_SERVER_FILE);
-    const std::string &fileData = readFile(pathToWebSServer);
-    m_url = QString::fromStdString(fileData).trimmed();
+    m_url = url;
 
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
 
     CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect sendMessage");
+    CHECK(connect(this, SIGNAL(sendMessage(const std::vector<QString> &)), this, SLOT(onSendMessage(const std::vector<QString> &))), "not connect sendMessage");
     CHECK(connect(this, SIGNAL(setHelloString(QString)), this, SLOT(onSetHelloString(QString))), "not connect setHelloString");
+    CHECK(connect(this, SIGNAL(setHelloString(const std::vector<QString> &)), this, SLOT(onSetHelloString(const std::vector<QString> &))), "not connect setHelloString");
+    CHECK(connect(this, SIGNAL(addHelloString(QString)), this, SLOT(addHelloString(QString))), "not connect setHelloString");
 
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
@@ -71,7 +70,7 @@ void WebSocketClient::onConnected() {
 BEGIN_SLOT_WRAPPER
     LOG << "Wss client connected";
     isConnected = true;
-    if (!helloString.isNull() && !helloString.isEmpty()) {
+    for (const QString &helloString: helloStrings) {
         LOG << "Wss Set hello message " << helloString;
         m_webSocket.sendTextMessage(helloString);
     }
@@ -100,9 +99,30 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WebSocketClient::onSendMessages(const std::vector<QString> &messages) {
+BEGIN_SLOT_WRAPPER
+    messageQueue.insert(messageQueue.end(), messages.begin(), messages.end());
+
+    sendMessagesInternal();
+END_SLOT_WRAPPER
+}
+
 void WebSocketClient::onSetHelloString(QString message) {
 BEGIN_SLOT_WRAPPER
-    helloString = message;
+    helloStrings.resize(0);
+    helloStrings.emplace_back(message);
+END_SLOT_WRAPPER
+}
+
+void WebSocketClient::onSetHelloString(const std::vector<QString> &messages) {
+BEGIN_SLOT_WRAPPER
+    helloStrings.assign(messages.begin(), messages.end());
+END_SLOT_WRAPPER
+}
+
+void WebSocketClient::onAddHelloString(QString message) {
+BEGIN_SLOT_WRAPPER
+    helloStrings.emplace_back(message);
 END_SLOT_WRAPPER
 }
 

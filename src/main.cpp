@@ -16,6 +16,7 @@
 #include "Log.h"
 #include "platform.h"
 #include "tests.h"
+#include "utils.h"
 
 #include "machine_uid.h"
 #include "openssl_wrapper/openssl_wrapper.h"
@@ -28,6 +29,8 @@
 #include "TypedException.h"
 #include "Paths.h"
 
+#include "Messenger/Messenger.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -39,6 +42,14 @@ static void crash_handler(int sig) {
     exit(1);
 }
 #endif
+
+QString getUrlToWss() {
+    const static QString WEB_SOCKET_SERVER_FILE = "web_socket.txt";
+
+    const QString pathToWebSServer = makePath(getSettingsPath(), WEB_SOCKET_SERVER_FILE);
+    const std::string &fileData = readFile(pathToWebSServer);
+    return QString::fromStdString(fileData).trimmed();
+}
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -91,10 +102,13 @@ int main(int argc, char *argv[]) {
         LOG << "Machine uid " << getMachineUid();
 
         while (true) {
+            Messenger messenger;
+            messenger.start();
+
             NsLookup nsLookup(getSettingsPath());
             nsLookup.start();
 
-            WebSocketClient webSocketClient;
+            WebSocketClient webSocketClient(getUrlToWss());
             webSocketClient.start();
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
