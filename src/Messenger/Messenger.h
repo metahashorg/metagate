@@ -9,6 +9,7 @@
 #include <map>
 
 struct NewMessageResponse;
+class MessengerJavascript;
 
 class Messenger : public TimerClass
 {
@@ -53,7 +54,7 @@ private:
 
 public:
 
-    explicit Messenger(QObject *parent = nullptr);
+    explicit Messenger(MessengerJavascript &javascriptWrapper, QObject *parent = nullptr);
 
 public:
 
@@ -108,6 +109,8 @@ private:
     std::vector<QString> getMonitoredAddresses() const;
 
 private:
+
+    MessengerJavascript &javascriptWrapper;
 
     WebSocketClient wssClient;
 

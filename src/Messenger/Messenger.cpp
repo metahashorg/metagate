@@ -13,6 +13,8 @@
 
 #include <QCryptographicHash>
 
+#include "MessengerJavascript.h"
+
 static QString createHashMessage(const QString &message) {
     return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
 }
@@ -33,8 +35,9 @@ QString Messenger::makeTextForSendMessageRequest(const QString &address, const Q
     return ::makeTextForSendMessageRequest(address, dataHex, fee);
 }
 
-Messenger::Messenger(QObject *parent)
+Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     : TimerClass(1s, parent)
+    , javascriptWrapper(javascriptWrapper)
     , wssClient("wss.wss.com")
 {
     CHECK(connect(this, SIGNAL(timerEvent()), this, SLOT(onTimerEvent())), "not connect onTimerEvent");

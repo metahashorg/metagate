@@ -30,6 +30,7 @@
 #include "Paths.h"
 
 #include "Messenger/Messenger.h"
+#include "Messenger/MessengerJavascript.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -102,7 +103,9 @@ int main(int argc, char *argv[]) {
         LOG << "Machine uid " << getMachineUid();
 
         while (true) {
-            Messenger messenger;
+            MessengerJavascript messengerJavascript;
+
+            Messenger messenger(messengerJavascript);
             messenger.start();
 
             NsLookup nsLookup(getSettingsPath());
@@ -113,7 +116,7 @@ int main(int argc, char *argv[]) {
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
 
-            MainWindow mainWindow(webSocketClient, jsWrapper, QString::fromStdString(versionString));
+            MainWindow mainWindow(webSocketClient, jsWrapper, messengerJavascript, QString::fromStdString(versionString));
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

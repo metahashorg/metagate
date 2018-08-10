@@ -48,7 +48,8 @@ SOURCES += main.cpp mainwindow.cpp \
     qrcoder.cpp \
     Messenger/Messenger.cpp \
     TimerClass.cpp \
-    Messenger/MessengerMessages.cpp
+    Messenger/MessengerMessages.cpp \
+    Messenger/MessengerJavascript.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -101,7 +102,8 @@ HEADERS += mainwindow.h \
     qrcoder.h \
     Messenger/Messenger.h \
     TimerClass.h \
-    Messenger/MessengerMessages.h
+    Messenger/MessengerMessages.h \
+    Messenger/MessengerJavascript.h
 
 FORMS += mainwindow.ui
 

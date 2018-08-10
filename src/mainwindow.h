@@ -20,6 +20,7 @@
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
+class MessengerJavascript;
 
 namespace Ui {
     class MainWindow;
@@ -46,7 +47,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent = 0);
+    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, MessengerJavascript &messengerJavascript, const QString &applicationVersion, QWidget *parent = 0);
 
     void showExpanded();
 
