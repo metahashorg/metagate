@@ -215,7 +215,7 @@ qint64 DBStorage::getUserId(const QString &username)
     return query.lastInsertId().toLongLong();
 }
 
-qint64 DBStorage::getMaxCounter(const QString &user)
+qint64 DBStorage::getMessageMaxCounter(const QString &user)
 {
     QSqlQuery query(m_db);
     query.prepare(selectMsgMaxCounter);
@@ -229,7 +229,7 @@ qint64 DBStorage::getMaxCounter(const QString &user)
     return -1;
 }
 
-qint64 DBStorage::getMaxConfirmedCounter(const QString &user)
+qint64 DBStorage::getMessageMaxConfirmedCounter(const QString &user)
 {
     QSqlQuery query(m_db);
     query.prepare(selectMsgMaxConfirmedCounter);

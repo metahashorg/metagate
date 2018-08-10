@@ -43,9 +43,9 @@ MainWindow::MainWindow(QWidget *parent) :
     std::list<Message> msgs = DBStorage::instance()->getMessagesForUser("user7", 1, 3);
     qDebug() << "count " << msgs.size();
 
-    qDebug() << DBStorage::instance()->getMaxCounter("user7");
-    qDebug() << DBStorage::instance()->getMaxConfirmedCounter("user7");
-    qDebug() << DBStorage::instance()->getMaxConfirmedCounter("userururut");
+    qDebug() << DBStorage::instance()->getMessageMaxCounter("user7");
+    qDebug() << DBStorage::instance()->getMessageMaxConfirmedCounter("user7");
+    qDebug() << DBStorage::instance()->getMessageMaxConfirmedCounter("userururut");
 //    QList<QStringList> r = DBStorage::instance()->getPayments();
 //    foreach(const QStringList &l, r) {
 //        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);

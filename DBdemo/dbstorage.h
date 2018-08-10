@@ -28,8 +28,8 @@ public:
 
     qint64 getUserId(const QString &username);
 
-    qint64 getMaxCounter(const QString &user);
-    qint64 getMaxConfirmedCounter(const QString &user);
+    qint64 getMessageMaxCounter(const QString &user);
+    qint64 getMessageMaxConfirmedCounter(const QString &user);
 
     std::list<Message> getMessagesForUser(const QString &user, qint64 ob, qint64 oe);
     std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 ob, qint64 oe);
