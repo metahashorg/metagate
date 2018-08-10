@@ -61,12 +61,12 @@ static const QString insertMsgMessages = "INSERT INTO msg_messages "
                                             "(userid, duserid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash) VALUES "
                                             "(:userid, :duserid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash)";
 
-static const QString selectMsgMaxCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
+static const QString selectMsgMaxCounter = "SELECT MAX(m.morder) AS max "
                                            "FROM msg_messages m "
                                            "INNER JOIN msg_users u ON u.id = m.userid "
                                            "WHERE u.username = :user";
 
-static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
+static const QString selectMsgMaxConfirmedCounter = "SELECT MAX(m.morder) AS max "
                                                     "FROM msg_messages m "
                                                     "INNER JOIN msg_users u ON u.id = m.userid "
                                                     "WHERE m.isConfirmed = 1 "

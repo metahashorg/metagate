@@ -5,7 +5,7 @@
 #include <QSqlDatabase>
 
 #include <list>
-#include "Message.h"
+#include "Messenger/Message.h"
 
 class DBStorage : public QObject
 {

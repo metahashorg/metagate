@@ -50,7 +50,8 @@ SOURCES += main.cpp mainwindow.cpp \
     TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
     Messenger/MessengerJavascript.cpp \
-    Messenger/Message.cpp
+    Messenger/Message.cpp \
+    dbstorage.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -106,11 +107,12 @@ HEADERS += mainwindow.h \
     Messenger/MessengerMessages.h \
     Messenger/MessengerJavascript.h \
     Messenger/Message.h \
-    RequestId.h
+    RequestId.h \
+    dbstorage.h
 
 FORMS += mainwindow.ui
 
-QT += webengine webenginewidgets network websockets
+QT += webengine webenginewidgets network websockets sql
 
 CONFIG += static
 CONFIG += c++14

@@ -31,6 +31,7 @@
 
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
+#include "dbstorage.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -102,6 +103,7 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
+        DBStorage::instance()->init();
         while (true) {
             MessengerJavascript messengerJavascript;
 

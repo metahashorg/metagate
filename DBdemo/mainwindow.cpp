@@ -37,11 +37,15 @@ MainWindow::MainWindow(QWidget *parent) :
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 3, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 4, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 5, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
-    DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 6, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
-    DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 7, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
+    DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 6, true, true, false, "dfjkjkgfjkgfjkgfjkjk");
+    DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 7, true, true, false, "dfjkjkgfjkgfjkgfjkjk");
 
     std::list<Message> msgs = DBStorage::instance()->getMessagesForUser("user7", 1, 3);
     qDebug() << "count " << msgs.size();
+
+    qDebug() << DBStorage::instance()->getMessageMaxCounter("user7");
+    qDebug() << DBStorage::instance()->getMessageMaxConfirmedCounter("user7");
+    qDebug() << DBStorage::instance()->getMessageMaxConfirmedCounter("userururut");
 //    QList<QStringList> r = DBStorage::instance()->getPayments();
 //    foreach(const QStringList &l, r) {
 //        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);

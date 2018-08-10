@@ -28,11 +28,11 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    dbstorage.cpp
+    ../src/dbstorage.cpp
 
 HEADERS += \
         mainwindow.h \
-    dbstorage.h
+    ../src/dbstorage.h
 
 FORMS += \
         mainwindow.ui
