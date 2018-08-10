@@ -86,7 +86,7 @@ QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex,
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Messenger::Counter from, Messenger::Counter to) {
+QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_MY_REQUEST);
@@ -143,7 +143,7 @@ std::vector<NewMessageResponse> parseNewMessagesResponse(const QJsonDocument &re
     return result;
 }
 
-Messenger::Counter parseCountMessagesResponse(const QJsonDocument &response) {
+Message::Counter parseCountMessagesResponse(const QJsonDocument &response) {
     return 0;
 }
 

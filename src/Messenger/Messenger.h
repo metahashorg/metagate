@@ -6,6 +6,8 @@
 #include "TimerClass.h"
 #include "WebSocketClient.h"
 
+#include "Message.h"
+
 #include <map>
 
 struct NewMessageResponse;
@@ -14,10 +16,6 @@ class MessengerJavascript;
 class Messenger : public TimerClass
 {
     Q_OBJECT
-public:
-
-    using Counter = uint64_t;
-
 private:
 
     class DeferredMessage {
@@ -80,7 +78,7 @@ signals:
 
     void getSavedPos(const QString &address);
 
-    void savePos(const QString &address, Counter pos);
+    void savePos(const QString &address, Message::Counter pos);
 
 private slots:
 
@@ -96,7 +94,7 @@ private slots:
 
     void onGetSavedPos(const QString &address);
 
-    void onSavePos(const QString &address, Counter pos);
+    void onSavePos(const QString &address, Message::Counter pos);
 
 private slots:
 
@@ -108,7 +106,7 @@ private slots:
 
 private:
 
-    void getMessagesFromAddressFromWss(const QString &fromAddress, Counter from, Counter to);
+    void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to);
 
     void clearAddressesToMonitored();
 

@@ -57,8 +57,8 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const Messenger::Counter fromC = std::stoull(from.toStdString());
-    const Messenger::Counter toC = std::stoull(to.toStdString());
+    const Message::Counter fromC = std::stoull(from.toStdString());
+    const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
         QJsonArray messagesArrJson;
@@ -83,8 +83,8 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const Messenger::Counter fromC = std::stoull(from.toStdString());
-    const Messenger::Counter toC = std::stoull(to.toStdString());
+    const Message::Counter fromC = std::stoull(from.toStdString());
+    const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
         QJsonArray messagesArrJson;
@@ -101,8 +101,8 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const Messenger::Counter countC = std::stoull(count.toStdString());
-    const Messenger::Counter toC = std::stoull(to.toStdString());
+    const Message::Counter countC = std::stoull(count.toStdString());
+    const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
         QJsonArray messagesArrJson;
@@ -187,7 +187,7 @@ BEGIN_SLOT_WRAPPER
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Messenger::Counter>(0));
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(0));
     }
 END_SLOT_WRAPPER
 }
@@ -205,7 +205,7 @@ BEGIN_SLOT_WRAPPER
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Messenger::Counter>(0));
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(0));
     }
 END_SLOT_WRAPPER
 }
@@ -219,7 +219,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const TypedException exception = apiVrapper([&, this](){
-        const Messenger::Counter counter = std::stoull(counterStr.toStdString());
+        const Message::Counter counter = std::stoull(counterStr.toStdString());
         emit messenger->savePos(address, counter);
     });
 
@@ -260,27 +260,27 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onNewMesseges(QString address, Messenger::Counter lastMessage) {
+void MessengerJavascript::onNewMesseges(QString address, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgNewMessegesJs";
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Messenger::Counter>(lastMessage));
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onLastMessageSig(QString address, Messenger::Counter lastMessage) {
+void MessengerJavascript::onLastMessageSig(QString address, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgLastMessegesJs";
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Messenger::Counter>(lastMessage));
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onSavedPos(QString address, Messenger::Counter lastMessage) {
+void MessengerJavascript::onSavedPos(QString address, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgSavedPosJs";
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Messenger::Counter>(lastMessage));
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
 END_SLOT_WRAPPER
 }
 

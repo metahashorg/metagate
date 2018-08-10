@@ -49,7 +49,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/Messenger.cpp \
     TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
-    Messenger/MessengerJavascript.cpp
+    Messenger/MessengerJavascript.cpp \
+    Messenger/Message.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -103,7 +104,8 @@ HEADERS += mainwindow.h \
     Messenger/Messenger.h \
     TimerClass.h \
     Messenger/MessengerMessages.h \
-    Messenger/MessengerJavascript.h
+    Messenger/MessengerJavascript.h \
+    Messenger/Message.h
 
 FORMS += mainwindow.ui
 

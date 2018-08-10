@@ -85,7 +85,7 @@ END_SLOT_WRAPPER
 void Messenger::onGetLastMessage(const QString &address) {
 BEGIN_SLOT_WRAPPER
     // Получить counter
-    Counter lastCounter = 0;
+    Message::Counter lastCounter = 0;
     emit javascriptWrapper.lastMessageSig(address, lastCounter);
 END_SLOT_WRAPPER
 }
@@ -93,12 +93,12 @@ END_SLOT_WRAPPER
 void Messenger::onGetSavedPos(const QString &address) {
 BEGIN_SLOT_WRAPPER
     // Получить counter
-    Counter lastCounter = 0;
+    Message::Counter lastCounter = 0;
     emit javascriptWrapper.savedPosSig(address, lastCounter);
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSavePos(const QString &address, Counter pos) {
+void Messenger::onSavePos(const QString &address, Message::Counter pos) {
 BEGIN_SLOT_WRAPPER
     // Сохранить позицию
     emit javascriptWrapper.storePosSig(address);
@@ -144,7 +144,7 @@ BEGIN_SLOT_WRAPPER
         if (deferred.check()) {
             deferred.resetDeferred();
             // Взять последнее значение из бд
-            const Counter lastCnt = 0;
+            const Message::Counter lastCnt = 0;
             emit javascriptWrapper.newMessegesSig(address, lastCnt);
         }
     }
@@ -154,9 +154,9 @@ END_SLOT_WRAPPER
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages) {
     CHECK(!messages.empty(), "Empty messages");
     // Запросить counter из bd
-    const Counter currCounter = 0;
-    const Counter minCounterInServer = messages.front().counter;
-    const Counter maxCounterInServer = messages.back().counter;
+    const Message::Counter currCounter = 0;
+    const Message::Counter minCounterInServer = messages.front().counter;
+    const Message::Counter maxCounterInServer = messages.back().counter;
 
     for (const NewMessageResponse &m: messages) {
         if (m.isInput) {
@@ -194,8 +194,8 @@ BEGIN_SLOT_WRAPPER
         emit javascriptWrapper.addressAppendToMessengerSig(responseType.address);
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
         // Получить из бд количество сообщений для адреса
-        const Counter currCounter = 0;
-        const Counter messagesInServer = parseCountMessagesResponse(messageJson);
+        const Message::Counter currCounter = 0;
+        const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
         if (currCounter < messagesInServer) {
             getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer); // TODO уточнить, to - это включительно или нет
         }
@@ -245,7 +245,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Counter from, Counter to) {
+void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
     // Получаем sign и pubkey для данного типа сообщений из базы
     const QString pubkeyHex = "";
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());

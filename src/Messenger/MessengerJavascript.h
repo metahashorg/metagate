@@ -4,7 +4,9 @@
 #include <QObject>
 
 #include "TypedException.h"
+
 #include "Messenger.h"
+#include "Message.h"
 
 class MessengerJavascript : public QObject {
     Q_OBJECT
@@ -29,11 +31,11 @@ signals:
 
     void publicKeyCollocutorGettedSig(QString address, QString collocutor);
 
-    void newMessegesSig(QString address, Messenger::Counter lastMessage);
+    void newMessegesSig(QString address, Message::Counter lastMessage);
 
-    void lastMessageSig(QString address, Messenger::Counter lastMessage);
+    void lastMessageSig(QString address, Message::Counter lastMessage);
 
-    void savedPosSig(QString address, Messenger::Counter lastMessage);
+    void savedPosSig(QString address, Message::Counter lastMessage);
 
     void storePosSig(QString address);
 
@@ -47,11 +49,11 @@ private slots:
 
     void onPublicKeyCollocutorGettedSig(QString address, QString collocutor);
 
-    void onNewMesseges(QString address, Messenger::Counter lastMessage);
+    void onNewMesseges(QString address, Message::Counter lastMessage);
 
-    void onLastMessageSig(QString address, Messenger::Counter lastMessage);
+    void onLastMessageSig(QString address, Message::Counter lastMessage);
 
-    void onSavedPos(QString address, Messenger::Counter lastMessage);
+    void onSavedPos(QString address, Message::Counter lastMessage);
 
     void onStorePos(QString address);
 

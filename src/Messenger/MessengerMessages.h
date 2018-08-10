@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Messenger.h"
+#include "Message.h"
 
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);
 
@@ -27,7 +28,7 @@ QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, c
 
 QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp);
 
-QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Messenger::Counter from, Messenger::Counter to);
+QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to);
 
 QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex);
 
@@ -45,7 +46,7 @@ struct ResponseType {
 struct NewMessageResponse {
     QString data;
     bool isInput;
-    Messenger::Counter counter;
+    Message::Counter counter;
     uint64_t timestamp;
     QString collocutor;
 
@@ -60,7 +61,7 @@ NewMessageResponse parseNewMessageResponse(const QJsonDocument &response);
 
 std::vector<NewMessageResponse> parseNewMessagesResponse(const QJsonDocument &response);
 
-Messenger::Counter parseCountMessagesResponse(const QJsonDocument &response);
+Message::Counter parseCountMessagesResponse(const QJsonDocument &response);
 
 std::pair<QString, QString> parseKeyMessageResponse(const QJsonDocument &response);
 
