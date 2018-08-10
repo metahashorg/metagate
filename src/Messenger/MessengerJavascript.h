@@ -5,11 +5,17 @@
 
 #include "TypedException.h"
 
+#include <functional>
+
 #include "Messenger.h"
 #include "Message.h"
 
 class MessengerJavascript : public QObject {
     Q_OBJECT
+public:
+
+    using Callback = std::function<void()>;
+
 public:
     explicit MessengerJavascript(QObject *parent = nullptr);
 
@@ -20,6 +26,12 @@ public:
 signals:
 
     void jsRunSig(QString jsString);
+
+    void callbackCall(const Callback &callback);
+
+public slots:
+
+    void onCallbackCall(const Callback &callback);
 
 signals:
 
@@ -33,18 +45,6 @@ signals:
 
     void newMessegesSig(QString address, Message::Counter lastMessage);
 
-    void lastMessageSig(QString address, Message::Counter lastMessage);
-
-    void savedPosSig(QString address, Message::Counter lastMessage);
-
-    void storePosSig(QString address);
-
-    void getHistoryAddressAddressSig(QString address, const std::vector<Message> &messages);
-
-    void getHistoryAddressSig(QString address, const std::vector<Message> &messages);
-
-    void getHistoryAddressAddressCountSig(QString address, const std::vector<Message> &messages);
-
 private slots:
 
     void onMessageSended(QString address, QString collocutor);
@@ -56,18 +56,6 @@ private slots:
     void onPublicKeyCollocutorGettedSig(QString address, QString collocutor);
 
     void onNewMesseges(QString address, Message::Counter lastMessage);
-
-    void onLastMessageSig(QString address, Message::Counter lastMessage);
-
-    void onSavedPos(QString address, Message::Counter lastMessage);
-
-    void onStorePos(QString address);
-
-    void onGetHistoryAddressAddress(QString address, const std::vector<Message> &messages);
-
-    void onGetHistoryAddress(QString address, const std::vector<Message> &messages);
-
-    void onGetHistoryAddressAddressCount(QString address, const std::vector<Message> &messages);
 
 public slots:
 
@@ -87,7 +75,7 @@ public slots:
 
     Q_INVOKABLE void getSavedPos(QString address);
 
-    Q_INVOKABLE void savedPos(QString address, QString counterStr);
+    Q_INVOKABLE void savePos(QString address, QString counterStr);
 
 private:
 

@@ -9,6 +9,7 @@
 #include "Message.h"
 
 #include <map>
+#include <functional>
 
 struct NewMessageResponse;
 class MessengerJavascript;
@@ -52,6 +53,20 @@ private:
 
 public:
 
+    using GetMessagesCallback = std::function<void(const std::vector<Message> &messages)>;
+
+    using SavePosCallback = std::function<void()>;
+
+    using GetSavedPosCallback = std::function<void(const Message::Counter &pos)>;
+
+    using RegisterAddressCallback = std::function<void(bool isNew)>;
+
+    using SignedStringsCallback = std::function<void()>;
+
+    using GetPubkeyCallback = std::function<void(bool isNew)>;
+
+public:
+
     explicit Messenger(MessengerJavascript &javascriptWrapper, QObject *parent = nullptr);
 
 public:
@@ -66,47 +81,47 @@ public:
 
 signals:
 
-    void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee);
+    void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
 
-    void getPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex);
+    void getPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback);
 
     void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex);
 
-    void signedStrings(const std::vector<QString> &signedHexs);
+    void signedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
-    void getLastMessage(const QString &address);
+    void getLastMessage(const QString &address, const GetSavedPosCallback &callback);
 
-    void getSavedPos(const QString &address);
+    void getSavedPos(const QString &address, const GetSavedPosCallback &callback);
 
-    void savePos(const QString &address, Message::Counter pos);
+    void savePos(const QString &address, Message::Counter pos, const SavePosCallback &callback);
 
-    void getHistoryAddress(QString address, Message::Counter from, Message::Counter to);
+    void getHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void getHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to);
+    void getHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void getHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to);
+    void getHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
 
 private slots:
 
-    void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee);
+    void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
 
-    void onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex);
+    void onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback);
 
     void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex);
 
-    void onSignedStrings(const std::vector<QString> &signedHexs);
+    void onSignedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
-    void onGetLastMessage(const QString &address);
+    void onGetLastMessage(const QString &address, const GetSavedPosCallback &callback);
 
-    void onGetSavedPos(const QString &address);
+    void onGetSavedPos(const QString &address, const GetSavedPosCallback &callback);
 
-    void onSavePos(const QString &address, Message::Counter pos);
+    void onSavePos(const QString &address, Message::Counter pos, const SavePosCallback &callback);
 
-    void onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to);
+    void onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to);
+    void onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to);
+    void onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
 
 private slots:
 

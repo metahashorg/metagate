@@ -14,17 +14,19 @@
 MessengerJavascript::MessengerJavascript(QObject *parent)
     : QObject(parent)
 {
+    CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
+
     CHECK(connect(this, &MessengerJavascript::messageSendedSig, this, &MessengerJavascript::onMessageSended), "not connect onMessageSended");
     CHECK(connect(this, &MessengerJavascript::publicKeyCollocutorGettedSig, this, &MessengerJavascript::onPublicKeyCollocutorGettedSig), "not connect onPublicKeyCollocutorGettedSig");
     CHECK(connect(this, &MessengerJavascript::addressAppendToMessengerSig, this, &MessengerJavascript::onAddressAppendToMessengerSig), "not connect onAddressAppendToMessengerSig");
     CHECK(connect(this, &MessengerJavascript::operationUnluckySig, this, &MessengerJavascript::onOperationUnlucky), "not connect onOperationUnlucky");
     CHECK(connect(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges), "not connect onNewMesseges");
-    CHECK(connect(this, &MessengerJavascript::lastMessageSig, this, &MessengerJavascript::onLastMessageSig), "not connect onLastMessageSig");
-    CHECK(connect(this, &MessengerJavascript::savedPosSig, this, &MessengerJavascript::onSavedPos), "not connect onSavedPos");
-    CHECK(connect(this, &MessengerJavascript::storePosSig, this, &MessengerJavascript::onStorePos), "not connect onStorePos");
-    CHECK(connect(this, &MessengerJavascript::getHistoryAddressAddressSig, this, &MessengerJavascript::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
-    CHECK(connect(this, &MessengerJavascript::getHistoryAddressSig, this, &MessengerJavascript::onGetHistoryAddress), "not connect onGetHistoryAddress");
-    CHECK(connect(this, &MessengerJavascript::getHistoryAddressAddressCountSig, this, &MessengerJavascript::onGetHistoryAddressAddressCount), "not connect onGetHistoryAddressAddressCount");
+}
+
+void MessengerJavascript::onCallbackCall(const std::function<void()> &callback) {
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
 template<class Function>
@@ -53,27 +55,6 @@ void MessengerJavascript::makeAndRunJsFuncParams(const QString &function, const 
     runJs(res);
 }
 
-void MessengerJavascript::getHistoryAddress(QString address, QString from, QString to) {
-BEGIN_SLOT_WRAPPER
-    CHECK(messenger != nullptr, "Messenger not set");
-
-    const QString JS_NAME_RESULT = "msgGetHistoryAddressJs";
-
-    LOG << "get messages";
-
-    const Message::Counter fromC = std::stoull(from.toStdString());
-    const Message::Counter toC = std::stoull(to.toStdString());
-    Opt<QJsonDocument> result;
-    const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getHistoryAddress(address, fromC, toC);
-    });
-
-    if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    }
-END_SLOT_WRAPPER
-}
-
 static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
     QJsonArray messagesArrJson;
     for (const Message &message: messages) {
@@ -90,13 +71,28 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
     return QJsonDocument(messagesArrJson);
 }
 
-void MessengerJavascript::onGetHistoryAddress(QString address, const std::vector<Message> &messages) {
+void MessengerJavascript::getHistoryAddress(QString address, QString from, QString to) {
 BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
     const QString JS_NAME_RESULT = "msgGetHistoryAddressJs";
 
-    const Opt<QJsonDocument> result(messagesToJson(messages));
+    LOG << "get messages";
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), result);
+    const Message::Counter fromC = std::stoull(from.toStdString());
+    const Message::Counter toC = std::stoull(to.toStdString());
+    Opt<QJsonDocument> result;
+    const TypedException exception = apiVrapper([&, this](){
+        emit messenger->getHistoryAddress(address, fromC, toC, Messenger::GetMessagesCallback([this, JS_NAME_RESULT, address](const std::vector<Message> &messages) {
+            // TODO добавить обработку ошибок
+            const Opt<QJsonDocument> result(messagesToJson(messages));
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), result);
+        }));
+    });
+
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), result);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -112,22 +108,16 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC);
+        emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC, Messenger::GetMessagesCallback([this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages) {
+            // TODO добавить обработку ошибок
+            const Opt<QJsonDocument> result(messagesToJson(messages));
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor), result);
+        }));
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), result);
     }
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onGetHistoryAddressAddress(QString address, const std::vector<Message> &messages) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressJs";
-
-    const Opt<QJsonDocument> result(messagesToJson(messages));
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), result);
 END_SLOT_WRAPPER
 }
 
@@ -143,22 +133,16 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC);
+        emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC, Messenger::GetMessagesCallback([this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages) {
+            // TODO добавить обработку ошибок
+            const Opt<QJsonDocument> result(messagesToJson(messages));
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor), result);
+        }));
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), result);
     }
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onGetHistoryAddressAddressCount(QString address, const std::vector<Message> &messages) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressCountJs";
-
-    const Opt<QJsonDocument> result(messagesToJson(messages));
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), result);
 END_SLOT_WRAPPER
 }
 
@@ -172,8 +156,16 @@ BEGIN_SLOT_WRAPPER
 
     const uint64_t fee = std::stoull(feeStr.toStdString());
     const TypedException exception = apiVrapper([&, this](){
-        emit messenger->registerAddress(isForcibly, address, "", "", "", fee);
-        emit messenger->signedStrings({});
+        emit messenger->registerAddress(isForcibly, address, "", "", "", fee, [this, JS_NAME_RESULT, address](bool isNew) {
+            if (isNew) {
+                const std::vector<QString> messagesForSign = Messenger::stringsForSign();
+                // Подписать сообщения
+                const std::vector<QString> result;
+                emit messenger->signedStrings(result, [this, JS_NAME_RESULT, address](){
+                    //makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+                });
+            }
+        });
     });
 
     if (exception.isSet()) {
@@ -191,7 +183,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getPubkeyAddress(isForcibly, collocutor, "", "");
+        emit messenger->getPubkeyAddress(isForcibly, collocutor, "", "", [this, JS_NAME_RESULT, address, collocutor](bool isNew) {
+            //makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+        });
     });
 
     if (exception.isSet()) {
@@ -232,7 +226,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getLastMessage(address);
+        emit messenger->getLastMessage(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(pos));
+        });
     });
 
     if (exception.isSet()) {
@@ -250,7 +246,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getSavedPos(address);
+        emit messenger->getSavedPos(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(pos));
+        });
     });
 
     if (exception.isSet()) {
@@ -259,7 +257,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::savedPos(QString address, QString counterStr) {
+void MessengerJavascript::savePos(QString address, QString counterStr) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
 
@@ -269,7 +267,9 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper([&, this](){
         const Message::Counter counter = std::stoull(counterStr.toStdString());
-        emit messenger->savePos(address, counter);
+        emit messenger->savePos(address, counter, [this, JS_NAME_RESULT, address]{
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>("Ok"));
+        });
     });
 
     if (exception.isSet()) {
@@ -314,30 +314,6 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgNewMessegesJs";
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onLastMessageSig(QString address, Message::Counter lastMessage) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgLastMessegesJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onSavedPos(QString address, Message::Counter lastMessage) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgSavedPosJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onStorePos(QString address) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgStorePosJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>("Ok"));
 END_SLOT_WRAPPER
 }
 

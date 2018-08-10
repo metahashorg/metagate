@@ -64,7 +64,7 @@ std::vector<QString> Messenger::getMonitoredAddresses() const {
     return result;
 }
 
-void Messenger::onSignedStrings(const std::vector<QString> &signedHexs) {
+void Messenger::onSignedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const std::vector<QString> keys = stringsForSign();
     CHECK(keys.size() == signedHexs.size(), "Incorrect signed strings");
@@ -82,29 +82,31 @@ BEGIN_SLOT_WRAPPER
 
     const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
     // Сохранить arr в бд
+
+    emit javascriptWrapper.callbackCall(callback);
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetLastMessage(const QString &address) {
+void Messenger::onGetLastMessage(const QString &address, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Получить counter
     Message::Counter lastCounter = 0;
-    emit javascriptWrapper.lastMessageSig(address, lastCounter);
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetSavedPos(const QString &address) {
+void Messenger::onGetSavedPos(const QString &address, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Получить counter
     Message::Counter lastCounter = 0;
-    emit javascriptWrapper.savedPosSig(address, lastCounter);
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSavePos(const QString &address, Message::Counter pos) {
+void Messenger::onSavePos(const QString &address, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Сохранить позицию
-    emit javascriptWrapper.storePosSig(address);
+    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(callback));
 END_SLOT_WRAPPER
 }
 
@@ -224,19 +226,24 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee) {
+void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Проверить в базе, если пользователь уже зарегистрирован, то больше не регестрировать
     const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee);
     emit wssClient.sendMessage(message);
+
+    const bool isNew = true;
+    emit javascriptWrapper.callbackCall(std::bind(callback, isNew));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex) {
+void Messenger::onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Проверить, есть ли нужных ключ в базе
     const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex);
     emit wssClient.sendMessage(message);
+
+    emit javascriptWrapper.callbackCall(std::bind(callback, true));
 END_SLOT_WRAPPER
 }
 
@@ -269,26 +276,26 @@ void Messenger::addAddressToMonitored(const QString &address) {
     emit wssClient.sendMessage(message);
 }
 
-void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to) {
+void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Получить сообщения
     std::vector<Message> messages;
-    emit javascriptWrapper.getHistoryAddressSig(address, messages);
+    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(std::bind(callback, messages)));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to) {
+void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Получить сообщения
     std::vector<Message> messages;
-    emit javascriptWrapper.getHistoryAddressAddressSig(address, messages);
+    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(std::bind(callback, messages)));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to) {
+void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Получить сообщения
     std::vector<Message> messages;
-    emit javascriptWrapper.getHistoryAddressAddressCountSig(address, messages);
+    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(std::bind(callback, messages)));
 END_SLOT_WRAPPER
 }
