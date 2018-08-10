@@ -66,7 +66,9 @@ public:
 
     using SignedStringsCallback = std::function<void()>;
 
-    using GetPubkeyCallback = std::function<void(bool isNew)>;
+    using SavePubkeyCallback = std::function<void(bool isNew)>;
+
+    using GetPubkeyAddress = std::function<void(const QString &pubkey)>;
 
     using SendMessageCallback = std::function<void()>;
 
@@ -88,7 +90,9 @@ signals:
 
     void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
 
-    void getPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback);
+    void savePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
+
+    void getPubkeyAddress(const QString &address, const GetPubkeyAddress &callback);
 
     void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
@@ -110,7 +114,9 @@ private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
 
-    void onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback);
+    void onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
+
+    void onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback);
 
     void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 

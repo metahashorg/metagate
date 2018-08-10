@@ -13,7 +13,7 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
-static std::pair<Wallet, WalletRsa> getWalletInst() {
+static std::pair<Wallet, WalletRsa> getWalletInst2() {
     // Узнать каталог к ключу
     std::string pubkey;
     std::string addr;
@@ -25,6 +25,12 @@ static std::pair<Wallet, WalletRsa> getWalletInst() {
     walletRsa.unlock("123");
 
     return std::make_pair(wallet, std::move(walletRsa));
+}
+
+static std::pair<Wallet, WalletRsa>& getWalletInst() {
+    static auto pair = getWalletInst2();
+
+    return pair;
 }
 
 MessengerJavascript::MessengerJavascript(QObject *parent)
@@ -99,7 +105,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper([&, this](){
         emit messenger->getHistoryAddress(address, fromC, toC, Messenger::GetMessagesCallback([this, JS_NAME_RESULT, address](const std::vector<Message> &messages) {
             // TODO добавить обработку ошибок
-            const auto pairWallet = getWalletInst();
+            const auto &pairWallet = getWalletInst();
             const Opt<QJsonDocument> result(messagesToJson(messages, pairWallet.second));
             makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), result);
         }));
@@ -125,7 +131,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper([&, this](){
         emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC, Messenger::GetMessagesCallback([this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages) {
             // TODO добавить обработку ошибок
-            const auto pairWallet = getWalletInst();
+            const auto &pairWallet = getWalletInst();
             const Opt<QJsonDocument> result(messagesToJson(messages, pairWallet.second));
             makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor), result);
         }));
@@ -151,7 +157,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper([&, this](){
         emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC, Messenger::GetMessagesCallback([this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages) {
             // TODO добавить обработку ошибок
-            const auto pairWallet = getWalletInst();
+            const auto &pairWallet = getWalletInst();
             const Opt<QJsonDocument> result(messagesToJson(messages, pairWallet.second));
             makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor), result);
         }));
@@ -173,14 +179,14 @@ BEGIN_SLOT_WRAPPER
 
     const uint64_t fee = std::stoull(feeStr.toStdString());
     const TypedException exception = apiVrapper([&, this](){
-        const auto pairWallet = getWalletInst();
+        const auto &pairWallet = getWalletInst();
         const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, QString::fromStdString(pairWallet.second.getPublikKey()), fee);
         std::string pubkey;
         const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
         emit messenger->registerAddress(isForcibly, address, QString::fromStdString(pairWallet.second.getPublikKey()), QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew) {
             if (isNew) {
                 const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-                const auto pairWallet = getWalletInst();
+                const auto &pairWallet = getWalletInst();
                 std::vector<QString> result;
                 for (const QString &msg: messagesForSign) {
                     std::string tmp;
@@ -200,7 +206,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::getPublicKeyCollocutor(bool isForcibly, QString address, QString collocutor) {
+void MessengerJavascript::savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
 
@@ -209,12 +215,12 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const TypedException exception = apiVrapper([&, this](){
-        const auto pairWallet = getWalletInst();
+        const auto &pairWallet = getWalletInst();
         const QString messageToSign = Messenger::makeTextForGetPubkeyRequest(collocutor);
         std::string pubkey;
         const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
 
-        emit messenger->getPubkeyAddress(isForcibly, collocutor, QString::fromStdString(pubkey), QString::fromStdString(sign), [this, JS_NAME_RESULT, address, collocutor](bool isNew) {
+        emit messenger->savePubkeyAddress(isForcibly, collocutor, QString::fromStdString(pubkey), QString::fromStdString(sign), [this, JS_NAME_RESULT, address, collocutor](bool /*isNew*/) {
             makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
         });
     });
@@ -236,19 +242,19 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper([&, this](){
         const uint64_t fee = std::stoull(feeStr.toStdString());
         const uint64_t timestamp = std::stoull(timestampStr.toStdString());
-        // Подписать данные ключем из базы
-        const auto pairWallet = getWalletInst();
+        emit messenger->getPubkeyAddress(collocutor, [this, JS_NAME_RESULT, address, collocutor, data, fee, timestamp](const QString &pubkey) {
+            const WalletRsa walletRsa = WalletRsa::fromPublicKey(pubkey.toStdString());
+            const QString encryptedDataToWss = QString::fromStdString(walletRsa.encrypt(data.toStdString()));
 
-        const QString encryptedDataToWss = QString::fromStdString(pairWallet.second.encrypt(data.toStdString()));
+            const auto &pairWallet = getWalletInst();
+            const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee);
+            std::string pub;
+            const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pub);
 
-        const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee);
-        std::string pubkey;
-        const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
-
-        // Подписать данные своим ключем
-        const QString encryptedDataToBd = QString::fromStdString(pairWallet.second.encrypt(data.toStdString()));
-        emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pubkey), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor]() {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+            const QString encryptedDataToBd = QString::fromStdString(pairWallet.second.encrypt(data.toStdString()));
+            emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor]() {
+                makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+            });
         });
     });
 

@@ -45,7 +45,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, SIGNAL(startedEvent()), this, SLOT(onRun())), "not connect run");
 
     CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
-    CHECK(connect(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress), "not connect onGetPubkeyAddress");
+    CHECK(connect(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress), "not connect onGetPubkeyAddress");
     CHECK(connect(this, &Messenger::sendMessage, this, &Messenger::onSendMessage), "not connect onSendMessage");
     CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
     CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onSignedStrings");
@@ -245,7 +245,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback) {
+void Messenger::onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Проверить, есть ли нужных ключ в базе
     const size_t idRequest = id.get();
@@ -253,6 +253,12 @@ BEGIN_SLOT_WRAPPER
     callbacks[idRequest] = std::bind(callback, true);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
+}
+
+void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback) {
+    // Взять публичный ключ из базы
+    const QString pubkey = "";
+    emit javascriptWrapper.callbackCall(std::bind(callback, pubkey));
 }
 
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {

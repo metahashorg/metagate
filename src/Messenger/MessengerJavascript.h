@@ -55,7 +55,7 @@ public slots:
 
     Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);
 
-    Q_INVOKABLE void getPublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
+    Q_INVOKABLE void savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
 
     Q_INVOKABLE void sendMessage(QString address, QString collocutor, QString data, QString timestampStr, QString feeStr);
 
