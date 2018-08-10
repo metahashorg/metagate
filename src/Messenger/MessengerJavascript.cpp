@@ -11,6 +11,14 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+/*static Wallet getWalletInst() {
+    // Узнать каталог к ключу
+    std::string pubkey;
+    std::string addr;
+    Wallet::createWallet("./", "123", pubkey, addr);
+    Wallet wallet("./", addr, password);
+}*/
+
 MessengerJavascript::MessengerJavascript(QObject *parent)
     : QObject(parent)
 {

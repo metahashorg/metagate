@@ -30,7 +30,7 @@ void InitOpenSSL() {
     isInitialized = true;
 }
 
-static std::unique_ptr<RSA, std::function<void(RSA*)>> getRsa(const std::string &privKey, const std::string &password) {
+static RsaKey getRsa(const std::string &privKey, const std::string &password) {
     CHECK(isInitialized, "Not initialized");
 
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new_mem_buf((void*)privKey.data(), (int)privKey.size()), BIO_free);
@@ -43,7 +43,7 @@ static std::unique_ptr<RSA, std::function<void(RSA*)>> getRsa(const std::string 
     const std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> evp(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, (void*)pswd), EVP_PKEY_free);
     CHECK(evp != nullptr, "Incorrect password");
 
-    std::unique_ptr<RSA, std::function<void(RSA*)>> rsa(EVP_PKEY_get1_RSA(evp.get()), RSA_free);
+    RsaKey rsa(EVP_PKEY_get1_RSA(evp.get()), RSA_free);
     CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
 
     return rsa;
@@ -52,7 +52,7 @@ static std::unique_ptr<RSA, std::function<void(RSA*)>> getRsa(const std::string 
 PublikKey getPublic(const std::string &privKey, const std::string &password) {
     CHECK(isInitialized, "Not initialized");
 
-    const std::unique_ptr<RSA, std::function<void(RSA*)>> rsa = getRsa(privKey, password);
+    const RsaKey rsa = getRsa(privKey, password);
     CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
 
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bioPub(BIO_new(BIO_s_mem()), BIO_free);
@@ -78,7 +78,7 @@ PrivateKey createRsaKey(const std::string &password) {
     const bool res1 = BN_set_word(bne.get(), 17);
     CHECK(res1, "Incorrect BN_set_word");
 
-    const std::unique_ptr<RSA, std::function<void(RSA*)>> rsa(RSA_new(), RSA_free);
+    const RsaKey rsa(RSA_new(), RSA_free);
     const bool res2 = RSA_generate_key_ex(rsa.get(), kBits, bne.get(), nullptr); // TODO random generator ?
     CHECK(res2, "Incorrect RSA_generate_key_ex");
 
@@ -138,24 +138,34 @@ static std::string decryptAes(const std::vector<unsigned char> &message, const A
     return std::string(result.begin(), result.end());
 }
 
-static std::string encryptRSA(const std::string &pubkey, const std::vector<unsigned char> &message) {
+static RsaKey getRsaPublikKey(const std::string &pubkey) {
+    CHECK(isInitialized, "Not initialized");
+
     const std::string normPubKey = fromHex(pubkey);
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new_mem_buf((void*)normPubKey.data(), (int)normPubKey.size()), BIO_free);
     CHECK(bio != nullptr, "Incorrect BIO_new_mem_buf");
 
-    const std::unique_ptr<RSA, std::function<void(RSA*)>> rsa(d2i_RSA_PUBKEY_bio(bio.get(), nullptr), RSA_free);
+    RsaKey rsa(d2i_RSA_PUBKEY_bio(bio.get(), nullptr), RSA_free);
     CHECK(rsa != nullptr, "Incorrect d2i_RSA_PUBKEY_bio");
+    return rsa;
+}
 
-    std::vector<unsigned char> encrypt(RSA_size(rsa.get()));
-    const int encrypt_len = RSA_public_encrypt(message.size(), (unsigned char*)message.data(), encrypt.data(), rsa.get(), RSA_PKCS1_OAEP_PADDING);
+static std::string encryptRSA(const RsaKey &pubkey, const std::vector<unsigned char> &message) {
+    CHECK(isInitialized, "Not initialized");
+
+    CHECK(pubkey != nullptr, "Incorrect d2i_RSA_PUBKEY_bio");
+
+    std::vector<unsigned char> encrypt(RSA_size(pubkey.get()));
+    const int encrypt_len = RSA_public_encrypt(message.size(), (unsigned char*)message.data(), encrypt.data(), pubkey.get(), RSA_PKCS1_OAEP_PADDING);
     CHECK(encrypt_len != -1, "Incorrect RSA_public_encrypt");
     encrypt.resize(encrypt_len);
 
     return std::string(encrypt.begin(), encrypt.end());
 }
 
-static std::string decryptRsa(const std::string &privkey, const std::string &password, const std::string &message) {
-    const std::unique_ptr<RSA, std::function<void(RSA*)>> rsa = getRsa(privkey, password);
+static std::string decryptRsa(const RsaKey &rsa, const std::string &message) {
+    CHECK(isInitialized, "Not initialized");
+
     CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
 
     std::vector<unsigned char> decrypt(RSA_size(rsa.get()));
@@ -224,19 +234,19 @@ static void parseMessageHex(const std::string &message, std::string &aes, std::v
     curIter += messageSize;
 }
 
-std::string encrypt(const std::string &pubkey, const std::string &message) {
+std::string encrypt(const RsaKey &publicKey, const std::string &message) {
     CHECK(isInitialized, "Not initialized");
 
     AES_KEY aesKey;
     const std::vector<unsigned char> aesVect = genAesKey(aesKey);
     const EncryptAes encryptAesResult = ::encryptAes(message, aesKey);
 
-    const std::string aes = encryptRSA(pubkey, aesVect);
+    const std::string aes = encryptRSA(publicKey, aesVect);
 
     return makeMessageHex(aes, encryptAesResult.iv, encryptAesResult.message);
 }
 
-std::string decrypt(const std::string &privkey, const std::string &password, const std::string &message) {
+std::string decrypt(const RsaKey &privkey, const std::string &message) {
     CHECK(isInitialized, "Not initialized");
 
     std::string aesEncrypted;
@@ -244,7 +254,7 @@ std::string decrypt(const std::string &privkey, const std::string &password, con
     std::vector<unsigned char> msg;
     parseMessageHex(message, aesEncrypted, iv, msg);
 
-    const std::string aes = decryptRsa(privkey, password, aesEncrypted);
+    const std::string aes = decryptRsa(privkey, aesEncrypted);
 
     AES_KEY aesKey;
     std::array<unsigned char, 32> aesArr;
@@ -258,4 +268,12 @@ std::string decrypt(const std::string &privkey, const std::string &password, con
     const std::string result = decryptAes(msg, aesKey, ivArr);
 
     return result;
+}
+
+RsaKey getPublicRsa(const PublikKey &pKey) {
+    return getRsaPublikKey(pKey);
+}
+
+RsaKey getPrivateRsa(const std::string &privkey, const std::string &password) {
+    return getRsa(privkey, password);
 }

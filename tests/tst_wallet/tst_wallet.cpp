@@ -699,8 +699,10 @@ void tst_Wallet::testSsl() {
     const std::string privateKey = createRsaKey(password);
     const std::string publicKey = getPublic(privateKey, password);
 
-    const std::string encryptedMsg = encrypt(publicKey, message);
-    const std::string decryptMsg = decrypt(privateKey, password, encryptedMsg);
+    const RsaKey publicKeyRsa = getPublicRsa(publicKey);
+    const std::string encryptedMsg = encrypt(publicKeyRsa, message);
+    const RsaKey privateKeyRsa = getPrivateRsa(privateKey, password);
+    const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMsg);
 
     QCOMPARE(decryptMsg, message);
 }

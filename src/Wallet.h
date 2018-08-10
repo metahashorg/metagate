@@ -28,17 +28,6 @@ public:
 
     static void checkAddress(const std::string &address);
 
-    /*
-       Возвращает публичный ключ в base16
-    */
-    static void createRsaKey(const QString &folder, const std::string &addr, const std::string &password);
-
-    static std::string getPublicRsaKey(const QString &folder, const std::string &addr);
-
-    static std::string decryptMessage(const QString &folder, const std::string &addr, const std::string &password, const std::string &encryptedMessageHex);
-
-    static std::string encryptMessage(const std::string &publicKeyHex, const std::string &message);
-
 public:
 
     Wallet(const QString &folder, const std::string &name, const std::string &password);

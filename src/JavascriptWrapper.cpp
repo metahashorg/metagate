@@ -16,6 +16,7 @@
 #include <QPainter>
 
 #include "Wallet.h"
+#include "WalletRsa.h"
 #include "EthWallet.h"
 #include "BtcWallet.h"
 
@@ -376,8 +377,9 @@ BEGIN_SLOT_WRAPPER
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
-        publicKey = Wallet::getPublicRsaKey(walletPathMth, address.toStdString());
+        WalletRsa::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
+        WalletRsa wallet(walletPathMth, address.toStdString());
+        publicKey = wallet.getPublikKey();
     });
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), publicKey);
@@ -392,7 +394,8 @@ BEGIN_SLOT_WRAPPER
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        publicKey = Wallet::getPublicRsaKey(walletPathMth, address.toStdString());
+        WalletRsa wallet(walletPathMth, address.toStdString());
+        publicKey = wallet.getPublikKey();
     });
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), publicKey);
@@ -407,7 +410,8 @@ BEGIN_SLOT_WRAPPER
     Opt<std::string> answer;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        answer = Wallet::encryptMessage(publicKey.toStdString(), message.toStdString());
+        const WalletRsa wallet = WalletRsa::fromPublicKey(publicKey.toStdString());
+        answer = wallet.encrypt(message.toStdString());
     });
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), answer);
@@ -422,7 +426,9 @@ BEGIN_SLOT_WRAPPER
     Opt<std::string> message;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        message = Wallet::decryptMessage(walletPathMth, addr.toStdString(), password.toStdString(), encryptedMessageHex.toStdString());
+        WalletRsa wallet(walletPathMth, addr.toStdString());
+        wallet.unlock(password.toStdString());
+        message = wallet.decryptMessage(encryptedMessageHex.toStdString());
     });
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), message);
