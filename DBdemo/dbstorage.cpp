@@ -61,6 +61,17 @@ static const QString insertMsgMessages = "INSERT INTO msg_messages "
                                             "(userid, duserid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash) VALUES "
                                             "(:userid, :duserid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash)";
 
+static const QString selectMsgMaxCounter = "SELECT MAX(m.morder) AS max "
+                                           "FROM msg_messages m "
+                                           "INNER JOIN msg_users u ON u.id = m.userid "
+                                           "WHERE u.username = :user";
+
+static const QString selectMsgMaxConfirmedCounter = "SELECT MAX(m.morder) AS max "
+                                                    "FROM msg_messages m "
+                                                    "INNER JOIN msg_users u ON u.id = m.userid "
+                                                    "WHERE m.isConfirmed = 1 "
+                                                    "AND u.username = :user";
+
 static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt "
                                                 "FROM msg_messages m "
                                                 "INNER JOIN msg_users u ON u.id = m.userid "
@@ -202,6 +213,34 @@ qint64 DBStorage::getUserId(const QString &username)
         qDebug() << "INSERT error " << query.lastError().text();
     }
     return query.lastInsertId().toLongLong();
+}
+
+qint64 DBStorage::getMaxCounter(const QString &user)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectMsgMaxCounter);
+    query.bindValue(":user", user);
+    if (!query.exec()) {
+        return -1;
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong();
+    }
+    return -1;
+}
+
+qint64 DBStorage::getMaxConfirmedCounter(const QString &user)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectMsgMaxConfirmedCounter);
+    query.bindValue(":user", user);
+    if (!query.exec()) {
+        return -1;
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong();
+    }
+    return -1;
 }
 
 std::list<Message> DBStorage::getMessagesForUser(const QString &user, qint64 ob, qint64 oe)
