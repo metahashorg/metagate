@@ -105,7 +105,8 @@ HEADERS += mainwindow.h \
     TimerClass.h \
     Messenger/MessengerMessages.h \
     Messenger/MessengerJavascript.h \
-    Messenger/Message.h
+    Messenger/Message.h \
+    RequestId.h
 
 FORMS += mainwindow.ui
 

@@ -37,23 +37,11 @@ signals:
 
     void operationUnluckySig(int operation, QString address, QString description);
 
-    void addressAppendToMessengerSig(QString address);
-
-    void messageSendedSig(QString address, QString collocutor);
-
-    void publicKeyCollocutorGettedSig(QString address, QString collocutor);
-
     void newMessegesSig(QString address, Message::Counter lastMessage);
 
 private slots:
 
-    void onMessageSended(QString address, QString collocutor);
-
     void onOperationUnlucky(int operation, QString address, QString description);
-
-    void onAddressAppendToMessengerSig(QString address);
-
-    void onPublicKeyCollocutorGettedSig(QString address, QString collocutor);
 
     void onNewMesseges(QString address, Message::Counter lastMessage);
 

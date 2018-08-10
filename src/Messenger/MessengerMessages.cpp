@@ -46,10 +46,11 @@ QString makeTextForMsgAppendKeyOnlineRequest() {
     return MSG_APPEND_KEY_ONLINE_REQUEST;
 }
 
-QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee) {
+QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_append_key_to_addr");
+    json.insert("id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("fee", QString::fromStdString(std::to_string(fee)));
     params.insert("rsa_pub_key", rsaPubkeyHex);
@@ -59,10 +60,11 @@ QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAd
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex) {
+QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_get_key_by_addr");
+    json.insert("id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("addr", address);
     params.insert("pubkey", pubkeyHex);
@@ -71,10 +73,11 @@ QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, c
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp) {
+QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_send_to_addr");
+    json.insert("id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("to", toAddress);
     params.insert("data", dataHex);
@@ -86,10 +89,11 @@ QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex,
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to) {
+QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_MY_REQUEST);
+    json.insert("id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("cnt", QString::fromStdString(std::to_string(from)));
     params.insert("pubkey", pubkeyHex);
@@ -98,10 +102,11 @@ QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHe
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex) {
+QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_APPEND_KEY_ONLINE_REQUEST);
+    json.insert("id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);

@@ -6,9 +6,12 @@
 #include "TimerClass.h"
 #include "WebSocketClient.h"
 
+#include "RequestId.h"
+
 #include "Message.h"
 
 #include <map>
+#include <unordered_map>
 #include <functional>
 
 struct NewMessageResponse;
@@ -65,6 +68,8 @@ public:
 
     using GetPubkeyCallback = std::function<void(bool isNew)>;
 
+    using SendMessageCallback = std::function<void()>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, QObject *parent = nullptr);
@@ -85,7 +90,7 @@ signals:
 
     void getPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback);
 
-    void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex);
+    void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
     void signedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
@@ -107,7 +112,7 @@ private slots:
 
     void onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback);
 
-    void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex);
+    void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
     void onSignedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
@@ -145,6 +150,8 @@ private:
 
     std::vector<QString> getMonitoredAddresses() const;
 
+    void invokeCallback(size_t requestId);
+
 private:
 
     MessengerJavascript &javascriptWrapper;
@@ -152,6 +159,12 @@ private:
     WebSocketClient wssClient;
 
     std::map<QString, DeferredMessage> deferredMessages;
+
+    RequestId id;
+
+    using ResponseCallbacks = std::function<void()>;
+
+    std::unordered_map<size_t, ResponseCallbacks> callbacks;
 
 };
 

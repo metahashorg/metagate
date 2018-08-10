@@ -22,15 +22,15 @@ QString makeTextForGetChannelsRequest();
 
 QString makeTextForMsgAppendKeyOnlineRequest();
 
-QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee);
+QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, size_t id);
 
-QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex);
+QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
 
-QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp);
+QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, size_t id);
 
-QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to);
+QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to, size_t id);
 
-QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex);
+QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex, size_t id);
 
 enum METHOD: int {
     APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5, NOT_SET = 1000
@@ -41,6 +41,7 @@ struct ResponseType {
     QString address;
     bool isError;
     QString error;
+    size_t id;
 };
 
 struct NewMessageResponse {

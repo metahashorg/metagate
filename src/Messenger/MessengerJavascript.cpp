@@ -16,9 +16,6 @@ MessengerJavascript::MessengerJavascript(QObject *parent)
 {
     CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
 
-    CHECK(connect(this, &MessengerJavascript::messageSendedSig, this, &MessengerJavascript::onMessageSended), "not connect onMessageSended");
-    CHECK(connect(this, &MessengerJavascript::publicKeyCollocutorGettedSig, this, &MessengerJavascript::onPublicKeyCollocutorGettedSig), "not connect onPublicKeyCollocutorGettedSig");
-    CHECK(connect(this, &MessengerJavascript::addressAppendToMessengerSig, this, &MessengerJavascript::onAddressAppendToMessengerSig), "not connect onAddressAppendToMessengerSig");
     CHECK(connect(this, &MessengerJavascript::operationUnluckySig, this, &MessengerJavascript::onOperationUnlucky), "not connect onOperationUnlucky");
     CHECK(connect(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges), "not connect onNewMesseges");
 }
@@ -162,7 +159,7 @@ BEGIN_SLOT_WRAPPER
                 // Подписать сообщения
                 const std::vector<QString> result;
                 emit messenger->signedStrings(result, [this, JS_NAME_RESULT, address](){
-                    //makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
                 });
             }
         });
@@ -184,7 +181,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper([&, this](){
         emit messenger->getPubkeyAddress(isForcibly, collocutor, "", "", [this, JS_NAME_RESULT, address, collocutor](bool isNew) {
-            //makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
         });
     });
 
@@ -208,7 +205,9 @@ BEGIN_SLOT_WRAPPER
         // Подписать данные
         const QString encryptedDataToWss = "";
         const QString encryptedDataToBd = "";
-        emit messenger->sendMessage(address, collocutor, encryptedDataToWss, "", "", fee, timestamp, encryptedDataToBd);
+        emit messenger->sendMessage(address, collocutor, encryptedDataToWss, "", "", fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor]() {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+        });
     });
 
     if (exception.isSet()) {
@@ -283,29 +282,6 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgOperationUnluckyJs";
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<int>(operation), Opt<QString>(description));
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onAddressAppendToMessengerSig(QString address) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgAddressAppendToMessengerJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(QString("Ok")));
-END_SLOT_WRAPPER}
-
-void MessengerJavascript::onMessageSended(QString address, QString collocutor) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgMessageSendedJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onPublicKeyCollocutorGettedSig(QString address, QString collocutor) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgPublicKeyCollocutorGettedJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
 END_SLOT_WRAPPER
 }
 

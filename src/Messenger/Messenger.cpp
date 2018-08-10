@@ -58,6 +58,14 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     wssClient.start();
 }
 
+void Messenger::invokeCallback(size_t requestId) {
+    auto found = callbacks.find(requestId);
+    CHECK(found != callbacks.end(), "Not found callback for request " + std::to_string(requestId));
+    const ResponseCallbacks callback = found->second; // копируем
+    callbacks.erase(found);
+    callback();
+}
+
 std::vector<QString> Messenger::getMonitoredAddresses() const {
     // Взять из базы данных все адреса
     std::vector<QString> result;
@@ -196,7 +204,7 @@ BEGIN_SLOT_WRAPPER
     }
 
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
-        emit javascriptWrapper.addressAppendToMessengerSig(responseType.address);
+        invokeCallback(responseType.id);
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
         // Получить из бд количество сообщений для адреса
         const Message::Counter currCounter = 0;
@@ -209,7 +217,7 @@ BEGIN_SLOT_WRAPPER
         const QString &address = publicKeyPair.first;
         const QString &pkey = publicKeyPair.second;
         // Сохранить в базу данных соответствие
-        emit javascriptWrapper.publicKeyCollocutorGettedSig(responseType.address, address);
+        invokeCallback(responseType.id);
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
         processMessages(responseType.address, {messages});
@@ -219,7 +227,7 @@ BEGIN_SLOT_WRAPPER
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
         // Получить адрес получателя
         const QString collocutor = "";
-        emit javascriptWrapper.messageSendedSig(responseType.address, collocutor);
+        invokeCallback(responseType.id);
     } else {
         throwErr("Incorrect response type");
     }
@@ -229,28 +237,30 @@ END_SLOT_WRAPPER
 void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Проверить в базе, если пользователь уже зарегистрирован, то больше не регестрировать
-    const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee);
-    emit wssClient.sendMessage(message);
-
+    const size_t idRequest = id.get();
+    const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
     const bool isNew = true;
-    emit javascriptWrapper.callbackCall(std::bind(callback, isNew));
+    callbacks[idRequest] = std::bind(callback, isNew);
+    emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetPubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const GetPubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Проверить, есть ли нужных ключ в базе
-    const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex);
+    const size_t idRequest = id.get();
+    const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
+    callbacks[idRequest] = std::bind(callback, true);
     emit wssClient.sendMessage(message);
-
-    emit javascriptWrapper.callbackCall(std::bind(callback, true));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex) {
+void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Вычислить хэш dataHex, Поместить сообщение encryptedDataHex в базу данных под максимальным номером
-    const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp);
+    const size_t idRequest = id.get();
+    const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
+    callbacks[idRequest] = callback;
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -259,7 +269,7 @@ void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Messag
     // Получаем sign и pubkey для данного типа сообщений из базы
     const QString pubkeyHex = "";
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
-    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to);
+    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
     emit wssClient.sendMessage(message);
 }
 
@@ -271,7 +281,7 @@ void Messenger::addAddressToMonitored(const QString &address) {
     // Получаем sign для данного типа сообщений из базы
     const QString pubkeyHex = "";
     const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
-    const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex);
+    const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
     emit wssClient.addHelloString(message);
     emit wssClient.sendMessage(message);
 }
