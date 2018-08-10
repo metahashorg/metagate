@@ -46,6 +46,13 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << DBStorage::instance()->getMessageMaxCounter("user7");
     qDebug() << DBStorage::instance()->getMessageMaxConfirmedCounter("user7");
     qDebug() << DBStorage::instance()->getMessageMaxConfirmedCounter("userururut");
+
+    qDebug() << DBStorage::instance()->getUsersList();
+
+    DBStorage::instance()->setUserPublicKey("user7", "dfkgflgfkltrioidfkldfklgfgf");
+    qDebug() << DBStorage::instance()->getUserPublicKey("user7");
+    qDebug() << DBStorage::instance()->getUserPublicKey("user1");
+    qDebug() << DBStorage::instance()->getUserPublicKey("userrrrr");
 //    QList<QStringList> r = DBStorage::instance()->getPayments();
 //    foreach(const QStringList &l, r) {
 //        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);

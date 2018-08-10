@@ -27,6 +27,10 @@ public:
                     const QString &hash);
 
     qint64 getUserId(const QString &username);
+    QStringList getUsersList();
+
+    QString getUserPublicKey(const QString &username);
+    void setUserPublicKey(const QString &username, const QString &publickey);
 
     Message::Counter getMessageMaxCounter(const QString &user);
     Message::Counter getMessageMaxConfirmedCounter(const QString &user);

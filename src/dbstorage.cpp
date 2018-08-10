@@ -36,7 +36,8 @@ static const QString createSettingsTable = "CREATE TABLE settings ( "
 
 static const QString createMsgUsersTable = "CREATE TABLE msg_users ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
-                                           "username VARCHAR(100) "
+                                           "username VARCHAR(100), "
+                                           "publickey VARCHAR(200)"
                                            ")";
 
 static const QString createMsgMessagesTable = "CREATE TABLE msg_messages ( "
@@ -96,6 +97,12 @@ static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS 
                                                           "AND u.username = :user AND du.username = :duser "
                                                           "ORDER BY m.morder "
                                                           "LIMIT :num";
+
+static const QString selectMsgUsersList = "SELECT username FROM msg_users ORDER BY id";
+
+static const QString selectMsgUserPublicKey = "SELECT publickey FROM msg_users WHERE username = :user";
+static const QString updateMsgUserPublicKey = "UPDATE msg_users SET publickey = :publickey WHERE username = :user";
+
 
 DBStorage *DBStorage::instance()
 {
@@ -213,6 +220,43 @@ qint64 DBStorage::getUserId(const QString &username)
         qDebug() << "INSERT error " << query.lastError().text();
     }
     return query.lastInsertId().toLongLong();
+}
+
+QStringList DBStorage::getUsersList()
+{
+    QStringList res;
+    QSqlQuery query(m_db);
+    if (!query.exec(selectMsgUsersList)) {
+
+    }
+    while (query.next()) {
+        res.push_back(query.value(0).toString());
+    }
+    return res;
+}
+
+QString DBStorage::getUserPublicKey(const QString &username)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectMsgUserPublicKey);
+    query.bindValue(":user", username);
+    if (!query.exec()) {
+        return QString();
+    }
+    if (query.next()) {
+        return query.value(0).toString();
+    }
+    return QString();
+}
+
+void DBStorage::setUserPublicKey(const QString &username, const QString &publickey)
+{
+    QSqlQuery query(m_db);
+    query.prepare(updateMsgUserPublicKey);
+    query.bindValue(":user", username);
+    query.bindValue(":publickey", publickey);
+    if (!query.exec()) {
+    }
 }
 
 Message::Counter DBStorage::getMessageMaxCounter(const QString &user)
