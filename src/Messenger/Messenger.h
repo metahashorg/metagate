@@ -80,6 +80,12 @@ signals:
 
     void savePos(const QString &address, Message::Counter pos);
 
+    void getHistoryAddress(QString address, Message::Counter from, Message::Counter to);
+
+    void getHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to);
+
+    void getHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to);
+
 private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee);
@@ -95,6 +101,12 @@ private slots:
     void onGetSavedPos(const QString &address);
 
     void onSavePos(const QString &address, Message::Counter pos);
+
+    void onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to);
+
+    void onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to);
+
+    void onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to);
 
 private slots:
 

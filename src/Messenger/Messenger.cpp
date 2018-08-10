@@ -51,6 +51,9 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onSignedStrings");
     CHECK(connect(this, &Messenger::getSavedPos, this, &Messenger::onGetSavedPos), "not connect onGetSavedPos");
     CHECK(connect(this, &Messenger::savePos, this, &Messenger::onSavePos), "not connect onGetSavedPos");
+    CHECK(connect(this, &Messenger::getHistoryAddress, this, &Messenger::onGetHistoryAddress), "not connect onGetHistoryAddress");
+    CHECK(connect(this, &Messenger::getHistoryAddressAddress, this, &Messenger::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
+    CHECK(connect(this, &Messenger::getHistoryAddressAddressCount, this, &Messenger::onGetHistoryAddressAddressCount), "not connect onGetHistoryAddressAddressCount");
 
     wssClient.start();
 }
@@ -264,4 +267,28 @@ void Messenger::addAddressToMonitored(const QString &address) {
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex);
     emit wssClient.addHelloString(message);
     emit wssClient.sendMessage(message);
+}
+
+void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to) {
+BEGIN_SLOT_WRAPPER
+    // Получить сообщения
+    std::vector<Message> messages;
+    emit javascriptWrapper.getHistoryAddressSig(address, messages);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to) {
+BEGIN_SLOT_WRAPPER
+    // Получить сообщения
+    std::vector<Message> messages;
+    emit javascriptWrapper.getHistoryAddressAddressSig(address, messages);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to) {
+BEGIN_SLOT_WRAPPER
+    // Получить сообщения
+    std::vector<Message> messages;
+    emit javascriptWrapper.getHistoryAddressAddressCountSig(address, messages);
+END_SLOT_WRAPPER
 }

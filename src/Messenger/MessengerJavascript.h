@@ -39,6 +39,12 @@ signals:
 
     void storePosSig(QString address);
 
+    void getHistoryAddressAddressSig(QString address, const std::vector<Message> &messages);
+
+    void getHistoryAddressSig(QString address, const std::vector<Message> &messages);
+
+    void getHistoryAddressAddressCountSig(QString address, const std::vector<Message> &messages);
+
 private slots:
 
     void onMessageSended(QString address, QString collocutor);
@@ -57,13 +63,19 @@ private slots:
 
     void onStorePos(QString address);
 
+    void onGetHistoryAddressAddress(QString address, const std::vector<Message> &messages);
+
+    void onGetHistoryAddress(QString address, const std::vector<Message> &messages);
+
+    void onGetHistoryAddressAddressCount(QString address, const std::vector<Message> &messages);
+
 public slots:
 
-    Q_INVOKABLE void getHistoryAddress(QString requestId, QString address, QString from, QString to);
+    Q_INVOKABLE void getHistoryAddress(QString address, QString from, QString to);
 
-    Q_INVOKABLE void getHistoryAddressAddress(QString requestId, QString address, QString collocutor, QString from, QString to);
+    Q_INVOKABLE void getHistoryAddressAddress(QString address, QString collocutor, QString from, QString to);
 
-    Q_INVOKABLE void getHistoryAddressAddressCount(QString requestId, QString address, QString collocutor, QString count, QString to);
+    Q_INVOKABLE void getHistoryAddressAddressCount(QString address, QString collocutor, QString count, QString to);
 
     Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);
 

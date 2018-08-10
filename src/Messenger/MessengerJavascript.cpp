@@ -22,11 +22,13 @@ MessengerJavascript::MessengerJavascript(QObject *parent)
     CHECK(connect(this, &MessengerJavascript::lastMessageSig, this, &MessengerJavascript::onLastMessageSig), "not connect onLastMessageSig");
     CHECK(connect(this, &MessengerJavascript::savedPosSig, this, &MessengerJavascript::onSavedPos), "not connect onSavedPos");
     CHECK(connect(this, &MessengerJavascript::storePosSig, this, &MessengerJavascript::onStorePos), "not connect onStorePos");
+    CHECK(connect(this, &MessengerJavascript::getHistoryAddressAddressSig, this, &MessengerJavascript::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
+    CHECK(connect(this, &MessengerJavascript::getHistoryAddressSig, this, &MessengerJavascript::onGetHistoryAddress), "not connect onGetHistoryAddress");
+    CHECK(connect(this, &MessengerJavascript::getHistoryAddressAddressCountSig, this, &MessengerJavascript::onGetHistoryAddressAddressCount), "not connect onGetHistoryAddressAddressCount");
 }
 
 template<class Function>
 TypedException MessengerJavascript::apiVrapper(const Function &func) {
-    // TODO когда будет if constexpr, объединить обе функции в одну
     try {
         func();
         return TypedException();
@@ -51,8 +53,10 @@ void MessengerJavascript::makeAndRunJsFuncParams(const QString &function, const 
     runJs(res);
 }
 
-void MessengerJavascript::getHistoryAddress(QString requestId, QString address, QString from, QString to) {
+void MessengerJavascript::getHistoryAddress(QString address, QString from, QString to) {
 BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
     const QString JS_NAME_RESULT = "msgGetHistoryAddressJs";
 
     LOG << "get messages";
@@ -61,24 +65,45 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
-        QJsonArray messagesArrJson;
-        QJsonObject messageJson;
-        messageJson.insert("collocutor", "");
-        messageJson.insert("isInput", true);
-        messageJson.insert("timestamp", 100);
-        messageJson.insert("data", "data");
-        messageJson.insert("counter", 1000);
-        messageJson.insert("fee", 1000);
-        messagesArrJson.push_back(messageJson);
-        result = QJsonDocument(messagesArrJson);
+        emit messenger->getHistoryAddress(address, fromC, toC);
     });
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    }
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::getHistoryAddressAddress(QString requestId, QString address, QString collocutor, QString from, QString to) {
+static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
+    QJsonArray messagesArrJson;
+    for (const Message &message: messages) {
+        QJsonObject messageJson;
+        // Расшифровать data
+        messageJson.insert("collocutor", message.collocutor);
+        messageJson.insert("isInput", message.isInput);
+        messageJson.insert("timestamp", QString::fromStdString(std::to_string(message.timestamp)));
+        messageJson.insert("data", message.data);
+        messageJson.insert("counter", QString::fromStdString(std::to_string(message.counter)));
+        messageJson.insert("fee", QString::fromStdString(std::to_string(message.fee)));
+        messagesArrJson.push_back(messageJson);
+    }
+    return QJsonDocument(messagesArrJson);
+}
+
+void MessengerJavascript::onGetHistoryAddress(QString address, const std::vector<Message> &messages) {
 BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgGetHistoryAddressJs";
+
+    const Opt<QJsonDocument> result(messagesToJson(messages));
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), result);
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::getHistoryAddressAddress(QString address, QString collocutor, QString from, QString to) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
     const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressJs";
 
     LOG << "get messages";
@@ -87,16 +112,29 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
-        QJsonArray messagesArrJson;
-        result = QJsonDocument(messagesArrJson);
+        emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC);
     });
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    }
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::getHistoryAddressAddressCount(QString requestId, QString address, QString collocutor, QString count, QString to) {
+void MessengerJavascript::onGetHistoryAddressAddress(QString address, const std::vector<Message> &messages) {
 BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressJs";
+
+    const Opt<QJsonDocument> result(messagesToJson(messages));
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), result);
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::getHistoryAddressAddressCount(QString address, QString collocutor, QString count, QString to) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
     const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressCountJs";
 
     LOG << "get messages";
@@ -105,11 +143,22 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper([&, this](){
-        QJsonArray messagesArrJson;
-        result = QJsonDocument(messagesArrJson);
+        emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC);
     });
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::onGetHistoryAddressAddressCount(QString address, const std::vector<Message> &messages) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressCountJs";
+
+    const Opt<QJsonDocument> result(messagesToJson(messages));
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), result);
 END_SLOT_WRAPPER
 }
 
