@@ -296,7 +296,8 @@ void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Mess
 BEGIN_SLOT_WRAPPER
     // Получить сообщения
     std::vector<Message> messages;
-    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(std::bind(callback, messages)));
+    emit javascriptWrapper.callbackCall(std::bind(callback, messages));
+    // Обработать ошибки
 END_SLOT_WRAPPER
 }
 
@@ -304,7 +305,7 @@ void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, 
 BEGIN_SLOT_WRAPPER
     // Получить сообщения
     std::vector<Message> messages;
-    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(std::bind(callback, messages)));
+    emit javascriptWrapper.callbackCall(std::bind(callback, messages));
 END_SLOT_WRAPPER
 }
 
@@ -312,6 +313,6 @@ void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocu
 BEGIN_SLOT_WRAPPER
     // Получить сообщения
     std::vector<Message> messages;
-    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(std::bind(callback, messages)));
+    emit javascriptWrapper.callbackCall(std::bind(callback, messages));
 END_SLOT_WRAPPER
 }
