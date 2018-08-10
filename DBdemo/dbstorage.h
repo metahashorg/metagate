@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QSqlDatabase>
 
+#include <list>
+#include "Message.h"
+
 class DBStorage : public QObject
 {
     Q_OBJECT
@@ -25,10 +28,15 @@ public:
 
     qint64 getUserId(const QString &username);
 
+    std::list<Message> getMessagesForUser(const QString &user, qint64 ob, qint64 oe);
+    std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 ob, qint64 oe);
+    std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 ob, qint64 num);
+
 private:
     explicit DBStorage(QObject *parent = nullptr);
 
     bool createTable(const QString &table, const QString &createQuery);
+    void createMessagesList(QSqlQuery &query, std::list<Message> &messages);
 
     QSqlDatabase m_db;
 };
