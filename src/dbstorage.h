@@ -22,18 +22,18 @@ public:
     QList<QStringList> getPayments() const;
 
     void addMessage(const QString &user, const QString &duser,
-                    const QString &text, qint64 dt, qint64 order,
+                    const QString &text, uint64_t timestamp, Message::Counter counter,
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
                     const QString &hash);
 
     qint64 getUserId(const QString &username);
 
-    qint64 getMessageMaxCounter(const QString &user);
-    qint64 getMessageMaxConfirmedCounter(const QString &user);
+    Message::Counter getMessageMaxCounter(const QString &user);
+    Message::Counter getMessageMaxConfirmedCounter(const QString &user);
 
-    std::list<Message> getMessagesForUser(const QString &user, qint64 ob, qint64 oe);
-    std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 ob, qint64 oe);
-    std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 ob, qint64 num);
+    std::list<Message> getMessagesForUser(const QString &user, qint64 from, qint64 to);
+    std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 tos);
+    std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 from, qint64 num);
 
 private:
     explicit DBStorage(QObject *parent = nullptr);

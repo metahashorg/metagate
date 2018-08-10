@@ -4,11 +4,11 @@
 #include <QString>
 
 struct Message {
-    using Counter = uint64_t;
+    using Counter = qint64;
 
     QString collocutor;
     bool isInput;
-    uint64_t timestamp;
+    quint64 timestamp;
     QString data;
     Counter counter;
     uint64_t fee;

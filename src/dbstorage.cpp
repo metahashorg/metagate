@@ -172,7 +172,7 @@ QList<QStringList> DBStorage::getPayments() const
     return res;
 }
 
-void DBStorage::addMessage(const QString &user, const QString &duser, const QString &text, qint64 dt, qint64 order, bool isIncoming, bool canDecrypted, bool isConfirmed, const QString &hash)
+void DBStorage::addMessage(const QString &user, const QString &duser, const QString &text, uint64_t timestamp, Message::Counter counter, bool isIncoming, bool canDecrypted, bool isConfirmed, const QString &hash)
 {
     qint64 userid = getUserId(user);
     qint64 duserid = getUserId(duser);
@@ -181,8 +181,8 @@ void DBStorage::addMessage(const QString &user, const QString &duser, const QStr
     query.prepare(insertMsgMessages);
     query.bindValue(":userid", userid);
     query.bindValue(":duserid", duserid);
-    query.bindValue(":order", order);
-    query.bindValue(":dt", dt);
+    query.bindValue(":order", counter);
+    query.bindValue(":dt", static_cast<qint64>(timestamp));
     query.bindValue(":text", text);
     query.bindValue(":isIncoming", isIncoming);
     query.bindValue(":canDecrypted", canDecrypted);
@@ -215,7 +215,7 @@ qint64 DBStorage::getUserId(const QString &username)
     return query.lastInsertId().toLongLong();
 }
 
-qint64 DBStorage::getMessageMaxCounter(const QString &user)
+Message::Counter DBStorage::getMessageMaxCounter(const QString &user)
 {
     QSqlQuery query(m_db);
     query.prepare(selectMsgMaxCounter);
@@ -229,7 +229,7 @@ qint64 DBStorage::getMessageMaxCounter(const QString &user)
     return -1;
 }
 
-qint64 DBStorage::getMessageMaxConfirmedCounter(const QString &user)
+Message::Counter DBStorage::getMessageMaxConfirmedCounter(const QString &user)
 {
     QSqlQuery query(m_db);
     query.prepare(selectMsgMaxConfirmedCounter);
@@ -329,7 +329,7 @@ void DBStorage::createMessagesList(QSqlQuery &query, std::list<Message> &message
         msg.isInput = query.value(2).toBool();
         msg.data = query.value(3).toString();
         msg.counter = query.value(4).toLongLong();
-        msg.timestamp = query.value(5).toLongLong();
+        msg.timestamp = static_cast<quint64>(query.value(5).toLongLong());
         messages.push_back(msg);
     }
 }
