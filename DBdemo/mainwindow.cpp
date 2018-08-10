@@ -40,6 +40,8 @@ MainWindow::MainWindow(QWidget *parent) :
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 6, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 7, true, true, true, "dfjkjkgfjkgfjkgfjkjk");
 
+    std::list<Message> msgs = DBStorage::instance()->getMessagesForUser("user7", 1, 3);
+    qDebug() << "count " << msgs.size();
 //    QList<QStringList> r = DBStorage::instance()->getPayments();
 //    foreach(const QStringList &l, r) {
 //        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);

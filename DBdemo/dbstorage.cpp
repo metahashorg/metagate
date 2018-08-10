@@ -61,6 +61,30 @@ static const QString insertMsgMessages = "INSERT INTO msg_messages "
                                             "(userid, duserid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash) VALUES "
                                             "(:userid, :duserid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash)";
 
+static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt "
+                                                "FROM msg_messages m "
+                                                "INNER JOIN msg_users u ON u.id = m.userid "
+                                                "INNER JOIN msg_users du ON du.id = m.duserid "
+                                                "WHERE m.morder >= :ob AND m.morder <= :oe "
+                                                "AND u.username = :user "
+                                                "ORDER BY m.morder";
+
+static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt "
+                                                       "FROM msg_messages m "
+                                                       "INNER JOIN msg_users u ON u.id = m.userid "
+                                                       "INNER JOIN msg_users du ON du.id = m.duserid "
+                                                       "WHERE m.morder >= :ob AND m.morder <= :oe "
+                                                       "AND u.username = :user AND du.username = :duser "
+                                                       "ORDER BY m.morder";
+
+static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt "
+                                                          "FROM msg_messages m "
+                                                          "INNER JOIN msg_users u ON u.id = m.userid "
+                                                          "INNER JOIN msg_users du ON du.id = m.duserid "
+                                                          "WHERE m.morder >= :ob "
+                                                          "AND u.username = :user AND du.username = :duser "
+                                                          "ORDER BY m.morder "
+                                                          "LIMIT :num";
 
 DBStorage *DBStorage::instance()
 {
@@ -180,6 +204,53 @@ qint64 DBStorage::getUserId(const QString &username)
     return query.lastInsertId().toLongLong();
 }
 
+std::list<Message> DBStorage::getMessagesForUser(const QString &user, qint64 ob, qint64 oe)
+{
+    std::list<Message> res;
+    QSqlQuery query(m_db);
+    query.prepare(selectMsgMessagesForUser);
+    query.bindValue(":user", user);
+    query.bindValue(":ob", ob);
+    query.bindValue(":oe", oe);
+    if (!query.exec()) {
+
+    }
+    createMessagesList(query, res);
+    return res;
+}
+
+std::list<Message> DBStorage::getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 ob, qint64 oe)
+{
+    std::list<Message> res;
+    QSqlQuery query(m_db);
+    query.prepare(selectMsgMessagesForUserAndDest);
+    query.bindValue(":user", user);
+    query.bindValue(":duser", duser);
+    query.bindValue(":ob", ob);
+    query.bindValue(":oe", oe);
+    if (!query.exec()) {
+
+    }
+    createMessagesList(query, res);
+    return res;
+}
+
+std::list<Message> DBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 ob, qint64 num)
+{
+    std::list<Message> res;
+    QSqlQuery query(m_db);
+    query.prepare(selectMsgMessagesForUserAndDestNum);
+    query.bindValue(":user", user);
+    query.bindValue(":duser", duser);
+    query.bindValue(":ob", ob);
+    query.bindValue(":num", num);
+    if (!query.exec()) {
+
+    }
+    createMessagesList(query, res);
+    return res;
+}
+
 DBStorage::DBStorage(QObject *parent)
     : QObject(parent)
 {
@@ -209,4 +280,17 @@ bool DBStorage::createTable(const QString &table, const QString &createQuery)
         return  false;
     }
     return true;
+}
+
+void DBStorage::createMessagesList(QSqlQuery &query, std::list<Message> &messages)
+{
+    while (query.next()) {
+        Message msg;
+        msg.collocutor = query.value(1).toString();
+        msg.isInput = query.value(2).toBool();
+        msg.data = query.value(3).toString();
+        msg.counter = query.value(4).toLongLong();
+        msg.timestamp = query.value(5).toLongLong();
+        messages.push_back(msg);
+    }
 }
