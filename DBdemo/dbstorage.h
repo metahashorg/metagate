@@ -18,8 +18,17 @@ public:
 
     QList<QStringList> getPayments() const;
 
+    void addMessage(const QString &user, const QString &duser,
+                    const QString &text, qint64 dt, qint64 order,
+                    bool isIncoming, bool canDecrypted, bool isConfirmed,
+                    const QString &hash);
+
+    qint64 getUserId(const QString &username);
+
 private:
     explicit DBStorage(QObject *parent = nullptr);
+
+    bool createTable(const QString &table, const QString &createQuery);
 
     QSqlDatabase m_db;
 };
