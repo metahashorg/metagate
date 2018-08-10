@@ -6,6 +6,7 @@
 
 QT       += core gui widgets
 QT       += sql
+CONFIG += console
 
 TARGET = DBdemo
 TEMPLATE = app
