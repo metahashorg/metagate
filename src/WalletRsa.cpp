@@ -13,7 +13,9 @@ WalletRsa::WalletRsa(const QString &folder, const std::string &addr)
     : folder(folder)
     , address(addr)
     , publicKey(getPublicRsaKey(folder, addr))
-{}
+{
+    publicKeyRsa = ::getPublicRsa(publicKey);
+}
 
 WalletRsa WalletRsa::fromPublicKey(const std::string &publicKey) {
     WalletRsa wallet;
@@ -65,7 +67,7 @@ std::string WalletRsa::getPublicRsaKey(const QString &folder, const std::string 
     return publicKeyHex;
 }
 
-std::string WalletRsa::decryptMessage(const std::string &encryptedMessageHex) {
+std::string WalletRsa::decryptMessage(const std::string &encryptedMessageHex) const {
     CHECK(privateKeyRsa != nullptr, "Wallet not unlock");
     const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMessageHex);
     return decryptMsg;

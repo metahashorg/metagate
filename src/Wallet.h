@@ -32,7 +32,7 @@ public:
 
     Wallet(const QString &folder, const std::string &name, const std::string &password);
 
-    std::string sign(const std::string &message, std::string &publicKey);
+    std::string sign(const std::string &message, std::string &publicKey) const;
 
     static bool verify(const std::string &message, const std::string &signature, const std::string &publicKey);
 

@@ -25,7 +25,7 @@ public:
 
     void unlock(const std::string &password);
 
-    std::string decryptMessage(const std::string &encryptedMessageHex);
+    std::string decryptMessage(const std::string &encryptedMessageHex) const;
 
 private:
 

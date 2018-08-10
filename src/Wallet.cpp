@@ -230,7 +230,7 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     CHECK_TYPED(hexAddr == name, TypeErrors::PRIVATE_KEY_ERROR, "Private key error: address calc incorrect");
 }
 
-std::string Wallet::sign(const std::string &message, std::string &publicKey){
+std::string Wallet::sign(const std::string &message, std::string &publicKey) const {
     try {
         CryptoPP::AutoSeededRandomPool prng;
         CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::Signer signer(privateKey);
