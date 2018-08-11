@@ -39,6 +39,9 @@ public:
     std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 tos);
     std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 from, qint64 num);
 
+    qint64 findLastNotConfirmedMessage(const QString &username);
+    void updateMessage(qint64 id, Message::Counter newCounter, bool confirmed);
+
 private:
     explicit DBStorage(QObject *parent = nullptr);
 

@@ -53,6 +53,10 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << DBStorage::instance()->getUserPublicKey("user7");
     qDebug() << DBStorage::instance()->getUserPublicKey("user1");
     qDebug() << DBStorage::instance()->getUserPublicKey("userrrrr");
+    qint64 id = DBStorage::instance()->findLastNotConfirmedMessage("user7");
+    qDebug() << id;
+    DBStorage::instance()->updateMessage(id, 4444, true);
+    qDebug() << DBStorage::instance()->findLastNotConfirmedMessage("user7");
 //    QList<QStringList> r = DBStorage::instance()->getPayments();
 //    foreach(const QStringList &l, r) {
 //        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
@@ -60,18 +64,6 @@ MainWindow::MainWindow(QWidget *parent) :
 //            item->setText(c, l.value(c));
 //    }
 
-    /*
-    QSqlTableModel *model = new QSqlTableModel(parentObject, database);
-    model->setTable("employee");
-    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    model->select();
-    model->setHeaderData(0, Qt::Horizontal, tr("Name"));
-    model->setHeaderData(1, Qt::Horizontal, tr("Salary"));
-
-    QTableView *view = new QTableView;
-    view->setModel(model);
-    view->hideColumn(0); // don't show the ID
-    view->show();*/
 }
 
 MainWindow::~MainWindow()

@@ -103,6 +103,18 @@ static const QString selectMsgUsersList = "SELECT username FROM msg_users ORDER 
 static const QString selectMsgUserPublicKey = "SELECT publickey FROM msg_users WHERE username = :user";
 static const QString updateMsgUserPublicKey = "UPDATE msg_users SET publickey = :publickey WHERE username = :user";
 
+static const QString selectLastNotConfirmedMessage = "SELECT m.id "
+                                                        "FROM msg_messages m "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid "
+                                                        "WHERE m.isConfirmed = 0 "
+                                                        "AND u.username = :user "
+                                                        "ORDER BY m.morder "
+                                                        "LIMIT 1";
+static const QString updateMessageQuery = "UPDATE msg_messages "
+                                        "SET isConfirmed = :isConfirmed, morder = :counter "
+                                        "WHERE id = :id";
+
+
 
 DBStorage *DBStorage::instance()
 {
@@ -332,6 +344,31 @@ std::list<Message> DBStorage::getMessagesForUserAndDestNum(const QString &user, 
     }
     createMessagesList(query, res);
     return res;
+}
+
+qint64 DBStorage::findLastNotConfirmedMessage(const QString &username)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectLastNotConfirmedMessage);
+    query.bindValue(":user", username);
+    if (!query.exec()) {
+        return -1;
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong();
+    }
+    return -1;
+}
+
+void DBStorage::updateMessage(qint64 id, Message::Counter newCounter, bool confirmed)
+{
+    QSqlQuery query(m_db);
+    query.prepare(updateMessageQuery);
+    query.bindValue(":id", id);
+    query.bindValue(":counter", newCounter);
+    query.bindValue(":isConfirmed", confirmed);
+    if (!query.exec()) {
+    }
 }
 
 DBStorage::DBStorage(QObject *parent)
