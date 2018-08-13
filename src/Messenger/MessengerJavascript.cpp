@@ -62,7 +62,6 @@ BEGIN_SLOT_WRAPPER
 
     const Message::Counter fromC = std::stoull(from.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
-    Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getHistoryAddress(address, fromC, toC, [this, JS_NAME_RESULT, address](const std::vector<Message> &messages, const TypedException &exception) {
             Opt<QJsonDocument> result;
@@ -79,7 +78,7 @@ BEGIN_SLOT_WRAPPER
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QJsonDocument>());
     }
 END_SLOT_WRAPPER
 }
@@ -94,7 +93,6 @@ BEGIN_SLOT_WRAPPER
 
     const Message::Counter fromC = std::stoull(from.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
-    Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC, [this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages, const TypedException &exception) {
             Opt<QJsonDocument> result;
@@ -111,7 +109,7 @@ BEGIN_SLOT_WRAPPER
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<QJsonDocument>());
     }
 END_SLOT_WRAPPER
 }
@@ -126,7 +124,6 @@ BEGIN_SLOT_WRAPPER
 
     const Message::Counter countC = std::stoull(count.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
-    Opt<QJsonDocument> result;
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC, [this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages, const TypedException &exception) {
             Opt<QJsonDocument> result;
@@ -143,7 +140,7 @@ BEGIN_SLOT_WRAPPER
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<QJsonDocument>());
     }
 END_SLOT_WRAPPER
 }
@@ -158,10 +155,11 @@ BEGIN_SLOT_WRAPPER
 
     const uint64_t fee = std::stoull(feeStr.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
-        const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).getPublikKey()), fee);
+        const QString pubkeyRsa = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).getPublikKey());
+        const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
         std::string pubkey;
         const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pubkey);
-        emit messenger->registerAddress(isForcibly, address, QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).getPublikKey()), QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew, const TypedException &exception) {
+        emit messenger->registerAddress(isForcibly, address, pubkeyRsa, QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew, const TypedException &exception) {
             const TypedException exception2 = apiVrapper2([&, this](){
                 if (exception.isSet()) {
                     throw exception;
@@ -340,7 +338,7 @@ BEGIN_SLOT_WRAPPER
         result = "Ok";
     });
 
-    if (exception.numError != TypeErrors::NOT_ERROR) {
+    if (exception.isSet()) {
         result = "Not ok";
     }
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
