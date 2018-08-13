@@ -11,7 +11,7 @@ struct Message {
     quint64 timestamp;
     QString data;
     Counter counter;
-    uint64_t fee;
+    int64_t fee;
 };
 
 #endif // MESSAGE_H
