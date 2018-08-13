@@ -38,7 +38,6 @@ MessengerJavascript::MessengerJavascript(QObject *parent)
 {
     CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
 
-    CHECK(connect(this, &MessengerJavascript::operationUnluckySig, this, &MessengerJavascript::onOperationUnlucky), "not connect onOperationUnlucky");
     CHECK(connect(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges), "not connect onNewMesseges");
 }
 
@@ -77,7 +76,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetHistoryAddressJs";
 
-    LOG << "get messages";
+    LOG << "get messages " << address << " " << from << " " << to;
 
     const Message::Counter fromC = std::stoull(from.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
@@ -90,6 +89,7 @@ BEGIN_SLOT_WRAPPER
                     throw exception;
                 }
 
+                LOG << "Count messages " << address << " " << messages.size();
                 const auto &pairWallet = getWalletInst();
                 result = messagesToJson(messages, pairWallet.second);
             });
@@ -109,7 +109,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressJs";
 
-    LOG << "get messages";
+    LOG << "get messages " << address << " " << collocutor << " " << from << " " << to;
 
     const Message::Counter fromC = std::stoull(from.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
@@ -122,6 +122,7 @@ BEGIN_SLOT_WRAPPER
                     throw exception;
                 }
 
+                LOG << "Count messages " << address << " " << collocutor << " " << messages.size();
                 const auto &pairWallet = getWalletInst();
                 result = messagesToJson(messages, pairWallet.second);
             });
@@ -141,7 +142,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressCountJs";
 
-    LOG << "get messages";
+    LOG << "get messagesC " << address << " " << collocutor << " " << count << " " << to;
 
     const Message::Counter countC = std::stoull(count.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
@@ -154,6 +155,7 @@ BEGIN_SLOT_WRAPPER
                     throw exception;
                 }
 
+                LOG << "Count messagesC " << address << " " << collocutor << " " << messages.size();
                 const auto &pairWallet = getWalletInst();
                 result = messagesToJson(messages, pairWallet.second);
             });
@@ -173,7 +175,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgAddressAppendToMessengerJs";
 
-    LOG << "get messages";
+    LOG << "registerAddress " << address;
 
     const uint64_t fee = std::stoull(feeStr.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
@@ -219,7 +221,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgPublicKeyCollocutorGettedJs";
 
-    LOG << "get messages";
+    LOG << "savePublicKeyCollocutor " << address << " " << collocutor;
 
     const TypedException exception = apiVrapper2([&, this](){
         const auto &pairWallet = getWalletInst();
@@ -244,7 +246,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgMessageSendedJs";
 
-    LOG << "get messages";
+    LOG << "sendMessage " << " " << address << " " << collocutor << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
         const uint64_t fee = std::stoull(feeStr.toStdString());
@@ -286,7 +288,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgLastMessegesJs";
 
-    LOG << "get messages";
+    LOG << "getLastMessageNumber " << address;
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getLastMessage(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos, const TypedException &exception) {
@@ -306,7 +308,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgSavedPosJs";
 
-    LOG << "get messages";
+    LOG << "getSavedPos " << address << " " << collocutor;
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getSavedPos(address, collocutor, [this, JS_NAME_RESULT, address, collocutor](const Message::Counter &pos, const TypedException &exception) {
@@ -326,7 +328,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgStorePosJs";
 
-    LOG << "get messages";
+    LOG << "savePos " << address << " " << collocutor << " " << counterStr;
 
     const TypedException exception = apiVrapper2([&, this](){
         const Message::Counter counter = std::stoull(counterStr.toStdString());
@@ -341,17 +343,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onOperationUnlucky(int operation, QString address, QString description) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "msgOperationUnluckyJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<int>(operation), Opt<QString>(description));
-END_SLOT_WRAPPER
-}
-
 void MessengerJavascript::onNewMesseges(QString address, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgNewMessegesJs";
+
+    LOG << "New messages " << lastMessage;
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
 END_SLOT_WRAPPER

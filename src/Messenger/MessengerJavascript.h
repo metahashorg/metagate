@@ -35,13 +35,9 @@ public slots:
 
 signals:
 
-    void operationUnluckySig(int operation, QString address, QString description);
-
     void newMessegesSig(QString address, Message::Counter lastMessage);
 
 private slots:
-
-    void onOperationUnlucky(int operation, QString address, QString description);
 
     void onNewMesseges(QString address, Message::Counter lastMessage);
 
