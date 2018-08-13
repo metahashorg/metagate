@@ -55,6 +55,10 @@ inline QString toJsString(const int &arg) {
     return QString::fromStdString(std::to_string(arg));
 }
 
+inline QString toJsString(const long long int &arg) {
+    return QString::fromStdString(std::to_string(arg));
+}
+
 inline QString toJsString(bool arg) {
     if (arg) {
         return "true";
