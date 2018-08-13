@@ -116,7 +116,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetSavedPos(const QString &address, const GetSavedPosCallback &callback) {
+void Messenger::onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Получить counter
     Message::Counter lastCounter = 0;
@@ -127,7 +127,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSavePos(const QString &address, Message::Counter pos, const SavePosCallback &callback) {
+void Messenger::onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Сохранить позицию
     const TypedException exception = apiVrapper2([&, this] {

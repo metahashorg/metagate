@@ -101,9 +101,9 @@ signals:
 
     void getLastMessage(const QString &address, const GetSavedPosCallback &callback);
 
-    void getSavedPos(const QString &address, const GetSavedPosCallback &callback);
+    void getSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback);
 
-    void savePos(const QString &address, Message::Counter pos, const SavePosCallback &callback);
+    void savePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
 
     void getHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
@@ -125,9 +125,9 @@ private slots:
 
     void onGetLastMessage(const QString &address, const GetSavedPosCallback &callback);
 
-    void onGetSavedPos(const QString &address, const GetSavedPosCallback &callback);
+    void onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback);
 
-    void onSavePos(const QString &address, Message::Counter pos, const SavePosCallback &callback);
+    void onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
 
     void onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 

@@ -300,7 +300,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::getSavedPos(QString address) {
+void MessengerJavascript::getSavedPos(QString address, const QString &collocutor) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
 
@@ -309,18 +309,18 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit messenger->getSavedPos(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos, const TypedException &exception) {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(pos));
+        emit messenger->getSavedPos(address, collocutor, [this, JS_NAME_RESULT, address, collocutor](const Message::Counter &pos, const TypedException &exception) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(pos));
         });
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(0));
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(0));
     }
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::savePos(QString address, QString counterStr) {
+void MessengerJavascript::savePos(QString address, const QString &collocutor, QString counterStr) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
 
@@ -330,13 +330,13 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         const Message::Counter counter = std::stoull(counterStr.toStdString());
-        emit messenger->savePos(address, counter, [this, JS_NAME_RESULT, address](const TypedException &exception){
-            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>("Ok"));
+        emit messenger->savePos(address, collocutor, counter, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception){
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<QString>("Ok"));
         });
     });
 
     if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>("Not ok"));
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<QString>("Not ok"));
     }
 END_SLOT_WRAPPER
 }

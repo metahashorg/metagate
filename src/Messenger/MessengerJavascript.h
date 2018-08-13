@@ -61,9 +61,9 @@ public slots:
 
     Q_INVOKABLE void getLastMessageNumber(QString address);
 
-    Q_INVOKABLE void getSavedPos(QString address);
+    Q_INVOKABLE void getSavedPos(QString address, const QString &collocutor);
 
-    Q_INVOKABLE void savePos(QString address, QString counterStr);
+    Q_INVOKABLE void savePos(QString address, const QString &collocutor, QString counterStr);
 
 private:
 
