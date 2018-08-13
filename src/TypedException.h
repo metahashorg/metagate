@@ -13,6 +13,8 @@ enum TypeErrors {
 
     QR_ENCODE_ERROR = 8,
 
+    MESSENGER_ERROR = 9,
+
     OTHER_ERROR = 1000
 };
 

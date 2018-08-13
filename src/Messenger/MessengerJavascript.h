@@ -67,9 +67,6 @@ public slots:
 
 private:
 
-    template<class Function>
-    TypedException apiVrapper(const Function &func);
-
     template<typename... Args>
     void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 

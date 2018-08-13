@@ -7,7 +7,7 @@
 #include "WebSocketClient.h"
 
 #include "RequestId.h"
-
+#include "TypedException.h"
 #include "Message.h"
 
 #include <map>
@@ -57,21 +57,21 @@ private:
 
 public:
 
-    using GetMessagesCallback = std::function<void(const std::vector<Message> &messages)>;
+    using GetMessagesCallback = std::function<void(const std::vector<Message> &messages, const TypedException &exception)>;
 
-    using SavePosCallback = std::function<void()>;
+    using SavePosCallback = std::function<void(const TypedException &exception)>;
 
-    using GetSavedPosCallback = std::function<void(const Message::Counter &pos)>;
+    using GetSavedPosCallback = std::function<void(const Message::Counter &pos, const TypedException &exception)>;
 
-    using RegisterAddressCallback = std::function<void(bool isNew)>;
+    using RegisterAddressCallback = std::function<void(bool isNew, const TypedException &exception)>;
 
-    using SignedStringsCallback = std::function<void()>;
+    using SignedStringsCallback = std::function<void(const TypedException &exception)>;
 
-    using SavePubkeyCallback = std::function<void(bool isNew)>;
+    using SavePubkeyCallback = std::function<void(bool isNew, const TypedException &exception)>;
 
-    using GetPubkeyAddress = std::function<void(const QString &pubkey)>;
+    using GetPubkeyAddress = std::function<void(const QString &pubkey, const TypedException &exception)>;
 
-    using SendMessageCallback = std::function<void()>;
+    using SendMessageCallback = std::function<void(const TypedException &exception)>;
 
 public:
 
@@ -157,7 +157,7 @@ private:
 
     std::vector<QString> getMonitoredAddresses() const;
 
-    void invokeCallback(size_t requestId);
+    void invokeCallback(size_t requestId, const TypedException &exception);
 
 private:
 
@@ -171,7 +171,7 @@ private:
 
     RequestId id;
 
-    using ResponseCallbacks = std::function<void()>;
+    using ResponseCallbacks = std::function<void(const TypedException &exception)>;
 
     std::unordered_map<size_t, ResponseCallbacks> callbacks;
 

@@ -48,26 +48,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-template<class Function>
-TypedException MessengerJavascript::apiVrapper(const Function &func) {
-    try {
-        func();
-        return TypedException();
-    } catch (const TypedException &e) {
-        LOG << "Error " << std::to_string(e.numError) << ". " << e.description;
-        return e;
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-        return TypedException(TypeErrors::OTHER_ERROR, e);
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-        return TypedException(TypeErrors::OTHER_ERROR, e.what());
-    } catch (...) {
-        LOG << "Unknown error";
-        return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
-    }
-}
-
 template<typename... Args>
 void MessengerJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
     const QString res = makeJsFunc2<false>(function, "", exception, std::forward<Args>(args)...);
@@ -102,14 +82,18 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter fromC = std::stoull(from.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
-    const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getHistoryAddress(address, fromC, toC, [this, JS_NAME_RESULT, address](const std::vector<Message> &messages) {
+    const TypedException exception = apiVrapper2([&, this](){
+        emit messenger->getHistoryAddress(address, fromC, toC, [this, JS_NAME_RESULT, address](const std::vector<Message> &messages, const TypedException &exception) {
             Opt<QJsonDocument> result;
-            const TypedException exception = apiVrapper([&, this](){
+            const TypedException exception2 = apiVrapper2([&, this](){
+                if (exception.isSet()) {
+                    throw exception;
+                }
+
                 const auto &pairWallet = getWalletInst();
                 result = messagesToJson(messages, pairWallet.second);
             });
-            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), result);
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), result);
         });
     });
 
@@ -130,14 +114,18 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter fromC = std::stoull(from.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
-    const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC, [this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages) {
+    const TypedException exception = apiVrapper2([&, this](){
+        emit messenger->getHistoryAddressAddress(address, collocutor, fromC, toC, [this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages, const TypedException &exception) {
             Opt<QJsonDocument> result;
-            const TypedException exception = apiVrapper([&, this](){
+            const TypedException exception2 = apiVrapper2([&, this](){
+                if (exception.isSet()) {
+                    throw exception;
+                }
+
                 const auto &pairWallet = getWalletInst();
                 result = messagesToJson(messages, pairWallet.second);
             });
-            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), result);
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), Opt<QString>(collocutor), result);
         });
     });
 
@@ -158,14 +146,18 @@ BEGIN_SLOT_WRAPPER
     const Message::Counter countC = std::stoull(count.toStdString());
     const Message::Counter toC = std::stoull(to.toStdString());
     Opt<QJsonDocument> result;
-    const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC, [this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages) {
+    const TypedException exception = apiVrapper2([&, this](){
+        emit messenger->getHistoryAddressAddressCount(address, collocutor, countC, toC, [this, JS_NAME_RESULT, address, collocutor](const std::vector<Message> &messages, const TypedException &exception) {
             Opt<QJsonDocument> result;
-            const TypedException exception = apiVrapper([&, this](){
+            const TypedException exception2 = apiVrapper2([&, this](){
+                if (exception.isSet()) {
+                    throw exception;
+                }
+
                 const auto &pairWallet = getWalletInst();
                 result = messagesToJson(messages, pairWallet.second);
             });
-            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), result);
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), Opt<QString>(collocutor), result);
         });
     });
 
@@ -184,13 +176,17 @@ BEGIN_SLOT_WRAPPER
     LOG << "get messages";
 
     const uint64_t fee = std::stoull(feeStr.toStdString());
-    const TypedException exception = apiVrapper([&, this](){
+    const TypedException exception = apiVrapper2([&, this](){
         const auto &pairWallet = getWalletInst();
         const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, QString::fromStdString(pairWallet.second.getPublikKey()), fee);
         std::string pubkey;
         const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
-        emit messenger->registerAddress(isForcibly, address, QString::fromStdString(pairWallet.second.getPublikKey()), QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew) {
-            const TypedException exception = apiVrapper([&, this](){
+        emit messenger->registerAddress(isForcibly, address, QString::fromStdString(pairWallet.second.getPublikKey()), QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew, const TypedException &exception) {
+            const TypedException exception2 = apiVrapper2([&, this](){
+                if (exception.isSet()) {
+                    throw exception;
+                }
+
                 if (isNew) {
                     const std::vector<QString> messagesForSign = Messenger::stringsForSign();
                     const auto &pairWallet = getWalletInst();
@@ -200,13 +196,13 @@ BEGIN_SLOT_WRAPPER
                         const std::string sign = pairWallet.first.sign(msg.toStdString(), tmp);
                         result.emplace_back(QString::fromStdString(sign));
                     }
-                    emit messenger->signedStrings(result, [this, JS_NAME_RESULT, address](){
-                        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+                    emit messenger->signedStrings(result, [this, JS_NAME_RESULT, address](const TypedException &exception){
+                        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
                     });
                 }
             });
-            if (exception.isSet()) {
-                makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Not ok"));
+            if (exception2.isSet()) {
+                makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>("Not ok"));
             }
         });
     });
@@ -225,14 +221,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const TypedException exception = apiVrapper([&, this](){
+    const TypedException exception = apiVrapper2([&, this](){
         const auto &pairWallet = getWalletInst();
         const QString messageToSign = Messenger::makeTextForGetPubkeyRequest(collocutor);
         std::string pubkey;
         const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
 
-        emit messenger->savePubkeyAddress(isForcibly, collocutor, QString::fromStdString(pubkey), QString::fromStdString(sign), [this, JS_NAME_RESULT, address, collocutor](bool /*isNew*/) {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+        emit messenger->savePubkeyAddress(isForcibly, collocutor, QString::fromStdString(pubkey), QString::fromStdString(sign), [this, JS_NAME_RESULT, address, collocutor](bool /*isNew*/, const TypedException &exception) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
         });
     });
 
@@ -250,11 +246,15 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const TypedException exception = apiVrapper([&, this](){
+    const TypedException exception = apiVrapper2([&, this](){
         const uint64_t fee = std::stoull(feeStr.toStdString());
         const uint64_t timestamp = std::stoull(timestampStr.toStdString());
-        emit messenger->getPubkeyAddress(collocutor, [this, JS_NAME_RESULT, address, collocutor, data, fee, timestamp](const QString &pubkey) {
-            const TypedException exception = apiVrapper([&, this](){
+        emit messenger->getPubkeyAddress(collocutor, [this, JS_NAME_RESULT, address, collocutor, data, fee, timestamp](const QString &pubkey, const TypedException &exception) {
+            const TypedException exception2 = apiVrapper2([&, this](){
+                if (exception.isSet()) {
+                    throw exception;
+                }
+
                 const WalletRsa walletRsa = WalletRsa::fromPublicKey(pubkey.toStdString());
                 const QString encryptedDataToWss = QString::fromStdString(walletRsa.encrypt(data.toStdString()));
 
@@ -264,12 +264,12 @@ BEGIN_SLOT_WRAPPER
                 const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pub);
 
                 const QString encryptedDataToBd = QString::fromStdString(pairWallet.second.encrypt(data.toStdString()));
-                emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor]() {
-                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>(collocutor));
+                emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception) {
+                    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
                 });
             });
-            if (exception.isSet()) {
-                makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
+            if (exception2.isSet()) {
+                makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), Opt<QString>(collocutor));
             }
         });
     });
@@ -288,9 +288,9 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getLastMessage(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos) {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(pos));
+    const TypedException exception = apiVrapper2([&, this](){
+        emit messenger->getLastMessage(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos, const TypedException &exception) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(pos));
         });
     });
 
@@ -308,9 +308,9 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const TypedException exception = apiVrapper([&, this](){
-        emit messenger->getSavedPos(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos) {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(pos));
+    const TypedException exception = apiVrapper2([&, this](){
+        emit messenger->getSavedPos(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos, const TypedException &exception) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(pos));
         });
     });
 
@@ -328,10 +328,10 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages";
 
-    const TypedException exception = apiVrapper([&, this](){
+    const TypedException exception = apiVrapper2([&, this](){
         const Message::Counter counter = std::stoull(counterStr.toStdString());
-        emit messenger->savePos(address, counter, [this, JS_NAME_RESULT, address]{
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<QString>("Ok"));
+        emit messenger->savePos(address, counter, [this, JS_NAME_RESULT, address](const TypedException &exception){
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>("Ok"));
         });
     });
 

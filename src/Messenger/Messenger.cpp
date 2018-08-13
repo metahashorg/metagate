@@ -3,9 +3,13 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "Log.h"
+#include "makeJsFunc.h"
 
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
+
+#include <functional>
+using namespace std::placeholders;
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -60,12 +64,12 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     wssClient.start();
 }
 
-void Messenger::invokeCallback(size_t requestId) {
+void Messenger::invokeCallback(size_t requestId, const TypedException &exception) {
     auto found = callbacks.find(requestId);
     CHECK(found != callbacks.end(), "Not found callback for request " + std::to_string(requestId));
     const ResponseCallbacks callback = found->second; // копируем
     callbacks.erase(found);
-    callback();
+    callback(exception);
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {
@@ -79,31 +83,36 @@ std::vector<QString> Messenger::getMonitoredAddresses() const {
 
 void Messenger::onSignedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const std::vector<QString> keys = stringsForSign();
-    CHECK(keys.size() == signedHexs.size(), "Incorrect signed strings");
+    const TypedException exception = apiVrapper2([&, this] {
+        const std::vector<QString> keys = stringsForSign();
+        CHECK(keys.size() == signedHexs.size(), "Incorrect signed strings");
 
-    QJsonArray arrJson;
-    for (size_t i = 0; i < keys.size(); i++) {
-        const QString &key = keys[i];
-        const QString &value = signedHexs[i];
+        QJsonArray arrJson;
+        for (size_t i = 0; i < keys.size(); i++) {
+            const QString &key = keys[i];
+            const QString &value = signedHexs[i];
 
-        QJsonObject obj;
-        obj.insert("key", key);
-        obj.insert("value", value);
-        arrJson.push_back(obj);
-    }
+            QJsonObject obj;
+            obj.insert("key", key);
+            obj.insert("value", value);
+            arrJson.push_back(obj);
+        }
 
-    const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
-    // Сохранить arr в бд
+        const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
+        // Сохранить arr в бд
+    });
 
-    emit javascriptWrapper.callbackCall(callback);
+    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetLastMessage(const QString &address, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const Message::Counter lastCounter = db.getMessageMaxCounter(address);
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter));
+    Message::Counter lastCounter;
+    const TypedException exception = apiVrapper2([&, this] {
+        lastCounter = db.getMessageMaxCounter(address);
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
 }
 
@@ -111,14 +120,20 @@ void Messenger::onGetSavedPos(const QString &address, const GetSavedPosCallback 
 BEGIN_SLOT_WRAPPER
     // Получить counter
     Message::Counter lastCounter = 0;
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter));
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
 }
 
 void Messenger::onSavePos(const QString &address, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Сохранить позицию
-    emit javascriptWrapper.callbackCall(MessengerJavascript::Callback(callback));
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
 END_SLOT_WRAPPER
 }
 
@@ -201,13 +216,13 @@ BEGIN_SLOT_WRAPPER
     if (responseType.isError) {
         LOG << "Messenger response error " << responseType.method << " " << responseType.address << " " << responseType.error;
         if (responseType.method != METHOD::NOT_SET && !responseType.address.isEmpty() && !responseType.address.isNull()) {
-            emit javascriptWrapper.operationUnluckySig(responseType.method, responseType.address, responseType.error);
+            invokeCallback(responseType.id, TypedException(TypeErrors::MESSENGER_ERROR, responseType.error.toStdString()));
         }
         return;
     }
 
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
-        invokeCallback(responseType.id);
+        invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
         const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(responseType.address);
         const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
@@ -219,7 +234,7 @@ BEGIN_SLOT_WRAPPER
         const QString &address = publicKeyPair.first;
         const QString &pkey = publicKeyPair.second;
         db.setUserPublicKey(address, pkey);
-        invokeCallback(responseType.id);
+        invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
         processMessages(responseType.address, {messages});
@@ -227,7 +242,7 @@ BEGIN_SLOT_WRAPPER
         const std::vector<NewMessageResponse> messages = parseNewMessagesResponse(messageJson);
         processMessages(responseType.address, messages);
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
-        invokeCallback(responseType.id);
+        invokeCallback(responseType.id, TypedException());
     } else {
         throwErr("Incorrect response type");
     }
@@ -240,7 +255,7 @@ BEGIN_SLOT_WRAPPER
     const size_t idRequest = id.get();
     const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
     const bool isNew = true;
-    callbacks[idRequest] = std::bind(callback, isNew);
+    callbacks[idRequest] = std::bind(callback, isNew, _1);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -250,7 +265,7 @@ BEGIN_SLOT_WRAPPER
     // Проверить, есть ли нужных ключ в базе
     const size_t idRequest = id.get();
     const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::bind(callback, true);
+    callbacks[idRequest] = std::bind(callback, true, _1);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -258,7 +273,10 @@ END_SLOT_WRAPPER
 void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback) {
     // Взять публичный ключ из базы
     const QString pubkey = "";
-    emit javascriptWrapper.callbackCall(std::bind(callback, pubkey));
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, pubkey, exception));
 }
 
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
@@ -296,29 +314,35 @@ void Messenger::addAddressToMonitored(const QString &address) {
 
 void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const std::list<Message> result = db.getMessagesForUser(address, from, to);
     std::vector<Message> messages;
-    std::copy(result.begin(), result.end(), std::back_inserter(messages));
-    emit javascriptWrapper.callbackCall(std::bind(callback, messages));
+    const TypedException exception = apiVrapper2([&, this] {
+        const std::list<Message> result = db.getMessagesForUser(address, from, to);
+        std::copy(result.begin(), result.end(), std::back_inserter(messages));
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
     // Обработать ошибки
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutor, from, to);
     std::vector<Message> messages;
-    std::copy(result.begin(), result.end(), std::back_inserter(messages));
-    emit javascriptWrapper.callbackCall(std::bind(callback, messages));
+    const TypedException exception = apiVrapper2([&, this] {
+        const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutor, from, to);
+        std::copy(result.begin(), result.end(), std::back_inserter(messages));
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-       // TODO
-    const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutor, count, to);
+       // TODO from -> to
     std::vector<Message> messages;
-    std::copy(result.begin(), result.end(), std::back_inserter(messages));
-    emit javascriptWrapper.callbackCall(std::bind(callback, messages));
+    const TypedException exception = apiVrapper2([&, this] {
+        const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutor, count, to);
+        std::copy(result.begin(), result.end(), std::back_inserter(messages));
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
 }

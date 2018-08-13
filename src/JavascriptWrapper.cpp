@@ -73,27 +73,6 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-template<class Function>
-TypedException JavascriptWrapper::apiVrapper2(const Function &func) {
-    // TODO когда будет if constexpr, объединить обе функции в одну
-    try {
-        func();
-        return TypedException();
-    } catch (const TypedException &e) {
-        LOG << "Error " << std::to_string(e.numError) << ". " << e.description;
-        return e;
-    } catch (const Exception &e) {
-        LOG << "Error " << e;
-        return TypedException(TypeErrors::OTHER_ERROR, e);
-    } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
-        return TypedException(TypeErrors::OTHER_ERROR, e.what());
-    } catch (...) {
-        LOG << "Unknown error";
-        return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
-    }
-}
-
 template<typename... Args>
 void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
     const QString res = makeJsFunc2<true>(function, lastArg, exception, std::forward<Args>(args)...);
