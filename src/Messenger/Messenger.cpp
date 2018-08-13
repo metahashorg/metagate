@@ -41,8 +41,8 @@ QString Messenger::makeTextForSendMessageRequest(const QString &address, const Q
 }
 
 Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
-    : db(*DBStorage::instance())
-    , TimerClass(1s, parent)
+    : TimerClass(1s, parent)
+    , db(*DBStorage::instance())
     , javascriptWrapper(javascriptWrapper)
     , wssClient("wss.wss.com")
 {
@@ -230,10 +230,8 @@ BEGIN_SLOT_WRAPPER
             getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer); // TODO уточнить, to - это включительно или нет
         }
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
-        const auto publicKeyPair = parseKeyMessageResponse(messageJson);
-        const QString &address = publicKeyPair.first;
-        const QString &pkey = publicKeyPair.second;
-        db.setUserPublicKey(address, pkey);
+        const KeyMessageResponse publicKeyResult = parseKeyMessageResponse(messageJson);
+        db.setUserPublicKey(publicKeyResult.addr, publicKeyResult.publicKey);
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
@@ -320,7 +318,6 @@ BEGIN_SLOT_WRAPPER
         std::copy(result.begin(), result.end(), std::back_inserter(messages));
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
-    // Обработать ошибки
 END_SLOT_WRAPPER
 }
 

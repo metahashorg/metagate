@@ -49,11 +49,18 @@ struct NewMessageResponse {
     bool isInput;
     Message::Counter counter;
     uint64_t timestamp;
+    uint64_t fee;
     QString collocutor;
 
     bool operator< (const NewMessageResponse &second) const {
         return this->counter < second.counter;
     }
+};
+
+struct KeyMessageResponse {
+    QString publicKey;
+    QString addr;
+    uint64_t fee;
 };
 
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response);
@@ -64,6 +71,6 @@ std::vector<NewMessageResponse> parseNewMessagesResponse(const QJsonDocument &re
 
 Message::Counter parseCountMessagesResponse(const QJsonDocument &response);
 
-std::pair<QString, QString> parseKeyMessageResponse(const QJsonDocument &response);
+KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response);
 
 #endif // MESSENGERMESSAGES_H

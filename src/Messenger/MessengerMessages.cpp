@@ -11,12 +11,12 @@ const static QString MSG_GET_CHANNEL_REQUEST = "msg_get_channel";
 const static QString MSG_GET_CHANNELS_REQUEST = "msg_get_channels";
 const static QString MSG_APPEND_KEY_ONLINE_REQUEST = "msg_append_key_online";
 
-const static QString APPEND_KEY_TO_ADDR_RESPONSE = "";
-const static QString GET_KEY_BY_ADDR_RESPONSE = "";
-const static QString SEND_TO_ADDR_RESPONSE = "";
-const static QString NEW_MSGS_RESPONSE = "";
-const static QString NEW_MSG_RESPONSE = "";
-const static QString COUNT_MESSAGES_RESPONSE = "";
+const static QString APPEND_KEY_TO_ADDR_RESPONSE = "msg_append_key_to_addr";
+const static QString GET_KEY_BY_ADDR_RESPONSE = "msg_get_key_by_addr";
+const static QString SEND_TO_ADDR_RESPONSE = "msg_send_to_addr";
+const static QString NEW_MSGS_RESPONSE = "msg_get_my";
+const static QString NEW_MSG_RESPONSE = "new_msg";
+const static QString COUNT_MESSAGES_RESPONSE = "msg_append_key_online";
 
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
     return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
@@ -50,7 +50,7 @@ QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAd
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_append_key_to_addr");
-    json.insert("id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("fee", QString::fromStdString(std::to_string(fee)));
     params.insert("rsa_pub_key", rsaPubkeyHex);
@@ -64,7 +64,7 @@ QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, c
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_get_key_by_addr");
-    json.insert("id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("addr", address);
     params.insert("pubkey", pubkeyHex);
@@ -77,7 +77,7 @@ QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex,
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_send_to_addr");
-    json.insert("id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("to", toAddress);
     params.insert("data", dataHex);
@@ -93,9 +93,10 @@ QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHe
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_MY_REQUEST);
-    json.insert("id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
-    params.insert("cnt", QString::fromStdString(std::to_string(from)));
+    params.insert("cnt_from", QString::fromStdString(std::to_string(from)));
+    params.insert("cnt_to", QString::fromStdString(std::to_string(to)));
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
     json.insert("params", params);
@@ -106,7 +107,7 @@ QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &sign
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_APPEND_KEY_ONLINE_REQUEST);
-    json.insert("id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
@@ -115,9 +116,28 @@ QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &sign
 }
 
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
-    // Может не быть адреса или метода, если ошибка
     ResponseType result;
-    const QString type = "";
+    QString type;
+
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("result") && root.value("result").isString(), "data field not found");
+    const QString res = root.value("result").toString();
+    CHECK(res == "ok", "result != ok"); // ok даже в случае ошибки
+    if (root.contains("method") && root.value("method").isString()) {
+        type = root.value("method").toString();
+    }
+    if (root.contains("addr") && root.value("addr").isString()) {
+        result.address = root.value("addr").toString();
+    }
+    if (root.contains("error") && root.value("error").isString()) {
+        result.error = root.value("error").toString();
+        result.isError = true;
+    }
+    if (root.contains("request_id") && root.value("request_id").isString()) {
+        result.id = std::stoull(root.value("request_id").toString().toStdString());
+    }
+
     if (type == APPEND_KEY_TO_ADDR_RESPONSE) {
         result.method = METHOD::APPEND_KEY_TO_ADDR;
     } else if (type == GET_KEY_BY_ADDR_RESPONSE) {
@@ -136,24 +156,74 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     return result;
 }
 
-NewMessageResponse parseNewMessageResponse(const QJsonDocument &response) {
+static NewMessageResponse parseOneMessage(const QJsonObject &messageJson) {
     NewMessageResponse result;
+    CHECK(messageJson.contains("from") && messageJson.value("from").isString(), "from field not found");
+    result.collocutor = messageJson.value("from").toString();
+    CHECK(messageJson.contains("data") && messageJson.value("data").isString(), "data field not found");
+    result.data = messageJson.value("data").toString();
+    CHECK(messageJson.contains("fee") && messageJson.value("fee").isString(), "fee field not found");
+    result.fee = std::stoull(messageJson.value("fee").toString().toStdString());
+    CHECK(messageJson.contains("cnt") && messageJson.value("cnt").isString(), "cnt field not found");
+    result.counter = std::stoull(messageJson.value("cnt").toString().toStdString());
+    CHECK(messageJson.contains("timestamp") && messageJson.value("timestamp").isString(), "timestamp field not found");
+    result.timestamp = std::stoull(messageJson.value("timestamp").toString().toStdString());
+    CHECK(messageJson.contains("type") && messageJson.value("type").isString(), "type field not found");
+    const QString type = messageJson.value("type").toString();
+    CHECK(type == "in" || type == "out", "type field incorrect");
+    result.isInput = type == "in";
+
     return result;
 }
 
+NewMessageResponse parseNewMessageResponse(const QJsonDocument &response) {
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("params") && root.value("params").isObject(), "params field not found");
+    const QJsonObject data = root.value("params").toObject();
+
+    return parseOneMessage(data);
+}
+
 std::vector<NewMessageResponse> parseNewMessagesResponse(const QJsonDocument &response) {
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+    const QJsonObject data = root.value("data").toObject();
+    CHECK(data.contains("messages") && data.value("messages").isArray(), "messages field not found");
+    const QJsonArray messages = data.value("messages").toArray();
+
     std::vector<NewMessageResponse> result;
+    for (const QJsonValue &messageValue: messages) {
+        const QJsonObject message = messageValue.toObject();
+        result.emplace_back(parseOneMessage(message));
+    }
 
     std::sort(result.begin(), result.end());
     return result;
 }
 
 Message::Counter parseCountMessagesResponse(const QJsonDocument &response) {
-    return 0;
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+    const QJsonObject data = root.value("data").toObject();
+    CHECK(data.contains("cnt_last") && data.value("cnt_last").isString(), "cnt_last field not found");
+    return std::stoll(data.value("cnt_last").toString().toStdString());
 }
 
-std::pair<QString, QString> parseKeyMessageResponse(const QJsonDocument &response) {
-    const QString address = "";
-    const QString publicKey = "";
-    return std::make_pair(address, publicKey);
+KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response) {
+    KeyMessageResponse result;
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+    const QJsonObject data = root.value("data").toObject();
+    CHECK(data.contains("rsa_pub_key") && data.value("rsa_pub_key").isString(), "rsa_pub_key field not found");
+    result.publicKey = data.value("rsa_pub_key").toString();
+    CHECK(data.contains("addr") && data.value("addr").isString(), "addr field not found");
+    result.addr = data.value("addr").toString();
+    CHECK(data.contains("fee") && data.value("fee").isString(), "fee field not found");
+    result.fee = std::stoull(data.value("fee").toString().toStdString());
+
+    return result;
 }
