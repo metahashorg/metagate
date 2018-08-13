@@ -53,7 +53,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/Message.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
-    Messenger/MessengerWaletManager.cpp
+    Messenger/MessengerWaletManager.cpp \
+    TypedException.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 

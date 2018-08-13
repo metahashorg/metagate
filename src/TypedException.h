@@ -1,6 +1,8 @@
 #ifndef TYPEDEXCEPTION_H
 #define TYPEDEXCEPTION_H
 
+#include <functional>
+
 enum TypeErrors {
     NOT_ERROR = 0,
     DONT_CREATE_FOLDER = 1,
@@ -51,5 +53,7 @@ if (!(v)) { \
     throwErrTyped(type, s); \
 } \
 }
+
+TypedException apiVrapper2(const std::function<void()> &func);
 
 #endif // TYPEDEXCEPTION_H
