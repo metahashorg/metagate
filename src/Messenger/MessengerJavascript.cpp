@@ -349,6 +349,27 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MessengerJavascript::getCountMessages(QString address, const QString &collocutor, QString from) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
+    const QString JS_NAME_RESULT = "msgCountMessagesJs";
+
+    LOG << "getCountMessages " << address << " " << collocutor << " " << from;
+
+    const TypedException exception = apiVrapper2([&, this](){
+        const Message::Counter fromI = std::stoll(from.toStdString());
+        emit messenger->getCountMessages(address, collocutor, fromI, [this, JS_NAME_RESULT, address, collocutor](const Message::Counter &count, const TypedException &exception) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(count));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(0));
+    }
+END_SLOT_WRAPPER
+}
+
 void MessengerJavascript::onNewMesseges(QString address, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgNewMessegesJs";

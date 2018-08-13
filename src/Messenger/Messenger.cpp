@@ -58,6 +58,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Messenger::getSavedPos, this, &Messenger::onGetSavedPos), "not connect onGetSavedPos");
     CHECK(connect(this, &Messenger::getSavedsPos, this, &Messenger::onGetSavedsPos), "not connect onGetSavedsPos");
     CHECK(connect(this, &Messenger::savePos, this, &Messenger::onSavePos), "not connect onGetSavedPos");
+    CHECK(connect(this, &Messenger::getCountMessages, this, &Messenger::onGetCountMessages), "not connect onGetCountMessages");
     CHECK(connect(this, &Messenger::getHistoryAddress, this, &Messenger::onGetHistoryAddress), "not connect onGetHistoryAddress");
     CHECK(connect(this, &Messenger::getHistoryAddressAddress, this, &Messenger::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
     CHECK(connect(this, &Messenger::getHistoryAddressAddressCount, this, &Messenger::onGetHistoryAddressAddressCount), "not connect onGetHistoryAddressAddressCount");
@@ -146,6 +147,17 @@ BEGIN_SLOT_WRAPPER
 
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Получить количество сообщений с адреса на адрес
+    Message::Counter lastCounter = 0;
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
 }
 

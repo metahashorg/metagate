@@ -64,6 +64,8 @@ public slots:
 
     Q_INVOKABLE void savePos(QString address, const QString &collocutor, QString counterStr);
 
+    Q_INVOKABLE void getCountMessages(QString address, const QString &collocutor, QString from);
+
 
     Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
 

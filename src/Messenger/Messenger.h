@@ -75,6 +75,8 @@ public:
 
     using SendMessageCallback = std::function<void(const TypedException &exception)>;
 
+    using GetCountMessagesCallback = std::function<void(const Message::Counter &count, const TypedException &exception)>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, QObject *parent = nullptr);
@@ -109,6 +111,8 @@ signals:
 
     void savePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
 
+    void getCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback);
+
     void getHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
     void getHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
@@ -134,6 +138,8 @@ private slots:
     void onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback);
 
     void onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
+
+    void onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback);
 
     void onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
