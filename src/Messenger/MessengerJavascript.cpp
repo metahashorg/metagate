@@ -337,7 +337,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "savePos " << address << " " << collocutor << " " << counterStr;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const Message::Counter counter = std::stoull(counterStr.toStdString());
+        const Message::Counter counter = std::stoll(counterStr.toStdString());
         emit messenger->savePos(address, collocutor, counter, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception){
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<QString>("Ok"));
         });

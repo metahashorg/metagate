@@ -165,7 +165,7 @@ static NewMessageResponse parseOneMessage(const QJsonObject &messageJson) {
     CHECK(messageJson.contains("fee") && messageJson.value("fee").isString(), "fee field not found");
     result.fee = std::stoull(messageJson.value("fee").toString().toStdString());
     CHECK(messageJson.contains("cnt") && messageJson.value("cnt").isString(), "cnt field not found");
-    result.counter = std::stoull(messageJson.value("cnt").toString().toStdString());
+    result.counter = std::stoll(messageJson.value("cnt").toString().toStdString());
     CHECK(messageJson.contains("timestamp") && messageJson.value("timestamp").isString(), "timestamp field not found");
     result.timestamp = std::stoull(messageJson.value("timestamp").toString().toStdString());
     CHECK(messageJson.contains("type") && messageJson.value("type").isString(), "type field not found");
