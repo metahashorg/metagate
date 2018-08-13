@@ -52,6 +52,17 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages, const 
     return QJsonDocument(messagesArrJson);
 }
 
+static QJsonDocument allPosToJson(const std::vector<std::pair<QString, Message::Counter>> &pos) {
+    QJsonArray messagesArrJson;
+    for (const auto &pair: pos) {
+        QJsonObject messageJson;
+        messageJson.insert("address", pair.first);
+        messageJson.insert("counter", pair.second);
+        messagesArrJson.push_back(messageJson);
+    }
+    return QJsonDocument(messagesArrJson);
+}
+
 void MessengerJavascript::getHistoryAddress(QString address, QString from, QString to) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
@@ -291,6 +302,28 @@ BEGIN_SLOT_WRAPPER
 
     if (exception.isSet()) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(0));
+    }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::getSavedsPos(QString address) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
+    const QString JS_NAME_RESULT = "msgSavedsPosJs";
+
+    LOG << "getSavedsPos " << address;
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit messenger->getSavedsPos(address, [this, JS_NAME_RESULT, address](const std::vector<std::pair<QString, Message::Counter>> &pos, const TypedException &exception) {
+            const Opt<QJsonDocument> result(allPosToJson(pos));
+
+            makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), result);
+        });
+    });
+
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>());
     }
 END_SLOT_WRAPPER
 }

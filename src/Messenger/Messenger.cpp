@@ -56,6 +56,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
     CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onSignedStrings");
     CHECK(connect(this, &Messenger::getSavedPos, this, &Messenger::onGetSavedPos), "not connect onGetSavedPos");
+    CHECK(connect(this, &Messenger::getSavedsPos, this, &Messenger::onGetSavedsPos), "not connect onGetSavedsPos");
     CHECK(connect(this, &Messenger::savePos, this, &Messenger::onSavePos), "not connect onGetSavedPos");
     CHECK(connect(this, &Messenger::getHistoryAddress, this, &Messenger::onGetHistoryAddress), "not connect onGetHistoryAddress");
     CHECK(connect(this, &Messenger::getHistoryAddressAddress, this, &Messenger::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
@@ -127,6 +128,17 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void Messenger::onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Получить все counter-ы
+    std::vector<std::pair<QString, Message::Counter>> pos;
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
+END_SLOT_WRAPPER
+}
+
 void Messenger::onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Сохранить позицию
@@ -192,6 +204,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         const QString hashMessage = createHashMessage(m.data);
         if (m.isInput) {
             db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage);
+            // Проверить, если для этого collocutor не установлен saved pos, то поставить его в 0 (или -1?)
         } else {
             // Вычислить хэш сообщения, найти сообщение в bd минимальное по номеру, которое не подтвержденное, заменить у него counter. Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
             // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer

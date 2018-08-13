@@ -63,6 +63,8 @@ public:
 
     using GetSavedPosCallback = std::function<void(const Message::Counter &pos, const TypedException &exception)>;
 
+    using GetSavedsPosCallback = std::function<void(const std::vector<std::pair<QString, Message::Counter>> &pos, const TypedException &exception)>;
+
     using RegisterAddressCallback = std::function<void(bool isNew, const TypedException &exception)>;
 
     using SignedStringsCallback = std::function<void(const TypedException &exception)>;
@@ -103,6 +105,8 @@ signals:
 
     void getSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback);
 
+    void getSavedsPos(const QString &address, const GetSavedsPosCallback &callback);
+
     void savePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
 
     void getHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
@@ -126,6 +130,8 @@ private slots:
     void onGetLastMessage(const QString &address, const GetSavedPosCallback &callback);
 
     void onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback);
+
+    void onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback);
 
     void onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
 

@@ -60,6 +60,8 @@ public slots:
 
     Q_INVOKABLE void getSavedPos(QString address, const QString &collocutor);
 
+    Q_INVOKABLE void getSavedsPos(QString address);
+
     Q_INVOKABLE void savePos(QString address, const QString &collocutor, QString counterStr);
 
 
