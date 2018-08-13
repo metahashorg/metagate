@@ -41,7 +41,6 @@
 const static QString WALLET_PREV_PATH = ".metahash_wallets/";
 const static QString WALLET_PATH_ETH = "eth/";
 const static QString WALLET_PATH_BTC = "btc/";
-const static QString WALLET_PATH_MTH = "mhc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
@@ -877,7 +876,7 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
 
     copyRecursively(makePath(prevPath, WALLET_PATH_ETH), makePath(newPath, WALLET_PATH_ETH), false);
     copyRecursively(makePath(prevPath, WALLET_PATH_BTC), makePath(newPath, WALLET_PATH_BTC), false);
-    copyRecursively(makePath(prevPath, WALLET_PATH_MTH), makePath(newPath, WALLET_PATH_MTH), false);
+    copyRecursively(makePath(prevPath, Wallet::WALLET_PATH_MTH), makePath(newPath, Wallet::WALLET_PATH_MTH), false);
     copyRecursively(makePath(prevPath, WALLET_PATH_TMH), makePath(newPath, WALLET_PATH_TMH), false);
     copyRecursively(prevPath, makePath(newPath, WALLET_PATH_TMH), false);
 
@@ -909,7 +908,7 @@ BEGIN_SLOT_WRAPPER
 
         setPathToWallet(walletPathEth, WALLET_PATH_ETH, "eth");
         setPathToWallet(walletPathBtc, WALLET_PATH_BTC, "btc");
-        setPathToWallet(walletPathMth, WALLET_PATH_MTH, "mhc");
+        setPathToWallet(walletPathMth, Wallet::WALLET_PATH_MTH, "mhc");
         setPathToWallet(walletPathTmh, WALLET_PATH_TMH, "tmh");
 
         walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);

@@ -14,6 +14,8 @@ public:
 
     const static std::string PREFIX_ONE_KEY_TMH;
 
+    const static QString WALLET_PATH_MTH;
+
 public:
 
     static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);
@@ -44,6 +46,10 @@ public:
 
     const QString& getFullPath() const {
         return fullPath;
+    }
+
+    const std::string& getAddress() const {
+        return name;
     }
 
 private:

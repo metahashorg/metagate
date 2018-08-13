@@ -5,6 +5,7 @@
 #include "makeJsFunc.h"
 #include "SlotWrapper.h"
 #include "utils.h"
+#include "Paths.h"
 
 #include "Wallet.h"
 #include "WalletRsa.h"
@@ -13,32 +14,13 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
-static std::pair<Wallet, WalletRsa> getWalletInst2() {
-    // Узнать каталог к ключу
-    std::string pubkey;
-    std::string addr;
-    Wallet::createWallet("./", "123", pubkey, addr);
-    Wallet wallet("./", addr, "123");
-
-    WalletRsa::createRsaKey("./", addr, "123");
-    WalletRsa walletRsa("./", addr);
-    walletRsa.unlock("123");
-
-    return std::make_pair(wallet, std::move(walletRsa));
-}
-
-static std::pair<Wallet, WalletRsa>& getWalletInst() {
-    static auto pair = getWalletInst2();
-
-    return pair;
-}
-
 MessengerJavascript::MessengerJavascript(QObject *parent)
     : QObject(parent)
 {
     CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
-
     CHECK(connect(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges), "not connect onNewMesseges");
+
+    setPaths(getWalletPath(), "");
 }
 
 void MessengerJavascript::onCallbackCall(const std::function<void()> &callback) {
@@ -90,8 +72,7 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messages " << address << " " << messages.size();
-                const auto &pairWallet = getWalletInst();
-                result = messagesToJson(messages, pairWallet.second);
+                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
             });
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), result);
         });
@@ -123,8 +104,7 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messages " << address << " " << collocutor << " " << messages.size();
-                const auto &pairWallet = getWalletInst();
-                result = messagesToJson(messages, pairWallet.second);
+                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
             });
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), Opt<QString>(collocutor), result);
         });
@@ -156,8 +136,7 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messagesC " << address << " " << collocutor << " " << messages.size();
-                const auto &pairWallet = getWalletInst();
-                result = messagesToJson(messages, pairWallet.second);
+                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
             });
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception2, Opt<QString>(address), Opt<QString>(collocutor), result);
         });
@@ -179,11 +158,10 @@ BEGIN_SLOT_WRAPPER
 
     const uint64_t fee = std::stoull(feeStr.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
-        const auto &pairWallet = getWalletInst();
-        const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, QString::fromStdString(pairWallet.second.getPublikKey()), fee);
+        const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).getPublikKey()), fee);
         std::string pubkey;
-        const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
-        emit messenger->registerAddress(isForcibly, address, QString::fromStdString(pairWallet.second.getPublikKey()), QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew, const TypedException &exception) {
+        const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pubkey);
+        emit messenger->registerAddress(isForcibly, address, QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).getPublikKey()), QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew, const TypedException &exception) {
             const TypedException exception2 = apiVrapper2([&, this](){
                 if (exception.isSet()) {
                     throw exception;
@@ -191,11 +169,10 @@ BEGIN_SLOT_WRAPPER
 
                 if (isNew) {
                     const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-                    const auto &pairWallet = getWalletInst();
                     std::vector<QString> result;
                     for (const QString &msg: messagesForSign) {
                         std::string tmp;
-                        const std::string sign = pairWallet.first.sign(msg.toStdString(), tmp);
+                        const std::string sign = walletManager.getWallet(address.toStdString()).sign(msg.toStdString(), tmp);
                         result.emplace_back(QString::fromStdString(sign));
                     }
                     emit messenger->signedStrings(result, [this, JS_NAME_RESULT, address](const TypedException &exception){
@@ -224,10 +201,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "savePublicKeyCollocutor " << address << " " << collocutor;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const auto &pairWallet = getWalletInst();
         const QString messageToSign = Messenger::makeTextForGetPubkeyRequest(collocutor);
         std::string pubkey;
-        const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pubkey);
+        const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pubkey);
 
         emit messenger->savePubkeyAddress(isForcibly, collocutor, QString::fromStdString(pubkey), QString::fromStdString(sign), [this, JS_NAME_RESULT, address, collocutor](bool /*isNew*/, const TypedException &exception) {
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
@@ -260,12 +236,11 @@ BEGIN_SLOT_WRAPPER
                 const WalletRsa walletRsa = WalletRsa::fromPublicKey(pubkey.toStdString());
                 const QString encryptedDataToWss = QString::fromStdString(walletRsa.encrypt(data.toStdString()));
 
-                const auto &pairWallet = getWalletInst();
                 const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee);
                 std::string pub;
-                const std::string &sign = pairWallet.first.sign(messageToSign.toStdString(), pub);
+                const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pub);
 
-                const QString encryptedDataToBd = QString::fromStdString(pairWallet.second.encrypt(data.toStdString()));
+                const QString encryptedDataToBd = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).encrypt(data.toStdString()));
                 emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception) {
                     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
                 });
@@ -351,6 +326,33 @@ BEGIN_SLOT_WRAPPER
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(address), Opt<Message::Counter>(lastMessage));
 END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::setPaths(QString newPatch, QString /*newUserName*/) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "setMessengerPathsJs";
+
+    Opt<QString> result;
+    const TypedException exception = apiVrapper2([&, this]() {
+        walletPath = makePath(newPatch, Wallet::WALLET_PATH_MTH);
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        result = "Ok";
+    });
+
+    if (exception.numError != TypeErrors::NOT_ERROR) {
+        result = "Not ok";
+    }
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds) {
+    walletManager.unlockWallet(walletPath, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), seconds(timeSeconds));
+}
+
+void MessengerJavascript::lockWallet() {
+    walletManager.lockWallet();
 }
 
 void MessengerJavascript::runJs(const QString &script) {

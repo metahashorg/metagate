@@ -29,6 +29,7 @@
 
 const std::string Wallet::PREFIX_ONE_KEY_MTH = "mth:";
 const std::string Wallet::PREFIX_ONE_KEY_TMH = "tmh:";
+const QString Wallet::WALLET_PATH_MTH = "mhc/";
 
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
 

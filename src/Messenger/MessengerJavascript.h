@@ -9,6 +9,7 @@
 
 #include "Messenger.h"
 #include "Message.h"
+#include "MessengerWaletManager.h"
 
 class MessengerJavascript : public QObject {
     Q_OBJECT
@@ -61,6 +62,13 @@ public slots:
 
     Q_INVOKABLE void savePos(QString address, const QString &collocutor, QString counterStr);
 
+
+    Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
+
+    Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
+
+    Q_INVOKABLE void lockWallet();
+
 private:
 
     template<typename... Args>
@@ -71,6 +79,10 @@ private:
 private:
 
     Messenger *messenger = nullptr;
+
+    MessengerWaletManager walletManager;
+
+    QString walletPath;
 
 };
 

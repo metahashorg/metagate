@@ -14,6 +14,8 @@ enum TypeErrors {
     QR_ENCODE_ERROR = 8,
 
     MESSENGER_ERROR = 9,
+    WALLET_NOT_UNLOCK = 10,
+    WALLET_OTHER = 11,
 
     OTHER_ERROR = 1000
 };

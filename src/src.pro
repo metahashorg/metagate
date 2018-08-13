@@ -52,7 +52,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/MessengerJavascript.cpp \
     Messenger/Message.cpp \
     dbstorage.cpp \
-    WalletRsa.cpp
+    WalletRsa.cpp \
+    Messenger/MessengerWaletManager.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -110,7 +111,8 @@ HEADERS += mainwindow.h \
     Messenger/Message.h \
     RequestId.h \
     dbstorage.h \
-    WalletRsa.h
+    WalletRsa.h \
+    Messenger/MessengerWaletManager.h
 
 FORMS += mainwindow.ui
 
