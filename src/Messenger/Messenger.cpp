@@ -5,6 +5,7 @@
 #include "Log.h"
 
 #include "MessengerMessages.h"
+#include "MessengerJavascript.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -13,7 +14,7 @@
 
 #include <QCryptographicHash>
 
-#include "MessengerJavascript.h"
+#include "dbstorage.h"
 
 static QString createHashMessage(const QString &message) {
     return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
@@ -36,7 +37,8 @@ QString Messenger::makeTextForSendMessageRequest(const QString &address, const Q
 }
 
 Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
-    : TimerClass(1s, parent)
+    : db(*DBStorage::instance())
+    , TimerClass(1s, parent)
     , javascriptWrapper(javascriptWrapper)
     , wssClient("wss.wss.com")
 {
@@ -67,8 +69,11 @@ void Messenger::invokeCallback(size_t requestId) {
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {
-    // Взять из базы данных все адреса
+    const QStringList res = db.getUsersList();
     std::vector<QString> result;
+    for (const QString r: res) {
+        result.emplace_back(r);
+    }
     return result;
 }
 
@@ -97,8 +102,7 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetLastMessage(const QString &address, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить counter
-    Message::Counter lastCounter = 0;
+    const Message::Counter lastCounter = db.getMessageMaxCounter(address);
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter));
 END_SLOT_WRAPPER
 }
@@ -156,8 +160,7 @@ BEGIN_SLOT_WRAPPER
         DeferredMessage &deferred = pairDeferred.second;
         if (deferred.check()) {
             deferred.resetDeferred();
-            // Взять последнее значение из бд
-            const Message::Counter lastCnt = 0;
+            const Message::Counter lastCnt = db.getMessageMaxCounter(address);
             emit javascriptWrapper.newMessegesSig(address, lastCnt);
         }
     }
@@ -166,23 +169,23 @@ END_SLOT_WRAPPER
 
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages) {
     CHECK(!messages.empty(), "Empty messages");
-    // Запросить counter из bd
-    const Message::Counter currCounter = 0;
+    const Message::Counter currConfirmedCounter = db.getMessageMaxConfirmedCounter(address);
     const Message::Counter minCounterInServer = messages.front().counter;
     const Message::Counter maxCounterInServer = messages.back().counter;
 
     for (const NewMessageResponse &m: messages) {
+        const QString hashMessage = createHashMessage(m.data);
         if (m.isInput) {
-            // сохранить сообщение в бд
+            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage);
         } else {
             // Вычислить хэш сообщения, найти сообщение в bd минимальное по номеру, которое не подтвержденное, заменить у него counter. Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
             // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
         }
     }
 
-    if (minCounterInServer > currCounter + 1) {
+    if (minCounterInServer > currConfirmedCounter + 1) {
         deferredMessages[address].setDeferred(2s);
-        getMessagesFromAddressFromWss(address, currCounter + 1, minCounterInServer);
+        getMessagesFromAddressFromWss(address, currConfirmedCounter + 1, minCounterInServer);
     } else {
         if (!deferredMessages[address].isDeferred()) {
             emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
@@ -206,8 +209,7 @@ BEGIN_SLOT_WRAPPER
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
         invokeCallback(responseType.id);
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
-        // Получить из бд количество сообщений для адреса
-        const Message::Counter currCounter = 0;
+        const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(responseType.address);
         const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
         if (currCounter < messagesInServer) {
             getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer); // TODO уточнить, to - это включительно или нет
@@ -216,7 +218,7 @@ BEGIN_SLOT_WRAPPER
         const auto publicKeyPair = parseKeyMessageResponse(messageJson);
         const QString &address = publicKeyPair.first;
         const QString &pkey = publicKeyPair.second;
-        // Сохранить в базу данных соответствие
+        db.setUserPublicKey(address, pkey);
         invokeCallback(responseType.id);
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
@@ -225,8 +227,6 @@ BEGIN_SLOT_WRAPPER
         const std::vector<NewMessageResponse> messages = parseNewMessagesResponse(messageJson);
         processMessages(responseType.address, messages);
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
-        // Получить адрес получателя
-        const QString collocutor = "";
         invokeCallback(responseType.id);
     } else {
         throwErr("Incorrect response type");
@@ -263,7 +263,9 @@ void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddres
 
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Вычислить хэш dataHex, Поместить сообщение encryptedDataHex в базу данных под максимальным номером
+    const QString hashMessage = createHashMessage(dataHex);
+    const Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress);
+    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage);
     const size_t idRequest = id.get();
     const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
     callbacks[idRequest] = callback;
@@ -294,8 +296,9 @@ void Messenger::addAddressToMonitored(const QString &address) {
 
 void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить сообщения
+    const std::list<Message> result = db.getMessagesForUser(address, from, to);
     std::vector<Message> messages;
+    std::copy(result.begin(), result.end(), std::back_inserter(messages));
     emit javascriptWrapper.callbackCall(std::bind(callback, messages));
     // Обработать ошибки
 END_SLOT_WRAPPER
@@ -303,16 +306,19 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить сообщения
+    const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutor, from, to);
     std::vector<Message> messages;
+    std::copy(result.begin(), result.end(), std::back_inserter(messages));
     emit javascriptWrapper.callbackCall(std::bind(callback, messages));
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить сообщения
+       // TODO
+    const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutor, count, to);
     std::vector<Message> messages;
+    std::copy(result.begin(), result.end(), std::back_inserter(messages));
     emit javascriptWrapper.callbackCall(std::bind(callback, messages));
 END_SLOT_WRAPPER
 }

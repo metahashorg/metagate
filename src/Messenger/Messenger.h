@@ -16,6 +16,7 @@
 
 struct NewMessageResponse;
 class MessengerJavascript;
+class DBStorage;
 
 class Messenger : public TimerClass
 {
@@ -159,6 +160,8 @@ private:
     void invokeCallback(size_t requestId);
 
 private:
+
+    DBStorage &db;
 
     MessengerJavascript &javascriptWrapper;
 
