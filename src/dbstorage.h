@@ -24,13 +24,21 @@ public:
     void addMessage(const QString &user, const QString &duser,
                     const QString &text, uint64_t timestamp, Message::Counter counter,
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
-                    const QString &hash);
+                    const QString &hash, qint64 fee);
 
     qint64 getUserId(const QString &username);
     QStringList getUsersList();
 
+    qint64 getContactId(const QString &username);
+
     QString getUserPublicKey(const QString &username);
     void setUserPublicKey(const QString &username, const QString &publickey);
+
+    QString getUserSignatures(const QString &username);
+    void setUserSignatures(const QString &username, const QString &signatures);
+
+    QString getContactrPublicKey(const QString &username);
+    void setContactPublicKey(const QString &username, const QString &publickey);
 
     Message::Counter getMessageMaxCounter(const QString &user);
     Message::Counter getMessageMaxConfirmedCounter(const QString &user);
@@ -42,11 +50,14 @@ public:
     qint64 findLastNotConfirmedMessage(const QString &username);
     void updateMessage(qint64 id, Message::Counter newCounter, bool confirmed);
 
+    Message::Counter getLastReadCounterForUserContact(const QString &username, const QString &contact);
+    void setLastReadCounterForUserContact(const QString &username, const QString &contact, Message::Counter counter);
+
 private:
     explicit DBStorage(QObject *parent = nullptr);
 
     bool createTable(const QString &table, const QString &createQuery);
-    void createMessagesList(QSqlQuery &query, std::list<Message> &messages);
+    void createMessagesList(QSqlQuery &query, std::list<Message> &messages, bool reverse = false);
 
     QSqlDatabase m_db;
 };
