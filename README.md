@@ -174,7 +174,7 @@ Q_INVOKABLE void signMessageBtcPswd(QString requestId, QString address, QString 
 signMessageBtcResultJs(requestId, result, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos);
-Генерирует bitcoin транзакцию
+# Generating Bitcoin transaction
 # Parameters:
   # jsonInputs - utxos in the format [{"tx_hash": "string", "tx_index": figure, "scriptPubKey": "string", "value": "figure in the string in decimal format"}]
   # value - is needed for sending. Possible variants: "all" or decimal number
@@ -310,20 +310,20 @@ getAppInfoResultJs(requestId, isProduction, version, gitCommit);
 directoryChangedResultJs(path, ethName);
 
 Q_INVOKABLE void qrEncode(QString requestId, QString textHex);
-Кодирует текст в qr
+# Encodes text to qr code
 # Result returns to the function:
 qrEncodeResultJs(requestId, result);
-где result - png изображение в base64
+# where result is a png image in base64
 
 Q_INVOKABLE void qrEncode(QString requestId, QString pngBase64);
-декодирует текст из qr
+# Decodes text from qr code
 # Result returns to the function:
 qrDecodeResultJs(requestId, result);
-где result - текст в base16
+# where result is a text in base16
 
 Q_INVOKABLE void metaOnline();
-Запрос статистики нахождения приложения online
-Ответ вернется в функцию
+# Request for statistics on being application online
+# Result returns to the function:
 onlineResultJs(jsonResult, errorNum, errorMessage);
 
 ```
