@@ -84,81 +84,23 @@ std::vector<QString> Messenger::getMonitoredAddresses() const {
     return result;
 }
 
-void Messenger::onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
-        const std::vector<QString> keys = stringsForSign();
-        CHECK(keys.size() == signedHexs.size(), "Incorrect signed strings");
-
-        QJsonArray arrJson;
-        for (size_t i = 0; i < keys.size(); i++) {
-            const QString &key = keys[i];
-            const QString &value = signedHexs[i];
-
-            QJsonObject obj;
-            obj.insert("key", key);
-            obj.insert("value", value);
-            arrJson.push_back(obj);
-        }
-
-        const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
-        LOG << "Set user signature " << arr.size();
-        db.setUserSignatures(address, arr);
-        addAddressToMonitored(address);
-    });
-
-    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
-END_SLOT_WRAPPER
+void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
+    const QString pubkeyHex = db.getUserPublicKey(fromAddress);
+    const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
+    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
+    emit wssClient.sendMessage(message);
 }
 
-void Messenger::onGetLastMessage(const QString &address, const GetSavedPosCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    Message::Counter lastCounter;
-    const TypedException exception = apiVrapper2([&, this] {
-        lastCounter = db.getMessageMaxCounter(address);
-    });
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
-END_SLOT_WRAPPER
+void Messenger::clearAddressesToMonitored() {
+    emit wssClient.setHelloString(std::vector<QString>{});
 }
 
-void Messenger::onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    Message::Counter lastCounter;
-    const TypedException exception = apiVrapper2([&, this] {
-        lastCounter = db.getLastReadCounterForUserContact(address, collocutor);
-    });
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
-END_SLOT_WRAPPER
-}
-
-void Messenger::onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    std::vector<std::pair<QString, Message::Counter>> pos;
-    const TypedException exception = apiVrapper2([&, this] {
-        const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address);
-        std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
-    });
-    emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
-END_SLOT_WRAPPER
-}
-
-void Messenger::onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
-        db.setLastReadCounterForUserContact(address, collocutor, pos);
-    });
-    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
-END_SLOT_WRAPPER
-}
-
-void Messenger::onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    Message::Counter lastCounter = 0;
-    const TypedException exception = apiVrapper2([&, this] {
-        lastCounter = db.getMessagesCountForUserAndDest(address, collocutor, from);
-    });
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
-END_SLOT_WRAPPER
+void Messenger::addAddressToMonitored(const QString &address) {
+    const QString pubkeyHex = db.getUserPublicKey(address);
+    const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
+    const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
+    emit wssClient.addHelloString(message);
+    emit wssClient.sendMessage(message);
 }
 
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
@@ -314,6 +256,33 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void Messenger::onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        const std::vector<QString> keys = stringsForSign();
+        CHECK(keys.size() == signedHexs.size(), "Incorrect signed strings");
+
+        QJsonArray arrJson;
+        for (size_t i = 0; i < keys.size(); i++) {
+            const QString &key = keys[i];
+            const QString &value = signedHexs[i];
+
+            QJsonObject obj;
+            obj.insert("key", key);
+            obj.insert("value", value);
+            arrJson.push_back(obj);
+        }
+
+        const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
+        LOG << "Set user signature " << arr.size();
+        db.setUserSignatures(address, arr);
+        addAddressToMonitored(address);
+    });
+
+    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
 void Messenger::onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const QString currSign = db.getUserSignatures(address);
@@ -352,23 +321,54 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
-    const QString pubkeyHex = db.getUserPublicKey(fromAddress);
-    const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
-    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
-    emit wssClient.sendMessage(message);
+void Messenger::onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    Message::Counter lastCounter;
+    const TypedException exception = apiVrapper2([&, this] {
+        lastCounter = db.getLastReadCounterForUserContact(address, collocutor);
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
+END_SLOT_WRAPPER
 }
 
-void Messenger::clearAddressesToMonitored() {
-    emit wssClient.setHelloString(std::vector<QString>{});
+void Messenger::onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<std::pair<QString, Message::Counter>> pos;
+    const TypedException exception = apiVrapper2([&, this] {
+        const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address);
+        std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
+END_SLOT_WRAPPER
 }
 
-void Messenger::addAddressToMonitored(const QString &address) {
-    const QString pubkeyHex = db.getUserPublicKey(address);
-    const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
-    const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
-    emit wssClient.addHelloString(message);
-    emit wssClient.sendMessage(message);
+void Messenger::onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        db.setLastReadCounterForUserContact(address, collocutor, pos);
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetLastMessage(const QString &address, const GetSavedPosCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    Message::Counter lastCounter;
+    const TypedException exception = apiVrapper2([&, this] {
+        lastCounter = db.getMessageMaxCounter(address);
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    Message::Counter lastCounter = 0;
+    const TypedException exception = apiVrapper2([&, this] {
+        lastCounter = db.getMessagesCountForUserAndDest(address, collocutor, from);
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
+END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
