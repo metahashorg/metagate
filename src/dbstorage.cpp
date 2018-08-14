@@ -176,6 +176,7 @@ QString DBStorage::getUserPublicKey(const QString &username)
 
 void DBStorage::setUserPublicKey(const QString &username, const QString &publickey)
 {
+    getUserId(username);
     QSqlQuery query(m_db);
     query.prepare(updateMsgUserPublicKey);
     query.bindValue(":user", username);
@@ -200,6 +201,7 @@ QString DBStorage::getUserSignatures(const QString &username)
 
 void DBStorage::setUserSignatures(const QString &username, const QString &signatures)
 {
+    getUserId(username);
     QSqlQuery query(m_db);
     query.prepare(updateMsgUserSignatures);
     query.bindValue(":user", username);
@@ -224,6 +226,7 @@ QString DBStorage::getContactrPublicKey(const QString &username)
 
 void DBStorage::setContactPublicKey(const QString &username, const QString &publickey)
 {
+    getContactId(username);
     QSqlQuery query(m_db);
     query.prepare(updateMsgContactsPublicKey);
     query.bindValue(":user", username);
@@ -307,10 +310,69 @@ std::list<Message> DBStorage::getMessagesForUserAndDestNum(const QString &user, 
     return res;
 }
 
-qint64 DBStorage::findLastNotConfirmedMessage(const QString &username)
+qint64 DBStorage::getMessagesCountForUserAndDest(const QString &user, const QString &duser, qint64 from)
 {
     QSqlQuery query(m_db);
-    query.prepare(selectLastNotConfirmedMessage);
+    query.prepare(selectMsgCountMessagesForUserAndDest);
+    query.bindValue(":user", user);
+    query.bindValue(":duser", duser);
+    query.bindValue(":ob", from);
+    if (!query.exec()) {
+        return 0;
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong();
+    }
+    return 0;
+}
+
+bool DBStorage::hasMessageWithCounter(const QString &username, Message::Counter counter)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectCountMessagesWithCounter);
+    query.bindValue(":user", username);
+    query.bindValue(":counter", counter);
+    if (!query.exec()) {
+
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong() > 0;
+    }
+    return false;
+}
+
+bool DBStorage::hasUnconfirmedMessageWithHash(const QString &hash)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectCountNotConfirmedMessagesWithHash);
+    query.bindValue(":hash", hash);
+    if (!query.exec()) {
+
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong() > 0;
+    }
+    return false;
+}
+
+qint64 DBStorage::findFirstNotConfirmedMessageWithHash(const QString &hash)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectFirstNotConfirmedMessageWithHash);
+    query.bindValue(":hash", hash);
+    if (!query.exec()) {
+        return -1;
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong();
+    }
+    return -1;
+}
+
+qint64 DBStorage::findFirstNotConfirmedMessage(const QString &username)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectFirstNotConfirmedMessage);
     query.bindValue(":user", username);
     if (!query.exec()) {
         return -1;
@@ -356,6 +418,22 @@ void DBStorage::setLastReadCounterForUserContact(const QString &username, const 
     query.bindValue(":contact", contact);
     if (!query.exec()) {
     }
+}
+
+std::list<std::pair<QString, Message::Counter> > DBStorage::getLastReadCountersForUser(const QString &username)
+{
+    std::list<std::pair<QString, Message::Counter> > res;
+    QSqlQuery query(m_db);
+    query.prepare(selectLastReadCountersForUser);
+    query.bindValue(":user", username);
+    if (!query.exec()) {
+        return res;
+    }
+    while (query.next()) {
+        std::pair<QString, Message::Counter> p(query.value(0).toString(), query.value(1).toLongLong());
+        res.push_back(p);
+    }
+    return res;
 }
 
 DBStorage::DBStorage(QObject *parent)
