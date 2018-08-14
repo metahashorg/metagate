@@ -113,7 +113,8 @@ HEADERS += mainwindow.h \
     RequestId.h \
     dbstorage.h \
     WalletRsa.h \
-    Messenger/MessengerWaletManager.h
+    Messenger/MessengerWaletManager.h \
+    dbres.h
 
 FORMS += mainwindow.ui
 

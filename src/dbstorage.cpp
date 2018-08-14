@@ -1,150 +1,9 @@
 #include "dbstorage.h"
+#include "dbres.h"
 
 #include <QtSql>
 
 #include "check.h"
-
-static const QString sqliteSettings = "PRAGMA foreign_keys=on";
-
-static const QString dropTable = "DROP TABLE IF EXISTS %1";
-
-
-static const QString createPaymentsTable = "CREATE TABLE payments ("
-                                           "id VARCHAR(100) PRIMARY KEY,"
-                                           "trans VARCHAR(100),"
-                                           "from_account VARCHAR(100),"
-                                           "to_account VARCHAR(100),"
-                                           "amount VARCHAR(9),"
-                                           "value VARCHAR(9),"
-                                           "block INT,"
-                                           "is_input BOOLEAN,"
-                                           "ts INT,"
-                                           "confirmations VARCHAR(9))";
-
-static const QString preparePaymentsInsert = "INSERT OR REPLACE INTO payments "
-        "(id, trans, from_account, to_account, amount, value, block, is_input, ts, confirmations)"
-        "VALUES (:id, :trans, :from_account, :to_account, :amount, :value, :block, :is_input, :ts, :confirmations)";
-
-
-static const QString selectPayments = "SELECT id, trans, from_account, to_account, "
-                                    "amount, value, block, is_input, ts, confirmations "
-                                    "FROM payments";
-
-
-
-
-static const QString createSettingsTable = "CREATE TABLE settings ( "
-                                           "key VARCHAR(256), "
-                                           "value TEXT "
-                                           ")";
-
-static const QString createMsgUsersTable = "CREATE TABLE msg_users ( "
-                                           "id INTEGER PRIMARY KEY NOT NULL, "
-                                           "username VARCHAR(100), "
-                                           "publickey VARCHAR(200), "
-                                           "signatures VARCHAR(200) "
-                                           ")";
-
-static const QString createMsgContactsTable = "CREATE TABLE msg_contacts ( "
-                                                "id INTEGER PRIMARY KEY NOT NULL, "
-                                                "username VARCHAR(100), "
-                                                "publickey VARCHAR(200) "
-                                                ")";
-
-static const QString createMsgMessagesTable = "CREATE TABLE msg_messages ( "
-                                           "id INTEGER PRIMARY KEY NOT NULL, "
-                                           "userid  INTEGER NOT NULL, "
-                                           "contactid  INTEGER NOT NULL, "
-                                           "morder INT8, "
-                                           "dt INT8, "
-                                           "text TEXT, "
-                                           "isIncoming BOOLEAN, "
-                                           "canDecrypted BOOLEAN, "
-                                           "isConfirmed BOOLEAN, "
-                                           "hash VARCHAR(100), "
-                                           "fee INT8, "
-                                           "FOREIGN KEY (userid) REFERENCES msg_users(id), "
-                                           "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
-                                           ")";
-
-static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadmessage ( "
-                                                        "id INTEGER PRIMARY KEY NOT NULL, "
-                                                        "userid  INTEGER NOT NULL, "
-                                                        "contactid  INTEGER NOT NULL, "
-                                                        "lastcounter INT8, "
-                                                        "FOREIGN KEY (userid) REFERENCES msg_users(id), "
-                                                        "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
-                                                        ")";
-
-static const QString selectMsgUsersForName = "SELECT id FROM msg_users WHERE username = :username";
-static const QString insertMsgUsers = "INSERT INTO msg_users (username) VALUES (:username)";
-
-static const QString selectMsgContactsForName = "SELECT id FROM msg_contacts WHERE username = :username";
-static const QString insertMsgContacts = "INSERT INTO msg_contacts (username) VALUES (:username)";
-
-static const QString insertMsgMessages = "INSERT INTO msg_messages "
-                                            "(userid, contactid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash, fee) VALUES "
-                                            "(:userid, :contactid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash, :fee)";
-
-static const QString selectMsgMaxCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
-                                           "FROM msg_messages m "
-                                           "INNER JOIN msg_users u ON u.id = m.userid "
-                                           "WHERE u.username = :user";
-
-static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
-                                                    "FROM msg_messages m "
-                                                    "INNER JOIN msg_users u ON u.id = m.userid "
-                                                    "WHERE m.isConfirmed = 1 "
-                                                    "AND u.username = :user";
-
-static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt, m.fee "
-                                                "FROM msg_messages m "
-                                                "INNER JOIN msg_users u ON u.id = m.userid "
-                                                "INNER JOIN msg_contacts du ON du.id = m.contactid "
-                                                "WHERE m.morder >= :ob AND m.morder <= :oe "
-                                                "AND u.username = :user "
-                                                "ORDER BY m.morder";
-
-static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt, m.fee "
-                                                       "FROM msg_messages m "
-                                                       "INNER JOIN msg_users u ON u.id = m.userid "
-                                                       "INNER JOIN msg_contacts du ON du.id = m.contactid "
-                                                       "WHERE m.morder >= :ob AND m.morder <= :oe "
-                                                       "AND u.username = :user AND du.username = :duser "
-                                                       "ORDER BY m.morder";
-
-static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt, m.fee "
-                                                          "FROM msg_messages m "
-                                                          "INNER JOIN msg_users u ON u.id = m.userid "
-                                                          "INNER JOIN msg_contacts du ON du.id = m.contactid "
-                                                          "WHERE m.morder >= :ob "
-                                                          "AND u.username = :user AND du.username = :duser "
-                                                          "ORDER BY m.morder "
-                                                          "LIMIT :num";
-
-static const QString selectMsgUsersList = "SELECT username FROM msg_users ORDER BY id";
-
-static const QString selectMsgUserPublicKey = "SELECT publickey FROM msg_users WHERE username = :user";
-static const QString updateMsgUserPublicKey = "UPDATE msg_users SET publickey = :publickey WHERE username = :user";
-
-static const QString selectMsgUserSignatures = "SELECT signatures FROM msg_users WHERE username = :user";
-static const QString updateMsgUserSignatures = "UPDATE msg_users SET signatures = :signatures WHERE username = :user";
-
-static const QString selectMsgContactsPublicKey = "SELECT publickey FROM msg_contacts WHERE username = :user";
-static const QString updateMsgContactsPublicKey = "UPDATE msg_contacts SET publickey = :publickey WHERE username = :user";
-
-static const QString selectLastNotConfirmedMessage = "SELECT m.id "
-                                                        "FROM msg_messages m "
-                                                        "INNER JOIN msg_users u ON u.id = m.userid "
-                                                        "WHERE m.isConfirmed = 0 "
-                                                        "AND u.username = :user "
-                                                        "ORDER BY m.morder "
-                                                        "LIMIT 1";
-static const QString updateMessageQuery = "UPDATE msg_messages "
-                                        "SET isConfirmed = :isConfirmed, morder = :counter "
-                                        "WHERE id = :id";
-
-
 
 DBStorage *DBStorage::instance()
 {
@@ -245,6 +104,7 @@ void DBStorage::addMessage(const QString &user, const QString &duser, const QStr
         qDebug() << "INSERT error " << query.lastError().text();
     }
     qDebug() << query.lastInsertId().toLongLong();
+    addLastReadRecord(userid, contactid);
 }
 
 qint64 DBStorage::getUserId(const QString &username)
@@ -400,14 +260,14 @@ Message::Counter DBStorage::getMessageMaxConfirmedCounter(const QString &user)
     return -1;
 }
 
-std::list<Message> DBStorage::getMessagesForUser(const QString &user, qint64 ob, qint64 oe)
+std::list<Message> DBStorage::getMessagesForUser(const QString &user, qint64 from, qint64 to)
 {
     std::list<Message> res;
     QSqlQuery query(m_db);
     query.prepare(selectMsgMessagesForUser);
     query.bindValue(":user", user);
-    query.bindValue(":ob", ob);
-    query.bindValue(":oe", oe);
+    query.bindValue(":ob", from);
+    query.bindValue(":oe", to);
     if (!query.exec()) {
 
     }
@@ -415,15 +275,15 @@ std::list<Message> DBStorage::getMessagesForUser(const QString &user, qint64 ob,
     return res;
 }
 
-std::list<Message> DBStorage::getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 ob, qint64 oe)
+std::list<Message> DBStorage::getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 to)
 {
     std::list<Message> res;
     QSqlQuery query(m_db);
     query.prepare(selectMsgMessagesForUserAndDest);
     query.bindValue(":user", user);
     query.bindValue(":duser", duser);
-    query.bindValue(":ob", ob);
-    query.bindValue(":oe", oe);
+    query.bindValue(":ob", from);
+    query.bindValue(":oe", to);
     if (!query.exec()) {
 
     }
@@ -431,19 +291,19 @@ std::list<Message> DBStorage::getMessagesForUserAndDest(const QString &user, con
     return res;
 }
 
-std::list<Message> DBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 ob, qint64 num)
+std::list<Message> DBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num)
 {
     std::list<Message> res;
     QSqlQuery query(m_db);
     query.prepare(selectMsgMessagesForUserAndDestNum);
     query.bindValue(":user", user);
     query.bindValue(":duser", duser);
-    query.bindValue(":ob", ob);
+    query.bindValue(":ob", to);
     query.bindValue(":num", num);
     if (!query.exec()) {
 
     }
-    createMessagesList(query, res);
+    createMessagesList(query, res, true);
     return res;
 }
 
@@ -474,12 +334,28 @@ void DBStorage::updateMessage(qint64 id, Message::Counter newCounter, bool confi
 
 Message::Counter DBStorage::getLastReadCounterForUserContact(const QString &username, const QString &contact)
 {
-
+    QSqlQuery query(m_db);
+    query.prepare(selectLastReadCounterForUserContact);
+    query.bindValue(":user", username);
+    query.bindValue(":contact", contact);
+    if (!query.exec()) {
+        return -1;
+    }
+    if (query.next()) {
+        return query.value(0).toLongLong();
+    }
+    return -1;
 }
 
 void DBStorage::setLastReadCounterForUserContact(const QString &username, const QString &contact, Message::Counter counter)
 {
-
+    QSqlQuery query(m_db);
+    query.prepare(updateLastReadCounterForUserContact);
+    query.bindValue(":counter", counter);
+    query.bindValue(":user", username);
+    query.bindValue(":contact", contact);
+    if (!query.exec()) {
+    }
 }
 
 DBStorage::DBStorage(QObject *parent)
@@ -528,4 +404,28 @@ void DBStorage::createMessagesList(QSqlQuery &query, std::list<Message> &message
         else
             messages.push_back(msg);
     }
+}
+
+void DBStorage::addLastReadRecord(qint64 userid, qint64 contactid)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectLastReadMessageCount);
+    query.bindValue(":userid", userid);
+    query.bindValue(":contactid", contactid);
+    if (!query.exec()) {
+
+    }
+    if (!query.next()) {
+        return;
+    }
+    qint64 count = query.value(0).toLongLong();
+    if (count > 0)
+        return;
+    query.prepare(insertLastReadMessageRecord);
+    query.bindValue(":userid", userid);
+    query.bindValue(":contactid", contactid);
+    if (!query.exec()) {
+        qDebug() << "INSERT error " << query.lastError().text();
+    }
+    qDebug() << "ok";
 }
