@@ -166,7 +166,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 db.setLastReadCounterForUserContact(address, m.collocutor, -1); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
             }
         } else {
-            const auto id = db.findFirstNotConfirmedMessageWithHash(hashMessage); // TODO username
+            const auto id = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
             if (id != -1) {
                 db.updateMessage(id, m.counter, true);
                 // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
