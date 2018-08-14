@@ -359,10 +359,9 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-       // TODO from -> to
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutor, count, to);
+        const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutor, to, count);
         std::copy(result.begin(), result.end(), std::back_inserter(messages));
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
