@@ -96,7 +96,8 @@ static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder)
                                                     "WHERE m.isConfirmed = 1 "
                                                     "AND u.username = :user";
 
-static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt, m.fee "
+static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+                                                "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                 "FROM msg_messages m "
                                                 "INNER JOIN msg_users u ON u.id = m.userid "
                                                 "INNER JOIN msg_contacts du ON du.id = m.contactid "
@@ -104,7 +105,8 @@ static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.u
                                                 "AND u.username = :user "
                                                 "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt, m.fee "
+static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+                                                       "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                        "FROM msg_messages m "
                                                        "INNER JOIN msg_users u ON u.id = m.userid "
                                                        "INNER JOIN msg_contacts du ON du.id = m.contactid "
@@ -112,7 +114,8 @@ static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS use
                                                        "AND u.username = :user AND du.username = :duser "
                                                        "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, m.morder, m.dt, m.fee "
+static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+                                                          "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                           "FROM msg_messages m "
                                                           "INNER JOIN msg_users u ON u.id = m.userid "
                                                           "INNER JOIN msg_contacts du ON du.id = m.contactid "
@@ -132,7 +135,7 @@ static const QString updateMsgUserSignatures = "UPDATE msg_users SET signatures 
 static const QString selectMsgContactsPublicKey = "SELECT publickey FROM msg_contacts WHERE username = :user";
 static const QString updateMsgContactsPublicKey = "UPDATE msg_contacts SET publickey = :publickey WHERE username = :user";
 
-static const QString selectMsgCountMessagesForUserAndDest = "SELECT * "
+static const QString selectMsgCountMessagesForUserAndDest = "SELECT COUNT(*) "
                                                        "FROM msg_messages m "
                                                        "INNER JOIN msg_users u ON u.id = m.userid "
                                                        "INNER JOIN msg_contacts du ON du.id = m.contactid "

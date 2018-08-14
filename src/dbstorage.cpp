@@ -480,6 +480,8 @@ void DBStorage::createMessagesList(QSqlQuery &query, std::list<Message> &message
         msg.counter = query.value(4).toLongLong();
         msg.timestamp = static_cast<quint64>(query.value(5).toLongLong());
         msg.fee = query.value(6).toLongLong();
+        msg.isCanDecrypted = query.value(7).toBool();
+        msg.isConfirmed = query.value(8).toBool();
         if (reverse)
             messages.push_front(msg);
         else
