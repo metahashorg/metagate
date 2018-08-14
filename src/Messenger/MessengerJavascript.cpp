@@ -184,7 +184,8 @@ BEGIN_SLOT_WRAPPER
                         const std::string sign = walletManager.getWallet(address.toStdString()).sign(msg.toStdString(), tmp);
                         result.emplace_back(QString::fromStdString(sign));
                     }
-                    emit messenger->signedStrings(result, [this, JS_NAME_RESULT, address](const TypedException &exception){
+                    emit messenger->signedStrings(address, result, [this, JS_NAME_RESULT, address](const TypedException &exception){
+                        LOG << "Address registered " << address;
                         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
                     });
                 }
@@ -215,6 +216,7 @@ BEGIN_SLOT_WRAPPER
         const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pubkey);
 
         emit messenger->savePubkeyAddress(isForcibly, collocutor, QString::fromStdString(pubkey), QString::fromStdString(sign), [this, JS_NAME_RESULT, address, collocutor](bool /*isNew*/, const TypedException &exception) {
+            LOG << "Pubkey saved " << collocutor;
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
         });
     });
@@ -251,6 +253,7 @@ BEGIN_SLOT_WRAPPER
 
                 const QString encryptedDataToBd = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).encrypt(data.toStdString()));
                 emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception) {
+                    LOG << "Message sended " << address << " " << collocutor;
                     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
                 });
             });
@@ -276,6 +279,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getLastMessage(address, [this, JS_NAME_RESULT, address](const Message::Counter &pos, const TypedException &exception) {
+            LOG << "Last message number " << address << " " << pos;
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<Message::Counter>(pos));
         });
     });
@@ -296,6 +300,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getSavedPos(address, collocutor, [this, JS_NAME_RESULT, address, collocutor](const Message::Counter &pos, const TypedException &exception) {
+            LOG << "Saved pos " << address << " " << collocutor << " " << pos;
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(pos));
         });
     });
@@ -318,6 +323,7 @@ BEGIN_SLOT_WRAPPER
         emit messenger->getSavedsPos(address, [this, JS_NAME_RESULT, address](const std::vector<std::pair<QString, Message::Counter>> &pos, const TypedException &exception) {
             const Opt<QJsonDocument> result(allPosToJson(pos));
 
+            LOG << "Get saveds pos " << pos.size();
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), result);
         });
     });
@@ -339,6 +345,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         const Message::Counter counter = std::stoll(counterStr.toStdString());
         emit messenger->savePos(address, collocutor, counter, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception){
+            LOG << "Save pos ok " << address << " " << collocutor;
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<QString>("Ok"));
         });
     });
@@ -359,7 +366,8 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         const Message::Counter fromI = std::stoll(from.toStdString());
-        emit messenger->getCountMessages(address, collocutor, fromI, [this, JS_NAME_RESULT, address, collocutor](const Message::Counter &count, const TypedException &exception) {
+        emit messenger->getCountMessages(address, collocutor, fromI, [this, JS_NAME_RESULT, address, collocutor, fromI](const Message::Counter &count, const TypedException &exception) {
+            LOG << "Count messages " << address << " " << collocutor << " " << fromI << " " << count;
             makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor), Opt<Message::Counter>(count));
         });
     });
@@ -384,6 +392,8 @@ void MessengerJavascript::setPaths(QString newPatch, QString /*newUserName*/) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "setMessengerPathsJs";
 
+    LOG << "Set messenger javascript path " << newPatch;
+
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
         walletPath = makePath(newPatch, Wallet::WALLET_PATH_MTH);
@@ -405,6 +415,7 @@ void MessengerJavascript::unlockWallet(QString address, QString password, QStrin
 }
 
 void MessengerJavascript::lockWallet() {
+    LOG << "lock wallets";
     walletManager.lockWallet();
 }
 

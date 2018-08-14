@@ -52,6 +52,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
 
     CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
     CHECK(connect(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress), "not connect onGetPubkeyAddress");
+    CHECK(connect(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress), "not connect onGetPubkeyAddress");
     CHECK(connect(this, &Messenger::sendMessage, this, &Messenger::onSendMessage), "not connect onSendMessage");
     CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
     CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onSignedStrings");
@@ -83,7 +84,7 @@ std::vector<QString> Messenger::getMonitoredAddresses() const {
     return result;
 }
 
-void Messenger::onSignedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
+void Messenger::onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const std::vector<QString> keys = stringsForSign();
@@ -101,7 +102,9 @@ BEGIN_SLOT_WRAPPER
         }
 
         const QString arr = QJsonDocument(arrJson).toJson(QJsonDocument::Compact);
-        // Сохранить arr в бд
+        LOG << "Set user signature " << arr.size();
+        db.setUserSignatures(address, arr);
+        addAddressToMonitored(address);
     });
 
     emit javascriptWrapper.callbackCall(std::bind(callback, exception));
@@ -162,10 +165,9 @@ END_SLOT_WRAPPER
 }
 
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
-    // Взять json из бд
-    const QString jsonString = "";
+    const QString jsonString = db.getUserSignatures(address);
     const QJsonDocument json = QJsonDocument::fromJson(jsonString.toUtf8());
-    CHECK(json.isArray(), "Incorrect json");
+    CHECK(json.isArray(), "Incorrect json " + jsonString.toStdString());
     const QJsonArray &array = json.array();
     for (const QJsonValue &val: array) {
         CHECK(val.isObject(), "Incorrect json");
@@ -185,6 +187,10 @@ QString Messenger::getSignFromMethod(const QString &address, const QString &meth
 void Messenger::onRun() {
 BEGIN_SLOT_WRAPPER
     const std::vector<QString> monitoredAddresses = getMonitoredAddresses();
+    LOG << "Monitored addresses: " << monitoredAddresses.size();
+    for (const QString &addr: monitoredAddresses) {
+        LOG << addr;
+    }
     clearAddressesToMonitored();
     for (const QString &address: monitoredAddresses) {
         addAddressToMonitored(address);
@@ -200,6 +206,7 @@ BEGIN_SLOT_WRAPPER
         if (deferred.check()) {
             deferred.resetDeferred();
             const Message::Counter lastCnt = db.getMessageMaxCounter(address);
+            LOG << "Defferred process message " << address << " " << lastCnt;
             emit javascriptWrapper.newMessegesSig(address, lastCnt);
         }
     }
@@ -224,11 +231,14 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
     }
 
     if (minCounterInServer > currConfirmedCounter + 1) {
+        LOG << "Deffer message " << address << " " << minCounterInServer << " " << currConfirmedCounter;
         deferredMessages[address].setDeferred(2s);
         getMessagesFromAddressFromWss(address, currConfirmedCounter + 1, minCounterInServer);
     } else {
         if (!deferredMessages[address].isDeferred()) {
             emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
+        } else {
+            LOG << "Deffer message2 " << address << " " << minCounterInServer << " " << currConfirmedCounter;
         }
     }
 }
@@ -252,19 +262,26 @@ BEGIN_SLOT_WRAPPER
         const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(responseType.address);
         const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
         if (currCounter < messagesInServer) {
-            getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer); // TODO уточнить, to - это включительно или нет
+            LOG << "Read missing messages " << responseType.address << " " << currCounter + 1 << " " << messagesInServer;
+            getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer);
+        } else {
+            LOG << "Count messages " << responseType.address << " " << currCounter << " " << messagesInServer;
         }
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
         const KeyMessageResponse publicKeyResult = parseKeyMessageResponse(messageJson);
-        db.setUserPublicKey(publicKeyResult.addr, publicKeyResult.publicKey);
+        LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey;
+        db.setContactPublicKey(publicKeyResult.addr, publicKeyResult.publicKey);
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
+        LOG << "New msg " << responseType.address << " " << messages.collocutor << " " << messages.counter;
         processMessages(responseType.address, {messages});
     } else if (responseType.method == METHOD::NEW_MSGS) {
         const std::vector<NewMessageResponse> messages = parseNewMessagesResponse(messageJson);
+        LOG << "New msgs " << responseType.address << " " << messages.size();
         processMessages(responseType.address, messages);
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
+        LOG << "Send to addr ok " << responseType.address;
         invokeCallback(responseType.id, TypedException());
     } else {
         throwErr("Incorrect response type");
@@ -274,32 +291,50 @@ END_SLOT_WRAPPER
 
 void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Проверить в базе, если пользователь уже зарегистрирован, то больше не регестрировать
+    const QString currPubkey = db.getUserPublicKey(address);
+    const bool isNew = currPubkey.isEmpty();
+    if (!isNew && !isForcibly) {
+        callback(isNew, TypedException());
+        return;
+    }
     const size_t idRequest = id.get();
     const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
-    const bool isNew = true;
-    callbacks[idRequest] = std::bind(callback, isNew, _1);
+    const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex](const TypedException &exception) {
+        if (!exception.isSet()) {
+            LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
+            db.setUserPublicKey(address, pubkeyAddressHex);
+        }
+        callback(isNew, exception);
+    };
+    callbacks[idRequest] = callbackWrap;
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Проверить, есть ли нужных ключ в базе
+    const QString currSign = db.getUserSignatures(address);
+    const bool isNew = currSign.isEmpty();
+    if (!isNew && !isForcibly) {
+        callback(isNew, TypedException());
+        return;
+    }
     const size_t idRequest = id.get();
     const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::bind(callback, true, _1);
+    callbacks[idRequest] = std::bind(callback, isNew, _1);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback) {
-    // Взять публичный ключ из базы
-    const QString pubkey = "";
+BEGIN_SLOT_WRAPPER
+    QString pubkey = "";
     const TypedException exception = apiVrapper2([&, this] {
-
+        pubkey = db.getContactrPublicKey(address);
+        LOG << "Publickey found " << address << " " << pubkey;
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pubkey, exception));
+END_SLOT_WRAPPER
 }
 
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
@@ -315,8 +350,7 @@ END_SLOT_WRAPPER
 }
 
 void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
-    // Получаем sign и pubkey для данного типа сообщений из базы
-    const QString pubkeyHex = "";
+    const QString pubkeyHex = db.getUserPublicKey(fromAddress);
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
     const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
     emit wssClient.sendMessage(message);
@@ -327,8 +361,7 @@ void Messenger::clearAddressesToMonitored() {
 }
 
 void Messenger::addAddressToMonitored(const QString &address) {
-    // Получаем sign для данного типа сообщений из базы
-    const QString pubkeyHex = "";
+    const QString pubkeyHex = db.getUserPublicKey(address);
     const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
     emit wssClient.addHelloString(message);

@@ -39,7 +39,7 @@ enum METHOD: int {
 struct ResponseType {
     METHOD method = METHOD::NOT_SET;
     QString address;
-    bool isError;
+    bool isError = false;
     QString error;
     size_t id;
 };

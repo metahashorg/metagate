@@ -101,7 +101,7 @@ signals:
 
     void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
-    void signedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
+    void signedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
     void getLastMessage(const QString &address, const GetSavedPosCallback &callback);
 
@@ -129,7 +129,7 @@ private slots:
 
     void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
-    void onSignedStrings(const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
+    void onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
     void onGetLastMessage(const QString &address, const GetSavedPosCallback &callback);
 

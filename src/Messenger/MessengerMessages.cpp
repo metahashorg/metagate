@@ -5,6 +5,7 @@
 #include <QJsonObject>
 
 #include "check.h"
+#include "Log.h"
 
 const static QString MSG_GET_MY_REQUEST = "msg_get_my";
 const static QString MSG_GET_CHANNEL_REQUEST = "msg_get_channel";
@@ -121,9 +122,9 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
 
     CHECK(response.isObject(), "Response field not found");
     const QJsonObject root = response.object();
-    CHECK(root.contains("result") && root.value("result").isString(), "data field not found");
+    /*CHECK(root.contains("result") && root.value("result").isString(), "data field not found");
     const QString res = root.value("result").toString();
-    CHECK(res == "ok", "result != ok"); // ok даже в случае ошибки
+    CHECK(res == "ok", "result != ok"); // ok даже в случае ошибки*/
     if (root.contains("method") && root.value("method").isString()) {
         type = root.value("method").toString();
     }

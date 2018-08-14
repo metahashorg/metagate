@@ -25,6 +25,28 @@
         });
     }
     
+    function savePubkeyTo() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.savePublicKeyCollocutor(true, document.createWalletForm.from1.value, document.createWalletForm.to1.value) ;
+        });
+    }
+        
+    function createWalletMHCResultJs(reqid, pubkey, address, ex, sig, err, errNo, tmp) {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.createRsaKey("1", address, "123") ;
+        document.createWalletForm.tmp.value = address;
+        });
+    }
+        
+    function genKey() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.createWalletMHC("1", "123") ;
+        });
+    }
+        
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -55,9 +77,11 @@
             <input name="to1" type="text" value="0x0039fec32dcde172da7d676e4a6bc4a9d23ad052cc43640ca3" size="60"><br>
             <input name="text1" type="text" value="0x00a765" size="60"><br>
             <input name="tmp" type="text" value="" size="60"><br>
+            <input type="button" value="genKey" onclick="genKey()">
             <input type="button" value="unlock" onclick="unlock()">
             <input type="button" value="register" onclick="registerAddress()"><br>
             <input type="button" value="sendMsg" onclick="sendMsg()"><br>
+            <input type="button" value="savePubkeyTo" onclick="savePubkeyTo()"><br>
             </FORM>
         </left>
     </p>
