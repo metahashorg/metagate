@@ -44,7 +44,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
     : TimerClass(1s, parent)
     , db(*DBStorage::instance())
     , javascriptWrapper(javascriptWrapper)
-    , wssClient("wss.wss.com")
+    , wssClient("wss://messenger.metahash.io")
 {
     CHECK(connect(this, SIGNAL(timerEvent()), this, SLOT(onTimerEvent())), "not connect onTimerEvent");
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived), "not connect wssClient");
