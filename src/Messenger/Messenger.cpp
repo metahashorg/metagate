@@ -215,7 +215,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
     for (const NewMessageResponse &m: messages) {
         const QString hashMessage = createHashMessage(m.data);
         if (m.isInput) {
-            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage);
+            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage, m.fee);
             // Проверить, если для этого collocutor не установлен saved pos, то поставить его в 0 (или -1?)
         } else {
             // Вычислить хэш сообщения, найти сообщение в bd минимальное по номеру, которое не подтвержденное, заменить у него counter. Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
@@ -306,7 +306,7 @@ void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddre
 BEGIN_SLOT_WRAPPER
     const QString hashMessage = createHashMessage(dataHex);
     const Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress);
-    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage);
+    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee);
     const size_t idRequest = id.get();
     const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
     callbacks[idRequest] = callback;
