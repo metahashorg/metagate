@@ -176,6 +176,7 @@ QString DBStorage::getUserPublicKey(const QString &username)
 
 void DBStorage::setUserPublicKey(const QString &username, const QString &publickey)
 {
+    getUserId(username);
     QSqlQuery query(m_db);
     query.prepare(updateMsgUserPublicKey);
     query.bindValue(":user", username);
@@ -200,6 +201,7 @@ QString DBStorage::getUserSignatures(const QString &username)
 
 void DBStorage::setUserSignatures(const QString &username, const QString &signatures)
 {
+    getUserId(username);
     QSqlQuery query(m_db);
     query.prepare(updateMsgUserSignatures);
     query.bindValue(":user", username);
@@ -224,6 +226,7 @@ QString DBStorage::getContactrPublicKey(const QString &username)
 
 void DBStorage::setContactPublicKey(const QString &username, const QString &publickey)
 {
+    getContactId(username);
     QSqlQuery query(m_db);
     query.prepare(updateMsgContactsPublicKey);
     query.bindValue(":user", username);
