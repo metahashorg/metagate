@@ -170,9 +170,9 @@ BEGIN_SLOT_WRAPPER
         const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
         std::string pubkey;
         const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pubkey);
-        emit messenger->registerAddress(isForcibly, address, pubkeyRsa, QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address](bool isNew, const TypedException &exception) {
+        emit messenger->registerAddress(isForcibly, address, pubkeyRsa, QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, JS_NAME_RESULT, address, isForcibly](bool isNew, const TypedException &exception) {
             const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
+                if (exception.isSet() && !isForcibly) {
                     throw exception;
                 }
 

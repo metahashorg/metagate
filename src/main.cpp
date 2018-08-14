@@ -103,7 +103,12 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        DBStorage::instance()->init();
+        //DBStorage::instance()->init();
+        /*auto &inst = *DBStorage::instance();
+        inst.addMessage("1234", "3454", "abcd", 1, 2000, true, true, true, "asdfdf", 1);
+        inst.addMessage("1234", "3454", "abcd", 1, 500, true, true, true, "asdfdf", 1);
+        LOG << "answer " << inst.getMessagesForUserAndDestNum("1234", "3454", 2000, 2).size();
+        return 0;*/
         while (true) {
             MessengerJavascript messengerJavascript;
 

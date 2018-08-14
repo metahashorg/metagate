@@ -96,6 +96,7 @@ void Messenger::clearAddressesToMonitored() {
 }
 
 void Messenger::addAddressToMonitored(const QString &address) {
+    LOG << "Add address to monitored " << address;
     const QString pubkeyHex = db.getUserPublicKey(address);
     const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
@@ -168,10 +169,11 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
             const auto id = db.findFirstNotConfirmedMessageWithHash(hashMessage); // TODO username
             if (id != -1) {
                 db.updateMessage(id, m.counter, true);
+                // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
             } else {
                 // Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
+                db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, false, true, hashMessage, m.fee);
             }
-            // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
         }
     }
 
