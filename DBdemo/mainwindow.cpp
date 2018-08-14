@@ -53,10 +53,10 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << DBStorage::instance()->getUserPublicKey("user7");
     qDebug() << DBStorage::instance()->getUserPublicKey("user1");
     qDebug() << DBStorage::instance()->getUserPublicKey("userrrrr");
-    qint64 id = DBStorage::instance()->findLastNotConfirmedMessage("user7");
+    qint64 id = DBStorage::instance()->findFirstNotConfirmedMessage("user7");
     qDebug() << id;
     DBStorage::instance()->updateMessage(id, 4444, true);
-    qDebug() << DBStorage::instance()->findLastNotConfirmedMessage("user7");
+    qDebug() << DBStorage::instance()->findFirstNotConfirmedMessage("user7");
 
 
     qDebug() << DBStorage::instance()->getLastReadCounterForUserContact("userrgjkg", "fjkgfjk");
@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent) :
     DBStorage::instance()->setLastReadCounterForUserContact("user7", "user1", 244);
     qDebug() << DBStorage::instance()->getLastReadCounterForUserContact("user7", "user1");
 
+
+    qDebug() << DBStorage::instance()->getLastReadCountersForUser("user7").size();
 //    QList<QStringList> r = DBStorage::instance()->getPayments();
 //    foreach(const QStringList &l, r) {
 //        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);

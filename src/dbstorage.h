@@ -5,6 +5,7 @@
 #include <QSqlDatabase>
 
 #include <list>
+#include <utility>
 #include "Messenger/Message.h"
 
 class DBStorage : public QObject
@@ -46,12 +47,18 @@ public:
     std::list<Message> getMessagesForUser(const QString &user, qint64 from, qint64 to);
     std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 tos);
     std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num);
+    qint64 getMessagesCountForUserAndDest(const QString &user, const QString &duser, qint64 from);
 
-    qint64 findLastNotConfirmedMessage(const QString &username);
+    bool hasMessageWithCounter(const QString &username, Message::Counter counter);
+    bool hasUnconfirmedMessageWithHash(const QString &hash);
+
+    qint64 findFirstNotConfirmedMessageWithHash(const QString &hash);
+    qint64 findFirstNotConfirmedMessage(const QString &username);
     void updateMessage(qint64 id, Message::Counter newCounter, bool confirmed);
 
     Message::Counter getLastReadCounterForUserContact(const QString &username, const QString &contact);
     void setLastReadCounterForUserContact(const QString &username, const QString &contact, Message::Counter counter);
+    std::list<std::pair<QString, Message::Counter>> getLastReadCountersForUser(const QString &username);
 
 private:
     explicit DBStorage(QObject *parent = nullptr);

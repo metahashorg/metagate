@@ -132,13 +132,42 @@ static const QString updateMsgUserSignatures = "UPDATE msg_users SET signatures 
 static const QString selectMsgContactsPublicKey = "SELECT publickey FROM msg_contacts WHERE username = :user";
 static const QString updateMsgContactsPublicKey = "UPDATE msg_contacts SET publickey = :publickey WHERE username = :user";
 
-static const QString selectLastNotConfirmedMessage = "SELECT m.id "
+static const QString selectMsgCountMessagesForUserAndDest = "SELECT * "
+                                                       "FROM msg_messages m "
+                                                       "INNER JOIN msg_users u ON u.id = m.userid "
+                                                       "INNER JOIN msg_contacts du ON du.id = m.contactid "
+                                                       "WHERE m.morder >= :ob "
+                                                       "AND u.username = :user AND du.username = :duser";
+
+
+static const QString selectCountNotConfirmedMessagesWithHash = "SELECT COUNT(*) "
+                                                        "FROM msg_messages "
+                                                        "WHERE isConfirmed = 0 "
+                                                        "AND hash = :hash";
+
+static const QString selectCountMessagesWithCounter = "SELECT COUNT(*) "
+                                                        "FROM msg_messages m "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid "
+                                                        "WHERE m.order = :counter "
+                                                        "AND u.username = :user ";
+
+
+static const QString selectFirstNotConfirmedMessage = "SELECT m.id "
                                                         "FROM msg_messages m "
                                                         "INNER JOIN msg_users u ON u.id = m.userid "
                                                         "WHERE m.isConfirmed = 0 "
                                                         "AND u.username = :user "
                                                         "ORDER BY m.morder "
                                                         "LIMIT 1";
+
+static const QString selectFirstNotConfirmedMessageWithHash = "SELECT m.id "
+                                                        "FROM msg_messages m "
+                                                        "WHERE m.isConfirmed = 0 "
+                                                        "AND m.hash = :hash "
+                                                        "ORDER BY m.morder "
+                                                        "LIMIT 1";
+
+
 static const QString updateMessageQuery = "UPDATE msg_messages "
                                         "SET isConfirmed = :isConfirmed, morder = :counter "
                                         "WHERE id = :id";
@@ -160,4 +189,10 @@ static const QString selectLastReadMessageCount = "SELECT COUNT(*) FROM msg_last
 static const QString insertLastReadMessageRecord = "INSERT INTO msg_lastreadmessage "
                                                     "(lastcounter, userid, contactid) VALUES "
                                                     "(0, :userid, :contactid)";
+static const QString selectLastReadCountersForUser = "SELECT c.username, l.lastcounter "
+                                                        "FROM msg_lastreadmessage l "
+                                                        "INNER JOIN msg_users u ON u.id = l.userid "
+                                                        "INNER JOIN msg_contacts c ON c.id = l.contactid "
+                                                        "WHERE u.username = :user";
+
 #endif // DBRES_H
