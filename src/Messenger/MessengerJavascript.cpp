@@ -39,12 +39,15 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages, const 
     QJsonArray messagesArrJson;
     for (const Message &message: messages) {
         QJsonObject messageJson;
-        const std::string decryptedData = toHex(walletRsa.decryptMessage(message.data.toStdString()));
 
         messageJson.insert("collocutor", message.collocutor);
         messageJson.insert("isInput", message.isInput);
         messageJson.insert("timestamp", QString::fromStdString(std::to_string(message.timestamp)));
-        messageJson.insert("data", QString::fromStdString(decryptedData));
+        if (message.isCanDecrypted) {
+            const std::string decryptedData = toHex(walletRsa.decryptMessage(message.data.toStdString()));
+            messageJson.insert("data", QString::fromStdString(decryptedData));
+        }
+        messageJson.insert("isDecrypter", message.isCanDecrypted);
         messageJson.insert("counter", QString::fromStdString(std::to_string(message.counter)));
         messageJson.insert("fee", QString::fromStdString(std::to_string(message.fee)));
         messagesArrJson.push_back(messageJson);

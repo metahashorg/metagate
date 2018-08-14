@@ -12,6 +12,8 @@ struct Message {
     QString data;
     Counter counter;
     int64_t fee;
+    bool isCanDecrypted = true;
+    bool isConfirmed = true;
 };
 
 #endif // MESSAGE_H
