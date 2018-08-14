@@ -123,10 +123,9 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить counter
-    Message::Counter lastCounter = 0;
+    Message::Counter lastCounter;
     const TypedException exception = apiVrapper2([&, this] {
-
+        lastCounter = db.getLastReadCounterForUserContact(address, collocutor);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
@@ -134,10 +133,10 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить все counter-ы
     std::vector<std::pair<QString, Message::Counter>> pos;
     const TypedException exception = apiVrapper2([&, this] {
-
+        const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address);
+        std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
 END_SLOT_WRAPPER
@@ -145,9 +144,8 @@ END_SLOT_WRAPPER
 
 void Messenger::onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Сохранить позицию
     const TypedException exception = apiVrapper2([&, this] {
-
+        db.setLastReadCounterForUserContact(address, collocutor, pos);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, exception));
 END_SLOT_WRAPPER
@@ -155,10 +153,9 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Получить количество сообщений с адреса на адрес
     Message::Counter lastCounter = 0;
     const TypedException exception = apiVrapper2([&, this] {
-
+        lastCounter = db.getMessagesCountForUserAndDest(address, collocutor, from);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
@@ -221,9 +218,17 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         if (m.isInput) {
             LOG << "Add message " << address << " " << m.collocutor << " " << m.counter;
             db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage, m.fee);
-            // Проверить, если для этого collocutor не установлен saved pos, то поставить его в 0 (или -1?)
+            const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, m.collocutor);
+            if (savedPos == -1) {
+                db.setLastReadCounterForUserContact(address, m.collocutor, -1); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
+            }
         } else {
-            // Вычислить хэш сообщения, найти сообщение в bd минимальное по номеру, которое не подтвержденное, заменить у него counter. Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
+            const auto id = db.findFirstNotConfirmedMessageWithHash(hashMessage); // TODO username
+            if (id != -1) {
+                db.updateMessage(id, m.counter, true);
+            } else {
+                // Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
+            }
             // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
         }
     }
@@ -297,8 +302,8 @@ BEGIN_SLOT_WRAPPER
     }
     const size_t idRequest = id.get();
     const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
-    const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex](const TypedException &exception) {
-        if (!exception.isSet()) {
+    const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex, isForcibly](const TypedException &exception) {
+        if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
             LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
             db.setUserPublicKey(address, pubkeyAddressHex);
         }
