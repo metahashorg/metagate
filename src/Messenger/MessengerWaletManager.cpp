@@ -11,7 +11,7 @@ MessengerWaletManager::MessengerWaletManager(QObject *parent)
     : QObject(parent)
 {
     timer.setInterval(milliseconds(1s).count());
-    CHECK(connect(&timer, SIGNAL(timeout()), this, SLOT(uploadEvent())), "not connect uploadEvent");
+    CHECK(connect(&timer, SIGNAL(timeout()), this, SLOT(onResetWallets())), "not connect uploadEvent");
     timer.start();
 }
 

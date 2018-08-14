@@ -21,6 +21,8 @@ public:
 
 signals:
 
+    void finished();
+
     void startedEvent();
 
     void timerEvent();

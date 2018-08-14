@@ -5,12 +5,12 @@
 TimerClass::TimerClass(const milliseconds &timerPeriod, QObject *parent)
     : QObject(parent)
 {
-    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(startedEvent())), "not connect");
+    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SIGNAL(startedEvent())), "not connect");
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect");
 
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(timerPeriod.count());
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(timerEvent())), "not connect");
+    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SIGNAL(timerEvent())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
     CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 }
