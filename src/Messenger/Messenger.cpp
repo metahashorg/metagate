@@ -188,9 +188,6 @@ void Messenger::onRun() {
 BEGIN_SLOT_WRAPPER
     const std::vector<QString> monitoredAddresses = getMonitoredAddresses();
     LOG << "Monitored addresses: " << monitoredAddresses.size();
-    for (const QString &addr: monitoredAddresses) {
-        LOG << addr;
-    }
     clearAddressesToMonitored();
     for (const QString &address: monitoredAddresses) {
         addAddressToMonitored(address);
@@ -222,6 +219,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
     for (const NewMessageResponse &m: messages) {
         const QString hashMessage = createHashMessage(m.data);
         if (m.isInput) {
+            LOG << "Add message " << address << " " << m.collocutor << " " << m.counter;
             db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage, m.fee);
             // Проверить, если для этого collocutor не установлен saved pos, то поставить его в 0 (или -1?)
         } else {
@@ -231,14 +229,14 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
     }
 
     if (minCounterInServer > currConfirmedCounter + 1) {
-        LOG << "Deffer message " << address << " " << minCounterInServer << " " << currConfirmedCounter;
+        LOG << "Deffer message " << address << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
         deferredMessages[address].setDeferred(2s);
         getMessagesFromAddressFromWss(address, currConfirmedCounter + 1, minCounterInServer);
     } else {
         if (!deferredMessages[address].isDeferred()) {
             emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
         } else {
-            LOG << "Deffer message2 " << address << " " << minCounterInServer << " " << currConfirmedCounter;
+            LOG << "Deffer message2 " << address << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
         }
     }
 }
