@@ -47,6 +47,7 @@ void WalletRsa::unlock(const std::string &password) {
 void WalletRsa::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
     const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
+    createFolder(folderKey);
     const std::string privateKey = ::createRsaKey(password);
 
     const QString fileName = makePath(folderKey, QString::fromStdString(addr).toLower() + FILE_PRIV_KEY_SUFFIX);

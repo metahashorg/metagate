@@ -14,6 +14,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     : QObject(parent)
 {
     qRegisterMetaType<QAbstractSocket::SocketState>();
+    qRegisterMetaType<std::vector<QString>>();
 
     m_url = url;
 

@@ -400,6 +400,7 @@ END_SLOT_WRAPPER
 }
 
 void MessengerJavascript::unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds) {
+    LOG << "Unlock wallet " << address << " Wallet path " << walletPath;
     walletManager.unlockWallet(walletPath, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), seconds(timeSeconds));
 }
 

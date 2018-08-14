@@ -4,10 +4,24 @@
 
 <script>
     
-    function reloadMeJs() {
+    function registerAddress() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
-        var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageBtcPswd(0, "1CKZ3fJrojYauQHUZiuSKeuvw1AwBVUwHX", "1234", "abc", "10000", 1000, "") ;
+        var mainWindow = channel.objects.messenger;
+        mainWindow.registerAddress(true, document.createWalletForm.from1.value, "1") ;
+        });
+    }
+    
+    function unlock() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.unlockWallet(document.createWalletForm.from1.value, "123", "123", 1000000) ;
+        });
+    }
+    
+    function sendMsg() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.sendMessage(document.createWalletForm.from1.value, document.createWalletForm.to1.value, document.createWalletForm.text1.value, "1234567",  "1") ;
         });
     }
     
@@ -37,7 +51,13 @@
     <p class="abs">
         <left>
             <FORM name="createWalletForm">
-            <input type="button" value="reload Me" onclick="reloadMeJs()"><br>
+            <input name="from1" type="text" value="0x00a76553d2a3e8d4b2d8b8fe65aebab77deaba86cf96e326ed" size="60"><br>
+            <input name="to1" type="text" value="0x0039fec32dcde172da7d676e4a6bc4a9d23ad052cc43640ca3" size="60"><br>
+            <input name="text1" type="text" value="0x00a765" size="60"><br>
+            <input name="tmp" type="text" value="" size="60"><br>
+            <input type="button" value="unlock" onclick="unlock()">
+            <input type="button" value="register" onclick="registerAddress()"><br>
+            <input type="button" value="sendMsg" onclick="sendMsg()"><br>
             </FORM>
         </left>
     </p>

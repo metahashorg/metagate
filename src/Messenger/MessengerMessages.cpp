@@ -150,6 +150,8 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
         result.method = METHOD::NEW_MSG;
     } else if (type == COUNT_MESSAGES_RESPONSE) {
         result.method = METHOD::COUNT_MESSAGES;
+    } else if (type.isEmpty()) {
+        // ignore
     } else {
         throwErr(("Incorrect response: " + type).toStdString());
     }
