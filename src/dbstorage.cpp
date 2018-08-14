@@ -13,6 +13,8 @@ DBStorage *DBStorage::instance()
 
 void DBStorage::init()
 {
+    if (m_dbExist)
+        return;
     QSqlQuery query(sqliteSettings, m_db);
     query.exec();
 
@@ -441,8 +443,11 @@ std::list<std::pair<QString, Message::Counter> > DBStorage::getLastReadCountersF
 
 DBStorage::DBStorage(QObject *parent)
     : QObject(parent)
+    , m_dbExist(false)
 {
     //QSqlDatabase db;
+
+    m_dbExist = QFile::exists("database.db");
     m_db = QSqlDatabase::addDatabase("QSQLITE");
     m_db.setDatabaseName("database.db");
     if (m_db.open())

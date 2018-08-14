@@ -23,11 +23,10 @@ MainWindow::MainWindow(QWidget *parent) :
 //                                      true,
 //                                      1532329669,
 //                                      "7");
-    DBStorage::instance()->addMessage("1234", "3454", "abcd", 1, 2000, true, true, true, "asdfdf", 1);
-    DBStorage::instance()->addMessage("1234", "3454", "abcd", 1, 500, true, true, true, "asdfdf", 1);
-    qDebug() << "answer " << DBStorage::instance()->getMessagesForUserAndDestNum("1234", "3454", 2000, 2).size();
+    DBStorage::instance()->addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    DBStorage::instance()->addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
+    qDebug() << "answer " << DBStorage::instance()->getMessagesForUserAndDestNum("1234", "3454", 5000, 20).size();
     qDebug() << "answer " << DBStorage::instance()->getMessagesCountForUserAndDest("1234", "3454", 3000);
-    return;
     qDebug() << DBStorage::instance()->getUserId("user1");
     qDebug() << DBStorage::instance()->getUserId("user2");
     qDebug() << DBStorage::instance()->getUserId("user3");
