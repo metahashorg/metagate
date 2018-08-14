@@ -301,8 +301,9 @@ std::list<Message> DBStorage::getMessagesForUserAndDestNum(const QString &user, 
     query.prepare(selectMsgMessagesForUserAndDestNum);
     query.bindValue(":user", user);
     query.bindValue(":duser", duser);
-    query.bindValue(":ob", to);
+    query.bindValue(":oe", to);
     query.bindValue(":num", num);
+    qDebug() << query.lastQuery();
     if (!query.exec()) {
 
     }
@@ -341,10 +342,11 @@ bool DBStorage::hasMessageWithCounter(const QString &username, Message::Counter 
     return false;
 }
 
-bool DBStorage::hasUnconfirmedMessageWithHash(const QString &hash)
+bool DBStorage::hasUnconfirmedMessageWithHash(const QString &username, const QString &hash)
 {
     QSqlQuery query(m_db);
     query.prepare(selectCountNotConfirmedMessagesWithHash);
+    query.bindValue(":user", username);
     query.bindValue(":hash", hash);
     if (!query.exec()) {
 
@@ -355,10 +357,11 @@ bool DBStorage::hasUnconfirmedMessageWithHash(const QString &hash)
     return false;
 }
 
-qint64 DBStorage::findFirstNotConfirmedMessageWithHash(const QString &hash)
+qint64 DBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash)
 {
     QSqlQuery query(m_db);
     query.prepare(selectFirstNotConfirmedMessageWithHash);
+    query.bindValue(":user", username);
     query.bindValue(":hash", hash);
     if (!query.exec()) {
         return -1;

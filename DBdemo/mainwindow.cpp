@@ -23,7 +23,10 @@ MainWindow::MainWindow(QWidget *parent) :
 //                                      true,
 //                                      1532329669,
 //                                      "7");
-
+    DBStorage::instance()->addMessage("1234", "3454", "abcd", 1, 2000, true, true, true, "asdfdf", 1);
+    DBStorage::instance()->addMessage("1234", "3454", "abcd", 1, 500, true, true, true, "asdfdf", 1);
+    qDebug() << "answer " << DBStorage::instance()->getMessagesForUserAndDestNum("1234", "3454", 2000, 2).size();
+    return;
     qDebug() << DBStorage::instance()->getUserId("user1");
     qDebug() << DBStorage::instance()->getUserId("user2");
     qDebug() << DBStorage::instance()->getUserId("user3");
@@ -39,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 5, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 6, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
     DBStorage::instance()->addMessage("user7", "user1", "Hello1!", 84583864, 7, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
+
+    qDebug() << "size" << DBStorage::instance()->getMessagesForUserAndDestNum("user7", "user1", 10, 1000).size();
 
     std::list<Message> msgs = DBStorage::instance()->getMessagesForUser("user7", 1, 3);
     qDebug() << "count " << msgs.size();

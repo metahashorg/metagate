@@ -118,7 +118,7 @@ static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS 
                                                           "INNER JOIN msg_contacts du ON du.id = m.contactid "
                                                           "WHERE m.morder <= :oe "
                                                           "AND u.username = :user AND du.username = :duser "
-                                                          "ORDER BY m.morder DESC"
+                                                          "ORDER BY m.morder DESC "
                                                           "LIMIT :num";
 
 static const QString selectMsgUsersList = "SELECT username FROM msg_users ORDER BY id";
@@ -141,9 +141,11 @@ static const QString selectMsgCountMessagesForUserAndDest = "SELECT * "
 
 
 static const QString selectCountNotConfirmedMessagesWithHash = "SELECT COUNT(*) "
-                                                        "FROM msg_messages "
+                                                        "FROM msg_messages m "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid "
                                                         "WHERE isConfirmed = 0 "
-                                                        "AND hash = :hash";
+                                                        "AND hash = :hash "
+                                                        "AND u.username = :user";
 
 static const QString selectCountMessagesWithCounter = "SELECT COUNT(*) "
                                                         "FROM msg_messages m "
@@ -162,8 +164,10 @@ static const QString selectFirstNotConfirmedMessage = "SELECT m.id "
 
 static const QString selectFirstNotConfirmedMessageWithHash = "SELECT m.id "
                                                         "FROM msg_messages m "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid "
                                                         "WHERE m.isConfirmed = 0 "
                                                         "AND m.hash = :hash "
+                                                        "AND u.username = :user "
                                                         "ORDER BY m.morder "
                                                         "LIMIT 1";
 

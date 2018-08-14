@@ -50,9 +50,9 @@ public:
     qint64 getMessagesCountForUserAndDest(const QString &user, const QString &duser, qint64 from);
 
     bool hasMessageWithCounter(const QString &username, Message::Counter counter);
-    bool hasUnconfirmedMessageWithHash(const QString &hash);
+    bool hasUnconfirmedMessageWithHash(const QString &username, const QString &hash);
 
-    qint64 findFirstNotConfirmedMessageWithHash(const QString &hash);
+    qint64 findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash);
     qint64 findFirstNotConfirmedMessage(const QString &username);
     void updateMessage(qint64 id, Message::Counter newCounter, bool confirmed);
 
