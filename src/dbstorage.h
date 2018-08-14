@@ -45,7 +45,7 @@ public:
 
     std::list<Message> getMessagesForUser(const QString &user, qint64 from, qint64 to);
     std::list<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 tos);
-    std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 from, qint64 num);
+    std::list<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num);
 
     qint64 findLastNotConfirmedMessage(const QString &username);
     void updateMessage(qint64 id, Message::Counter newCounter, bool confirmed);
@@ -58,8 +58,10 @@ private:
 
     bool createTable(const QString &table, const QString &createQuery);
     void createMessagesList(QSqlQuery &query, std::list<Message> &messages, bool reverse = false);
+    void addLastReadRecord(qint64 userid, qint64 contactid);
 
     QSqlDatabase m_db;
+    bool m_dbExist;
 };
 
 #endif // DBSTORAGE_H
