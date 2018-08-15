@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        DBStorage::instance()->setPath(getBdPath());
+        DBStorage::instance()->setPath(getDbPath());
         DBStorage::instance()->openDB();
         /*auto &inst = *DBStorage::instance();
         inst.addMessage("1234", "3454", "abcd", 1, 2000, true, true, true, "asdfdf", 1);
