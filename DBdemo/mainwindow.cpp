@@ -11,7 +11,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    DBStorage::instance()->openDB();
     DBStorage::instance()->init();
+
+    DBStorage::instance()->setSettings("key1", "vaaa");
+    DBStorage::instance()->setSettings("key1", "vaaa123");
+    qDebug() << DBStorage::instance()->getSettings("key1");
+    qDebug() << DBStorage::instance()->getSettings("key2");
 
 //    DBStorage::instance()->addPayment("818af8b3a50a5b6758360d11a44533f596af76feb9b4e57557220a8536c38165",
 //                                      "818af8b3a50a5b6758360d11a44533f596af76feb9b4e57557220a8536c38165",

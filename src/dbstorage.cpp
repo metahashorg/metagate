@@ -13,6 +13,24 @@ DBStorage *DBStorage::instance()
     return &self;
 }
 
+void DBStorage::setPath(const QString &path)
+{
+    m_path = path;
+}
+
+bool DBStorage::openDB()
+{
+    const QString pathToDB = makePath(m_path, databaseFileName);
+
+    m_dbExist = QFile::exists(pathToDB);
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db.setDatabaseName(pathToDB);
+    if (!m_db.open()) {
+        return false;
+    }
+    return true;
+}
+
 void DBStorage::init()
 {
     if (m_dbExist)
@@ -20,24 +38,40 @@ void DBStorage::init()
     QSqlQuery query(sqliteSettings, m_db);
     query.exec();
 
-    /*QSqlQuery query(dropPaymentsTable);
-    if (!query.exec()) {
-        qDebug() << "DROP error" << query.lastError().text();
-    }*/
-
-//    QSqlQuery query1(createPaymentsTable);
-//    if (!query1.exec()) {
-
-//        qDebug() << "CREATE error " << query1.lastError().text();
-//    }
-
     createTable(QStringLiteral("settings"), createSettingsTable);
     createTable(QStringLiteral("msg_users"), createMsgUsersTable);
     createTable(QStringLiteral("msg_contacts"), createMsgContactsTable);
     createTable(QStringLiteral("msg_messages"), createMsgMessagesTable);
     createTable(QStringLiteral("msg_lastreadmessage"), createMsgLastReadMessageTable);
+    setSettings(QStringLiteral("dbversion"), databaseVersion);
 }
 
+QString DBStorage::getSettings(const QString &key)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectSettingsKeyValue);
+    query.bindValue(":key", key);
+    if (!query.exec()) {
+
+    }
+    if (query.next()) {
+        return query.value(0).toString();
+    }
+    return QString();
+}
+
+void DBStorage::setSettings(const QString &key, const QString &value)
+{
+    QSqlQuery query(m_db);
+    query.prepare(insertSettingsKeyValue);
+    query.bindValue(":key", key);
+    query.bindValue(":value", value);
+    if (!query.exec()) {
+        qDebug() << "INSERT error " << query.lastError().text();
+    }
+}
+
+/*
 void DBStorage::addPayment(const QString &id, const QString &transaction, const QString &from_account, const QString &to_account, const QString &amount, const QString &value, int block, bool is_input, int ts, const QString &confirmations)
 {
     QSqlQuery query(m_db);
@@ -84,7 +118,7 @@ QList<QStringList> DBStorage::getPayments() const
         res.append(r);
     }
     return res;
-}
+}*/
 
 void DBStorage::addMessage(const QString &user, const QString &duser, const QString &text, uint64_t timestamp, Message::Counter counter, bool isIncoming, bool canDecrypted, bool isConfirmed, const QString &hash, qint64 fee)
 {
@@ -447,16 +481,6 @@ DBStorage::DBStorage(QObject *parent)
     : QObject(parent)
     , m_dbExist(false)
 {
-    //QSqlDatabase db;
-    const QString pathToBd = makePath(getBdPath(), "database.db");
-
-    m_dbExist = QFile::exists(pathToBd);
-    m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_db.setDatabaseName(pathToBd);
-    if (m_db.open())
-        qDebug() << "DB ok";
-    else
-        qDebug() << "DB open error";
 }
 
 bool DBStorage::createTable(const QString &table, const QString &createQuery)

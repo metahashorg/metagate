@@ -3,11 +3,14 @@
 
 #include <QString>
 
+static const QString databaseFileName = "database.db";
+static const QString databaseVersion = "1";
+
 static const QString sqliteSettings = "PRAGMA foreign_keys=on";
 
 static const QString dropTable = "DROP TABLE IF EXISTS %1";
 
-
+/*
 static const QString createPaymentsTable = "CREATE TABLE payments ("
                                            "id VARCHAR(100) PRIMARY KEY,"
                                            "trans VARCHAR(100),"
@@ -28,12 +31,12 @@ static const QString preparePaymentsInsert = "INSERT OR REPLACE INTO payments "
 static const QString selectPayments = "SELECT id, trans, from_account, to_account, "
                                     "amount, value, block, is_input, ts, confirmations "
                                     "FROM payments";
-
+*/
 
 
 
 static const QString createSettingsTable = "CREATE TABLE settings ( "
-                                           "key VARCHAR(256), "
+                                           "key VARCHAR(256) UNIQUE, "
                                            "value TEXT "
                                            ")";
 
@@ -74,6 +77,17 @@ static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadm
                                                         "FOREIGN KEY (userid) REFERENCES msg_users(id), "
                                                         "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
                                                         ")";
+
+static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (key, value)"
+                                             " VALUES (:key, :value)";
+
+static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
+
+
+
+
+
+
 
 static const QString selectMsgUsersForName = "SELECT id FROM msg_users WHERE username = :username";
 static const QString insertMsgUsers = "INSERT INTO msg_users (username) VALUES (:username)";

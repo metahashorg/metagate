@@ -12,15 +12,22 @@ class DBStorage : public QObject
 {
     Q_OBJECT
 public:
-    static DBStorage *instance() ;
+    static DBStorage *instance();
+
+    void setPath(const QString &path);
+    bool openDB();
 
     void init();
 
+    QString getSettings(const QString &key);
+    void setSettings(const QString &key, const QString &value);
+
+    /*
     void addPayment(const QString &id, const QString &transaction, const QString &from_account, const QString &to_account,
                     const QString &amount, const QString &value,
                     int block, bool is_input, int ts, const QString &confirmations);
 
-    QList<QStringList> getPayments() const;
+    QList<QStringList> getPayments() const;*/
 
     void addMessage(const QString &user, const QString &duser,
                     const QString &text, uint64_t timestamp, Message::Counter counter,
@@ -69,6 +76,7 @@ private:
 
     QSqlDatabase m_db;
     bool m_dbExist;
+    QString m_path;
 };
 
 #endif // DBSTORAGE_H
