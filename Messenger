@@ -1,0 +1,80 @@
+Messenger регестрируется в javascript по имени messenger
+
+Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
+Установить путь расположения кошельков (аналогичен setPath в mainwindow)
+Результат вернется в функцию
+setMessengerPathsJs("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
+Разблокировать кошелек на заданное время. При новой разблокировке старый кошелек блокируется
+
+Q_INVOKABLE void lockWallet();
+Заблокировать разблокированный кошелек
+
+
+Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);
+Зарегестрировать адрес в сервисе сообщений. Если адрес уже зарегестрирован (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг isForcibly
+isForcibly - перерегестрировать принудидельно (желательно выставлять в false)
+Результат вернется в функцию
+msgAddressAppendToMessengerJs("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
+Получить публичный ключ собеседника и сохранить его в bd. Если адрес уже существует (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг isForcibly
+isForcibly - Получить принудидельно (желательно выставлять в false)
+Результат вернется в функцию
+msgPublicKeyCollocutorGettedJs(address, collocutor, errorNum, errorMessage)
+
+Q_INVOKABLE void sendMessage(QString address, QString collocutor, QString dataHex, QString timestampStr, QString feeStr);
+Отправить сообщение
+Результат вернется в функцию
+msgMessageSendedJs(address, collocutor, errorNum, errorMessage)
+
+Q_INVOKABLE void getLastMessageNumber(QString address);
+Получить последний номер сообщения (номер сообщения сквозной для всех собеседников адреса)
+Результат вернется в функцию
+msgLastMessegesJs(address, number, errorNum, errorMessage)
+
+Q_INVOKABLE void getCountMessages(QString address, const QString &collocutor, QString from);
+Получить количество сообщений между собеседниками начиная с номера from
+Результат вернется в функцию
+msgCountMessagesJs(address, collocutor, number, errorNum, errorMessage)
+
+Q_INVOKABLE void savePos(QString address, const QString &collocutor, QString counterStr);
+Сохранить позицию прочитанного сообщения между собеседниками
+Результат вернется в функцию
+msgStorePosJs(address, collocutor, "Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void getSavedPos(QString address, const QString &collocutor);
+Получить позицию чтения между собеседниками
+Результат вернется в функцию
+msgSavedPosJs(address, collocutor, number, errorNum, errorMessage)
+
+Q_INVOKABLE void getSavedsPos(QString address);
+Получить все позиции чтения. Может использоваться для восстановления списка всех диалогов
+Результат вернется в функцию
+msgSavedsPosJs(address, result, errorNum, errorMessage)
+result - json массив вида [{"address": "addr", "counter": "pos"}]
+
+Q_INVOKABLE void getHistoryAddress(QString address, QString from, QString to);
+Получить сообщения адреса по всем собеседникам с номеров по и до
+Результат вернется в функцию
+msgGetHistoryAddressJs(address, result, errorNum, errorMessage)
+result - json массив вида [{\"collocutor\":\"0x0039fec32dcde172da7d676e4a6bc4a9d23ad052cc43640ca3\",\"counter\":\"13\",\"fee\":\"1\",\"isConfirmed\":true,\"isDecrypter\":false,\"isInput\":false,\"data\":\"00a765\",\"timestamp\":\"1234567\"}]
+где 
+collocutor - имя собеседника, 
+counter - порядковый номер сообщения
+fee - fee
+isConfirmed - подтверждено ли сообщение сервером (актуально для отправленных сообщений)
+isDecrypter - можно ли сообщение расшифровать (актуально для отправленных сообщений. Может быть false, если база чистилась, или загрузка сообщений была с другого устройства)
+isInput - входящее или исходящее сообщение
+data - расшифрованное сообщение в hex (может не быть, если isDecrypter == false)
+
+Q_INVOKABLE void getHistoryAddressAddress(QString address, QString collocutor, QString from, QString to);
+Получить сообщения между собеседниками с номеров по и до
+Результат вернется в функцию
+msgGetHistoryAddressAddressJs(address, collocutor, result, errorNum, errorMessage)
+
+Q_INVOKABLE void getHistoryAddressAddressCount(QString address, QString collocutor, QString count, QString to);
+Получить сообщения между собеседниками количесвом count штук до номера to
+Результат вернется в функцию
+msgGetHistoryAddressAddressCountJs(address, collocutor, result, errorNum, errorMessage)

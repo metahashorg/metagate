@@ -50,6 +50,7 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages, const 
         messageJson.insert("isDecrypter", message.isCanDecrypted);
         messageJson.insert("counter", QString::fromStdString(std::to_string(message.counter)));
         messageJson.insert("fee", QString::fromStdString(std::to_string(message.fee)));
+        messageJson.insert("isConfirmed", message.isConfirmed);
         messagesArrJson.push_back(messageJson);
     }
     return QJsonDocument(messagesArrJson);
@@ -230,7 +231,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::sendMessage(QString address, QString collocutor, QString data, QString timestampStr, QString feeStr) {
+void MessengerJavascript::sendMessage(QString address, QString collocutor, QString dataHex, QString timestampStr, QString feeStr) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
 
@@ -241,20 +242,20 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         const uint64_t fee = std::stoull(feeStr.toStdString());
         const uint64_t timestamp = std::stoull(timestampStr.toStdString());
-        emit messenger->getPubkeyAddress(collocutor, [this, JS_NAME_RESULT, address, collocutor, data, fee, timestamp](const QString &pubkey, const TypedException &exception) {
+        emit messenger->getPubkeyAddress(collocutor, [this, JS_NAME_RESULT, address, collocutor, dataHex, fee, timestamp](const QString &pubkey, const TypedException &exception) {
             const TypedException exception2 = apiVrapper2([&, this](){
                 if (exception.isSet()) {
                     throw exception;
                 }
 
                 const WalletRsa walletRsa = WalletRsa::fromPublicKey(pubkey.toStdString());
-                const QString encryptedDataToWss = QString::fromStdString(walletRsa.encrypt(fromHex(data.toStdString())));
+                const QString encryptedDataToWss = QString::fromStdString(walletRsa.encrypt(fromHex(dataHex.toStdString())));
 
                 const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee);
                 std::string pub;
                 const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pub);
 
-                const QString encryptedDataToBd = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).encrypt(data.toStdString()));
+                const QString encryptedDataToBd = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).encrypt(fromHex(dataHex.toStdString())));
                 emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception) {
                     LOG << "Message sended " << address << " " << collocutor;
                     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
@@ -423,5 +424,6 @@ void MessengerJavascript::lockWallet() {
 }
 
 void MessengerJavascript::runJs(const QString &script) {
+    LOG << "Javascript " << script;
     emit jsRunSig(script);
 }

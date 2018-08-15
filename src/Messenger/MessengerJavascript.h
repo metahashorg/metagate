@@ -54,7 +54,7 @@ public slots:
 
     Q_INVOKABLE void savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
 
-    Q_INVOKABLE void sendMessage(QString address, QString collocutor, QString data, QString timestampStr, QString feeStr);
+    Q_INVOKABLE void sendMessage(QString address, QString collocutor, QString dataHex, QString timestampStr, QString feeStr);
 
     Q_INVOKABLE void getLastMessageNumber(QString address);
 
