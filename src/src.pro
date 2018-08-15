@@ -50,7 +50,6 @@ SOURCES += main.cpp mainwindow.cpp \
     TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
     Messenger/MessengerJavascript.cpp \
-    Messenger/Message.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
     Messenger/MessengerWaletManager.cpp \

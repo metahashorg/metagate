@@ -41,7 +41,7 @@ struct ResponseType {
     QString address;
     bool isError = false;
     QString error;
-    size_t id;
+    size_t id = -1;
 };
 
 struct NewMessageResponse {

@@ -68,7 +68,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
 }
 
 void Messenger::invokeCallback(size_t requestId, const TypedException &exception) {
-    auto found = callbacks.find(requestId);
+    const auto found = callbacks.find(requestId);
     CHECK(found != callbacks.end(), "Not found callback for request " + std::to_string(requestId));
     const ResponseCallbacks callback = found->second; // копируем
     callbacks.erase(found);
@@ -86,6 +86,7 @@ std::vector<QString> Messenger::getMonitoredAddresses() const {
 
 void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
     const QString pubkeyHex = db.getUserPublicKey(fromAddress);
+    CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + fromAddress.toStdString());
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
     const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
     emit wssClient.sendMessage(message);
@@ -98,6 +99,7 @@ void Messenger::clearAddressesToMonitored() {
 void Messenger::addAddressToMonitored(const QString &address) {
     LOG << "Add address to monitored " << address;
     const QString pubkeyHex = db.getUserPublicKey(address);
+    CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + address.toStdString());
     const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
     emit wssClient.addHelloString(message);
@@ -121,7 +123,7 @@ QString Messenger::getSignFromMethod(const QString &address, const QString &meth
             return value;
         }
     }
-    throwErr(("Not found signed method " + method + " in address " + address).toStdString());
+    throwErrTyped(TypeErrors::INCOMPLETE_USER_INFO, ("Not found signed method " + method + " in address " + address).toStdString());
 }
 
 void Messenger::onRun() {
@@ -153,6 +155,7 @@ END_SLOT_WRAPPER
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages) {
     CHECK(!messages.empty(), "Empty messages");
     const Message::Counter currConfirmedCounter = db.getMessageMaxConfirmedCounter(address);
+    CHECK(std::is_sorted(messages.begin(), messages.end()), "Messages not sorted");
     const Message::Counter minCounterInServer = messages.front().counter;
     const Message::Counter maxCounterInServer = messages.back().counter;
 
@@ -161,17 +164,19 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         if (m.isInput) {
             LOG << "Add message " << address << " " << m.collocutor << " " << m.counter;
             db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, true, true, hashMessage, m.fee);
-            const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, m.collocutor);
+            const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, m.collocutor); // TODO вместо метода get сделать метод is
             if (savedPos == -1) {
                 db.setLastReadCounterForUserContact(address, m.collocutor, -1); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
             }
         } else {
             const auto id = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
             if (id != -1) {
+                LOG << "Update message " << address << " " << m.counter;
                 db.updateMessage(id, m.counter, true);
                 // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
             } else {
                 // Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
+                LOG << "Insert new output message " << address << " " << m.counter;
                 db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, false, true, hashMessage, m.fee);
             }
         }
@@ -196,9 +201,9 @@ BEGIN_SLOT_WRAPPER
     const ResponseType responseType = getMethodAndAddressResponse(messageJson);
 
     if (responseType.isError) {
-        LOG << "Messenger response error " << responseType.method << " " << responseType.address << " " << responseType.error;
-        if (responseType.method != METHOD::NOT_SET && !responseType.address.isEmpty() && !responseType.address.isNull()) {
-            invokeCallback(responseType.id, TypedException(TypeErrors::MESSENGER_ERROR, responseType.error.toStdString()));
+        LOG << "Messenger response error " << responseType.id << " " << responseType.method << " " << responseType.address << " " << responseType.error;
+        if (responseType.id != size_t(-1)) {
+            invokeCallback(responseType.id, TypedException(TypeErrors::MESSENGER_SERVER_ERROR, responseType.error.toStdString()));
         }
         return;
     }
@@ -305,6 +310,7 @@ BEGIN_SLOT_WRAPPER
     QString pubkey = "";
     const TypedException exception = apiVrapper2([&, this] {
         pubkey = db.getContactrPublicKey(address);
+        CHECK_TYPED(!pubkey.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "Collocutor pubkey not found " + address.toStdString());
         LOG << "Publickey found " << address << " " << pubkey;
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pubkey, exception));
@@ -314,7 +320,10 @@ END_SLOT_WRAPPER
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const QString hashMessage = createHashMessage(dataHex);
-    const Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress);
+    Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress);
+    if (lastCnt < 0) {
+        lastCnt = -1;
+    }
     db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee);
     const size_t idRequest = id.get();
     const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
