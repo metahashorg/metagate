@@ -7,8 +7,13 @@
 #include "SlotWrapper.h"
 #include "Log.h"
 
+static std::thread::id threadId() {
+    return std::this_thread::get_id();
+}
+
 MessengerWaletManager::MessengerWaletManager(QObject *parent)
     : QObject(parent)
+    , threadId(::threadId())
 {
     timer.setInterval(milliseconds(1s).count());
     CHECK(connect(&timer, SIGNAL(timeout()), this, SLOT(onResetWallets())), "not connect uploadEvent");
@@ -16,12 +21,14 @@ MessengerWaletManager::MessengerWaletManager(QObject *parent)
 }
 
 Wallet& MessengerWaletManager::getWallet(const std::string &address) const {
+    CHECK(threadId == ::threadId(), "Incorrect thread");
     CHECK_TYPED(wallet != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet not unlock");
     CHECK_TYPED(wallet->getAddress() == address, TypeErrors::WALLET_OTHER, "Wallet address not coincide")
     return *wallet;
 }
 
 WalletRsa& MessengerWaletManager::getWalletRsa(const std::string &address) const {
+    CHECK(threadId == ::threadId(), "Incorrect thread");
     CHECK_TYPED(walletRsa != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet rsa not unlock");
     CHECK_TYPED(wallet != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet not unlock");
     CHECK_TYPED(wallet->getAddress() == address, TypeErrors::WALLET_OTHER, "Wallet address not coincide")
@@ -29,11 +36,13 @@ WalletRsa& MessengerWaletManager::getWalletRsa(const std::string &address) const
 }
 
 void MessengerWaletManager::lockWallet() {
+    CHECK(threadId == ::threadId(), "Incorrect thread");
     wallet = nullptr;
     walletRsa = nullptr;
 }
 
 void MessengerWaletManager::unlockWallet(const QString &folder, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_) {
+    CHECK(threadId == ::threadId(), "Incorrect thread");
     wallet = std::make_unique<Wallet>(folder, address, password);
     walletRsa = std::make_unique<WalletRsa>(folder, address);
     walletRsa->unlock(passwordRsa);
@@ -44,7 +53,8 @@ void MessengerWaletManager::unlockWallet(const QString &folder, const std::strin
 
 void MessengerWaletManager::onResetWallets() {
 BEGIN_SLOT_WRAPPER
-    LOG << "Reset wallets";
+    CHECK(threadId == ::threadId(), "Incorrect thread");
+    LOG << "Try reset wallets";
     if (wallet != nullptr || walletRsa != nullptr) {
         const time_point now = ::now();
         const milliseconds elapsedTime = std::chrono::duration_cast<milliseconds>(now - startTime);

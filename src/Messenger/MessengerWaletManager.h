@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "Wallet.h"
 #include "WalletRsa.h"
@@ -36,6 +37,8 @@ private:
     time_point startTime;
 
     QTimer timer;
+
+    const std::thread::id threadId;
 
 signals:
 
