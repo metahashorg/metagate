@@ -5,6 +5,8 @@
     <Title>MetaGate Installer</Title>
     <Publisher>MetaGate</Publisher>
     <StartMenuDir>MetaGate</StartMenuDir>
+    <AllowNonAsciiCharacters>true</AllowNonAsciiCharacters>
+    <AllowSpaceInPath>true</AllowSpaceInPath>
     <TargetDir>@HomeDir@/MetaGate</TargetDir>
     <RemoteRepositories>
         <Repository>
