@@ -19,6 +19,8 @@ const static QString LOG_PATH = "logs/";
 
 const static QString PAGES_PATH = "pages/";
 
+const static QString BD_PATH = "bd/";
+
 const static QString AUTOUPDATER_PATH = "autoupdater/";
 
 const static QString NS_LOOKUP_PATH = "./";
@@ -31,6 +33,12 @@ QString getWalletPath() {
 
 QString getLogPath() {
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, LOG_PATH);
+    createFolder(res);
+    return res;
+}
+
+QString getBdPath() {
+    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, BD_PATH);
     createFolder(res);
     return res;
 }

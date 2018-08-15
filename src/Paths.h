@@ -7,6 +7,8 @@ QString getWalletPath();
 
 QString getLogPath();
 
+QString getBdPath();
+
 QString getNsLookupPath();
 
 QString getPagesPath();

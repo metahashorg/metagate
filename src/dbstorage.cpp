@@ -4,6 +4,8 @@
 #include <QtSql>
 
 #include "check.h"
+#include "Paths.h"
+#include "utils.h"
 
 DBStorage *DBStorage::instance()
 {
@@ -446,10 +448,11 @@ DBStorage::DBStorage(QObject *parent)
     , m_dbExist(false)
 {
     //QSqlDatabase db;
+    const QString pathToBd = makePath(getBdPath(), "database.db");
 
-    m_dbExist = QFile::exists("database.db");
+    m_dbExist = QFile::exists(pathToBd);
     m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_db.setDatabaseName("database.db");
+    m_db.setDatabaseName(pathToBd);
     if (m_db.open())
         qDebug() << "DB ok";
     else
