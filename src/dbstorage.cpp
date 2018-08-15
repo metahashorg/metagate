@@ -395,19 +395,36 @@ bool DBStorage::hasUnconfirmedMessageWithHash(const QString &username, const QSt
     return false;
 }
 
-qint64 DBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash)
+DBStorage::IdCounterPair DBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash)
 {
     QSqlQuery query(m_db);
     query.prepare(selectFirstNotConfirmedMessageWithHash);
     query.bindValue(":user", username);
     query.bindValue(":hash", hash);
     if (!query.exec()) {
-        return -1;
+        return DBStorage::IdCounterPair(-1, -1);
     }
     if (query.next()) {
-        return query.value(0).toLongLong();
+        return DBStorage::IdCounterPair(query.value("id").toLongLong(),
+                                        query.value("morder").toLongLong());
     }
-    return -1;
+    return DBStorage::IdCounterPair(-1, -1);
+}
+
+DBStorage::IdCounterPair DBStorage::findFirstMessageWithHash(const QString &username, const QString &hash)
+{
+    QSqlQuery query(m_db);
+    query.prepare(selectFirstMessageWithHash);
+    query.bindValue(":user", username);
+    query.bindValue(":hash", hash);
+    if (!query.exec()) {
+        return DBStorage::IdCounterPair(-1, -1);
+    }
+    if (query.next()) {
+        return DBStorage::IdCounterPair(query.value("id").toLongLong(),
+                                        query.value("morder").toLongLong());
+    }
+    return DBStorage::IdCounterPair(-1, -1);
 }
 
 qint64 DBStorage::findFirstNotConfirmedMessage(const QString &username)

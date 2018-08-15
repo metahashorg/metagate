@@ -171,7 +171,7 @@ static const QString selectCountMessagesWithCounter = "SELECT COUNT(*) "
                                                         "AND u.username = :user ";
 
 
-static const QString selectFirstNotConfirmedMessage = "SELECT m.id "
+static const QString selectFirstNotConfirmedMessage = "SELECT m.id, m.morder "
                                                         "FROM msg_messages m "
                                                         "INNER JOIN msg_users u ON u.id = m.userid "
                                                         "WHERE m.isConfirmed = 0 "
@@ -188,6 +188,13 @@ static const QString selectFirstNotConfirmedMessageWithHash = "SELECT m.id "
                                                         "ORDER BY m.morder "
                                                         "LIMIT 1";
 
+static const QString selectFirstMessageWithHash = "SELECT m.id "
+                                                        "FROM msg_messages m "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid "
+                                                        "WHERE m.hash = :hash "
+                                                        "AND u.username = :user "
+                                                        "ORDER BY m.morder "
+                                                        "LIMIT 1";
 
 static const QString updateMessageQuery = "UPDATE msg_messages "
                                         "SET isConfirmed = :isConfirmed, morder = :counter "

@@ -12,6 +12,8 @@ class DBStorage : public QObject
 {
     Q_OBJECT
 public:
+    using IdCounterPair = std::pair<qint64, Message::Counter>;
+
     static DBStorage *instance();
 
     void setPath(const QString &path);
@@ -59,7 +61,8 @@ public:
     bool hasMessageWithCounter(const QString &username, Message::Counter counter);
     bool hasUnconfirmedMessageWithHash(const QString &username, const QString &hash);
 
-    qint64 findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash);
+    IdCounterPair findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash);
+    IdCounterPair findFirstMessageWithHash(const QString &username, const QString &hash);
     qint64 findFirstNotConfirmedMessage(const QString &username);
     void updateMessage(qint64 id, Message::Counter newCounter, bool confirmed);
 
