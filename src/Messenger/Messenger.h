@@ -17,6 +17,7 @@
 struct NewMessageResponse;
 class MessengerJavascript;
 class DBStorage;
+struct ChannelInfo;
 
 class Messenger : public TimerClass
 {
@@ -167,6 +168,8 @@ private:
 
     void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to);
 
+    void getMessagesFromChannelFromWss(const QString &fromAddress, const QString &channelSha, Message::Counter from, Message::Counter to);
+
     void clearAddressesToMonitored();
 
     void addAddressToMonitored(const QString &address);
@@ -176,6 +179,8 @@ private:
     QString getSignFromMethod(const QString &address, const QString &method) const;
 
     std::vector<QString> getMonitoredAddresses() const;
+
+    void processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels);
 
     void invokeCallback(size_t requestId, const TypedException &exception);
 

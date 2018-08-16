@@ -108,6 +108,14 @@ void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Messag
     emit wssClient.sendMessage(message);
 }
 
+void Messenger::getMessagesFromChannelFromWss(const QString &fromAddress, const QString &channelSha, Message::Counter from, Message::Counter to) {
+    const QString pubkeyHex = db.getUserPublicKey(fromAddress);
+    CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + fromAddress.toStdString());
+    const QString signHex = getSignFromMethod(fromAddress, makeTextForGetChannelRequest());
+    const QString message = makeGetChannelRequest(channelSha, from, to, pubkeyHex, signHex, id.get());
+    emit wssClient.sendMessage(message);
+}
+
 void Messenger::clearAddressesToMonitored() {
     emit wssClient.setHelloString(std::vector<QString>{});
 }
@@ -120,6 +128,18 @@ void Messenger::addAddressToMonitored(const QString &address) {
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
     emit wssClient.addHelloString(message);
     emit wssClient.sendMessage(message);
+
+    const QString signHexChannels = getSignFromMethod(address, makeTextForGetMyChannelsRequest());
+    const QString messageGetMyChannels = makeGetMyChannelsRequest(pubkeyHex, signHexChannels, id.get());
+    emit wssClient.addHelloString(messageGetMyChannels);
+    emit wssClient.sendMessage(messageGetMyChannels);
+}
+
+void processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels) {
+    // Сбросить флаг isVisited у всех channel-ей в таблице
+    // Пройтись по всему массиву, добавить новую инфу с флагом isVisited или установить флаг isVisited, если инфа существует
+    // У всех записей, где флаг isVisited не установлен, поставить isWriter = false
+    // Сбросить флаг isVisited у всех channel-ей в таблице
 }
 
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
