@@ -57,7 +57,9 @@ QString makeGetMyChannelsRequest(const QString &pubkeyHex, const QString &signHe
 QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex, size_t id);
 
 enum METHOD: int {
-    APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5, NOT_SET = 1000
+    APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5,
+    CHANNEL_CREATE = 6, CHANNEL_ADD_WRITER = 7, CHANNEL_DEL_WRITER = 8, SEND_TO_CHANNEL = 9, GET_CHANNEL = 10, GET_CHANNELS = 11, GET_MY_CHANNELS = 12, ADD_TO_CHANNEL = 13, DEL_FROM_CHANNEL = 14,
+    NOT_SET = 1000
 };
 
 struct ResponseType {

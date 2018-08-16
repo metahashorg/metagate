@@ -20,6 +20,16 @@ const static QString NEW_MSGS_RESPONSE = "msg_get_my";
 const static QString NEW_MSG_RESPONSE = "new_msg";
 const static QString COUNT_MESSAGES_RESPONSE = "msg_append_key_online";
 
+const static QString CHANNEL_CREATE_RESPONSE = "msg_channel_create";
+const static QString CHANNEL_ADD_WRITER_RESPONSE = "msg_channel_add_writer";
+const static QString CHANNEL_DEL_WRITER_RESPONSE = "msg_channel_del_writer";
+const static QString SEND_TO_CHANNEL_RESPONSE = "msg_send_to_channel";
+const static QString GET_CHANNEL_RESPONSE = "msg_get_channel";
+const static QString GET_CHANNELS_RESPONSE = "msg_get_channels";
+const static QString GET_MY_CHANNELS_RESPONSE = "msg_get_my_channels";
+const static QString ADD_TO_CHANNEL_RESPONSE = "add_to_channel";
+const static QString DEL_FROM_CHANNEL_RESPONSE = "del_from_channel";
+
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
     return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
 }
@@ -269,6 +279,24 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
         result.method = METHOD::NEW_MSG;
     } else if (type == COUNT_MESSAGES_RESPONSE) {
         result.method = METHOD::COUNT_MESSAGES;
+    } else if (type == CHANNEL_CREATE_RESPONSE) {
+        result.method = METHOD::CHANNEL_CREATE;
+    } else if (type == CHANNEL_ADD_WRITER_RESPONSE) {
+        result.method = METHOD::CHANNEL_ADD_WRITER;
+    } else if (type == CHANNEL_DEL_WRITER_RESPONSE) {
+        result.method = METHOD::CHANNEL_DEL_WRITER;
+    } else if (type == SEND_TO_CHANNEL_RESPONSE) {
+        result.method = METHOD::SEND_TO_CHANNEL;
+    } else if (type == GET_CHANNEL_RESPONSE) {
+        result.method = METHOD::GET_CHANNEL;
+    } else if (type == GET_CHANNELS_RESPONSE) {
+        result.method = METHOD::GET_CHANNELS;
+    } else if (type == GET_MY_CHANNELS_RESPONSE) {
+        result.method = METHOD::GET_MY_CHANNELS;
+    } else if (type == ADD_TO_CHANNEL_RESPONSE) {
+        result.method = METHOD::ADD_TO_CHANNEL;
+    } else if (type == DEL_FROM_CHANNEL_RESPONSE) {
+        result.method = METHOD::DEL_FROM_CHANNEL;
     } else if (type.isEmpty()) {
         // ignore
     } else {
