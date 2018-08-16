@@ -46,7 +46,7 @@ QString makeChannelAddWriterRequest(const QString &titleSha, const QString &addr
 
 QString makeChannelDelWriterRequest(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
 
-QString makeSendToChannelRequest(const QString &titleSha, const QString &dataHex, uint64_t fee, const QString &pubkeyHex, const QString &signHex, size_t id);
+QString makeSendToChannelRequest(const QString &titleSha, const QString &dataHex, uint64_t fee, uint64_t timestamp, const QString &pubkeyHex, const QString &signHex, size_t id);
 
 QString makeGetChannelRequest(const QString &titleSha, Message::Counter from, Message::Counter to, const QString &pubkeyHex, const QString &signHex, size_t id);
 

@@ -178,13 +178,14 @@ QString makeChannelDelWriterRequest(const QString &titleSha, const QString &addr
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeSendToChannelRequest(const QString &titleSha, const QString &dataHex, uint64_t fee, const QString &pubkeyHex, const QString &signHex, size_t id) {
+QString makeSendToChannelRequest(const QString &titleSha, const QString &dataHex, uint64_t fee, uint64_t timestamp, const QString &pubkeyHex, const QString &signHex, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_send_to_channel");
     json.insert("request_id", QString::fromStdString(std::to_string(id)));
     QJsonObject params;
     params.insert("fee", QString::fromStdString(std::to_string(fee)));
+    params.insert("timestamp", QString::fromStdString(std::to_string(timestamp)));
     params.insert("title_sha256", titleSha);
     params.insert("data", dataHex);
     params.insert("pubkey", pubkeyHex);

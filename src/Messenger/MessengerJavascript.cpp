@@ -257,7 +257,7 @@ BEGIN_SLOT_WRAPPER
                 const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pub);
 
                 const QString encryptedDataToBd = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).encrypt(data));
-                emit messenger->sendMessage(address, collocutor, encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception) {
+                emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, QString::fromStdString(pub), QString::fromStdString(sign), fee, timestamp, encryptedDataToBd, [this, JS_NAME_RESULT, address, collocutor](const TypedException &exception) {
                     LOG << "Message sended " << address << " " << collocutor;
                     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(address), Opt<QString>(collocutor));
                 });

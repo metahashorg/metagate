@@ -475,16 +475,26 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
+void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
+    if (!isChannel) {
+        channel = "";
+    }
     const QString hashMessage = createHashMessage(dataHex);
+    // + channel
     Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress);
     if (lastCnt < 0) {
         lastCnt = -1;
     }
+    // + channel
     db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee);
     const size_t idRequest = id.get();
-    const QString message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
+    QString message;
+    if (!isChannel) {
+        message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
+    } else {
+        message = makeSendToChannelRequest(channel, dataHex, fee, timestamp, pubkeyHex, signHex, idRequest);
+    }
     callbacks[idRequest] = callback;
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
