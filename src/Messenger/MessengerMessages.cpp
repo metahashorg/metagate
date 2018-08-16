@@ -38,8 +38,8 @@ QString makeTextForGetPubkeyRequest(const QString &address) {
     return address;
 }
 
-QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee) {
-    return address + QString::fromStdString(std::to_string(fee)) + dataHex;
+QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp) {
+    return address + QString::fromStdString(std::to_string(fee)) + dataHex + QString::fromStdString(std::to_string(timestamp));
 }
 
 QString makeTextForGetMyMessagesRequest() {
@@ -58,8 +58,8 @@ QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QStrin
     return "del" + titleSha + address;
 }
 
-QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee) {
-    return QString::fromStdString(std::to_string(fee)) + titleSha + text;
+QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp) {
+    return QString::fromStdString(std::to_string(fee)) + titleSha + text + QString::fromStdString(std::to_string(timestamp));
 }
 
 QString makeTextForGetChannelRequest() {

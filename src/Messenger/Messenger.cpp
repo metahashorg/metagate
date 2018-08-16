@@ -36,8 +36,8 @@ QString Messenger::makeTextForGetPubkeyRequest(const QString &address) {
     return ::makeTextForGetPubkeyRequest(address);
 }
 
-QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee) {
-    return ::makeTextForSendMessageRequest(address, dataHex, fee);
+QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp) {
+    return ::makeTextForSendMessageRequest(address, dataHex, fee, timestamp);
 }
 
 QString Messenger::makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee) {
@@ -52,8 +52,8 @@ QString Messenger::makeTextForChannelDelWriterRequest(const QString &titleSha, c
     return ::makeTextForChannelDelWriterRequest(titleSha, address);
 }
 
-QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee) {
-    return ::makeTextForSendToChannelRequest(titleSha, text, fee);
+QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp) {
+    return ::makeTextForSendToChannelRequest(titleSha, text, fee, timestamp);
 }
 
 Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)

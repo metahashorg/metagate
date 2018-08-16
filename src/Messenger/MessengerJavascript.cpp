@@ -252,7 +252,7 @@ BEGIN_SLOT_WRAPPER
                 const WalletRsa walletRsa = WalletRsa::fromPublicKey(pubkey.toStdString());
                 const QString encryptedDataToWss = QString::fromStdString(walletRsa.encrypt(data));
 
-                const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee);
+                const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee, timestamp);
                 std::string pub;
                 const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pub);
 

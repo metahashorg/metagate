@@ -12,7 +12,7 @@ QString makeTextForSignRegisterRequest(const QString &address, const QString &rs
 
 QString makeTextForGetPubkeyRequest(const QString &address);
 
-QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee);
+QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp);
 
 QString makeTextForGetMyMessagesRequest();
 
@@ -22,7 +22,7 @@ QString makeTextForChannelAddWriterRequest(const QString &titleSha, const QStrin
 
 QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address);
 
-QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee);
+QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp);
 
 QString makeTextForGetChannelRequest();
 
