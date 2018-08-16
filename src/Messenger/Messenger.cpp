@@ -238,41 +238,26 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         const QString hashMessage = createHashMessage(m.data); // TODO брать хэш еще и по timestamp
         if (isInput) {
             LOG << "Add message " << address << " " << channel << " " << m.collocutor << " " << m.counter;
-            if (!isChannel) {
-                db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee);
-            } else {
-                // Добавить
-            }
+            // + channel
+            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee);
             const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
+            // + isChannel
             const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, collocutorOrChannel); // TODO вместо метода get сделать метод is
             if (savedPos == -1) {
+                // + isChannel
                 db.setLastReadCounterForUserContact(address, collocutorOrChannel, -1); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
             }
         } else {
-            qint64 idDb;
-            Message::Counter counter;
-
-            if (!isChannel) {
-                const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
-                idDb = idPair.first;
-                counter = idPair.second;
-            } else {
-                // Искать по channel
-                const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
-                idDb = idPair.first;
-                counter = idPair.second;
-            }
+            // + channel
+            const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
+            const auto idDb = idPair.first;
+            const Message::Counter counter = idPair.second;
             if (idDb != -1) {
                 LOG << "Update message " << address << " " << channel << " " << m.counter;
-                if (!isChannel) {
-                    db.updateMessage(idDb, m.counter, true);
-                } else {
-                    // Доп поле channel
-                    db.updateMessage(idDb, m.counter, true);
-                }
-                // Поле channel. Потом перенести под if
-                const bool foundMessage = isChannel ? db.hasMessageWithCounter(address, counter) : db.hasMessageWithCounter(address, counter);
-                if (counter != m.counter && !foundMessage) {
+                // + channel
+                db.updateMessage(idDb, m.counter, true);
+                // + channel
+                if (counter != m.counter && !db.hasMessageWithCounter(address, counter)) {
                     if (!isChannel) {
                         getMessagesFromAddressFromWss(address, counter, counter);
                     } else {
@@ -281,20 +266,12 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                     deffer = true;
                 }
             } else {
-                qint64 idDb2;
-                if (!isChannel) {
-                    const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage);
-                    idDb2 = idPair2.first;
-                } else {
-                    // + поле channel
-                }
-                if (idDb2 == -1) {
+                // + channel
+                const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage);
+                if (idPair2.first == -1) {
                     LOG << "Insert new output message " << address << " " << channel << " " << m.counter;
-                    if (!isChannel) {
-                        db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee);
-                    } else {
-                        // Добавить к каналу
-                    }
+                    // + channel
+                    db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee);
                 }
             }
         }
