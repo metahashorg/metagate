@@ -1,0 +1,22 @@
+Building the application:
+0. preparing the base: close cute project, delete folder containing project, empty WalletMetahash folder, into this folder we will copy MetaGate.app on step 5
+1. open project in qt
+2. change build type for release
+3. build project
+4. copy startSettings folder from folder with project into the folder that qt creates when building close to the executable file (in build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/MetaGate.app/Contents/MacOS/)
+4.1 Copy and replace
+~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt directory in startSettings
+5. copy from build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/ MetaGate.app” into separate arbitrary WalletMetahash folder
+6. Run macdeployqt.
+/Users/daria/Qt/5.9.1/clang_64/bin/macdeployqt /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app -executable=/Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/Contents/MacOS/MetaGate
+7. dmg is now ready for build. The next step is to run dropdpmg
+
+Build the autoupdater:
+Place files from updater in MetaGate.app
+Run ./create-packages.rb -p macosx -v "1.1.0" /Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/ ./config-template.js /Users/daria/Documents/tmp/
+where
+-v version
+/
+Users/daria/Downloads/blabla/for_dmg/WalletMetahash/MetaGate.app/ path to the WalletMetahash directory with final slash
+/Users/daria/Documents/tmp/ path with output files with final slash
+Compress resulting app.zip, file_list.xml and  updater files into archive without leading directories and give for upoading 

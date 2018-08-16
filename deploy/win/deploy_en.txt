@@ -1,0 +1,20 @@
+Building the application:
+It is needed to delete qt build directory
+cd "C:\Qt\5.10.1\msvc2015_64\bin"
+.\windeployqt.exe D:\qt\MetaGate\MetaGate.exe
+Copy following files to D:\qt\MetaGate\MetaGate.exe directory:
+.gitignore
+deploy/win/lib/*
+cryptopp/lib/windows/cryptopp.dll
+quazip-0.7.3/libs/win/quazip.dll
+secp256k1/lib/windows/secp256k1.dll
+and
+startSettings/ folder
+Copy and replace ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt in startSettings
+Copy content of the MetaGate directory into Install/packages/Wallet/data folder
+Run create_package.cmd
+
+Autoupdater archive structure:
+7z directory with 7z program
+release.zip file
+unpack.bat file
