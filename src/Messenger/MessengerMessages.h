@@ -96,6 +96,7 @@ struct ChannelInfo {
     QString titleSha;
     QString admin;
     uint64_t fee;
+    Message::Counter counter = -1;
 };
 
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response);

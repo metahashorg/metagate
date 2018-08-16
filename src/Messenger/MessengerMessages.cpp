@@ -387,6 +387,9 @@ static ChannelInfo parseChannel(const QJsonObject &channelJson) {
     info.admin = channelJson.value("admin").toString();
     CHECK(channelJson.contains("fee") && channelJson.value("fee").isString(), "fee field not found");
     info.fee = std::stoull(channelJson.value("fee").toString().toStdString());
+    if (channelJson.contains("cnt_last") && channelJson.value("cnt_last").isString()) {
+        info.counter = std::stoll(channelJson.value("cnt_last").toString().toStdString());
+    }
     return info;
 }
 

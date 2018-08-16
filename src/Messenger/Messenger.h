@@ -174,7 +174,7 @@ private:
 
     void addAddressToMonitored(const QString &address);
 
-    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages);
+    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel);
 
     QString getSignFromMethod(const QString &address, const QString &method) const;
 
@@ -184,6 +184,8 @@ private:
 
     void invokeCallback(size_t requestId, const TypedException &exception);
 
+    void processAddOrDeleteInChannel(const QString &address, const ChannelInfo &channel, bool isAdd);
+
 private:
 
     DBStorage &db;
@@ -192,7 +194,7 @@ private:
 
     WebSocketClient wssClient;
 
-    std::map<QString, DeferredMessage> deferredMessages;
+    std::map<std::pair<QString, QString>, DeferredMessage> deferredMessages;
 
     RequestId id;
 
