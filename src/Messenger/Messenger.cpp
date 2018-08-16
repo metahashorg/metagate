@@ -159,6 +159,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
     const Message::Counter minCounterInServer = messages.front().counter;
     const Message::Counter maxCounterInServer = messages.back().counter;
 
+    bool deffer = false;
     for (const NewMessageResponse &m: messages) {
         const QString hashMessage = createHashMessage(m.data);
         if (m.isInput) {
@@ -169,20 +170,30 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 db.setLastReadCounterForUserContact(address, m.collocutor, -1); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
             }
         } else {
-            const auto id = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
-            if (id != -1) {
+            const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
+            const auto idDb = idPair.first;
+            const Message::Counter counter = idPair.second;
+            if (idDb != -1) {
                 LOG << "Update message " << address << " " << m.counter;
-                db.updateMessage(id, m.counter, true);
-                // Потом запросить сообщение по предыдущему counter output-а, если он изменился и такого номера еще нет, и установить deferrer
+                db.updateMessage(idDb, m.counter, true);
+                if (counter != m.counter && !db.hasMessageWithCounter(address, counter)) {
+                    getMessagesFromAddressFromWss(address, counter, counter);
+                    deffer = true;
+                }
             } else {
-                // Если сообщение не нашлось, поискать просто по хэшу. Если и оно не нашлось, то вставить
-                LOG << "Insert new output message " << address << " " << m.counter;
-                db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, false, true, hashMessage, m.fee);
+                const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage);
+                if (idPair2.first == -1) {
+                    LOG << "Insert new output message " << address << " " << m.counter;
+                    db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, m.isInput, false, true, hashMessage, m.fee);
+                }
             }
         }
     }
 
-    if (minCounterInServer > currConfirmedCounter + 1) {
+    if (deffer) {
+        LOG << "Deffer message0 " << address;
+        deferredMessages[address].setDeferred(2s);
+    } else if (minCounterInServer > currConfirmedCounter + 1) {
         LOG << "Deffer message " << address << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
         deferredMessages[address].setDeferred(2s);
         getMessagesFromAddressFromWss(address, currConfirmedCounter + 1, minCounterInServer);
