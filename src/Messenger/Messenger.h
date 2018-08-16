@@ -91,6 +91,14 @@ public:
 
     static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee);
 
+    static QString makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee);
+
+    static QString makeTextForChannelAddWriterRequest(const QString &titleSha, const QString &address);
+
+    static QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address);
+
+    static QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee);
+
 signals:
 
     void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);

@@ -25,7 +25,7 @@ static QString createHashMessage(const QString &message) {
 }
 
 std::vector<QString> Messenger::stringsForSign() {
-    return {makeTextForGetMyMessagesRequest(), makeTextForGetChannelRequest(), makeTextForGetChannelsRequest(), makeTextForMsgAppendKeyOnlineRequest()};
+    return {makeTextForGetMyMessagesRequest(), makeTextForGetChannelRequest(), makeTextForGetChannelsRequest(), makeTextForMsgAppendKeyOnlineRequest(), makeTextForGetMyChannelsRequest()};
 }
 
 QString Messenger::makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
@@ -38,6 +38,22 @@ QString Messenger::makeTextForGetPubkeyRequest(const QString &address) {
 
 QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee) {
     return ::makeTextForSendMessageRequest(address, dataHex, fee);
+}
+
+QString Messenger::makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee) {
+    return ::makeTextForChannelCreateRequest(title, titleSha, fee);
+}
+
+QString Messenger::makeTextForChannelAddWriterRequest(const QString &titleSha, const QString &address) {
+    return ::makeTextForChannelAddWriterRequest(titleSha, address);
+}
+
+QString Messenger::makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address) {
+    return ::makeTextForChannelDelWriterRequest(titleSha, address);
+}
+
+QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee) {
+    return ::makeTextForSendToChannelRequest(titleSha, text, fee);
 }
 
 Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
@@ -214,7 +230,7 @@ BEGIN_SLOT_WRAPPER
     if (responseType.isError) {
         LOG << "Messenger response error " << responseType.id << " " << responseType.method << " " << responseType.address << " " << responseType.error;
         if (responseType.id != size_t(-1)) {
-            invokeCallback(responseType.id, TypedException(TypeErrors::MESSENGER_SERVER_ERROR, responseType.error.toStdString()));
+            invokeCallback(responseType.id, TypedException(TypeErrors::MESSENGER_SERVER_ERROR, responseType.error.toStdString())); // TODO Разбирать ответ от сервера
         }
         return;
     }

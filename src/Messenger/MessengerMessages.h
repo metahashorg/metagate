@@ -16,9 +16,19 @@ QString makeTextForSendMessageRequest(const QString &address, const QString &dat
 
 QString makeTextForGetMyMessagesRequest();
 
+QString makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee);
+
+QString makeTextForChannelAddWriterRequest(const QString &titleSha, const QString &address);
+
+QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address);
+
+QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee);
+
 QString makeTextForGetChannelRequest();
 
 QString makeTextForGetChannelsRequest();
+
+QString makeTextForGetMyChannelsRequest();
 
 QString makeTextForMsgAppendKeyOnlineRequest();
 
@@ -29,6 +39,20 @@ QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, c
 QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, size_t id);
 
 QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to, size_t id);
+
+QString makeCreateChannelRequest(const QString &title, const QString &titleSha, uint64_t fee, const QString &pubkeyHex, const QString &signHex, size_t id);
+
+QString makeChannelAddWriterRequest(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
+
+QString makeChannelDelWriterRequest(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
+
+QString makeSendToChannelRequest(const QString &titleSha, const QString &dataHex, uint64_t fee, const QString &pubkeyHex, const QString &signHex, size_t id);
+
+QString makeGetChannelRequest(const QString &titleSha, Message::Counter from, Message::Counter to, const QString &pubkeyHex, const QString &signHex, size_t id);
+
+QString makeGetChannelsRequest(const QString &pubkeyHex, const QString &signHex, size_t id);
+
+QString makeGetMyChannelsRequest(const QString &pubkeyHex, const QString &signHex, size_t id);
 
 QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex, size_t id);
 
@@ -47,10 +71,12 @@ struct ResponseType {
 struct NewMessageResponse {
     QString data;
     bool isInput;
+    bool isChannel;
     Message::Counter counter;
     uint64_t timestamp;
     uint64_t fee;
     QString collocutor;
+    QString channelName;
 
     bool operator< (const NewMessageResponse &second) const {
         return this->counter < second.counter;
@@ -63,11 +89,28 @@ struct KeyMessageResponse {
     uint64_t fee;
 };
 
+struct ChannelInfo {
+    QString title;
+    QString titleSha;
+    QString admin;
+    uint64_t fee;
+};
+
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response);
 
 NewMessageResponse parseNewMessageResponse(const QJsonDocument &response);
 
 std::vector<NewMessageResponse> parseNewMessagesResponse(const QJsonDocument &response);
+
+std::vector<NewMessageResponse> parseGetChannelResponse(const QJsonDocument &response);
+
+std::vector<ChannelInfo> parseGetChannelsResponse(const QJsonDocument &response);
+
+std::vector<ChannelInfo> parseGetMyChannelsResponse(const QJsonDocument &response);
+
+ChannelInfo parseAddToChannelResponse(const QJsonDocument &response);
+
+ChannelInfo parseDelToChannelResponse(const QJsonDocument &response);
 
 Message::Counter parseCountMessagesResponse(const QJsonDocument &response);
 
