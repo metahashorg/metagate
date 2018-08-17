@@ -18,7 +18,7 @@ using namespace std::placeholders;
 
 #include <QCryptographicHash>
 
-#include "dbstorage.h"
+#include "messengerdbstorage.h"
 
 static QString createHashMessage(const QString &message) {
     return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
@@ -56,9 +56,9 @@ QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, cons
     return ::makeTextForSendToChannelRequest(titleSha, text, fee, timestamp);
 }
 
-Messenger::Messenger(MessengerJavascript &javascriptWrapper, QObject *parent)
+Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, QObject *parent)
     : TimerClass(1s, parent)
-    , db(*DBStorage::instance())
+    , db(db)
     , javascriptWrapper(javascriptWrapper)
     , wssClient("wss://messenger.metahash.io")
 {

@@ -16,7 +16,7 @@
 
 struct NewMessageResponse;
 class MessengerJavascript;
-class DBStorage;
+class MessengerDBStorage;
 struct ChannelInfo;
 
 class Messenger : public TimerClass
@@ -80,7 +80,7 @@ public:
 
 public:
 
-    explicit Messenger(MessengerJavascript &javascriptWrapper, QObject *parent = nullptr);
+    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, QObject *parent = nullptr);
 
 public:
 
@@ -188,7 +188,7 @@ private:
 
 private:
 
-    DBStorage &db;
+    MessengerDBStorage &db;
 
     MessengerJavascript &javascriptWrapper;
 
