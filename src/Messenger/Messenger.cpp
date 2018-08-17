@@ -166,14 +166,20 @@ void Messenger::addAddressToMonitored(const QString &address) {
 }
 
 void Messenger::processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels) {
-    // Сбросить флаг isVisited у всех channel-ей в таблице
-    // Пройтись по всему массиву, добавить новую инфу с флагом isVisited или установить флаг isVisited, если инфа существует
-    // У всех записей, где флаг isVisited не установлен, поставить isWriter = false
-    // Для новых каналов поставить счетчик прочитанных в -1. Нужно ли?
-    // Сбросить флаг isVisited у всех channel-ей в таблице
+    db.setChannelsNotVisited(address);
+    const DBStorage::DbId userId = db.getUserId(address);
     for (const ChannelInfo &channel: channels) {
-        // Взять индекс последнего сообщения из бд
-        const Message::Counter counter = -1;
+        const DBStorage::DbId dbId = db.getChannelForUserShaName(address, channel.titleSha);
+        if (dbId != -1) {
+            db.updateChannel(dbId, true);
+        } else {
+            db.addChannel(userId, channel.title, channel.titleSha, channel.admin == address, channel.admin, false, true, true);
+            db.setLastReadCounterForUserContact(address, channel.titleSha, -1, true);
+        }
+    }
+    db.setWriterForNotVisited(address);
+    for (const ChannelInfo &channel: channels) {
+        const Message::Counter counter = db.getMessageMaxCounter(address, channel.titleSha);
         if (counter < channel.counter) {
             getMessagesFromChannelFromWss(address, channel.titleSha, counter + 1, channel.counter);
         }
@@ -182,17 +188,17 @@ void Messenger::processMyChannels(const QString &address, const std::vector<Chan
 
 void Messenger::processAddOrDeleteInChannel(const QString &address, const ChannelInfo &channel, bool isAdd) {
     if (!isAdd) {
-        // поставить метку, что канал удален
+        db.setChannelIsWriterForUserShaName(address, channel.titleSha, false);
         emit javascriptWrapper.deletedFromChannelSig(address, channel.title, channel.titleSha, channel.admin);
-        return;
+    } else {
+        const DBStorage::DbId userId = db.getUserId(address);
+        db.addChannel(userId, channel.title, channel.titleSha, channel.admin == address, channel.admin, false, true, false);
+        const Message::Counter cnt = channel.counter;
+        if (cnt != -1) {
+            getMessagesFromChannelFromWss(address, channel.titleSha, 0, cnt);
+        }
+        emit javascriptWrapper.addedToChannelSig(address, channel.title, channel.titleSha, channel.admin, channel.counter);
     }
-    // занести новый канал
-    // Получить counter из channel или запросить
-    const Message::Counter cnt = -1;
-    if (cnt != -1) {
-        getMessagesFromChannelFromWss(address, channel.titleSha, 0, cnt);
-    }
-    emit javascriptWrapper.addedToChannelSig(address, channel.title, channel.titleSha, channel.admin, channel.counter);
 }
 
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
@@ -234,12 +240,12 @@ BEGIN_SLOT_WRAPPER
         DeferredMessage &deferred = pairDeferred.second;
         if (deferred.check()) {
             deferred.resetDeferred();
-            const Message::Counter lastCnt = db.getMessageMaxCounter(address);
+            const Message::Counter lastCnt = db.getMessageMaxCounter(address, "");
             LOG << "Defferred process message " << address << " " << channel << " " << lastCnt;
             if (channel.isEmpty()) {
                 emit javascriptWrapper.newMessegesSig(address, lastCnt);
             } else {
-                // newMessageSigChannel
+                emit javascriptWrapper.newMessegesChannelSig(address, channel, lastCnt);
             }
         }
     }
@@ -267,14 +273,11 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         const QString hashMessage = createHashMessage(m.data); // TODO брать хэш еще и по timestamp
         if (isInput) {
             LOG << "Add message " << address << " " << channel << " " << m.collocutor << " " << m.counter;
-            // + channel
-            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee);
+            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee, channel);
             const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
-            // + isChannel
-            const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, collocutorOrChannel); // TODO вместо метода get сделать метод is
+            const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
             if (savedPos == -1) {
-                // + isChannel
-                db.setLastReadCounterForUserContact(address, collocutorOrChannel, -1); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
+                db.setLastReadCounterForUserContact(address, collocutorOrChannel, -1, isChannel); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
             }
         } else {
             // + channel
@@ -283,10 +286,8 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
             const Message::Counter counter = idPair.second;
             if (idDb != -1) {
                 LOG << "Update message " << address << " " << channel << " " << m.counter;
-                // + channel
-                db.updateMessage(idDb, m.counter, true);
-                // + channel
-                if (counter != m.counter && !db.hasMessageWithCounter(address, counter)) {
+                db.updateMessage(idDb, m.counter, true, channel);
+                if (counter != m.counter && !db.hasMessageWithCounter(address, counter, channel)) {
                     if (!isChannel) {
                         getMessagesFromAddressFromWss(address, counter, counter);
                     } else {
@@ -295,12 +296,10 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                     deffer = true;
                 }
             } else {
-                // + channel
-                const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage);
+                const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage, channel);
                 if (idPair2.first == -1) {
                     LOG << "Insert new output message " << address << " " << channel << " " << m.counter;
-                    // + channel
-                    db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee);
+                    db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee, channel);
                 }
             }
         }
@@ -506,13 +505,11 @@ BEGIN_SLOT_WRAPPER
         channel = "";
     }
     const QString hashMessage = createHashMessage(dataHex);
-    // + channel
-    Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress);
+    Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress, channel);
     if (lastCnt < 0) {
         lastCnt = -1;
     }
-    // + channel
-    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee);
+    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
     const size_t idRequest = id.get();
     QString message;
     if (!isChannel) {
@@ -529,8 +526,7 @@ void Messenger::onGetSavedPos(const QString &address, bool isChannel, const QStr
 BEGIN_SLOT_WRAPPER
     Message::Counter lastCounter;
     const TypedException exception = apiVrapper2([&, this] {
-        // + isChannel
-        lastCounter = db.getLastReadCounterForUserContact(address, collocutorOrChannel);
+        lastCounter = db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
@@ -540,8 +536,7 @@ void Messenger::onGetSavedsPos(const QString &address, bool isChannel, const Get
 BEGIN_SLOT_WRAPPER
     std::vector<std::pair<QString, Message::Counter>> pos;
     const TypedException exception = apiVrapper2([&, this] {
-        // + isChannel
-        const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address);
+        const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address, isChannel);
         std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
@@ -551,8 +546,7 @@ END_SLOT_WRAPPER
 void Messenger::onSavePos(const QString &address, bool isChannel, const QString &collocutorOrChannel, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        // + isChannel
-        db.setLastReadCounterForUserContact(address, collocutorOrChannel, pos);
+        db.setLastReadCounterForUserContact(address, collocutorOrChannel, pos, isChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, exception));
 END_SLOT_WRAPPER
@@ -565,8 +559,7 @@ BEGIN_SLOT_WRAPPER
         if (!isChannel) {
             channel = "";
         }
-        // + channel
-        lastCounter = db.getMessageMaxCounter(address);
+        lastCounter = db.getMessageMaxCounter(address, channel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
