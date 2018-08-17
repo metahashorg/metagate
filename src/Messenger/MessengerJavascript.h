@@ -38,9 +38,21 @@ signals:
 
     void newMessegesSig(QString address, Message::Counter lastMessage);
 
+    void addedToChannelSig(QString address, QString title, QString titleSha, QString admin, Message::Counter counter);
+
+    void deletedFromChannelSig(QString address, QString title, QString titleSha, QString admin);
+
+    void newMessegesChannelSig(QString address, QString titleSha, Message::Counter lastMessage);
+
 private slots:
 
     void onNewMesseges(QString address, Message::Counter lastMessage);
+
+    void onAddedToChannel(QString address, QString title, QString titleSha, QString admin, Message::Counter counter);
+
+    void onDeletedFromChannel(QString address, QString title, QString titleSha, QString admin);
+
+    void onNewMessegesChannel(QString address, QString titleSha, Message::Counter lastMessage);
 
 public slots:
 
@@ -65,6 +77,27 @@ public slots:
     Q_INVOKABLE void savePos(QString address, const QString &collocutor, QString counterStr);
 
     Q_INVOKABLE void getCountMessages(QString address, const QString &collocutor, QString from);
+
+
+    Q_INVOKABLE void createChannel(QString address, QString channelTitle, QString fee);
+
+    Q_INVOKABLE void addWriterToChannel(QString address, QString titleSha, QString writer);
+
+    Q_INVOKABLE void delWriterFromChannel(QString address, QString titleSha, QString writer);
+
+    Q_INVOKABLE void sendMessageToChannel(QString address, QString titleSha, QString dataHex, QString timestampStr, QString feeStr);
+
+    Q_INVOKABLE void getChannelsList(QString address);
+
+    Q_INVOKABLE void getLastMessageChannelNumber(QString address, QString titleSha);
+
+    Q_INVOKABLE void getSavedPosChannel(QString address, QString titleSha);
+
+    Q_INVOKABLE void savePosToChannel(QString address, const QString &titleSha, QString counterStr);
+
+    Q_INVOKABLE void getHistoryAddressChannel(QString address, QString titleSha, QString from, QString to);
+
+    Q_INVOKABLE void getHistoryAddressChannelCount(QString address, QString titleSha, QString count, QString to);
 
 
     Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);

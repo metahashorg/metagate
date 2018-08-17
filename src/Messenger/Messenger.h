@@ -78,6 +78,14 @@ public:
 
     using GetCountMessagesCallback = std::function<void(const Message::Counter &count, const TypedException &exception)>;
 
+    using CreateChannelCallback = std::function<void(const TypedException &exception)>;
+
+    using AddWriterToChannelCallback = std::function<void(const TypedException &exception)>;
+
+    using DelWriterToChannelCallback = std::function<void(const TypedException &exception)>;
+
+    using GetChannelListCallback = std::function<void(const std::vector<ChannelInfo> &channels, const TypedException &exception)>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, QObject *parent = nullptr);
@@ -100,6 +108,11 @@ public:
 
     static QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp);
 
+
+    static void checkChannelTitle(const QString &title);
+
+    static QString getChannelSha(const QString &title);
+
 signals:
 
     void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
@@ -112,21 +125,30 @@ signals:
 
     void signedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
-    void getLastMessage(const QString &address, const GetSavedPosCallback &callback);
+    void getLastMessage(const QString &address, bool isChannel, QString channel, const GetSavedPosCallback &callback);
 
-    void getSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback);
+    void getSavedPos(const QString &address, bool isChannel, const QString &collocutorOrChannel, const GetSavedPosCallback &callback);
 
-    void getSavedsPos(const QString &address, const GetSavedsPosCallback &callback);
+    void getSavedsPos(const QString &address, bool isChannel, const GetSavedsPosCallback &callback);
 
-    void savePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
+    void savePos(const QString &address, bool isChannel, const QString &collocutorOrChannel, Message::Counter pos, const SavePosCallback &callback);
 
     void getCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback);
 
     void getHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void getHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
+    void getHistoryAddressAddress(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void getHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
+    void getHistoryAddressAddressCount(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
+
+
+    void createChannel(const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback);
+
+    void addWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback);
+
+    void delWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback);
+
+    void getChannelList(const QString &address, const GetChannelListCallback &callback);
 
 private slots:
 
@@ -140,21 +162,30 @@ private slots:
 
     void onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
-    void onGetLastMessage(const QString &address, const GetSavedPosCallback &callback);
+    void onGetLastMessage(const QString &address, bool isChannel, QString channel, const GetSavedPosCallback &callback);
 
-    void onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback);
+    void onGetSavedPos(const QString &address, bool isChannel, const QString &collocutorOrChannel, const GetSavedPosCallback &callback);
 
-    void onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback);
+    void onGetSavedsPos(const QString &address, bool isChannel, const GetSavedsPosCallback &callback);
 
-    void onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback);
+    void onSavePos(const QString &address, bool isChannel, const QString &collocutorOrChannel, Message::Counter pos, const SavePosCallback &callback);
 
     void onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback);
 
     void onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
+    void onGetHistoryAddressAddress(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback);
 
-    void onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
+    void onGetHistoryAddressAddressCount(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
+
+
+    void onCreateChannel(const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback);
+
+    void onAddWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback);
+
+    void onDelWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback);
+
+    void onGetChannelList(const QString &address, const GetChannelListCallback &callback);
 
 private slots:
 

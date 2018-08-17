@@ -24,6 +24,31 @@ static QString createHashMessage(const QString &message) {
     return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
 }
 
+void Messenger::checkChannelTitle(const QString &title) {
+    bool isUnicode = false;
+    for (int i = 0; i < title.size(); ++i) {
+        if (title.at(i).unicode() > 127) {
+            isUnicode = true;
+        }
+    }
+    CHECK_TYPED(!isUnicode, TypeErrors::CHANNEL_TITLE_INCORRECT, "Only ascii");
+    bool isAlphanumeric = true;
+    for (int i = 0; i < title.size(); i++) {
+        const auto c = title.at(i);
+        if (('0' <= c && c <= '9') || ('a' <= c && c <= 'Z') || ('A' <= c && c <= 'Z') || c == '-' || c == '_') {
+            // ok
+        } else {
+            isAlphanumeric = false;
+        }
+    }
+    CHECK_TYPED(isAlphanumeric, TypeErrors::CHANNEL_TITLE_INCORRECT, "Only alphanumerics");
+}
+
+QString Messenger::getChannelSha(const QString &title) {
+    checkChannelTitle(title);
+    return QString(QCryptographicHash::hash(title.toUtf8(), QCryptographicHash::Sha256).toHex());
+}
+
 std::vector<QString> Messenger::stringsForSign() {
     return {makeTextForGetMyMessagesRequest(), makeTextForGetChannelRequest(), makeTextForGetChannelsRequest(), makeTextForMsgAppendKeyOnlineRequest(), makeTextForGetMyChannelsRequest()};
 }
@@ -79,6 +104,10 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::getHistoryAddress, this, &Messenger::onGetHistoryAddress), "not connect onGetHistoryAddress");
     CHECK(connect(this, &Messenger::getHistoryAddressAddress, this, &Messenger::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
     CHECK(connect(this, &Messenger::getHistoryAddressAddressCount, this, &Messenger::onGetHistoryAddressAddressCount), "not connect onGetHistoryAddressAddressCount");
+    CHECK(connect(this, &Messenger::createChannel, this, &Messenger::onCreateChannel), "not connect onCreateChannel");
+    CHECK(connect(this, &Messenger::addWriterToChannel, this, &Messenger::onAddWriterToChannel), "not connect onAddWriterToChannel");
+    CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
+    CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
 
     wssClient.start();
 }
@@ -140,7 +169,7 @@ void Messenger::processMyChannels(const QString &address, const std::vector<Chan
     // Сбросить флаг isVisited у всех channel-ей в таблице
     // Пройтись по всему массиву, добавить новую инфу с флагом isVisited или установить флаг isVisited, если инфа существует
     // У всех записей, где флаг isVisited не установлен, поставить isWriter = false
-    // Для новых каналов поставить счетчик прочитанных в -1
+    // Для новых каналов поставить счетчик прочитанных в -1. Нужно ли?
     // Сбросить флаг isVisited у всех channel-ей в таблице
     for (const ChannelInfo &channel: channels) {
         // Взять индекс последнего сообщения из бд
@@ -154,7 +183,7 @@ void Messenger::processMyChannels(const QString &address, const std::vector<Chan
 void Messenger::processAddOrDeleteInChannel(const QString &address, const ChannelInfo &channel, bool isAdd) {
     if (!isAdd) {
         // поставить метку, что канал удален
-        // emit удалился новый канал
+        emit javascriptWrapper.deletedFromChannelSig(address, channel.title, channel.titleSha, channel.admin);
         return;
     }
     // занести новый канал
@@ -163,7 +192,7 @@ void Messenger::processAddOrDeleteInChannel(const QString &address, const Channe
     if (cnt != -1) {
         getMessagesFromChannelFromWss(address, channel.titleSha, 0, cnt);
     }
-    // emit появился новый канал
+    emit javascriptWrapper.addedToChannelSig(address, channel.title, channel.titleSha, channel.admin, channel.counter);
 }
 
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
@@ -294,7 +323,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
             if (!isChannel) {
                 emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
             } else {
-                // emit channel
+                emit javascriptWrapper.newMessegesChannelSig(address, channel, maxCounterInServer);
             }
         } else {
             LOG << "Deffer message2 " << address << " " << channel << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
@@ -477,20 +506,22 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetSavedPos(const QString &address, const QString &collocutor, const GetSavedPosCallback &callback) {
+void Messenger::onGetSavedPos(const QString &address, bool isChannel, const QString &collocutorOrChannel, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     Message::Counter lastCounter;
     const TypedException exception = apiVrapper2([&, this] {
-        lastCounter = db.getLastReadCounterForUserContact(address, collocutor);
+        // + isChannel
+        lastCounter = db.getLastReadCounterForUserContact(address, collocutorOrChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetSavedsPos(const QString &address, const GetSavedsPosCallback &callback) {
+void Messenger::onGetSavedsPos(const QString &address, bool isChannel, const GetSavedsPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     std::vector<std::pair<QString, Message::Counter>> pos;
     const TypedException exception = apiVrapper2([&, this] {
+        // + isChannel
         const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address);
         std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
     });
@@ -498,19 +529,24 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSavePos(const QString &address, const QString &collocutor, Message::Counter pos, const SavePosCallback &callback) {
+void Messenger::onSavePos(const QString &address, bool isChannel, const QString &collocutorOrChannel, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        db.setLastReadCounterForUserContact(address, collocutor, pos);
+        // + isChannel
+        db.setLastReadCounterForUserContact(address, collocutorOrChannel, pos);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, exception));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetLastMessage(const QString &address, const GetSavedPosCallback &callback) {
+void Messenger::onGetLastMessage(const QString &address, bool isChannel, QString channel, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
     Message::Counter lastCounter;
     const TypedException exception = apiVrapper2([&, this] {
+        if (!isChannel) {
+            channel = "";
+        }
+        // + channel
         lastCounter = db.getMessageMaxCounter(address);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
@@ -538,24 +574,63 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetHistoryAddressAddress(QString address, QString collocutor, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
+void Messenger::onGetHistoryAddressAddress(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutor, from, to);
+        // + isChannel
+        const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to);
         std::copy(result.begin(), result.end(), std::back_inserter(messages));
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetHistoryAddressAddressCount(QString address, QString collocutor, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
+void Messenger::onGetHistoryAddressAddressCount(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutor, to, count);
+        // + isChannel
+        const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count);
         std::copy(result.begin(), result.end(), std::back_inserter(messages));
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
+END_SLOT_WRAPPER
+}
+
+void Messenger::onCreateChannel(const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const size_t idRequest = id.get();
+    const QString message = makeCreateChannelRequest(title, titleSha, fee, pubkeyHex, signHex, idRequest);
+    callbacks[idRequest] = std::bind(callback, _1);
+    emit wssClient.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onAddWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const size_t idRequest = id.get();
+    const QString message = makeChannelAddWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
+    callbacks[idRequest] = std::bind(callback, _1);
+    emit wssClient.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onDelWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const size_t idRequest = id.get();
+    const QString message = makeChannelDelWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
+    callbacks[idRequest] = std::bind(callback, _1);
+    emit wssClient.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetChannelList(const QString &address, const GetChannelListCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<ChannelInfo> channels;
+    const TypedException exception = apiVrapper2([&, this] {
+        // Достать список каналов, объединить с таблицей saved_pos
+    });
+    emit javascriptWrapper.callbackCall(std::bind(callback, channels, exception));
 END_SLOT_WRAPPER
 }

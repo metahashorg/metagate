@@ -91,14 +91,6 @@ struct KeyMessageResponse {
     uint64_t fee;
 };
 
-struct ChannelInfo {
-    QString title;
-    QString titleSha;
-    QString admin;
-    uint64_t fee;
-    Message::Counter counter = -1;
-};
-
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response);
 
 NewMessageResponse parseNewMessageResponse(const QJsonDocument &response);

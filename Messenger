@@ -78,3 +78,82 @@ Q_INVOKABLE void getHistoryAddressAddressCount(QString address, QString collocut
 Получить сообщения между собеседниками количесвом count штук до номера to
 Результат вернется в функцию
 msgGetHistoryAddressAddressCountJs(address, collocutor, result, errorNum, errorMessage)
+
+
+msgNewMessegesJs(address, lastMessageCounter, errorNum, errorMessage)
+Это сообщение будет приходить при поступлении новых сообщений
+
+
+Q_INVOKABLE void createChannel(QString address, QString channelTitle, QString fee);
+Создает канал. Создатель становится админом канала.
+Результат вернется в функцию
+msgChannelCreateJs(address, channelTitle, titleSha, errorNum, errorMessage)
+Все дальнейшее взаимодействие с каналом идет по titleSha
+
+Q_INVOKABLE void addWriterToChannel(QString address, QString titleSha, QString writer);
+Добавляет пользователя в канал
+Результат вернется в функцию
+msgAddWriterToChannelJs(address, titleSha, writer, errorNum, errorMessage)
+
+Q_INVOKABLE void delWriterFromChannel(QString address, QString titleSha, QString writer);
+Удаляет пользователя из канала
+Результат вернется в функцию
+msgDelWriterFromChannelJs(address, titleSha, writer, errorNum, errorMessage)
+
+Q_INVOKABLE void sendMessageToChannel(QString address, QString titleSha, QString dataHex, QString timestampStr, QString feeStr);
+Отправить незашифрованное сообщение в канал
+Результат вернется в функцию
+msgMessageSendedToChannelJs(address, titleSha, errorNum, errorMessage)
+
+Q_INVOKABLE void getChannelsList(QString address);
+Получить список всех каналов
+Результат вернется в функцию
+msgGetChannelListJs(address, result, errorNum, errorMessage)
+где result - json массив вида
+[{\"title\":\"title\",\"titleSha\":\"titleSha\",\"fee\":\"1\",\"isWriter\":true,\"admin\":\"admin\",\"saved_pos\":\"1234567\"}]
+
+Q_INVOKABLE void getLastMessageChannelNumber(QString address, QString titleSha);
+Получить последний номер сообщения (номер сообщения разный для разных каналов)
+Результат вернется в функцию
+msgGetLastMessageChannelJs(address, titleSha, number, errorNum, errorMessage)
+
+Q_INVOKABLE void getSavedPosChannel(QString address, QString titleSha);
+Получить сохранненую позицию для канала
+Результат вернется в функцию
+msgSavedPosChannelJs(address, titleSha, number, errorNum, errorMessage)
+
+Q_INVOKABLE void savePosToChannel(QString address, const QString &titleSha, QString counterStr);
+Сохраняет позицию чтения
+Результат вернется в функцию
+msgStorePosToChannelJs(address, titleSha, "Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void getHistoryAddressChannel(QString address, QString titleSha, QString from, QString to);
+Получить сообщения в канале с номеров по и до
+Результат вернется в функцию
+msgGetHistoryAddressChannelJs(address, titleSha, result, errorNum, errorMessage)
+result - json массив вида [{\"collocutor\":\"0x0039fec32dcde172da7d676e4a6bc4a9d23ad052cc43640ca3\",\"counter\":\"13\",\"fee\":\"1\",\"isConfirmed\":true,\"isDecrypter\":false,\"isInput\":false,\"data\":\"00a765\",\"timestamp\":\"1234567\",\"channel\":\"channel\"}]
+где 
+collocutor - имя собеседника, 
+counter - порядковый номер сообщения
+fee - fee
+isConfirmed - подтверждено ли сообщение сервером (актуально для отправленных сообщений)
+isDecrypter - можно ли сообщение расшифровать (актуально для отправленных сообщений. Может быть false, если база чистилась, или загрузка сообщений была с другого устройства)
+isInput - входящее или исходящее сообщение
+data - расшифрованное сообщение в hex
+channel - titleSha канала
+
+Q_INVOKABLE void getHistoryAddressChannelCount(QString address, QString titleSha, QString count, QString to);
+Получить сообщения между собеседниками количесвом count штук до номера to
+Результат вернется в функцию
+msgGetHistoryAddressChannelCountJs(address, titleSha, result, errorNum, errorMessage)
+
+
+msgAddedToChannelJs(address, title, titleSha, admin, lastMessageCounter, errorNum, errorMessage)
+Это сообщение будет приходить при добавлении отслеживаемого адреса в новый канал.
+В том числе оно придет, если адрес сам создал этот канал
+
+msgDeletedFromChannelJs(address, title, titleSha, admin, errorNum, errorMessage)
+Это сообщение будет приходить при удалении отслеживаемого адреса из канала.
+
+msgNewMessegesChannelJs(address, titleSha, lastMessageCounter, errorNum, errorMessage)
+Это сообщение будет приходить при поступлении новых сообщений в канал

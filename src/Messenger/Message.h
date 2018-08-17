@@ -14,6 +14,17 @@ struct Message {
     int64_t fee;
     bool isCanDecrypted = true;
     bool isConfirmed = true;
+    bool isChannel = false;
+    QString channel;
+};
+
+struct ChannelInfo {
+    QString title;
+    QString titleSha;
+    QString admin;
+    uint64_t fee;
+    Message::Counter counter = -1;
+    bool isWriter;
 };
 
 #endif // MESSAGE_H
