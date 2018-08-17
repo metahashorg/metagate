@@ -108,4 +108,16 @@ inline QString makeJsFunc2(const QString &function, const QString &lastArg, cons
     return jScript;
 }
 
+template<bool isLastArg, typename... Args>
+inline QString makeJsFunc3(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
+    QString jScript = function + "(";
+    jScript += append<Args...>(std::forward<Args>(args)...) + ", ";
+    jScript += append(exception.numError, exception.description);
+    if (isLastArg) {
+        jScript += ", " + toJsString(lastArg);
+    }
+    jScript += ");";
+    return jScript;
+}
+
 #endif // MAKEJSFUNCPARAMETERS_H
