@@ -28,11 +28,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    ../src/dbstorage.cpp
+        ../src/dbstorage.cpp \
+        ../src/Messenger/messengerdbstorage.cpp
 
 HEADERS += \
         mainwindow.h \
-    ../src/dbstorage.h
+        ../src/dbstorage.h \
+        ../src/Messenger/messengerdbstorage.h
 
 FORMS += \
         mainwindow.ui

@@ -3,53 +3,16 @@
 
 #include <QString>
 
-static const QString databaseFileName = "database.db";
-static const QString databaseVersion = "1";
-
-static const QString sqliteSettings = "PRAGMA foreign_keys=on";
-
-static const QString dropTable = "DROP TABLE IF EXISTS %1";
-
-/*
-static const QString createPaymentsTable = "CREATE TABLE payments ("
-                                           "id VARCHAR(100) PRIMARY KEY,"
-                                           "trans VARCHAR(100),"
-                                           "from_account VARCHAR(100),"
-                                           "to_account VARCHAR(100),"
-                                           "amount VARCHAR(9),"
-                                           "value VARCHAR(9),"
-                                           "block INT,"
-                                           "is_input BOOLEAN,"
-                                           "ts INT,"
-                                           "confirmations VARCHAR(9))";
-
-static const QString preparePaymentsInsert = "INSERT OR REPLACE INTO payments "
-        "(id, trans, from_account, to_account, amount, value, block, is_input, ts, confirmations)"
-        "VALUES (:id, :trans, :from_account, :to_account, :amount, :value, :block, :is_input, :ts, :confirmations)";
-
-
-static const QString selectPayments = "SELECT id, trans, from_account, to_account, "
-                                    "amount, value, block, is_input, ts, confirmations "
-                                    "FROM payments";
-*/
-
-
-
-static const QString createSettingsTable = "CREATE TABLE settings ( "
-                                           "key VARCHAR(256) UNIQUE, "
-                                           "value TEXT "
-                                           ")";
-
 static const QString createMsgUsersTable = "CREATE TABLE msg_users ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
-                                           "username VARCHAR(100), "
+                                           "username VARCHAR(100) UNIQUE, "
                                            "publickey VARCHAR(200), "
                                            "signatures VARCHAR(200) "
                                            ")";
 
 static const QString createMsgContactsTable = "CREATE TABLE msg_contacts ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
-                                                "username VARCHAR(100), "
+                                                "username VARCHAR(100) UNIQUE, "
                                                 "publickey VARCHAR(200) "
                                                 ")";
 
@@ -69,6 +32,12 @@ static const QString createMsgMessagesTable = "CREATE TABLE msg_messages ( "
                                            "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
                                            ")";
 
+static const QString createMsgMessageUniqueIndex = "CREATE UNIQUE INDEX messagesUniqueIdx ON msg_messages ( "
+                                                    "userid, contactid, morder, dt, text, isIncoming, canDecrypted, "
+                                                    "isConfirmed, hash, fee)";
+
+static const QString createMsgMessageCounterIndex = "CREATE INDEX messagesCounterIdx ON msg_messages(morder)";
+
 static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadmessage ( "
                                                         "id INTEGER PRIMARY KEY NOT NULL, "
                                                         "userid  INTEGER NOT NULL, "
@@ -78,24 +47,13 @@ static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadm
                                                         "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
                                                         ")";
 
-static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (key, value)"
-                                             " VALUES (:key, :value)";
-
-static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
-
-
-
-
-
-
-
 static const QString selectMsgUsersForName = "SELECT id FROM msg_users WHERE username = :username";
 static const QString insertMsgUsers = "INSERT INTO msg_users (username) VALUES (:username)";
 
 static const QString selectMsgContactsForName = "SELECT id FROM msg_contacts WHERE username = :username";
 static const QString insertMsgContacts = "INSERT INTO msg_contacts (username) VALUES (:username)";
 
-static const QString insertMsgMessages = "INSERT INTO msg_messages "
+static const QString insertMsgMessages = "INSERT OR IGNORE INTO msg_messages "
                                             "(userid, contactid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash, fee) VALUES "
                                             "(:userid, :contactid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash, :fee)";
 
@@ -110,7 +68,7 @@ static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder)
                                                     "WHERE m.isConfirmed = 1 "
                                                     "AND u.username = :user";
 
-static const QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
                                                 "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                 "FROM msg_messages m "
                                                 "INNER JOIN msg_users u ON u.id = m.userid "
@@ -149,7 +107,7 @@ static const QString updateMsgUserSignatures = "UPDATE msg_users SET signatures 
 static const QString selectMsgContactsPublicKey = "SELECT publickey FROM msg_contacts WHERE username = :user";
 static const QString updateMsgContactsPublicKey = "UPDATE msg_contacts SET publickey = :publickey WHERE username = :user";
 
-static const QString selectMsgCountMessagesForUserAndDest = "SELECT COUNT(*) "
+static const QString selectMsgCountMessagesForUserAndDest = "SELECT COUNT(*) AS count "
                                                        "FROM msg_messages m "
                                                        "INNER JOIN msg_users u ON u.id = m.userid "
                                                        "INNER JOIN msg_contacts du ON du.id = m.contactid "
@@ -157,17 +115,17 @@ static const QString selectMsgCountMessagesForUserAndDest = "SELECT COUNT(*) "
                                                        "AND u.username = :user AND du.username = :duser";
 
 
-static const QString selectCountNotConfirmedMessagesWithHash = "SELECT COUNT(*) "
+static const QString selectCountNotConfirmedMessagesWithHash = "SELECT (COUNT(*) > 0) AS res "
                                                         "FROM msg_messages m "
                                                         "INNER JOIN msg_users u ON u.id = m.userid "
                                                         "WHERE isConfirmed = 0 "
                                                         "AND hash = :hash "
                                                         "AND u.username = :user";
 
-static const QString selectCountMessagesWithCounter = "SELECT COUNT(*) "
+static const QString selectCountMessagesWithCounter = "SELECT (COUNT(*) > 0) AS res "
                                                         "FROM msg_messages m "
                                                         "INNER JOIN msg_users u ON u.id = m.userid "
-                                                        "WHERE m.order = :counter "
+                                                        "WHERE m.morder = :counter "
                                                         "AND u.username = :user ";
 
 
@@ -212,7 +170,7 @@ static const QString updateLastReadCounterForUserContact = "UPDATE msg_lastreadm
                                                             "INNER JOIN msg_contacts c ON c.id = l.contactid "
                                                             "WHERE u.username = :user AND c.username = :contact)";
 
-static const QString selectLastReadMessageCount = "SELECT COUNT(*) FROM msg_lastreadmessage "
+static const QString selectLastReadMessageCount = "SELECT (COUNT(*) > 0) AS res FROM msg_lastreadmessage "
                                                     "WHERE userid = :userid AND contactid = :contactid";
 static const QString insertLastReadMessageRecord = "INSERT INTO msg_lastreadmessage "
                                                     "(lastcounter, userid, contactid) VALUES "
