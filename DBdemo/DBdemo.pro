@@ -22,17 +22,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
-CONFIG += c++11
+CONFIG += c++14
 
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
+        ../src/Log.cpp \
+        ../src/Paths.cpp \
+        ../src/utils.cpp \
+        ../src/btctx/Base58.cpp \
         ../src/dbstorage.cpp \
         ../src/Messenger/messengerdbstorage.cpp
 
 HEADERS += \
         mainwindow.h \
+        ../src/Log.h \
+        ../src/Paths.h \
+        ../src/utils.h \
         ../src/dbstorage.h \
         ../src/Messenger/messengerdbstorage.h
 

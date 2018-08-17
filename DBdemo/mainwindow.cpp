@@ -5,6 +5,7 @@
 #include "dbres.h"
 #include "dbstorage.h"
 #include "messengerdbstorage.h"
+#include "SlotWrapper.h"
 
 #include <QDebug>
 MainWindow::MainWindow(QWidget *parent) :
@@ -12,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+BEGIN_SLOT_WRAPPER
     MessengerDBStorage db;
     db.openDB();
     db.init();
@@ -77,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << db.getUserPublicKey("userrrrr");
     qint64 id = db.findFirstNotConfirmedMessage("user7");
     qDebug() << id;
-    db.updateMessage(id, 4444, true);
+    db.updateMessage(id, 4445, true);
     qDebug() << db.findFirstNotConfirmedMessage("user7");
 
 
@@ -88,13 +89,24 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     qDebug() << db.getLastReadCountersForUser("user7").size();
-//    QList<QStringList> r = db.getPayments();
-//    foreach(const QStringList &l, r) {
-//        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
-//        for (int c = 0; c < 10; c++)
-//            item->setText(c, l.value(c));
-//    }
 
+
+    db.addChannel(1, "chnl1", "jkgfjkgfgfioioriojk", true, "ktkt", false, true, true);
+    db.addChannel(1, "chnl2", "jkgfjkgfgfioioriojk", false, "ktkt", false, true, true);
+    db.addChannel(2, "chnl1", "jkgfjkgfgfioioriojk", true, "kfgfgft", false, true, true);
+
+
+    db.setChannelsNotVisited("user1");
+    qDebug() << db.getChannelForUserShaName("1234", "jkgfjkgfgfioioriojk");
+    db.updateChannel(1, false);
+    db.setWriterForNotVisited("1234");
+
+
+    db.getChannelInfoForUserShaName("1234", "jkgfjkgfgfioioriojk");
+    db.setChannelIsWriterForUserShaName("1234", "jkgfjkgfgfioioriojk", true);
+
+
+END_SLOT_WRAPPER
 }
 
 MainWindow::~MainWindow()

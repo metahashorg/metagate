@@ -47,6 +47,19 @@ static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadm
                                                         "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
                                                         ")";
 
+static const QString createMsgChannelsTable = "CREATE TABLE msg_channels ( "
+                                                        "id INTEGER PRIMARY KEY NOT NULL, "
+                                                        "userid  INTEGER NOT NULL, "
+                                                        "channel TEXT, "
+                                                        "shaName TEXT, "
+                                                        "isAdmin BOOLEAN, "
+                                                        "adminName VARCHAR(200), "
+                                                        "isBanned BOOLEAN, "
+                                                        "isWriter BOOLEAN, "
+                                                        "isVisited BOOLEAN, "
+                                                        "FOREIGN KEY (userid) REFERENCES msg_users(id) "
+                                                        ")";
+
 static const QString selectMsgUsersForName = "SELECT id FROM msg_users WHERE username = :username";
 static const QString insertMsgUsers = "INSERT INTO msg_users (username) VALUES (:username)";
 
@@ -180,5 +193,40 @@ static const QString selectLastReadCountersForUser = "SELECT c.username, l.lastc
                                                         "INNER JOIN msg_users u ON u.id = l.userid "
                                                         "INNER JOIN msg_contacts c ON c.id = l.contactid "
                                                         "WHERE u.username = :user";
+
+static const QString insertMsgChannels = "INSERT INTO msg_channels "
+                                            "(userid, channel, shaName, isAdmin, adminName, isBanned, isWriter, isVisited) "
+                                            "VALUES (:userid, :channel, :shaName, :isAdmin, :adminName, :isBanned, :isWriter, :isVisited)";
+
+static const QString updateSetChannelsNotVisited = "UPDATE msg_channels "
+                                                    "SET isVisited = 0 "
+                                                    "WHERE id = (SELECT id FROM msg_users "
+                                                    "WHERE username = :user)";
+
+static const QString selectChannelForUserShaName = "SELECT c.id FROM msg_channels c "
+                                                    "INNER JOIN msg_users u ON u.id = c.userid "
+                                                    "WHERE u.username = :user "
+                                                    "AND c.shaName = :shaName";
+
+static const QString updateChannelInfo = "UPDATE msg_channels "
+                                        "SET isVisited = :isVisited "
+                                        "WHERE id = :id";
+
+static const QString updatetWriterForNotVisited = "UPDATE msg_channels "
+                                                    "SET isWriter = 1 "
+                                                    "WHERE id = (SELECT id FROM msg_users "
+                                                    "WHERE username = :user) "
+                                                    "AND isVisited = 0";
+
+static const QString selectChannelInfoForUserShaName = "SELECT c.* FROM msg_channels c "
+                                                           "INNER JOIN msg_users u ON u.id = c.userid "
+                                                           "WHERE u.username = :user "
+                                                           "AND c.shaName = :shaName";
+
+static const QString updateChannelIsWriterForUserShaName = "UPDATE msg_channels "
+                                                            "SET isWriter = :isWriter "
+                                                            "WHERE id = (SELECT id FROM msg_users "
+                                                            "WHERE username = :user) "
+                                                            "AND shaName = :shaName";
 
 #endif // DBRES_H
