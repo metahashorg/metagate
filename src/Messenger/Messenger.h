@@ -17,6 +17,7 @@
 struct NewMessageResponse;
 class MessengerJavascript;
 class DBStorage;
+struct ChannelInfo;
 
 class Messenger : public TimerClass
 {
@@ -89,7 +90,15 @@ public:
 
     static QString makeTextForGetPubkeyRequest(const QString &address);
 
-    static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee);
+    static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp);
+
+    static QString makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee);
+
+    static QString makeTextForChannelAddWriterRequest(const QString &titleSha, const QString &address);
+
+    static QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address);
+
+    static QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp);
 
 signals:
 
@@ -99,7 +108,7 @@ signals:
 
     void getPubkeyAddress(const QString &address, const GetPubkeyAddress &callback);
 
-    void sendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
+    void sendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
     void signedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
@@ -127,7 +136,7 @@ private slots:
 
     void onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback);
 
-    void onSendMessage(const QString &thisAddress, const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
+    void onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
     void onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
@@ -159,17 +168,23 @@ private:
 
     void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to);
 
+    void getMessagesFromChannelFromWss(const QString &fromAddress, const QString &channelSha, Message::Counter from, Message::Counter to);
+
     void clearAddressesToMonitored();
 
     void addAddressToMonitored(const QString &address);
 
-    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages);
+    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel);
 
     QString getSignFromMethod(const QString &address, const QString &method) const;
 
     std::vector<QString> getMonitoredAddresses() const;
 
+    void processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels);
+
     void invokeCallback(size_t requestId, const TypedException &exception);
+
+    void processAddOrDeleteInChannel(const QString &address, const ChannelInfo &channel, bool isAdd);
 
 private:
 
@@ -179,7 +194,7 @@ private:
 
     WebSocketClient wssClient;
 
-    std::map<QString, DeferredMessage> deferredMessages;
+    std::map<std::pair<QString, QString>, DeferredMessage> deferredMessages;
 
     RequestId id;
 
