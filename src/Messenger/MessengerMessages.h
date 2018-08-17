@@ -64,9 +64,15 @@ enum METHOD: int {
 
 struct ResponseType {
     METHOD method = METHOD::NOT_SET;
+
+    enum class ERROR_TYPE {
+        NO_ERROR, ADDRESS_EXIST, SIGN_OR_ADDRESS_INVALID, INCORRECT_JSON, ADDRESS_NOT_FOUND, CHANNEL_EXIST, CHANNEL_NOT_PERMISSION, CHANNEL_NOT_FOUND, OTHER
+    };
+
     QString address;
     bool isError = false;
     QString error;
+    ERROR_TYPE errorType = ERROR_TYPE::NO_ERROR;
     size_t id = -1;
 };
 

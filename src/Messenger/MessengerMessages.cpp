@@ -263,6 +263,23 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     if (root.contains("error") && root.value("error").isString()) {
         result.error = root.value("error").toString();
         result.isError = true;
+        if (result.error == "KEY_EXIST") {
+            result.errorType = ResponseType::ERROR_TYPE::ADDRESS_EXIST;
+        } else if (result.error == "INVALID_SIGN" || result.error == "INVALID_ADDR_OR_PUBKEY") {
+            result.errorType = ResponseType::ERROR_TYPE::SIGN_OR_ADDRESS_INVALID;
+        } else if (result.error == "NO_REQ_FIELD" || result.error == "UNSUPPORTED_METHOD" || result.error == "NO_METHOD_OR_PARAMS" || result.error == "JSON_PARSE_ERROR") {
+            result.errorType = ResponseType::ERROR_TYPE::INCORRECT_JSON;
+        } else if (result.error == "NOT_FOUND" || result.error == "ADDR_NOT_FOUND") {
+            result.errorType = ResponseType::ERROR_TYPE::ADDRESS_NOT_FOUND;
+        } else if (result.error == "TITLE_IS_BUSY") {
+            result.errorType = ResponseType::ERROR_TYPE::CHANNEL_EXIST;
+        } else if (result.error == "NO_PERMISSION") {
+            result.errorType = ResponseType::ERROR_TYPE::CHANNEL_NOT_PERMISSION;
+        } else if (result.error == "CHANNEL_NOT_FOUND") {
+            result.errorType = ResponseType::ERROR_TYPE::CHANNEL_NOT_FOUND;
+        } else {
+            result.errorType = ResponseType::ERROR_TYPE::OTHER;
+        }
     }
     if (root.contains("request_id") && root.value("request_id").isString()) {
         result.id = std::stoull(root.value("request_id").toString().toStdString());

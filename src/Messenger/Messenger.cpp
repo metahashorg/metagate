@@ -339,7 +339,26 @@ BEGIN_SLOT_WRAPPER
     if (responseType.isError) {
         LOG << "Messenger response error " << responseType.id << " " << responseType.method << " " << responseType.address << " " << responseType.error;
         if (responseType.id != size_t(-1)) {
-            invokeCallback(responseType.id, TypedException(TypeErrors::MESSENGER_SERVER_ERROR, responseType.error.toStdString())); // TODO Разбирать ответ от сервера
+            TypedException exception;
+            if (responseType.errorType == ResponseType::ERROR_TYPE::ADDRESS_EXIST) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_EXIST, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::SIGN_OR_ADDRESS_INVALID) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_SIGN_OR_ADDRESS_INVALID, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::INCORRECT_JSON) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_INCORRECT_JSON, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::ADDRESS_NOT_FOUND) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::CHANNEL_EXIST) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_CHANNEL_EXIST, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::CHANNEL_NOT_PERMISSION) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_CHANNEL_NOT_PERMISSION, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::CHANNEL_NOT_FOUND) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_CHANNEL_NOT_FOUND, responseType.error.toStdString());
+            } else {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_OTHER, responseType.error.toStdString());
+            }
+
+            invokeCallback(responseType.id, exception); // TODO Разбирать ответ от сервера
         }
         return;
     }
