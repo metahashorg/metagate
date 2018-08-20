@@ -54,7 +54,8 @@ SOURCES += main.cpp mainwindow.cpp \
     WalletRsa.cpp \
     Messenger/MessengerWaletManager.cpp \
     TypedException.cpp \
-    Messenger/messengerdbstorage.cpp
+    Messenger/messengerdbstorage.cpp \
+    transactions/Transactions.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -115,7 +116,8 @@ HEADERS += mainwindow.h \
     WalletRsa.h \
     Messenger/MessengerWaletManager.h \
     dbres.h \
-    Messenger/messengerdbstorage.h
+    Messenger/messengerdbstorage.h \
+    transactions/Transactions.h
 
 FORMS += mainwindow.ui
 
