@@ -154,15 +154,16 @@ void Messenger::addAddressToMonitored(const QString &address) {
     LOG << "Add address to monitored " << address;
     const QString pubkeyHex = db.getUserPublicKey(address);
     CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + address.toStdString());
-    const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
-    const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
-    emit wssClient.addHelloString(message);
-    emit wssClient.sendMessage(message);
 
     const QString signHexChannels = getSignFromMethod(address, makeTextForGetMyChannelsRequest());
     const QString messageGetMyChannels = makeGetMyChannelsRequest(pubkeyHex, signHexChannels, id.get());
     emit wssClient.addHelloString(messageGetMyChannels);
     emit wssClient.sendMessage(messageGetMyChannels);
+
+    const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
+    const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
+    emit wssClient.addHelloString(message);
+    emit wssClient.sendMessage(message);
 }
 
 void Messenger::processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels) {
