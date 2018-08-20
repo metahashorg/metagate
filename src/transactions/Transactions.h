@@ -5,6 +5,8 @@
 #include <QString>
 
 #include <functional>
+#include <vector>
+#include <map>
 
 #include "client.h"
 #include "TimerClass.h"
@@ -41,9 +43,15 @@ private slots:
 
 private:
 
+    void processAddressMth(const QString &address, const std::vector<QString> &servers);
+
+private:
+
     NsLookup &nsLookup;
 
     SimpleClient client;
+
+    std::map<QString, bool> getFullTxs;
 };
 
 }
