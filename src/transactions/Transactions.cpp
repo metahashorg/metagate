@@ -81,27 +81,34 @@ void Transactions::processAddressMth(const QString &address, const std::vector<Q
                 if (countAll < countInServer) {
                     const uint64_t countMissingTxs = countInServer - countAll;
                     const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
-                    const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, true, requestCountTxs);
+                    const bool isToTxs = !getFullTxs[balanceStruct->address];
+                    const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, isToTxs, requestCountTxs);
 
-                    const auto getHistoryCallback = [this, balanceStruct, server](const std::string &response) {
+                    const auto getHistoryCallback = [this, balanceStruct, server, isToTxs](const std::string &response) {
                         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
                         const std::vector<Transaction> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
 
-                        const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
-                        const auto getBalance2Callback = [this, balanceStruct, server](const std::string &response) {
-                            CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
-                            const BalanceResponse balance = parseBalanceResponse(QString::fromStdString(response));
-                            const uint64_t countInServer = balance.countReceived + balance.countSpent;
-                            const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
-                            if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
-                                // Сохраняем транзакции в bd
-                                // emit сигнал с сохраненным балансом
-                                getFullTxs[balanceStruct->address] = false;
-                            } else {
-                                getFullTxs[balanceStruct->address] = true;
-                            }
-                        };
-                        client.sendMessagePost(server, requestBalance, getBalance2Callback, 1s);
+                        if (isToTxs) {
+                            const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
+                            const auto getBalance2Callback = [this, balanceStruct, server](const std::string &response) {
+                                CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
+                                const BalanceResponse balance = parseBalanceResponse(QString::fromStdString(response));
+                                const uint64_t countInServer = balance.countReceived + balance.countSpent;
+                                const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
+                                if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
+                                    // Сохраняем транзакции в bd
+                                    // emit сигнал с сохраненным балансом
+                                    getFullTxs[balanceStruct->address] = false;
+                                } else {
+                                    getFullTxs[balanceStruct->address] = true;
+                                }
+                            };
+                            client.sendMessagePost(server, requestBalance, getBalance2Callback, 1s);
+                        } else {
+                            // Сохраняем транзакции в bd
+                            // emit сигнал с сохраненным балансом
+                            getFullTxs[balanceStruct->address] = false;
+                        }
                     };
                     client.sendMessagePost(server, requestForTxs, getHistoryCallback, 1s);
                 }
