@@ -85,7 +85,7 @@ void Transactions::processAddressMth(const QString &address, const std::vector<Q
 
                     const auto getHistoryCallback = [this, balanceStruct, server](const std::string &response) {
                         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
-                        const std::vector<TxResponse> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
+                        const std::vector<Transaction> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
 
                         const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
                         const auto getBalance2Callback = [this, balanceStruct, server](const std::string &response) {

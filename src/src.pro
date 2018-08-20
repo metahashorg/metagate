@@ -119,7 +119,8 @@ HEADERS += mainwindow.h \
     dbres.h \
     Messenger/messengerdbstorage.h \
     transactions/Transactions.h \
-    transactions/TransactionsMessages.h
+    transactions/TransactionsMessages.h \
+    transactions/Transaction.h
 
 FORMS += mainwindow.ui
 

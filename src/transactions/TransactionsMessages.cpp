@@ -46,20 +46,20 @@ QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t cnt) 
     }
 }
 
-std::vector<TxResponse> parseHistoryResponse(const QString &address, const QString &response) {
+std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &response) {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(json1.contains("result") && json1.value("result").isArray(), "Incorrect json: result field not found");
     const QJsonArray &json = json1.value("result").toArray();
 
-    std::vector<TxResponse> result;
+    std::vector<Transaction> result;
 
     for (const QJsonValue &elementJson: json) {
         CHECK(elementJson.isObject(), "Incorrect json");
         const QJsonObject txJson = elementJson.toObject();
 
-        TxResponse res;
+        Transaction res;
 
         CHECK(txJson.contains("from") && txJson.value("from").isString(), "Incorrect json: from field not found");
         res.from = txJson.value("from").toString();
@@ -82,7 +82,7 @@ std::vector<TxResponse> parseHistoryResponse(const QString &address, const QStri
 
         result.emplace_back(res);
         if (res.from == address && res.to == address) {
-            TxResponse res2 = res;
+            Transaction res2 = res;
             res2.isInput = false;
             result.emplace_back(res2);
         }
