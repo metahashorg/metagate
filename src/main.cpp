@@ -105,6 +105,7 @@ int main(int argc, char *argv[]) {
 
         MessengerDBStorage dbMessenger;
         dbMessenger.setPath(getDbPath());
+        dbMessenger.openDB();
         dbMessenger.init();
         /*auto &inst = *DBStorage::instance();
         inst.addMessage("1234", "3454", "abcd", 1, 2000, true, true, true, "asdfdf", 1);

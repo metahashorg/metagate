@@ -103,6 +103,69 @@
         });
     }
     
+    
+    function msgChannelCreateJs(addr, channel, channelSha) {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        document.createWalletForm.channelSha.value = channelSha;
+        });
+    }
+    
+    function createChannel() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.createChannel(document.createWalletForm.from1.value, document.createWalletForm.channel.value, "1") ;
+        });
+    }
+    
+    function addWriter() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.addWriterToChannel(document.createWalletForm.from1.value, document.createWalletForm.channelSha.value, document.createWalletForm.to1.value) ;
+        });
+    }
+    
+    function delWriter() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.delWriterFromChannel(document.createWalletForm.from1.value, document.createWalletForm.channelSha.value, document.createWalletForm.to1.value) ;
+        });
+    }
+    
+    function sendMsgChannel() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.sendMessageToChannel(document.createWalletForm.from1.value, document.createWalletForm.channelSha.value, document.createWalletForm.text1.value, "1234567",  "1") ;
+        });
+    }
+    
+    function getChannelsList() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.getChannelsList(document.createWalletForm.from1.value) ;
+        });
+    }
+    
+    function getLastMessageChannel() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.getLastMessageChannelNumber(document.createWalletForm.from1.value, document.createWalletForm.channelSha.value) ;
+        });
+    }
+
+    function getMessagesChannel2() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.getHistoryAddressChannel( document.createWalletForm.from1.value, document.createWalletForm.channelSha.value, document.createWalletForm.count.value, document.createWalletForm.toCnt.value) ;
+        });
+    }
+      
+    function getMessagesChannel3() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.getHistoryAddressChannelCount( document.createWalletForm.from1.value, document.createWalletForm.channelSha.value, document.createWalletForm.count.value, document.createWalletForm.toCnt.value) ;
+        });
+    }
+    
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -130,6 +193,8 @@
             <input name="to1" type="text" value="0x0039fec32dcde172da7d676e4a6bc4a9d23ad052cc43640ca3" size="60"><label for="to1">to</label><br>
             <input name="text1" type="text" value="00a765" size="60"><label for="text1">textHex</label><br>
             <input name="tmp" type="text" value="" size="60"><label for="tmp">tmp</label><br>
+            <input name="channel" type="text" value="" size="60"><label for="channel">channel</label><br>
+            <input name="channelSha" type="text" value="" size="60"><label for="channelSha">channelSha</label><br>
             <input name="count" type="text" value="10" size="60"><label for="count">count/savePos/from</label><br>
             <input name="toCnt" type="text" value="1000" size="60"><label for="toCnt">toCnt</label><br>
             <input type="button" value="genKey" onclick="genKey()">
@@ -145,6 +210,15 @@
             <input type="button" value="savePos" onclick="savePos()"><br>
             <input type="button" value="getSavePos" onclick="getSavePos()"><br>
             <input type="button" value="getSavePosAll" onclick="getSavePos2()"><br>
+            <br>
+            <input type="button" value="createChannel" onclick="createChannel()"><br>
+            <input type="button" value="addWriter" onclick="addWriter()"><br>
+            <input type="button" value="delWriter" onclick="delWriter()"><br>
+            <input type="button" value="sendMsgChannel" onclick="sendMsgChannel()"><br>
+            <input type="button" value="getChannelsList" onclick="getChannelsList()"><br>
+            <input type="button" value="getLastMessageChannel" onclick="getLastMessageChannel()"><br>
+            <input type="button" value="getMessagesChannelCollFromTo" onclick="getMessagesChannel2()"><br>
+            <input type="button" value="getMessagesChannelCollCountTo" onclick="getMessagesChannel3()"><br>
             </FORM>
         </left>
     </p>
