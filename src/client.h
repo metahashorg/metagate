@@ -38,6 +38,7 @@ public:
     explicit SimpleClient();
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
+    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
 
     // ping хорошо работает только с максимум одним одновременным запросом
@@ -62,6 +63,8 @@ private Q_SLOTS:
     void onTimerEvent();
 
 private:
+
+    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
     template<class Callbacks, typename... Message>
     void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);

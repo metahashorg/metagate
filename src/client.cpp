@@ -109,7 +109,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
+void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
     const std::string requestId = std::to_string(id++);
 
     startTimer();
@@ -118,9 +118,22 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     addRequestId(request, requestId);
+    if (isTimeout) {
+        const time_point time = ::now();
+        addBeginTime(request, time);
+        addTimeout(request, timeout);
+    }
     QNetworkReply* reply = manager->post(request, message.toUtf8());
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
     LOG << "post message sended";
+}
+
+void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
+    sendMessagePost(url, message, callback, false, milliseconds(0));
+}
+
+void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout) {
+    sendMessagePost(url, message, callback, true, timeout);
 }
 
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
