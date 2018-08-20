@@ -55,8 +55,7 @@ public:
     void updateChannel(DbId id, bool isVisited);
     void setWriterForNotVisited(const QString &user);
 
-    // TODO
-    void getChannelInfoForUserShaName(const QString &user, const QString &shaName);
+    ChannelInfo getChannelInfoForUserShaName(const QString &user, const QString &shaName);
     void setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter);
 
 private:

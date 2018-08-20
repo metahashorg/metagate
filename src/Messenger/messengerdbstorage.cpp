@@ -18,9 +18,9 @@ void MessengerDBStorage::init()
     DBStorage::init();
     createTable(QStringLiteral("msg_users"), createMsgUsersTable);
     createTable(QStringLiteral("msg_contacts"), createMsgContactsTable);
+    createTable(QStringLiteral("msg_channels"), createMsgChannelsTable);
     createTable(QStringLiteral("msg_messages"), createMsgMessagesTable);
     createTable(QStringLiteral("msg_lastreadmessage"), createMsgLastReadMessageTable);
-    createTable(QStringLiteral("msg_channels"), createMsgChannelsTable);
     createIndex(createMsgMessageUniqueIndex);
 }
 
@@ -28,6 +28,9 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
 {
     DbId userid = getUserId(user);
     DbId contactid = getContactId(duser);
+    DbId channelid = -1;
+    if (!channelSha.isNull())
+        channelid = getChannelForUserShaName(user, channelSha);
 
     QSqlQuery query(database());
     query.prepare(insertMsgMessages);
@@ -41,6 +44,10 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
     query.bindValue(":isConfirmed", isConfirmed);
     query.bindValue(":hash", hash);
     query.bindValue(":fee", fee);
+    if (channelid == -1)
+        query.bindValue(":channelid", QVariant());
+    else
+        query.bindValue(":channelid", channelid);
     if (!query.exec()) {
         qDebug() << "ERROR" << query.lastError().type();
     }
@@ -407,16 +414,22 @@ void MessengerDBStorage::setWriterForNotVisited(const QString &user)
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-void MessengerDBStorage::getChannelInfoForUserShaName(const QString &user, const QString &shaName)
+ChannelInfo MessengerDBStorage::getChannelInfoForUserShaName(const QString &user, const QString &shaName)
 {
+    ChannelInfo info;
     QSqlQuery query(database());
     query.prepare(selectChannelInfoForUserShaName);
     query.bindValue(":user", user);
     query.bindValue(":shaName", shaName);
     CHECK(query.exec(), query.lastError().text().toStdString());
-//    if (query.next()) {
-//        return query.value("max").toLongLong();
-    //    }
+    if (!query.next()) {
+
+    }
+    info.title = query.value("channel").toString();;
+    info.titleSha = query.value("shaName").toString();;
+    info.admin = query.value("adminName").toString();;
+    info.isWriter = query.value("isWriter").toBool();;
+    return info;
 }
 
 void MessengerDBStorage::setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter)

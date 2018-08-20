@@ -16,6 +16,20 @@ static const QString createMsgContactsTable = "CREATE TABLE msg_contacts ( "
                                                 "publickey VARCHAR(200) "
                                                 ")";
 
+static const QString createMsgChannelsTable = "CREATE TABLE msg_channels ( "
+                                                        "id INTEGER PRIMARY KEY NOT NULL, "
+                                                        "userid  INTEGER NOT NULL, "
+                                                        "channel TEXT, "
+                                                        "shaName TEXT, "
+                                                        "isAdmin BOOLEAN, "
+                                                        "adminName VARCHAR(200), "
+                                                        "isBanned BOOLEAN, "
+                                                        "isWriter BOOLEAN, "
+                                                        "isVisited BOOLEAN, "
+                                                        "FOREIGN KEY (userid) REFERENCES msg_users(id) "
+                                                        ")";
+
+
 static const QString createMsgMessagesTable = "CREATE TABLE msg_messages ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
                                            "userid  INTEGER NOT NULL, "
@@ -28,8 +42,10 @@ static const QString createMsgMessagesTable = "CREATE TABLE msg_messages ( "
                                            "isConfirmed BOOLEAN, "
                                            "hash VARCHAR(100), "
                                            "fee INT8, "
+                                           "channelid  INTEGER, "
                                            "FOREIGN KEY (userid) REFERENCES msg_users(id), "
-                                           "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
+                                           "FOREIGN KEY (contactid) REFERENCES msg_contacts(id), "
+                                           "FOREIGN KEY (channelid) REFERENCES msg_channels(id) "
                                            ")";
 
 static const QString createMsgMessageUniqueIndex = "CREATE UNIQUE INDEX messagesUniqueIdx ON msg_messages ( "
@@ -47,19 +63,6 @@ static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadm
                                                         "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
                                                         ")";
 
-static const QString createMsgChannelsTable = "CREATE TABLE msg_channels ( "
-                                                        "id INTEGER PRIMARY KEY NOT NULL, "
-                                                        "userid  INTEGER NOT NULL, "
-                                                        "channel TEXT, "
-                                                        "shaName TEXT, "
-                                                        "isAdmin BOOLEAN, "
-                                                        "adminName VARCHAR(200), "
-                                                        "isBanned BOOLEAN, "
-                                                        "isWriter BOOLEAN, "
-                                                        "isVisited BOOLEAN, "
-                                                        "FOREIGN KEY (userid) REFERENCES msg_users(id) "
-                                                        ")";
-
 static const QString selectMsgUsersForName = "SELECT id FROM msg_users WHERE username = :username";
 static const QString insertMsgUsers = "INSERT INTO msg_users (username) VALUES (:username)";
 
@@ -67,8 +70,8 @@ static const QString selectMsgContactsForName = "SELECT id FROM msg_contacts WHE
 static const QString insertMsgContacts = "INSERT INTO msg_contacts (username) VALUES (:username)";
 
 static const QString insertMsgMessages = "INSERT OR IGNORE INTO msg_messages "
-                                            "(userid, contactid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash, fee) VALUES "
-                                            "(:userid, :contactid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash, :fee)";
+                                            "(userid, contactid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash, fee, channelid) VALUES "
+                                            "(:userid, :contactid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash, :fee, :channelid)";
 
 static const QString selectMsgMaxCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
                                            "FROM msg_messages m "
@@ -218,7 +221,8 @@ static const QString updatetWriterForNotVisited = "UPDATE msg_channels "
                                                     "WHERE username = :user) "
                                                     "AND isVisited = 0";
 
-static const QString selectChannelInfoForUserShaName = "SELECT c.* FROM msg_channels c "
+static const QString selectChannelInfoForUserShaName = "SELECT c.channel, c.shaName, c.adminName, c.isWriter "
+                                                           "FROM msg_channels c "
                                                            "INNER JOIN msg_users u ON u.id = c.userid "
                                                            "WHERE u.username = :user "
                                                            "AND c.shaName = :shaName";
