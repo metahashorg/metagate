@@ -13,7 +13,7 @@ class TimerClass : public QObject
 {
     Q_OBJECT
 public:
-    explicit TimerClass(const milliseconds &timerPeriod, QObject *parent = nullptr);
+    TimerClass(const milliseconds &timerPeriod, QObject *parent);
 
     ~TimerClass();
 
