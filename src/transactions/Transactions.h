@@ -12,18 +12,24 @@
 #include "TimerClass.h"
 
 class NsLookup;
+struct TypedException;
 
 namespace transactions {
+
+class TransactionsJavascript;
+class TransactionsDBStorage;
+struct BalanceResponse;
+struct Transaction;
 
 class Transactions : public TimerClass {
     Q_OBJECT
 public:
 
-    using RegisterAddressCallback = std::function<void()>;
+    using RegisterAddressCallback = std::function<void(const TypedException &exception)>;
 
 public:
 
-    explicit Transactions(NsLookup &nsLookup, QObject *parent = nullptr);
+    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
 signals:
 
@@ -43,15 +49,21 @@ private slots:
 
 private:
 
-    void processAddressMth(const QString &address, const std::vector<QString> &servers);
+    void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers);
+
+    void newBalance(const QString &address, const QString &currency, const BalanceResponse &balance, const std::vector<Transaction> &txs);
 
 private:
 
     NsLookup &nsLookup;
 
+    TransactionsJavascript &javascriptWrapper;
+
+    TransactionsDBStorage &db;
+
     SimpleClient client;
 
-    std::map<QString, bool> getFullTxs;
+    std::map<std::pair<QString, QString>, bool> getFullTxs;
 };
 
 }

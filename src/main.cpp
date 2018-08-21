@@ -33,6 +33,10 @@
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/messengerdbstorage.h"
 
+#include "transactions/Transactions.h"
+#include "transactions/TransactionsJavascript.h"
+#include "transactions/transactionsdbstorage.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -112,6 +116,10 @@ int main(int argc, char *argv[]) {
         inst.addMessage("1234", "3454", "abcd", 1, 500, true, true, true, "asdfdf", 1);
         LOG << "answer " << inst.getMessagesForUserAndDestNum("1234", "3454", 20000, 2).size();
         return 0;*/
+
+        transactions::TransactionsDBStorage dbTransactions;
+        dbTransactions.openDB();
+        dbTransactions.init();
         while (true) {
             MessengerJavascript messengerJavascript;
 
@@ -122,12 +130,18 @@ int main(int argc, char *argv[]) {
             NsLookup nsLookup(getSettingsPath());
             nsLookup.start();
 
+            transactions::TransactionsJavascript transactionsJavascript;
+
+            transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
+            transactionsManager.start();
+            transactionsJavascript.setTransactions(transactionsManager);
+
             WebSocketClient webSocketClient(getUrlToWss());
             webSocketClient.start();
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
 
-            MainWindow mainWindow(webSocketClient, jsWrapper, messengerJavascript, QString::fromStdString(versionString));
+            MainWindow mainWindow(webSocketClient, jsWrapper, messengerJavascript, transactionsJavascript, QString::fromStdString(versionString));
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

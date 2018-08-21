@@ -1,0 +1,5 @@
+Transactions регестрируется в javascript по имени transactions 
+
+Q_INVOKABLE void registerAddress(QString address, QString currency, QString type);
+Зарегестрировать адрес для отслеживания
+type - для mth валют это "torrent" или "torrent_main"

@@ -42,12 +42,16 @@ public:
     QIcon icoHover;
 };
 
+namespace transactions {
+class TransactionsJavascript;
+}
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
 
-    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, MessengerJavascript &messengerJavascript, const QString &applicationVersion, QWidget *parent = 0);
+    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, const QString &applicationVersion, QWidget *parent = 0);
 
     void showExpanded();
 

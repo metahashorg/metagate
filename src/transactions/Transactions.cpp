@@ -6,6 +6,7 @@
 #include "NsLookup.h"
 
 #include "TransactionsMessages.h"
+#include "TransactionsJavascript.h"
 
 #include <memory>
 
@@ -13,9 +14,11 @@ namespace transactions {
 
 static const uint64_t ADD_TO_COUNT_TXS = 10;
 
-Transactions::Transactions(NsLookup &nsLookup, QObject *parent)
+Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent)
     : TimerClass(2s, parent)
     , nsLookup(nsLookup)
+    , javascriptWrapper(javascriptWrapper)
+    , db(db)
 {
     CHECK(connect(this, &Transactions::timerEvent, this, &Transactions::onTimerEvent), "not connect onTimerEvent");
     CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
@@ -25,6 +28,7 @@ Transactions::Transactions(NsLookup &nsLookup, QObject *parent)
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
     client.moveToThread(&thread1);
+
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
@@ -51,7 +55,13 @@ struct BalanceStruct {
     {}
 };
 
-void Transactions::processAddressMth(const QString &address, const std::vector<QString> &servers) {
+void Transactions::newBalance(const QString &address, const QString &currency, const BalanceResponse &balance, const std::vector<Transaction> &txs) {
+    // Сохраняем транзакции в bd
+    emit javascriptWrapper.newBalanceSig(address, currency, balance);
+    getFullTxs[std::make_pair(currency, address)] = false;
+}
+
+void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers) {
     if (servers.empty()) {
         return;
     }
@@ -60,7 +70,7 @@ void Transactions::processAddressMth(const QString &address, const std::vector<Q
     balanceStruct->countResponses = servers.size();
     for (const QString &server: servers) {
         const QString requestBalance = makeGetBalanceRequest(address);
-        const auto getBalanceCallback = [this, balanceStruct, server](const std::string &response) {
+        const auto getBalanceCallback = [this, balanceStruct, server, currency](const std::string &response) {
             balanceStruct->countResponses--;
 
             if (response != SimpleClient::ERROR_BAD_REQUEST) {
@@ -81,33 +91,29 @@ void Transactions::processAddressMth(const QString &address, const std::vector<Q
                 if (countAll < countInServer) {
                     const uint64_t countMissingTxs = countInServer - countAll;
                     const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
-                    const bool isToTxs = !getFullTxs[balanceStruct->address];
+                    const bool isToTxs = !getFullTxs[std::make_pair(currency, balanceStruct->address)];
                     const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, isToTxs, requestCountTxs);
 
-                    const auto getHistoryCallback = [this, balanceStruct, server, isToTxs](const std::string &response) {
+                    const auto getHistoryCallback = [this, balanceStruct, server, isToTxs, currency](const std::string &response) {
                         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
                         const std::vector<Transaction> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
 
                         if (isToTxs) {
                             const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
-                            const auto getBalance2Callback = [this, balanceStruct, server](const std::string &response) {
+                            const auto getBalance2Callback = [this, balanceStruct, server, currency, txs](const std::string &response) {
                                 CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
                                 const BalanceResponse balance = parseBalanceResponse(QString::fromStdString(response));
                                 const uint64_t countInServer = balance.countReceived + balance.countSpent;
                                 const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
                                 if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
-                                    // Сохраняем транзакции в bd
-                                    // emit сигнал с сохраненным балансом
-                                    getFullTxs[balanceStruct->address] = false;
+                                    newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
                                 } else {
-                                    getFullTxs[balanceStruct->address] = true;
+                                    getFullTxs[std::make_pair(currency, balanceStruct->address)] = true;
                                 }
                             };
                             client.sendMessagePost(server, requestBalance, getBalance2Callback, 1s);
                         } else {
-                            // Сохраняем транзакции в bd
-                            // emit сигнал с сохраненным балансом
-                            getFullTxs[balanceStruct->address] = false;
+                            newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
                         }
                     };
                     client.sendMessagePost(server, requestForTxs, getHistoryCallback, 1s);

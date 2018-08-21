@@ -9,15 +9,6 @@
 
 namespace transactions {
 
-struct BalanceResponse {
-    QString address;
-    uint64_t received = 0;
-    uint64_t spent = 0;
-    uint64_t countReceived = 0;
-    uint64_t countSpent = 0;
-    uint64_t currBlockNum = 0;
-};
-
 QString makeGetBalanceRequest(const QString &address);
 
 BalanceResponse parseBalanceResponse(const QString &response);

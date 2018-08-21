@@ -25,9 +25,9 @@ BalanceResponse parseBalanceResponse(const QString &response) {
     CHECK(json.contains("address") && json.value("address").isString(), "Incorrect json: address field not found");
     result.address = json.value("address").toString();
     CHECK(json.contains("received") && json.value("received").isDouble(), "Incorrect json: received field not found");
-    result.received = json.value("received").toDouble();
+    result.received = QString::fromStdString(std::to_string(uint64_t(json.value("received").toDouble())));
     CHECK(json.contains("spent") && json.value("spent").isDouble(), "Incorrect json: spent field not found");
-    result.spent = json.value("spent").toDouble();
+    result.spent = QString::fromStdString(std::to_string(uint64_t(json.value("spent").toDouble())));
     CHECK(json.contains("count_received") && json.value("count_received").isDouble(), "Incorrect json: count_received field not found");
     result.countReceived = json.value("count_received").toDouble();
     CHECK(json.contains("count_spent") && json.value("count_spent").isDouble(), "Incorrect json: count_spent field not found");
@@ -66,7 +66,7 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
         CHECK(txJson.contains("to") && txJson.value("to").isString(), "Incorrect json: to field not found");
         res.to = txJson.value("to").toString();
         CHECK(txJson.contains("value") && txJson.value("value").isDouble(), "Incorrect json: value field not found");
-        res.value = txJson.value("value").toDouble();
+        res.value = QString::fromStdString(std::to_string(uint64_t(txJson.value("value").toDouble())));
         CHECK(txJson.contains("transaction") && txJson.value("transaction").isString(), "Incorrect json: transaction field not found");
         res.tx = txJson.value("transaction").toString();
         CHECK(txJson.contains("data") && txJson.value("data").isString(), "Incorrect json: data field not found");
