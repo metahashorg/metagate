@@ -15,6 +15,19 @@ txsGetTxsJs(address, currency, result, errorNum, errorMessage)
 где result - json массив вида
 [{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\",\"isInput\":true}]
 
+Q_INVOKABLE void getTxsAll(QString currency, QString fromTx, int count, bool asc);
+Получение транзакций по всем адресам currency
+fromTx транзакция, с которой продолжать поиск. Если пустая, то с первой (или с последней, в зависимости от параметра asc) транзакции
+asc порядок сортировки
+Результат вернется в функцию
+txsGetTxsAllJs(address, currency, result, errorNum, errorMessage)
+
+Q_INVOKABLE void calcBalance(QString address, QString currency);
+Получение баланса
+Результат вернется в функцию
+txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)
+где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\"}
+
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу

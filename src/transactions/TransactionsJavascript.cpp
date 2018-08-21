@@ -151,4 +151,29 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::calcBalance(QString address, QString currency) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsCalcBalanceResultJs";
+
+    LOG << "calc balance address " << currency << " " << address;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->calcBalance(address, currency, [this, currency, address, makeFunc](const BalanceResponse &balance, const TypedException &exception) {
+            LOG << "Get balance ok " << currency << " " << address;
+            makeFunc(exception, address, currency, balanceToJson(balance));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, address, currency, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
 }

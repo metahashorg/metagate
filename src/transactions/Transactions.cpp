@@ -26,6 +26,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::registerAddress, this, &Transactions::onRegisterAddress), "not connect onRegisterAddress");
     CHECK(connect(this, &Transactions::getTxs, this, &Transactions::onGetTxs), "not connect onGetTxs");
     CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
+    CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
@@ -170,6 +171,17 @@ BEGIN_SLOT_WRAPPER
 
     });
     runCallback(std::bind(callback, txs, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Запросить из bd
+    BalanceResponse balance;
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    runCallback(std::bind(callback, balance, exception));
 END_SLOT_WRAPPER
 }
 
