@@ -221,6 +221,56 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::getTxs2(QString address, QString currency, int from, int count, bool asc) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetTxs2Js";
+
+    LOG << "get txs2 address " << address << " " << currency << " " << from;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getTxs2(address, currency, from, count, asc, [this, address, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+            LOG << "Get txs ok " << address << " " << currency << " " << txs.size();
+            makeFunc(exception, address, currency, txsToJson(txs));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, address, currency, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::getTxsAll2(QString currency, int from, int count, bool asc) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetTxsAll2Js";
+
+    LOG << "get txs address " << currency << " " << from;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getTxsAll2(currency, from, count, asc, [this, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+            LOG << "Get txs ok " << currency << " " << txs.size();
+            makeFunc(exception, currency, txsToJson(txs));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, currency, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::calcBalance(QString address, QString currency) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");

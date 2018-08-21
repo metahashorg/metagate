@@ -58,7 +58,11 @@ signals:
 
     void getTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
 
+    void getTxs2(QString address, QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
+
     void getTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
+
+    void getTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void calcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
@@ -72,7 +76,11 @@ public slots:
 
     void onGetTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
 
+    void onGetTxs2(QString address, QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
+
     void onGetTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
+
+    void onGetTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 

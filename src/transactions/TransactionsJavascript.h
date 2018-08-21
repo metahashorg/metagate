@@ -59,6 +59,10 @@ public slots:
 
     Q_INVOKABLE void getTxsAll(QString currency, QString fromTx, int count, bool asc);
 
+    Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
+
+    Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
+
     Q_INVOKABLE void calcBalance(QString address, QString currency);
 
 private:
