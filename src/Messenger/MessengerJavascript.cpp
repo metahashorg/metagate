@@ -23,6 +23,8 @@ MessengerJavascript::MessengerJavascript(QObject *parent)
     CHECK(connect(this, &MessengerJavascript::deletedFromChannelSig, this, &MessengerJavascript::onDeletedFromChannel), "not connect onDeletedFromChannel");
     CHECK(connect(this, &MessengerJavascript::newMessegesChannelSig, this, &MessengerJavascript::onNewMessegesChannel), "not connect onNewMessegesChannel");
 
+    qRegisterMetaType<Callback>("Callback");
+
     setPaths(getWalletPath(), "");
 }
 

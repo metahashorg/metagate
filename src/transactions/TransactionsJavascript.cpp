@@ -17,6 +17,8 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
 {
     CHECK(connect(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance), "not connect onNewBalance");
+
+    qRegisterMetaType<Callback>("Callback");
 }
 
 void TransactionsJavascript::onCallbackCall(const std::function<void()> &callback) {
