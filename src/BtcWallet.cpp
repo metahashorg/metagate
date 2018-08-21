@@ -199,7 +199,8 @@ std::pair<std::string, std::set<std::string>> BtcWallet::encode(
         valueToSend = value;
     }
 
-    CHECK_TYPED(valueToSend > 0, TypeErrors::INCORRECT_USER_DATA, "Not enough money. Balance " + std::to_string(allUtxoValue) + ". Value to send " + std::to_string(value) + ". Fees " + std::to_string(fees));
+    CHECK_TYPED(valueToSend > 0, TypeErrors::INCORRECT_USER_DATA, "Not enough money. Balance " + std::to_string(allUtxoValue) + ". Value to send " + std::to_string(valueToSend) + ". Fees " + std::to_string(fees));
+    CHECK_TYPED(valueToSend >= fees, TypeErrors::INCORRECT_VALUE_OR_FEE, "Value it should be large than fees. Value " + std::to_string(valueToSend) + ". Fees " + std::to_string(fees));
 
     const std::string encodedTransaction = genTransaction(newUtxos, valueToSend, feesValue, toAddress, false);
 
