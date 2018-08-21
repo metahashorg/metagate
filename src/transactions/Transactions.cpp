@@ -24,6 +24,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
 
     CHECK(connect(this, &Transactions::registerAddress, this, &Transactions::onRegisterAddress), "not connect onRegisterAddress");
+    CHECK(connect(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses), "not connect onRegisterAddresses");
+    CHECK(connect(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup), "not connect onSetCurrentGroup");
     CHECK(connect(this, &Transactions::getTxs, this, &Transactions::onGetTxs), "not connect onGetTxs");
     CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
@@ -134,7 +136,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
 void Transactions::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
-    // Получить список отслеживаемых
+    // Получить список отслеживаемых по текущей группе
     // Отсортировать по type
     // Завести массив под сервера (и сохраненный type)
     // Идти по списку отслеживаемых, если type поменялся, то перезагрузить массив серверов
@@ -142,13 +144,30 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onRegisterAddress(const QString &currency, const QString &address, const QString &type, const RegisterAddressCallback &callback) {
+void Transactions::onRegisterAddress(const QString &currency, const QString &address, const QString &type, const QString &group, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Положить в бд
     const TypedException exception = apiVrapper2([&, this] {
 
     });
     runCallback(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Положить в бд
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    runCallback(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    currentGroup = group;
+    runCallback(std::bind(callback, TypedException()));
 END_SLOT_WRAPPER
 }
 

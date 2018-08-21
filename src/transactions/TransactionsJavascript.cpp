@@ -77,7 +77,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::registerAddress(QString address, QString currency, QString type) {
+void TransactionsJavascript::registerAddress(QString address, QString currency, QString type, QString group) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
@@ -90,13 +90,81 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->registerAddress(currency, address, type, [this, address, currency, makeFunc](const TypedException &exception) {
+        emit transactionsManager->registerAddress(currency, address, type, group, [this, address, currency, makeFunc](const TypedException &exception) {
             makeFunc(exception, address, currency);
         });
     });
 
     if (exception.isSet()) {
         makeFunc(exception, address, currency);
+    }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::registerAddresses(QString addressesJson) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsRegisterAddressesJs";
+    std::vector<Transactions::AddressInfo> infos;
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(addressesJson.toUtf8());
+    CHECK(jsonResponse.isArray(), "Incorrect json ");
+    const QJsonArray &jsonArr = jsonResponse.array();
+    for (const QJsonValue &jsonVal: jsonArr) {
+        CHECK(jsonVal.isObject(), "Incorrect json");
+        const QJsonObject &addressJson = jsonVal.toObject();
+
+        Transactions::AddressInfo addressInfo;
+        CHECK(addressJson.contains("address") && addressJson.value("address").isString(), "Incorrect json: address field not found");
+        addressInfo.address = addressJson.value("address").toString();
+        CHECK(addressJson.contains("currency") && addressJson.value("currency").isString(), "Incorrect json: currency field not found");
+        addressInfo.currency = addressJson.value("currency").toString();
+        CHECK(addressJson.contains("type") && addressJson.value("type").isString(), "Incorrect json: type field not found");
+        addressInfo.type = addressJson.value("type").toString();
+        CHECK(addressJson.contains("group") && addressJson.value("group").isString(), "Incorrect json: group field not found");
+        addressInfo.group = addressJson.value("group").toString();
+
+        infos.emplace_back(addressInfo);
+    }
+
+    LOG << "register addresses " << infos.size();
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, QString("Ok"));
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->registerAddresses(infos, [this, makeFunc](const TypedException &exception) {
+            makeFunc(exception);
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception);
+    }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::setCurrentGroup(QString group) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsSetCurrentGroupResultJs";
+
+    LOG << "Set group " << group;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, QString("Ok"));
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->setCurrentGroup(group, [this, makeFunc](const TypedException &exception) {
+            makeFunc(exception);
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception);
     }
 END_SLOT_WRAPPER
 }

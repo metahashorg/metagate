@@ -31,13 +31,28 @@ public:
 
     using CalcBalanceCallback = std::function<void(const BalanceResponse &txs, const TypedException &exception)>;
 
+    using SetCurrentGroupCallback = std::function<void(const TypedException &exception)>;
+
+public:
+
+    struct AddressInfo {
+        QString currency;
+        QString address;
+        QString type;
+        QString group;
+    };
+
 public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
 signals:
 
-    void registerAddress(const QString &currency, const QString &address, const QString &type, const RegisterAddressCallback &callback);
+    void registerAddress(const QString &currency, const QString &address, const QString &type, const QString &group, const RegisterAddressCallback &callback);
+
+    void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
+
+    void setCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
     void getTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
 
@@ -47,7 +62,11 @@ signals:
 
 public slots:
 
-    void onRegisterAddress(const QString &currency, const QString &address, const QString &type, const RegisterAddressCallback &callback);
+    void onRegisterAddress(const QString &currency, const QString &address, const QString &type, const QString &group, const RegisterAddressCallback &callback);
+
+    void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
+
+    void onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
     void onGetTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
 
@@ -83,6 +102,8 @@ private:
     SimpleClient client;
 
     std::map<std::pair<QString, QString>, bool> getFullTxs;
+
+    QString currentGroup;
 };
 
 }
