@@ -15,7 +15,7 @@ public:
     using DbId = qint64;
     using IdCounterPair = std::pair<DbId, Message::Counter>;
 
-    explicit DBStorage(QObject *parent = nullptr);
+    explicit DBStorage(const QString &dbname, QObject *parent = nullptr);
     //static DBStorage *instance();
 
     virtual void init();
@@ -36,6 +36,7 @@ private:
     QSqlDatabase m_db;
     bool m_dbExist;
     QString m_path;
+    QString m_dbName;
 };
 
 #endif // DBSTORAGE_H

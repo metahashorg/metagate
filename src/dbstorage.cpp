@@ -5,9 +5,6 @@
 #include "utils.h"
 #include "check.h"
 
-static const QString databaseFileName = "database1.db";
-static const QString databaseVersion = "1";
-
 static const QString sqliteSettings = "PRAGMA foreign_keys=on";
 
 static const QString dropTable = "DROP TABLE IF EXISTS %1";
@@ -22,9 +19,10 @@ static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (
 
 static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
 
-DBStorage::DBStorage(QObject *parent)
+DBStorage::DBStorage(const QString &dbname, QObject *parent)
     : QObject(parent)
     , m_dbExist(false)
+    , m_dbName(dbname)
 {
 }
 
@@ -35,7 +33,7 @@ void DBStorage::setPath(const QString &path)
 
 bool DBStorage::openDB()
 {
-    const QString pathToDB = makePath(m_path, databaseFileName);
+    const QString pathToDB = makePath(m_path, m_dbName);
 
     m_dbExist = QFile::exists(pathToDB);
     m_db = QSqlDatabase::addDatabase("QSQLITE");
@@ -54,7 +52,7 @@ void DBStorage::init()
     query.exec();
 
     createTable(QStringLiteral("settings"), createSettingsTable);
-    setSettings(QStringLiteral("dbversion"), databaseVersion);
+    setSettings(QStringLiteral("dbversion"), "1"); // TODO
 }
 
 QString DBStorage::getSettings(const QString &key)

@@ -5,6 +5,7 @@
 #include "dbres.h"
 #include "dbstorage.h"
 #include "messengerdbstorage.h"
+#include "transactionsdbstorage.h"
 #include "SlotWrapper.h"
 
 #include <QDebug>
@@ -105,6 +106,14 @@ BEGIN_SLOT_WRAPPER
     db.getChannelInfoForUserShaName("1234", "jkgfjkgfgfioioriojk");
     db.setChannelIsWriterForUserShaName("1234", "jkgfjkgfgfioioriojk", true);
 
+    transactions::TransactionsDBStorage tdb;
+    tdb.init();
+
+    tdb.addPayment("mh", "gfklklkltrklklgfmjgfhg", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", 100, 8896865);
+    tdb.addPayment("mh", "gfklklkltrklklklgfkfhg", true, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", 100, 8896865);
+    tdb.addPayment("mh", "gfklklkltjjkguieriufhg", true, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", 100, 8896865);
+    tdb.addPayment("mh", "gfklklklruuiuiduidgjkg", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", 100, 8896865);
+    qDebug() << tdb.getPaymentsForDest("user7", "user1", "fjgjg", 3, true).size();
 
 END_SLOT_WRAPPER
 }

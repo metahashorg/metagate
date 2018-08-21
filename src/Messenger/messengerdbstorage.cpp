@@ -5,8 +5,11 @@
 
 #include "check.h"
 
+static const QString databaseFileName = "messenger.db";
+static const QString databaseVersion = "1";
+
 MessengerDBStorage::MessengerDBStorage()
-    : DBStorage()
+    : DBStorage(databaseFileName)
 {
 
 }
@@ -167,6 +170,7 @@ void MessengerDBStorage::setContactPublicKey(const QString &username, const QStr
 
 Message::Counter MessengerDBStorage::getMessageMaxCounter(const QString &user, const QString &channelSha)
 {
+    Q_UNUSED(channelSha);
     QSqlQuery query(database());
     query.prepare(selectMsgMaxCounter);
     query.bindValue(":user", user);
@@ -246,6 +250,7 @@ qint64 MessengerDBStorage::getMessagesCountForUserAndDest(const QString &user, c
 
 bool MessengerDBStorage::hasMessageWithCounter(const QString &username, Message::Counter counter, const QString &channelSha)
 {
+    Q_UNUSED(channelSha);
     QSqlQuery query(database());
     query.prepare(selectCountMessagesWithCounter);
     query.bindValue(":user", username);
@@ -287,6 +292,7 @@ DBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessageWithHas
 
 DBStorage::IdCounterPair MessengerDBStorage::findFirstMessageWithHash(const QString &username, const QString &hash, const QString &channelSha)
 {
+    Q_UNUSED(channelSha);
     QSqlQuery query(database());
     query.prepare(selectFirstMessageWithHash);
     query.bindValue(":user", username);
@@ -313,6 +319,7 @@ DBStorage::DbId MessengerDBStorage::findFirstNotConfirmedMessage(const QString &
 
 void MessengerDBStorage::updateMessage(DbId id, Message::Counter newCounter, bool confirmed, const QString &channelSha)
 {
+    Q_UNUSED(channelSha);
     QSqlQuery query(database());
     query.prepare(updateMessageQuery);
     query.bindValue(":id", id);
@@ -325,6 +332,7 @@ void MessengerDBStorage::updateMessage(DbId id, Message::Counter newCounter, boo
 
 Message::Counter MessengerDBStorage::getLastReadCounterForUserContact(const QString &username, const QString &contact, bool isChannel)
 {
+    Q_UNUSED(isChannel);
     QSqlQuery query(database());
     query.prepare(selectLastReadCounterForUserContact);
     query.bindValue(":user", username);
@@ -338,6 +346,7 @@ Message::Counter MessengerDBStorage::getLastReadCounterForUserContact(const QStr
 
 void MessengerDBStorage::setLastReadCounterForUserContact(const QString &username, const QString &contact, Message::Counter counter, bool isChannel)
 {
+    Q_UNUSED(isChannel);
     QSqlQuery query(database());
     query.prepare(updateLastReadCounterForUserContact);
     query.bindValue(":counter", counter);
@@ -348,6 +357,7 @@ void MessengerDBStorage::setLastReadCounterForUserContact(const QString &usernam
 
 std::list<std::pair<QString, Message::Counter> > MessengerDBStorage::getLastReadCountersForUser(const QString &username, bool isChannel)
 {
+    Q_UNUSED(isChannel);
     std::list<std::pair<QString, Message::Counter> > res;
     QSqlQuery query(database());
     query.prepare(selectLastReadCountersForUser);

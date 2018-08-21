@@ -11,7 +11,7 @@ CONFIG += console
 TARGET = DBdemo
 TEMPLATE = app
 
-INCLUDEPATH += ../src/Messenger ../src
+INCLUDEPATH += ../src/Messenger ../src ../src/transactions
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -32,7 +32,9 @@ SOURCES += \
         ../src/utils.cpp \
         ../src/btctx/Base58.cpp \
         ../src/dbstorage.cpp \
-        ../src/Messenger/messengerdbstorage.cpp
+        ../src/Messenger/messengerdbstorage.cpp \
+        ../src/transactions/transactionsdbstorage.cpp
+
 
 HEADERS += \
         mainwindow.h \
@@ -40,7 +42,8 @@ HEADERS += \
         ../src/Paths.h \
         ../src/utils.h \
         ../src/dbstorage.h \
-        ../src/Messenger/messengerdbstorage.h
+        ../src/Messenger/messengerdbstorage.h \
+        ../src/transactions/transactionsdbstorage.h
 
 FORMS += \
         mainwindow.ui
