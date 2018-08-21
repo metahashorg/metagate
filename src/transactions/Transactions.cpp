@@ -105,6 +105,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 const uint64_t countSpent = 0;
                 const uint64_t countAll = countReceived + countSpent;
                 const uint64_t countInServer = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
+                LOG << "Automatic get txs " << balanceStruct->address << " " << countAll << " " << countInServer;
                 if (countAll < countInServer) {
                     const uint64_t countMissingTxs = countInServer - countAll;
                     const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
@@ -115,6 +116,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                         CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
                         const std::vector<Transaction> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
 
+                        LOG << "Txs geted " << balanceStruct->address << " " << txs.size();
+
                         if (isToTxs) {
                             const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
                             const auto getBalance2Callback = [this, balanceStruct, server, currency, txs](const std::string &response) {
@@ -123,13 +126,16 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                                 const uint64_t countInServer = balance.countReceived + balance.countSpent;
                                 const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
                                 if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
+                                    LOG << "Balance " << balanceStruct->address << " confirmed";
                                     newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
                                 } else {
+                                    LOG << "Balance " << balanceStruct->address << " not confirmed";
                                     getFullTxs[std::make_pair(currency, balanceStruct->address)] = true;
                                 }
                             };
                             client.sendMessagePost(server, requestBalance, getBalance2Callback, 1s);
                         } else {
+                            LOG << "Balance " << balanceStruct->address << " confirmed2";
                             newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
                         }
                     };
