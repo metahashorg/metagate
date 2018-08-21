@@ -30,9 +30,11 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
 
+    qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
     qRegisterMetaType<GetTxsCallback>("GetTxsCallback");
     qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
+    qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
 
     client.setParent(this);
@@ -42,7 +44,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
-void Transactions::onCallbackCall(std::function<void()> callback) {
+void Transactions::onCallbackCall(Callback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER

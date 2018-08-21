@@ -33,6 +33,8 @@ public:
 
     using SetCurrentGroupCallback = std::function<void(const TypedException &exception)>;
 
+    using Callback = std::function<void()>;
+
 public:
 
     struct AddressInfo {
@@ -76,7 +78,7 @@ public slots:
 
 private slots:
 
-    void onCallbackCall(std::function<void()> callback);
+    void onCallbackCall(Callback callback);
 
     void onRun();
 
