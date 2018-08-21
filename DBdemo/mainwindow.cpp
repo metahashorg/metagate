@@ -7,6 +7,7 @@
 #include "messengerdbstorage.h"
 #include "transactionsdbstorage.h"
 #include "SlotWrapper.h"
+#include "bignumber.h"
 
 #include <QDebug>
 MainWindow::MainWindow(QWidget *parent) :
@@ -115,6 +116,13 @@ BEGIN_SLOT_WRAPPER
     tdb.addPayment("mh", "gfklklklruuiuiduidgjkg", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", 100, 8896865);
     qDebug() << tdb.getPaymentsForDest("user7", "user1", "fjgjg", 3, true).size();
 
+
+    BigNumber num1(QByteArray("1111111111111111111111111111111111111111111111"));
+    BigNumber num2(QByteArray("2222222222222222222222222222222222222222222222"));
+    qDebug() << num1.getDecimal();
+    qDebug() << num2.getDecimal();
+    BigNumber r = num1 + num2;
+    qDebug() << r.getDecimal();
 END_SLOT_WRAPPER
 }
 

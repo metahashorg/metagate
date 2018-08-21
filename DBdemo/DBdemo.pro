@@ -24,6 +24,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 CONFIG += c++14
 
+
+INCLUDEPATH += $$PWD/openssl_linux/include/
+LIBS += -L$$PWD/openssl_linux/lib -lssl -lcrypto
+
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
@@ -33,7 +37,8 @@ SOURCES += \
         ../src/btctx/Base58.cpp \
         ../src/dbstorage.cpp \
         ../src/Messenger/messengerdbstorage.cpp \
-        ../src/transactions/transactionsdbstorage.cpp
+        ../src/transactions/transactionsdbstorage.cpp \
+    bignumber.cpp
 
 
 HEADERS += \
@@ -43,7 +48,8 @@ HEADERS += \
         ../src/utils.h \
         ../src/dbstorage.h \
         ../src/Messenger/messengerdbstorage.h \
-        ../src/transactions/transactionsdbstorage.h
+        ../src/transactions/transactionsdbstorage.h \
+    bignumber.h
 
 FORMS += \
         mainwindow.ui
