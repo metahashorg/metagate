@@ -3,3 +3,19 @@ Transactions регестрируется в javascript по имени transact
 Q_INVOKABLE void registerAddress(QString address, QString currency, QString type);
 Зарегестрировать адрес для отслеживания
 type - для mth валют это "torrent" или "torrent_main"
+Результат вернется в функцию
+txsRegisterAddressJs(address, currency, errorNum, errorMessage)
+
+Q_INVOKABLE void getTxs(QString address, QString currency, QString fromTx, int count, bool asc);
+Получение транзакций
+fromTx транзакция, с которой продолжать поиск. Если пустая, то с первой (или с последней, в зависимости от параметра asc) транзакции
+asc порядок сортировки
+Результат вернется в функцию
+txsGetTxsJs(address, currency, result, errorNum, errorMessage)
+где result - json массив вида
+[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\",\"isInput\":true}]
+
+
+txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
+Возвращается при изменении баланса по остлеживаемому адресу
+balanceJson вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"currBlock\":\"1234567\"}

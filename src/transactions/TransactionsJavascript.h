@@ -51,6 +51,10 @@ public slots:
 
     Q_INVOKABLE void registerAddress(QString address, QString currency, QString type);
 
+    Q_INVOKABLE void getTxs(QString address, QString currency, QString fromTx, int count, bool asc);
+
+    Q_INVOKABLE void getTxsAll(QString currency, QString fromTx, int count, bool asc);
+
 private:
 
     template<typename... Args>

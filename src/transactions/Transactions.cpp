@@ -24,6 +24,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
 
     CHECK(connect(this, &Transactions::registerAddress, this, &Transactions::onRegisterAddress), "not connect onRegisterAddress");
+    CHECK(connect(this, &Transactions::getTxs, this, &Transactions::onGetTxs), "not connect onGetTxs");
+    CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
@@ -41,6 +43,11 @@ END_SLOT_WRAPPER
 void Transactions::onRun() {
 BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
+}
+
+template<typename Func>
+void Transactions::runCallback(const Func &callback) {
+    emit javascriptWrapper.callbackCall(callback);
 }
 
 struct BalanceStruct {
@@ -137,7 +144,32 @@ END_SLOT_WRAPPER
 void Transactions::onRegisterAddress(const QString &currency, const QString &address, const QString &type, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Положить в бд
-    // emit callback
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    runCallback(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Запросить из bd
+    std::vector<Transaction> txs;
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    runCallback(std::bind(callback, txs, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Запросить из bd
+    std::vector<Transaction> txs;
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    runCallback(std::bind(callback, txs, exception));
 END_SLOT_WRAPPER
 }
 
