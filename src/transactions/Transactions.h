@@ -95,6 +95,8 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
 
+    std::vector<AddressInfo> getAddressesInfos(const QString &group);
+
 private:
 
     NsLookup &nsLookup;

@@ -7,6 +7,7 @@
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"
+#include "transactionsdbstorage.h"
 
 #include <memory>
 
@@ -76,7 +77,11 @@ struct BalanceStruct {
 };
 
 void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs) {
-    // Сохраняем транзакции в bd
+    for (Transaction tx: txs) {
+        tx.address = address;
+        tx.currency = currency;
+        db.addPayment(tx);
+    }
     emit javascriptWrapper.newBalanceSig(address, currency, balance);
     getFullTxs[std::make_pair(currency, address)] = false;
 }
@@ -103,9 +108,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
             }
 
             if (balanceStruct->countResponses == 0 && !balanceStruct->server.isEmpty()) {
-                // Получаем количество received и количество spent
-                const uint64_t countReceived = 0;
-                const uint64_t countSpent = 0;
+                const uint64_t countReceived = db.getPaymentsCountForAddress(balanceStruct->address, currency, false);
+                const uint64_t countSpent = db.getPaymentsCountForAddress(balanceStruct->address, currency, true);
                 const uint64_t countAll = countReceived + countSpent;
                 const uint64_t countInServer = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
                 LOG << "Automatic get txs " << balanceStruct->address << " " << countAll << " " << countInServer;
@@ -150,13 +154,26 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     }
 }
 
+std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
+    const std::list<AddressInfo> res = db.getTrackedForGroup(group);
+    return std::vector<AddressInfo>(res.cbegin(), res.cend());
+}
+
 void Transactions::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
-    // Получить список отслеживаемых по текущей группе
-    // Отсортировать по type
-    // Завести массив под сервера (и сохраненный type)
-    // Идти по списку отслеживаемых, если type поменялся, то перезагрузить массив серверов
-    // Фигачить запрос
+    std::vector<AddressInfo> addressesInfos = getAddressesInfos(currentGroup);
+    std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
+        return first.type < second.type;
+    });
+    std::vector<QString> servers;
+    QString currentType;
+    for (const AddressInfo &addr: addressesInfos) {
+        if (addr.type != currentType) {
+            servers = nsLookup.getRandom(addr.type, 3, 3);
+            currentType = addr.type;
+        }
+        processAddressMth(addr.address, addr.currency, servers);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -172,10 +189,9 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetAddresses(const QString &group, const GetAddressesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Положить в бд
     std::vector<AddressInfo> result;
     const TypedException exception = apiVrapper2([&, this] {
-
+        result = getAddressesInfos(group);
     });
     runCallback(std::bind(callback, result, exception));
 END_SLOT_WRAPPER
@@ -190,7 +206,7 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Запросить из bd
+    // TODO
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
 
@@ -201,10 +217,10 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetTxs2(QString address, QString currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Запросить из bd
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
-
+        const std::list<Transaction> result = db.getPaymentsForAddress(address, currency, from, count, asc);
+        std::copy(result.cbegin(), result.cend(), std::back_inserter(txs));
     });
     runCallback(std::bind(callback, txs, exception));
 END_SLOT_WRAPPER
@@ -212,7 +228,7 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Запросить из bd
+    // TODO
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
 
@@ -223,10 +239,10 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Запросить из bd
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
-
+        const std::list<Transaction> result = db.getPaymentsForCurrency(currency, from, count, asc);
+        std::copy(result.cbegin(), result.cend(), std::back_inserter(txs));
     });
     runCallback(std::bind(callback, txs, exception));
 END_SLOT_WRAPPER

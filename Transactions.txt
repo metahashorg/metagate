@@ -25,9 +25,11 @@ Q_INVOKABLE void setCurrentGroup(QString group);
 txsSetCurrentGroupResultJs("Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void getTxs(QString address, QString currency, QString fromTx, int count, bool asc);
+Пока не работает
 Получение транзакций
 fromTx транзакция, с которой продолжать поиск. Если пустая, то с первой (или с последней, в зависимости от параметра asc) транзакции
 asc порядок сортировки
+count == -1 выдать все
 Результат вернется в функцию
 txsGetTxsJs(address, currency, result, errorNum, errorMessage)
 где result - json массив вида
@@ -37,16 +39,20 @@ Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count,
 Получение транзакций
 fromTx транзакция, с которой продолжать поиск. Если пустая, то с первой (или с последней, в зависимости от параметра asc) транзакции
 asc порядок сортировки
+count == -1 выдать все
 Результат вернется в функцию
 txsGetTxs2Js(address, currency, result, errorNum, errorMessage)
 
 Q_INVOKABLE void getTxsAll(QString currency, QString fromTx, int count, bool asc);
+Пока не работает
+count == -1 выдать все
 Получение транзакций по всем адресам currency
 Результат вернется в функцию
 txsGetTxsAllJs(address, currency, result, errorNum, errorMessage)
 
 Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
 Получение транзакций по всем адресам currency
+count == -1 выдать все
 Результат вернется в функцию
 txsGetTxsAll2Js(address, currency, result, errorNum, errorMessage)
 
