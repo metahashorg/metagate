@@ -38,7 +38,7 @@ void TransactionsJavascript::runJs(const QString &script) {
     emit jsRunSig(script);
 }
 
-static QJsonDocument balanceToJson(const BalanceResponse &balance) {
+static QJsonDocument balanceToJson(const BalanceInfo &balance) {
     QJsonObject messagesBalanceJson;
     messagesBalanceJson.insert("received", balance.received);
     messagesBalanceJson.insert("spent", balance.spent);
@@ -69,7 +69,7 @@ static QJsonDocument txsToJson(const std::vector<Transaction> &txs) {
     return QJsonDocument(messagesTxsJson);
 }
 
-void TransactionsJavascript::onNewBalance(const QString &address, const QString &currency, const BalanceResponse &balance) {
+void TransactionsJavascript::onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsNewBalanceJs";
 
@@ -287,7 +287,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->calcBalance(address, currency, [this, currency, address, makeFunc](const BalanceResponse &balance, const TypedException &exception) {
+        emit transactionsManager->calcBalance(address, currency, [this, currency, address, makeFunc](const BalanceInfo &balance, const TypedException &exception) {
             LOG << "Get balance ok " << currency << " " << address;
             makeFunc(exception, address, currency, balanceToJson(balance));
         });

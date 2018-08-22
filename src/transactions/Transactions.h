@@ -18,7 +18,7 @@ namespace transactions {
 
 class TransactionsJavascript;
 class TransactionsDBStorage;
-struct BalanceResponse;
+struct BalanceInfo;
 struct Transaction;
 struct AddressInfo;
 
@@ -30,7 +30,7 @@ public:
 
     using GetTxsCallback = std::function<void(const std::vector<Transaction> &txs, const TypedException &exception)>;
 
-    using CalcBalanceCallback = std::function<void(const BalanceResponse &txs, const TypedException &exception)>;
+    using CalcBalanceCallback = std::function<void(const BalanceInfo &txs, const TypedException &exception)>;
 
     using SetCurrentGroupCallback = std::function<void(const TypedException &exception)>;
 
@@ -84,7 +84,7 @@ private:
 
     void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers);
 
-    void newBalance(const QString &address, const QString &currency, const BalanceResponse &balance, const std::vector<Transaction> &txs);
+    void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs);
 
     template<typename Func>
     void runCallback(const Func &callback);

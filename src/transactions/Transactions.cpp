@@ -64,7 +64,7 @@ void Transactions::runCallback(const Func &callback) {
 struct BalanceStruct {
     QString address;
     size_t countResponses = 0;
-    BalanceResponse balance;
+    BalanceInfo balance;
 
     QString server;
 
@@ -73,7 +73,7 @@ struct BalanceStruct {
     {}
 };
 
-void Transactions::newBalance(const QString &address, const QString &currency, const BalanceResponse &balance, const std::vector<Transaction> &txs) {
+void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs) {
     // Сохраняем транзакции в bd
     emit javascriptWrapper.newBalanceSig(address, currency, balance);
     getFullTxs[std::make_pair(currency, address)] = false;
@@ -92,7 +92,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
             balanceStruct->countResponses--;
 
             if (response != SimpleClient::ERROR_BAD_REQUEST) {
-                const BalanceResponse balanceResponse = parseBalanceResponse(QString::fromStdString(response));
+                const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
                 CHECK(balanceResponse.address == balanceStruct->address, "Incorrect response: address not equal. Expected " + balanceStruct->address.toStdString() + ". Received " + balanceResponse.address.toStdString());
                 if (balanceResponse.currBlockNum > balanceStruct->balance.currBlockNum) {
                     balanceStruct->balance = balanceResponse;
@@ -123,7 +123,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                             const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
                             const auto getBalance2Callback = [this, balanceStruct, server, currency, txs](const std::string &response) {
                                 CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
-                                const BalanceResponse balance = parseBalanceResponse(QString::fromStdString(response));
+                                const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
                                 const uint64_t countInServer = balance.countReceived + balance.countSpent;
                                 const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
                                 if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
@@ -222,7 +222,7 @@ END_SLOT_WRAPPER
 void Transactions::onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // Запросить из bd
-    BalanceResponse balance;
+    BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
 
     });

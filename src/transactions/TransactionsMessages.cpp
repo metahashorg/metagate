@@ -13,14 +13,14 @@ QString makeGetBalanceRequest(const QString &address) {
     return "{\"id\":1,\"params\":{\"address\": \"" + address + "\"},\"method\":\"fetch-balance\", \"pretty\": false}";
 }
 
-BalanceResponse parseBalanceResponse(const QString &response) {
+BalanceInfo parseBalanceResponse(const QString &response) {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
     const QJsonObject &json = json1.value("result").toObject();
 
-    BalanceResponse result;
+    BalanceInfo result;
 
     CHECK(json.contains("address") && json.value("address").isString(), "Incorrect json: address field not found");
     result.address = json.value("address").toString();

@@ -37,7 +37,7 @@ signals:
 
 signals:
 
-    void newBalanceSig(const QString &address, const QString &currency, const BalanceResponse &balance);
+    void newBalanceSig(const QString &address, const QString &currency, const BalanceInfo &balance);
 
 public slots:
 
@@ -45,7 +45,7 @@ public slots:
 
 private slots:
 
-    void onNewBalance(const QString &address, const QString &currency, const BalanceResponse &balance);
+    void onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance);
 
 public slots:
 

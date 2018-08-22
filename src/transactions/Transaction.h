@@ -18,7 +18,7 @@ struct Transaction {
     bool isInput;
 };
 
-struct BalanceResponse {
+struct BalanceInfo {
     QString address;
     QString received;
     QString spent;

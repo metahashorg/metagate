@@ -11,7 +11,7 @@ namespace transactions {
 
 QString makeGetBalanceRequest(const QString &address);
 
-BalanceResponse parseBalanceResponse(const QString &response);
+BalanceInfo parseBalanceResponse(const QString &response);
 
 QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t cnt);
 
