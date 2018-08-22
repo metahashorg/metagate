@@ -33,7 +33,8 @@ public:
     BigNumber calcInValueForAddress(const QString &address, const QString &currency);
     BigNumber calcOutValueForAddress(const QString &address, const QString &currency);
 
-    void addTracked(const QString &currency, const QString &address, const QString &type, const QString &tgroup);
+    void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
+    void addTracked(const AddressInfo &info);
 
     std::list<AddressInfo> getTrackedForGroup(const QString &tgroup);
 

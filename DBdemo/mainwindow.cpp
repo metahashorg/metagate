@@ -137,10 +137,10 @@ BEGIN_SLOT_WRAPPER
     //res1 = res1 - res2;
 
 
-    tdb.addTracked("mh", "address101", "typeee", "grp333");
-    tdb.addTracked("mh", "address103", "typeee", "grp333");
-    tdb.addTracked("mh", "address100", "typeee", "grp333");
-    tdb.addTracked("mh", "address100", "typeee", "grp331");
+    tdb.addTracked("mh", "address101", "namew", "typeee", "grp333");
+    tdb.addTracked("mh", "address103", "namew", "typeee", "grp333");
+    tdb.addTracked("mh", "address100", "namew", "typeee", "grp333");
+    tdb.addTracked("mh", "address100", "namew", "typeee", "grp331");
 
     qDebug() << tdb.getTrackedForGroup("grp333").size();
 
