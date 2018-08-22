@@ -144,8 +144,8 @@ BEGIN_SLOT_WRAPPER
 
     qDebug() << tdb.getTrackedForGroup("grp333").size();
 
-    //qDebug() << res1.getDecimal();
-    //qDebug() << res2.getDecimal();
+    qDebug() << res1.getDecimal();
+    qDebug() << res2.getDecimal();
     BigNumber num1(QByteArray("1111111111111111111111111111111111111111111111"));
     BigNumber num2(QByteArray("2222222222222222222222222222222222222222222222"));
     //num1 += num2;
