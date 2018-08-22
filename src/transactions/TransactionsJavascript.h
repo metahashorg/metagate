@@ -53,6 +53,8 @@ public slots:
 
     Q_INVOKABLE void registerAddresses(QString addressesJson);
 
+    Q_INVOKABLE void getAddresses(QString group);
+
     Q_INVOKABLE void setCurrentGroup(QString group);
 
     Q_INVOKABLE void getTxs(QString address, QString currency, QString fromTx, int count, bool asc);

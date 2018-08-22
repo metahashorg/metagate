@@ -24,6 +24,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
 
     CHECK(connect(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses), "not connect onRegisterAddresses");
+    CHECK(connect(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses), "not connect onGetAddresses");
     CHECK(connect(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup), "not connect onSetCurrentGroup");
     CHECK(connect(this, &Transactions::getTxs, this, &Transactions::onGetTxs), "not connect onGetTxs");
     CHECK(connect(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2), "not connect onGetTxs2");
@@ -37,6 +38,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
+    qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
@@ -165,6 +167,17 @@ BEGIN_SLOT_WRAPPER
 
     });
     runCallback(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetAddresses(const QString &group, const GetAddressesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    // Положить в бд
+    std::vector<AddressInfo> result;
+    const TypedException exception = apiVrapper2([&, this] {
+
+    });
+    runCallback(std::bind(callback, result, exception));
 END_SLOT_WRAPPER
 }
 

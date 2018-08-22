@@ -34,6 +34,8 @@ public:
 
     using SetCurrentGroupCallback = std::function<void(const TypedException &exception)>;
 
+    using GetAddressesCallback = std::function<void(const std::vector<AddressInfo> &result, const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -43,6 +45,8 @@ public:
 signals:
 
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
+
+    void getAddresses(const QString &group, const GetAddressesCallback &callback);
 
     void setCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
@@ -59,6 +63,8 @@ signals:
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
+
+    void onGetAddresses(const QString &group, const GetAddressesCallback &callback);
 
     void onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 

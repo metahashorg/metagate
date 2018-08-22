@@ -18,17 +18,38 @@
         });
     }
     
+    function getGroup() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getAddresses(document.createWalletForm.group.value) ;
+        });
+    }
+    
     function getTxs() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.transactions;
-        mainWindow.getTxs(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.fromTx.value, document.createWalletForm.count.value, document.createWalletForm.ack.value) ;
+        mainWindow.getTxs(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.fromTx.value, parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
         });
     }
     
     function getAllTxs() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.transactions;
-        mainWindow.getTxsAll(document.createWalletForm.currency.value, document.createWalletForm.fromTx.value, document.createWalletForm.count.value, document.createWalletForm.ack.value) ;
+        mainWindow.getTxsAll(document.createWalletForm.currency.value, document.createWalletForm.fromTx.value, parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
+    function getTxs2() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxs2(document.createWalletForm.address.value, document.createWalletForm.currency.value, parseInt(document.createWalletForm.fromTx.value), parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
+    function getAllTxs2() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxsAll2(document.createWalletForm.currency.value, parseInt(document.createWalletForm.fromTx.value), parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
         });
     }
     
@@ -66,11 +87,12 @@
             <input name="currency" type="text" value="mth" size="60"><label for="currency">currency</label><br>
             <input name="type" type="text" value="torrent" size="60"><label for="type">type</label><br>
             <input name="group" type="text" value="g1" size="60"><label for="group">group</label><br>
-            <input name="fromTx" type="text" value="" size="60"><label for="fromTx">fromTx</label><br>
+            <input name="fromTx" type="text" value="" size="60"><label for="fromTx">fromTx/from</label><br>
             <input name="count" type="text" value="10" size="60"><label for="count">count</label><br>
             <input name="ack" type="text" value="true" size="60"><label for="ack">ack</label><br>
             <input type="button" value="register" onclick="registerAddress()">
             <input type="button" value="setGroup" onclick="setGroup()">
+            <input type="button" value="getGroup" onclick="getGroup()">
             <input type="button" value="getTxs" onclick="getTxs()">
             <input type="button" value="getAllTxs" onclick="getAllTxs()">
             <input type="button" value="calcBalance" onclick="calcBalance()">

@@ -12,6 +12,13 @@ addressesJson - json массив вида [{\"address\":\"address\",\"currency\
 Результат вернется в функцию
 txsRegisterAddressesJs("Ok", errorNum, errorMessage)
 
+Q_INVOKABLE void getAddresses(QString group);
+Получает список всех зарегестрированных адресов
+Результат вернется в функцию
+txsGetAddressesResultJs(result, errorNum, errorMessage)
+где result - json массив вида
+[{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\"}]
+
 Q_INVOKABLE void setCurrentGroup(QString group);
 Устанавливает группу, по которой будет идти автоматическое отслеживание изменений
 Результат вернется в функцию

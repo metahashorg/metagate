@@ -69,6 +69,22 @@ static QJsonDocument txsToJson(const std::vector<Transaction> &txs) {
     return QJsonDocument(messagesTxsJson);
 }
 
+static QJsonDocument addressInfoToJson(const std::vector<AddressInfo> &infos) {
+    QJsonArray messagesInfosJson;
+    for (const AddressInfo &info: infos) {
+        QJsonObject txJson;
+        txJson.insert("address", info.address);
+        txJson.insert("currency", info.currency);
+        txJson.insert("group", info.group);
+        txJson.insert("type", info.type);
+        txJson.insert("name", info.name);
+
+        messagesInfosJson.push_back(txJson);
+    }
+
+    return QJsonDocument(messagesInfosJson);
+}
+
 void TransactionsJavascript::onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsNewBalanceJs";
@@ -146,6 +162,32 @@ BEGIN_SLOT_WRAPPER
 
     if (exception.isSet()) {
         makeFunc(exception);
+    }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::getAddresses(QString group) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetAddressesResultJs";
+
+    LOG << "get addresses " << group;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getAddresses(group, [this, makeFunc](const std::vector<AddressInfo> &infos, const TypedException &exception) {
+            LOG << "Addresses getted " << infos.size();
+            const QJsonDocument &result = addressInfoToJson(infos);
+            makeFunc(exception, result);
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, QJsonDocument());
     }
 END_SLOT_WRAPPER
 }
