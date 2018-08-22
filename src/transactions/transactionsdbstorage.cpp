@@ -117,6 +117,8 @@ BigNumber TransactionsDBStorage::calcInValueForAddress(const QString &address, c
     while (query.next()) {
         r.setDecimal(query.value("value").toByteArray());
         res += r;
+        r.setDecimal(query.value("fee").toByteArray());
+        res += r;
     }
     return res;
 }
@@ -132,8 +134,6 @@ BigNumber TransactionsDBStorage::calcOutValueForAddress(const QString &address, 
     BigNumber r;
     while (query.next()) {
         r.setDecimal(query.value("value").toByteArray());
-        res += r;
-        r.setDecimal(query.value("fee").toByteArray());
         res += r;
     }
     return res;

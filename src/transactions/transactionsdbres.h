@@ -53,11 +53,11 @@ static const QString selectPaymentsForCurrency = "SELECT id, currency, txid, add
 static const QString deletePaymentsForAddress = "DELETE FROM payments "
                                                 "WHERE address = :address AND  currency = :currency";
 
-static const QString selectInPaymentsValuesForAddress = "SELECT value FROM payments "
+static const QString selectInPaymentsValuesForAddress = "SELECT value, fee FROM payments "
                                                          "WHERE address = :address AND  currency = :currency "
                                                          "AND isInput = 1";
 
-static const QString selectOutPaymentsValuesForAddress = "SELECT value, fee FROM payments "
+static const QString selectOutPaymentsValuesForAddress = "SELECT value FROM payments "
                                                           "WHERE address = :address AND  currency = :currency "
                                                           "AND isInput = 0";
 
