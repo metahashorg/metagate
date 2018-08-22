@@ -139,18 +139,24 @@ BigNumber TransactionsDBStorage::calcOutValueForAddress(const QString &address, 
     return res;
 }
 
-void TransactionsDBStorage::addTracked(const QString &currency, const QString &address,
-                                       const QString &type, const QString &tgroup)
+void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
 {
     QSqlQuery query(database());
     query.prepare(insertTracked);
     query.bindValue(":currency", currency);
     query.bindValue(":address", address);
+    query.bindValue(":name", name);
     query.bindValue(":type", type);
     query.bindValue(":tgroup", tgroup);
     if (!query.exec()) {
         qDebug() << "ERROR" << query.lastError().type();
     }
+
+}
+
+void TransactionsDBStorage::addTracked(const AddressInfo &info)
+{
+    addTracked(info.currency, info.address, info.name, info.type, info.group);
 }
 
 std::list<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString &tgroup)
