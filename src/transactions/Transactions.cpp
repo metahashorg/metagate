@@ -179,9 +179,10 @@ END_SLOT_WRAPPER
 
 void Transactions::onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Положить в бд
     const TypedException exception = apiVrapper2([&, this] {
-
+        for (const AddressInfo &address: addresses) {
+            db.addTracked(address);
+        }
     });
     runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER
@@ -253,7 +254,10 @@ BEGIN_SLOT_WRAPPER
     // Запросить из bd
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
-
+        balance.countReceived = db.getPaymentsCountForAddress(address, currency, false);
+        balance.countSpent = db.getPaymentsCountForAddress(address, currency, true);
+        balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
+        balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
     });
     runCallback(std::bind(callback, balance, exception));
 END_SLOT_WRAPPER
