@@ -6,14 +6,15 @@
 namespace transactions {
 
 struct Transaction {
+    QString currency;
     QString from;
     QString to;
     QString tx;
     QString value;
     QString data;
     uint64_t timestamp;
-    uint64_t fee;
-    uint64_t nonce;
+    int64_t fee;
+    int64_t nonce;
     bool isInput;
 };
 

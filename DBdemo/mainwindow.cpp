@@ -7,7 +7,7 @@
 #include "messengerdbstorage.h"
 #include "transactionsdbstorage.h"
 #include "SlotWrapper.h"
-#include "bignumber.h"
+#include "BigNumber.h"
 
 #include <QDebug>
 MainWindow::MainWindow(QWidget *parent) :
@@ -110,18 +110,47 @@ BEGIN_SLOT_WRAPPER
     transactions::TransactionsDBStorage tdb;
     tdb.init();
 
-    tdb.addPayment("mh", "gfklklkltrklklgfmjgfhg", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", 100, 8896865);
+  /*  tdb.addPayment("mh", "gfklklkltrklklgfmjgfhg", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", 100, 8896865);
     tdb.addPayment("mh", "gfklklkltrklklklgfkfhg", true, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", 100, 8896865);
     tdb.addPayment("mh", "gfklklkltjjkguieriufhg", true, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", 100, 8896865);
     tdb.addPayment("mh", "gfklklklruuiuiduidgjkg", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", 100, 8896865);
-    qDebug() << tdb.getPaymentsForDest("user7", "user1", "fjgjg", 3, true).size();
+    qDebug() << tdb.getPaymentsForDest("user7", "user1", "mh", 0, 3, true).size();
 
 
+    //9223372036854775807
+    //100000000000000000000
+    for (int n = 0; n < 1000; n++) {
+
+        tdb.addPayment("mh", "gfklklkltrklklklgfkfhg", true, "user2", "user3", "100000000000000000", 5688694544 + 2 * n, "nvcmnjkdfjkgf", 100, 8896865);
+    }*/
+
+    /*for (int n = 0; n < 100; n++) {
+
+        tdb.addPayment("mh", "gfklklkltrklklklgfkfhg", false, "user2", "user3", "200000000000000001", 5688694543 + 2 * n, "nvcmnjkdfjkgf", 100, 8896865);
+    }*/
+
+    qDebug() << tdb.getPaymentsCountForDest("user2", "user3", "mh", true);
+    qDebug() << tdb.getPaymentsCountForDest("user2", "user3", "mh", false);
+    BigNumber res1, res2;
+    res1 = tdb.calcInValueForDest("user2", "user3", "mh");
+    res2 = tdb.calcOutValueForDest("user2", "user3", "mh");
+    //res1 = res1 - res2;
+
+
+    tdb.addTracked("mh", "user7", "user1", "typeee", "grp333");
+    tdb.addTracked("mh", "user7", "user1", "typeee", "grp331");
+
+    qDebug() << res1.getDecimal();
+    qDebug() << res2.getDecimal();
     BigNumber num1(QByteArray("1111111111111111111111111111111111111111111111"));
     BigNumber num2(QByteArray("2222222222222222222222222222222222222222222222"));
+    //num1 += num2;
+
     qDebug() << num1.getDecimal();
     qDebug() << num2.getDecimal();
-    BigNumber r = num1 + num2;
+    BigNumber r = num2 - num1;
+    r = r - num1;
+    r = r - num1;
     qDebug() << r.getDecimal();
 END_SLOT_WRAPPER
 }

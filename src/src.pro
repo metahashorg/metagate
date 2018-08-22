@@ -44,6 +44,7 @@ SOURCES += main.cpp mainwindow.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
     Paths.cpp \
+    BigNumber.cpp \
     RunGuard.cpp \
     qrcoder.cpp \
     Messenger/Messenger.cpp \
@@ -106,6 +107,7 @@ HEADERS += mainwindow.h \
     SlotWrapper.h \
     mhurlschemehandler.h \
     Paths.h \
+    BigNumber.h \
     RunGuard.h \
     makeJsFunc.h \
     qrcoder.h \

@@ -36,9 +36,10 @@ SOURCES += \
         ../src/utils.cpp \
         ../src/btctx/Base58.cpp \
         ../src/dbstorage.cpp \
+        ../src/BigNumber.cpp \
         ../src/Messenger/messengerdbstorage.cpp \
-        ../src/transactions/transactionsdbstorage.cpp \
-    bignumber.cpp
+        ../src/transactions/transactionsdbstorage.cpp
+
 
 
 HEADERS += \
@@ -47,9 +48,9 @@ HEADERS += \
         ../src/Paths.h \
         ../src/utils.h \
         ../src/dbstorage.h \
+        ../src/BigNumber.h \
         ../src/Messenger/messengerdbstorage.h \
-        ../src/transactions/transactionsdbstorage.h \
-    bignumber.h
+        ../src/transactions/transactionsdbstorage.h
 
 FORMS += \
         mainwindow.ui

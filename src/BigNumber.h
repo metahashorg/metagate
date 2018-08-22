@@ -9,17 +9,24 @@
 class BigNumber
 {
     friend const BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs);
+    friend const BigNumber operator-(const BigNumber &lhs, const BigNumber &rhs);
 public:
     BigNumber();
     BigNumber(const QByteArray &dec);
     BigNumber(const BigNumber &bn);
 
+    void setDecimal(const QByteArray &dec);
     QByteArray getDecimal() const;
+
+    BigNumber &operator=(const BigNumber &rhs);
+    BigNumber &operator+=(const BigNumber &rhs);
+    BigNumber &operator-=(const BigNumber &rhs);
 
 private:
     std::unique_ptr<BIGNUM, std::function<void(BIGNUM *)>> ptr;
 };
 
 const BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs);
+const BigNumber operator-(const BigNumber &lhs, const BigNumber &rhs);
 
 #endif // BIGNUMBER_H
