@@ -6,6 +6,7 @@
 #include <QJsonObject>
 
 #include "check.h"
+#include "Log.h"
 
 namespace transactions {
 
@@ -69,14 +70,17 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
         res.value = QString::fromStdString(std::to_string(uint64_t(txJson.value("value").toDouble())));
         CHECK(txJson.contains("transaction") && txJson.value("transaction").isString(), "Incorrect json: transaction field not found");
         res.tx = txJson.value("transaction").toString();
-        CHECK(txJson.contains("data") && txJson.value("data").isString(), "Incorrect json: data field not found");
-        res.data = txJson.value("data").toString();
+        if (txJson.contains("data") && txJson.value("data").isString()) {
+            res.data = txJson.value("data").toString();
+        }
         CHECK(txJson.contains("timestamp") && txJson.value("timestamp").isDouble(), "Incorrect json: timestamp field not found");
         res.timestamp = txJson.value("timestamp").toDouble();
-        CHECK(txJson.contains("fee") && txJson.value("fee").isDouble(), "Incorrect json: fee field not found");
-        res.fee = txJson.value("fee").toDouble();
-        CHECK(txJson.contains("nonce") && txJson.value("nonce").isDouble(), "Incorrect json: nonce field not found");
-        res.nonce = txJson.value("nonce").toInt();
+        if (txJson.contains("fee") && txJson.value("fee").isDouble()) {
+            res.fee = txJson.value("fee").toDouble();
+        }
+        if (txJson.contains("nonce") && txJson.value("nonce").isDouble()) {
+            res.nonce = txJson.value("nonce").toInt();
+        }
 
         res.isInput = res.from == address;
 

@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
         return 0;*/
 
         transactions::TransactionsDBStorage dbTransactions;
+        dbTransactions.setPath(getDbPath());
         dbTransactions.openDB();
         dbTransactions.init();
         while (true) {

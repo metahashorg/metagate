@@ -7,7 +7,7 @@
     function registerAddress() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.transactions;
-        mainWindow.registerAddress(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.type.value, document.createWalletForm.group.value) ;
+        mainWindow.registerAddress(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.type.value, document.createWalletForm.group.value, document.createWalletForm.name.value) ;
         });
     }
     
@@ -83,19 +83,22 @@
     <p class="abs">
         <left>
             <FORM name="createWalletForm">
-            <input name="address" type="text" value="0x00a76553d2a3e8d4b2d8b8fe65aebab77deaba86cf96e326ed" size="60"><label for="address">address</label><br>
+            <input name="address" type="text" value="0x0034d209107371745c6f5634d6ed87199bac872c310091ca56" size="60"><label for="address">address</label><br>
+            <input name="name" type="text" value="name1" size="60"><label for="address">name</label><br>
             <input name="currency" type="text" value="mth" size="60"><label for="currency">currency</label><br>
             <input name="type" type="text" value="torrent" size="60"><label for="type">type</label><br>
             <input name="group" type="text" value="g1" size="60"><label for="group">group</label><br>
             <input name="fromTx" type="text" value="" size="60"><label for="fromTx">fromTx/from</label><br>
             <input name="count" type="text" value="10" size="60"><label for="count">count</label><br>
             <input name="ack" type="text" value="true" size="60"><label for="ack">ack</label><br>
-            <input type="button" value="register" onclick="registerAddress()">
-            <input type="button" value="setGroup" onclick="setGroup()">
-            <input type="button" value="getGroup" onclick="getGroup()">
-            <input type="button" value="getTxs" onclick="getTxs()">
-            <input type="button" value="getAllTxs" onclick="getAllTxs()">
-            <input type="button" value="calcBalance" onclick="calcBalance()">
+            <input type="button" value="register" onclick="registerAddress()"><br>
+            <input type="button" value="setGroup" onclick="setGroup()"><br>
+            <input type="button" value="getGroup" onclick="getGroup()"><br>
+            <input type="button" value="getTxs" onclick="getTxs()"><br>
+            <input type="button" value="getAllTxs" onclick="getAllTxs()"><br>
+            <input type="button" value="getTxs2" onclick="getTxs2()"><br>
+            <input type="button" value="getAllTxs2" onclick="getAllTxs2()"><br>
+            <input type="button" value="calcBalance" onclick="calcBalance()"><br>
             </FORM>
         </left>
     </p>

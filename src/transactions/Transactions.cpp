@@ -41,6 +41,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
 
+    qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
+
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
     client.moveToThread(&thread1);
@@ -93,7 +95,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(address);
     balanceStruct->countResponses = servers.size();
-    for (const QString &server: servers) {
+    for (const QString &serverS: servers) {
+        const QString server = "http://" + serverS;
         const QString requestBalance = makeGetBalanceRequest(address);
         const auto getBalanceCallback = [this, balanceStruct, server, currency](const std::string &response) {
             balanceStruct->countResponses--;
@@ -165,6 +168,7 @@ BEGIN_SLOT_WRAPPER
     std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
         return first.type < second.type;
     });
+    LOG << "Try fetch balance " << addressesInfos.size();
     std::vector<QString> servers;
     QString currentType;
     for (const AddressInfo &addr: addressesInfos) {
