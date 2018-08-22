@@ -16,24 +16,26 @@ public:
     virtual void init() override;
 
 
-    void addPayment(const QString &currency, const QString &txid, bool isInput,
+    void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, qint64 fee, qint64 nonce);
     void addPayment(const Transaction &trans);
 
-    std::list<Transaction> getPaymentsForDest(const QString &ufrom, const QString &uto, const QString &currency,
+    std::list<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
                                               qint64 offset, qint64 count, bool asc) const;
-    std::list<Transaction> getPaymentsForCurrency(const QString &ufrom, const QString &currency,
+    std::list<Transaction> getPaymentsForCurrency(const QString &currency,
                                                   qint64 offset, qint64 count, bool asc) const;
 
-    void removePaymentsForDest(const QString &ufrom, const QString &uto, const QString &currency);
+    void removePaymentsForDest(const QString &address, const QString &currency);
 
-    qint64 getPaymentsCountForDest(const QString &ufrom, const QString &uto, const QString &currency, bool input);
+    qint64 getPaymentsCountForAddress(const QString &address, const QString &currency, bool input);
 
-    BigNumber calcInValueForDest(const QString &ufrom, const QString &uto, const QString &currency);
-    BigNumber calcOutValueForDest(const QString &ufrom, const QString &uto, const QString &currency);
+    BigNumber calcInValueForAddress(const QString &address, const QString &currency);
+    BigNumber calcOutValueForAddress(const QString &address, const QString &currency);
 
-    void addTracked(const QString &currency, const QString &ufrom, const QString &uto, const QString &type, const QString &tgroup);
+    void addTracked(const QString &currency, const QString &address, const QString &type, const QString &tgroup);
+
+    std::list<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
 private:
     void createPaymentsList(QSqlQuery &query, std::list<Transaction> &payments) const;

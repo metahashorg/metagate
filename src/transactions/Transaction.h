@@ -7,9 +7,10 @@ namespace transactions {
 
 struct Transaction {
     QString currency;
+    QString tx;
+    QString address;
     QString from;
     QString to;
-    QString tx;
     QString value;
     QString data;
     uint64_t timestamp;
