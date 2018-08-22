@@ -79,7 +79,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::registerAddress(QString address, QString currency, QString type, QString group) {
+void TransactionsJavascript::registerAddress(QString address, QString currency, QString type, QString group, QString name) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
@@ -92,7 +92,8 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->registerAddress(currency, address, type, group, [this, address, currency, makeFunc](const TypedException &exception) {
+        AddressInfo info(currency, address, type, group, name);
+        emit transactionsManager->registerAddresses({info}, [this, address, currency, makeFunc](const TypedException &exception) {
             makeFunc(exception, address, currency);
         });
     });
@@ -108,7 +109,7 @@ BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
     const QString JS_NAME_RESULT = "txsRegisterAddressesJs";
-    std::vector<Transactions::AddressInfo> infos;
+    std::vector<AddressInfo> infos;
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(addressesJson.toUtf8());
     CHECK(jsonResponse.isArray(), "Incorrect json ");
     const QJsonArray &jsonArr = jsonResponse.array();
@@ -116,7 +117,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(jsonVal.isObject(), "Incorrect json");
         const QJsonObject &addressJson = jsonVal.toObject();
 
-        Transactions::AddressInfo addressInfo;
+        AddressInfo addressInfo;
         CHECK(addressJson.contains("address") && addressJson.value("address").isString(), "Incorrect json: address field not found");
         addressInfo.address = addressJson.value("address").toString();
         CHECK(addressJson.contains("currency") && addressJson.value("currency").isString(), "Incorrect json: currency field not found");
@@ -125,6 +126,8 @@ BEGIN_SLOT_WRAPPER
         addressInfo.type = addressJson.value("type").toString();
         CHECK(addressJson.contains("group") && addressJson.value("group").isString(), "Incorrect json: group field not found");
         addressInfo.group = addressJson.value("group").toString();
+        CHECK(addressJson.contains("name") && addressJson.value("name").isString(), "Incorrect json: name field not found");
+        addressInfo.name = addressJson.value("name").toString();
 
         infos.emplace_back(addressInfo);
     }

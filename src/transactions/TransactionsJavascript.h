@@ -49,7 +49,7 @@ private slots:
 
 public slots:
 
-    Q_INVOKABLE void registerAddress(QString address, QString currency, QString type, QString group);
+    Q_INVOKABLE void registerAddress(QString address, QString currency, QString type, QString group, QString name);
 
     Q_INVOKABLE void registerAddresses(QString addressesJson);
 

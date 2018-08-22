@@ -20,6 +20,7 @@ class TransactionsJavascript;
 class TransactionsDBStorage;
 struct BalanceResponse;
 struct Transaction;
+struct AddressInfo;
 
 class Transactions : public TimerClass {
     Q_OBJECT
@@ -37,20 +38,9 @@ public:
 
 public:
 
-    struct AddressInfo {
-        QString currency;
-        QString address;
-        QString type;
-        QString group;
-    };
-
-public:
-
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
 signals:
-
-    void registerAddress(const QString &currency, const QString &address, const QString &type, const QString &group, const RegisterAddressCallback &callback);
 
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
@@ -67,8 +57,6 @@ signals:
     void calcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
 public slots:
-
-    void onRegisterAddress(const QString &currency, const QString &address, const QString &type, const QString &group, const RegisterAddressCallback &callback);
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 

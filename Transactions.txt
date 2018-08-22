@@ -1,6 +1,6 @@
 Transactions регестрируется в javascript по имени transactions 
 
-Q_INVOKABLE void registerAddress(QString address, QString currency, QString type, QString group);
+Q_INVOKABLE void registerAddress(QString address, QString currency, QString type, QString group, QString name);
 Зарегестрировать адрес для отслеживания
 type - для mth валют это "torrent" или "torrent_main"
 Результат вернется в функцию
@@ -8,7 +8,7 @@ txsRegisterAddressJs(address, currency, errorNum, errorMessage)
 
 Q_INVOKABLE void registerAddresses(QString addressesJson);
 Зарегестрировать адреса для отслеживания
-addressesJson - json массив вида [{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\"}]
+addressesJson - json массив вида [{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\"}]
 Результат вернется в функцию
 txsRegisterAddressesJs("Ok", errorNum, errorMessage)
 
