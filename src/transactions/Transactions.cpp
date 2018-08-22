@@ -255,7 +255,6 @@ END_SLOT_WRAPPER
 
 void Transactions::onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    // Запросить из bd
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
         balance.countReceived = db.getPaymentsCountForAddress(address, currency, false);
