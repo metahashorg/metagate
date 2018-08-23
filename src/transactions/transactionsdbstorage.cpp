@@ -8,8 +8,8 @@
 
 namespace transactions {
 
-TransactionsDBStorage::TransactionsDBStorage()
-    : DBStorage(databaseFileName)
+TransactionsDBStorage::TransactionsDBStorage(const QString &path)
+    : DBStorage(path, databaseFileName)
 {
 
 }
@@ -22,6 +22,8 @@ void transactions::TransactionsDBStorage::init()
     createTable(QStringLiteral("payments"), createPaymentsTable);
     createTable(QStringLiteral("tracked"), createTrackedTable);
     createIndex(createPaymentsSortingIndex);
+    createIndex(createPaymentsUniqueIndex);
+    createIndex(createTrackedUniqueIndex);
 }
 
 void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,

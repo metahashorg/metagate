@@ -15,18 +15,18 @@ public:
     using DbId = qint64;
     using IdCounterPair = std::pair<DbId, Message::Counter>;
 
-    explicit DBStorage(const QString &dbname, QObject *parent = nullptr);
+    explicit DBStorage(const QString &path, const QString &dbname, QObject *parent = nullptr);
     //static DBStorage *instance();
 
     virtual void init();
-
-    void setPath(const QString &path);
-    bool openDB();
 
     QString getSettings(const QString &key);
     void setSettings(const QString &key, const QString &value);
 
 protected:
+    void setPath(const QString &path);
+    bool openDB();
+
     bool createTable(const QString &table, const QString &createQuery);
     bool createIndex(const QString &createQuery);
     QSqlDatabase database() const;

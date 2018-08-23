@@ -6,7 +6,7 @@
 class MessengerDBStorage : public DBStorage
 {
 public:
-    MessengerDBStorage();
+    MessengerDBStorage(const QString &path = QString());
 
     virtual void init() override;
 

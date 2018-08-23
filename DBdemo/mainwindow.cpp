@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 BEGIN_SLOT_WRAPPER
     MessengerDBStorage db;
-    db.openDB();
+    //db.openDB();
     db.init();
 
     db.setSettings("key1", "vaaa");

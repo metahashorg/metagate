@@ -11,7 +11,7 @@ namespace transactions {
 class TransactionsDBStorage : public DBStorage
 {
 public:
-    TransactionsDBStorage();
+    TransactionsDBStorage(const QString &path = QString());
 
     virtual void init() override;
 

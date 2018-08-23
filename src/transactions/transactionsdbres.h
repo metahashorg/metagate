@@ -24,6 +24,8 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 ")";
 
 static const QString createPaymentsSortingIndex = "CREATE INDEX paymentsSortingIdx ON payments(ts ASC, txid ASC)";
+static const QString createPaymentsUniqueIndex = "CREATE UNIQUE INDEX paymentsUniqueIdx ON payments ( "
+                                                    "currency, txid, address, isInput ) ";
 
 static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -34,8 +36,10 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "tgroup TEXT "
                                                 ")";
 
+static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
+                                                    "currency, address, name, type, tgroup ) ";
 
-static const QString insertPayment = "INSERT INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce) "
+static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce) "
                                         "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce)";
 
 static const QString selectPaymentsForDest = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
@@ -65,7 +69,7 @@ static const QString selectPaymentsCountForAddress = "SELECT COUNT(*) AS count F
                                                     "WHERE address = :address AND  currency = :currency "
                                                     "AND isInput = :input";
 
-static const QString insertTracked = "INSERT INTO tracked (currency, address, name, type, tgroup) "
+static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, address, name, type, tgroup) "
                                             "VALUES (:currency, :address, :name, :type, :tgroup)";
 
 static const QString  selectTrackedForGroup = "SELECT currency, address, name, type FROM tracked "

@@ -19,29 +19,13 @@ static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (
 
 static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
 
-DBStorage::DBStorage(const QString &dbname, QObject *parent)
+DBStorage::DBStorage(const QString &path, const QString &dbname, QObject *parent)
     : QObject(parent)
     , m_dbExist(false)
+    , m_path(path)
     , m_dbName(dbname)
 {
-}
-
-void DBStorage::setPath(const QString &path)
-{
-    m_path = path;
-}
-
-bool DBStorage::openDB()
-{
-    const QString pathToDB = makePath(m_path, m_dbName);
-
-    m_dbExist = QFile::exists(pathToDB);
-    m_db = QSqlDatabase::addDatabase("QSQLITE");
-    m_db.setDatabaseName(pathToDB);
-    if (!m_db.open()) {
-        return false;
-    }
-    return true;
+    openDB();
 }
 
 void DBStorage::init()
@@ -74,6 +58,24 @@ void DBStorage::setSettings(const QString &key, const QString &value)
     query.bindValue(":key", key);
     query.bindValue(":value", value);
     CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+void DBStorage::setPath(const QString &path)
+{
+    m_path = path;
+}
+
+bool DBStorage::openDB()
+{
+    const QString pathToDB = makePath(m_path, m_dbName);
+
+    m_dbExist = QFile::exists(pathToDB);
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db.setDatabaseName(pathToDB);
+    if (!m_db.open()) {
+        return false;
+    }
+    return true;
 }
 
 bool DBStorage::createTable(const QString &table, const QString &createQuery)

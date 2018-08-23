@@ -8,8 +8,8 @@
 static const QString databaseFileName = "messenger.db";
 static const QString databaseVersion = "1";
 
-MessengerDBStorage::MessengerDBStorage()
-    : DBStorage(databaseFileName)
+MessengerDBStorage::MessengerDBStorage(const QString &path)
+    : DBStorage(path, databaseFileName)
 {
 
 }
