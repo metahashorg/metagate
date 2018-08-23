@@ -107,19 +107,10 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        MessengerDBStorage dbMessenger;
-        dbMessenger.setPath(getDbPath());
-        dbMessenger.openDB();
+        MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();
-        /*auto &inst = *DBStorage::instance();
-        inst.addMessage("1234", "3454", "abcd", 1, 2000, true, true, true, "asdfdf", 1);
-        inst.addMessage("1234", "3454", "abcd", 1, 500, true, true, true, "asdfdf", 1);
-        LOG << "answer " << inst.getMessagesForUserAndDestNum("1234", "3454", 20000, 2).size();
-        return 0;*/
 
-        transactions::TransactionsDBStorage dbTransactions;
-        dbTransactions.setPath(getDbPath());
-        dbTransactions.openDB();
+        transactions::TransactionsDBStorage dbTransactions(getDbPath());
         dbTransactions.init();
         while (true) {
             MessengerJavascript messengerJavascript;
