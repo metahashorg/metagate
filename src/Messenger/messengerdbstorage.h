@@ -8,7 +8,7 @@ class MessengerDBStorage : public DBStorage
 public:
     MessengerDBStorage(const QString &path = QString());
 
-    virtual void init() override;
+    virtual void init(bool force = false) override;
 
     void addMessage(const QString &user, const QString &duser,
                     const QString &text, uint64_t timestamp, Message::Counter counter,

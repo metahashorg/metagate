@@ -14,11 +14,11 @@ TransactionsDBStorage::TransactionsDBStorage(const QString &path)
 
 }
 
-void transactions::TransactionsDBStorage::init()
+void transactions::TransactionsDBStorage::init(bool force)
 {
-    if (dbExist())
+    if (dbExist() && !force)
         return;
-    DBStorage::init();
+    DBStorage::init(force);
     createTable(QStringLiteral("payments"), createPaymentsTable);
     createTable(QStringLiteral("tracked"), createTrackedTable);
     createIndex(createPaymentsSortingIndex);
@@ -195,7 +195,7 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::list<Trans
         trans.fee = query.value("fee").toLongLong();
         trans.nonce = query.value("nonce").toLongLong();
         trans.isInput = query.value("isInput").toBool();
-        payments.push_front(trans);
+        payments.push_back(trans);
     }
 }
 

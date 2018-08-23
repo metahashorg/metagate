@@ -28,9 +28,9 @@ DBStorage::DBStorage(const QString &path, const QString &dbname, QObject *parent
     openDB();
 }
 
-void DBStorage::init()
+void DBStorage::init(bool force)
 {
-    if (dbExist())
+    if (dbExist() && !force)
         return;
     QSqlQuery query(sqliteSettings, m_db);
     query.exec();

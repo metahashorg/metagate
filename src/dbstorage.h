@@ -18,7 +18,7 @@ public:
     explicit DBStorage(const QString &path, const QString &dbname, QObject *parent = nullptr);
     //static DBStorage *instance();
 
-    virtual void init();
+    virtual void init(bool force);
 
     QString getSettings(const QString &key);
     void setSettings(const QString &key, const QString &value);

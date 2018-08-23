@@ -8,81 +8,68 @@ tst_TransactionsDBStorage::tst_TransactionsDBStorage(QObject *parent)
 
 void tst_TransactionsDBStorage::testDB1()
 {
-/*    MessengerDBStorage db;
-    db.openDB();
     db.init();
-    DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
-    DBStorage::DbId id2 = db.getUserId("ddfjgjgj");
-    QCOMPARE(id1, id2);*/
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", true, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", true, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklklruuiuiduidgjkg", "address100", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", 100, 8896865);
+
+//    DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
+//    DBStorage::DbId id2 = db.getUserId("ddfjgjgj");
+//    QCOMPARE(id1, id2);
 }
 
-void tst_TransactionsDBStorage::testQRCoderEncodeDecode_data()
+void tst_TransactionsDBStorage::testBigNumSum()
 {
-    /*QTest::addColumn<QByteArray>("data");
+    db.init(true);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", 100, 8896865);
+    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", 100, 8896865);
+    BigNumber ires = db.calcInValueForAddress("address100", "mh");
+    BigNumber ores = db.calcOutValueForAddress("address100", "mh");
+    QCOMPARE(ires.getDecimal(), QByteArray("36000000000000000400"));
+    QCOMPARE(ores.getDecimal(), QByteArray("36000000000000000000"));
 
-    QTest::newRow("QRCoderEncodeDecode 1")
-        << QByteArray::fromStdString(std::string("0009806da73b1589f38630649bdee48467946d118059efd6aab"));
-
-    QTest::newRow("QRCoderEncodeDecode 2")
-        << QByteArray(300, '\0');
-
-    QTest::newRow("QRCoderEncodeDecode 3")
-        <<  QByteArray(500, 'A');
-
-    QTest::newRow("QRCoderEncodeDecode 4")
-        << QByteArray();
-
-    QTest::newRow("QRCoderEncodeDecode 5")
-        << QByteArray("q");
-
-    QTest::newRow("QRCoderEncodeDecode 6")
-        << QByteArray::fromStdString(std::string("0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "\x00\x01\n\r"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"
-                                                 "0009806da73b1589f38630649bdee48467946d118059efd6aab"));
-
-    QTest::newRow("QRCoderEncodeDecode 7")
-        << QByteArray::fromStdString(std::string("12787328744987349849839843893434894894398"
-                                                 "12787328744987349849839843893434894894398"
-                                                 "12787328744987349849839843893434894894398"
-                                                 "12787328744987349849839843893434894894398"
-                                                 "12787328744987349849839843893434894894398"
-                                                 "12787328744987349849839843893434894894398"));
-    QTest::newRow("QRCoderEncodeDecode 8")
-        << QByteArray("0000\n\n\n\nn\nn");
-
-    QTest::newRow("QRCoderEncodeDecode 9")
-        << QByteArray("btc:L36xyLTQA4bEcFgF8aGvAcfoMBexMC3hAb25HmTBTnn8GahFVGQU 16RYK17Mwi27amr4nCR94uqWphLqm38FRY");
-
-    QTest::newRow("QRCoderEncodeDecode 10")
-        << QByteArray("tmh:f:1\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,801b027ebf9b898380af57ed33594fe5\n\nFl8DM5t75F7Bucnf4b4jkf5H1zvXX1iPsxX2kp1kVRaMj7KGi//cau1oI5L9hrxT\n7yfJFMgIqTbwIi62czoMCJGBo4fh8FTK6XjRtOzPYx3dXkpaw7bIaJBP6PjXkM4D\nBIDfDdFYbuWn+WvZ//0eb2++SxKxmfDyOrW9AvJnuMs=");
-
-    QTest::newRow("QRCoderEncodeDecode 11")
-        << QByteArray("tmh:-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,801b027ebf9b898380af57ed33594fe5\n\nFl8DM5t75F7Bucnf4b4jkf5H1zvXX1iPsxX2kp1kVRaMj7KGi//cau1oI5L9hrxT\n7yfJFMgIqTbwIi62czoMCJGBo4fh8FTK6XjRtOzPYx3dXkpaw7bIaJBP6PjXkM4D\nBIDfDdFYbuWn+WvZ//0eb2++SxKxmfDyOrW9AvJnuMs=\n-----END EC PRIVATE KEY-----\n\n");
-
-    QTest::newRow("QRCoderEncodeDecode 12")
-        << QByteArray("eth:{\"address\": \"c951ce32add35cc55b0ca1527e96a0fe36d6c2e9\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"4c4e86aad46b6499ef76ebe05c1f40bed39290ddfa52be52eaab61fabbb3c89e\",\"cipherparams\": {\"iv\": \"41b7cc057e6384cc10915d2b14273971\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"aae8b7784e281077fac0f54b7bd661ab2205ae17ba55c5ce8e26475fc9615f78\"},\"mac\": \"c83846fc0962ad85169e778bfb6283b7d0cfd0632ed9b813b0f32aaa37990eea\"},\"id\": \"6fcda701-217b-4b0d-b1dd-14ea14542763\",\"version\": 3}");
-        */
 }
 
-void tst_TransactionsDBStorage::testQRCoderEncodeDecode()
+void tst_TransactionsDBStorage::testGetPayments()
 {
-    /*
-    QFETCH(QByteArray, data);
+    db.init(true);
+    for (int n = 0; n < 100; n++) {
+        db.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", true, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", 100, 8896865);
+        db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address20", true, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", 100, 8896865);
+    }
+    qint64 count = db.getPaymentsCountForAddress("address100", "mh", true);
+    QCOMPARE(count, 100);
+    std::list<transactions::Transaction> res = db.getPaymentsForAddress("address100", "mh", 55, 10, true);
 
-    QByteArray bin = QRCoder::encode(data);
-    QByteArray res = QRCoder::decode(bin);
-    QCOMPARE(data, res);
-    */
+    int r = 0;
+    for (auto it = res.begin(); it != res.end (); ++it) {
+        QCOMPARE(it->timestamp, 1110 + 2 * r);
+        QCOMPARE(it->currency, QStringLiteral("mh"));
+        QCOMPARE(it->address, QStringLiteral("address100"));
+        r++;
+    }
+
+
+    res = db.getPaymentsForCurrency("mh", 55, 10, false);
+
+    r = 0;
+    for (auto it = res.begin(); it != res.end (); ++it) {
+        QCOMPARE(it->timestamp, 1144 - r);
+        QCOMPARE(it->currency, QStringLiteral("mh"));
+        if (r % 2)
+            QCOMPARE(it->address, QStringLiteral("address20"));
+        else
+            QCOMPARE(it->address, QStringLiteral("address100"));
+        r++;
+    }
 }
+
 
 QTEST_MAIN(tst_TransactionsDBStorage)
