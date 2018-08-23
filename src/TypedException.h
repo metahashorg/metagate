@@ -2,6 +2,7 @@
 #define TYPEDEXCEPTION_H
 
 #include <functional>
+#include <string>
 
 enum TypeErrors {
     NOT_ERROR = 0,
