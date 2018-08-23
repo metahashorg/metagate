@@ -31,27 +31,39 @@ void tst_Wallet::testCreateBinMthTransaction_data() {
     QTest::addColumn<unsigned long long>("amount");
     QTest::addColumn<unsigned long long>("fee");
     QTest::addColumn<unsigned long long>("nonce");
+    QTest::addColumn<std::string>("data");
     QTest::addColumn<std::string>("answer");
 
     QTest::newRow("CreateBinTransaction 1")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
         << 126894ULL << 55647ULL << 255ULL
+        << std::string()
         << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
 
     QTest::newRow("CreateBinTransaction 2")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
         << 0ULL << 0ULL << 0ULL
+        << std::string()
         << std::string("009806da73b1589f38630649bdee48467946d118059efd6aab00000000");
 
     QTest::newRow("CreateBinTransaction 3")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
         << 4294967295ULL << 65535ULL << 249ULL
+        << std::string()
         << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbfffffffffafffff900");
 
     QTest::newRow("CreateBinTransaction 4")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
         << 4294967296ULL << 65536ULL << 250ULL
+        << std::string()
         << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfc0000000001000000fb00000100fafa0000");
+
+    QTest::newRow("CreateBinTransaction 5")
+        << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aab")
+        << 126894ULL << 55647ULL << 255ULL
+        << std::string("4d79207465787420225c2027")
+        << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff000c4d79207465787420225c2027");
+
 }
 
 void tst_Wallet::testCreateBinMthTransaction() {
@@ -59,9 +71,10 @@ void tst_Wallet::testCreateBinMthTransaction() {
     QFETCH(unsigned long long, amount);
     QFETCH(unsigned long long, fee);
     QFETCH(unsigned long long, nonce);
+    QFETCH(std::string, data);
     QFETCH(std::string, answer);
 
-    QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, "")), answer);
+    QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, data)), answer);
 }
 
 void tst_Wallet::testNotCreateBinMthTransaction_data() {

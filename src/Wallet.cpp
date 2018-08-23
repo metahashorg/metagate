@@ -289,15 +289,16 @@ bool Wallet::verify(const std::string &message, const std::string &signature, co
     }
 }
 
-std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data) {
+std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &dataHex) {
     checkAddress(toAddress);
     std::string result;
     result += fromHex(toAddress.substr(2));
     result += packInteger(value);
     result += packInteger(fee);
     result += packInteger(nonce);
-    CHECK_TYPED(data.empty(), TypeErrors::INCORRECT_USER_DATA, "Data not empty");
+    const std::string data = fromHex(dataHex);
     result += packInteger(data.size());
+    result += data;
 
     return result;
 }

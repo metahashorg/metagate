@@ -42,7 +42,7 @@ Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, Q
 # javascript is called after completion of this function 
 signMessageResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
-Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex);
 # signs the transaction in a new binary format
 # value, fee, nonce - a string with decimal number
 # Result returns to 
@@ -98,7 +98,7 @@ Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text
 # javascript is called after completion of this function 
 signMessageMHCResultJs(requestId, signature, publicKey, errorNum, errorMessage)
 
-Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex);
 # signs the transaction in a new binary format
 # value, fee, nonce - a string with decimal number
 # Result returns to 

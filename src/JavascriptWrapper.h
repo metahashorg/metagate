@@ -50,7 +50,7 @@ public slots:
 
     Q_INVOKABLE void signMessage(QString requestId, QString keyName, QString text, QString password);
 
-    Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+    Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex);
 
     Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
 
@@ -66,7 +66,7 @@ public slots:
 
     Q_INVOKABLE void signMessageMHC(QString requestId, QString keyName, QString text, QString password);
 
-    Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data);
+    Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex);
 
     Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
 
@@ -200,7 +200,7 @@ private:
 
     void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
 
-    void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult);
+    void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult);
 
     template<class Function>
     TypedException apiVrapper2(const Function &func);

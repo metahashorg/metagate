@@ -174,9 +174,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data) {
+void JavascriptWrapper::signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, data, walletPathTmh, "signMessageV2ResultJs");
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathTmh, "signMessageV2ResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -186,9 +186,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data) {
+void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, data, walletPathMth, "signMessageMHCV2ResultJs");
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathMth, "signMessageMHCV2ResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -284,8 +284,8 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature, publicKey);
 }
 
-void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
+void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
@@ -297,7 +297,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), data.toStdString(), tx, signature, publicKey);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
         publicKey2 = publicKey;
         tx2 = tx;
         signature2 = signature;
