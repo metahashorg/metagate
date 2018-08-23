@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTest>
 
+#include "transactionsdbstorage.h"
 
 class tst_TransactionsDBStorage : public QObject
 {
@@ -14,9 +15,11 @@ public:
 private slots:
 
     void testDB1();
-    void testQRCoderEncodeDecode_data();
-    void testQRCoderEncodeDecode();
+    void testBigNumSum();
+    void testGetPayments();
 
+private:
+    transactions::TransactionsDBStorage db;
 };
 
 #endif // TST_MESSENGERDBSTORAGE_H

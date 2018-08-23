@@ -14,11 +14,11 @@ MessengerDBStorage::MessengerDBStorage(const QString &path)
 
 }
 
-void MessengerDBStorage::init()
+void MessengerDBStorage::init(bool force)
 {
-    if (dbExist())
+    if (dbExist() && !force)
         return;
-    DBStorage::init();
+    DBStorage::init(force);
     createTable(QStringLiteral("msg_users"), createMsgUsersTable);
     createTable(QStringLiteral("msg_contacts"), createMsgContactsTable);
     createTable(QStringLiteral("msg_channels"), createMsgChannelsTable);

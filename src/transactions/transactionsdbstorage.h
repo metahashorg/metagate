@@ -13,7 +13,7 @@ class TransactionsDBStorage : public DBStorage
 public:
     TransactionsDBStorage(const QString &path = QString());
 
-    virtual void init() override;
+    virtual void init(bool force = false) override;
 
 
     void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
