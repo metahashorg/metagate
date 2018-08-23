@@ -202,6 +202,8 @@ private:
 
     void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult);
 
+    void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult);
+
     template<class Function>
     TypedException apiVrapper2(const Function &func);
 

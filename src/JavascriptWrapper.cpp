@@ -306,6 +306,28 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
 }
 
+void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+
+    Opt<std::string> publicKey2;
+    Opt<std::string> tx2;
+    Opt<std::string> signature2;
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        std::string publicKey;
+        std::string tx;
+        std::string signature;
+        bool tmp;
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
+        publicKey2 = publicKey;
+        tx2 = tx;
+        signature2 = signature;
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
+}
+
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh) {
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
