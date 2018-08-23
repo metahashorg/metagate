@@ -95,4 +95,30 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
     return result;
 }
 
+QString makeSendTransactionRequest(QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign) {
+    QJsonObject request;
+    request.insert("jsonrpc", "2.0");
+    request.insert("method", "mhc_send");
+    QJsonObject params;
+    params.insert("to", to);
+    params.insert("value", value);
+    params.insert("nonce", nonce);
+    params.insert("data", data);
+    params.insert("fee", fee);
+    params.insert("pubkey", pubkey);
+    params.insert("sign", sign);
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
+QString parseSendTransactionResponse(const QString &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK_TYPED(!json1.contains("error") || !json1.value("error").isString(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, json1.value("error").toString().toStdString());
+
+    CHECK(json1.contains("params") && json1.value("params").isString(), "Incorrect json: params field not found");
+    return json1.value("params").toString();
+}
+
 }

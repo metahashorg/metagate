@@ -39,6 +39,8 @@ signals:
 
     void newBalanceSig(const QString &address, const QString &currency, const BalanceInfo &balance);
 
+    void sendedTransactionsResponseSig(QString requestId, QString server, QString response, TypedException error);
+
 public slots:
 
     void onCallbackCall(const Callback &callback);
@@ -46,6 +48,8 @@ public slots:
 private slots:
 
     void onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance);
+
+    void onSendedTransactionsResponse(QString requestId, QString server, QString response, TypedException error);
 
 public slots:
 

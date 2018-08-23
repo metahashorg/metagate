@@ -66,3 +66,6 @@ txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу
 balanceJson вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"currBlock\":\"1234567\"}
+
+txsSendedTxJs(requestId, server, result, errorNum, errorMessage)
+Возвращается при ответе сервера на запрос отправки транзакции

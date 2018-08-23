@@ -60,6 +60,8 @@ signals:
 
     void calcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
+    void sendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -77,6 +79,8 @@ public slots:
     void onGetTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
+
+    void onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type);
 
 private slots:
 

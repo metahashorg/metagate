@@ -17,6 +17,7 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
 {
     CHECK(connect(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance), "not connect onNewBalance");
+    CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
 
     qRegisterMetaType<Callback>("Callback");
 
@@ -340,6 +341,13 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         makeFunc(exception, address, currency, QJsonDocument());
     }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::onSendedTransactionsResponse(QString requestId, QString server, QString response, TypedException error) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "txsSendedTxJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, requestId, server, response);
 END_SLOT_WRAPPER
 }
 

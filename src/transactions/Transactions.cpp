@@ -32,6 +32,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
     CHECK(connect(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2), "not connect onGetTxsAll2");
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
+    CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
@@ -263,6 +264,38 @@ BEGIN_SLOT_WRAPPER
         balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
     });
     runCallback(std::bind(callback, balance, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
+        const std::vector<QString> servers = nsLookup.getRandom(type, countServers, countServers);
+
+        struct ServerResponse {
+            int countServers;
+
+            ServerResponse(int countServers)
+                : countServers(countServers)
+            {}
+        };
+
+        std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>(servers.size());
+        for (QString server: servers) {
+            server = "http://" + server;
+            client.sendMessagePost(server, request, [this, servResp, server, requestId](const std::string &response) {
+                servResp->countServers--;
+                QString result;
+                const TypedException exception = apiVrapper2([&] {
+                    CHECK_TYPED(response != SimpleClient::ERROR_BAD_REQUEST, TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, "Error");
+                    result = parseSendTransactionResponse(QString::fromStdString(response));
+                });
+
+                emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
+            });
+        }
+    });
 END_SLOT_WRAPPER
 }
 
