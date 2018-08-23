@@ -10,7 +10,6 @@ tst_MessengerDBStorage::tst_MessengerDBStorage(QObject *parent)
 void tst_MessengerDBStorage::testDB()
 {
     MessengerDBStorage db;
-    //db.openDB();
     db.init();
     DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
     DBStorage::DbId id2 = db.getUserId("ddfjgjgj");

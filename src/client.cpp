@@ -128,7 +128,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     }
     QNetworkReply* reply = manager->post(request, message.toUtf8());
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
-    LOG << "post message sended";
+    //LOG << "post message sended";
 }
 
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
