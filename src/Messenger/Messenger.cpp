@@ -109,6 +109,23 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
 
+    qRegisterMetaType<GetMessagesCallback>("GetMessagesCallback");
+    qRegisterMetaType<SavePosCallback>("SavePosCallback");
+    qRegisterMetaType<GetSavedPosCallback>("GetSavedPosCallback");
+    qRegisterMetaType<GetSavedsPosCallback>("GetSavedsPosCallback");
+    qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
+    qRegisterMetaType<SignedStringsCallback>("SignedStringsCallback");
+    qRegisterMetaType<SavePubkeyCallback>("SavePubkeyCallback");
+    qRegisterMetaType<GetPubkeyAddressCallback>("GetPubkeyAddressCallback");
+    qRegisterMetaType<SendMessageCallback>("SendMessageCallback");
+    qRegisterMetaType<GetCountMessagesCallback>("GetCountMessagesCallback");
+    qRegisterMetaType<CreateChannelCallback>("CreateChannelCallback");
+    qRegisterMetaType<AddWriterToChannelCallback>("AddWriterToChannelCallback");
+    qRegisterMetaType<DelWriterToChannelCallback>("DelWriterToChannelCallback");
+    qRegisterMetaType<GetChannelListCallback>("GetChannelListCallback");
+
+    qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
+
     moveToThread(&thread1);
 
     wssClient.start();
@@ -490,7 +507,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback) {
+void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     QString pubkey = "";
     const TypedException exception = apiVrapper2([&, this] {

@@ -72,7 +72,7 @@ public:
 
     using SavePubkeyCallback = std::function<void(bool isNew, const TypedException &exception)>;
 
-    using GetPubkeyAddress = std::function<void(const QString &pubkey, const TypedException &exception)>;
+    using GetPubkeyAddressCallback = std::function<void(const QString &pubkey, const TypedException &exception)>;
 
     using SendMessageCallback = std::function<void(const TypedException &exception)>;
 
@@ -119,7 +119,7 @@ signals:
 
     void savePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
-    void getPubkeyAddress(const QString &address, const GetPubkeyAddress &callback);
+    void getPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback);
 
     void sendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
@@ -156,7 +156,7 @@ private slots:
 
     void onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
-    void onGetPubkeyAddress(const QString &address, const GetPubkeyAddress &callback);
+    void onGetPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback);
 
     void onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
