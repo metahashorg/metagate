@@ -22,6 +22,7 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     qRegisterMetaType<Callback>("Callback");
 
     qRegisterMetaType<BalanceInfo>("BalanceInfo");
+    qRegisterMetaType<TypedException>("TypedException");
 }
 
 void TransactionsJavascript::onCallbackCall(const std::function<void()> &callback) {
