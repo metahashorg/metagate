@@ -72,7 +72,16 @@ QString getPagesPath() {
     std::lock_guard<std::mutex> lock(mut);
     if (!isExistFolder(newPagesPath)) {
         LOG << "Create pages folder: " << newPagesPath << " " << oldPagesPath;
-        CHECK(copyRecursively(oldPagesPath, newPagesPath), "not copy pages");
+        CHECK(copyRecursively(oldPagesPath, newPagesPath, true, false), "not copy pages");
+    }
+
+    const static QString VERSION_SETTINGS_FILE = "version.txt";
+
+    const std::string currVersion = readFile(makePath(oldPagesPath, VERSION_SETTINGS_FILE));
+    const QString newPathVersion = makePath(newPagesPath, VERSION_SETTINGS_FILE);
+    if (!isExistFile(newPathVersion) || readFile(newPathVersion) != currVersion) {
+        LOG << "Replase pages folder: " << newPagesPath << " " << oldPagesPath;
+        CHECK(copyRecursively(oldPagesPath, newPagesPath, true, true), "not copy pages");
     }
 
     return newPagesPath;

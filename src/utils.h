@@ -32,9 +32,11 @@ std::string readFile(const QString &pathToFile);
 
 std::string readFileBinary(const QString &pathToFile);
 
-bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs = true);
+bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs = true, bool isReplace = false);
 
 void createFolder(const QString &folder);
+
+bool isExistFile(const QString &file);
 
 bool isExistFolder(const QString &folder);
 
