@@ -180,6 +180,18 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate) {
+BEGIN_SLOT_WRAPPER
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, walletPathTmh, "signMessageDelegateResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate) {
+BEGIN_SLOT_WRAPPER
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, walletPathMth, "signMessageDelegateResultJs");
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::signMessageMHC(QString requestId, QString keyName, QString text, QString password) {
 BEGIN_SLOT_WRAPPER
     signMessageMTHS(requestId, keyName, text, password, walletPathMth, "signMessageMHCResultJs");
@@ -306,8 +318,8 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
 }
 
-void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
@@ -315,11 +327,15 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+
+        const uint64_t delegValue = std::stoull(valueDelegate.toStdString());
+        const std::string dataHex = Wallet::genDataDelegateHex(isDelegate, delegValue);
+
         std::string publicKey;
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey);
         publicKey2 = publicKey;
         tx2 = tx;
         signature2 = signature;

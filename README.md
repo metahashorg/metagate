@@ -48,6 +48,9 @@ Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString passw
 # Result returns to 
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
+Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate);
+# signs the transaction in a new binary format with delegate data
+
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 # To check the address for correctness. The result will return to the function:
 checkAddressResultJs(requestId, "ok"/"not valid", errorNum, errorMessage)
@@ -103,6 +106,9 @@ Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString pa
 # value, fee, nonce - a string with decimal number
 # Result returns to 
 signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate);
+# signs the transaction in a new binary format with delegate data
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 # To check the address for correctness. The result will return to the function:
