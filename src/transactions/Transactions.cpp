@@ -48,6 +48,12 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
     client.moveToThread(&thread1);
 
+    timerSendTx.moveToThread(&thread1);
+    timerSendTx.setInterval(milliseconds(100).count()); // TODO сделать так, чтобы таймер запускался только когда нужно, а не постоянно чекал событие
+    CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
+    CHECK(timerSendTx.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
+    CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
+
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
@@ -267,7 +273,65 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type) {
+void Transactions::onSendTxEvent() {
+BEGIN_SLOT_WRAPPER
+    const time_point now = ::now();
+
+    for (auto iter = sendTxWathcers.begin(); iter != sendTxWathcers.end();) {
+        const TransactionHash &hash = iter->first;
+        SendedTransactionWatcher &watcher = iter->second;
+
+        const QString message = makeGetTxRequest(QString::fromStdString(hash));
+        const auto serversCopy = watcher.servers;
+        for (const QString &serv: serversCopy) {
+            // Удаляем, чтобы не заддосить сервер на следующей итерации
+            watcher.servers.erase(serv);
+
+            const QString server = "http://" + serv;
+            client.sendMessagePost(server, message, [this, serv, hash](const std::string &response) {
+                if (response != SimpleClient::ERROR_BAD_REQUEST) {
+                    try {
+                        const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
+                        emit javascriptWrapper.transactionInTorrentSig(serv, QString::fromStdString(hash), tx);
+                        auto found = sendTxWathcers.find(hash);
+                        if (found != sendTxWathcers.end()) {
+                            found->second.successy++;
+                        }
+                        return;
+                    } catch (const Exception &e) {
+                        LOG << "Get tx not parse " << serv << " " << hash << " " << e;
+                    } catch (...) {
+                        // empty;
+                    }
+                }
+                auto found = sendTxWathcers.find(hash);
+                if (found != sendTxWathcers.end()) {
+                    found->second.servers.insert(serv);
+                }
+            });
+        }
+
+        if (now - watcher.startTime >= seconds(5)) {
+            iter = sendTxWathcers.erase(iter);
+        } else if (watcher.successy == watcher.count) {
+            iter = sendTxWathcers.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+END_SLOT_WRAPPER
+}
+
+void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group) {
+    if (sendTxWathcers.find(hash) != sendTxWathcers.end()) {
+        return;
+    }
+
+    const time_point now = ::now();
+    sendTxWathcers[hash] = SendedTransactionWatcher(now, nsLookup.getRandom(group, countServers, countServers));
+}
+
+void Transactions::onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type, QString type2) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
@@ -284,7 +348,7 @@ BEGIN_SLOT_WRAPPER
         std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>(servers.size());
         for (QString server: servers) {
             server = "http://" + server;
-            client.sendMessagePost(server, request, [this, servResp, server, requestId](const std::string &response) {
+            client.sendMessagePost(server, request, [this, servResp, server, requestId, countServers, type2](const std::string &response) {
                 servResp->countServers--;
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
@@ -292,6 +356,7 @@ BEGIN_SLOT_WRAPPER
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                 });
 
+                addToSendTxWatcher(result.toStdString(), countServers, type2);
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             });
         }

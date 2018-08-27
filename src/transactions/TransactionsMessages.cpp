@@ -47,6 +47,36 @@ QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t cnt) 
     }
 }
 
+QString makeGetTxRequest(const QString &hash) {
+    return "{\"id\":1,\"params\":{\"hash\": \"" + hash + "\"},\"method\":\"get-tx\", \"pretty\": false}";
+}
+
+static Transaction parseTransaction(const QJsonObject &txJson) {
+    Transaction res;
+
+    CHECK(txJson.contains("from") && txJson.value("from").isString(), "Incorrect json: from field not found");
+    res.from = txJson.value("from").toString();
+    CHECK(txJson.contains("to") && txJson.value("to").isString(), "Incorrect json: to field not found");
+    res.to = txJson.value("to").toString();
+    CHECK(txJson.contains("value") && txJson.value("value").isDouble(), "Incorrect json: value field not found");
+    res.value = QString::fromStdString(std::to_string(uint64_t(txJson.value("value").toDouble())));
+    CHECK(txJson.contains("transaction") && txJson.value("transaction").isString(), "Incorrect json: transaction field not found");
+    res.tx = txJson.value("transaction").toString();
+    if (txJson.contains("data") && txJson.value("data").isString()) {
+        res.data = txJson.value("data").toString();
+    }
+    CHECK(txJson.contains("timestamp") && txJson.value("timestamp").isDouble(), "Incorrect json: timestamp field not found");
+    res.timestamp = txJson.value("timestamp").toDouble();
+    if (txJson.contains("fee") && txJson.value("fee").isDouble()) {
+        res.fee = txJson.value("fee").toDouble();
+    }
+    if (txJson.contains("nonce") && txJson.value("nonce").isDouble()) {
+        res.nonce = txJson.value("nonce").toInt();
+    }
+
+    return res;
+}
+
 std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &response) {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
@@ -60,27 +90,7 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
         CHECK(elementJson.isObject(), "Incorrect json");
         const QJsonObject txJson = elementJson.toObject();
 
-        Transaction res;
-
-        CHECK(txJson.contains("from") && txJson.value("from").isString(), "Incorrect json: from field not found");
-        res.from = txJson.value("from").toString();
-        CHECK(txJson.contains("to") && txJson.value("to").isString(), "Incorrect json: to field not found");
-        res.to = txJson.value("to").toString();
-        CHECK(txJson.contains("value") && txJson.value("value").isDouble(), "Incorrect json: value field not found");
-        res.value = QString::fromStdString(std::to_string(uint64_t(txJson.value("value").toDouble())));
-        CHECK(txJson.contains("transaction") && txJson.value("transaction").isString(), "Incorrect json: transaction field not found");
-        res.tx = txJson.value("transaction").toString();
-        if (txJson.contains("data") && txJson.value("data").isString()) {
-            res.data = txJson.value("data").toString();
-        }
-        CHECK(txJson.contains("timestamp") && txJson.value("timestamp").isDouble(), "Incorrect json: timestamp field not found");
-        res.timestamp = txJson.value("timestamp").toDouble();
-        if (txJson.contains("fee") && txJson.value("fee").isDouble()) {
-            res.fee = txJson.value("fee").toDouble();
-        }
-        if (txJson.contains("nonce") && txJson.value("nonce").isDouble()) {
-            res.nonce = txJson.value("nonce").toInt();
-        }
+        Transaction res = parseTransaction(txJson);
 
         res.isInput = res.from == address;
 
@@ -119,6 +129,17 @@ QString parseSendTransactionResponse(const QString &response) {
 
     CHECK(json1.contains("params") && json1.value("params").isString(), "Incorrect json: params field not found");
     return json1.value("params").toString();
+}
+
+Transaction parseGetTxResponse(const QString &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(!json1.contains("error") || !json1.value("error").isString(), json1.value("error").toString().toStdString());
+
+    CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
+    const QJsonObject &obj = json1.value("result").toObject();
+    return parseTransaction(obj);
 }
 
 }

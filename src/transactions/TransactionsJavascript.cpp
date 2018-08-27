@@ -18,11 +18,13 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     CHECK(connect(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance), "not connect onNewBalance");
     CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
+    CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
 
     qRegisterMetaType<Callback>("Callback");
 
     qRegisterMetaType<BalanceInfo>("BalanceInfo");
-    qRegisterMetaType<TypedException>("TypedException");
+    qRegisterMetaType<BalanceInfo>("BalanceInfo");
+    qRegisterMetaType<Transaction>("Transaction");
 }
 
 void TransactionsJavascript::onCallbackCall(const std::function<void()> &callback) {
@@ -53,21 +55,24 @@ static QJsonDocument balanceToJson(const BalanceInfo &balance) {
     return QJsonDocument(messagesBalanceJson);
 }
 
+static QJsonObject txToJson(const Transaction &tx) {
+    QJsonObject txJson;
+    txJson.insert("id", tx.tx);
+    txJson.insert("from", tx.from);
+    txJson.insert("to", tx.to);
+    txJson.insert("value", tx.value);
+    txJson.insert("data", tx.data);
+    txJson.insert("timestamp", QString::fromStdString(std::to_string(tx.timestamp)));
+    txJson.insert("fee", QString::fromStdString(std::to_string(tx.fee)));
+    txJson.insert("nonce", QString::fromStdString(std::to_string(tx.nonce)));
+    txJson.insert("isInput", tx.isInput);
+    return txJson;
+}
+
 static QJsonDocument txsToJson(const std::vector<Transaction> &txs) {
     QJsonArray messagesTxsJson;
     for (const Transaction &tx: txs) {
-        QJsonObject txJson;
-        txJson.insert("id", tx.tx);
-        txJson.insert("from", tx.from);
-        txJson.insert("to", tx.to);
-        txJson.insert("value", tx.value);
-        txJson.insert("data", tx.data);
-        txJson.insert("timestamp", QString::fromStdString(std::to_string(tx.timestamp)));
-        txJson.insert("fee", QString::fromStdString(std::to_string(tx.fee)));
-        txJson.insert("nonce", QString::fromStdString(std::to_string(tx.nonce)));
-        txJson.insert("isInput", tx.isInput);
-
-        messagesTxsJson.push_back(txJson);
+        messagesTxsJson.push_back(txToJson(tx));
     }
 
     return QJsonDocument(messagesTxsJson);
@@ -87,6 +92,10 @@ static QJsonDocument addressInfoToJson(const std::vector<AddressInfo> &infos) {
     }
 
     return QJsonDocument(messagesInfosJson);
+}
+
+static QJsonDocument txInfoToJson(const Transaction &tx) {
+    return QJsonDocument(txToJson(tx));
 }
 
 void TransactionsJavascript::onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance) {
@@ -350,6 +359,11 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, requestId, server, response);
 END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx) {
+    const QString JS_NAME_RESULT = "txOnTorrentJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), server, txHash, txInfoToJson(tx));
 }
 
 }

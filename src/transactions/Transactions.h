@@ -7,6 +7,7 @@
 #include <functional>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "client.h"
 #include "TimerClass.h"
@@ -24,6 +25,25 @@ struct AddressInfo;
 
 class Transactions : public TimerClass {
     Q_OBJECT
+private:
+
+    struct SendedTransactionWatcher {
+        time_point startTime;
+        std::set<QString> servers;
+        size_t count;
+        size_t successy = 0;
+
+        SendedTransactionWatcher() = default;
+
+        SendedTransactionWatcher(const time_point &startTime, const std::vector<QString> &servers)
+            : startTime(startTime)
+            , servers(servers.begin(), servers.end())
+            , count(servers.size())
+        {}
+    };
+
+    using TransactionHash = std::string;
+
 public:
 
     using RegisterAddressCallback = std::function<void(const TypedException &exception)>;
@@ -60,7 +80,7 @@ signals:
 
     void calcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
-    void sendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type);
+    void sendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type, QString type2);
 
 public slots:
 
@@ -80,7 +100,7 @@ public slots:
 
     void onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
-    void onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type);
+    void onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type, QString type2);
 
 private slots:
 
@@ -89,6 +109,8 @@ private slots:
     void onRun();
 
     void onTimerEvent();
+
+    void onSendTxEvent();
 
 private:
 
@@ -100,6 +122,8 @@ private:
     void runCallback(const Func &callback);
 
     std::vector<AddressInfo> getAddressesInfos(const QString &group);
+
+    void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group);
 
 private:
 
@@ -114,6 +138,10 @@ private:
     std::map<std::pair<QString, QString>, bool> getFullTxs;
 
     QString currentGroup;
+
+    QTimer timerSendTx;
+
+    std::map<TransactionHash, SendedTransactionWatcher> sendTxWathcers;
 };
 
 }

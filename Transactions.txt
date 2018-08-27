@@ -69,3 +69,8 @@ balanceJson вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\
 
 txsSendedTxJs(requestId, server, result, errorNum, errorMessage)
 Возвращается при ответе сервера на запрос отправки транзакции
+
+txOnTorrentJs(requestId, server, hash, result, errorNum, errorMessage)
+Возвращается при появлении на сервере торрента отправленной транзакции
+result - json с транзакцией (см выше)
+errorNum всегда 0 (нет ошибок)

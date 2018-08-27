@@ -41,6 +41,8 @@ signals:
 
     void sendedTransactionsResponseSig(QString requestId, QString server, QString response, TypedException error);
 
+    void transactionInTorrentSig(const QString &server, const QString &txHash, const Transaction &tx);
+
 public slots:
 
     void onCallbackCall(const Callback &callback);
@@ -50,6 +52,8 @@ private slots:
     void onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance);
 
     void onSendedTransactionsResponse(QString requestId, QString server, QString response, TypedException error);
+
+    void onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx);
 
 public slots:
 
