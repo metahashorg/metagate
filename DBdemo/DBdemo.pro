@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets
+QT       += core gui widgets network
 QT       += sql
 CONFIG += console
 
@@ -31,6 +31,7 @@ LIBS += -L$$PWD/openssl_linux/lib -lssl -lcrypto
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
+        ../src/httpclient.cpp \
         ../src/Log.cpp \
         ../src/Paths.cpp \
         ../src/utils.cpp \
@@ -41,9 +42,9 @@ SOURCES += \
         ../src/transactions/transactionsdbstorage.cpp
 
 
-
 HEADERS += \
         mainwindow.h \
+        ../src/httpclient.h \
         ../src/Log.h \
         ../src/Paths.h \
         ../src/utils.h \

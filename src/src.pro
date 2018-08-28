@@ -59,7 +59,8 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/Transactions.cpp \
     transactions/TransactionsMessages.cpp \
     transactions/transactionsdbstorage.cpp \
-    transactions/TransactionsJavascript.cpp
+    transactions/TransactionsJavascript.cpp \
+    httpclient.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -126,7 +127,8 @@ HEADERS += mainwindow.h \
     transactions/TransactionsMessages.h \
     transactions/Transaction.h \
     transactions/transactionsdbstorage.h \
-    transactions/TransactionsJavascript.h
+    transactions/TransactionsJavascript.h \
+    httpclient.h
 
 FORMS += mainwindow.ui
 
