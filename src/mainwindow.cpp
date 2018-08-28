@@ -51,42 +51,10 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
-    QJsonObject allJson;
-    allJson.insert("app", "MetaSearch");
-    QJsonObject data;
-    data.insert("machine_uid", hardwareId);
-    data.insert("user_id", userId);
-    data.insert("focus_release_count", (int)focusCount);
-    data.insert("text", QString(line.toUtf8().toHex()));
-    data.insert("is_enter_pressed", isEnter);
-    data.insert("is_user_text", isUserText);
-    allJson.insert("data", data);
-    QJsonDocument json(allJson);
-
-    return json.toJson(QJsonDocument::Compact);
-}
-
-static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion) {
-    QJsonObject allJson;
-    allJson.insert("app", "MetaGate");
-    QJsonObject data;
-    data.insert("machine_uid", hardwareId);
-    data.insert("user_id", userId);
-    data.insert("application_ver", applicationVersion);
-    data.insert("interface_ver", interfaceVersion);
-    allJson.insert("data", data);
-    QJsonDocument json(allJson);
-
-    return json.toJson(QJsonDocument::Compact);
-}
-
-MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent)
+MainWindow::MainWindow(JavascriptWrapper &jsWrapper, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , webSocketClient(webSocketClient)
     , jsWrapper(jsWrapper)
-    , applicationVersion(applicationVersion)
 {
     ui->setupUi(this);
 
@@ -131,18 +99,6 @@ MainWindow::MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWr
     qtimer.start();
 
     emit onUpdateMhsReferences();
-
-    sendAppInfoToWss(true);
-}
-
-void MainWindow::sendAppInfoToWss(bool force) {
-    const QString newUserName = ui->userButton->text();
-    if (force || newUserName != sendedUserName) {
-        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion);
-        emit webSocketClient.sendMessage(message);
-        emit webSocketClient.setHelloString(message);
-        sendedUserName = newUserName;
-    }
 }
 
 void MainWindow::onUpdateMhsReferences() {
@@ -255,15 +211,15 @@ void MainWindow::configureMenu() {
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
         lineEditUserChanged = true;
-        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true));
+        emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
         if (!lineEditUserChanged) {
-            emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false));
+            emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
         }
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
-        emit webSocketClient.sendMessage(makeCommandLineMessageForWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true));
+        emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     }), "Not connect returnPressed");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
@@ -519,8 +475,6 @@ BEGIN_SLOT_WRAPPER
     const int estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
     button->setMaximumWidth(estimatedWidth);
     button->setMinimumWidth(estimatedWidth);
-
-    sendAppInfoToWss(false);
 END_SLOT_WRAPPER
 }
 
@@ -541,8 +495,7 @@ void MainWindow::showExpanded() {
     show();
 }
 
-QString MainWindow::getServerIp(const QString &text) const
-{
+QString MainWindow::getServerIp(const QString &text) const {
     QString ip = pagesMappings.getIp(text);
     QUrl url(ip);
     return url.host();

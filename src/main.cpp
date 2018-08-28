@@ -97,9 +97,9 @@ int main(int argc, char *argv[]) {
             WebSocketClient webSocketClient;
             webSocketClient.start();
 
-            JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
+            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, QString::fromStdString(versionString));
 
-            MainWindow mainWindow(webSocketClient, jsWrapper, QString::fromStdString(versionString));
+            MainWindow mainWindow(jsWrapper);
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

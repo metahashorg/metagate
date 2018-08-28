@@ -44,11 +44,44 @@ const static QString WALLET_PATH_MTH = "mhc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, QObject */*parent*/)
+static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
+    QJsonObject allJson;
+    allJson.insert("app", "MetaSearch");
+    QJsonObject data;
+    data.insert("machine_uid", hardwareId);
+    data.insert("user_id", userId);
+    data.insert("focus_release_count", (int)focusCount);
+    data.insert("text", QString(line.toUtf8().toHex()));
+    data.insert("is_enter_pressed", isEnter);
+    data.insert("is_user_text", isUserText);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+}
+
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion) {
+    QJsonObject allJson;
+    allJson.insert("app", "MetaGate");
+    QJsonObject data;
+    data.insert("machine_uid", hardwareId);
+    data.insert("user_id", userId);
+    data.insert("application_ver", applicationVersion);
+    data.insert("interface_ver", interfaceVersion);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+}
+
+JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, const QString &applicationVersion, QObject */*parent*/)
     : wssClient(wssClient)
     , nsLookup(nsLookup)
+    , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
+
+    lastHtmls = Uploader::getLastHtmlVersion();
 
     walletDefaultPath = getWalletPath();
     LOG << "Wallets default path " << walletDefaultPath;
@@ -60,6 +93,10 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
 
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect wssClient");
+
+    CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
+
+    sendAppInfoToWss("", true);
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
@@ -74,7 +111,6 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
 
 template<class Function>
 TypedException JavascriptWrapper::apiVrapper2(const Function &func) {
-    // TODO когда будет if constexpr, объединить обе функции в одну
     try {
         func();
         return TypedException();
@@ -103,6 +139,22 @@ template<typename... Args>
 void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
     const QString res = makeJsFunc2<false>(function, "", exception, std::forward<Args>(args)...);
     runJs(res);
+}
+
+void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
+    const QString newUserName = userName;
+    if (force || newUserName != sendedUserName) {
+        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion);
+        emit wssClient.sendMessage(message);
+        emit wssClient.setHelloString(message);
+        sendedUserName = newUserName;
+    }
+}
+
+void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
+BEGIN_SLOT_WRAPPER
+    emit wssClient.sendMessage(makeCommandLineMessageForWss(hardwareId, userId, focusCount, line, isEnter, isUserText));
+END_SLOT_WRAPPER
 }
 
 ////////////////
@@ -1122,6 +1174,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::setUserName(const QString &userName) {
 BEGIN_SLOT_WRAPPER
     emit setUserNameSig(userName);
+    sendAppInfoToWss(userName, false);
 END_SLOT_WRAPPER
 }
 

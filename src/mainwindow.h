@@ -46,7 +46,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(WebSocketClient &webSocketClient, JavascriptWrapper &jsWrapper, const QString &applicationVersion, QWidget *parent = 0);
+    explicit MainWindow(JavascriptWrapper &jsWrapper, QWidget *parent = 0);
 
     void showExpanded();
 
@@ -67,8 +67,6 @@ private:
     void registerCommandLine();
 
     void unregisterCommandLine();
-
-    void sendAppInfoToWss(bool force);
 
     void enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate);
 
@@ -114,13 +112,7 @@ private:
 
     std::unique_ptr<QWebChannel> channel;
 
-    WebSocketClient &webSocketClient;
-
     JavascriptWrapper &jsWrapper;
-
-    QString sendedUserName;
-
-    const QString applicationVersion;
 
     LastHtmlVersion lastHtmls;
 

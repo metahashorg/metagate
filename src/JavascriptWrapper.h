@@ -6,6 +6,8 @@
 #include <QFileSystemWatcher>
 #include <QDir>
 
+#include "uploader.h"
+
 #include "TypedException.h"
 
 #include "client.h"
@@ -20,7 +22,7 @@ class JavascriptWrapper : public QObject
 {
     Q_OBJECT
 public:
-    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, QObject *parent = nullptr);
+    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -37,6 +39,8 @@ signals:
     void setMappingsSig(QString name);
 
     void lineEditReturnPressedSig(QString text);
+
+    void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 public slots:
 
@@ -190,6 +194,8 @@ private slots:
 
     void onWssMessageReceived(QString message);
 
+    void onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
+
 private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
@@ -221,11 +227,19 @@ private:
 
     void openFolderInStandartExplored(const QString &folder);
 
+    void sendAppInfoToWss(QString userName, bool force);
+
 private:
 
     WebSocketClient &wssClient;
 
     NsLookup &nsLookup;
+
+    const QString applicationVersion;
+
+    QString sendedUserName;
+
+    LastHtmlVersion lastHtmls;
 
     QString hardwareId;
 
