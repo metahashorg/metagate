@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
             WebSocketClient webSocketClient(getUrlToWss());
             webSocketClient.start();
 
-            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, QString::fromStdString(versionString));
+            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, QString::fromStdString(versionString));
 
             MainWindow mainWindow(jsWrapper, messengerJavascript, transactionsJavascript);
             mainWindow.showExpanded();

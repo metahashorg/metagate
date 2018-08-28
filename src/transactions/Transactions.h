@@ -81,7 +81,7 @@ signals:
 
     void calcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
-    void sendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type, QString type2);
+    void sendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet);
 
 public slots:
 
@@ -101,7 +101,7 @@ public slots:
 
     void onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
-    void onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type, QString type2);
+    void onSendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet);
 
 private slots:
 

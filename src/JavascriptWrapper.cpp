@@ -38,6 +38,8 @@
 
 #include "machine_uid.h"
 
+#include "transactions/Transactions.h"
+
 const static QString WALLET_PREV_PATH = ".metahash_wallets/";
 const static QString WALLET_PATH_ETH = "eth/";
 const static QString WALLET_PATH_BTC = "btc/";
@@ -87,9 +89,10 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, const QString &applicationVersion, QObject */*parent*/)
+JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const QString &applicationVersion, QObject */*parent*/)
     : wssClient(wssClient)
     , nsLookup(nsLookup)
+    , transactionsManager(transactionsManager)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -232,15 +235,15 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate) {
+void JavascriptWrapper::signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet) {
 BEGIN_SLOT_WRAPPER
-    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, walletPathTmh, "signMessageDelegateResultJs");
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, countServersSend, countServersGet, typeSend, typeGet, walletPathTmh, "signMessageDelegateResultJs");
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate) {
+void JavascriptWrapper::signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet) {
 BEGIN_SLOT_WRAPPER
-    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, walletPathMth, "signMessageDelegateResultJs");
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, countServersSend, countServersGet, typeSend, typeGet, walletPathMth, "signMessageDelegateMhcResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -370,12 +373,10 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
 }
 
-void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
+void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
-    Opt<std::string> publicKey2;
-    Opt<std::string> tx2;
-    Opt<std::string> signature2;
+    Opt<QString> result(QString("Not ok"));
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
@@ -388,12 +389,12 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         std::string signature;
         bool tmp;
         wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey);
-        publicKey2 = publicKey;
-        tx2 = tx;
-        signature2 = signature;
+
+        emit transactionsManager.sendTransaction(requestId, countServersSend, countServersGet, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), typeSend, typeGet);
+        result = "Ok";
     });
 
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
 }
 
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh) {

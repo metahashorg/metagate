@@ -335,11 +335,11 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
     sendTxWathcers[hash] = SendedTransactionWatcher(now, nsLookup.getRandom(group, countServers, countServers));
 }
 
-void Transactions::onSendTransaction(QString requestId, int countServers, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString type, QString type2) {
+void Transactions::onSendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const std::vector<QString> servers = nsLookup.getRandom(type, countServers, countServers);
+        const std::vector<QString> servers = nsLookup.getRandom(typeSend, countServersSend, countServersSend);
 
         struct ServerResponse {
             int countServers;
@@ -352,7 +352,7 @@ BEGIN_SLOT_WRAPPER
         std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>(servers.size());
         for (QString server: servers) {
             server = "http://" + server;
-            client.sendMessagePost(server, request, [this, servResp, server, requestId, countServers, type2](const std::string &response) {
+            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet](const std::string &response) {
                 servResp->countServers--;
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
@@ -360,7 +360,7 @@ BEGIN_SLOT_WRAPPER
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                 });
 
-                addToSendTxWatcher(result.toStdString(), countServers, type2);
+                addToSendTxWatcher(result.toStdString(), countServersGet, typeGet);
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             });
         }

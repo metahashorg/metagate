@@ -15,6 +15,10 @@
 class NsLookup;
 class WebSocketClient;
 
+namespace transactions {
+class Transactions;
+}
+
 template<bool isLastArg, typename... Args>
 struct JsFunc;
 
@@ -22,7 +26,7 @@ class JavascriptWrapper : public QObject
 {
     Q_OBJECT
 public:
-    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -56,7 +60,7 @@ public slots:
 
     Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex);
 
-    Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate);
+    Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet);
 
     Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
 
@@ -74,7 +78,7 @@ public slots:
 
     Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex);
 
-    Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate);
+    Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet);
 
     Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
 
@@ -212,7 +216,7 @@ private:
 
     void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult);
 
-    void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString walletPath, QString jsNameResult);
+    void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet, QString walletPath, QString jsNameResult);
 
     template<typename... Args>
     void makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);
@@ -231,6 +235,8 @@ private:
     WebSocketClient &wssClient;
 
     NsLookup &nsLookup;
+
+    transactions::Transactions &transactionsManager;
 
     const QString applicationVersion;
 

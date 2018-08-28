@@ -48,8 +48,10 @@ Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString passw
 # Result returns to 
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
-Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate);
+Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet);
 # signs the transaction in a new binary format with delegate data
+# Result returns to 
+signMessageDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 # To check the address for correctness. The result will return to the function:
@@ -107,8 +109,10 @@ Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString pa
 # Result returns to 
 signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
-Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate);
+Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, int countServersSend, int countServersGet, QString typeSend, QString typeGet);
 # signs the transaction in a new binary format with delegate data
+# Result returns to 
+signMessageDelegateMhcResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 # To check the address for correctness. The result will return to the function:
