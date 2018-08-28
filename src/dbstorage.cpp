@@ -70,7 +70,7 @@ bool DBStorage::openDB()
     const QString pathToDB = makePath(m_path, m_dbName);
 
     m_dbExist = QFile::exists(pathToDB);
-    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db = QSqlDatabase::addDatabase("QSQLITE", m_dbName);
     m_db.setDatabaseName(pathToDB);
     if (!m_db.open()) {
         return false;
