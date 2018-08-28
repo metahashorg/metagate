@@ -60,7 +60,7 @@ static QString makeCommandLineMessageForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion) {
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
     QJsonObject allJson;
     allJson.insert("app", "MetaGate");
     QJsonObject data;
@@ -68,6 +68,19 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     data.insert("user_id", userId);
     data.insert("application_ver", applicationVersion);
     data.insert("interface_ver", interfaceVersion);
+
+    QJsonArray keysTmhJson;
+    for (const QString &key: keysTmh) {
+        keysTmhJson.push_back(key);
+    }
+    data.insert("keys_tmh", keysTmhJson);
+
+    QJsonArray keysMthJson;
+    for (const QString &key: keysMth) {
+        keysMthJson.push_back(key);
+    }
+    data.insert("keys_mth", keysMthJson);
+
     allJson.insert("data", data);
     QJsonDocument json(allJson);
 
@@ -144,7 +157,14 @@ void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const Ty
 void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
     const QString newUserName = userName;
     if (force || newUserName != sendedUserName) {
-        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion);
+        std::vector<QString> keysTmh;
+        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh);
+        std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
+        std::vector<QString> keysMth;
+        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
+        std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
+
+        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message);
         sendedUserName = newUserName;
@@ -996,6 +1016,15 @@ BEGIN_SLOT_WRAPPER
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
         userName = newUserName;
+
+        emit setUserNameSig(newUserName);
+        sendAppInfoToWss(newUserName, false);
+
+        if (walletPath == newPatch) {
+            result = "Ok";
+            return;
+        }
+
         walletPath = newPatch;
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         createFolder(walletPath);
@@ -1032,6 +1061,7 @@ BEGIN_SLOT_WRAPPER
     if (exception.numError != TypeErrors::NOT_ERROR) {
         result = "Not ok";
     }
+
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
 END_SLOT_WRAPPER
 }
@@ -1173,8 +1203,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::setUserName(const QString &userName) {
 BEGIN_SLOT_WRAPPER
-    emit setUserNameSig(userName);
-    sendAppInfoToWss(userName, false);
+    // ignore
 END_SLOT_WRAPPER
 }
 
