@@ -14,9 +14,6 @@
 #include "duration.h"
 
 using ClientCallback = std::function<void(const std::string &response)>;
-
-//using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
-
 using ReturnCallback = std::function<void()>;
 
 class HttpSocket : public QTcpSocket
@@ -24,7 +21,6 @@ class HttpSocket : public QTcpSocket
     Q_OBJECT
 public:
     explicit HttpSocket(const QUrl &url, const QString &message, QObject *parent = nullptr);
-    virtual ~HttpSocket();
 
     void start();
 
@@ -32,6 +28,7 @@ public:
     void setRequestId(const std::string &s);
 
     bool hasTimeOut() const;
+    bool hasError() const;
 
     time_point timePoint() const;
     void setTimePoint(time_point s);
@@ -46,7 +43,9 @@ signals:
 
 private slots:
     void onConnected();
+    void onError(QAbstractSocket::SocketError socketError);
     void onReadyRead();
+
 private:
     QByteArray getHttpPostHeader() const;
     void parseResponseHeader();
@@ -62,6 +61,8 @@ private:
     bool m_headerParsed = false;
     int m_contentLength = -1;
     QByteArray m_reply;
+    bool m_error = false;
+    bool m_firstHeaderStringParsed = false;
 };
 
 /*
@@ -70,10 +71,6 @@ private:
 class HttpSimpleClient : public QObject
 {
     Q_OBJECT
-
-//private:
-
-    //using PingCallbackInternal = std::function<void(const milliseconds &time, const std::string &response)>;
 
 public:
 
@@ -84,10 +81,6 @@ public:
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
-    //void sendMessageGet(const QUrl &url, const ClientCallback &callback);
-
-    // ping хорошо работает только с максимум одним одновременным запросом
-    //void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
 
     void setParent(QObject *obj);
 
@@ -102,13 +95,9 @@ Q_SIGNALS:
 
 private slots:
     void onSocketFinished();
-
-    //void onPingReceived();
-
     void onTimerEvent();
 
 private:
-
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
     template<class Callbacks, typename... Message>
@@ -117,10 +106,7 @@ private:
     void startTimer();
 
 private:
-    //std::unique_ptr<QNetworkAccessManager> manager;
     std::unordered_map<std::string, ClientCallback> callbacks_;
-    //std::unordered_map<std::string, PingCallbackInternal> pingCallbacks_;
-    //std::unordered_map<std::string, QNetworkReply*> requests;
     std::unordered_map<std::string, HttpSocket *> sockets;
 
     QTimer* timer = nullptr;
