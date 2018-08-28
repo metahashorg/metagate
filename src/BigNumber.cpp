@@ -58,7 +58,7 @@ BigNumber &BigNumber::operator-=(const BigNumber &rhs)
 const BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs)
 {
     BigNumber res;
-    int r = BN_add(res.ptr.get(), lhs.ptr.get(), rhs.ptr.get());
+    CHECK(BN_add(res.ptr.get(), lhs.ptr.get(), rhs.ptr.get()), "BN error");
     return res;
 }
 
