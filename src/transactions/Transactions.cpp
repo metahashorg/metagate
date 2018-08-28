@@ -280,6 +280,10 @@ END_SLOT_WRAPPER
 Transactions::SendedTransactionWatcher::~SendedTransactionWatcher() {
     for (const QString &server: allServers) {
         txManager.sendErrorGetTx(hash, server);
+        const auto found = errors.find(server);
+        if (found != errors.end()) {
+            LOG << "Get tx not parse " << server << " " << hash << " " << found->second;
+        }
     }
 }
 
@@ -303,25 +307,23 @@ BEGIN_SLOT_WRAPPER
 
             const QString server = "http://" + serv;
             client.sendMessagePost(server, message, [this, serv, hash](const std::string &response) {
+                auto found = sendTxWathcers.find(hash);
+                if (found == sendTxWathcers.end()) {
+                    return;
+                }
                 if (response != SimpleClient::ERROR_BAD_REQUEST) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
                         emit javascriptWrapper.transactionInTorrentSig(serv, QString::fromStdString(hash), tx, TypedException());
-                        auto found = sendTxWathcers.find(hash);
-                        if (found != sendTxWathcers.end()) {
-                            found->second.okServer(serv);
-                        }
+                        found->second.okServer(serv);
                         return;
                     } catch (const Exception &e) {
-                        LOG << "Get tx not parse " << serv << " " << hash << " " << e;
+                        found->second.setError(serv, QString::fromStdString(e));
                     } catch (...) {
                         // empty;
                     }
                 }
-                auto found = sendTxWathcers.find(hash);
-                if (found != sendTxWathcers.end()) {
-                    found->second.returnServer(serv);
-                }
+                found->second.returnServer(serv);
             });
         }
 

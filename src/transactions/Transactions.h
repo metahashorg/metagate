@@ -75,6 +75,10 @@ private:
             }
         }
 
+        void setError(const QString &server, const QString &error) {
+            errors[server] = error;
+        }
+
     private:
         Transactions &txManager;
 
@@ -82,6 +86,7 @@ private:
 
         std::set<QString> servers;
         std::set<QString> allServers;
+        std::map<QString, QString> errors;
     };
 
 public:
