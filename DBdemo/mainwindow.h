@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "testconnection.h"
 #include "httpclient.h"
 namespace Ui {
 class MainWindow;
