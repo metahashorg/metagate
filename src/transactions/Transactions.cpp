@@ -277,6 +277,16 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+Transactions::SendedTransactionWatcher::~SendedTransactionWatcher() {
+    for (const QString &server: allServers) {
+        txManager.sendErrorGetTx(hash, server);
+    }
+}
+
+void Transactions::sendErrorGetTx(const TransactionHash &hash, const QString &server) {
+    emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SENDED_NOT_FOUND, "Transaction not found"));
+}
+
 void Transactions::onSendTxEvent() {
 BEGIN_SLOT_WRAPPER
     const time_point now = ::now();
@@ -286,20 +296,20 @@ BEGIN_SLOT_WRAPPER
         SendedTransactionWatcher &watcher = iter->second;
 
         const QString message = makeGetTxRequest(QString::fromStdString(hash));
-        const auto serversCopy = watcher.servers;
+        const auto serversCopy = watcher.getServersCopy();
         for (const QString &serv: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
-            watcher.servers.erase(serv);
+            watcher.removeServer(serv);
 
             const QString server = "http://" + serv;
             client.sendMessagePost(server, message, [this, serv, hash](const std::string &response) {
                 if (response != SimpleClient::ERROR_BAD_REQUEST) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
-                        emit javascriptWrapper.transactionInTorrentSig(serv, QString::fromStdString(hash), tx);
+                        emit javascriptWrapper.transactionInTorrentSig(serv, QString::fromStdString(hash), tx, TypedException());
                         auto found = sendTxWathcers.find(hash);
                         if (found != sendTxWathcers.end()) {
-                            found->second.successy++;
+                            found->second.okServer(serv);
                         }
                         return;
                     } catch (const Exception &e) {
@@ -310,14 +320,14 @@ BEGIN_SLOT_WRAPPER
                 }
                 auto found = sendTxWathcers.find(hash);
                 if (found != sendTxWathcers.end()) {
-                    found->second.servers.insert(serv);
+                    found->second.returnServer(serv);
                 }
             });
         }
 
         if (now - watcher.startTime >= seconds(5)) {
             iter = sendTxWathcers.erase(iter);
-        } else if (watcher.successy == watcher.count) {
+        } else if (watcher.isEmpty()) {
             iter = sendTxWathcers.erase(iter);
         } else {
             iter++;
@@ -332,7 +342,7 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
     }
 
     const time_point now = ::now();
-    sendTxWathcers[hash] = SendedTransactionWatcher(now, nsLookup.getRandom(group, countServers, countServers));
+    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers)));
 }
 
 void Transactions::onSendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet) {

@@ -41,7 +41,7 @@ signals:
 
     void sendedTransactionsResponseSig(QString requestId, QString server, QString response, TypedException error);
 
-    void transactionInTorrentSig(const QString &server, const QString &txHash, const Transaction &tx);
+    void transactionInTorrentSig(const QString &server, const QString &txHash, const Transaction &tx, TypedException error);
 
 public slots:
 
@@ -53,7 +53,7 @@ private slots:
 
     void onSendedTransactionsResponse(QString requestId, QString server, QString response, TypedException error);
 
-    void onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx);
+    void onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, TypedException error);
 
 public slots:
 

@@ -28,22 +28,61 @@ class Transactions : public TimerClass {
     Q_OBJECT
 private:
 
-    struct SendedTransactionWatcher {
-        time_point startTime;
-        std::set<QString> servers;
-        size_t count;
-        size_t successy = 0;
-
-        SendedTransactionWatcher() = default;
-
-        SendedTransactionWatcher(const time_point &startTime, const std::vector<QString> &servers)
-            : startTime(startTime)
-            , servers(servers.begin(), servers.end())
-            , count(servers.size())
-        {}
-    };
-
     using TransactionHash = std::string;
+
+    class SendedTransactionWatcher {
+    public:
+
+        const time_point startTime;
+
+        SendedTransactionWatcher(const SendedTransactionWatcher &) = delete;
+        SendedTransactionWatcher(SendedTransactionWatcher &&) = delete;
+        SendedTransactionWatcher& operator=(const SendedTransactionWatcher &) = delete;
+        SendedTransactionWatcher& operator=(SendedTransactionWatcher &&) = delete;
+
+        SendedTransactionWatcher(Transactions &txManager, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers)
+            : startTime(startTime)
+            , txManager(txManager)
+            , hash(hash)
+            , servers(servers.begin(), servers.end())
+            , allServers(servers.begin(), servers.end())
+        {}
+
+        ~SendedTransactionWatcher();
+
+        std::set<QString> getServersCopy() const {
+            return servers;
+        }
+
+        bool isEmpty() const {
+            return allServers.empty();
+        }
+
+        void removeServer(const QString &server) {
+            servers.erase(server);
+        }
+
+        void returnServer(const QString &server) {
+            if (allServers.find(server) != allServers.end()) {
+                servers.insert(server);
+            }
+        }
+
+        void okServer(const QString &server) {
+            if (allServers.find(server) != allServers.end()) {
+                servers.erase(server);
+                allServers.erase(server);
+            }
+        }
+
+    private:
+        Transactions &txManager;
+
+        TransactionHash hash;
+
+        std::set<QString> servers;
+        std::set<QString> allServers;
+    };
 
 public:
 
@@ -125,6 +164,8 @@ private:
     std::vector<AddressInfo> getAddressesInfos(const QString &group);
 
     void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group);
+
+    void sendErrorGetTx(const TransactionHash &hash, const QString &server);
 
 private:
 

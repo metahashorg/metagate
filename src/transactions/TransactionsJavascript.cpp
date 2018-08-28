@@ -361,9 +361,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx) {
+void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, TypedException error) {
     const QString JS_NAME_RESULT = "txOnTorrentJs";
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), server, txHash, txInfoToJson(tx));
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, server, txHash, txInfoToJson(tx));
 }
 
 }
