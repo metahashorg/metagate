@@ -10,6 +10,7 @@
 #include <set>
 
 #include "client.h"
+#include "httpclient.h"
 #include "TimerClass.h"
 
 class NsLookup;
@@ -134,6 +135,8 @@ private:
     TransactionsDBStorage &db;
 
     SimpleClient client;
+
+    HttpSimpleClient tcpClient;
 
     std::map<std::pair<QString, QString>, bool> getFullTxs;
 

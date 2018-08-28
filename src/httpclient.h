@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef HTTP_CLIENT_H
+#define HTTP_CLIENT_H
 
 #include <QObject>
 #include <QNetworkAccessManager>
@@ -130,4 +130,4 @@ private:
     int id = 0;
 };
 
-#endif // CLIENT_H
+#endif // HTTP_CLIENT_H

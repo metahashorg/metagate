@@ -48,6 +48,10 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
     client.moveToThread(&thread1);
 
+    tcpClient.setParent(this);
+    CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
+    tcpClient.moveToThread(&thread1);
+
     timerSendTx.moveToThread(&thread1);
     timerSendTx.setInterval(milliseconds(100).count()); // TODO сделать так, чтобы таймер запускался только когда нужно, а не постоянно чекал событие
     CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
