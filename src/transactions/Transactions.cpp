@@ -370,7 +370,9 @@ BEGIN_SLOT_WRAPPER
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                 });
 
-                addToSendTxWatcher(result.toStdString(), countServersGet, typeGet);
+                if (!exception.isSet()) {
+                    addToSendTxWatcher(result.toStdString(), countServersGet, typeGet);
+                }
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             });
         }

@@ -112,6 +112,8 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
 
     CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
 
+    qRegisterMetaType<TypedException>("TypedException");
+
     sendAppInfoToWss("", true);
 }
 

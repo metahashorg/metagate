@@ -133,6 +133,8 @@ int main(int argc, char *argv[]) {
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, QString::fromStdString(versionString));
 
+            //jsWrapper.signMessageDelegate("1", "0x0034d209107371745c6f5634d6ed87199bac872c310091ca56", "123", "0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff", "1", "0", "6", "1", true, 3, 3, "proxy", "torrent");
+
             MainWindow mainWindow(jsWrapper, messengerJavascript, transactionsJavascript);
             mainWindow.showExpanded();
 

@@ -214,7 +214,7 @@ BEGIN_SLOT_WRAPPER
         runCallback(callbacks_, requestId, std::string(content.data(), content.size()));
     } else {
         const std::string errorStr = reply->errorString().toStdString();
-        LOG << errorStr;
+        LOG << errorStr << ". " << QString(reply->readAll());
 
         runCallback(callbacks_, requestId, ERROR_BAD_REQUEST);
     }

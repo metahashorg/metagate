@@ -135,11 +135,13 @@ Transaction parseGetTxResponse(const QString &response) {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
-    CHECK(!json1.contains("error") || !json1.value("error").isString(), json1.value("error").toString().toStdString());
+    CHECK(!json1.contains("error") || !json1.value("error").isObject(), json1.value("error").toObject().value("message").toString().toStdString());
 
     CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
     const QJsonObject &obj = json1.value("result").toObject();
-    return parseTransaction(obj);
+    CHECK(obj.contains("transaction") && obj.value("transaction").isObject(), "Incorrect json: transaction field not found");
+    const QJsonObject &transaction = obj.value("transaction").toObject();
+    return parseTransaction(transaction);
 }
 
 }
