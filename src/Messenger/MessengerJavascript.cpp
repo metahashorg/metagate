@@ -221,7 +221,7 @@ BEGIN_SLOT_WRAPPER
         const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
         std::string pubkey;
         const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pubkey);
-        emit messenger->registerAddress(isForcibly, address, pubkeyRsa, QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, address, isForcibly, makeFunc](bool isNew, const TypedException &exception) {
+        emit messenger->registerAddress(isForcibly, address, pubkeyRsa, QString::fromStdString(pubkey), QString::fromStdString(sign), fee, [this, address, isForcibly, makeFunc](bool isNew, const TypedException &exception) mutable {
             const TypedException exception2 = apiVrapper2([&, this](){
                 if (exception.isSet() && !isForcibly) {
                     throw exception;
@@ -297,7 +297,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         const uint64_t fee = std::stoull(feeStr.toStdString());
         const uint64_t timestamp = std::stoull(timestampStr.toStdString());
-        emit messenger->getPubkeyAddress(collocutor, [this, makeFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey, const TypedException &exception) {
+        emit messenger->getPubkeyAddress(collocutor, [this, makeFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey, const TypedException &exception) mutable {
             const TypedException exception2 = apiVrapper2([&, this](){
                 if (exception.isSet()) {
                     throw exception;
