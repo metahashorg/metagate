@@ -44,11 +44,57 @@ const static QString WALLET_PATH_BTC = "btc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, QObject */*parent*/)
+static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
+    QJsonObject allJson;
+    allJson.insert("app", "MetaSearch");
+    QJsonObject data;
+    data.insert("machine_uid", hardwareId);
+    data.insert("user_id", userId);
+    data.insert("focus_release_count", (int)focusCount);
+    data.insert("text", QString(line.toUtf8().toHex()));
+    data.insert("is_enter_pressed", isEnter);
+    data.insert("is_user_text", isUserText);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+}
+
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
+    QJsonObject allJson;
+    allJson.insert("app", "MetaGate");
+    QJsonObject data;
+    data.insert("machine_uid", hardwareId);
+    data.insert("user_id", userId);
+    data.insert("application_ver", applicationVersion);
+    data.insert("interface_ver", interfaceVersion);
+
+    QJsonArray keysTmhJson;
+    for (const QString &key: keysTmh) {
+        keysTmhJson.push_back(key);
+    }
+    data.insert("keys_tmh", keysTmhJson);
+
+    QJsonArray keysMthJson;
+    for (const QString &key: keysMth) {
+        keysMthJson.push_back(key);
+    }
+    data.insert("keys_mth", keysMthJson);
+
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+}
+
+JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, const QString &applicationVersion, QObject */*parent*/)
     : wssClient(wssClient)
     , nsLookup(nsLookup)
+    , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
+
+    lastHtmls = Uploader::getLastHtmlVersion();
 
     walletDefaultPath = getWalletPath();
     LOG << "Wallets default path " << walletDefaultPath;
@@ -60,6 +106,10 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
 
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect wssClient");
+
+    CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
+
+    sendAppInfoToWss("", true);
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
@@ -82,6 +132,29 @@ template<typename... Args>
 void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
     const QString res = makeJsFunc2<false>(function, "", exception, std::forward<Args>(args)...);
     runJs(res);
+}
+
+void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
+    const QString newUserName = userName;
+    if (force || newUserName != sendedUserName) {
+        std::vector<QString> keysTmh;
+        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh);
+        std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
+        std::vector<QString> keysMth;
+        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
+        std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
+
+        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion, keysTmh, keysMth);
+        emit wssClient.sendMessage(message);
+        emit wssClient.setHelloString(message);
+        sendedUserName = newUserName;
+    }
+}
+
+void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
+BEGIN_SLOT_WRAPPER
+    emit wssClient.sendMessage(makeCommandLineMessageForWss(hardwareId, userId, focusCount, line, isEnter, isUserText));
+END_SLOT_WRAPPER
 }
 
 ////////////////
@@ -153,9 +226,21 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data) {
+void JavascriptWrapper::signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, data, walletPathTmh, "signMessageV2ResultJs");
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathTmh, "signMessageV2ResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate) {
+BEGIN_SLOT_WRAPPER
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, walletPathTmh, "signMessageDelegateResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate) {
+BEGIN_SLOT_WRAPPER
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, isDelegate, walletPathMth, "signMessageDelegateResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -165,9 +250,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data) {
+void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, data, walletPathMth, "signMessageMHCV2ResultJs");
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathMth, "signMessageMHCV2ResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -263,8 +348,8 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature, publicKey);
 }
 
-void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString data, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << data;
+void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
@@ -276,7 +361,33 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), data.toStdString(), tx, signature, publicKey);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
+        publicKey2 = publicKey;
+        tx2 = tx;
+        signature2 = signature;
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
+}
+
+void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString walletPath, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
+
+    Opt<std::string> publicKey2;
+    Opt<std::string> tx2;
+    Opt<std::string> signature2;
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+
+        const uint64_t delegValue = std::stoull(valueDelegate.toStdString());
+        const std::string dataHex = Wallet::genDataDelegateHex(isDelegate, delegValue);
+
+        std::string publicKey;
+        std::string tx;
+        std::string signature;
+        bool tmp;
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey);
         publicKey2 = publicKey;
         tx2 = tx;
         signature2 = signature;
@@ -890,6 +1001,15 @@ BEGIN_SLOT_WRAPPER
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
         userName = newUserName;
+
+        emit setUserNameSig(newUserName);
+        sendAppInfoToWss(newUserName, false);
+
+        if (walletPath == newPatch) {
+            result = "Ok";
+            return;
+        }
+
         walletPath = newPatch;
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         createFolder(walletPath);
@@ -926,6 +1046,7 @@ BEGIN_SLOT_WRAPPER
     if (exception.numError != TypeErrors::NOT_ERROR) {
         result = "Not ok";
     }
+
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
 END_SLOT_WRAPPER
 }
@@ -1067,7 +1188,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::setUserName(const QString &userName) {
 BEGIN_SLOT_WRAPPER
-    emit setUserNameSig(userName);
+    // ignore
 END_SLOT_WRAPPER
 }
 

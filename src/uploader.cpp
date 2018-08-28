@@ -227,7 +227,7 @@ BEGIN_SLOT_WRAPPER
             const QString hashStr(hashAlg.result().toHex());
             CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
 
-            clearFolderHtmls(makePath(currentBeginPath, folderServer), version);
+            clearFolderHtmls(makePath(currentBeginPath, folderServer), lastVersion);
 
             const QString archiveFilePath = makePath(currentBeginPath, version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);

@@ -118,7 +118,9 @@ std::string readFileBinary(const QString &pathToFile) {
     return file.readAll().toStdString();
 }
 
-bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs) {
+#include <iostream>
+
+bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs, bool isReplace) {
     QFileInfo srcFileInfo(srcFilePath);
     if (srcFileInfo.isDir()) {
         QDir targetDir(tgtFilePath);
@@ -135,12 +137,17 @@ bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, boo
                     = QDir(srcFilePath).filePath(fileName);
             const QString newTgtFilePath
                     = QDir(tgtFilePath).filePath(fileName);
-            if (!copyRecursively(newSrcFilePath, newTgtFilePath))
+            if (!copyRecursively(newSrcFilePath, newTgtFilePath, isDirs, isReplace)) {
                 return false;
+            }
         }
     } else {
-        if (!QFile::copy(srcFilePath, tgtFilePath))
+        if (isReplace) {
+            QFile::remove(tgtFilePath);
+        }
+        if (!QFile::copy(srcFilePath, tgtFilePath)) {
             return false;
+        }
     }
     return true;
 }
@@ -149,6 +156,10 @@ void createFolder(const QString &folder) {
     QDir dir(folder);
     const bool resultCreate = dir.mkpath(folder);
     CHECK(resultCreate, "dont create folder " + folder.toStdString());
+}
+
+bool isExistFile(const QString &file) {
+    return QFile::exists(file);
 }
 
 bool isExistFolder(const QString &folder) {

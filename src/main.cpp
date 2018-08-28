@@ -131,9 +131,9 @@ int main(int argc, char *argv[]) {
             WebSocketClient webSocketClient(getUrlToWss());
             webSocketClient.start();
 
-            JavascriptWrapper jsWrapper(webSocketClient, nsLookup);
+            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, QString::fromStdString(versionString));
 
-            MainWindow mainWindow(webSocketClient, jsWrapper, messengerJavascript, transactionsJavascript, QString::fromStdString(versionString));
+            MainWindow mainWindow(jsWrapper, messengerJavascript, transactionsJavascript);
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

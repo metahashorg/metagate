@@ -1,0 +1,16 @@
+Building the application:
+./deploy.sh /home/user/qtExamples/MetaGate/MetaGate
+Copy startSettings directory
+Copy and replace ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt directory in StartSettings
+Copy run.sh file
+Copy files from libssl into application root folder
+Run ./run.sh
+
+Build the autoupdater:
+Place files from updater in MetaGate folder
+Run ./create-packages.rb -p linux -v "1.1.0" /home/user/qtExamples/MetaGate ./config-template.js /home/user/updater/download/
+where
+-v version
+/home/user/qtExamples/MetaGate path to the MetaGate directory
+/home/user/updater/download/ path with output files
+Compress resulting app.zip, file_list.xml and  updater files into archive without leading directories and give for upoading
