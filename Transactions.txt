@@ -62,6 +62,11 @@ Q_INVOKABLE void calcBalance(QString address, QString currency);
 txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)
 где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\"}
 
+Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
+Получает транзакцию с сервера. 
+Результат вернется в функцию
+txsGetTxFromServerResultJs(txHash, type, result, errorNum, errorMessage)
+
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу

@@ -101,6 +101,8 @@ public:
 
     using GetAddressesCallback = std::function<void(const std::vector<AddressInfo> &result, const TypedException &exception)>;
 
+    using GetTxCallback = std::function<void(const Transaction &txs, const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -127,6 +129,8 @@ signals:
 
     void sendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet);
 
+    void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -146,6 +150,8 @@ public slots:
     void onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
 
     void onSendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet);
+
+    void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
 private slots:
 

@@ -354,6 +354,31 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::getTxFromServer(QString txHash, QString type) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetTxFromServerResultJs";
+
+    LOG << "calc balance address " << txHash << " " << type;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &txHash, const QString &type, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, txHash, type, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getTxFromServer(txHash, type, [this, txHash, type, makeFunc](const Transaction &tx, const TypedException &exception) {
+            LOG << "Get transaction ok " << txHash << " " << type;
+            makeFunc(exception, txHash, type, QJsonDocument(txToJson(tx)));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, txHash, type, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::onSendedTransactionsResponse(QString requestId, QString server, QString response, TypedException error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";
@@ -362,8 +387,10 @@ END_SLOT_WRAPPER
 }
 
 void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, TypedException error) {
+BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txOnTorrentJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, server, txHash, txInfoToJson(tx));
+END_SLOT_WRAPPER
 }
 
 }

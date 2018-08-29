@@ -41,6 +41,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
+    qRegisterMetaType<GetTxCallback>("GetAddressesCallback");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
 
@@ -379,6 +380,31 @@ BEGIN_SLOT_WRAPPER
             });
         }
     });
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        const QString message = makeGetTxRequest(txHash);
+
+        const std::vector<QString> servers = nsLookup.getRandom(type, 1, 1);
+        CHECK(servers.size() == 1, "Incorrect servers");
+        const QString server = "http://" + servers[0];
+
+        client.sendMessagePost(server, message, [this, callback](const std::string &response) mutable {
+            Transaction tx;
+            const TypedException exception = apiVrapper2([&, this] {
+                CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
+                tx = parseGetTxResponse(QString::fromStdString(response));
+            });
+            runCallback(std::bind(callback, tx, exception));
+        });
+    });
+
+    if (exception.isSet()) {
+        runCallback(std::bind(callback, Transaction(), exception));
+    }
 END_SLOT_WRAPPER
 }
 
