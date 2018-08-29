@@ -21,7 +21,7 @@ struct NodeType {
 };
 
 struct NodeInfo {
-    QString ipAndPort;
+    QString address;
 
     size_t ping;
 
@@ -39,6 +39,8 @@ public:
     ~NsLookup() override;
 
     void start();
+
+    std::vector<QString> getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const;
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count) const;
 
@@ -69,6 +71,8 @@ private:
     void continuePing();
 
     void finalizeLookup();
+
+    std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
 private:
 

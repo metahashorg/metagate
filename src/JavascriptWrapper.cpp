@@ -1167,7 +1167,7 @@ BEGIN_SLOT_WRAPPER
 
     Opt<QString> res;
     const TypedException exception = apiVrapper2([&, this]() {
-        const std::vector<QString> result = nsLookup.getRandom(type, length, count);
+        const std::vector<QString> result = nsLookup.getRandomWithoutHttp(type, length, count);
 
         QString resultStr = "[";
         bool isFirst = true;
@@ -1183,7 +1183,7 @@ BEGIN_SLOT_WRAPPER
         res = resultStr;
     });
 
-    LOG << "get ips servers ok " << requestId;
+    LOG << "get ips servers ok " << requestId << " " << res.get();
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), res);
 END_SLOT_WRAPPER

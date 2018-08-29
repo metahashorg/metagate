@@ -179,10 +179,10 @@ void NsLookup::continuePing() {
     for (size_t i = 0; i < countSteps; i++) {
         const QString &ip = ipsTemp[posInIpsTemp];
         posInIpsTemp++;
-        client.ping(ip + ":" + nodeType.port, [this, type=nodeType.type](const QString &address, const milliseconds &time, const std::string &message) {
+        client.ping("http://" + ip + ":" + nodeType.port, [this, type=nodeType.type](const QString &address, const milliseconds &time, const std::string &message) {
             const milliseconds MAX_PING = 100s;
             NodeInfo info;
-            info.ipAndPort = address;
+            info.address = address;
             info.ping = time.count();
 
             if (message.empty()) {
@@ -248,7 +248,10 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file) {
             const QString type = line.mid(0, spacePos1);
             const int spacePos2 = line.indexOf(' ', spacePos1 + 1);
             CHECK(spacePos2 != -1, "Incorrect file " + file.toStdString());
-            info.ipAndPort = line.mid(spacePos1 + 1, spacePos2 - spacePos1 - 1);
+            info.address = line.mid(spacePos1 + 1, spacePos2 - spacePos1 - 1);
+            if (!info.address.startsWith("http")) {
+                info.address = "http://" + info.address;
+            }
             info.ping = std::stoull(line.mid(spacePos2 + 1).toStdString());
 
             addNode(type, info, false);
@@ -268,7 +271,7 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp) {
     for (const auto &element1: allNodesForTypes) {
         for (const NodeInfo &node: element1.second) {
             content += element1.first.toStdString() + " ";
-            content += node.ipAndPort.toStdString() + " ";
+            content += node.address.toStdString() + " ";
             content += std::to_string(node.ping) + "\n";
         }
     }
@@ -278,7 +281,15 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp) {
     createSymlink(file);
 }
 
+std::vector<QString> NsLookup::getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const {
+    return getRandom(type, limit, count, [](const NodeInfo &node) {return QUrl(node.address).host() + ":" + QString::fromStdString(std::to_string(QUrl(node.address).port()));});
+}
+
 std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count) const {
+    return getRandom(type, limit, count, [](const NodeInfo &node) {return node.address;});
+}
+
+std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const {
     CHECK(count <= limit, "Incorrect count value");
 
     std::lock_guard<std::mutex> lock(nodeMutex);
@@ -288,5 +299,5 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     }
     const auto &nodes = found->second;
 
-    return ::getRandom<QString>(nodes, limit, count, [](const auto &node) {return node.get().ipAndPort;});
+    return ::getRandom<QString>(nodes, limit, count, process);
 }

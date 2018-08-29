@@ -159,7 +159,7 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
     startTimer();
 
     pingCallbacks_[requestId] = std::bind(callback, address, _1, _2);
-    QNetworkRequest request("http://" + address);
+    QNetworkRequest request(address);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     const time_point time = ::now();
     addRequestId(request, requestId);

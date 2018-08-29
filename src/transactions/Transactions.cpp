@@ -107,8 +107,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(address);
     balanceStruct->countResponses = servers.size();
-    for (const QString &serverS: servers) {
-        const QString server = "http://" + serverS;
+    for (const QString &server: servers) {
         const QString requestBalance = makeGetBalanceRequest(address);
         const auto getBalanceCallback = [this, balanceStruct, server, currency](const std::string &response) {
             balanceStruct->countResponses--;
@@ -302,12 +301,10 @@ BEGIN_SLOT_WRAPPER
 
         const QString message = makeGetTxRequest(QString::fromStdString(hash));
         const auto serversCopy = watcher.getServersCopy();
-        for (const QString &serv: serversCopy) {
+        for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
-            watcher.removeServer(serv);
-
-            const QString server = "http://" + serv;
-            client.sendMessagePost(server, message, [this, serv, hash](const std::string &response) {
+            watcher.removeServer(server);
+            client.sendMessagePost(server, message, [this, server, hash](const std::string &response) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
@@ -315,16 +312,16 @@ BEGIN_SLOT_WRAPPER
                 if (response != SimpleClient::ERROR_BAD_REQUEST) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
-                        emit javascriptWrapper.transactionInTorrentSig(serv, QString::fromStdString(hash), tx, TypedException());
-                        found->second.okServer(serv);
+                        emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
+                        found->second.okServer(server);
                         return;
                     } catch (const Exception &e) {
-                        found->second.setError(serv, QString::fromStdString(e));
+                        found->second.setError(server, QString::fromStdString(e));
                     } catch (...) {
                         // empty;
                     }
                 }
-                found->second.returnServer(serv);
+                found->second.returnServer(server);
             });
         }
 
@@ -363,8 +360,7 @@ BEGIN_SLOT_WRAPPER
         };
 
         std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>(servers.size());
-        for (QString server: servers) {
-            server = "http://" + server;
+        for (const QString &server: servers) {
             tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet](const std::string &response) {
                 servResp->countServers--;
                 QString result;
@@ -390,7 +386,7 @@ BEGIN_SLOT_WRAPPER
 
         const std::vector<QString> servers = nsLookup.getRandom(type, 1, 1);
         CHECK(servers.size() == 1, "Incorrect servers");
-        const QString server = "http://" + servers[0];
+        const QString &server = servers[0];
 
         client.sendMessagePost(server, message, [this, callback](const std::string &response) mutable {
             Transaction tx;

@@ -41,7 +41,6 @@ public:
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
 
-    // ping хорошо работает только с максимум одним одновременным запросом
     void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
 
     void setParent(QObject *obj);
