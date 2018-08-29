@@ -29,7 +29,7 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     qRegisterMetaType<Transaction>("Transaction");
 }
 
-void TransactionsJavascript::onCallbackCall(const std::function<void()> &callback) {
+void TransactionsJavascript::onCallbackCall(const Callback &callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
@@ -371,7 +371,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         emit transactionsManager->getTxFromServer(txHash, type, [this, txHash, type, makeFunc](const Transaction &tx, const TypedException &exception) {
             LOG << "Get transaction ok " << txHash << " " << type;
-            makeFunc(exception, txHash, type, QJsonDocument(txToJson(tx)));
+            makeFunc(exception, txHash, type, txInfoToJson(tx));
         });
     });
 
