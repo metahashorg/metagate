@@ -7,11 +7,12 @@
 
 #include "TypedException.h"
 
-#include "Transaction.h"
-
 namespace transactions {
 
 class Transactions;
+
+struct BalanceInfo;
+struct Transaction;
 
 class TransactionsJavascript
     : public QObject

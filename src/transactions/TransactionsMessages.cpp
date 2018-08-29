@@ -8,6 +8,8 @@
 #include "check.h"
 #include "Log.h"
 
+#include "Transaction.h"
+
 namespace transactions {
 
 QString makeGetBalanceRequest(const QString &address) {

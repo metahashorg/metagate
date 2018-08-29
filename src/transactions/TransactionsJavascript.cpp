@@ -5,6 +5,8 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include "Transaction.h"
+
 #include "makeJsFunc.h"
 #include "SlotWrapper.h"
 

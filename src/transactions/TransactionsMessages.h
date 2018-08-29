@@ -5,9 +5,10 @@
 
 #include <vector>
 
-#include "Transaction.h"
-
 namespace transactions {
+
+struct BalanceInfo;
+struct Transaction;
 
 QString makeGetBalanceRequest(const QString &address);
 
