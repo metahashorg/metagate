@@ -190,8 +190,6 @@ private:
 
     HttpSimpleClient tcpClient;
 
-    std::map<std::pair<QString, QString>, bool> getFullTxs;
-
     QString currentGroup;
 
     QTimer timerSendTx;

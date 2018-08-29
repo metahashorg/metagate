@@ -1,5 +1,8 @@
 #include "Transactions.h"
 
+#include <functional>
+using namespace std::placeholders;
+
 #include "check.h"
 #include "SlotWrapper.h"
 
@@ -97,7 +100,6 @@ void Transactions::newBalance(const QString &address, const QString &currency, c
         db.addPayment(tx);
     }
     emit javascriptWrapper.newBalanceSig(address, currency, balance);
-    getFullTxs[std::make_pair(currency, address)] = false;
 }
 
 void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers) {
@@ -106,65 +108,74 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     }
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(address);
+
+    const auto getAllHistoryCallback = [this, address, currency](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
+        const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
+
+        LOG << "Txs geted2 " << address << " " << txs.size();
+        newBalance(address, currency, balance, txs);
+    };
+
+    const auto getBalanceConfirmeCallback = [this, balanceStruct, currency, getAllHistoryCallback](const std::vector<Transaction> &txs, const QString &server, const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
+        const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
+        const uint64_t countInServer = balance.countReceived + balance.countSpent;
+        const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
+        if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
+            LOG << "Balance " << balanceStruct->address << " confirmed";
+            newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
+        } else {
+            LOG << "Balance " << balanceStruct->address << " not confirmed";
+            const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, false, 0);
+
+            client.sendMessagePost(server, requestForTxs, std::bind(getAllHistoryCallback, balance, _1, _2), 1s);
+        }
+    };
+
+    const auto getHistoryCallback = [this, address, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
+        const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
+
+        LOG << "Txs geted " << address << " " << txs.size();
+
+        const QString requestBalance = makeGetBalanceRequest(address);
+
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), 1s);
+    };
+
+    const auto getBalanceCallback = [this, balanceStruct, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback](const QString &server, const std::string &response, const TypedException &exception) {
+        balanceStruct->countResponses--;
+
+        if (!exception.isSet()) {
+            const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
+            CHECK(balanceResponse.address == balanceStruct->address, "Incorrect response: address not equal. Expected " + balanceStruct->address.toStdString() + ". Received " + balanceResponse.address.toStdString());
+            if (balanceResponse.currBlockNum > balanceStruct->balance.currBlockNum) {
+                balanceStruct->balance = balanceResponse;
+                balanceStruct->server = server;
+            }
+        }
+
+        if (balanceStruct->countResponses == 0 && !balanceStruct->server.isEmpty()) {
+            const uint64_t countReceived = db.getPaymentsCountForAddress(balanceStruct->address, currency, false);
+            const uint64_t countSpent = db.getPaymentsCountForAddress(balanceStruct->address, currency, true);
+            const uint64_t countAll = countReceived + countSpent;
+            const uint64_t countInServer = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
+            LOG << "Automatic get txs " << balanceStruct->address << " " << countAll << " " << countInServer;
+            if (countAll < countInServer) {
+                const uint64_t countMissingTxs = countInServer - countAll;
+                const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
+                const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, true, requestCountTxs);
+
+                client.sendMessagePost(server, requestForTxs, std::bind(getHistoryCallback, server, _1, _2), 1s);
+            }
+        }
+    };
+
     balanceStruct->countResponses = servers.size();
     for (const QString &server: servers) {
         const QString requestBalance = makeGetBalanceRequest(address);
-        const auto getBalanceCallback = [this, balanceStruct, server, currency](const std::string &response, const TypedException &exception) {
-            balanceStruct->countResponses--;
-
-            if (!exception.isSet()) {
-                const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
-                CHECK(balanceResponse.address == balanceStruct->address, "Incorrect response: address not equal. Expected " + balanceStruct->address.toStdString() + ". Received " + balanceResponse.address.toStdString());
-                if (balanceResponse.currBlockNum > balanceStruct->balance.currBlockNum) {
-                    balanceStruct->balance = balanceResponse;
-                    balanceStruct->server = server;
-                }
-            }
-
-            if (balanceStruct->countResponses == 0 && !balanceStruct->server.isEmpty()) {
-                const uint64_t countReceived = db.getPaymentsCountForAddress(balanceStruct->address, currency, false);
-                const uint64_t countSpent = db.getPaymentsCountForAddress(balanceStruct->address, currency, true);
-                const uint64_t countAll = countReceived + countSpent;
-                const uint64_t countInServer = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
-                LOG << "Automatic get txs " << balanceStruct->address << " " << countAll << " " << countInServer;
-                if (countAll < countInServer) {
-                    const uint64_t countMissingTxs = countInServer - countAll;
-                    const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
-                    const bool isToTxs = !getFullTxs[std::make_pair(currency, balanceStruct->address)];
-                    const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, isToTxs, requestCountTxs);
-
-                    const auto getHistoryCallback = [this, balanceStruct, server, isToTxs, currency](const std::string &response, const TypedException &exception) {
-                        CHECK(!exception.isSet(), "Server error: " + exception.description);
-                        const std::vector<Transaction> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
-
-                        LOG << "Txs geted " << balanceStruct->address << " " << txs.size();
-
-                        if (isToTxs) {
-                            const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
-                            const auto getBalance2Callback = [this, balanceStruct, server, currency, txs](const std::string &response, const TypedException &exception) {
-                                CHECK(!exception.isSet(), "Server error: " + exception.description);
-                                const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
-                                const uint64_t countInServer = balance.countReceived + balance.countSpent;
-                                const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
-                                if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
-                                    LOG << "Balance " << balanceStruct->address << " confirmed";
-                                    newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
-                                } else {
-                                    LOG << "Balance " << balanceStruct->address << " not confirmed";
-                                    getFullTxs[std::make_pair(currency, balanceStruct->address)] = true;
-                                }
-                            };
-                            client.sendMessagePost(server, requestBalance, getBalance2Callback, 1s);
-                        } else {
-                            LOG << "Balance " << balanceStruct->address << " confirmed2";
-                            newBalance(balanceStruct->address, currency, balanceStruct->balance, txs);
-                        }
-                    };
-                    client.sendMessagePost(server, requestForTxs, getHistoryCallback, 1s);
-                }
-            }
-        };
-        client.sendMessagePost(server, requestBalance, getBalanceCallback, 1s);
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), 1s);
     }
 }
 
