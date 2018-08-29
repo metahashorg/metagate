@@ -192,7 +192,7 @@ public slots:
 
 private slots:
 
-    void onCallbackCall(ReturnCallback callback);
+    void onCallbackCall(SimpleClient::ReturnCallback callback);
 
     void onDirChanged(const QString &dir);
 

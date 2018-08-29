@@ -86,8 +86,6 @@ static milliseconds getTimeout(QNetworkReply &reply) {
     return milliseconds(std::stol(reply.request().attribute(TIMOUT_FIELD).toString().toStdString()));
 }
 
-const std::string SimpleClient::ERROR_BAD_REQUEST = "Error bad request";
-
 void SimpleClient::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     std::vector<std::reference_wrapper<QNetworkReply>> toDelete;
@@ -211,12 +209,12 @@ BEGIN_SLOT_WRAPPER
 
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray content = reply->readAll();
-        runCallback(callbacks_, requestId, std::string(content.data(), content.size()));
+        runCallback(callbacks_, requestId, std::string(content.data(), content.size()), TypedException());
     } else {
-        const std::string errorStr = reply->errorString().toStdString();
-        LOG << errorStr << ". " << QString(reply->readAll());
+        const std::string error = reply->errorString().toStdString() + ". " + QString(reply->readAll()).toStdString();
+        //LOG << error;
 
-        runCallback(callbacks_, requestId, ERROR_BAD_REQUEST);
+        runCallback(callbacks_, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, error));
     }
 
     reply->deleteLater();

@@ -126,7 +126,7 @@ Uploader::Uploader(MainWindow *mainWindow)
 
     client.setParent(this);
 
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall), "not connect");
 
     currentBeginPath = getPagesPath();
     const auto &lastVersionPair = Uploader::getLastVersion(currentBeginPath);
@@ -162,7 +162,7 @@ void Uploader::start() {
     thread1.start();
 }
 
-void Uploader::callbackCall(ReturnCallback callback) {
+void Uploader::callbackCall(SimpleClient::ReturnCallback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
@@ -191,8 +191,8 @@ BEGIN_SLOT_WRAPPER
         return;
     }
 
-    auto callbackGetHtmls = [this, UPDATE_API](const std::string &result) {
-        CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "incorrect result");
+    auto callbackGetHtmls = [this, UPDATE_API](const std::string &result, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
         const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
@@ -214,9 +214,9 @@ BEGIN_SLOT_WRAPPER
             return;
         }
 
-        auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result) {
+        auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result, const TypedException &exception) {
             versionHtmlForUpdate = "";
-            CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Bad request");
+            CHECK(!exception.isSet(), "Server error: " + exception.description);
 
             if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
                 return;
@@ -254,8 +254,8 @@ BEGIN_SLOT_WRAPPER
     client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
     id++;
 
-    auto callbackAppVersion = [this, UPDATE_API](const std::string &result) {
-        CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
+    auto callbackAppVersion = [this, UPDATE_API](const std::string &result, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
 
         const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
         const QJsonObject root = document.object();
@@ -279,10 +279,10 @@ BEGIN_SLOT_WRAPPER
             return;
         }
 
-        auto autoupdateGetCallback = [this, version, reference](const std::string &result) {
+        auto autoupdateGetCallback = [this, version, reference](const std::string &result, const TypedException &exception) {
             versionForUpdate.clear();
             LOG << "autoupdater callback";
-            CHECK(result != SimpleClient::ERROR_BAD_REQUEST, "Incorrect result");
+            CHECK(!exception.isSet(), "Server error: " + exception.description);
 
             clearAutoupdatersPath();
             const QString autoupdaterPath = getAutoupdaterPath();

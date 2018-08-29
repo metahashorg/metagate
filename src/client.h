@@ -11,12 +11,7 @@
 #include <string>
 
 #include "duration.h"
-
-using ClientCallback = std::function<void(const std::string &response)>;
-
-using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
-
-using ReturnCallback = std::function<void()>;
+#include "TypedException.h"
 
 /*
    На каждый поток должен быть один экземпляр класса.
@@ -25,13 +20,17 @@ class SimpleClient : public QObject
 {
     Q_OBJECT
 
+public:
+
+    using ClientCallback = std::function<void(const std::string &response, const TypedException &exception)>;
+
+    using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
+
+    using ReturnCallback = std::function<void()>;
+
 private:
 
     using PingCallbackInternal = std::function<void(const milliseconds &time, const std::string &response)>;
-
-public:
-
-    static const std::string ERROR_BAD_REQUEST;
 
 public:
 

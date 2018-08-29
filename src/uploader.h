@@ -61,7 +61,7 @@ public slots:
 
     void run();
 
-    void callbackCall(ReturnCallback callback);
+    void callbackCall(SimpleClient::ReturnCallback callback);
 
     void uploadEvent();
 

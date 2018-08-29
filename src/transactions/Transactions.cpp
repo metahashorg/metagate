@@ -109,10 +109,10 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     balanceStruct->countResponses = servers.size();
     for (const QString &server: servers) {
         const QString requestBalance = makeGetBalanceRequest(address);
-        const auto getBalanceCallback = [this, balanceStruct, server, currency](const std::string &response) {
+        const auto getBalanceCallback = [this, balanceStruct, server, currency](const std::string &response, const TypedException &exception) {
             balanceStruct->countResponses--;
 
-            if (response != SimpleClient::ERROR_BAD_REQUEST) {
+            if (!exception.isSet()) {
                 const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
                 CHECK(balanceResponse.address == balanceStruct->address, "Incorrect response: address not equal. Expected " + balanceStruct->address.toStdString() + ". Received " + balanceResponse.address.toStdString());
                 if (balanceResponse.currBlockNum > balanceStruct->balance.currBlockNum) {
@@ -133,16 +133,16 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                     const bool isToTxs = !getFullTxs[std::make_pair(currency, balanceStruct->address)];
                     const QString requestForTxs = makeGetHistoryRequest(balanceStruct->address, isToTxs, requestCountTxs);
 
-                    const auto getHistoryCallback = [this, balanceStruct, server, isToTxs, currency](const std::string &response) {
-                        CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
+                    const auto getHistoryCallback = [this, balanceStruct, server, isToTxs, currency](const std::string &response, const TypedException &exception) {
+                        CHECK(!exception.isSet(), "Server error: " + exception.description);
                         const std::vector<Transaction> txs = parseHistoryResponse(balanceStruct->address, QString::fromStdString(response));
 
                         LOG << "Txs geted " << balanceStruct->address << " " << txs.size();
 
                         if (isToTxs) {
                             const QString requestBalance = makeGetBalanceRequest(balanceStruct->address);
-                            const auto getBalance2Callback = [this, balanceStruct, server, currency, txs](const std::string &response) {
-                                CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
+                            const auto getBalance2Callback = [this, balanceStruct, server, currency, txs](const std::string &response, const TypedException &exception) {
+                                CHECK(!exception.isSet(), "Server error: " + exception.description);
                                 const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
                                 const uint64_t countInServer = balance.countReceived + balance.countSpent;
                                 const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
@@ -304,12 +304,12 @@ BEGIN_SLOT_WRAPPER
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash](const std::string &response) {
+            client.sendMessagePost(server, message, [this, server, hash](const std::string &response, const TypedException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
                 }
-                if (response != SimpleClient::ERROR_BAD_REQUEST) {
+                if (!exception.isSet()) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
                         emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
@@ -365,7 +365,7 @@ BEGIN_SLOT_WRAPPER
                 servResp->countServers--;
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
-                    CHECK_TYPED(response != SimpleClient::ERROR_BAD_REQUEST, TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, "Error");
+                    CHECK_TYPED(response != HttpSimpleClient::ERROR_BAD_REQUEST, TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, "Error");
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                 });
 
@@ -388,10 +388,10 @@ BEGIN_SLOT_WRAPPER
         CHECK(servers.size() == 1, "Incorrect servers");
         const QString &server = servers[0];
 
-        client.sendMessagePost(server, message, [this, callback](const std::string &response) mutable {
+        client.sendMessagePost(server, message, [this, callback](const std::string &response, const TypedException &error) mutable {
             Transaction tx;
             const TypedException exception = apiVrapper2([&, this] {
-                CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Incorrect response");
+                CHECK_TYPED(!error.isSet(), error.numError, error.description);
                 tx = parseGetTxResponse(QString::fromStdString(response));
             });
             runCallback(std::bind(callback, tx, exception));

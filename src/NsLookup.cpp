@@ -75,7 +75,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
     client.setParent(this);
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(callbackCall(ReturnCallback))), "not connect callbackCall");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
 
     client.moveToThread(&thread1);
     moveToThread(&thread1);
@@ -89,7 +89,7 @@ NsLookup::~NsLookup() {
     }
 }
 
-void NsLookup::callbackCall(ReturnCallback callback) {
+void NsLookup::callbackCall(SimpleClient::ReturnCallback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER

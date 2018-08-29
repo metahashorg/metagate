@@ -76,7 +76,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messen
     jsWrapper.setWidget(this);
 
     client.setParent(this);
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect callbackCall");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
     CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
@@ -111,14 +111,15 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messen
 
 void MainWindow::onUpdateMhsReferences() {
 BEGIN_SLOT_WRAPPER
-    client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response) {
+    client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response, const TypedException &exception) {
         LOG << "Set mappings mh " << response;
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
         pagesMappings.setMappingsMh(QString::fromStdString(response));
     });
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onCallbackCall(ReturnCallback callback) {
+void MainWindow::onCallbackCall(SimpleClient::ReturnCallback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER

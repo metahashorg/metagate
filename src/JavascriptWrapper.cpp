@@ -104,7 +104,7 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
 
     setPaths(walletDefaultPath, "");
 
-    CHECK(connect(&client, SIGNAL(callbackCall(ReturnCallback)), this, SLOT(onCallbackCall(ReturnCallback))), "not connect callbackCall");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
 
     CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
 
@@ -117,7 +117,7 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     sendAppInfoToWss("", true);
 }
 
-void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
+void JavascriptWrapper::onCallbackCall(SimpleClient::ReturnCallback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
@@ -1202,8 +1202,8 @@ BEGIN_SLOT_WRAPPER
     const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
     CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
 
-    client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response) {
-        CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
+    client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Error load image: " + exception.description);
         writeToFileBinary(file, response, false);
         if (openAfterSave) {
             openFolderInStandartExplored(QFileInfo(file).dir().path());
@@ -1233,8 +1233,8 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
 BEGIN_SLOT_WRAPPER
     LOG << "print url";
-    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response) {
-        CHECK(response != SimpleClient::ERROR_BAD_REQUEST, "Error response");
+    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Error load image: " + exception.description);
 
         QImage image;
         image.loadFromData((const unsigned char*)response.data(), (int)response.size());
