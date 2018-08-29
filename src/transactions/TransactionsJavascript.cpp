@@ -379,14 +379,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::onSendedTransactionsResponse(QString requestId, QString server, QString response, TypedException error) {
+void TransactionsJavascript::onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, requestId, server, response);
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, TypedException error) {
+void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txOnTorrentJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, server, txHash, txInfoToJson(tx));

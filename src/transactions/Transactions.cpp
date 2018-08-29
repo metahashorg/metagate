@@ -220,7 +220,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback) {
+void Transactions::onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // TODO
     std::vector<Transaction> txs;
@@ -231,7 +231,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxs2(QString address, QString currency, int from, int count, bool asc, const GetTxsCallback &callback) {
+void Transactions::onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
@@ -242,7 +242,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback) {
+void Transactions::onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // TODO
     std::vector<Transaction> txs;
@@ -253,7 +253,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback) {
+void Transactions::onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
@@ -264,7 +264,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback) {
+void Transactions::onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback) {
 BEGIN_SLOT_WRAPPER
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
@@ -345,7 +345,7 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
     sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers)));
 }
 
-void Transactions::onSendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet) {
+void Transactions::onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);

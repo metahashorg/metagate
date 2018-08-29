@@ -117,17 +117,17 @@ signals:
 
     void setCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
-    void getTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
+    void getTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
 
-    void getTxs2(QString address, QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
+    void getTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
-    void getTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
+    void getTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
 
-    void getTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
+    void getTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
-    void calcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
+    void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void sendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet);
+    void sendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet);
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -139,17 +139,17 @@ public slots:
 
     void onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
-    void onGetTxs(QString address, QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
+    void onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
 
-    void onGetTxs2(QString address, QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
+    void onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
-    void onGetTxsAll(QString currency, QString fromTx, int count, bool asc, const GetTxsCallback &callback);
+    void onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
 
-    void onGetTxsAll2(QString currency, int from, int count, bool asc, const GetTxsCallback &callback);
+    void onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
-    void onCalcBalance(QString address, QString currency, const CalcBalanceCallback &callback);
+    void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onSendTransaction(QString requestId, int countServersSend, int countServersGet, QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign, QString typeSend, QString typeGet);
+    void onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet);
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
