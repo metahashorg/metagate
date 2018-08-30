@@ -65,7 +65,7 @@ static QJsonObject txToJson(const Transaction &tx) {
     txJson.insert("value", tx.value);
     txJson.insert("data", tx.data);
     txJson.insert("timestamp", QString::fromStdString(std::to_string(tx.timestamp)));
-    txJson.insert("fee", QString::fromStdString(std::to_string(tx.fee)));
+    txJson.insert("fee", tx.fee);
     txJson.insert("nonce", QString::fromStdString(std::to_string(tx.nonce)));
     txJson.insert("isInput", tx.isInput);
     return txJson;

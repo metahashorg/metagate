@@ -19,6 +19,7 @@ const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribut
 
 SimpleClient::SimpleClient() {
     manager = std::make_unique<QNetworkAccessManager>(this);
+    qRegisterMetaType<ReturnCallback>("ReturnCallback");
 }
 
 void SimpleClient::setParent(QObject *obj) {

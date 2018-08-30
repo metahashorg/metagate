@@ -177,8 +177,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 }
 
 std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
-    const std::list<AddressInfo> res = db.getTrackedForGroup(group);
-    return std::vector<AddressInfo>(res.cbegin(), res.cend());
+    return db.getTrackedForGroup(group);
 }
 
 void Transactions::onTimerEvent() {
@@ -243,8 +242,7 @@ void Transactions::onGetTxs2(const QString &address, const QString &currency, in
 BEGIN_SLOT_WRAPPER
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<Transaction> result = db.getPaymentsForAddress(address, currency, from, count, asc);
-        std::copy(result.cbegin(), result.cend(), std::back_inserter(txs));
+        txs = db.getPaymentsForAddress(address, currency, from, count, asc);
     });
     runCallback(std::bind(callback, txs, exception));
 END_SLOT_WRAPPER
@@ -265,8 +263,7 @@ void Transactions::onGetTxsAll2(const QString &currency, int from, int count, bo
 BEGIN_SLOT_WRAPPER
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<Transaction> result = db.getPaymentsForCurrency(currency, from, count, asc);
-        std::copy(result.cbegin(), result.cend(), std::back_inserter(txs));
+        txs = db.getPaymentsForCurrency(currency, from, count, asc);
     });
     runCallback(std::bind(callback, txs, exception));
 END_SLOT_WRAPPER
@@ -365,10 +362,10 @@ BEGIN_SLOT_WRAPPER
 
         std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>();
         for (const QString &server: servers) {
-            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet](const std::string &response) {
+            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
-                    CHECK_TYPED(response != HttpSimpleClient::ERROR_BAD_REQUEST, TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, "Error");
+                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                 });
 

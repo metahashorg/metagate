@@ -69,7 +69,6 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        qRegisterMetaType<ReturnCallback>("ReturnCallback");
         qRegisterMetaType<WindowEvent>("WindowEvent");
 
         for (int i = 1; i < argc; i++) {

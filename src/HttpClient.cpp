@@ -13,8 +13,8 @@ using namespace std::placeholders;
 
 QT_USE_NAMESPACE
 
-HttpSimpleClient::HttpSimpleClient()
-{
+HttpSimpleClient::HttpSimpleClient() {
+    qRegisterMetaType<ReturnCallback>("ReturnCallback");
 }
 
 void HttpSimpleClient::moveToThread(QThread *thread)
