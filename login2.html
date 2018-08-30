@@ -70,7 +70,7 @@
     function sendTx() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", "0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff", "10", "0", document.createWalletForm.nonce.value, "10", '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent"}') ;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", "0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff", "10", "0", document.createWalletForm.nonce.value, "10", '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate"}') ;
         });
     }
     
@@ -100,7 +100,7 @@
             <input name="address" type="text" value="0x0034d209107371745c6f5634d6ed87199bac872c310091ca56" size="60"><label for="address">address</label><br>
             <input name="name" type="text" value="name1" size="60"><label for="address">name</label><br>
             <input name="currency" type="text" value="mth" size="60"><label for="currency">currency</label><br>
-            <input name="type" type="text" value="torrent" size="60"><label for="type">type</label><br>
+            <input name="type" type="text" value="torrent_delegate" size="60"><label for="type">type</label><br>
             <input name="group" type="text" value="g1" size="60"><label for="group">group</label><br>
             <input name="fromTx" type="text" value="0" size="60"><label for="fromTx">fromTx/from</label><br>
             <input name="count" type="text" value="10" size="60"><label for="count">count</label><br>
