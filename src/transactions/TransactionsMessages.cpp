@@ -72,6 +72,9 @@ static Transaction parseTransaction(const QJsonObject &txJson) {
     if (txJson.contains("fee") && txJson.value("fee").isDouble()) {
         res.fee = txJson.value("fee").toDouble();
     }
+    if (res.fee.isEmpty() || res.fee.isNull()) {
+        res.fee = "0";
+    }
     if (txJson.contains("nonce") && txJson.value("nonce").isDouble()) {
         res.nonce = txJson.value("nonce").toInt();
     }
