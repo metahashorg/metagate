@@ -3,8 +3,9 @@
 
 #include <fstream>
 #include <iostream>
-#include <ctime>
+#include <thread>
 
+#include <QDateTime>
 #include <QString>
 
 #include "duration.h"
@@ -45,14 +46,11 @@ private:
     void print(T t) {
         std::cout << t;
         if (isSetTimestamp) {
-            const auto p = std::chrono::system_clock::now();
-            const std::time_t t = std::chrono::system_clock::to_time_t(p);
-            std::string cTime = std::ctime(&t);
-            if (cTime[cTime.size() - 1] == '\n') {
-                cTime = cTime.substr(0, cTime.size() - 1);
-            }
-            __log_file__ << cTime << " ";
-            __log_file2__ << cTime << " ";
+            const QDateTime now = QDateTime::currentDateTime();
+            const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
+            const auto tId = std::this_thread::get_id();
+            __log_file__ << std::hex << tId << std::dec << " " << time << " ";
+            __log_file2__ << std::hex << tId << std::dec << " " << time << " ";
         }
         __log_file__ << t;
         __log_file2__ << t;
