@@ -31,7 +31,7 @@ LIBS += -L$$PWD/openssl_linux/lib -lssl -lcrypto
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-        ../src/httpclient.cpp \
+        ../src/HttpClient.cpp \
         ../src/Log.cpp \
         ../src/Paths.cpp \
         ../src/utils.cpp \
@@ -44,7 +44,7 @@ SOURCES += \
 
 HEADERS += \
         mainwindow.h \
-        ../src/httpclient.h \
+        ../src/HttpClient.h \
         ../src/Log.h \
         ../src/Paths.h \
         ../src/utils.h \

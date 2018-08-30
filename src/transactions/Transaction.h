@@ -14,7 +14,7 @@ struct Transaction {
     QString value;
     QString data;
     uint64_t timestamp;
-    int64_t fee = 0;
+    QString fee;
     int64_t nonce = 0;
     bool isInput;
 };

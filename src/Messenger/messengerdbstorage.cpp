@@ -276,7 +276,7 @@ bool MessengerDBStorage::hasUnconfirmedMessageWithHash(const QString &username, 
     return false;
 }
 
-DBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash)
+MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash)
 {
     QSqlQuery query(database());
     query.prepare(selectFirstNotConfirmedMessageWithHash);
@@ -284,13 +284,13 @@ DBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessageWithHas
     query.bindValue(":hash", hash);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
-        return DBStorage::IdCounterPair(query.value("id").toLongLong(),
+        return MessengerDBStorage::IdCounterPair(query.value("id").toLongLong(),
                                         query.value("morder").toLongLong());
     }
-    return DBStorage::IdCounterPair(-1, -1);
+    return MessengerDBStorage::IdCounterPair(-1, -1);
 }
 
-DBStorage::IdCounterPair MessengerDBStorage::findFirstMessageWithHash(const QString &username, const QString &hash, const QString &channelSha)
+MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstMessageWithHash(const QString &username, const QString &hash, const QString &channelSha)
 {
     Q_UNUSED(channelSha);
     QSqlQuery query(database());
@@ -299,10 +299,10 @@ DBStorage::IdCounterPair MessengerDBStorage::findFirstMessageWithHash(const QStr
     query.bindValue(":hash", hash);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
-        return DBStorage::IdCounterPair(query.value("id").toLongLong(),
+        return MessengerDBStorage::IdCounterPair(query.value("id").toLongLong(),
                                         query.value("morder").toLongLong());
     }
-    return DBStorage::IdCounterPair(-1, -1);
+    return MessengerDBStorage::IdCounterPair(-1, -1);
 }
 
 DBStorage::DbId MessengerDBStorage::findFirstNotConfirmedMessage(const QString &username)

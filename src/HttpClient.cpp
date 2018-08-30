@@ -1,4 +1,4 @@
-#include "httpclient.h"
+#include "HttpClient.h"
 
 #include <iostream>
 using namespace std::placeholders;
@@ -15,11 +15,6 @@ QT_USE_NAMESPACE
 
 HttpSimpleClient::HttpSimpleClient()
 {
-}
-
-void HttpSimpleClient::setParent(QObject *obj)
-{
-    Q_UNUSED(obj);
 }
 
 void HttpSimpleClient::moveToThread(QThread *thread)
@@ -74,12 +69,10 @@ static milliseconds getTimeout(HttpSocket *socket)
     return  socket->timeOut();
 }
 
-const std::string HttpSimpleClient::ERROR_BAD_REQUEST = "Error bad request";
-
 void HttpSimpleClient::onTimerEvent()
 {
 BEGIN_SLOT_WRAPPER
-     std::vector<std::reference_wrapper<HttpSocket *>> toDelete;
+    std::vector<HttpSocket *> toStop;
     const time_point timeEnd = ::now();
     for (auto &iter: sockets) {
         HttpSocket *socket = iter.second;
@@ -90,14 +83,13 @@ BEGIN_SLOT_WRAPPER
             const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
             if (duration >= timeout) {
                 LOG << "Timeout request";
-                toDelete.emplace_back(socket);
+                toStop.push_back(socket);
             }
         }
     }
 
-    for (HttpSocket *socket: toDelete) {
-        //reply.abort();
-        delete socket;
+    for (HttpSocket *socket: toStop) {
+        socket->stop();
     }
     END_SLOT_WRAPPER
 }
@@ -107,17 +99,17 @@ void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, 
     const std::string requestId = std::to_string(id++);
     startTimer();
 
-    HttpSocket *socket = new HttpSocket(url, message);
+    std::unique_ptr<HttpSocket> socket(new HttpSocket(url, message));
     callbacks_[requestId] = callback;
-    addRequestId(socket, requestId);
+    addRequestId(socket.get(), requestId);
     if (isTimeout) {
         const time_point time = ::now();
-        addBeginTime(socket, time);
-        addTimeout(socket, timeout);
+        addBeginTime(socket.get(), time);
+        addTimeout(socket.get(), timeout);
     }
 
-    connect(socket, &HttpSocket::finished, this, &HttpSimpleClient::onSocketFinished);
-    socket->start();
+    connect(socket.get(), &HttpSocket::finished, this, &HttpSimpleClient::onSocketFinished);
+    socket.release()->start();
     LOG << "post message sended";
 }
 
@@ -144,23 +136,22 @@ void HttpSimpleClient::runCallback(Callbacks &callbacks, const std::string &id, 
 
 void HttpSimpleClient::onSocketFinished()
 {
-    BEGIN_SLOT_WRAPPER
-        HttpSocket *socket = qobject_cast<HttpSocket *>(sender());
+BEGIN_SLOT_WRAPPER
+    HttpSocket *socket = qobject_cast<HttpSocket *>(sender());
+    CHECK(socket, "Not socket object");
 
-        const std::string requestId = getRequestId(socket);
+    const std::string requestId = getRequestId(socket);
 
-        if (socket->hasError()) {
-            //const std::string errorStr = reply->errorString().toStdString();
-            //LOG << errorStr;
-            runCallback(callbacks_, requestId, ERROR_BAD_REQUEST);
-        } else {
-            QByteArray content = socket->getReply();
-            runCallback(callbacks_, requestId, std::string(content.data(), content.size()));
-        }
+    if (socket->hasError()) {
+        runCallback(callbacks_, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, "error"));
+    } else {
+        QByteArray content = socket->getReply();
+        runCallback(callbacks_, requestId, std::string(content.data(), content.size()), TypedException());
+    }
 
-        socket->deleteLater();
+    socket->deleteLater();
 
-    END_SLOT_WRAPPER
+END_SLOT_WRAPPER
 }
 
 HttpSocket::HttpSocket(const QUrl &url, const QString &message, QObject *parent)
@@ -176,6 +167,13 @@ HttpSocket::HttpSocket(const QUrl &url, const QString &message, QObject *parent)
 void HttpSocket::start()
 {
     connectToHost(m_url.host(), m_url.port(80));
+}
+
+void HttpSocket::stop()
+{
+    abort();
+    m_error = true;
+    emit finished();
 }
 
 std::string HttpSocket::requestId() const
@@ -243,6 +241,10 @@ void HttpSocket::onReadyRead()
     QByteArray d = readAll();
     m_data += d;
     parseResponseHeader();
+    if (m_error) {
+        abort();
+        emit finished();
+    }
     if (m_headerParsed) {
         if (m_contentLength != -1) {
             if (m_data.length() >= m_contentLength) {
@@ -250,6 +252,9 @@ void HttpSocket::onReadyRead()
                 emit finished();
             }
         } else {
+            m_error = true;
+            abort();
+            emit finished();
         }
 
     }
@@ -282,9 +287,8 @@ void HttpSocket::parseResponseHeader()
         if (!m_firstHeaderStringParsed) {
             if (!s.startsWith("HTTP/1.1 200 OK") && !s.startsWith("HTTP/1.0 200 OK")) {
                 // HTTP error
-                disconnectFromHost();
                 m_error = true;
-                emit finished();
+                return;
             }
             m_firstHeaderStringParsed = true;
         }

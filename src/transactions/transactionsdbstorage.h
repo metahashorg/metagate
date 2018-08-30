@@ -4,7 +4,7 @@
 #include "dbstorage.h"
 #include "Transaction.h"
 #include "BigNumber.h"
-#include <list>
+#include <vector>
 
 namespace transactions {
 
@@ -18,12 +18,12 @@ public:
 
     void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
-                    quint64 ts, const QString &data, qint64 fee, qint64 nonce);
+                    quint64 ts, const QString &data, const QString &fee, qint64 nonce);
     void addPayment(const Transaction &trans);
 
-    std::list<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
+    std::vector<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
                                               qint64 offset, qint64 count, bool asc) const;
-    std::list<Transaction> getPaymentsForCurrency(const QString &currency,
+    std::vector<Transaction> getPaymentsForCurrency(const QString &currency,
                                                   qint64 offset, qint64 count, bool asc) const;
 
     void removePaymentsForDest(const QString &address, const QString &currency);
@@ -36,10 +36,10 @@ public:
     void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
     void addTracked(const AddressInfo &info);
 
-    std::list<AddressInfo> getTrackedForGroup(const QString &tgroup);
+    std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
 private:
-    void createPaymentsList(QSqlQuery &query, std::list<Transaction> &payments) const;
+    void createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const;
 };
 
 }

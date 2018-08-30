@@ -12,9 +12,7 @@
 #include <string>
 
 #include "duration.h"
-
-using ClientCallback = std::function<void(const std::string &response)>;
-using ReturnCallback = std::function<void()>;
+#include "TypedException.h"
 
 class HttpSocket : public QTcpSocket
 {
@@ -23,6 +21,7 @@ public:
     explicit HttpSocket(const QUrl &url, const QString &message, QObject *parent = nullptr);
 
     void start();
+    void stop();
 
     std::string requestId() const;
     void setRequestId(const std::string &s);
@@ -73,16 +72,14 @@ class HttpSimpleClient : public QObject
     Q_OBJECT
 
 public:
-
-    static const std::string ERROR_BAD_REQUEST;
+    using ClientCallback = std::function<void(const std::string &response, const TypedException &exception)>;
+    using ReturnCallback = std::function<void()>;
 
 public:
     explicit HttpSimpleClient();
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
-
-    void setParent(QObject *obj);
 
     void moveToThread(QThread *thread);
 
@@ -110,7 +107,6 @@ private:
     std::unordered_map<std::string, HttpSocket *> sockets;
 
     QTimer* timer = nullptr;
-
     QThread *thread1 = nullptr;
 
     int id = 0;

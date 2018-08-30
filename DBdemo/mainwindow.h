@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "httpclient.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -17,8 +17,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    //TestConnection connection;
-    HttpSocket *httpsocket;
 };
 
 #endif // MAINWINDOW_H

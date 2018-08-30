@@ -10,7 +10,7 @@
 #include <set>
 
 #include "client.h"
-#include "httpclient.h"
+#include "HttpClient.h"
 #include "TimerClass.h"
 
 class NsLookup;

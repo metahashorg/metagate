@@ -8,8 +8,6 @@
 
 class BigNumber
 {
-    friend const BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs);
-    friend const BigNumber operator-(const BigNumber &lhs, const BigNumber &rhs);
 public:
     BigNumber();
     BigNumber(const QByteArray &dec);

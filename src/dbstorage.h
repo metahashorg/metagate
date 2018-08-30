@@ -4,19 +4,15 @@
 #include <QObject>
 #include <QSqlDatabase>
 
-#include <list>
-#include <utility>
-#include "Messenger/Message.h"
-
 class DBStorage : public QObject
 {
     Q_OBJECT
 public:
     using DbId = qint64;
-    using IdCounterPair = std::pair<DbId, Message::Counter>;
 
-    explicit DBStorage(const QString &path, const QString &dbname, QObject *parent = nullptr);
-    //static DBStorage *instance();
+    explicit DBStorage(const QString &dbpath, const QString &dbname, QObject *parent = nullptr);
+
+    QString dbName() const;
 
     virtual void init(bool force);
 
@@ -25,17 +21,17 @@ public:
 
 protected:
     void setPath(const QString &path);
-    bool openDB();
+    void openDB();
 
-    bool createTable(const QString &table, const QString &createQuery);
-    bool createIndex(const QString &createQuery);
+    void createTable(const QString &table, const QString &createQuery);
+    void createIndex(const QString &createQuery);
     QSqlDatabase database() const;
     bool dbExist() const;
 
 private:
     QSqlDatabase m_db;
     bool m_dbExist;
-    QString m_path;
+    QString m_dbPath;
     QString m_dbName;
 };
 

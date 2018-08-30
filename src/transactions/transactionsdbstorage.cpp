@@ -28,10 +28,10 @@ void transactions::TransactionsDBStorage::init(bool force)
 
 void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                                        const QString &ufrom, const QString &uto, const QString &value,
-                                       quint64 ts, const QString &data, qint64 fee, qint64 nonce)
+                                       quint64 ts, const QString &data, const QString &fee, qint64 nonce)
 {
     QSqlQuery query(database());
-    query.prepare(insertPayment);
+    CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
     query.bindValue(":address", address);
@@ -43,9 +43,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":data", data);
     query.bindValue(":fee", fee);
     query.bindValue(":nonce", nonce);
-    if (!query.exec()) {
-        qDebug() << "ERROR" << query.lastError().type();
-    }
+    CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
 void TransactionsDBStorage::addPayment(const Transaction &trans)
@@ -55,12 +53,13 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
                trans.timestamp, trans.data, trans.fee, trans.nonce);
 }
 
-std::list<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QString &address, const QString &currency,
+std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QString &address, const QString &currency,
                                                                  qint64 offset, qint64 count, bool asc) const
 {
-    std::list<Transaction> res;
+    std::vector<Transaction> res;
     QSqlQuery query(database());
-    query.prepare(selectPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")));
+    CHECK(query.prepare(selectPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+          query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":offset", offset);
@@ -70,12 +69,13 @@ std::list<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QStrin
     return res;
 }
 
-std::list<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QString &currency,
+std::vector<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QString &currency,
                                                                      qint64 offset, qint64 count, bool asc) const
 {
-    std::list<Transaction> res;
+    std::vector<Transaction> res;
     QSqlQuery query(database());
-    query.prepare(selectPaymentsForCurrency.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")));
+    CHECK(query.prepare(selectPaymentsForCurrency.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+          query.lastError().text().toStdString());
     query.bindValue(":currency", currency);
     query.bindValue(":offset", offset);
     query.bindValue(":count", count);
@@ -87,7 +87,7 @@ std::list<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QStri
 void TransactionsDBStorage::removePaymentsForDest(const QString &address, const QString &currency)
 {
     QSqlQuery query(database());
-    query.prepare(deletePaymentsForAddress);
+    CHECK(query.prepare(deletePaymentsForAddress), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -96,7 +96,7 @@ void TransactionsDBStorage::removePaymentsForDest(const QString &address, const 
 qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address, const QString &currency, bool input)
 {
     QSqlQuery query(database());
-    query.prepare(selectPaymentsCountForAddress);
+    CHECK(query.prepare(selectPaymentsCountForAddress), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":input", input);
@@ -110,7 +110,7 @@ qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address,
 BigNumber TransactionsDBStorage::calcInValueForAddress(const QString &address, const QString &currency)
 {
     QSqlQuery query(database());
-    query.prepare(selectInPaymentsValuesForAddress);
+    CHECK(query.prepare(selectInPaymentsValuesForAddress), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -128,7 +128,7 @@ BigNumber TransactionsDBStorage::calcInValueForAddress(const QString &address, c
 BigNumber TransactionsDBStorage::calcOutValueForAddress(const QString &address, const QString &currency)
 {
     QSqlQuery query(database());
-    query.prepare(selectOutPaymentsValuesForAddress);
+    CHECK(query.prepare(selectOutPaymentsValuesForAddress), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -144,16 +144,13 @@ BigNumber TransactionsDBStorage::calcOutValueForAddress(const QString &address, 
 void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
 {
     QSqlQuery query(database());
-    query.prepare(insertTracked);
+    CHECK(query.prepare(insertTracked), query.lastError().text().toStdString());
     query.bindValue(":currency", currency);
     query.bindValue(":address", address);
     query.bindValue(":name", name);
     query.bindValue(":type", type);
     query.bindValue(":tgroup", tgroup);
-    if (!query.exec()) {
-        qDebug() << "ERROR" << query.lastError().type();
-    }
-
+    CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
 void TransactionsDBStorage::addTracked(const AddressInfo &info)
@@ -161,11 +158,11 @@ void TransactionsDBStorage::addTracked(const AddressInfo &info)
     addTracked(info.currency, info.address, info.name, info.type, info.group);
 }
 
-std::list<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString &tgroup)
+std::vector<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString &tgroup)
 {
-    std::list<AddressInfo> res;
+    std::vector<AddressInfo> res;
     QSqlQuery query(database());
-    query.prepare(selectTrackedForGroup);
+    CHECK(query.prepare(selectTrackedForGroup), query.lastError().text().toStdString());
     query.bindValue(":tgroup", tgroup);
     CHECK(query.exec(), query.lastError().text().toStdString());
     while (query.next()) {
@@ -175,12 +172,12 @@ std::list<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString &
                          tgroup,
                          query.value("name").toString()
                          );
-        res.push_front(info);
+        res.push_back(info);
     }
     return res;
 }
 
-void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::list<Transaction> &payments) const
+void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const
 {
     while (query.next()) {
         Transaction trans;
@@ -192,7 +189,7 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::list<Trans
         trans.value = query.value("value").toString();
         trans.data = query.value("data").toString();
         trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
-        trans.fee = query.value("fee").toLongLong();
+        trans.fee = query.value("fee").toString();
         trans.nonce = query.value("nonce").toLongLong();
         trans.isInput = query.value("isInput").toBool();
         payments.push_back(trans);

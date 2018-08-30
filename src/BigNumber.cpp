@@ -57,14 +57,14 @@ BigNumber &BigNumber::operator-=(const BigNumber &rhs)
 
 const BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs)
 {
-    BigNumber res;
-    CHECK(BN_add(res.ptr.get(), lhs.ptr.get(), rhs.ptr.get()), "BN error");
+    BigNumber res(lhs);
+    res += rhs;
     return res;
 }
 
 const BigNumber operator-(const BigNumber &lhs, const BigNumber &rhs)
 {
-    BigNumber res;
-    CHECK(BN_sub(res.ptr.get(), lhs.ptr.get(), rhs.ptr.get()), "BN error");
+    BigNumber res(lhs);
+    res -= rhs;
     return res;
 }

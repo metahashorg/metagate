@@ -3,9 +3,13 @@
 
 #include "dbstorage.h"
 
+#include "Messenger/Message.h"
+
 class MessengerDBStorage : public DBStorage
 {
 public:
+    using IdCounterPair = std::pair<DbId, Message::Counter>;
+
     MessengerDBStorage(const QString &path = QString());
 
     virtual void init(bool force = false) override;

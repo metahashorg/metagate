@@ -19,13 +19,13 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "value TEXT, "
                                                 "ts INT8, "
                                                 "data TEXT, "
-                                                "fee INTEGER, "
+                                                "fee TEXT, "
                                                 "nonce INTEGER"
                                                 ")";
 
 static const QString createPaymentsSortingIndex = "CREATE INDEX paymentsSortingIdx ON payments(ts ASC, txid ASC)";
 static const QString createPaymentsUniqueIndex = "CREATE UNIQUE INDEX paymentsUniqueIdx ON payments ( "
-                                                    "currency, txid, address, isInput ) ";
+                                                    "currency ASC, address ASC, txid ASC, isInput ASC ) ";
 
 static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -37,7 +37,7 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 ")";
 
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
-                                                    "currency, address, name, type, tgroup ) ";
+                                                    "tgroup, address, currency, name, type ) ";
 
 static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce) "
                                         "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce)";
