@@ -58,9 +58,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     tcpClient.moveToThread(&thread1);
 
     timerSendTx.moveToThread(&thread1);
-    timerSendTx.setInterval(milliseconds(100).count()); // TODO сделать так, чтобы таймер запускался только когда нужно, а не постоянно чекал событие
+    timerSendTx.setInterval(milliseconds(100).count());
     CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
-    CHECK(timerSendTx.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
     CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
     moveToThread(&thread1); // TODO вызывать в TimerClass
@@ -339,6 +338,10 @@ BEGIN_SLOT_WRAPPER
             iter++;
         }
     }
+    if (sendTxWathcers.empty()) {
+        LOG << "Timer send stop";
+        timerSendTx.stop();
+    }
 END_SLOT_WRAPPER
 }
 
@@ -349,6 +352,8 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
 
     const time_point now = ::now();
     sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers)));
+    LOG << "Timer send start";
+    timerSendTx.start();
 }
 
 void Transactions::onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet) {
