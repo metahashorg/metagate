@@ -112,7 +112,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messen
 void MainWindow::onUpdateMhsReferences() {
 BEGIN_SLOT_WRAPPER
     client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response, const TypedException &exception) {
-        LOG << "Set mappings mh " << response;
+        LOG << "Set mappings mh " << QString::fromStdString(response).simplified();
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         pagesMappings.setMappingsMh(QString::fromStdString(response));
     });
