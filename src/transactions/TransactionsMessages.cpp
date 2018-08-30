@@ -32,11 +32,11 @@ BalanceInfo parseBalanceResponse(const QString &response) {
     CHECK(json.contains("spent") && json.value("spent").isDouble(), "Incorrect json: spent field not found");
     result.spent = QString::fromStdString(std::to_string(uint64_t(json.value("spent").toDouble())));
     CHECK(json.contains("count_received") && json.value("count_received").isDouble(), "Incorrect json: count_received field not found");
-    result.countReceived = json.value("count_received").toDouble();
+    result.countReceived = static_cast<uint64_t>(json.value("count_received").toDouble());
     CHECK(json.contains("count_spent") && json.value("count_spent").isDouble(), "Incorrect json: count_spent field not found");
-    result.countSpent = json.value("count_spent").toDouble();
+    result.countSpent = static_cast<uint64_t>(json.value("count_spent").toDouble());
     CHECK(json.contains("currentBlock") && json.value("currentBlock").isDouble(), "Incorrect json: currentBlock field not found");
-    result.currBlockNum = json.value("currentBlock").toDouble();
+    result.currBlockNum = static_cast<uint64_t>(json.value("currentBlock").toDouble());
 
     return result;
 }
@@ -68,9 +68,9 @@ static Transaction parseTransaction(const QJsonObject &txJson) {
         res.data = txJson.value("data").toString();
     }
     CHECK(txJson.contains("timestamp") && txJson.value("timestamp").isDouble(), "Incorrect json: timestamp field not found");
-    res.timestamp = txJson.value("timestamp").toDouble();
+    res.timestamp = static_cast<uint64_t>(txJson.value("timestamp").toDouble());
     if (txJson.contains("fee") && txJson.value("fee").isDouble()) {
-        res.fee = txJson.value("fee").toDouble();
+        res.fee = QString::fromStdString(std::to_string(static_cast<int64_t>(txJson.value("fee").toDouble())));
     }
     if (res.fee.isEmpty() || res.fee.isNull()) {
         res.fee = "0";

@@ -124,7 +124,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         AddressInfo info(currency, address, type, group, name);
-        emit transactionsManager->registerAddresses({info}, [this, address, currency, makeFunc](const TypedException &exception) {
+        emit transactionsManager->registerAddresses({info}, [address, currency, makeFunc](const TypedException &exception) {
             makeFunc(exception, address, currency);
         });
     });
@@ -170,7 +170,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->registerAddresses(infos, [this, makeFunc](const TypedException &exception) {
+        emit transactionsManager->registerAddresses(infos, [makeFunc](const TypedException &exception) {
             makeFunc(exception);
         });
     });
@@ -194,7 +194,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getAddresses(group, [this, makeFunc](const std::vector<AddressInfo> &infos, const TypedException &exception) {
+        emit transactionsManager->getAddresses(group, [makeFunc](const std::vector<AddressInfo> &infos, const TypedException &exception) {
             LOG << "Addresses getted " << infos.size();
             const QJsonDocument &result = addressInfoToJson(infos);
             makeFunc(exception, result);
@@ -220,7 +220,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->setCurrentGroup(group, [this, makeFunc](const TypedException &exception) {
+        emit transactionsManager->setCurrentGroup(group, [makeFunc](const TypedException &exception) {
             makeFunc(exception);
         });
     });
@@ -244,7 +244,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getTxs(address, currency, fromTx, count, asc, [this, address, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+        emit transactionsManager->getTxs(address, currency, fromTx, count, asc, [address, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
             LOG << "Get txs ok " << address << " " << currency << " " << txs.size();
             makeFunc(exception, address, currency, txsToJson(txs));
         });
@@ -269,7 +269,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getTxsAll(currency, fromTx, count, asc, [this, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+        emit transactionsManager->getTxsAll(currency, fromTx, count, asc, [currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
             LOG << "Get txs ok " << currency << " " << txs.size();
             makeFunc(exception, currency, txsToJson(txs));
         });
@@ -294,7 +294,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getTxs2(address, currency, from, count, asc, [this, address, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+        emit transactionsManager->getTxs2(address, currency, from, count, asc, [address, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
             LOG << "Get txs ok " << address << " " << currency << " " << txs.size();
             makeFunc(exception, address, currency, txsToJson(txs));
         });
@@ -319,7 +319,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getTxsAll2(currency, from, count, asc, [this, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+        emit transactionsManager->getTxsAll2(currency, from, count, asc, [currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
             LOG << "Get txs ok " << currency << " " << txs.size();
             makeFunc(exception, currency, txsToJson(txs));
         });
@@ -344,7 +344,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->calcBalance(address, currency, [this, currency, address, makeFunc](const BalanceInfo &balance, const TypedException &exception) {
+        emit transactionsManager->calcBalance(address, currency, [currency, address, makeFunc](const BalanceInfo &balance, const TypedException &exception) {
             LOG << "Get balance ok " << currency << " " << address;
             makeFunc(exception, address, currency, balanceToJson(balance));
         });
@@ -369,7 +369,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getTxFromServer(txHash, type, [this, txHash, type, makeFunc](const Transaction &tx, const TypedException &exception) {
+        emit transactionsManager->getTxFromServer(txHash, type, [txHash, type, makeFunc](const Transaction &tx, const TypedException &exception) {
             LOG << "Get transaction ok " << txHash << " " << type;
             makeFunc(exception, txHash, type, txInfoToJson(tx));
         });

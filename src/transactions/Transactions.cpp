@@ -156,8 +156,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
 
         if (balanceStruct->countResponses == 0 && !balanceStruct->server.isEmpty()) {
-            const uint64_t countReceived = db.getPaymentsCountForAddress(address, currency, false);
-            const uint64_t countSpent = db.getPaymentsCountForAddress(address, currency, true);
+            const uint64_t countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
+            const uint64_t countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
             const uint64_t countAll = countReceived + countSpent;
             const uint64_t countInServer = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
             LOG << "Automatic get txs " << address << " " << countAll << " " << countInServer;
@@ -274,8 +274,8 @@ void Transactions::onCalcBalance(const QString &address, const QString &currency
 BEGIN_SLOT_WRAPPER
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
-        balance.countReceived = db.getPaymentsCountForAddress(address, currency, false);
-        balance.countSpent = db.getPaymentsCountForAddress(address, currency, true);
+        balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
+        balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
         balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
         balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
     });
@@ -355,7 +355,7 @@ void Transactions::onSendTransaction(const QString &requestId, int countServersS
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const std::vector<QString> servers = nsLookup.getRandom(typeSend, countServersSend, countServersSend);
+        const std::vector<QString> servers = nsLookup.getRandom(typeSend, static_cast<size_t>(countServersSend), static_cast<size_t>(countServersSend));
 
         struct ServerResponse {
             bool isSended = false;
@@ -371,7 +371,7 @@ BEGIN_SLOT_WRAPPER
                 });
 
                 if (!exception.isSet() && !servResp->isSended) {
-                    addToSendTxWatcher(result.toStdString(), countServersGet, typeGet);
+                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(countServersGet), typeGet);
                     servResp->isSended = true;
                 }
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
@@ -392,7 +392,7 @@ BEGIN_SLOT_WRAPPER
 
         client.sendMessagePost(server, message, [this, callback](const std::string &response, const TypedException &error) mutable {
             Transaction tx;
-            const TypedException exception = apiVrapper2([&, this] {
+            const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!error.isSet(), error.numError, error.description);
                 tx = parseGetTxResponse(QString::fromStdString(response));
             });
