@@ -36,6 +36,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2), "not connect onGetTxsAll2");
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
     CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
+    CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
@@ -44,7 +45,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
-    qRegisterMetaType<GetTxCallback>("GetAddressesCallback");
+    qRegisterMetaType<GetTxCallback>("GetTxCallback");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
 

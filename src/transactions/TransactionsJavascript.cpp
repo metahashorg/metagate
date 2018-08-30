@@ -362,7 +362,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxFromServerResultJs";
 
-    LOG << "calc balance address " << txHash << " " << type;
+    LOG << "getTxFromServer address " << txHash << " " << type;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &txHash, const QString &type, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, txHash, type, result);
