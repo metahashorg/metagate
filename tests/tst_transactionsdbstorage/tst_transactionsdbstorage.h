@@ -19,7 +19,6 @@ private slots:
     void testGetPayments();
 
 private:
-    transactions::TransactionsDBStorage db;
 };
 
 #endif // TST_MESSENGERDBSTORAGE_H

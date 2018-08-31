@@ -28,6 +28,13 @@ DBStorage::DBStorage(const QString &dbpath, const QString &dbname, QObject *pare
     openDB();
 }
 
+DBStorage::~DBStorage()
+{
+    m_db.close();
+    m_db = QSqlDatabase();
+    QSqlDatabase::removeDatabase(m_dbName);
+}
+
 QString DBStorage::dbName() const
 {
     return  m_dbName;

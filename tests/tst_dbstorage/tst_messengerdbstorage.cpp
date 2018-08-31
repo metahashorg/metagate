@@ -2,6 +2,8 @@
 
 #include "messengerdbstorage.h"
 
+const QString dbName = "messenger.db";
+
 tst_MessengerDBStorage::tst_MessengerDBStorage(QObject *parent)
     : QObject(parent)
 {
@@ -9,11 +11,66 @@ tst_MessengerDBStorage::tst_MessengerDBStorage(QObject *parent)
 
 void tst_MessengerDBStorage::testDB()
 {
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
     MessengerDBStorage db;
     db.init();
     DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
     DBStorage::DbId id2 = db.getUserId("ddfjgjgj");
     QCOMPARE(id1, id2);
+}
+
+void tst_MessengerDBStorage::testMessengerDB2()
+{
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
+    MessengerDBStorage db;
+    db.init();
+    DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
+    DBStorage::DbId id2 = db.getUserId("ddfjgjgj");
+    QCOMPARE(id1, id2);
+
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
+    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 3000), 1);
+    qDebug() << "answer " << db.getMessagesForUserAndDestNum("1234", "3454", 5000, 20).size();
+    qDebug() << "answer " << db.getMessagesCountForUserAndDest("1234", "3454", 3000);
+    qDebug() << db.getUserId("user1");
+    qDebug() << db.getUserId("user2");
+    qDebug() << db.getUserId("user3");
+    qDebug() << db.getUserId("user1");
+    qDebug() << db.getUserId("user5");
+    qDebug() << db.getUserId("user6");
+
+    db.addMessage("user6", "user7", "Hello!", 8458864, 1, true, true, true, "jkfjkjttrjkgfjkgfjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 1, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 2, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 3, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 4, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 5, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 6, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", 84583864, 7, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
+    qDebug() << "?" << db.hasMessageWithCounter("1234", 4000);
+    qDebug() << "?" << db.hasMessageWithCounter("1234", 2000);
+    qDebug() << "?" << db.hasUnconfirmedMessageWithHash("1234", "asdfdf");
+    qDebug() << "?" << db.hasUnconfirmedMessageWithHash("user7", "dfjkjkgfjkgfjkgfjkjk");
+
+    /*
+    qDebug() << "size" << db.getMessagesForUserAndDestNum("user7", "user1", 10, 1000).size();
+
+    std::list<Message> msgs = db.getMessagesForUser("user7", 1, 3);
+    qDebug() << "count " << msgs.size();
+
+    qDebug() << db.getMessageMaxCounter("user7");
+    qDebug() << db.getMessageMaxConfirmedCounter("user7");
+    qDebug() << db.getMessageMaxConfirmedCounter("userururut");
+
+    qDebug() << db.getUsersList();
+*/
 }
 
 void tst_MessengerDBStorage::testQRCoderEncodeDecode_data()

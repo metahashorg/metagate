@@ -1,5 +1,6 @@
 #include "tst_transactionsdbstorage.h"
 
+const QString dbName = "payments.db";
 
 tst_TransactionsDBStorage::tst_TransactionsDBStorage(QObject *parent)
     : QObject(parent)
@@ -8,6 +9,9 @@ tst_TransactionsDBStorage::tst_TransactionsDBStorage(QObject *parent)
 
 void tst_TransactionsDBStorage::testDB1()
 {
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
+    transactions::TransactionsDBStorage db;
     db.init();
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865);
     db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", true, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865);
@@ -21,7 +25,10 @@ void tst_TransactionsDBStorage::testDB1()
 
 void tst_TransactionsDBStorage::testBigNumSum()
 {
-    db.init(true);
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
+    transactions::TransactionsDBStorage db;
+    db.init();
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865);
     db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", "100", 8896865);
     db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", "100", 8896865);
@@ -39,7 +46,10 @@ void tst_TransactionsDBStorage::testBigNumSum()
 
 void tst_TransactionsDBStorage::testGetPayments()
 {
-    db.init(true);
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
+    transactions::TransactionsDBStorage db;
+    db.init();
     for (int n = 0; n < 100; n++) {
         db.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", true, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865);
         db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address20", true, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", "100", 8896865);
@@ -69,6 +79,7 @@ void tst_TransactionsDBStorage::testGetPayments()
             QCOMPARE(it->address, QStringLiteral("address100"));
         r++;
     }
+    qDebug() << db.dbName();
 }
 
 

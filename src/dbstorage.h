@@ -11,6 +11,7 @@ public:
     using DbId = qint64;
 
     explicit DBStorage(const QString &dbpath, const QString &dbname, QObject *parent = nullptr);
+    virtual ~DBStorage();
 
     QString dbName() const;
 
