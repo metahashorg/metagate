@@ -59,6 +59,7 @@ LastHtmlVersion Uploader::getLastHtmlVersion() {
     const auto &last = getLastVersion(result.htmlsRootPath);
     result.folderName = last.first;
     result.lastVersion = last.second;
+    result.fullPath = makePath(result.htmlsRootPath, result.folderName, result.lastVersion);
     return result;
 }
 

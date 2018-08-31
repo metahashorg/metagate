@@ -23,6 +23,8 @@ struct LastHtmlVersion {
     QString folderName;
 
     QString lastVersion;
+
+    QString fullPath;
 };
 
 class Uploader : public QObject {

@@ -69,6 +69,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messen
     configureMenu();
 
     lastHtmls = Uploader::getLastHtmlVersion();
+    pagesMappings.setFullPagesPath(lastHtmls.fullPath);
 
     loadFile("login.html");
     addElementToHistoryAndCommandLine("app://Login", true, true);
@@ -397,7 +398,7 @@ void MainWindow::loadUrl(const QString &page) {
 
 void MainWindow::loadFile(const QString &pageName) {
     LOG << "Reload. Last version " << lastHtmls.lastVersion;
-    loadUrl("file:///" + makePath(lastHtmls.htmlsRootPath, lastHtmls.folderName, lastHtmls.lastVersion, pageName));
+    loadUrl("file:///" + makePath(lastHtmls.fullPath, pageName));
 }
 
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
