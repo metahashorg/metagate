@@ -16,10 +16,6 @@ private slots:
     void testDB();
 
     void testMessengerDB2();
-
-    void testQRCoderEncodeDecode_data();
-    void testQRCoderEncodeDecode();
-
 };
 
 #endif // TST_MESSENGERDBSTORAGE_H
