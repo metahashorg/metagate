@@ -25,6 +25,10 @@ BigNumber::BigNumber(const BigNumber &bn)
 void BigNumber::setDecimal(const QByteArray &dec)
 {
     BIGNUM *p = ptr.get();
+    if (dec.isEmpty()) {
+        BN_zero(p);
+        return;
+    }
     QByteArray str = dec + '\0';
     BN_dec2bn(&p, str.data());
 }
