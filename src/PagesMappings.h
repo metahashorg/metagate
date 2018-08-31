@@ -89,6 +89,10 @@ public:
 
     void setMappings(QString mapping);
 
+    void setFullPagesPath(QString pagesPath) {
+        fullPagesPath = pagesPath;
+    }
+
     bool compareTwoPaths(const QString &path1, const QString &path2) const;
 
     const PageInfo& getSearchPage() const;
@@ -127,6 +131,8 @@ private:
     std::map<UrlName, QString> urlToName;
 
     PageInfo searchPage;
+
+    QString fullPagesPath;
 
 };
 

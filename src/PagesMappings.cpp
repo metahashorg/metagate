@@ -292,12 +292,16 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
             findSharp = url.size();
         }
         const QString url3 = url.left(findSharp);
-        const int find = url3.lastIndexOf('/');
-        if (find != -1) {
-            Optional<QString> found = findUrl(url3.mid(find + 1), url.mid(findSharp));
-            if (found.has_value()) {
-                return found.value();
-            }
+        CHECK(!fullPagesPath.isEmpty(), "full pages path empty");
+        int find = url3.lastIndexOf(fullPagesPath);
+        CHECK(find != -1, "Incorrect location " + url.toStdString());
+        find += fullPagesPath.size();
+        if (url3.at(find) == "/") {
+            find++;
+        }
+        Optional<QString> found = findUrl(url3.mid(find), url.mid(findSharp));
+        if (found.has_value()) {
+            return found.value();
         }
     } else {
         int foundSlash = -1;
