@@ -11,9 +11,7 @@ BigNumber::BigNumber()
 BigNumber::BigNumber(const QByteArray &dec)
     : BigNumber()
 {
-    BIGNUM *p = ptr.get();
-    QByteArray str = dec + '\0';
-    BN_dec2bn(&p, str.data());
+    setDecimal(dec);
 }
 
 BigNumber::BigNumber(const BigNumber &bn)
