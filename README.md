@@ -75,7 +75,7 @@ Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString passwo
 createRsaKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 
 Q_INVOKABLE void getRsaPublicKey(QString requestId, QString address);
-Отдает публичный ключ от rsa ключа
+# Returns public key from rsa key
 getRsaPublicKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 
 Q_INVOKABLE void encryptMessage(QString requestId, QString publicKeyHex, QString message);
@@ -204,7 +204,7 @@ Q_INVOKABLE void signMessageBtcPswdUsedUtxos(QString requestId, QString address,
   # value - is needed for sending. Possible variants: "all" or decimal number
   # fees - Possible variants: "auto" or decimal number
   # estimateComissionInSatoshi if there was "auto", here must be specified a decimal number
-  # jsonUsedUtxos использованные транзакции. Пустой массив или значение из предыдущего результата вызова функции
+  # jsonUsedUtxos performed transactions. Empty array or value from the previous function call result
 # javascript is called after completion of this function 
 signMessageBtcUsedUtxosResultJs(requestId, transaction, jsonUsedUtxos, transactionHash, errorNum, errorMessage)
 
