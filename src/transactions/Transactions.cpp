@@ -58,9 +58,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     tcpClient.moveToThread(&thread1);
 
     timerSendTx.moveToThread(&thread1);
-    timerSendTx.setInterval(milliseconds(100).count()); // TODO сделать так, чтобы таймер запускался только когда нужно, а не постоянно чекал событие
+    timerSendTx.setInterval(milliseconds(100).count());
     CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
-    CHECK(timerSendTx.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
     CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
     moveToThread(&thread1); // TODO вызывать в TimerClass
@@ -156,8 +155,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
 
         if (balanceStruct->countResponses == 0 && !balanceStruct->server.isEmpty()) {
-            const uint64_t countReceived = db.getPaymentsCountForAddress(address, currency, false);
-            const uint64_t countSpent = db.getPaymentsCountForAddress(address, currency, true);
+            const uint64_t countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
+            const uint64_t countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
             const uint64_t countAll = countReceived + countSpent;
             const uint64_t countInServer = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
             LOG << "Automatic get txs " << address << " " << countAll << " " << countInServer;
@@ -274,8 +273,8 @@ void Transactions::onCalcBalance(const QString &address, const QString &currency
 BEGIN_SLOT_WRAPPER
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
-        balance.countReceived = db.getPaymentsCountForAddress(address, currency, false);
-        balance.countSpent = db.getPaymentsCountForAddress(address, currency, true);
+        balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
+        balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
         balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
         balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
     });
@@ -339,6 +338,10 @@ BEGIN_SLOT_WRAPPER
             iter++;
         }
     }
+    if (sendTxWathcers.empty()) {
+        LOG << "Timer send stop";
+        timerSendTx.stop();
+    }
 END_SLOT_WRAPPER
 }
 
@@ -349,13 +352,15 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
 
     const time_point now = ::now();
     sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers)));
+    LOG << "Timer send start";
+    timerSendTx.start();
 }
 
 void Transactions::onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const std::vector<QString> servers = nsLookup.getRandom(typeSend, countServersSend, countServersSend);
+        const std::vector<QString> servers = nsLookup.getRandom(typeSend, static_cast<size_t>(countServersSend), static_cast<size_t>(countServersSend));
 
         struct ServerResponse {
             bool isSended = false;
@@ -371,7 +376,7 @@ BEGIN_SLOT_WRAPPER
                 });
 
                 if (!exception.isSet() && !servResp->isSended) {
-                    addToSendTxWatcher(result.toStdString(), countServersGet, typeGet);
+                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(countServersGet), typeGet);
                     servResp->isSended = true;
                 }
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
@@ -392,7 +397,7 @@ BEGIN_SLOT_WRAPPER
 
         client.sendMessagePost(server, message, [this, callback](const std::string &response, const TypedException &error) mutable {
             Transaction tx;
-            const TypedException exception = apiVrapper2([&, this] {
+            const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!error.isSet(), error.numError, error.description);
                 tx = parseGetTxResponse(QString::fromStdString(response));
             });

@@ -2,13 +2,49 @@
 
 #include <QApplication>
 
+#include <thread>
+#include <mutex>
+#include <fstream>
+#include <iostream>
+
+#include <QDateTime>
+#include <QString>
+
 #include "utils.h"
 #include "Paths.h"
 
 #include "duration.h"
 
-std::ofstream __log_file__;
-std::ofstream __log_file2__;
+static std::ofstream __log_file__;
+static std::ofstream __log_file2__;
+
+static std::mutex mutGlobal;
+
+Log_ &Log_::operator <<(const QString &s) {
+    print(s.toStdString());
+    return *this;
+}
+
+Log_::Log_() {
+    const QDateTime now = QDateTime::currentDateTime();
+    const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
+    const auto tId = std::this_thread::get_id();
+    ssLog << std::hex << tId << std::dec << " " << time << " ";
+}
+
+void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
+    try {
+        const std::string &toCoutStr = ssCout.str();
+        const std::string &toLogStr = ssLog.str();
+
+        std::lock_guard<std::mutex> lock(mutGlobal);
+        std::cout << toCoutStr << *pManip;
+        __log_file__ << toLogStr << toCoutStr << *pManip;
+        __log_file2__ << toLogStr << toCoutStr << *pManip;
+    } catch (...) {
+        std::cerr << "Error";
+    }
+}
 
 void initLog() {
     const system_time_point now = ::system_now();

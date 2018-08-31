@@ -52,6 +52,13 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath);
     const system_time_point now = system_now();
     milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
+    bool isNotFull = false;
+    for (const NodeType &node: nodes) {
+        if (allNodesForTypes.find(node.type) == allNodesForTypes.end()) {
+            isNotFull = true;
+            break;
+        }
+    }
     if (lastFill - now >= hours(1)) {
         // Защита от перевода времени назад
         passedTime = UPDATE_PERIOD;
@@ -61,7 +68,7 @@ NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect finished");
 
     milliseconds msTimer;
-    if (passedTime >= UPDATE_PERIOD) {
+    if (passedTime >= UPDATE_PERIOD || isNotFull) {
         msTimer = 1ms;
     } else {
         msTimer = UPDATE_PERIOD - passedTime;
