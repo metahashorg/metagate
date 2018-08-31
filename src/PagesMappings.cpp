@@ -230,10 +230,21 @@ Optional<PageInfo> PagesMappings::findInternal(const QString &url) const {
     if (found == mappingsPages.end()) {
         int foundSlash = -1;
         auto findSymbols = [](const QString &url, const QString &prefix) {
+            bool isFound = false;
             int foundSlash = url.indexOf('/', prefix.size() + 1);
+            if (foundSlash == -1) {
+                foundSlash = url.size();
+            } else {
+                isFound = true;
+            }
             int found2 = url.indexOf('#', prefix.size() + 1);
             if (found2 == -1) {
                 found2 = url.size();
+            } else {
+                isFound = true;
+            }
+            if (!isFound) {
+                return -1;
             }
             foundSlash = std::min(foundSlash, found2);
             return foundSlash;
