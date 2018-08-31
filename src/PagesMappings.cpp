@@ -30,6 +30,9 @@ PagesMappings::Name::Name(const QString &text) {
     if (txt.endsWith('/')) {
         txt = txt.left(txt.size() - 1);
     }
+    if (txt.endsWith("#!")) {
+        txt = txt.left(txt.size() - 2);
+    }
     name = txt.toLower();
 }
 
