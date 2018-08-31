@@ -82,25 +82,21 @@ void tst_Wallet::testNotCreateBinMthTransaction_data() {
     QTest::addColumn<unsigned long long>("amount");
     QTest::addColumn<unsigned long long>("fee");
     QTest::addColumn<unsigned long long>("nonce");
-    QTest::addColumn<std::string>("answer");
 
     // incorrect address
     QTest::newRow("NotCreateBinTransaction 1")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6aa")
-        << 126894ULL << 55647ULL << 255ULL
-        << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
+        << 126894ULL << 55647ULL << 255ULL;
 
     // incorrect address
     QTest::newRow("NotCreateBinTransaction 2")
         << std::string("0x009806da73b1589f38630649bdee48467946d118059efd6a")
-        << 126894ULL << 55647ULL << 255ULL
-        << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
+        << 126894ULL << 55647ULL << 255ULL;
 
     // incorrect address
     QTest::newRow("NotCreateBinTransaction 3")
         << std::string("0x009806d22a73b1589f38630649bdee48467946d118059efd6aa")
-        << 126894ULL << 55647ULL << 255ULL
-        << std::string("009806da73b1589f38630649bdee48467946d118059efd6aabfbaeef0100fa5fd9faff0000");
+        << 126894ULL << 55647ULL << 255ULL;
 }
 
 void tst_Wallet::testNotCreateBinMthTransaction() {
@@ -108,7 +104,6 @@ void tst_Wallet::testNotCreateBinMthTransaction() {
     QFETCH(unsigned long long, amount);
     QFETCH(unsigned long long, fee);
     QFETCH(unsigned long long, nonce);
-    QFETCH(std::string, answer);
 
     QVERIFY_EXCEPTION_THROWN(Wallet::genTx(address, amount, fee, nonce, ""), TypedException);
 }
@@ -436,7 +431,6 @@ void tst_Wallet::testNotCreateBtcTransaction_data() {
     QTest::addColumn<unsigned long long>("amount");
     QTest::addColumn<unsigned long long>("fee");
     QTest::addColumn<QVariantList>("ins");
-    QTest::addColumn<std::string>("answer");
 
     // Неправильный wif
     QTest::newRow("NotBitcoinTransaction 1")
@@ -445,8 +439,7 @@ void tst_Wallet::testNotCreateBtcTransaction_data() {
         << 13240000ULL << 10000ULL
         << QVariantList{
                 QVariant(QVariantList{QVariant::fromValue(std::string("f49da89eba6ef0d4935bf2edf54700710327be0bbdc5db411ad7f016e51ef922")), QVariant(0U),
-                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(13250000ULL)})}
-        << std::string("010000000122f91ee516f0d71a41dbc5bd0bbe2703710047f5edf25b93d4f06eba9ea89df4000000006a47304402203292c3b97569f90b2c4458d2b8efdeaa0fbe1f8e65840eec99bcbc626911d5f302200b5ebf256033138129563286d525145a6e7b83fc85f2cc60295290064afd89e9012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffff01c006ca00000000001976a91433869dcc29235cd6d3369de263f1ab54463ee65688ac00000000");
+                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(13250000ULL)})};
 
     // Неправильный address
     QTest::newRow("NotBitcoinTransaction 4")
@@ -459,8 +452,7 @@ void tst_Wallet::testNotCreateBtcTransaction_data() {
                 QVariant(QVariantList{QVariant::fromValue(std::string("94026dae0058bd0059b84e9910e5f0f30153f4b78cdeb8f1b59b54ad72bd98ca")), QVariant(0U),
                     QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(100000000ULL)}),
                 QVariant(QVariantList{QVariant::fromValue(std::string("0c48634b6ebf0a07430b1c08b53df81159d24902346d396bfd2d3cba2852e384")), QVariant(1U),
-                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1415000ULL)})}
-        << std::string("0100000003b82277b5cd2078fb5a3ede37a14c34f0b2061a5579d8c479688f175af2daec72010000006b483045022100e331f87c1da0dc1f25bcd28ffd61e96339666fc5ca4729e89b2e940061fcdd6d022011748b41655046934c9e124a4ae307eb8f67a8c61b9d957e2cca0b95fcb21397012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffffca98bd72ad549bb5f1b8de8cb7f45301f3f0e510994eb85900bd5800ae6d0294000000006b483045022100938db1a910e54efdf55cc5228bb7c77b5e40b19ef30eaa60ca45d40fab7f316602202bf5298ad3cfc0cb461491b31303138ad74ff61537193cb4d9b24d50a4a3a36e012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffff84e35228ba3c2dfd6b396d340249d25911f83db5081c0b43070abf6e4b63480c010000006b483045022100ff7bc69634e30b614068733750e7c6e8a6906f3116f26bf9d010289bc5b185fb0220467427fd7fce3fb97f217716c00f764354ad929fb527d3b57448667b222080fc012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffff0280f0fa02000000001976a91433869dcc29235cd6d3369de263f1ab54463ee65688ac38be2e03000000001976a9145e05738474a2d065b554bd8564857e166031570688ac00000000");
+                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(1415000ULL)})};
 }
 
 void tst_Wallet::testNotCreateBtcTransaction() {
@@ -469,7 +461,6 @@ void tst_Wallet::testNotCreateBtcTransaction() {
     QFETCH(unsigned long long, amount);
     QFETCH(unsigned long long, fee);
     QFETCH(QVariantList, ins);
-    QFETCH(std::string, answer);
 
     std::vector<BtcInput> is;
     BtcInput input;
@@ -492,7 +483,6 @@ void tst_Wallet::testNotCreateBtcTransaction2_data() {
     QTest::addColumn<unsigned long long>("amount");
     QTest::addColumn<unsigned long long>("fee");
     QTest::addColumn<QVariantList>("ins");
-    QTest::addColumn<std::string>("answer");
 
     // Мало денег
     QTest::newRow("NotBitcoinTransaction 2")
@@ -501,8 +491,7 @@ void tst_Wallet::testNotCreateBtcTransaction2_data() {
         << 2000000ULL << 10000ULL
         << QVariantList{
                 QVariant(QVariantList{QVariant::fromValue(std::string("90ecb1c712d4d9eb831d13db141726460578718382587b1ab1a3cfeaa8c472d5")), QVariant(0U),
-                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(400000ULL)})}
-        << std::string("0100000001d572c4a8eacfa3b11a7b58828371780546261714db131d83ebd9d412c7b1ec90000000006a473044022067ac4d831d9670d63856e7ce6aa7ecfffca2dc07fb32eef7edaafe35bf9c30c402204472fc396865501cfbe9955f0f5476cd4f9f5a95b7d7658eb781dcc6873042b9012102ccb646cc5cc5fcb76e8ff0576366c71dd729f8395f25e863215e44d8d344a907ffffffff0280841e00000000001976a91433869dcc29235cd6d3369de263f1ab54463ee65688ac705d1e00000000001976a9145e05738474a2d065b554bd8564857e166031570688ac00000000");
+                    QVariant::fromValue(std::string("76a9145e05738474a2d065b554bd8564857e166031570688ac")), QVariant(400000ULL)})};
 }
 
 void tst_Wallet::testNotCreateBtcTransaction2() {
@@ -511,7 +500,6 @@ void tst_Wallet::testNotCreateBtcTransaction2() {
     QFETCH(unsigned long long, amount);
     QFETCH(unsigned long long, fee);
     QFETCH(QVariantList, ins);
-    QFETCH(std::string, answer);
 
     std::vector<BtcInput> is;
     BtcInput input;
