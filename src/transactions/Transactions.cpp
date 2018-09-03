@@ -339,7 +339,7 @@ BEGIN_SLOT_WRAPPER
             });
         }
 
-        if (now - watcher.startTime >= seconds(5)) {
+        if (watcher.isTimeout(now)) {
             iter = sendTxWathcers.erase(iter);
         } else if (watcher.isEmpty()) {
             iter = sendTxWathcers.erase(iter);
@@ -354,18 +354,18 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group) {
+void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group, const seconds &timeout) {
     if (sendTxWathcers.find(hash) != sendTxWathcers.end()) {
         return;
     }
 
     const time_point now = ::now();
-    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers)));
+    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers), timeout));
     LOG << "Timer send start";
     timerSendTx.start();
 }
 
-void Transactions::onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet) {
+void Transactions::onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet, seconds timeout) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
@@ -377,7 +377,7 @@ BEGIN_SLOT_WRAPPER
 
         std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>();
         for (const QString &server: servers) {
-            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet](const std::string &response, const TypedException &error) {
+            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet, timeout](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
@@ -385,7 +385,7 @@ BEGIN_SLOT_WRAPPER
                 });
 
                 if (!exception.isSet() && !servResp->isSended) {
-                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(countServersGet), typeGet);
+                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(countServersGet), typeGet, timeout);
                     servResp->isSended = true;
                 }
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);

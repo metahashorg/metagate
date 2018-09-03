@@ -50,13 +50,13 @@ signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMes
 
 Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
-paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent"}
+paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
-paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent"}
+paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageUnDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
@@ -118,13 +118,13 @@ signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, error
 
 Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
-paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent"}
+paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageDelegateMhcResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
-paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent"}
+paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageUnDelegateMhcResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 

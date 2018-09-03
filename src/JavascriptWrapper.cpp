@@ -403,6 +403,8 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         const QString typeSend = docParams.value("typeSend").toString();
         CHECK_TYPED(docParams.contains("typeGet") && docParams.value("typeGet").isString(), TypeErrors::INCORRECT_USER_DATA, "typeGet not found in params");
         const QString typeGet = docParams.value("typeGet").toString();
+        CHECK_TYPED(docParams.contains("timeout_sec") && docParams.value("timeout_sec").isDouble(), TypeErrors::INCORRECT_USER_DATA, "timeout_sec not found in params");
+        const int timeout_sec = docParams.value("timeout_sec").toInt();
 
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
@@ -416,7 +418,7 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         bool tmp;
         wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey);
 
-        emit transactionsManager.sendTransaction(requestId, countServersSend, countServersGet, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), typeSend, typeGet);
+        emit transactionsManager.sendTransaction(requestId, countServersSend, countServersGet, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), typeSend, typeGet, seconds(timeout_sec));
         result = "Ok";
     });
 

@@ -33,15 +33,14 @@ private:
     class SendedTransactionWatcher {
     public:
 
-        const time_point startTime;
-
         SendedTransactionWatcher(const SendedTransactionWatcher &) = delete;
         SendedTransactionWatcher(SendedTransactionWatcher &&) = delete;
         SendedTransactionWatcher& operator=(const SendedTransactionWatcher &) = delete;
         SendedTransactionWatcher& operator=(SendedTransactionWatcher &&) = delete;
 
-        SendedTransactionWatcher(Transactions &txManager, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers)
+        SendedTransactionWatcher(Transactions &txManager, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers, const seconds &timeout)
             : startTime(startTime)
+            , timeout(timeout)
             , txManager(txManager)
             , hash(hash)
             , servers(servers.begin(), servers.end())
@@ -56,6 +55,10 @@ private:
 
         bool isEmpty() const {
             return allServers.empty();
+        }
+
+        bool isTimeout(const time_point &now) const {
+            return now - startTime >= timeout;
         }
 
         void removeServer(const QString &server) {
@@ -80,6 +83,9 @@ private:
         }
 
     private:
+        const time_point startTime;
+        const seconds timeout;
+
         Transactions &txManager;
 
         TransactionHash hash;
@@ -127,7 +133,7 @@ signals:
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void sendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet);
+    void sendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet, seconds timeout);
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -149,7 +155,7 @@ public slots:
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet);
+    void onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet, seconds timeout);
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -176,7 +182,7 @@ private:
 
     BalanceInfo getBalance(const QString &address, const QString &currency);
 
-    void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group);
+    void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group, const seconds &timeout);
 
     void sendErrorGetTx(const TransactionHash &hash, const QString &server);
 
