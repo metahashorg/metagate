@@ -46,6 +46,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
     qRegisterMetaType<GetTxCallback>("GetTxCallback");
+    qRegisterMetaType<seconds>("seconds");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
 

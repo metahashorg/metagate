@@ -70,7 +70,7 @@
     function sendTx() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", "0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff", "10", "0", document.createWalletForm.nonce.value, "10", '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate"}') ;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", "0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff", "10", "0", document.createWalletForm.nonce.value, "10", '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
         });
     }
     
