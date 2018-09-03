@@ -4,19 +4,13 @@
 #include <string>
 #include <vector>
 
-#include <cryptopp/keccak.h>
-#include <cryptopp/eccrypto.h>
-
 #include "ethtx/ethtx.h"
 #include "ethtx/utils2.h"
 #include "ethtx/const.h"
 #include "ethtx/cert.h"
-#include "ethtx/scrypt/libscrypt.h"
 
 #include "utils.h"
 #include "check.h"
-
-#include <iostream>
 
 const std::string EthWallet::PREFIX_ONE_KEY = "eth:";
 

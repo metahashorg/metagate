@@ -2,15 +2,11 @@
 
 #include "btctx/wif.h"
 #include "ethtx/utils2.h"
-#include "btctx/Base58.h"
 #include "btctx/btctx.h"
 
 #include "check.h"
 #include "utils.h"
 #include "Log.h"
-
-#include <algorithm>
-#include <iostream>
 
 const std::string BtcWallet::PREFIX_ONE_KEY = "btc:";
 
