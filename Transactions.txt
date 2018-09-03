@@ -17,7 +17,7 @@ Q_INVOKABLE void getAddresses(QString group);
 Результат вернется в функцию
 txsGetAddressesResultJs(result, errorNum, errorMessage)
 где result - json массив вида
-[{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\"}]
+[{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\",\"balance\":{\"countReceived\":\"1\",\"countSpent\":\"0\",\"currBlock\":\"0\",\"received\":\"4000000000\",\"spent\":\"0\"}}]
 
 Q_INVOKABLE void setCurrentGroup(QString group);
 Устанавливает группу, по которой будет идти автоматическое отслеживание изменений

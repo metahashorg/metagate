@@ -174,6 +174,8 @@ private:
 
     std::vector<AddressInfo> getAddressesInfos(const QString &group);
 
+    BalanceInfo getBalance(const QString &address, const QString &currency);
+
     void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group);
 
     void sendErrorGetTx(const TransactionHash &hash, const QString &server);

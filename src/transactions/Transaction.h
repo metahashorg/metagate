@@ -35,6 +35,8 @@ struct AddressInfo {
     QString group;
     QString name;
 
+    BalanceInfo balance;
+
     AddressInfo(const QString &currency, const QString &address, const QString &type, const QString &group, const QString &name)
         : currency(currency)
         , address(address)

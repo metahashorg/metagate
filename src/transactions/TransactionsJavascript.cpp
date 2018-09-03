@@ -46,15 +46,18 @@ void TransactionsJavascript::runJs(const QString &script) {
     emit jsRunSig(script);
 }
 
-static QJsonDocument balanceToJson(const BalanceInfo &balance) {
+static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     QJsonObject messagesBalanceJson;
     messagesBalanceJson.insert("received", balance.received);
     messagesBalanceJson.insert("spent", balance.spent);
     messagesBalanceJson.insert("countReceived", QString::fromStdString(std::to_string(balance.countReceived)));
     messagesBalanceJson.insert("countSpent", QString::fromStdString(std::to_string(balance.countSpent)));
     messagesBalanceJson.insert("currBlock", QString::fromStdString(std::to_string(balance.currBlockNum)));
+    return messagesBalanceJson;
+}
 
-    return QJsonDocument(messagesBalanceJson);
+static QJsonDocument balanceToJson(const BalanceInfo &balance) {
+    return QJsonDocument(balanceToJson1(balance));
 }
 
 static QJsonObject txToJson(const Transaction &tx) {
@@ -89,6 +92,8 @@ static QJsonDocument addressInfoToJson(const std::vector<AddressInfo> &infos) {
         txJson.insert("group", info.group);
         txJson.insert("type", info.type);
         txJson.insert("name", info.name);
+
+        txJson.insert("balance", balanceToJson1(info.balance));
 
         messagesInfosJson.push_back(txJson);
     }

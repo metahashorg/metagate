@@ -180,6 +180,15 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
     return db.getTrackedForGroup(group);
 }
 
+BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
+    BalanceInfo balance;
+    balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
+    balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
+    balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
+    balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
+    return balance;
+}
+
 void Transactions::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     std::vector<AddressInfo> addressesInfos = getAddressesInfos(currentGroup);
@@ -215,6 +224,9 @@ BEGIN_SLOT_WRAPPER
     std::vector<AddressInfo> result;
     const TypedException exception = apiVrapper2([&, this] {
         result = getAddressesInfos(group);
+        for (AddressInfo &info: result) {
+            info.balance = getBalance(info.address, info.currency);
+        }
     });
     runCallback(std::bind(callback, result, exception));
 END_SLOT_WRAPPER
@@ -273,10 +285,7 @@ void Transactions::onCalcBalance(const QString &address, const QString &currency
 BEGIN_SLOT_WRAPPER
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
-        balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
-        balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
-        balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
-        balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
+        balance = getBalance(address, currency);
     });
     runCallback(std::bind(callback, balance, exception));
 END_SLOT_WRAPPER
