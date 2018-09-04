@@ -67,6 +67,13 @@
         });
     }
     
+    function getLastUpdate() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getLastUpdatedBalance(document.createWalletForm.currency.value) ;
+        });
+    }
+    
     function sendTx() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
@@ -116,6 +123,7 @@
             <input type="button" value="getAllTxs2" onclick="getAllTxs2()"><br>
             <input type="button" value="calcBalance" onclick="calcBalance()"><br>
             <input type="button" value="getTxFromServer" onclick="getTxFromServer()"><br>
+            <input type="button" value="getLastUpdate" onclick="getLastUpdate()"><br>
             <input type="button" value="sendTx" onclick="sendTx()"><br>
             </FORM>
         </left>

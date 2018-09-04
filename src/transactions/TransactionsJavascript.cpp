@@ -386,6 +386,33 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::getLastUpdatedBalance(QString currency) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetLastUpdatedBalanceResultJs";
+
+    LOG << "getLastUpdatedBalance " << currency;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QString &timestamp, const QString &now) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, timestamp, now);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getLastUpdateBalance(currency, [currency, makeFunc](const system_time_point &result, const system_time_point &now) {
+            const QString r = QString::fromStdString(std::to_string(systemTimePointToMilliseconds(result)));
+            const QString n = QString::fromStdString(std::to_string(systemTimePointToMilliseconds(now)));
+            LOG << "Get getLastUpdateBalance ok " << r << " " << n;
+            makeFunc(TypedException(), currency, r, n);
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, currency, "", "");
+    }
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";

@@ -31,11 +31,21 @@ inline size_t timePointToInt(const time_point &tp) {
     return timeMs.count();
 }
 
+inline size_t timePointToMilliseconds(const time_point &tp) {
+    const milliseconds timeMs = std::chrono::duration_cast<milliseconds>(std::chrono::time_point_cast<milliseconds>(tp).time_since_epoch());
+    return timeMs.count();
+}
+
 inline time_point intToTimePoint(size_t timestamp) {
     return time_point() + milliseconds(timestamp);
 }
 
 inline size_t systemTimePointToInt(const system_time_point &tp) {
+    const milliseconds timeMs = std::chrono::duration_cast<milliseconds>(std::chrono::time_point_cast<milliseconds>(tp).time_since_epoch());
+    return timeMs.count();
+}
+
+inline size_t systemTimePointToMilliseconds(const system_time_point &tp) {
     const milliseconds timeMs = std::chrono::duration_cast<milliseconds>(std::chrono::time_point_cast<milliseconds>(tp).time_since_epoch());
     return timeMs.count();
 }

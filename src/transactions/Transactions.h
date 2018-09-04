@@ -95,6 +95,15 @@ private:
         std::map<QString, QString> errors;
     };
 
+    struct ServersStruct {
+        int countRequests = 0;
+        QString currency;
+
+        ServersStruct(const QString &currency)
+            : currency(currency)
+        {}
+    };
+
 public:
 
     using RegisterAddressCallback = std::function<void(const TypedException &exception)>;
@@ -108,6 +117,8 @@ public:
     using GetAddressesCallback = std::function<void(const std::vector<AddressInfo> &result, const TypedException &exception)>;
 
     using GetTxCallback = std::function<void(const Transaction &txs, const TypedException &exception)>;
+
+    using GetLastUpdateCallback = std::function<void(const system_time_point &lastUpdate, const system_time_point &now)>;
 
     using Callback = std::function<void()>;
 
@@ -137,6 +148,8 @@ signals:
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
+    void getLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -159,6 +172,8 @@ public slots:
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
+    void onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
+
 private slots:
 
     void onCallbackCall(Callback callback);
@@ -171,9 +186,11 @@ private slots:
 
 private:
 
-    void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers);
+    void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
-    void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs);
+    void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
+
+    void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
 
     template<typename Func>
     void runCallback(const Func &callback);
@@ -203,6 +220,8 @@ private:
     QTimer timerSendTx;
 
     std::map<TransactionHash, SendedTransactionWatcher> sendTxWathcers;
+
+    std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
 };
 
 }

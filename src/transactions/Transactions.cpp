@@ -37,6 +37,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
     CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
+    CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
@@ -46,6 +47,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
     qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
     qRegisterMetaType<GetTxCallback>("GetTxCallback");
+    qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
     qRegisterMetaType<seconds>("seconds");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
@@ -82,16 +84,28 @@ void Transactions::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
-void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs) {
+void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
     for (Transaction tx: txs) {
         tx.address = address;
         tx.currency = currency;
         db.addPayment(tx);
     }
     emit javascriptWrapper.newBalanceSig(address, currency, balance);
+    updateBalanceTime(currency, servStruct);
 }
 
-void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers) {
+void Transactions::updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct) {
+    CHECK(servStruct != nullptr, "Incorrect servStruct");
+    CHECK(servStruct->currency == currency, "Incorrect servStruct currency");
+    servStruct->countRequests--;
+    if (servStruct->countRequests == 0) {
+        const system_time_point now = ::system_now();
+        LOG << "Updated currency: " << currency << " " << systemTimePointToInt(now);
+        lastSuccessUpdateTimestamps[currency] = now;
+    }
+}
+
+void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct) {
     if (servers.empty()) {
         return;
     }
@@ -108,22 +122,22 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(servers.size());
 
-    const auto getAllHistoryCallback = [this, address, currency](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
+    const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
 
         LOG << "Txs geted2 " << address << " " << txs.size();
-        newBalance(address, currency, balance, txs);
+        newBalance(address, currency, balance, txs, servStruct);
     };
 
-    const auto getBalanceConfirmeCallback = [this, balanceStruct, address, currency, getAllHistoryCallback](const std::vector<Transaction> &txs, const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getBalanceConfirmeCallback = [this, balanceStruct, address, currency, getAllHistoryCallback, servStruct](const std::vector<Transaction> &txs, const QString &server, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countReceived + balance.countSpent;
         const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
             LOG << "Balance " << address << " confirmed";
-            newBalance(address, currency, balanceStruct->balance, txs);
+            newBalance(address, currency, balanceStruct->balance, txs, servStruct);
         } else {
             LOG << "Balance " << address << " not confirmed";
             const QString requestForTxs = makeGetHistoryRequest(address, false, 0);
@@ -143,7 +157,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), 1s);
     };
 
-    const auto getBalanceCallback = [this, balanceStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback](const QString &server, const std::string &response, const TypedException &exception) {
         balanceStruct->countResponses--;
 
         if (!exception.isSet()) {
@@ -167,6 +181,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 const QString requestForTxs = makeGetHistoryRequest(address, true, requestCountTxs);
 
                 client.sendMessagePost(server, requestForTxs, std::bind(getHistoryCallback, server, _1, _2), 1s);
+            } else {
+                updateBalanceTime(currency, servStruct);
             }
         }
     };
@@ -199,13 +215,20 @@ BEGIN_SLOT_WRAPPER
     LOG << "Try fetch balance " << addressesInfos.size();
     std::vector<QString> servers;
     QString currentType;
+    std::shared_ptr<ServersStruct> servStruct = nullptr;
     for (const AddressInfo &addr: addressesInfos) {
         if (addr.type != currentType) {
             servers = nsLookup.getRandom(addr.type, 3, 3);
-            CHECK(!servers.empty(), "Servers empty");
+            if (servers.empty()) {
+                continue;
+            }
             currentType = addr.type;
         }
-        processAddressMth(addr.address, addr.currency, servers);
+        if (servStruct == nullptr || servStruct->currency != addr.currency) {
+            servStruct = std::make_shared<ServersStruct>(addr.currency);
+        }
+        servStruct->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
+        processAddressMth(addr.address, addr.currency, servers, servStruct);
     }
 END_SLOT_WRAPPER
 }
@@ -422,6 +445,18 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         runCallback(std::bind(callback, Transaction(), exception));
     }
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const system_time_point now = ::system_now();
+    auto found = lastSuccessUpdateTimestamps.find(currency);
+    system_time_point result;
+    if (found != lastSuccessUpdateTimestamps.end()) {
+        result = found->second;
+    }
+    runCallback(std::bind(callback, result, now));
 END_SLOT_WRAPPER
 }
 

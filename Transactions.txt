@@ -67,6 +67,12 @@ Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 Результат вернется в функцию
 txsGetTxFromServerResultJs(txHash, type, result, errorNum, errorMessage)
 
+Q_INVOKABLE void getLastUpdatedBalance(QString currency);
+Запрашивает время последнего изменения балансов по данной валюте
+Результат вернется в функцию
+txsGetLastUpdatedBalanceResultJs(currency, timestampString, nowString, errorNum, errorMessage)
+Результат в милисекундах
+
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу

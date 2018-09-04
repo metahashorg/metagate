@@ -78,6 +78,8 @@ public slots:
 
     Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 
+    Q_INVOKABLE void getLastUpdatedBalance(QString currency);
+
 private:
 
     template<typename... Args>

@@ -128,7 +128,8 @@ HEADERS += mainwindow.h \
     transactions/Transaction.h \
     transactions/transactionsdbstorage.h \
     transactions/TransactionsJavascript.h \
-    HttpClient.h
+    HttpClient.h \
+    duration.h
 
 FORMS += mainwindow.ui
 
