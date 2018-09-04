@@ -19,7 +19,7 @@ namespace transactions {
 static const uint64_t ADD_TO_COUNT_TXS = 10;
 
 Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent)
-    : TimerClass(2s, parent)
+    : TimerClass(5s, parent)
     , nsLookup(nsLookup)
     , javascriptWrapper(javascriptWrapper)
     , db(db)
@@ -202,6 +202,7 @@ BEGIN_SLOT_WRAPPER
     for (const AddressInfo &addr: addressesInfos) {
         if (addr.type != currentType) {
             servers = nsLookup.getRandom(addr.type, 3, 3);
+            CHECK(!servers.empty(), "Servers empty");
             currentType = addr.type;
         }
         processAddressMth(addr.address, addr.currency, servers);
@@ -361,7 +362,9 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
     }
 
     const time_point now = ::now();
-    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, nsLookup.getRandom(group, countServers, countServers), timeout));
+    const std::vector<QString> servers = nsLookup.getRandom(group, countServers, countServers);
+    CHECK(servers.size() == countServers, "Not enough servers");
+    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, servers, timeout));
     LOG << "Timer send start";
     timerSendTx.start();
 }
@@ -371,6 +374,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
         const std::vector<QString> servers = nsLookup.getRandom(typeSend, static_cast<size_t>(countServersSend), static_cast<size_t>(countServersSend));
+        CHECK(servers.size() == static_cast<size_t>(countServersSend), "Not enough servers");
 
         struct ServerResponse {
             bool isSended = false;
