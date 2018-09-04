@@ -210,7 +210,7 @@ void Transactions::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     std::vector<AddressInfo> addressesInfos = getAddressesInfos(currentGroup);
     std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
-        return first.type < second.type;
+        return std::make_tuple(first.type, first.currency) < std::make_tuple(second.type, second.currency);
     });
     LOG << "Try fetch balance " << addressesInfos.size();
     std::vector<QString> servers;
