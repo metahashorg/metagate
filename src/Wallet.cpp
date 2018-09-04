@@ -196,6 +196,9 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
     for (const QString &file: allFiles) {
         if (file.endsWith(FILE_METAHASH_PRIV_KEY_SUFFIX)) {
             const std::string address = file.split(FILE_METAHASH_PRIV_KEY_SUFFIX).first().toStdString();
+            if (address.size() != 52 || address.compare(0, 2, "0x") != 0) {
+                continue;
+            }
             result.emplace_back(QString::fromStdString(address), makeFullWalletPath(folder, address));
         }
     }
