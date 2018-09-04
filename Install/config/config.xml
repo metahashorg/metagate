@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
-    <Name>MetaGate Installer</Name>
-    <Version>1.15.0</Version>
-    <Title>MetaGate Installer</Title>
+    <Name>MetaGate</Name>
+    <Version>1.15.1</Version>
+    <Title>MetaGate</Title>
     <Publisher>MetaGate</Publisher>
     <StartMenuDir>MetaGate</StartMenuDir>
     <AllowNonAsciiCharacters>true</AllowNonAsciiCharacters>
@@ -13,4 +13,5 @@
             <Url>http://localhost/repository</Url>
         </Repository>
     </RemoteRepositories>
+	<RunProgram>>@TargetDir@\MetaGate.exe</RunProgram>
 </Installer>

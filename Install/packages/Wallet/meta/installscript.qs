@@ -7,6 +7,13 @@ function Controller()
 {
 }
 
+Component.prototype.beginInstallation = function()
+{
+    if (installer.value("os") === "win") {
+        installer.setValue("RunProgram", "@TargetDir@/MetaGate.exe");
+    }
+}
+
 Component.prototype.createOperations = function()
 {
     // call default implementation to actually install MetaGate.exe
