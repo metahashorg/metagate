@@ -7,6 +7,8 @@
 
 void InitOpenSSL();
 
+bool isInitOpenSSL();
+
 using PrivateKey = std::string;
 using PublikKey = std::string;
 

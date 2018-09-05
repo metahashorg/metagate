@@ -30,6 +30,10 @@ void InitOpenSSL() {
     isInitialized = true;
 }
 
+bool isInitOpenSSL() {
+    return isInitialized;
+}
+
 static RsaKey getRsa(const std::string &privKey, const std::string &password) {
     CHECK(isInitialized, "Not initialized");
 

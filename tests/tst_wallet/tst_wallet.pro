@@ -11,7 +11,6 @@ TEMPLATE = app
 INCLUDEPATH = ../../src
 
 SOURCES += \
-    tst_wallet.cpp \
     ../../src/Wallet.cpp \
     ../../src/machine_uid_win.cpp \
     ../../src/EthWallet.cpp \
@@ -32,10 +31,18 @@ SOURCES += \
     ../../src/utils.cpp \
     ../../src/ethtx/utils2.cpp \
     ../../src/Log.cpp \
-    ../../src/Paths.cpp
+    ../../src/Paths.cpp \
+    tst_Metahash.cpp \
+    tst_Bitcoin.cpp \
+    tst_Ethereum.cpp \
+    tst_rsa.cpp \
+    tst_main.cpp
 
 HEADERS += \
-    tst_wallet.h
+    tst_Metahash.h \
+    tst_Bitcoin.h \
+    tst_Ethereum.h \
+    tst_rsa.h
 
 DEFINES += CRYPTOPP_IMPORTS
 DEFINES += QUAZIP_STATIC
