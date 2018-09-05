@@ -211,12 +211,12 @@ void Transactions::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     std::vector<AddressInfo> addressesInfos = getAddressesInfos(currentGroup);
     std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
-        return std::make_tuple(first.type, first.currency) < std::make_tuple(second.type, second.currency);
+        return first.type < second.type;
     });
     LOG << "Try fetch balance " << addressesInfos.size();
     std::vector<QString> servers;
     QString currentType;
-    std::shared_ptr<ServersStruct> servStruct = nullptr;
+    std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
     for (const AddressInfo &addr: addressesInfos) {
         if (addr.type != currentType) {
             servers = nsLookup.getRandom(addr.type, 3, 3);
@@ -225,11 +225,12 @@ BEGIN_SLOT_WRAPPER
             }
             currentType = addr.type;
         }
-        if (servStruct == nullptr || servStruct->currency != addr.currency) {
-            servStruct = std::make_shared<ServersStruct>(addr.currency);
+        auto found = servStructs.find(addr.currency);
+        if (found == servStructs.end()) {
+            servStructs.emplace(std::piecewise_construct, std::forward_as_tuple(addr.currency), std::forward_as_tuple(std::make_shared<ServersStruct>(addr.currency)));
         }
-        servStruct->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
-        processAddressMth(addr.address, addr.currency, servers, servStruct);
+        servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
+        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency));
     }
 END_SLOT_WRAPPER
 }
