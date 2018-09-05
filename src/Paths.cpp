@@ -90,10 +90,6 @@ QString getPagesPath() {
 }
 
 QString getSettingsPath() {
-    return getPagesPath();
-}
-
-QString getSettings2Path() {
     static std::mutex mut;
 
     const QString oldPagesPath = getOldPagesPath();

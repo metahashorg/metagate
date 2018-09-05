@@ -65,10 +65,8 @@ LastHtmlVersion Uploader::getLastHtmlVersion() {
 }
 
 Uploader::Servers Uploader::getServers() {
-    const QString currentBeginPath = makePath(getSettingsPath(), "servers.txt");
-
     Servers servers;
-    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("servers/production"), "production server not found");
     servers.prod = settings.value("servers/production").toString().toStdString();
     CHECK(settings.contains("servers/development"), "development server not found");

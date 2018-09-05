@@ -85,7 +85,7 @@ QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, cons
 }
 
 static QString getWssServer() {
-    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("web_socket/messenger"), "web_socket/messenger setting not found");
     return settings.value("web_socket/messenger").toString();
 };

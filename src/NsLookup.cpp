@@ -28,7 +28,7 @@ const milliseconds UPDATE_PERIOD = days(1);
 NsLookup::NsLookup(QObject *parent)
     : QObject(parent)
 {
-    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("nodes");
     for (int i = 0; i < size; i++) {
         settings.setArrayIndex(i);

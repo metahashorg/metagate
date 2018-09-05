@@ -116,7 +116,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messen
 
 void MainWindow::onUpdateMhsReferences() {
 BEGIN_SLOT_WRAPPER
-    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("dns/metahash"), "dns/metahash setting not found");
 
     client.sendMessageGet(QUrl(settings.value("dns/metahash").toString()), [this](const std::string &response, const TypedException &exception) {

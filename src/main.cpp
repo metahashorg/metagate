@@ -51,7 +51,7 @@ static void crash_handler(int sig) {
 #endif
 
 QString getUrlToWss() {
-    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
     return settings.value("web_socket/meta_online").toString();
 }
