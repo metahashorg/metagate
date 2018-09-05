@@ -4,6 +4,7 @@
 #include "SlotWrapper.h"
 #include "Log.h"
 #include "makeJsFunc.h"
+#include "Paths.h"
 
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
@@ -15,6 +16,8 @@ using namespace std::placeholders;
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+
+#include <QSettings>
 
 #include <QCryptographicHash>
 
@@ -81,11 +84,17 @@ QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, cons
     return ::makeTextForSendToChannelRequest(titleSha, text, fee, timestamp);
 }
 
+static QString getWssServer() {
+    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    CHECK(settings.contains("web_socket/messenger"), "web_socket/messenger setting not found");
+    return settings.value("web_socket/messenger").toString();
+};
+
 Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, QObject *parent)
     : TimerClass(1s, parent)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
-    , wssClient("wss://messenger.metahash.io")
+    , wssClient(getWssServer())
 {
     CHECK(connect(this, SIGNAL(timerEvent()), this, SLOT(onTimerEvent())), "not connect onTimerEvent");
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived), "not connect wssClient");

@@ -15,6 +15,7 @@
 #include <QStandardItemModel>
 #include <QFontDatabase>
 #include <QDesktopServices>
+#include <QSettings>
 
 #include "WebSocketClient.h"
 #include "JavascriptWrapper.h"
@@ -27,6 +28,7 @@
 #include "utils.h"
 #include "algorithms.h"
 #include "SlotWrapper.h"
+#include "Paths.h"
 
 #include "mhurlschemehandler.h"
 
@@ -114,7 +116,10 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messen
 
 void MainWindow::onUpdateMhsReferences() {
 BEGIN_SLOT_WRAPPER
-    client.sendMessageGet(QUrl("http://dns.metahash.io/"), [this](const std::string &response, const TypedException &exception) {
+    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    CHECK(settings.contains("dns/metahash"), "dns/metahash setting not found");
+
+    client.sendMessageGet(QUrl(settings.value("dns/metahash").toString()), [this](const std::string &response, const TypedException &exception) {
         LOG << "Set mappings mh " << QString::fromStdString(response).simplified();
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         pagesMappings.setMappingsMh(QString::fromStdString(response));
