@@ -13,6 +13,7 @@
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QCryptographicHash>
+#include <QSettings>
 
 #include "mainwindow.h"
 
@@ -63,46 +64,16 @@ LastHtmlVersion Uploader::getLastHtmlVersion() {
     return result;
 }
 
-static std::pair<bool, std::string> parseServer(const std::string &str) {
-    const std::string trimStr = trim(str);
-    CHECK(!trimStr.empty(), "Incorrect str: empty");
-    const size_t foundSpace = trimStr.find(" ");
-    CHECK(foundSpace != trimStr.npos, "Not found dot in string " + str);
-    const std::string type = trim(trimStr.substr(0, foundSpace));
-    const std::string server = trim(trimStr.substr(foundSpace + 1));
-    CHECK(!server.empty(), "Empty server");
-    if (type == "development") {
-        return std::make_pair(false, server);
-    } else if (type == "production") {
-        return std::make_pair(true, server);
-    } else {
-        throwErr("Incorrect type " + str);
-    }
-}
-
 Uploader::Servers Uploader::getServers() {
     const QString currentBeginPath = makePath(getSettingsPath(), "servers.txt");
 
     Servers servers;
-    QFile inputFile(currentBeginPath);
-    CHECK(inputFile.open(QIODevice::ReadOnly), "Not open file " + currentBeginPath.toStdString());
-    QTextStream in(&inputFile);
-    QString firstServer = in.readLine();
-    CHECK(!firstServer.isNull(), "Incorrect servers file");
-    QString secondServer = in.readLine();
-    CHECK(!secondServer.isNull(), "Incorrect servers file");
-    const auto pairServer1 = parseServer(firstServer.toStdString());
-    const auto pairServer2 = parseServer(secondServer.toStdString());
-    if (pairServer1.first) {
-        servers.prod = pairServer1.second;
-    } else {
-        servers.dev = pairServer1.second;
-    }
-    if (pairServer2.first) {
-        servers.prod = pairServer2.second;
-    } else {
-        servers.dev = pairServer2.second;
-    }
+    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    CHECK(settings.contains("servers/production"), "production server not found");
+    servers.prod = settings.value("servers/production").toString().toStdString();
+    CHECK(settings.contains("servers/development"), "development server not found");
+    servers.dev = settings.value("servers/development").toString().toStdString();
+
     return servers;
 }
 

@@ -108,6 +108,8 @@ QString getSettings2Path() {
     const auto replaceSettings = [&] {
         copyFile(oldSettingsPath, settings, true);
         removeFile(makePath(pagesPath, "nodes.txt"));
+        removeFile(makePath(pagesPath, "servers.txt"));
+        removeFile(makePath(pagesPath, "web_socket.txt"));
     };
 
     std::lock_guard<std::mutex> lock(mut);

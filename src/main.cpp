@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include <QSurfaceFormat>
+#include <QSettings>
 
 #include "RunGuard.h"
 
@@ -50,11 +51,9 @@ static void crash_handler(int sig) {
 #endif
 
 QString getUrlToWss() {
-    const static QString WEB_SOCKET_SERVER_FILE = "web_socket.txt";
-
-    const QString pathToWebSServer = makePath(getSettingsPath(), WEB_SOCKET_SERVER_FILE);
-    const std::string &fileData = readFile(pathToWebSServer);
-    return QString::fromStdString(fileData).trimmed();
+    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
+    return settings.value("web_socket/meta_online").toString();
 }
 
 int main(int argc, char *argv[]) {
