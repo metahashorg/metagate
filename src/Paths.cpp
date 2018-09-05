@@ -106,6 +106,7 @@ QString getSettingsPath() {
         removeFile(makePath(pagesPath, "nodes.txt"));
         removeFile(makePath(pagesPath, "servers.txt"));
         removeFile(makePath(pagesPath, "web_socket.txt"));
+        removeFile(makePath(pagesPath, "version.txt"));
     };
 
     std::lock_guard<std::mutex> lock(mut);
