@@ -237,6 +237,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::signMessageV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson) {
+BEGIN_SLOT_WRAPPER
+    signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, walletPathTmh, "signMessageV3ResultJs");
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
     signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, true, paramsJson, walletPathTmh, "signMessageDelegateResultJs");
@@ -270,6 +276,12 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
     signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathMth, "signMessageMHCV2ResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::signMessageMHCV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson) {
+BEGIN_SLOT_WRAPPER
+    signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, walletPathMth, "signMessageMHCV3ResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -387,24 +399,53 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
 }
 
+static transactions::Transactions::SendParameters parseSendParams(const QString &paramsJson) {
+    transactions::Transactions::SendParameters result;
+    const QJsonDocument doc = QJsonDocument::fromJson(paramsJson.toUtf8());
+    CHECK_TYPED(doc.isObject(), TypeErrors::INCORRECT_USER_DATA, "params json incorrect");
+    const QJsonObject docParams = doc.object();
+    CHECK_TYPED(docParams.contains("countServersSend") && docParams.value("countServersSend").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersSend not found in params");
+    result.countServersSend = docParams.value("countServersSend").toInt();
+    CHECK_TYPED(docParams.contains("countServersGet") && docParams.value("countServersGet").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersGet not found in params");
+    result.countServersGet = docParams.value("countServersSend").toInt();
+    CHECK_TYPED(docParams.contains("typeSend") && docParams.value("typeSend").isString(), TypeErrors::INCORRECT_USER_DATA, "typeSend not found in params");
+    result.typeSend = docParams.value("typeSend").toString();
+    CHECK_TYPED(docParams.contains("typeGet") && docParams.value("typeGet").isString(), TypeErrors::INCORRECT_USER_DATA, "typeGet not found in params");
+    result.typeGet = docParams.value("typeGet").toString();
+    CHECK_TYPED(docParams.contains("timeout_sec") && docParams.value("timeout_sec").isDouble(), TypeErrors::INCORRECT_USER_DATA, "timeout_sec not found in params");
+    result.timeout = seconds(docParams.value("timeout_sec").toInt());
+    return result;
+}
+
+void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, QString walletPath, QString jsNameResult) {
+    LOG << "Sign messagev3 " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+
+    Opt<QString> result(QString("Not ok"));
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+
+        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        std::string publicKey;
+        std::string tx;
+        std::string signature;
+        bool tmp;
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
+
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
+        result = "Ok";
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+}
+
 void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult) {
     LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
     Opt<QString> result(QString("Not ok"));
     const TypedException exception = apiVrapper2([&, this]() {
-        const QJsonDocument doc = QJsonDocument::fromJson(paramsJson.toUtf8());
-        CHECK_TYPED(doc.isObject(), TypeErrors::INCORRECT_USER_DATA, "params json incorrect");
-        const QJsonObject docParams = doc.object();
-        CHECK_TYPED(docParams.contains("countServersSend") && docParams.value("countServersSend").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersSend not found in params");
-        const int countServersSend = docParams.value("countServersSend").toInt();
-        CHECK_TYPED(docParams.contains("countServersGet") && docParams.value("countServersGet").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersGet not found in params");
-        const int countServersGet = docParams.value("countServersSend").toInt();
-        CHECK_TYPED(docParams.contains("typeSend") && docParams.value("typeSend").isString(), TypeErrors::INCORRECT_USER_DATA, "typeSend not found in params");
-        const QString typeSend = docParams.value("typeSend").toString();
-        CHECK_TYPED(docParams.contains("typeGet") && docParams.value("typeGet").isString(), TypeErrors::INCORRECT_USER_DATA, "typeGet not found in params");
-        const QString typeGet = docParams.value("typeGet").toString();
-        CHECK_TYPED(docParams.contains("timeout_sec") && docParams.value("timeout_sec").isDouble(), TypeErrors::INCORRECT_USER_DATA, "timeout_sec not found in params");
-        const int timeout_sec = docParams.value("timeout_sec").toInt();
+        const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
@@ -418,7 +459,7 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         bool tmp;
         wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey);
 
-        emit transactionsManager.sendTransaction(requestId, countServersSend, countServersGet, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), typeSend, typeGet, seconds(timeout_sec));
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
         result = "Ok";
     });
 

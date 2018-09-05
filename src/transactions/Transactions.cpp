@@ -49,6 +49,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<GetTxCallback>("GetTxCallback");
     qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
     qRegisterMetaType<seconds>("seconds");
+    qRegisterMetaType<SendParameters>("SendParameters");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
 
@@ -392,12 +393,12 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
     timerSendTx.start();
 }
 
-void Transactions::onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet, seconds timeout) {
+void Transactions::onSendTransaction(const QString &requestId, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const std::vector<QString> servers = nsLookup.getRandom(typeSend, static_cast<size_t>(countServersSend), static_cast<size_t>(countServersSend));
-        CHECK(servers.size() == static_cast<size_t>(countServersSend), "Not enough servers");
+        const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, static_cast<size_t>(sendParams.countServersSend), static_cast<size_t>(sendParams.countServersSend));
+        CHECK(servers.size() == static_cast<size_t>(sendParams.countServersSend), "Not enough servers");
 
         struct ServerResponse {
             bool isSended = false;
@@ -405,7 +406,7 @@ BEGIN_SLOT_WRAPPER
 
         std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>();
         for (const QString &server: servers) {
-            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, countServersGet, typeGet, timeout](const std::string &response, const TypedException &error) {
+            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, sendParams](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
@@ -413,7 +414,7 @@ BEGIN_SLOT_WRAPPER
                 });
 
                 if (!exception.isSet() && !servResp->isSended) {
-                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(countServersGet), typeGet, timeout);
+                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(sendParams.countServersGet), sendParams.typeGet, sendParams.timeout);
                     servResp->isSended = true;
                 }
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);

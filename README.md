@@ -48,6 +48,11 @@ Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString passw
 # Result returns to 
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
+Q_INVOKABLE void signMessageV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson);
+# Посылает транзакцию через C++ (аналог signMessageDelegate)
+# Result returns to 
+signMessageV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
+
 Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
 paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
@@ -115,6 +120,11 @@ Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString pa
 # value, fee, nonce - a string with decimal number
 # Result returns to 
 signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageMHCV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson);
+# Посылает транзакцию через C++ (аналог signMessageDelegate)
+# Result returns to 
+signMessageMHCV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data

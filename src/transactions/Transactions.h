@@ -26,6 +26,16 @@ struct AddressInfo;
 
 class Transactions : public TimerClass {
     Q_OBJECT
+public:
+
+    struct SendParameters {
+        int countServersSend;
+        int countServersGet;
+        QString typeSend;
+        QString typeGet;
+        seconds timeout;
+    };
+
 private:
 
     using TransactionHash = std::string;
@@ -144,7 +154,7 @@ signals:
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void sendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet, seconds timeout);
+    void sendTransaction(const QString &requestId, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -168,7 +178,7 @@ public slots:
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onSendTransaction(const QString &requestId, int countServersSend, int countServersGet, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const QString &typeSend, const QString &typeGet, seconds timeout);
+    void onSendTransaction(const QString &requestId, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
