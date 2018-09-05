@@ -1,2 +1,0 @@
-development http://app-dev.metahash.org/api/
-production http://app.metahash.org/api/

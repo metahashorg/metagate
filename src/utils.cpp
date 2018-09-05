@@ -152,6 +152,13 @@ bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, boo
     return true;
 }
 
+void copyFile(const QString &srcFilePath, const QString &tgtFilePath, bool isReplace) {
+    if (isReplace) {
+        QFile::remove(tgtFilePath);
+    }
+    CHECK(QFile::copy(srcFilePath, tgtFilePath), "Dont copy file " + tgtFilePath.toStdString());
+}
+
 void createFolder(const QString &folder) {
     QDir dir(folder);
     const bool resultCreate = dir.mkpath(folder);

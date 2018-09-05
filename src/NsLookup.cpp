@@ -7,6 +7,8 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include <QSettings>
+
 #include "dns/dnspacket.h"
 #include "check.h"
 #include "utils.h"
@@ -23,30 +25,21 @@ const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
 const milliseconds UPDATE_PERIOD = days(1);
 
-NsLookup::NsLookup(const QString &pagesPath, QObject *parent)
+NsLookup::NsLookup(QObject *parent)
     : QObject(parent)
-    , pagesPath(pagesPath)
 {
-    const QString nodesFile = makePath(pagesPath, NODES_FILE);
-    QFile inputFile(nodesFile);
-    CHECK(inputFile.open(QIODevice::ReadOnly), "Not open file " + nodesFile.toStdString());
-    QTextStream in(&inputFile);
-    while (!in.atEnd()) {
-        const QString line = in.readLine();
-        if (!line.isNull() && !line.isEmpty()) {
-            NodeType info;
-            const int spacePos1 = line.indexOf(' ');
-            CHECK(spacePos1 != -1, "Incorrect file " + nodesFile.toStdString());
-            info.type = line.mid(0, spacePos1);
-            const int spacePos2 = line.indexOf(' ', spacePos1 + 1);
-            CHECK(spacePos2 != -1, "Incorrect file " + nodesFile.toStdString());
-            info.node = line.mid(spacePos1 + 1, spacePos2 - spacePos1 - 1);
-            info.port = line.mid(spacePos2 + 1);
-
-            LOG << "node " << info.type << ". " << info.node << ". " << info.port << ".";
-            nodes.emplace_back(info);
-        }
+    QSettings settings(getSettings2Path(), QSettings::IniFormat);
+    const int size = settings.beginReadArray("nodes");
+    for (int i = 0; i < size; i++) {
+        settings.setArrayIndex(i);
+        NodeType info;
+        info.type = settings.value("type").toString();
+        info.node = settings.value("node").toString();
+        info.port = settings.value("port").toString();
+        LOG << "node " << info.type << ". " << info.node << ". " << info.port << ".";
+        nodes.emplace_back(info);
     }
+    settings.endArray();
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath);

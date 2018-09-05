@@ -2,6 +2,7 @@
 
 #include <QStandardPaths>
 #include <QApplication>
+#include <QSettings>
 
 #include <mutex>
 
@@ -18,6 +19,8 @@ const static QString WALLET_COMMON_PATH = ".metagate/";
 const static QString LOG_PATH = "logs/";
 
 const static QString PAGES_PATH = "pages/";
+
+const static QString SETTINGS_NAME = "settings.ini";
 
 const static QString DB_PATH = "bd/";
 
@@ -83,20 +86,47 @@ QString getPagesPath() {
         CHECK(copyRecursively(oldPagesPath, newPagesPath, true, false), "not copy pages");
     }
 
-    const static QString VERSION_SETTINGS_FILE = "version.txt";
-
-    const std::string currVersion = readFile(makePath(oldPagesPath, VERSION_SETTINGS_FILE));
-    const QString newPathVersion = makePath(newPagesPath, VERSION_SETTINGS_FILE);
-    if (!isExistFile(newPathVersion) || readFile(newPathVersion) != currVersion) {
-        LOG << "Replase pages folder: " << newPagesPath << " " << oldPagesPath;
-        CHECK(copyRecursively(oldPagesPath, newPagesPath, true, true), "not copy pages");
-    }
-
     return newPagesPath;
 }
 
 QString getSettingsPath() {
     return getPagesPath();
+}
+
+QString getSettings2Path() {
+    static std::mutex mut;
+
+    const QString oldPagesPath = getOldPagesPath();
+    const QString oldSettingsPath = makePath(oldPagesPath, SETTINGS_NAME);
+
+    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH);
+    createFolder(res);
+    const QString settings = makePath(res, SETTINGS_NAME);
+
+    const QString pagesPath = getPagesPath();
+
+    const auto replaceSettings = [&] {
+        copyFile(oldSettingsPath, settings, true);
+        removeFile(makePath(pagesPath, "nodes.txt"));
+    };
+
+    std::lock_guard<std::mutex> lock(mut);
+    if (!isExistFile(settings)) {
+        LOG << "Create settings: " << oldSettingsPath << " " << settings;
+        replaceSettings();
+    }
+
+    const auto compareVersion = [&]() {// Чтобы в деструкторе закрылось
+        const QSettings settingsFile(settings, QSettings::IniFormat);
+        const QSettings oldSettingsFile(oldSettingsPath, QSettings::IniFormat);
+        return settingsFile.value("version") == oldSettingsFile.value("version");
+    };
+    if (!compareVersion()) {
+        LOG << "Replace settings: " << oldSettingsPath << " " << settings;
+        replaceSettings();
+    }
+
+    return settings;
 }
 
 QString getAutoupdaterPath() {

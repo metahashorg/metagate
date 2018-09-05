@@ -34,7 +34,7 @@ class NsLookup : public QObject
 {
     Q_OBJECT
 public:
-    explicit NsLookup(const QString &pagesPath, QObject *parent = nullptr);
+    explicit NsLookup(QObject *parent = nullptr);
 
     ~NsLookup() override;
 
@@ -75,8 +75,6 @@ private:
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
 private:
-
-    QString pagesPath;
 
     QString savedNodesPath;
 
