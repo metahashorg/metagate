@@ -1,7 +1,7 @@
 #ifndef QRCODER_H
 #define QRCODER_H
 
-#include <QtCore>
+#include <QByteArray>
 
 class QRCoder
 {

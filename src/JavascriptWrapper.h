@@ -8,12 +8,11 @@
 
 #include "uploader.h"
 
-#include "TypedException.h"
-
 #include "client.h"
 
 class NsLookup;
 class WebSocketClient;
+struct TypedException;
 
 namespace transactions {
 class Transactions;

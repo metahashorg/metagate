@@ -3,15 +3,13 @@
 #include <thread>
 
 #include <QThread>
-#include <QFile>
-#include <QDir>
-#include <QTextStream>
-#include <QApplication>
 #include <QTimer>
+
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+
 #include <QCryptographicHash>
 #include <QSettings>
 

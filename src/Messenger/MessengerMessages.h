@@ -5,7 +5,6 @@
 
 #include <vector>
 
-#include "Messenger.h"
 #include "Message.h"
 
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);

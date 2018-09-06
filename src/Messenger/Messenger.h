@@ -7,7 +7,6 @@
 #include "WebSocketClient.h"
 
 #include "RequestId.h"
-#include "TypedException.h"
 #include "Message.h"
 
 #include <map>
@@ -18,6 +17,7 @@ struct NewMessageResponse;
 class MessengerJavascript;
 class MessengerDBStorage;
 struct ChannelInfo;
+struct TypedException;
 
 class Messenger : public TimerClass
 {

@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "TypedException.h"
+struct TypedException;
 
 namespace transactions {
 

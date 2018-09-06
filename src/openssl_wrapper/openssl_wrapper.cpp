@@ -4,18 +4,12 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <functional>
 #include <array>
 
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
-#include <openssl/x509.h>
 #include <openssl/aes.h>
-#include <openssl/evp.h>
 #include <openssl/rand.h>
-
-#include <QString>
-#include <QByteArray>
 
 #include "check.h"
 #include "utils.h"

@@ -5,6 +5,7 @@
 
 #include <QImage>
 #include <QPainter>
+#include <QBuffer>
 
 #include "check.h"
 
