@@ -309,13 +309,12 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 db.setLastReadCounterForUserContact(address, collocutorOrChannel, -1, isChannel); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
             }
         } else {
-            // + channel
-            const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage);
+            const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage, channel);
             const auto idDb = idPair.first;
             const Message::Counter counter = idPair.second;
             if (idDb != -1) {
                 LOG << "Update message " << address << " " << channel << " " << m.counter;
-                db.updateMessage(idDb, m.counter, true, channel);
+                db.updateMessage(idDb, m.counter, true);
                 if (counter != m.counter && !db.hasMessageWithCounter(address, counter, channel)) {
                     if (!isChannel) {
                         getMessagesFromAddressFromWss(address, counter, counter);
@@ -565,8 +564,6 @@ void Messenger::onGetSavedsPos(const QString &address, bool isChannel, const Get
 BEGIN_SLOT_WRAPPER
     std::vector<MessengerDBStorage::UserCounterPair> pos;
     const TypedException exception = apiVrapper2([&, this] {
-        //const std::list<MessengerDBStorage::UserCounterPair> result = db.getLastReadCountersForUser(address, isChannel);
-        //std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
         pos = db.getLastReadCountersForUser(address, isChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
@@ -609,8 +606,6 @@ void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Mess
 BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        //const std::list<Message> result = db.getMessagesForUser(address, from, to);
-        //std::copy(result.begin(), result.end(), std::back_inserter(messages));
         messages = db.getMessagesForUser(address, from, to);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
@@ -621,10 +616,7 @@ void Messenger::onGetHistoryAddressAddress(QString address, bool isChannel, cons
 BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        // + isChannel
-        //const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to);
-        //std::copy(result.begin(), result.end(), std::back_inserter(messages));
-        messages = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to);
+        messages = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to, isChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
@@ -634,10 +626,7 @@ void Messenger::onGetHistoryAddressAddressCount(QString address, bool isChannel,
 BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        // + isChannel
-        //const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count);
-        //std::copy(result.begin(), result.end(), std::back_inserter(messages));
-        messages = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count);
+        messages = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count, isChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
