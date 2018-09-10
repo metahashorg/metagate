@@ -21,7 +21,7 @@ using namespace std::placeholders;
 
 #include <QCryptographicHash>
 
-#include "messengerdbstorage.h"
+#include "MessengerDBStorage.h"
 
 static QString createHashMessage(const QString &message) {
     return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
@@ -563,10 +563,11 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetSavedsPos(const QString &address, bool isChannel, const GetSavedsPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<std::pair<QString, Message::Counter>> pos;
+    std::vector<MessengerDBStorage::UserCounterPair> pos;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<std::pair<QString, Message::Counter>> result = db.getLastReadCountersForUser(address, isChannel);
-        std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
+        //const std::list<MessengerDBStorage::UserCounterPair> result = db.getLastReadCountersForUser(address, isChannel);
+        //std::copy(result.cbegin(), result.cend(), std::back_inserter(pos));
+        pos = db.getLastReadCountersForUser(address, isChannel);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
 END_SLOT_WRAPPER
@@ -608,8 +609,9 @@ void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Mess
 BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
-        const std::list<Message> result = db.getMessagesForUser(address, from, to);
-        std::copy(result.begin(), result.end(), std::back_inserter(messages));
+        //const std::list<Message> result = db.getMessagesForUser(address, from, to);
+        //std::copy(result.begin(), result.end(), std::back_inserter(messages));
+        messages = db.getMessagesForUser(address, from, to);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
@@ -620,8 +622,9 @@ BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
         // + isChannel
-        const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to);
-        std::copy(result.begin(), result.end(), std::back_inserter(messages));
+        //const std::list<Message> result = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to);
+        //std::copy(result.begin(), result.end(), std::back_inserter(messages));
+        messages = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER
@@ -632,8 +635,9 @@ BEGIN_SLOT_WRAPPER
     std::vector<Message> messages;
     const TypedException exception = apiVrapper2([&, this] {
         // + isChannel
-        const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count);
-        std::copy(result.begin(), result.end(), std::back_inserter(messages));
+        //const std::list<Message> result = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count);
+        //std::copy(result.begin(), result.end(), std::back_inserter(messages));
+        messages = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
 END_SLOT_WRAPPER

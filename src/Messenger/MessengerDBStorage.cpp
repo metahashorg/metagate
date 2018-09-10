@@ -1,6 +1,6 @@
-#include "messengerdbstorage.h"
+#include "MessengerDBStorage.h"
 
-#include "dbres.h"
+#include "MessengerDBRes.h"
 #include <QtSql>
 
 #include "check.h"
@@ -36,7 +36,7 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
         channelid = getChannelForUserShaName(user, channelSha);
 
     QSqlQuery query(database());
-    query.prepare(insertMsgMessages);
+    CHECK(query.prepare(insertMsgMessages), query.lastError().text().toStdString());
     query.bindValue(":userid", userid);
     query.bindValue(":contactid", contactid);
     query.bindValue(":order", counter);
@@ -61,14 +61,14 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
 DBStorage::DbId MessengerDBStorage::getUserId(const QString &username)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgUsersForName);
+    CHECK(query.prepare(selectMsgUsersForName), query.lastError().text().toStdString());
     query.bindValue(":username", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return query.value("id").toLongLong();
     }
 
-    query.prepare(insertMsgUsers);
+    CHECK(query.prepare(insertMsgUsers), query.lastError().text().toStdString());
     query.bindValue(":username", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     return query.lastInsertId().toLongLong();
@@ -78,7 +78,7 @@ QStringList MessengerDBStorage::getUsersList()
 {
     QStringList res;
     QSqlQuery query(database());
-    query.prepare(selectMsgUsersList);
+    CHECK(query.prepare(selectMsgUsersList), query.lastError().text().toStdString());
     CHECK(query.exec(), query.lastError().text().toStdString());
     while (query.next()) {
         res.push_back(query.value("username").toString());
@@ -89,14 +89,14 @@ QStringList MessengerDBStorage::getUsersList()
 DBStorage::DbId MessengerDBStorage::getContactId(const QString &username)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgContactsForName);
+    CHECK(query.prepare(selectMsgContactsForName), query.lastError().text().toStdString());
     query.bindValue(":username", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return query.value("id").toLongLong();
     }
 
-    query.prepare(insertMsgContacts);
+    CHECK(query.prepare(insertMsgContacts), query.lastError().text().toStdString());
     query.bindValue(":username", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     return query.lastInsertId().toLongLong();
@@ -105,7 +105,7 @@ DBStorage::DbId MessengerDBStorage::getContactId(const QString &username)
 QString MessengerDBStorage::getUserPublicKey(const QString &username)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgUserPublicKey);
+    CHECK(query.prepare(selectMsgUserPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
@@ -118,7 +118,7 @@ void MessengerDBStorage::setUserPublicKey(const QString &username, const QString
 {
     getUserId(username);
     QSqlQuery query(database());
-    query.prepare(updateMsgUserPublicKey);
+    CHECK(query.prepare(updateMsgUserPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":publickey", publickey);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -127,7 +127,7 @@ void MessengerDBStorage::setUserPublicKey(const QString &username, const QString
 QString MessengerDBStorage::getUserSignatures(const QString &username)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgUserSignatures);
+    CHECK(query.prepare(selectMsgUserSignatures), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
@@ -140,7 +140,7 @@ void MessengerDBStorage::setUserSignatures(const QString &username, const QStrin
 {
     getUserId(username);
     QSqlQuery query(database());
-    query.prepare(updateMsgUserSignatures);
+    CHECK(query.prepare(updateMsgUserSignatures), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":signatures", signatures);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -149,7 +149,7 @@ void MessengerDBStorage::setUserSignatures(const QString &username, const QStrin
 QString MessengerDBStorage::getContactrPublicKey(const QString &username)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgContactsPublicKey);
+    CHECK(query.prepare(selectMsgContactsPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
@@ -162,7 +162,7 @@ void MessengerDBStorage::setContactPublicKey(const QString &username, const QStr
 {
     getContactId(username);
     QSqlQuery query(database());
-    query.prepare(updateMsgContactsPublicKey);
+    CHECK(query.prepare(updateMsgContactsPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":publickey", publickey);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -170,10 +170,14 @@ void MessengerDBStorage::setContactPublicKey(const QString &username, const QStr
 
 Message::Counter MessengerDBStorage::getMessageMaxCounter(const QString &user, const QString &channelSha)
 {
-    Q_UNUSED(channelSha);
     QSqlQuery query(database());
-    query.prepare(selectMsgMaxCounter);
+    const QString sql = selectMsgMaxCounter
+            .arg(channelSha.isEmpty() ? QStringLiteral("") : selectJoinChannel)
+            .arg(channelSha.isEmpty() ? selectWhereIsNotChannel : QStringLiteral(""));
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
     query.bindValue(":user", user);
+    if (!channelSha.isEmpty())
+        query.bindValue(":channelSha", channelSha);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return query.value("max").toLongLong();
@@ -184,7 +188,7 @@ Message::Counter MessengerDBStorage::getMessageMaxCounter(const QString &user, c
 Message::Counter MessengerDBStorage::getMessageMaxConfirmedCounter(const QString &user)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgMaxConfirmedCounter);
+    CHECK(query.prepare(selectMsgMaxConfirmedCounter), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
@@ -193,11 +197,11 @@ Message::Counter MessengerDBStorage::getMessageMaxConfirmedCounter(const QString
     return -1;
 }
 
-std::list<Message> MessengerDBStorage::getMessagesForUser(const QString &user, qint64 from, qint64 to)
+std::vector<Message> MessengerDBStorage::getMessagesForUser(const QString &user, qint64 from, qint64 to)
 {
-    std::list<Message> res;
+    std::vector<Message> res;
     QSqlQuery query(database());
-    query.prepare(selectMsgMessagesForUser);
+    CHECK(query.prepare(selectMsgMessagesForUser), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":ob", from);
     query.bindValue(":oe", to);
@@ -206,11 +210,12 @@ std::list<Message> MessengerDBStorage::getMessagesForUser(const QString &user, q
     return res;
 }
 
-std::list<Message> MessengerDBStorage::getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 to)
+std::vector<Message> MessengerDBStorage::getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 to, bool isChannel)
 {
-    std::list<Message> res;
+    std::vector<Message> res;
     QSqlQuery query(database());
-    query.prepare(selectMsgMessagesForUserAndDest);
+    const QString sql = selectMsgMessagesForUserAndDest.arg(isChannel ? selectWhereIsChannel : selectWhereIsNotChannel);
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":duser", duser);
     query.bindValue(":ob", from);
@@ -220,11 +225,12 @@ std::list<Message> MessengerDBStorage::getMessagesForUserAndDest(const QString &
     return res;
 }
 
-std::list<Message> MessengerDBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num)
+std::vector<Message> MessengerDBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num, bool isChannel)
 {
-    std::list<Message> res;
+    std::vector<Message> res;
     QSqlQuery query(database());
-    query.prepare(selectMsgMessagesForUserAndDestNum);
+    const QString sql = selectMsgMessagesForUserAndDestNum.arg(isChannel ? selectWhereIsChannel : selectWhereIsNotChannel);
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":duser", duser);
     query.bindValue(":oe", to);
@@ -237,7 +243,7 @@ std::list<Message> MessengerDBStorage::getMessagesForUserAndDestNum(const QStrin
 qint64 MessengerDBStorage::getMessagesCountForUserAndDest(const QString &user, const QString &duser, qint64 from)
 {
     QSqlQuery query(database());
-    query.prepare(selectMsgCountMessagesForUserAndDest);
+    CHECK(query.prepare(selectMsgCountMessagesForUserAndDest), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":duser", duser);
     query.bindValue(":ob", from);
@@ -250,12 +256,15 @@ qint64 MessengerDBStorage::getMessagesCountForUserAndDest(const QString &user, c
 
 bool MessengerDBStorage::hasMessageWithCounter(const QString &username, Message::Counter counter, const QString &channelSha)
 {
-    Q_UNUSED(channelSha);
     QSqlQuery query(database());
-    query.prepare(selectCountMessagesWithCounter);
+    const QString sql = selectCountMessagesWithCounter
+            .arg(channelSha.isEmpty() ? QStringLiteral("") : selectJoinChannel)
+            .arg(channelSha.isEmpty() ? selectWhereIsNotChannel : QStringLiteral(""));
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":counter", counter);
-    qDebug() << query.lastQuery();
+    if (!channelSha.isEmpty())
+        query.bindValue(":channelSha", channelSha);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return query.value("res").toBool();
@@ -266,7 +275,7 @@ bool MessengerDBStorage::hasMessageWithCounter(const QString &username, Message:
 bool MessengerDBStorage::hasUnconfirmedMessageWithHash(const QString &username, const QString &hash)
 {
     QSqlQuery query(database());
-    query.prepare(selectCountNotConfirmedMessagesWithHash);
+    CHECK(query.prepare(selectCountNotConfirmedMessagesWithHash), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":hash", hash);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -276,12 +285,17 @@ bool MessengerDBStorage::hasUnconfirmedMessageWithHash(const QString &username, 
     return false;
 }
 
-MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash)
+MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessageWithHash(const QString &username, const QString &hash, const QString &channelSha)
 {
     QSqlQuery query(database());
-    query.prepare(selectFirstNotConfirmedMessageWithHash);
+    const QString sql = selectFirstNotConfirmedMessageWithHash
+    .arg(channelSha.isEmpty() ? QStringLiteral("") : selectJoinChannel)
+    .arg(channelSha.isEmpty() ? selectWhereIsNotChannel : QStringLiteral(""));
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":hash", hash);
+    if (!channelSha.isEmpty())
+        query.bindValue(":channelSha", channelSha);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return MessengerDBStorage::IdCounterPair(query.value("id").toLongLong(),
@@ -292,11 +306,15 @@ MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstNotConfirmedMessa
 
 MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstMessageWithHash(const QString &username, const QString &hash, const QString &channelSha)
 {
-    Q_UNUSED(channelSha);
     QSqlQuery query(database());
-    query.prepare(selectFirstMessageWithHash);
+    const QString sql = selectFirstMessageWithHash
+    .arg(channelSha.isEmpty() ? QStringLiteral("") : selectJoinChannel)
+    .arg(channelSha.isEmpty() ? selectWhereIsNotChannel : QStringLiteral(""));
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":hash", hash);
+    if (!channelSha.isEmpty())
+        query.bindValue(":channelSha", channelSha);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return MessengerDBStorage::IdCounterPair(query.value("id").toLongLong(),
@@ -308,7 +326,7 @@ MessengerDBStorage::IdCounterPair MessengerDBStorage::findFirstMessageWithHash(c
 DBStorage::DbId MessengerDBStorage::findFirstNotConfirmedMessage(const QString &username)
 {
     QSqlQuery query(database());
-    query.prepare(selectFirstNotConfirmedMessage);
+    CHECK(query.prepare(selectFirstNotConfirmedMessage), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
@@ -317,11 +335,10 @@ DBStorage::DbId MessengerDBStorage::findFirstNotConfirmedMessage(const QString &
     return -1;
 }
 
-void MessengerDBStorage::updateMessage(DbId id, Message::Counter newCounter, bool confirmed, const QString &channelSha)
+void MessengerDBStorage::updateMessage(DbId id, Message::Counter newCounter, bool confirmed)
 {
-    Q_UNUSED(channelSha);
     QSqlQuery query(database());
-    query.prepare(updateMessageQuery);
+    CHECK(query.prepare(updateMessageQuery), query.lastError().text().toStdString());
     query.bindValue(":id", id);
     query.bindValue(":counter", newCounter);
     query.bindValue(":isConfirmed", confirmed);
@@ -330,13 +347,19 @@ void MessengerDBStorage::updateMessage(DbId id, Message::Counter newCounter, boo
     //CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-Message::Counter MessengerDBStorage::getLastReadCounterForUserContact(const QString &username, const QString &contact, bool isChannel)
+Message::Counter MessengerDBStorage::getLastReadCounterForUserContact(const QString &username, const QString &channelOrContact, bool isChannel)
 {
-    Q_UNUSED(isChannel);
     QSqlQuery query(database());
-    query.prepare(selectLastReadCounterForUserContact);
+    if (isChannel) {
+        CHECK(query.prepare(selectLastReadCounterForUserChannel), query.lastError().text().toStdString());
+    } else {
+        CHECK(query.prepare(selectLastReadCounterForUserContact), query.lastError().text().toStdString());
+    }
     query.bindValue(":user", username);
-    query.bindValue(":contact", contact);
+    if (isChannel)
+        query.bindValue(":contact", channelOrContact);
+    else
+        query.bindValue(":shaName", channelOrContact);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return query.value("lastcounter").toLongLong();
@@ -344,23 +367,28 @@ Message::Counter MessengerDBStorage::getLastReadCounterForUserContact(const QStr
     return -1;
 }
 
-void MessengerDBStorage::setLastReadCounterForUserContact(const QString &username, const QString &contact, Message::Counter counter, bool isChannel)
+void MessengerDBStorage::setLastReadCounterForUserContact(const QString &username, const QString &channelOrContact, Message::Counter counter, bool isChannel)
 {
-    Q_UNUSED(isChannel);
     QSqlQuery query(database());
-    query.prepare(updateLastReadCounterForUserContact);
+    if (isChannel) {
+        CHECK(query.prepare(updateLastReadCounterForUserChannel), query.lastError().text().toStdString());
+    } else {
+        CHECK(query.prepare(updateLastReadCounterForUserContact), query.lastError().text().toStdString());
+    }
     query.bindValue(":counter", counter);
     query.bindValue(":user", username);
-    query.bindValue(":contact", contact);
+    if (isChannel)
+        query.bindValue(":contact", channelOrContact);
+    else
+        query.bindValue(":shaName", channelOrContact);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-std::list<std::pair<QString, Message::Counter> > MessengerDBStorage::getLastReadCountersForUser(const QString &username, bool isChannel)
+std::vector<std::pair<QString, Message::Counter> > MessengerDBStorage::getLastReadCountersForUser(const QString &username, bool isChannel)
 {
-    Q_UNUSED(isChannel);
-    std::list<std::pair<QString, Message::Counter> > res;
+    std::vector<std::pair<QString, Message::Counter> > res;
     QSqlQuery query(database());
-    query.prepare(selectLastReadCountersForUser);
+    CHECK(query.prepare(selectLastReadCountersForUser), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     while (query.next()) {
@@ -373,7 +401,7 @@ std::list<std::pair<QString, Message::Counter> > MessengerDBStorage::getLastRead
 void MessengerDBStorage::addChannel(DBStorage::DbId userid, const QString &channel, const QString &shaName, bool isAdmin, const QString &adminName, bool isBanned, bool isWriter, bool isVisited)
 {
     QSqlQuery query(database());
-    query.prepare(insertMsgChannels);
+    CHECK(query.prepare(insertMsgChannels), query.lastError().text().toStdString());
     query.bindValue(":userid", userid);
     query.bindValue(":channel", channel);
     query.bindValue(":shaName", shaName);
@@ -389,7 +417,7 @@ void MessengerDBStorage::addChannel(DBStorage::DbId userid, const QString &chann
 void MessengerDBStorage::setChannelsNotVisited(const QString &user)
 {
     QSqlQuery query(database());
-    query.prepare(updateSetChannelsNotVisited);
+    CHECK(query.prepare(updateSetChannelsNotVisited), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
@@ -397,7 +425,7 @@ void MessengerDBStorage::setChannelsNotVisited(const QString &user)
 DBStorage::DbId MessengerDBStorage::getChannelForUserShaName(const QString &user, const QString &shaName)
 {
     QSqlQuery query(database());
-    query.prepare(selectChannelForUserShaName);
+    CHECK(query.prepare(selectChannelForUserShaName), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":shaName", shaName);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -410,7 +438,7 @@ DBStorage::DbId MessengerDBStorage::getChannelForUserShaName(const QString &user
 void MessengerDBStorage::updateChannel(DBStorage::DbId id, bool isVisited)
 {
     QSqlQuery query(database());
-    query.prepare(updateChannelInfo);
+    CHECK(query.prepare(updateChannelInfo), query.lastError().text().toStdString());
     query.bindValue(":id", id);
     query.bindValue(":isVisited", isVisited);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -419,7 +447,7 @@ void MessengerDBStorage::updateChannel(DBStorage::DbId id, bool isVisited)
 void MessengerDBStorage::setWriterForNotVisited(const QString &user)
 {
     QSqlQuery query(database());
-    query.prepare(updatetWriterForNotVisited);
+    CHECK(query.prepare(updatetWriterForNotVisited), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
@@ -428,7 +456,7 @@ ChannelInfo MessengerDBStorage::getChannelInfoForUserShaName(const QString &user
 {
     ChannelInfo info;
     QSqlQuery query(database());
-    query.prepare(selectChannelInfoForUserShaName);
+    CHECK(query.prepare(selectChannelInfoForUserShaName), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":shaName", shaName);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -445,7 +473,7 @@ ChannelInfo MessengerDBStorage::getChannelInfoForUserShaName(const QString &user
 void MessengerDBStorage::setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter)
 {
     QSqlQuery query(database());
-    query.prepare(updateChannelIsWriterForUserShaName);
+    CHECK(query.prepare(updateChannelIsWriterForUserShaName), query.lastError().text().toStdString());
     query.bindValue(":user", user);
     query.bindValue(":shaName", shaName);
     query.bindValue(":isWriter", isWriter);
@@ -453,7 +481,7 @@ void MessengerDBStorage::setChannelIsWriterForUserShaName(const QString &user, c
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::list<Message> &messages, bool reverse)
+void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool reverse)
 {
     while (query.next()) {
         Message msg;
@@ -465,17 +493,16 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::list<Message>
         msg.fee = query.value("fee").toLongLong();
         msg.isCanDecrypted = query.value("canDecrypted").toBool();
         msg.isConfirmed = query.value("isConfirmed").toBool();
-        if (reverse)
-            messages.push_front(msg);
-        else
-            messages.push_back(msg);
+        messages.push_back(msg);
     }
+    if (reverse)
+        std::reverse(std::begin(messages), std::end(messages));
 }
 
 void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::DbId contactid)
 {
     QSqlQuery query(database());
-    query.prepare(selectLastReadMessageCount);
+    CHECK(query.prepare(selectLastReadMessageCount), query.lastError().text().toStdString());
     query.bindValue(":userid", userid);
     query.bindValue(":contactid", contactid);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -485,7 +512,7 @@ void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::Db
     qint64 count = query.value("res").toLongLong();
     if (count > 0)
         return;
-    query.prepare(insertLastReadMessageRecord);
+    CHECK(query.prepare(insertLastReadMessageRecord), query.lastError().text().toStdString());
     query.bindValue(":userid", userid);
     query.bindValue(":contactid", contactid);
     CHECK(query.exec(), query.lastError().text().toStdString());

@@ -13,13 +13,13 @@ INCLUDEPATH = ../../src ../../src/Messenger
 SOURCES += \
     tst_messengerdbstorage.cpp \
     ../../src/dbstorage.cpp \
-    ../../src/Messenger/messengerdbstorage.cpp
+    ../../src/Messenger/MessengerDBStorage.cpp
 
 
 HEADERS += \
     tst_messengerdbstorage.h \
     ../../src/dbstorage.h \
-    ../../src/Messenger/messengerdbstorage.h
+    ../../src/Messenger/MessengerDBStorage.h
 
 QMAKE_LFLAGS += -rdynamic
 unix:!macx: include(../../libs-unix.pri)

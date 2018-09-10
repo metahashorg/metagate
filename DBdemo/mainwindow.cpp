@@ -1,10 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QFile>
 #include <QTreeWidget>
-#include "dbres.h"
 #include "dbstorage.h"
-#include "messengerdbstorage.h"
+#include "MessengerDBStorage.h"
 #include "transactionsdbstorage.h"
 #include "SlotWrapper.h"
 #include "BigNumber.h"
@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
 
-    {
+    /*{
         QList<TestStructure> list;
         TestStructure t;
         t.name = "John Smith";
@@ -50,8 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug() << t.name << t.type << t.value;
     }
 
-    return;
-
+    return;*/
+/*
     qDebug() << sizeof(transactions::Transaction);
 
     const int NUM = 10000;
@@ -82,6 +82,8 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     qDebug() << res / 20;
     return;
+    */
+    /*
     HttpSimpleClient *client = new HttpSimpleClient();
     client->sendMessagePost(QUrl("http://www.google.com:80/jkjktrjkt"), "{\"jsonrpc\":\"2.0\",\"method\":\"mhc_send\",\"params\":{\"data\":\"\",\"fee\":\"\",\"nonce\":\"3\",\"pubkey\":\"3059301306072A8648CE3D020106082A8648CE3D030107034200047FAF41D8AC6C965467EC24A8B78E528892DFEBAA91EEE770443EA574F4A384D0C305ED6FE97A2652241C4F6E2EE7A2306354EF39AFAAE2C0156C7FF69ECE3110\",\"sign\":\"3044022035538e5d047d394b58cb3046d4bc387d456cf850bcfe5231244438e98740acf8022045dc2d1750689f820c43ef26a4058cdbcaa5e5dbd2e7e80115baf3639989587b\",\"to\":\"0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff\",\"value\":\"1\"}}",
                             [](const std::string &response, const TypedException &exception) {
@@ -94,6 +96,9 @@ MainWindow::MainWindow(QWidget *parent) :
     });
 
     HttpSocket *httpsocket = new HttpSocket(QUrl("http://188.246.233.140:9999/"), message);
+    */
+    if (QFile::exists("messenger.db"))
+        QFile::remove("messenger.db");
     BEGIN_SLOT_WRAPPER
             MessengerDBStorage db;
     //db.openDB();
@@ -114,15 +119,40 @@ MainWindow::MainWindow(QWidget *parent) :
     //                                      true,
     //                                      1532329669,
     //                                      "7");
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
+    DBStorage::DbId id1 = db.getUserId("1234");
+    db.addChannel(id1, "channel", "jkgfjkgfgfitrrtoioriojk", true, "ktkt", false, true, true);
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
+    db.addMessage("1234", "3454", "abcd", 1, 4001, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4002, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4003, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", 1, 4004, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
-    qDebug() << "answer " << db.getMessagesForUserAndDestNum("1234", "3454", 5000, 20).size();
+    db.addMessage("1234", "3454", "abcd", 1, 6000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
+
+    MessengerDBStorage::IdCounterPair p = db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf");
+    qDebug() << "P " << p.second;
+    p = db.findFirstMessageWithHash("1234", "asdfdf");
+    qDebug() << "P " << p.second;
+
+    p = db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf", "jkgfjkgfgfitrrtoioriojk");
+    qDebug() << "P " << p.second;
+    p = db.findFirstMessageWithHash("1234", "asdfdf", "jkgfjkgfgfitrrtoioriojk");
+    qDebug() << "P " << p.second;
+
+    qDebug() << db.getMessageMaxCounter("1234");
+    qDebug() << db.getMessageMaxCounter("1234", "jkgfjkgfgfitrrtoioriojk");
+    qDebug() << db.hasMessageWithCounter("1234", 4000);
+    qDebug() << db.hasMessageWithCounter("1234", 4001);
+    qDebug() << db.hasMessageWithCounter("1234", 4000, "jkgfjkgfgfitrrtoioriojk");
+    qDebug() << db.hasMessageWithCounter("1234", 4001, "jkgfjkgfgfitrrtoioriojk");
+    //qDebug() << db.getMessageMaxConfirmedCounter("user7");
+    //qDebug() << db.getMessageMaxConfirmedCounter("userururut");
+
+
+
+
+    qDebug() << "answer " << db.getMessagesForUserAndDestNum("1234", "3454", 5000, 20, false).size();
     qDebug() << "answer " << db.getMessagesCountForUserAndDest("1234", "3454", 3000);
-    qDebug() << db.getUserId("user1");
     qDebug() << db.getUserId("user2");
     qDebug() << db.getUserId("user3");
     qDebug() << db.getUserId("user1");
@@ -144,7 +174,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     qDebug() << "size" << db.getMessagesForUserAndDestNum("user7", "user1", 10, 1000).size();
 
-    std::list<Message> msgs = db.getMessagesForUser("user7", 1, 3);
+    std::vector<Message> msgs = db.getMessagesForUser("user7", 1, 3);
     qDebug() << "count " << msgs.size();
 
     qDebug() << db.getMessageMaxCounter("user7");
@@ -186,6 +216,7 @@ MainWindow::MainWindow(QWidget *parent) :
     db.getChannelInfoForUserShaName("1234", "jkgfjkgfgfioioriojk");
     db.setChannelIsWriterForUserShaName("1234", "jkgfjkgfgfioioriojk", true);
 
+    return;
     transactions::TransactionsDBStorage tdb;
     tdb.init();
 

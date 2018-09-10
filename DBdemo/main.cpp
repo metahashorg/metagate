@@ -8,9 +8,6 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<TestStructure>>();
     qRegisterMetaTypeStreamOperators<QList<TestStructure>>();
 
-    qRegisterMetaType<std::vector<TestStructure>>();
-    qRegisterMetaTypeStreamOperators<std::vector<TestStructure>>();
-
     QApplication a(argc, argv);
     MainWindow w;
     w.show();

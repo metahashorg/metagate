@@ -1,5 +1,5 @@
-#ifndef DBRES_H
-#define DBRES_H
+#ifndef MESSENGERDBRES_H
+#define MESSENGERDBRES_H
 
 #include <QString>
 
@@ -33,7 +33,7 @@ static const QString createMsgChannelsTable = "CREATE TABLE msg_channels ( "
 static const QString createMsgMessagesTable = "CREATE TABLE msg_messages ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
                                            "userid  INTEGER NOT NULL, "
-                                           "contactid  INTEGER NOT NULL, "
+                                           "contactid  INTEGER, "
                                            "morder INT8, "
                                            "dt INT8, "
                                            "text TEXT, "
@@ -57,10 +57,12 @@ static const QString createMsgMessageCounterIndex = "CREATE INDEX messagesCounte
 static const QString createMsgLastReadMessageTable = "CREATE TABLE msg_lastreadmessage ( "
                                                         "id INTEGER PRIMARY KEY NOT NULL, "
                                                         "userid  INTEGER NOT NULL, "
-                                                        "contactid  INTEGER NOT NULL, "
+                                                        "contactid  INTEGER, "
+                                                        "channelid  INTEGER, "
                                                         "lastcounter INT8, "
                                                         "FOREIGN KEY (userid) REFERENCES msg_users(id), "
-                                                        "FOREIGN KEY (contactid) REFERENCES msg_contacts(id) "
+                                                        "FOREIGN KEY (contactid) REFERENCES msg_contacts(id), "
+                                                        "FOREIGN KEY (channelid) REFERENCES msg_channels(id) "
                                                         ")";
 
 static const QString selectMsgUsersForName = "SELECT id FROM msg_users WHERE username = :username";
@@ -75,8 +77,8 @@ static const QString insertMsgMessages = "INSERT OR IGNORE INTO msg_messages "
 
 static const QString selectMsgMaxCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
                                            "FROM msg_messages m "
-                                           "INNER JOIN msg_users u ON u.id = m.userid "
-                                           "WHERE u.username = :user";
+                                           "INNER JOIN msg_users u ON u.id = m.userid %1 "
+                                           "WHERE u.username = :user %2";
 
 static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
                                                     "FROM msg_messages m "
@@ -99,7 +101,7 @@ static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS use
                                                        "INNER JOIN msg_users u ON u.id = m.userid "
                                                        "INNER JOIN msg_contacts du ON du.id = m.contactid "
                                                        "WHERE m.morder >= :ob AND m.morder <= :oe "
-                                                       "AND u.username = :user AND du.username = :duser "
+                                                       "AND u.username = :user AND du.username = :duser %1 "
                                                        "ORDER BY m.morder";
 
 static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
@@ -108,9 +110,10 @@ static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS 
                                                           "INNER JOIN msg_users u ON u.id = m.userid "
                                                           "INNER JOIN msg_contacts du ON du.id = m.contactid "
                                                           "WHERE m.morder <= :oe "
-                                                          "AND u.username = :user AND du.username = :duser "
+                                                          "AND u.username = :user AND du.username = :duser %1 "
                                                           "ORDER BY m.morder DESC "
                                                           "LIMIT :num";
+
 
 static const QString selectMsgUsersList = "SELECT username FROM msg_users ORDER BY id";
 
@@ -140,9 +143,9 @@ static const QString selectCountNotConfirmedMessagesWithHash = "SELECT (COUNT(*)
 
 static const QString selectCountMessagesWithCounter = "SELECT (COUNT(*) > 0) AS res "
                                                         "FROM msg_messages m "
-                                                        "INNER JOIN msg_users u ON u.id = m.userid "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid %1 "
                                                         "WHERE m.morder = :counter "
-                                                        "AND u.username = :user ";
+                                                        "AND u.username = :user %2 ";
 
 
 static const QString selectFirstNotConfirmedMessage = "SELECT m.id, m.morder "
@@ -153,20 +156,20 @@ static const QString selectFirstNotConfirmedMessage = "SELECT m.id, m.morder "
                                                         "ORDER BY m.morder "
                                                         "LIMIT 1";
 
-static const QString selectFirstNotConfirmedMessageWithHash = "SELECT m.id "
+static const QString selectFirstNotConfirmedMessageWithHash = "SELECT m.id, m.morder "
                                                         "FROM msg_messages m "
-                                                        "INNER JOIN msg_users u ON u.id = m.userid "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid %1 "
                                                         "WHERE m.isConfirmed = 0 "
                                                         "AND m.hash = :hash "
-                                                        "AND u.username = :user "
+                                                        "AND u.username = :user %2 "
                                                         "ORDER BY m.morder "
                                                         "LIMIT 1";
 
-static const QString selectFirstMessageWithHash = "SELECT m.id "
+static const QString selectFirstMessageWithHash = "SELECT m.id, m.morder "
                                                         "FROM msg_messages m "
-                                                        "INNER JOIN msg_users u ON u.id = m.userid "
+                                                        "INNER JOIN msg_users u ON u.id = m.userid %1 "
                                                         "WHERE m.hash = :hash "
-                                                        "AND u.username = :user "
+                                                        "AND u.username = :user %2 "
                                                         "ORDER BY m.morder "
                                                         "LIMIT 1";
 
@@ -179,12 +182,24 @@ static const QString selectLastReadCounterForUserContact = "SELECT l.lastcounter
                                                             "INNER JOIN msg_contacts c ON c.id = l.contactid "
                                                             "WHERE u.username = :user AND c.username = :contact";
 
+static const QString selectLastReadCounterForUserChannel = "SELECT l.lastcounter FROM msg_lastreadmessage l "
+                                                            "INNER JOIN msg_users u ON u.id = l.userid "
+                                                            "INNER JOIN msg_channels c ON c.id = l.channelid "
+                                                            "WHERE u.username = :user AND c.shaName = :shaName";
+
 static const QString updateLastReadCounterForUserContact = "UPDATE msg_lastreadmessage "
                                                             "SET lastcounter = :counter "
                                                             "WHERE id = (SELECT l.id FROM msg_lastreadmessage l "
                                                             "INNER JOIN msg_users u ON u.id = l.userid "
                                                             "INNER JOIN msg_contacts c ON c.id = l.contactid "
                                                             "WHERE u.username = :user AND c.username = :contact)";
+
+static const QString updateLastReadCounterForUserChannel = "UPDATE msg_lastreadmessage "
+                                                            "SET lastcounter = :counter "
+                                                            "WHERE id = (SELECT l.id FROM msg_lastreadmessage l "
+                                                            "INNER JOIN msg_users u ON u.id = l.userid "
+                                                            "INNER JOIN msg_channels c ON c.id = l.channelid "
+                                                            "WHERE u.username = :user AND c.shaName = :shaName)";
 
 static const QString selectLastReadMessageCount = "SELECT (COUNT(*) > 0) AS res FROM msg_lastreadmessage "
                                                     "WHERE userid = :userid AND contactid = :contactid";
@@ -233,4 +248,8 @@ static const QString updateChannelIsWriterForUserShaName = "UPDATE msg_channels 
                                                             "WHERE username = :user) "
                                                             "AND shaName = :shaName";
 
-#endif // DBRES_H
+static const QString selectWhereIsChannel = "AND m.channelid IS NOT NULL";
+static const QString selectWhereIsNotChannel = "AND m.channelid IS NULL";
+static const QString selectJoinChannel = "INNER JOIN msg_channels c ON c.id = m.channelid AND c.shaName = :channelSha";
+
+#endif // MESSENGERDBRES_H

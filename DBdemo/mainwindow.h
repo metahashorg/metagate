@@ -20,8 +20,6 @@ struct TestStructure
 Q_DECLARE_METATYPE(TestStructure)
 
 Q_DECLARE_METATYPE(QList<TestStructure>)
-Q_DECLARE_METATYPE(std::vector<TestStructure>)
-
 
 
 QDataStream &operator<<(QDataStream &out, const TestStructure &obj);

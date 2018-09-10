@@ -55,7 +55,7 @@ SOURCES += main.cpp mainwindow.cpp \
     WalletRsa.cpp \
     Messenger/MessengerWaletManager.cpp \
     TypedException.cpp \
-    Messenger/messengerdbstorage.cpp \
+    Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
     transactions/TransactionsMessages.cpp \
     transactions/transactionsdbstorage.cpp \
@@ -122,7 +122,7 @@ HEADERS += mainwindow.h \
     WalletRsa.h \
     Messenger/MessengerWaletManager.h \
     dbres.h \
-    Messenger/messengerdbstorage.h \
+    Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
     transactions/Transaction.h \
