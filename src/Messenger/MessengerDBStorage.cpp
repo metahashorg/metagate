@@ -30,7 +30,9 @@ void MessengerDBStorage::init(bool force)
 void MessengerDBStorage::addMessage(const QString &user, const QString &duser, const QString &text, uint64_t timestamp, Message::Counter counter, bool isIncoming, bool canDecrypted, bool isConfirmed, const QString &hash, qint64 fee, const QString &channelSha)
 {
     DbId userid = getUserId(user);
-    DbId contactid = getContactId(duser);
+    DbId contactid = -1;
+    if (!duser.isNull())
+        contactid = getContactId(duser);
     DbId channelid = -1;
     if (!channelSha.isNull())
         channelid = getChannelForUserShaName(user, channelSha);
@@ -38,7 +40,10 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
     QSqlQuery query(database());
     CHECK(query.prepare(insertMsgMessages), query.lastError().text().toStdString());
     query.bindValue(":userid", userid);
-    query.bindValue(":contactid", contactid);
+    if (contactid == -1)
+        query.bindValue(":contactid", QVariant());
+    else
+        query.bindValue(":contactid", contactid);
     query.bindValue(":order", counter);
     query.bindValue(":dt", static_cast<qint64>(timestamp));
     query.bindValue(":text", text);
@@ -55,7 +60,7 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
         qDebug() << "ERROR" << query.lastError().type();
     }
     //CHECK(query.exec(), query.lastError().text().toStdString());
-    addLastReadRecord(userid, contactid);
+    addLastReadRecord(userid, contactid, channelid);
 }
 
 DBStorage::DbId MessengerDBStorage::getUserId(const QString &username)
@@ -384,15 +389,29 @@ void MessengerDBStorage::setLastReadCounterForUserContact(const QString &usernam
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-std::vector<std::pair<QString, Message::Counter> > MessengerDBStorage::getLastReadCountersForUser(const QString &username, bool isChannel)
+std::vector<MessengerDBStorage::NameCounterPair> MessengerDBStorage::getLastReadCountersForContacts(const QString &username)
 {
-    std::vector<std::pair<QString, Message::Counter> > res;
+    std::vector<MessengerDBStorage::NameCounterPair> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectLastReadCountersForUser), query.lastError().text().toStdString());
+    CHECK(query.prepare(selectLastReadCountersForContacts), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     while (query.next()) {
-        std::pair<QString, Message::Counter> p(query.value("username").toString(), query.value("lastcounter").toLongLong());
+        NameCounterPair p(query.value("username").toString(), query.value("lastcounter").toLongLong());
+        res.push_back(p);
+    }
+    return res;
+}
+
+std::vector<MessengerDBStorage::NameCounterPair> MessengerDBStorage::getLastReadCountersForChannels(const QString &username)
+{
+    std::vector<MessengerDBStorage::NameCounterPair> res;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectLastReadCountersForChannels), query.lastError().text().toStdString());
+    query.bindValue(":user", username);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    while (query.next()) {
+        NameCounterPair p(query.value("shaName").toString(), query.value("lastcounter").toLongLong());
         res.push_back(p);
     }
     return res;
@@ -499,7 +518,7 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
         std::reverse(std::begin(messages), std::end(messages));
 }
 
-void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::DbId contactid)
+void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::DbId contactid, DBStorage::DbId channelid)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(selectLastReadMessageCount), query.lastError().text().toStdString());

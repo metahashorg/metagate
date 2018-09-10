@@ -206,11 +206,18 @@ static const QString selectLastReadMessageCount = "SELECT (COUNT(*) > 0) AS res 
 static const QString insertLastReadMessageRecord = "INSERT INTO msg_lastreadmessage "
                                                     "(lastcounter, userid, contactid) VALUES "
                                                     "(0, :userid, :contactid)";
-static const QString selectLastReadCountersForUser = "SELECT c.username, l.lastcounter "
-                                                        "FROM msg_lastreadmessage l "
-                                                        "INNER JOIN msg_users u ON u.id = l.userid "
-                                                        "INNER JOIN msg_contacts c ON c.id = l.contactid "
-                                                        "WHERE u.username = :user";
+
+static const QString selectLastReadCountersForContacts = "SELECT c.username, l.lastcounter "
+                                                            "FROM msg_lastreadmessage l "
+                                                            "INNER JOIN msg_users u ON u.id = l.userid "
+                                                            "INNER JOIN msg_contacts c ON c.id = l.contactid "
+                                                            "WHERE u.username = :user";
+
+static const QString selectLastReadCountersForChannels = "SELECT c.shaName, l.lastcounter "
+                                                            "FROM msg_lastreadmessage l "
+                                                            "INNER JOIN msg_users u ON u.id = l.userid "
+                                                            "INNER JOIN msg_channels c ON c.id = l.channelid "
+                                                            "WHERE u.username = :user";
 
 static const QString insertMsgChannels = "INSERT INTO msg_channels "
                                             "(userid, channel, shaName, isAdmin, adminName, isBanned, isWriter, isVisited) "

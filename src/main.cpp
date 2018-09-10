@@ -32,7 +32,7 @@
 
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
-#include "Messenger/messengerdbstorage.h"
+#include "Messenger/MessengerDBStorage.h"
 
 #include "transactions/Transactions.h"
 #include "transactions/TransactionsJavascript.h"
