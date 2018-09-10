@@ -9,6 +9,9 @@
 #include "MessengerWaletManager.h"
 
 struct TypedException;
+
+namespace messenger {
+
 class Messenger;
 
 class MessengerJavascript : public QObject {
@@ -122,5 +125,7 @@ private:
     QString walletPath;
 
 };
+
+}
 
 #endif // MESSENGERJAVASCRIPT_H

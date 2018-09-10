@@ -13,11 +13,14 @@
 #include <unordered_map>
 #include <functional>
 
+struct TypedException;
+
+namespace messenger {
+
 struct NewMessageResponse;
 class MessengerJavascript;
 class MessengerDBStorage;
 struct ChannelInfo;
-struct TypedException;
 
 class Messenger : public TimerClass
 {
@@ -234,5 +237,7 @@ private:
     std::unordered_map<size_t, ResponseCallbacks> callbacks;
 
 };
+
+}
 
 #endif // MESSENGER_H

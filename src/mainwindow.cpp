@@ -57,7 +57,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(JavascriptWrapper &jsWrapper, MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent)
+MainWindow::MainWindow(JavascriptWrapper &jsWrapper, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , jsWrapper(jsWrapper)

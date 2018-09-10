@@ -7,6 +7,8 @@
 #include "check.h"
 #include "Log.h"
 
+namespace messenger {
+
 const static QString MSG_GET_MY_REQUEST = "msg_get_my";
 const static QString MSG_GET_CHANNEL_REQUEST = "msg_get_channel";
 const static QString MSG_GET_CHANNELS_REQUEST = "msg_get_channels";
@@ -486,4 +488,6 @@ KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response) {
     result.fee = std::stoull(data.value("fee").toString().toStdString());
 
     return result;
+}
+
 }

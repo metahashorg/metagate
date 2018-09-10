@@ -11,6 +11,8 @@ static std::thread::id threadId() {
     return std::this_thread::get_id();
 }
 
+namespace messenger {
+
 MessengerWaletManager::MessengerWaletManager(QObject *parent)
     : QObject(parent)
     , threadId(::threadId())
@@ -66,4 +68,6 @@ BEGIN_SLOT_WRAPPER
         }
     }
 END_SLOT_WRAPPER
+}
+
 }

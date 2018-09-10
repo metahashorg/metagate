@@ -16,6 +16,8 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+namespace messenger {
+
 MessengerJavascript::MessengerJavascript(QObject *parent)
     : QObject(parent)
 {
@@ -827,4 +829,6 @@ void MessengerJavascript::lockWallet() {
 void MessengerJavascript::runJs(const QString &script) {
     LOG << "Javascript " << script;
     emit jsRunSig(script);
+}
+
 }

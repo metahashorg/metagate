@@ -13,7 +13,7 @@ void tst_MessengerDBStorage::testDB()
 {
     if (QFile::exists(dbName))
         QFile::remove(dbName);
-    MessengerDBStorage db;
+    messenger::MessengerDBStorage db;
     db.init();
     DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
     DBStorage::DbId id2 = db.getUserId("ddfjgjgj");
@@ -24,7 +24,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
 {
     if (QFile::exists(dbName))
         QFile::remove(dbName);
-    MessengerDBStorage db;
+    messenger::MessengerDBStorage db;
     db.init();
 
     db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
@@ -37,7 +37,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 5000), 0);
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 0), 2);
 
-    std::vector<Message> r = db.getMessagesForUserAndDestNum("1234", "3454", 5000, 20);
+    std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "3454", 5000, 20);
     QCOMPARE(r.size(), 2);
     QCOMPARE(r.front().data, QStringLiteral("abcd123"));
 
@@ -64,7 +64,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
     QCOMPARE(db.hasUnconfirmedMessageWithHash("556", "asdfdf"), false);
     QCOMPARE(db.hasUnconfirmedMessageWithHash("user7", "dfjkjkgfjkgfjkgfjkjk"), true);
 
-    std::vector<Message> rr = db.getMessagesForUserAndDestNum("user7", "user1", 10, 1000);
+    std::vector<messenger::Message> rr = db.getMessagesForUserAndDestNum("user7", "user1", 10, 1000);
     QCOMPARE(rr.size(), 7);
     qint64 pos[7] = {1, 2, 3, 4, 5, 6, 7};
 
@@ -75,7 +75,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
         k++;
     }
 
-    std::vector<Message> msgs = db.getMessagesForUser("user7", 1, 3);
+    std::vector<messenger::Message> msgs = db.getMessagesForUser("user7", 1, 3);
     QCOMPARE(msgs.size(), 3);
     msgs = db.getMessagesForUser("user7", 1, 7);
     QCOMPARE(msgs.size(), 7);
@@ -114,7 +114,7 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
 {
     if (QFile::exists(dbName))
         QFile::remove(dbName);
-    MessengerDBStorage db;
+    messenger::MessengerDBStorage db;
     db.init();
     DBStorage::DbId id1 = db.getUserId("1234");
     db.addChannel(id1, "channel", "jkgfjkgfgfitrrtoioriojk", true, "ktkt", false, true, true);

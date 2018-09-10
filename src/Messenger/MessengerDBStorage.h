@@ -5,6 +5,8 @@
 
 #include "Message.h"
 
+namespace messenger {
+
 class MessengerDBStorage : public DBStorage
 {
 public:
@@ -68,5 +70,7 @@ private:
     void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool reverse = false);
     void addLastReadRecord(DbId userid, DbId contactid, DBStorage::DbId channelid);
 };
+
+}
 
 #endif // MESSENGERDBSTORAGE_H

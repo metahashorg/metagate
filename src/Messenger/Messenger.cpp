@@ -23,6 +23,8 @@ using namespace std::placeholders;
 
 #include "MessengerDBStorage.h"
 
+namespace messenger {
+
 static QString createHashMessage(const QString &message) {
     return QString(QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Sha512).toHex());
 }
@@ -57,31 +59,31 @@ std::vector<QString> Messenger::stringsForSign() {
 }
 
 QString Messenger::makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
-    return ::makeTextForSignRegisterRequest(address, rsaPubkeyHex, fee);
+    return messenger::makeTextForSignRegisterRequest(address, rsaPubkeyHex, fee);
 }
 
 QString Messenger::makeTextForGetPubkeyRequest(const QString &address) {
-    return ::makeTextForGetPubkeyRequest(address);
+    return messenger::makeTextForGetPubkeyRequest(address);
 }
 
 QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp) {
-    return ::makeTextForSendMessageRequest(address, dataHex, fee, timestamp);
+    return messenger::makeTextForSendMessageRequest(address, dataHex, fee, timestamp);
 }
 
 QString Messenger::makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee) {
-    return ::makeTextForChannelCreateRequest(title, titleSha, fee);
+    return messenger::makeTextForChannelCreateRequest(title, titleSha, fee);
 }
 
 QString Messenger::makeTextForChannelAddWriterRequest(const QString &titleSha, const QString &address) {
-    return ::makeTextForChannelAddWriterRequest(titleSha, address);
+    return messenger::makeTextForChannelAddWriterRequest(titleSha, address);
 }
 
 QString Messenger::makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address) {
-    return ::makeTextForChannelDelWriterRequest(titleSha, address);
+    return messenger::makeTextForChannelDelWriterRequest(titleSha, address);
 }
 
 QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp) {
-    return ::makeTextForSendToChannelRequest(titleSha, text, fee, timestamp);
+    return messenger::makeTextForSendToChannelRequest(titleSha, text, fee, timestamp);
 }
 
 static QString getWssServer() {
@@ -671,4 +673,6 @@ BEGIN_SLOT_WRAPPER
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, channels, exception));
 END_SLOT_WRAPPER
+}
+
 }

@@ -13,6 +13,8 @@
 
 #include "duration.h"
 
+namespace messenger {
+
 class MessengerWaletManager : public QObject {
     Q_OBJECT
 public:
@@ -47,5 +49,7 @@ public slots:
     void onResetWallets();
 
 };
+
+}
 
 #endif // MESSENGERWALETMANAGER_H

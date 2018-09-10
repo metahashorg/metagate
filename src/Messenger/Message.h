@@ -3,6 +3,8 @@
 
 #include <QString>
 
+namespace messenger {
+
 struct Message {
     using Counter = qint64;
 
@@ -26,5 +28,7 @@ struct ChannelInfo {
     Message::Counter counter = -1;
     bool isWriter;
 };
+
+}
 
 #endif // MESSAGE_H

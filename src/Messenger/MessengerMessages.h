@@ -7,6 +7,8 @@
 
 #include "Message.h"
 
+namespace messenger {
+
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);
 
 QString makeTextForGetPubkeyRequest(const QString &address);
@@ -115,5 +117,7 @@ ChannelInfo parseDelToChannelResponse(const QJsonDocument &response);
 Message::Counter parseCountMessagesResponse(const QJsonDocument &response);
 
 KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response);
+
+}
 
 #endif // MESSENGERMESSAGES_H

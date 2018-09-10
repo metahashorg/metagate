@@ -5,6 +5,8 @@
 
 #include "check.h"
 
+namespace messenger {
+
 static const QString databaseFileName = "messenger.db";
 static const QString databaseVersion = "1";
 
@@ -535,4 +537,6 @@ void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::Db
     query.bindValue(":userid", userid);
     query.bindValue(":contactid", contactid);
     CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
 }
