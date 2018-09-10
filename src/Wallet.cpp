@@ -140,7 +140,7 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
     return hexAddr;
 }
 
-void Wallet::checkAddress(const std::string &address) {
+void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
     std::string addr = address;
     CHECK_TYPED(addr.size() == 52, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
     CHECK_TYPED(addr.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
@@ -150,8 +150,10 @@ void Wallet::checkAddress(const std::string &address) {
     const std::string payload = binAddress.substr(0, binAddress.size() - 4);
     const std::string hash = binAddress.substr(binAddress.size() - 4);
 
-    const std::string doubleHash = doubleSha(payload);
-    CHECK_TYPED(doubleHash.substr(0, hash.size()) == hash, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+    if (isCheckHash) {
+        const std::string doubleHash = doubleSha(payload);
+        CHECK_TYPED(doubleHash.substr(0, hash.size()) == hash, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+    }
 }
 
 void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){
@@ -285,8 +287,8 @@ bool Wallet::verify(const std::string &message, const std::string &signature, co
     }
 }
 
-std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &dataHex) {
-    checkAddress(toAddress);
+std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &dataHex, bool isCheckHash) {
+    checkAddress(toAddress, isCheckHash);
     std::string result;
     result += fromHex(toAddress.substr(2));
     result += packInteger(value);
@@ -299,8 +301,8 @@ std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t
     return result;
 }
 
-void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey) {
-    const std::string txBinary = genTx(toAddress, value, fee, nonce, data);
+void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey, bool isCheckHash) {
+    const std::string txBinary = genTx(toAddress, value, fee, nonce, data, isCheckHash);
     signature = sign(txBinary, publicKey);
     txHex = toHex(txBinary);
 }

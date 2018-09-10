@@ -63,7 +63,7 @@ void tst_Metahash::testCreateBinMthTransaction() {
     QFETCH(std::string, data);
     QFETCH(std::string, answer);
 
-    QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, data)), answer);
+    QCOMPARE(toHex(Wallet::genTx(address, amount, fee, nonce, data, true)), answer);
 }
 
 void tst_Metahash::testNotCreateBinMthTransaction_data() {
@@ -94,7 +94,7 @@ void tst_Metahash::testNotCreateBinMthTransaction() {
     QFETCH(unsigned long long, fee);
     QFETCH(unsigned long long, nonce);
 
-    QVERIFY_EXCEPTION_THROWN(Wallet::genTx(address, amount, fee, nonce, ""), TypedException);
+    QVERIFY_EXCEPTION_THROWN(Wallet::genTx(address, amount, fee, nonce, "", true), TypedException);
 }
 
 void tst_Metahash::testCreateMth_data() {

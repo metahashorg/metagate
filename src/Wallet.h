@@ -28,7 +28,7 @@ public:
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
 
-    static void checkAddress(const std::string &address);
+    static void checkAddress(const std::string &address, bool isCheckHash=true);
 
 public:
 
@@ -38,9 +38,9 @@ public:
 
     static bool verify(const std::string &message, const std::string &signature, const std::string &publicKey);
 
-    static std::string genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &dataHex);
+    static std::string genTx(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &dataHex, bool isCheckHash);
 
-    void sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey);
+    void sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey, bool isCheckHash=true);
 
     static std::string genDataDelegateHex(bool isDelegate, uint64_t value);
 

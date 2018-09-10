@@ -458,7 +458,7 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey, false);
 
         emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
         result = "Ok";
