@@ -3,13 +3,13 @@
 
 #include <QObject>
 
-#include "TypedException.h"
-
 #include <functional>
 
-#include "Messenger.h"
 #include "Message.h"
 #include "MessengerWaletManager.h"
+
+struct TypedException;
+class Messenger;
 
 class MessengerJavascript : public QObject {
     Q_OBJECT

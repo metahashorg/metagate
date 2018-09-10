@@ -3,10 +3,12 @@
 #include <map>
 
 #include <QWebEnginePage>
+
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+
 #include <QTextDocument>
 #include <QLineEdit>
 #include <QWebEngineProfile>
@@ -26,7 +28,6 @@
 #include "duration.h"
 #include "Log.h"
 #include "utils.h"
-#include "algorithms.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
 

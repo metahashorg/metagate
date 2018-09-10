@@ -1,8 +1,6 @@
 #ifndef BASE58_H
-
 #define BASE58_H
 
-#include <stdint.h>
 #include <string>
 #include <vector>
 

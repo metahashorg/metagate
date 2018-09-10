@@ -7,6 +7,8 @@
 #include "utils.h"
 #include "Paths.h"
 
+#include "Messenger.h"
+
 #include "Wallet.h"
 #include "WalletRsa.h"
 

@@ -2,9 +2,9 @@
 #define HTTP_CLIENT_H
 
 #include <QObject>
-#include <QNetworkAccessManager>
 #include <QTimer>
 #include <QTcpSocket>
+#include <QUrl>
 
 #include <memory>
 #include <functional>
@@ -12,7 +12,8 @@
 #include <string>
 
 #include "duration.h"
-#include "TypedException.h"
+
+struct TypedException;
 
 class HttpSocket : public QTcpSocket
 {

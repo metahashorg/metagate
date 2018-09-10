@@ -7,8 +7,6 @@ using namespace std::placeholders;
 #include "Log.h"
 #include "SlotWrapper.h"
 
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QThread>
 
 QT_USE_NAMESPACE

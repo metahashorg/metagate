@@ -11,7 +11,8 @@
 #include <string>
 
 #include "duration.h"
-#include "TypedException.h"
+
+struct TypedException;
 
 /*
    На каждый поток должен быть один экземпляр класса.

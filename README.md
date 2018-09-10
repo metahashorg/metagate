@@ -49,7 +49,7 @@ Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString passw
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson);
-# Посылает транзакцию через C++ (аналог signMessageDelegate)
+# Sends transaction with C++ (like signMessageDelegate)
 # Result returns to 
 signMessageV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 

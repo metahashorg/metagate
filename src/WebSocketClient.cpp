@@ -5,8 +5,9 @@
 #include "utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "duration.h"
 
-#include "uploader.h"
+#include <QTimer>
 
 #include <thread>
 
