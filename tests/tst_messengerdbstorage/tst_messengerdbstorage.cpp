@@ -107,7 +107,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
     db.setLastReadCounterForUserContact("user7", "user1", 244);
     QCOMPARE(db.getLastReadCounterForUserContact("user7", "user1"), 244);
 
-    QCOMPARE(db.getLastReadCountersForUser("user7").size(), 1);
+    QCOMPARE(db.getLastReadCountersForContacts("user7").size(), 1);
 }
 
 void tst_MessengerDBStorage::testMessengerDBChannels()

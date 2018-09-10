@@ -562,9 +562,13 @@ END_SLOT_WRAPPER
 
 void Messenger::onGetSavedsPos(const QString &address, bool isChannel, const GetSavedsPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<MessengerDBStorage::UserCounterPair> pos;
+    std::vector<MessengerDBStorage::NameCounterPair> pos;
     const TypedException exception = apiVrapper2([&, this] {
-        pos = db.getLastReadCountersForUser(address, isChannel);
+        if (isChannel) {
+            pos = db.getLastReadCountersForChannels(address);
+        } else {
+            pos = db.getLastReadCountersForContacts(address);
+        }
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
 END_SLOT_WRAPPER

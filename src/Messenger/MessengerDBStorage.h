@@ -9,7 +9,7 @@ class MessengerDBStorage : public DBStorage
 {
 public:
     using IdCounterPair = std::pair<DbId, Message::Counter>;
-    using UserCounterPair = std::pair<QString, Message::Counter>;
+    using NameCounterPair = std::pair<QString, Message::Counter>;
 
     MessengerDBStorage(const QString &path = QString());
 
@@ -52,7 +52,8 @@ public:
 
     Message::Counter getLastReadCounterForUserContact(const QString &username, const QString &channelOrContact, bool isChannel = false);
     void setLastReadCounterForUserContact(const QString &username, const QString &channelOrContact, Message::Counter counter, bool isChannel = false);
-    std::vector<UserCounterPair> getLastReadCountersForUser(const QString &username, bool isChannel = false);
+    std::vector<NameCounterPair> getLastReadCountersForContacts(const QString &username);
+    std::vector<NameCounterPair> getLastReadCountersForChannels(const QString &username);
 
     void addChannel(DbId userid, const QString &channel, const QString &shaName, bool isAdmin, const QString &adminName, bool isBanned, bool isWriter, bool isVisited);
     void setChannelsNotVisited(const QString &user);
@@ -65,7 +66,7 @@ public:
 
 private:
     void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool reverse = false);
-    void addLastReadRecord(DbId userid, DbId contactid);
+    void addLastReadRecord(DbId userid, DbId contactid, DBStorage::DbId channelid);
 };
 
 #endif // MESSENGERDBSTORAGE_H

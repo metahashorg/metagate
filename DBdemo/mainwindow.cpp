@@ -199,7 +199,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << db.getLastReadCounterForUserContact("user7", "user1");
 
 
-    qDebug() << db.getLastReadCountersForUser("user7").size();
+    qDebug() << db.getLastReadCountersForContacts("user7").size();
 
 
     db.addChannel(1, "chnl1", "jkgfjkgfgfioioriojk", true, "ktkt", false, true, true);
