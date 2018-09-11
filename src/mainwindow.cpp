@@ -398,7 +398,10 @@ void MainWindow::softReloadApp() {
 
 void MainWindow::loadUrl(const QString &page) {
     shemeHandler->setLog();
-    ui->webView->load(page);
+    QUrl url(page);
+    if (url.path().isEmpty())
+        url.setPath("/");
+    ui->webView->load(url);
     LOG << "Reload ok";
 }
 
