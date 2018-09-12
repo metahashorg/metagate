@@ -36,10 +36,7 @@ void SimpleClient::startTimer() {
         timer = new QTimer();
         CHECK(connect(timer, SIGNAL(timeout()), this, SLOT(onTimerEvent())), "not connect timeout");
         if (thread1 != nullptr) {
-            timer->setParent(thread1);
             CHECK(timer->connect(thread1, SIGNAL(finished()), SLOT(stop())), "not connect finished");
-        } else {
-            timer->setParent(this);
         }
         timer->setInterval(milliseconds(1s).count());
         timer->start();
