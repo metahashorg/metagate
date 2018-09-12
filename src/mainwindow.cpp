@@ -166,7 +166,7 @@ void MainWindow::configureMenu() {
         button->installEventFilter(new EvFilter(this, icoActive, icoHover));
     };
 
-    configureMenuButton(ui->buyButton, ":/resources/svg/Buy_MHC.svg", ":/resources/svg/Buy_MHC_white.svg");
+    //configureMenuButton(ui->buyButton, ":/resources/svg/Buy_MHC.svg", ":/resources/svg/Buy_MHC_white.svg");
     configureMenuButton(ui->metaAppsButton, ":/resources/svg/MetaApps.svg", ":/resources/svg/MetaApps_white.svg");
     configureMenuButton(ui->metaWalletButton, ":/resources/svg/MetaWallet.svg", ":/resources/svg/MetaWallet_white.svg");
     configureMenuButton(ui->userButton, ":/resources/svg/user.svg", ":/resources/svg/user_white.svg");
@@ -211,9 +211,9 @@ void MainWindow::configureMenu() {
         onEnterCommandAndAddToHistory("Settings");
     }), "not connect userButton::pressed");
 
-    CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
+    /*CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("BuyMHC");
-    }), "not connect buyButton::pressed");
+    }), "not connect buyButton::pressed");*/
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("Wallet");
