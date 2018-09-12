@@ -20,7 +20,10 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "ts INT8, "
                                                 "data TEXT, "
                                                 "fee TEXT, "
-                                                "nonce INTEGER"
+                                                "nonce INTEGER, "
+                                                "isSetDelegate BOOLEAN, "
+                                                "isDelegate BOOLEAN, "
+                                                "delegateValue TEXT "
                                                 ")";
 
 static const QString createPaymentsSortingIndex = "CREATE INDEX paymentsSortingIdx ON payments(ts ASC, txid ASC)";
@@ -39,8 +42,8 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency, name, type ) ";
 
-static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce) "
-                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce)";
+static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue) "
+                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue)";
 
 static const QString selectPaymentsForDest = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
                                                     "value, ts, data, fee, nonce FROM payments "
@@ -58,15 +61,24 @@ static const QString deletePaymentsForAddress = "DELETE FROM payments "
                                                 "WHERE address = :address AND  currency = :currency";
 
 static const QString selectInPaymentsValuesForAddress = "SELECT value, fee FROM payments "
-                                                         "WHERE address = :address AND  currency = :currency "
+                                                         "WHERE address = :address AND currency = :currency "
                                                          "AND isInput = 1";
 
 static const QString selectOutPaymentsValuesForAddress = "SELECT value FROM payments "
-                                                          "WHERE address = :address AND  currency = :currency "
+                                                          "WHERE address = :address AND currency = :currency "
                                                           "AND isInput = 0";
 
+static const QString selectIsSetDelegatePaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
+                                                                        "WHERE address = :address AND currency = :currency "
+                                                                        "AND isSetDelegate = 1";
+
+static const QString selectIsSetDelegatePaymentsValuesForAddress = "SELECT value FROM payments "
+                                                                        "WHERE address = :address AND currency = :currency "
+                                                                        "AND isInput = :isInput AND isDelegate = :isDelegate "
+                                                                        "AND isSetDelegate = 1";
+
 static const QString selectPaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
-                                                    "WHERE address = :address AND  currency = :currency "
+                                                    "WHERE address = :address AND currency = :currency "
                                                     "AND isInput = :input";
 
 static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, address, name, type, tgroup) "

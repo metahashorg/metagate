@@ -28,7 +28,8 @@ void transactions::TransactionsDBStorage::init(bool force)
 
 void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                                        const QString &ufrom, const QString &uto, const QString &value,
-                                       quint64 ts, const QString &data, const QString &fee, qint64 nonce)
+                                       quint64 ts, const QString &data, const QString &fee, qint64 nonce,
+                                       bool isSetDelegate, bool isDelegate, QString delegateValue)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
@@ -43,6 +44,9 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":data", data);
     query.bindValue(":fee", fee);
     query.bindValue(":nonce", nonce);
+    query.bindValue(":isSetDelegate", isSetDelegate);
+    query.bindValue(":isDelegate", isDelegate);
+    query.bindValue(":delegateValue", delegateValue);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
@@ -50,7 +54,8 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
 {
     addPayment(trans.currency, trans.tx, trans.address, trans.isInput,
                trans.from, trans.to, trans.value,
-               trans.timestamp, trans.data, trans.fee, trans.nonce);
+               trans.timestamp, trans.data, trans.fee, trans.nonce,
+               trans.isSetDelegate, trans.isDelegate, trans.delegateValue);
 }
 
 std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QString &address, const QString &currency,
@@ -131,6 +136,37 @@ BigNumber TransactionsDBStorage::calcOutValueForAddress(const QString &address, 
     CHECK(query.prepare(selectOutPaymentsValuesForAddress), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    BigNumber res;
+    BigNumber r;
+    while (query.next()) {
+        r.setDecimal(query.value("value").toByteArray());
+        res += r;
+    }
+    return res;
+}
+
+qint64 TransactionsDBStorage::getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency)
+{
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectIsSetDelegatePaymentsCountForAddress), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    if (query.next()) {
+        return query.value("count").toLongLong();
+    }
+    return 0;
+}
+
+BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput)
+{
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectIsSetDelegatePaymentsValuesForAddress), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    query.bindValue(":isDelegate", isDelegate);
+    query.bindValue(":isInput", isInput);
     CHECK(query.exec(), query.lastError().text().toStdString());
     BigNumber res;
     BigNumber r;
