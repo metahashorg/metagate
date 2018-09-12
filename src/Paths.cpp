@@ -22,7 +22,7 @@ const static QString PAGES_PATH = "pages/";
 
 const static QString SETTINGS_NAME = "settings.ini";
 
-const static QString DB_PATH = "bd/";
+const static QString DB_PATH = "database/";
 
 const static QString AUTOUPDATER_PATH = "autoupdater/";
 

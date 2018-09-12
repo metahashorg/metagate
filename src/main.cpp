@@ -102,17 +102,17 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        messenger::MessengerDBStorage dbMessenger(getDbPath());
-        dbMessenger.init();
+        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
+        dbMessenger.init();*/
 
         transactions::TransactionsDBStorage dbTransactions(getDbPath());
         dbTransactions.init();
         while (true) {
             messenger::MessengerJavascript messengerJavascript;
 
-            messenger::Messenger messenger(messengerJavascript, dbMessenger);
+            /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
             messenger.start();
-            messengerJavascript.setMessenger(messenger);
+            messengerJavascript.setMessenger(messenger);*/
 
             NsLookup nsLookup;
             nsLookup.start();
