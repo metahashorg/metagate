@@ -17,6 +17,10 @@ struct Transaction {
     QString fee;
     int64_t nonce = 0;
     bool isInput;
+
+    bool isSetDelegate = false;
+    bool isDelegate;
+    QString delegateValue;
 };
 
 struct BalanceInfo {
@@ -26,6 +30,12 @@ struct BalanceInfo {
     uint64_t countReceived = 0;
     uint64_t countSpent = 0;
     uint64_t currBlockNum = 0;
+
+    uint64_t countDelegated;
+    QString delegate;
+    QString undelegate;
+    QString delegated;
+    QString undelegated;
 };
 
 struct AddressInfo {

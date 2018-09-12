@@ -53,6 +53,11 @@ static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     messagesBalanceJson.insert("countReceived", QString::fromStdString(std::to_string(balance.countReceived)));
     messagesBalanceJson.insert("countSpent", QString::fromStdString(std::to_string(balance.countSpent)));
     messagesBalanceJson.insert("currBlock", QString::fromStdString(std::to_string(balance.currBlockNum)));
+    messagesBalanceJson.insert("countDelegated", QString::fromStdString(std::to_string(balance.countDelegated)));
+    messagesBalanceJson.insert("delegate", balance.delegate);
+    messagesBalanceJson.insert("undelegate", balance.undelegate);
+    messagesBalanceJson.insert("delegated", balance.delegated);
+    messagesBalanceJson.insert("undelegated", balance.undelegated);
     return messagesBalanceJson;
 }
 
@@ -71,6 +76,10 @@ static QJsonObject txToJson(const Transaction &tx) {
     txJson.insert("fee", tx.fee);
     txJson.insert("nonce", QString::fromStdString(std::to_string(tx.nonce)));
     txJson.insert("isInput", tx.isInput);
+    if (tx.isSetDelegate) {
+        txJson.insert("isDelegate", tx.isDelegate);
+        txJson.insert("delegate_value", tx.delegateValue);
+    }
     return txJson;
 }
 
