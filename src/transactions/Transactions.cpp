@@ -7,6 +7,7 @@ using namespace std::placeholders;
 #include "SlotWrapper.h"
 
 #include "NsLookup.h"
+#include "JavascriptWrapper.h"
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"
@@ -38,8 +39,10 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
     CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
+    CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
 
     qRegisterMetaType<Callback>("Callback");
+    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
     qRegisterMetaType<GetTxsCallback>("GetTxsCallback");
     qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
@@ -48,6 +51,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
     qRegisterMetaType<GetTxCallback>("GetTxCallback");
     qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
+    qRegisterMetaType<GetNonceCallback>("GetNonceCallback");
     qRegisterMetaType<seconds>("seconds");
     qRegisterMetaType<SendParameters>("SendParameters");
 
@@ -83,6 +87,12 @@ END_SLOT_WRAPPER
 template<typename Func>
 void Transactions::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
+}
+
+template<typename Func>
+void Transactions::runCallbackJsWrap(const Func &callback) {
+    CHECK(javascriptWrapperCannonical != nullptr, "javascriptWrapperCannonical not setted");
+    emit javascriptWrapperCannonical->callbackCall(callback);
 }
 
 void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
@@ -188,8 +198,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
     };
 
+    const QString requestBalance = makeGetBalanceRequest(address);
     for (const QString &server: servers) {
-        const QString requestBalance = makeGetBalanceRequest(address);
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), 1s);
     }
 }
@@ -394,12 +404,12 @@ void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countS
     timerSendTx.start();
 }
 
-void Transactions::onSendTransaction(const QString &requestId, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams) {
+void Transactions::onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, static_cast<size_t>(sendParams.countServersSend), static_cast<size_t>(sendParams.countServersSend));
-        CHECK(servers.size() == static_cast<size_t>(sendParams.countServersSend), "Not enough servers");
+        const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, sendParams.countServersSend, sendParams.countServersSend);
+        CHECK(servers.size() == sendParams.countServersSend, "Not enough servers");
 
         struct ServerResponse {
             bool isSended = false;
@@ -412,16 +422,60 @@ BEGIN_SLOT_WRAPPER
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
                     result = parseSendTransactionResponse(QString::fromStdString(response));
-                });
-
-                if (!exception.isSet() && !servResp->isSended) {
-                    addToSendTxWatcher(result.toStdString(), static_cast<size_t>(sendParams.countServersGet), sendParams.typeGet, sendParams.timeout);
+                    addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, sendParams.typeGet, sendParams.timeout);
                     servResp->isSended = true;
-                }
+                });
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             });
         }
     });
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet);
+    CHECK(servers.size() == sendParams.countServersGet, "Not enough servers");
+
+    struct NonceStruct {
+        bool isSet = false;
+        size_t nonce = 0;
+        size_t count;
+        TypedException exception;
+        QString serverError;
+
+        NonceStruct(size_t count)
+           : count(count)
+        {}
+    };
+
+    std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
+
+    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const TypedException &exception) {
+        nonceStruct->count--;
+
+        if (!exception.isSet()) {
+            const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
+            nonceStruct->isSet = true;
+            nonceStruct->nonce = std::max(nonceStruct->nonce, balanceResponse.countSpent);
+        } else {
+            nonceStruct->exception = exception;
+            nonceStruct->serverError = server;
+        }
+
+        if (nonceStruct->count == 0) {
+            if (!nonceStruct->isSet) {
+                runCallbackJsWrap(std::bind(callback, 0, nonceStruct->serverError, nonceStruct->exception));
+            } else {
+                runCallbackJsWrap(std::bind(callback, nonceStruct->nonce + 1, "", TypedException()));
+            }
+        }
+    };
+
+    const QString requestBalance = makeGetBalanceRequest(from);
+    for (const QString &server: servers) {
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), 1s);
+    }
 END_SLOT_WRAPPER
 }
 

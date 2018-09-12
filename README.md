@@ -49,18 +49,21 @@ Q_INVOKABLE void signMessageV2(QString requestId, QString keyName, QString passw
 signMessageV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson);
-# Sends transaction with C++ (like signMessageDelegate)
+# Sends transaction with C++ (like signMessageDelegate, только с параметром data)
 # Result returns to 
+# if nonce empty, then calc nonce
 signMessageV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
+# if nonce empty, then calc nonce
 paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
+# if nonce empty, then calc nonce
 paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageUnDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
@@ -122,18 +125,21 @@ Q_INVOKABLE void signMessageMHCV2(QString requestId, QString keyName, QString pa
 signMessageMHCV2ResultJs(requestId, signature, publicKey, txHex, errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson);
-# Посылает транзакцию через C++ (аналог signMessageDelegate)
+# Посылает транзакцию через C++ (аналог signMessageDelegate, только с полем data)
+# if nonce empty, then calc nonce
 # Result returns to 
 signMessageMHCV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
+# if nonce empty, then calc nonce
 paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageDelegateMhcResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void signMessageMHCUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
+# if nonce empty, then calc nonce
 paramsJson - json вида {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6}
 # Result returns to 
 signMessageUnDelegateMhcResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)

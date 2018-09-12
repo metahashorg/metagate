@@ -25,11 +25,17 @@ class JavascriptWrapper : public QObject
 {
     Q_OBJECT
 public:
+
+using ReturnCallback = std::function<void()>;
+
+public:
     explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
 signals:
+
+    void callbackCall(ReturnCallback callback);
 
     void jsRunSig(QString jsString);
 
@@ -199,7 +205,7 @@ public slots:
 
 private slots:
 
-    void onCallbackCall(SimpleClient::ReturnCallback callback);
+    void onCallbackCall(ReturnCallback callback);
 
     void onDirChanged(const QString &dir);
 
@@ -226,6 +232,8 @@ private:
     void signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, QString walletPath, QString jsNameResult);
 
     void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult);
+
+    void signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction);
 
     template<typename... Args>
     void makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);

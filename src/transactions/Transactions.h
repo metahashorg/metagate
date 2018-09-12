@@ -16,6 +16,8 @@
 class NsLookup;
 struct TypedException;
 
+class JavascriptWrapper;
+
 namespace transactions {
 
 class TransactionsJavascript;
@@ -29,8 +31,8 @@ class Transactions : public TimerClass {
 public:
 
     struct SendParameters {
-        int countServersSend;
-        int countServersGet;
+        size_t countServersSend;
+        size_t countServersGet;
         QString typeSend;
         QString typeGet;
         seconds timeout;
@@ -130,11 +132,17 @@ public:
 
     using GetLastUpdateCallback = std::function<void(const system_time_point &lastUpdate, const system_time_point &now)>;
 
+    using GetNonceCallback = std::function<void(size_t nonce, const QString &server, const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
+
+    void setJavascriptWrapper(JavascriptWrapper &wrapper) {
+        javascriptWrapperCannonical = &wrapper;
+    }
 
 signals:
 
@@ -154,7 +162,9 @@ signals:
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void sendTransaction(const QString &requestId, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
+    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+
+    void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -178,7 +188,9 @@ public slots:
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onSendTransaction(const QString &requestId, const QString &to, const QString &value, const QString &nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
+    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+
+    void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -205,6 +217,9 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
 
+    template<typename Func>
+    void runCallbackJsWrap(const Func &callback);
+
     std::vector<AddressInfo> getAddressesInfos(const QString &group);
 
     BalanceInfo getBalance(const QString &address, const QString &currency);
@@ -218,6 +233,8 @@ private:
     NsLookup &nsLookup;
 
     TransactionsJavascript &javascriptWrapper;
+
+    JavascriptWrapper *javascriptWrapperCannonical = nullptr;
 
     TransactionsDBStorage &db;
 

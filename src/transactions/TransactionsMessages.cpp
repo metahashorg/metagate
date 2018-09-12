@@ -130,14 +130,14 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
     return result;
 }
 
-QString makeSendTransactionRequest(QString to, QString value, QString nonce, QString data, QString fee, QString pubkey, QString sign) {
+QString makeSendTransactionRequest(QString to, QString value, size_t nonce, QString data, QString fee, QString pubkey, QString sign) {
     QJsonObject request;
     request.insert("jsonrpc", "2.0");
     request.insert("method", "mhc_send");
     QJsonObject params;
     params.insert("to", to);
     params.insert("value", value);
-    params.insert("nonce", nonce);
+    params.insert("nonce", QString::fromStdString(std::to_string(nonce)));
     params.insert("data", data);
     params.insert("fee", fee);
     params.insert("pubkey", pubkey);

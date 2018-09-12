@@ -106,6 +106,7 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     setPaths(walletDefaultPath, "");
 
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
+    CHECK(connect(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
 
     CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
 
@@ -114,11 +115,12 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
 
     qRegisterMetaType<TypedException>("TypedException");
+    qRegisterMetaType<ReturnCallback>("ReturnCallback");
 
     sendAppInfoToWss("", true);
 }
 
-void JavascriptWrapper::onCallbackCall(SimpleClient::ReturnCallback callback) {
+void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
@@ -418,37 +420,61 @@ static transactions::Transactions::SendParameters parseSendParams(const QString 
     return result;
 }
 
+void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction) {
+    const TypedException exception = apiVrapper2([&, this]() {
+        const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        const bool isNonce = !nonce.isEmpty();
+        if (!isNonce) {
+            Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, [this, jsNameResult, requestId, signTransaction](size_t nonce, const QString &server, const TypedException &exception) {
+                Opt<QString> result(QString("Not ok"));
+                const TypedException &exception2 = apiVrapper2([&] {
+                    CHECK_TYPED(!exception.isSet(), exception.numError, exception.description);
+                    signTransaction(nonce);
+                    result = "Ok";
+                });
+                makeAndRunJsFuncParams(jsNameResult, exception2, Opt<QString>(requestId), result);
+            });
+        } else {
+            bool isParseNonce = false;
+            const size_t nonceInt = nonce.toULongLong(&isParseNonce);
+            CHECK_TYPED(isParseNonce, TypeErrors::INCORRECT_USER_DATA, "Nonce incorrect " + nonce.toStdString());
+            signTransaction(nonceInt);
+        }
+    });
+
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
+    }
+}
+
 void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, QString walletPath, QString jsNameResult) {
     LOG << "Sign messagev3 " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
-    Opt<QString> result(QString("Not ok"));
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+    const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
-        const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
-
+    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce, dataHex.toStdString(), tx, signature, publicKey);
 
         emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
-        result = "Ok";
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+    };
+    signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }
 
 void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult) {
     LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
-    Opt<QString> result(QString("Not ok"));
-    const TypedException exception = apiVrapper2([&, this]() {
-        const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+    const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
-        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
 
         const uint64_t delegValue = std::stoull(valueDelegate.toStdString());
@@ -458,13 +484,11 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex, tx, signature, publicKey, false);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce, dataHex, tx, signature, publicKey, false);
 
         emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
-        result = "Ok";
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+    };
+    signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }
 
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh) {
