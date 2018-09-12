@@ -178,6 +178,11 @@ void removeFile(const QString &file) {
     QFile::remove(file);
 }
 
+void removeFolder(const QString &folder) {
+    QDir dir(folder);
+    dir.removeRecursively();
+}
+
 bool isPathEquals(const QString &path1, const QString &path2) {
     QString p1(path1);
     QString p2(path2);

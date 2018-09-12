@@ -44,6 +44,8 @@ bool isExistFolder(const QString &folder);
 
 void removeFile(const QString &file);
 
+void removeFolder(const QString &folder);
+
 bool isPathEquals(const QString &path1, const QString &path2);
 
 inline QString makePath(const QString &arg) {

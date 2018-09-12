@@ -41,6 +41,7 @@ QString getLogPath() {
 }
 
 QString getDbPath() {
+    removeFolder(makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, "bd"));
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, DB_PATH);
     createFolder(res);
     return res;
