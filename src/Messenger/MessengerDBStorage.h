@@ -56,6 +56,7 @@ public:
     void setLastReadCounterForUserContact(const QString &username, const QString &channelOrContact, Message::Counter counter, bool isChannel = false);
     std::vector<NameCounterPair> getLastReadCountersForContacts(const QString &username);
     std::vector<NameCounterPair> getLastReadCountersForChannels(const QString &username);
+    std::vector<ChannelInfo> getChannelsWithLastReadCounters(const QString &username);
 
     void addChannel(DbId userid, const QString &channel, const QString &shaName, bool isAdmin, const QString &adminName, bool isBanned, bool isWriter, bool isVisited);
     void setChannelsNotVisited(const QString &user);

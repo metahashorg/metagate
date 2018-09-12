@@ -100,7 +100,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if (QFile::exists("messenger.db"))
         QFile::remove("messenger.db");
     BEGIN_SLOT_WRAPPER
-            MessengerDBStorage db;
+            messenger::MessengerDBStorage db;
     //db.openDB();
     db.init();
 
@@ -129,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent) :
     db.addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 6000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
 
-    MessengerDBStorage::IdCounterPair p = db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf");
+    messenger::MessengerDBStorage::IdCounterPair p = db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf");
     qDebug() << "P " << p.second;
     p = db.findFirstMessageWithHash("1234", "asdfdf");
     qDebug() << "P " << p.second;
@@ -174,7 +174,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     qDebug() << "size" << db.getMessagesForUserAndDestNum("user7", "user1", 10, 1000).size();
 
-    std::vector<Message> msgs = db.getMessagesForUser("user7", 1, 3);
+    std::vector<messenger::Message> msgs = db.getMessagesForUser("user7", 1, 3);
     qDebug() << "count " << msgs.size();
 
     qDebug() << db.getMessageMaxCounter("user7");
