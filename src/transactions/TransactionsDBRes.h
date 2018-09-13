@@ -26,9 +26,12 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "delegateValue TEXT "
                                                 ")";
 
-static const QString createPaymentsSortingIndex = "CREATE INDEX paymentsSortingIdx ON payments(ts ASC, txid ASC)";
 static const QString createPaymentsUniqueIndex = "CREATE UNIQUE INDEX paymentsUniqueIdx ON payments ( "
                                                     "currency ASC, address ASC, txid ASC, isInput ASC ) ";
+
+static const QString createPaymentsIndex1 = "CREATE INDEX paymentsIdx1 ON payments(address, currency, isInput, isDelegate, isSetDelegate)";
+static const QString createPaymentsIndex2 = "CREATE INDEX paymentsIdx2 ON payments(address, currency, ts, txid)";
+static const QString createPaymentsIndex3 = "CREATE INDEX paymentsIdx3 ON payments(currency, ts, txid)";
 
 static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "

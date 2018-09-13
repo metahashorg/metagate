@@ -21,7 +21,9 @@ void transactions::TransactionsDBStorage::init(bool force)
     DBStorage::init(force);
     createTable(QStringLiteral("payments"), createPaymentsTable);
     createTable(QStringLiteral("tracked"), createTrackedTable);
-    createIndex(createPaymentsSortingIndex);
+    createIndex(createPaymentsIndex1);
+    createIndex(createPaymentsIndex2);
+    createIndex(createPaymentsIndex3);
     createIndex(createPaymentsUniqueIndex);
     createIndex(createTrackedUniqueIndex);
 }
