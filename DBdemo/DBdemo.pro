@@ -39,7 +39,7 @@ SOURCES += \
         ../src/dbstorage.cpp \
         ../src/BigNumber.cpp \
         ../src/Messenger/MessengerDBStorage.cpp \
-        ../src/transactions/transactionsdbstorage.cpp
+        ../src/transactions/TransactionsDBStorage.cpp
 
 
 HEADERS += \
@@ -51,7 +51,7 @@ HEADERS += \
         ../src/dbstorage.h \
         ../src/BigNumber.h \
         ../src/Messenger/MessengerDBStorage.h \
-        ../src/transactions/transactionsdbstorage.h
+        ../src/transactions/TransactionsDBStorage.h
 
 FORMS += \
         mainwindow.ui

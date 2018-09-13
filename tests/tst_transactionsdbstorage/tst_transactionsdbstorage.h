@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QTest>
 
-#include "transactionsdbstorage.h"
+#include "TransactionsDBStorage.h"
 
 class tst_TransactionsDBStorage : public QObject
 {

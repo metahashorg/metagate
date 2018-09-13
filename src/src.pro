@@ -58,7 +58,7 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
     transactions/TransactionsMessages.cpp \
-    transactions/transactionsdbstorage.cpp \
+    transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
     HttpClient.cpp
 
@@ -121,12 +121,11 @@ HEADERS += mainwindow.h \
     dbstorage.h \
     WalletRsa.h \
     Messenger/MessengerWaletManager.h \
-    dbres.h \
     Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
     transactions/Transaction.h \
-    transactions/transactionsdbstorage.h \
+    transactions/TransactionsDBStorage.h \
     transactions/TransactionsJavascript.h \
     HttpClient.h \
     duration.h

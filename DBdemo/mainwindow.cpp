@@ -5,10 +5,10 @@
 #include <QTreeWidget>
 #include "dbstorage.h"
 #include "MessengerDBStorage.h"
-#include "transactionsdbstorage.h"
+#include "TransactionsDBStorage.h"
 #include "SlotWrapper.h"
 #include "BigNumber.h"
-#include "transactions/Transaction.h"
+#include "Transaction.h"
 
 #include "client.h"
 #include <QDebug>

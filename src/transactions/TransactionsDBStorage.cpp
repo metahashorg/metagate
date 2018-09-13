@@ -1,9 +1,9 @@
-#include "transactionsdbstorage.h"
+#include "TransactionsDBStorage.h"
 
 #include <QtSql>
 #include <QDebug>
 
-#include "transactionsdbres.h"
+#include "TransactionsDBRes.h"
 #include "check.h"
 
 namespace transactions {

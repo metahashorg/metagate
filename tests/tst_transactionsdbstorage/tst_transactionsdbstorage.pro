@@ -14,14 +14,14 @@ SOURCES += \
     tst_transactionsdbstorage.cpp \
     ../../src/dbstorage.cpp \
     ../../src/BigNumber.cpp \
-    ../../src/transactions/transactionsdbstorage.cpp
+    ../../src/transactions/TransactionsDBStorage.cpp
 
 
 HEADERS += \
     tst_transactionsdbstorage.h \
     ../../src/dbstorage.h \
     ../../src/BigNumber.h \
-    ../../src/transactions/transactionsdbstorage.h
+    ../../src/transactions/TransactionsDBStorage.h
 
 QMAKE_LFLAGS += -rdynamic
 unix:!macx: include(../../libs-unix.pri)

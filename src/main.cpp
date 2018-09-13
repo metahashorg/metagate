@@ -36,7 +36,7 @@
 
 #include "transactions/Transactions.h"
 #include "transactions/TransactionsJavascript.h"
-#include "transactions/transactionsdbstorage.h"
+#include "transactions/TransactionsDBStorage.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {

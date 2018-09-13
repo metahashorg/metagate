@@ -11,7 +11,7 @@ using namespace std::placeholders;
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"
-#include "transactionsdbstorage.h"
+#include "TransactionsDBStorage.h"
 
 #include <memory>
 
