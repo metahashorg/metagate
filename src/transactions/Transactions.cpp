@@ -445,7 +445,7 @@ BEGIN_SLOT_WRAPPER
 
     struct NonceStruct {
         bool isSet = false;
-        size_t nonce = 0;
+        uint64_t nonce = 0;
         size_t count;
         TypedException exception;
         QString serverError;
