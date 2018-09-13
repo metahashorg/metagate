@@ -61,7 +61,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
     client.moveToThread(&thread1);
 
-    tcpClient.setParent(this);
     CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
     tcpClient.moveToThread(&thread1);
 
