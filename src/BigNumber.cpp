@@ -14,6 +14,12 @@ BigNumber::BigNumber(const QByteArray &dec)
     setDecimal(dec);
 }
 
+BigNumber::BigNumber(const QString &dec)
+    : BigNumber()
+{
+    setDecimal(dec.toUtf8());
+}
+
 BigNumber::BigNumber(const BigNumber &bn)
     : ptr(BN_dup(bn.ptr.get()), BN_free)
 {

@@ -48,16 +48,17 @@ void TransactionsJavascript::runJs(const QString &script) {
 
 static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     QJsonObject messagesBalanceJson;
-    messagesBalanceJson.insert("received", balance.received);
-    messagesBalanceJson.insert("spent", balance.spent);
+    messagesBalanceJson.insert("received", QString(balance.received.getDecimal()));
+    messagesBalanceJson.insert("spent", QString(balance.spent.getDecimal()));
     messagesBalanceJson.insert("countReceived", QString::fromStdString(std::to_string(balance.countReceived)));
     messagesBalanceJson.insert("countSpent", QString::fromStdString(std::to_string(balance.countSpent)));
     messagesBalanceJson.insert("currBlock", QString::fromStdString(std::to_string(balance.currBlockNum)));
     messagesBalanceJson.insert("countDelegated", QString::fromStdString(std::to_string(balance.countDelegated)));
-    messagesBalanceJson.insert("delegate", balance.delegate);
-    messagesBalanceJson.insert("undelegate", balance.undelegate);
-    messagesBalanceJson.insert("delegated", balance.delegated);
-    messagesBalanceJson.insert("undelegated", balance.undelegated);
+    messagesBalanceJson.insert("delegate", QString(balance.delegate.getDecimal()));
+    messagesBalanceJson.insert("undelegate", QString(balance.undelegate.getDecimal()));
+    messagesBalanceJson.insert("delegated", QString(balance.delegated.getDecimal()));
+    messagesBalanceJson.insert("undelegated", QString(balance.undelegated.getDecimal()));
+    messagesBalanceJson.insert("balance", QString(balance.calcBalance().getDecimal()));
     return messagesBalanceJson;
 }
 

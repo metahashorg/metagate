@@ -2,6 +2,7 @@
 #define BIGNUMBER_H
 
 #include <QByteArray>
+#include <QString>
 #include <openssl/bn.h>
 #include <memory>
 #include <functional>
@@ -11,6 +12,7 @@ class BigNumber
 public:
     BigNumber();
     BigNumber(const QByteArray &dec);
+    BigNumber(const QString &dec);
     BigNumber(const BigNumber &bn);
 
     void setDecimal(const QByteArray &dec);

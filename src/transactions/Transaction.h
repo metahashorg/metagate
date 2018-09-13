@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#include "BigNumber.h"
+
 namespace transactions {
 
 struct Transaction {
@@ -25,17 +27,21 @@ struct Transaction {
 
 struct BalanceInfo {
     QString address;
-    QString received;
-    QString spent;
+    BigNumber received;
+    BigNumber spent;
     uint64_t countReceived = 0;
     uint64_t countSpent = 0;
     uint64_t currBlockNum = 0;
 
     uint64_t countDelegated;
-    QString delegate;
-    QString undelegate;
-    QString delegated;
-    QString undelegated;
+    BigNumber delegate;
+    BigNumber undelegate;
+    BigNumber delegated;
+    BigNumber undelegated;
+
+    BigNumber calcBalance() const {
+        return received - spent - (delegate - undelegate);
+    };
 };
 
 struct AddressInfo {
