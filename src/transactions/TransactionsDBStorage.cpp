@@ -228,6 +228,9 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Tra
         trans.fee = query.value("fee").toString();
         trans.nonce = query.value("nonce").toLongLong();
         trans.isInput = query.value("isInput").toBool();
+        trans.isSetDelegate = query.value("isSetDelegate").toBool();
+        trans.isDelegate = query.value("isDelegate").toBool();
+        trans.delegateValue = query.value("delegateValue").toString();
         payments.push_back(trans);
     }
 }

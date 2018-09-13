@@ -46,13 +46,13 @@ static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, 
                                         "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue)";
 
 static const QString selectPaymentsForDest = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
-                                                    "value, ts, data, fee, nonce FROM payments "
+                                                    "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 
 static const QString selectPaymentsForCurrency = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
-                                                    "value, ts, data, fee, nonce FROM payments "
+                                                    "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue FROM payments "
                                                     "WHERE currency = :currency "
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
