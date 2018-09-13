@@ -1426,6 +1426,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::metaOnline() {
 BEGIN_SLOT_WRAPPER
+    LOG << "Metaonline request";
     emit wssClient.sendMessage("{\"app\":\"MetaOnline\"}");
 END_SLOT_WRAPPER
 }
