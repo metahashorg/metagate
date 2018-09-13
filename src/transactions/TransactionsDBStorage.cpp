@@ -171,7 +171,7 @@ BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString 
     BigNumber res;
     BigNumber r;
     while (query.next()) {
-        r.setDecimal(query.value("value").toByteArray());
+        r.setDecimal(query.value("delegateValue").toByteArray());
         res += r;
     }
     return res;

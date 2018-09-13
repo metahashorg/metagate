@@ -72,7 +72,7 @@ static const QString selectIsSetDelegatePaymentsCountForAddress = "SELECT COUNT(
                                                                         "WHERE address = :address AND currency = :currency "
                                                                         "AND isSetDelegate = 1";
 
-static const QString selectIsSetDelegatePaymentsValuesForAddress = "SELECT value FROM payments "
+static const QString selectIsSetDelegatePaymentsValuesForAddress = "SELECT delegateValue FROM payments "
                                                                         "WHERE address = :address AND currency = :currency "
                                                                         "AND isInput = :isInput AND isDelegate = :isDelegate "
                                                                         "AND isSetDelegate = 1";
