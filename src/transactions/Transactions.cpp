@@ -214,6 +214,12 @@ BalanceInfo Transactions::getBalance(const QString &address, const QString &curr
     balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
     balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
     balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
+
+    balance.countDelegated = db.getIsSetDelegatePaymentsCountForAddress(address, currency);
+    balance.delegate = db.calcIsSetDelegateValueForAddress(address, currency, true, true).getDecimal();
+    balance.undelegate = db.calcIsSetDelegateValueForAddress(address, currency, false, true).getDecimal();
+    balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false).getDecimal();
+    balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false).getDecimal();
     return balance;
 }
 
