@@ -474,20 +474,19 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
-    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, valueDelegate, isDelegate, sendParams](size_t nonce) {
+    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
 
         const uint64_t delegValue = std::stoull(valueDelegate.toStdString());
         const std::string dataHex = Wallet::genDataDelegateHex(isDelegate, delegValue);
 
-        const uint64_t fee = dataHex.size() / 2;
         std::string publicKey;
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee, nonce, dataHex, tx, signature, publicKey, false);
+        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce, dataHex, tx, signature, publicKey, false);
 
-        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), QString::fromStdString(std::to_string(fee)), QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
     };
     signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }
