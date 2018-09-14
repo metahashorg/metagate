@@ -16,11 +16,22 @@ void tst_TransactionsDBStorage::testDB1()
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
     db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", true, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
     db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", true, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
-    db.addPayment("mh", "gfklklklruuiuiduidgjkg", "address100", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
+    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1004040");
+    db.addPayment("mh", "gfklklklrttrrrduidgjkg", "address100", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "15434900");
+    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400");
+    db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", false, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1054030");
+    db.addPayment("mh", "gtrgklklrddfgiduidgjkg", "address100", true, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1334430");
+    db.addPayment("mh", "gfklklklti5o0rruidgjkg", "address100", true, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590");
 
-//    DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
-//    DBStorage::DbId id2 = db.getUserId("ddfjgjgj");
-//    QCOMPARE(id1, id2);
+
+    BigNumber ires = db.calcInValueForAddress("address100", "mh");
+    BigNumber ores = db.calcOutValueForAddress("address100", "mh");
+    QCOMPARE(ires.getDecimal(), QByteArray("7614"));
+    QCOMPARE(ores.getDecimal(), QByteArray("9360"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", true, false).getDecimal(), QByteArray("16870300"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", false, false).getDecimal(), QByteArray("2058070"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", true, true).getDecimal(), QByteArray("1069590"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", false, true).getDecimal(), QByteArray("1334430"));
 }
 
 void tst_TransactionsDBStorage::testBigNumSum()
@@ -36,6 +47,8 @@ void tst_TransactionsDBStorage::testBigNumSum()
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
     db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
     db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
+    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
+
     db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
     BigNumber ires = db.calcInValueForAddress("address100", "mh");
     BigNumber ores = db.calcOutValueForAddress("address100", "mh");
