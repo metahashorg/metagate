@@ -314,7 +314,7 @@ QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath) {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get mth wallets json " << result.size();
+        LOG << "get mth wallets json " << result.size() << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -330,7 +330,7 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath) {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get mth wallets json " << result.size();
+        LOG << "get mth wallets json " << result.size() << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
