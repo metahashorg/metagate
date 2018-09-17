@@ -148,9 +148,15 @@ void Messenger::invokeCallback(size_t requestId, const TypedException &exception
     CHECK(requestId != size_t(-1), "Incorrect request id");
     const auto found = callbacks.find(requestId);
     CHECK(found != callbacks.end(), "Not found callback for request " + std::to_string(requestId));
-    const ResponseCallbacks callback = found->second; // копируем
+    const auto &callbackPair = found->second;
+    const ResponseCallbacks callback = callbackPair.first; // копируем
+    const bool isNativeCallback = callbackPair.second;
     callbacks.erase(found);
-    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+    if (isNativeCallback) {
+        callback(exception);
+    } else {
+        emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+    }
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {
@@ -470,9 +476,9 @@ BEGIN_SLOT_WRAPPER
             LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
             db.setUserPublicKey(address, pubkeyAddressHex);
         }
-        callback(isNew, exception);
+        emit javascriptWrapper.callbackCall(std::bind(callback, isNew, exception));
     };
-    callbacks[idRequest] = callbackWrap;
+    callbacks[idRequest] = std::make_pair(callbackWrap, true);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -514,7 +520,7 @@ BEGIN_SLOT_WRAPPER
     }
     const size_t idRequest = id.get();
     const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::bind(callback, isNew, _1);
+    callbacks[idRequest] = std::make_pair(std::bind(callback, isNew, _1), false);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -549,7 +555,7 @@ BEGIN_SLOT_WRAPPER
     } else {
         message = makeSendToChannelRequest(channel, dataHex, fee, timestamp, pubkeyHex, signHex, idRequest);
     }
-    callbacks[idRequest] = callback;
+    callbacks[idRequest] = std::make_pair(callback, false);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -644,7 +650,7 @@ void Messenger::onCreateChannel(const QString &title, const QString &titleSha, c
 BEGIN_SLOT_WRAPPER
     const size_t idRequest = id.get();
     const QString message = makeCreateChannelRequest(title, titleSha, fee, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::bind(callback, _1);
+    callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -653,7 +659,7 @@ void Messenger::onAddWriterToChannel(const QString &titleSha, const QString &add
 BEGIN_SLOT_WRAPPER
     const size_t idRequest = id.get();
     const QString message = makeChannelAddWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::bind(callback, _1);
+    callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -662,7 +668,7 @@ void Messenger::onDelWriterFromChannel(const QString &titleSha, const QString &a
 BEGIN_SLOT_WRAPPER
     const size_t idRequest = id.get();
     const QString message = makeChannelDelWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::bind(callback, _1);
+    callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
