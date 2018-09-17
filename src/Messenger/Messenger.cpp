@@ -669,7 +669,7 @@ void Messenger::onGetChannelList(const QString &address, const GetChannelListCal
 BEGIN_SLOT_WRAPPER
     std::vector<ChannelInfo> channels;
     const TypedException exception = apiVrapper2([&, this] {
-        // Достать список каналов, объединить с таблицей saved_pos
+        channels = db.getChannelsWithLastReadCounters(address);
     });
     emit javascriptWrapper.callbackCall(std::bind(callback, channels, exception));
 END_SLOT_WRAPPER
