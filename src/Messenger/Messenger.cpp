@@ -646,11 +646,19 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onCreateChannel(const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback) {
+void Messenger::onCreateChannel(const QString &address, const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const size_t idRequest = id.get();
     const QString message = makeCreateChannelRequest(title, titleSha, fee, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+    const auto callbackWrap = [this, callback, address, title, titleSha](const TypedException &exception) {
+        if (!exception.isSet()) {
+            const DBStorage::DbId userId = db.getUserId(address);
+            db.addChannel(userId, title, titleSha, true, address, false, true, true);
+            db.setLastReadCounterForUserContact(address, titleSha, -1, true);
+        }
+        emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+    };
+    callbacks[idRequest] = std::make_pair(callbackWrap, true);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
