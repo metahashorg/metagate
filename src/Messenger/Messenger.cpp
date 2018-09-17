@@ -40,7 +40,7 @@ void Messenger::checkChannelTitle(const QString &title) {
     bool isAlphanumeric = true;
     for (int i = 0; i < title.size(); i++) {
         const auto c = title.at(i);
-        if (('0' <= c && c <= '9') || ('a' <= c && c <= 'Z') || ('A' <= c && c <= 'Z') || c == '-' || c == '_') {
+        if (('0' <= c && c <= '9') || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '-' || c == '_') {
             // ok
         } else {
             isAlphanumeric = false;
@@ -120,6 +120,8 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
 
+    qRegisterMetaType<uint64_t>("uint64_t");
+    qRegisterMetaType<Message::Counter>("Message::Counter");
     qRegisterMetaType<GetMessagesCallback>("GetMessagesCallback");
     qRegisterMetaType<SavePosCallback>("SavePosCallback");
     qRegisterMetaType<GetSavedPosCallback>("GetSavedPosCallback");
@@ -148,7 +150,7 @@ void Messenger::invokeCallback(size_t requestId, const TypedException &exception
     CHECK(found != callbacks.end(), "Not found callback for request " + std::to_string(requestId));
     const ResponseCallbacks callback = found->second; // копируем
     callbacks.erase(found);
-    callback(exception);
+    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {
