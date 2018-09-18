@@ -121,7 +121,7 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
     db.addMessage("1234", "3454", "abcd", 1, 4001, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 4002, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4003, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3457", "abcd", 1, 4003, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 4004, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 6000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
@@ -132,6 +132,22 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     QCOMPARE(db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf", "jkgfjkgfgfitrrtoioriojk").second, -1);
     QCOMPARE(db.findFirstMessageWithHash("1234", "asdfdf", "jkgfjkgfgfitrrtoioriojk").second, 4000);
 
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 0);
+    db.setLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", 4567, true);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 4567);
+    db.setLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", 17, true);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 17);
+
+
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3454", false), 0);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), 0);
+    db.setLastReadCounterForUserContact("1234", "3454", 44322, false);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), 0);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3454", false), 44322);
+    db.setLastReadCounterForUserContact("1234", "3454", 42, false);
+    db.setLastReadCounterForUserContact("1234", "3457", 452, false);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), 452);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3454", false), 42);
 
     QCOMPARE(db.getMessageMaxCounter("1234"), 4004);
     QCOMPARE(db.getMessageMaxCounter("1234", "jkgfjkgfgfitrrtoioriojk"), 6000);
@@ -144,6 +160,20 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
 
 
 
+}
+
+void tst_MessengerDBStorage::testMessengerDBSpeed()
+{
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
+    messenger::MessengerDBStorage db;
+    db.init();
+    db.beginTransaction();
+    for (int n = 0; n < 1000; n++) {
+        db.addMessage("1234", "3454", "abcd", 1000000 + n, 4001 + n, true, true, true, "asdfdf", 1);
+    }
+    db.commitTransaction();
+    qDebug() << db.getMessageMaxCounter("1234");
 }
 
 QTEST_MAIN(tst_MessengerDBStorage)

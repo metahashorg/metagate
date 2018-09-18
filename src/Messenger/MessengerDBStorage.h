@@ -33,7 +33,7 @@ public:
     QString getUserSignatures(const QString &username);
     void setUserSignatures(const QString &username, const QString &signatures);
 
-    QString getContactrPublicKey(const QString &username);
+    QString getContactPublicKey(const QString &username);
     void setContactPublicKey(const QString &username, const QString &publickey);
 
     Message::Counter getMessageMaxCounter(const QString &user, const QString &channelSha = QString());

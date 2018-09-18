@@ -40,11 +40,14 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
 {
     DbId userid = getUserId(user);
     DbId contactid = -1;
-    if (!duser.isNull())
-        contactid = getContactId(duser);
     DbId channelid = -1;
-    if (!channelSha.isNull())
+    // ignore duser if channelSha is not null (channel message)
+    if (channelSha.isNull()) {
+        CHECK(!duser.isNull(), "No contact or channel");
+        contactid = getContactId(duser);
+    } else {
         channelid = getChannelForUserShaName(user, channelSha);
+    }
 
     QSqlQuery query(database());
     CHECK(query.prepare(insertMsgMessages), query.lastError().text().toStdString());
@@ -157,7 +160,7 @@ void MessengerDBStorage::setUserSignatures(const QString &username, const QStrin
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-QString MessengerDBStorage::getContactrPublicKey(const QString &username)
+QString MessengerDBStorage::getContactPublicKey(const QString &username)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(selectMsgContactsPublicKey), query.lastError().text().toStdString());
@@ -543,16 +546,6 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
 void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::DbId contactid, DBStorage::DbId channelid)
 {
     QSqlQuery query(database());
-    /*CHECK(query.prepare(selectLastReadMessageCount), query.lastError().text().toStdString());
-    query.bindValue(":userid", userid);
-    query.bindValue(":contactid", contactid);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    if (!query.next()) {
-        return;
-    }
-    qint64 count = query.value("res").toLongLong();
-    if (count > 0)
-        return;*/
     CHECK(query.prepare(insertLastReadMessageRecord), query.lastError().text().toStdString());
     query.bindValue(":userid", userid);
     if (contactid == -1)

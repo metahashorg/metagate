@@ -72,6 +72,21 @@ void DBStorage::setSettings(const QString &key, const QString &value)
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
+void DBStorage::beginTransaction()
+{
+    CHECK(database().transaction(), "Transaction Begin");
+}
+
+void DBStorage::commitTransaction()
+{
+    CHECK(database().commit(), "Transaction Commit");
+}
+
+void DBStorage::rollbackTransaction()
+{
+    CHECK(database().rollback(), "Transaction Rollback");
+}
+
 void DBStorage::setPath(const QString &path)
 {
     m_dbPath = path;

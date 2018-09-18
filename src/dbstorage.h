@@ -20,6 +20,10 @@ public:
     QString getSettings(const QString &key);
     void setSettings(const QString &key, const QString &value);
 
+    void beginTransaction();
+    void commitTransaction();
+    void rollbackTransaction();
+
 protected:
     void setPath(const QString &path);
     void openDB();

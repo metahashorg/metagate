@@ -521,7 +521,7 @@ void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddres
 BEGIN_SLOT_WRAPPER
     QString pubkey = "";
     const TypedException exception = apiVrapper2([&, this] {
-        pubkey = db.getContactrPublicKey(address);
+        pubkey = db.getContactPublicKey(address);
         CHECK_TYPED(!pubkey.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "Collocutor pubkey not found " + address.toStdString());
         LOG << "Publickey found " << address << " " << pubkey;
     });
