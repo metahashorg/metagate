@@ -126,6 +126,9 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     db.addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 6000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
 
+    std::vector<messenger::Message> rr = db.getMessagesForUserAndDestNum("1234", "jkgfjkgfgfitrrtoioriojk", 10, 1000, true);
+    QCOMPARE(rr.size(), 2);
+
     QCOMPARE(db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf").second, -1);
     QCOMPARE(db.findFirstMessageWithHash("1234", "asdfdf").second, 1500);
 
