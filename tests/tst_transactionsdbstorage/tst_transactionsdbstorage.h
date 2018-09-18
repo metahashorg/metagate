@@ -17,6 +17,7 @@ private slots:
     void testDB1();
     void testBigNumSum();
     void testGetPayments();
+    void testAddressInfos();
 
 private:
 };
