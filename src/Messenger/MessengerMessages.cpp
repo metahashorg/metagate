@@ -400,7 +400,7 @@ std::vector<NewMessageResponse> parseGetChannelResponse(const QJsonDocument &res
 static ChannelInfo parseChannel(const QJsonObject &channelJson) {
     ChannelInfo info;
     CHECK(channelJson.contains("title") && channelJson.value("title").isString(), "title field not found");
-    info.title = channelJson.value("data").toString();
+    info.title = channelJson.value("title").toString();
     CHECK(channelJson.contains("title_sha256") && channelJson.value("title_sha256").isString(), "title_sha256 field not found");
     info.titleSha = channelJson.value("title_sha256").toString();
     CHECK(channelJson.contains("admin") && channelJson.value("admin").isString(), "admin field not found");
