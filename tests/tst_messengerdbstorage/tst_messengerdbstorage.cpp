@@ -159,7 +159,16 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     //qDebug() << db.getMessageMaxConfirmedCounter("userururut");
 
 
+    db.addChannel(id1, "channel1", "0564", true, "admin", false, true, true);
+    db.setLastReadCounterForUserContact("1234", "0564", 10, true);
 
+    const std::vector<messenger::ChannelInfo> channels = db.getChannelsWithLastReadCounters("1234");
+    QCOMPARE(channels.size(), 2);
+    for (const messenger::ChannelInfo &channel: channels) {
+        if (channel.title == "channel1") {
+            QCOMPARE(channel.counter, 10);
+        }
+    }
 }
 
 void tst_MessengerDBStorage::testMessengerDBSpeed()
