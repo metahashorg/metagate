@@ -145,7 +145,7 @@ signals:
     void getHistoryAddressAddressCount(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
 
 
-    void createChannel(const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback);
+    void createChannel(const QString &address, const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback);
 
     void addWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback);
 
@@ -182,7 +182,7 @@ private slots:
     void onGetHistoryAddressAddressCount(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback);
 
 
-    void onCreateChannel(const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback);
+    void onCreateChannel(const QString &address, const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback);
 
     void onAddWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback);
 
@@ -234,7 +234,7 @@ private:
 
     using ResponseCallbacks = std::function<void(const TypedException &exception)>;
 
-    std::unordered_map<size_t, ResponseCallbacks> callbacks;
+    std::unordered_map<size_t, std::pair<ResponseCallbacks, bool>> callbacks;
 
 };
 

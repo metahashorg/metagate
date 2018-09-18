@@ -481,7 +481,7 @@ BEGIN_SLOT_WRAPPER
         std::string pub;
         const std::string &sign = walletManager.getWallet(address.toStdString()).sign(messageToSign.toStdString(), pub);
 
-        emit messenger->createChannel(channelTitle, titleSha, QString::fromStdString(pub), QString::fromStdString(sign), feeI, [this, makeFunc, address, channelTitle, titleSha](const TypedException &exception) {
+        emit messenger->createChannel(address, channelTitle, titleSha, QString::fromStdString(pub), QString::fromStdString(sign), feeI, [this, makeFunc, address, channelTitle, titleSha](const TypedException &exception) {
             LOG << "channel created " << address << " " << channelTitle << " " << titleSha;
             makeFunc(exception, address, channelTitle, titleSha);
         });

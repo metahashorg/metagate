@@ -4,6 +4,7 @@
 #include <QtSql>
 
 #include "check.h"
+#include <iostream>
 
 namespace messenger {
 
