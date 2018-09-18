@@ -18,7 +18,7 @@ std::vector<ReturnElement> getRandom(const std::vector<Element> &elements, size_
     std::shuffle(indices.begin(), indices.end(), g);
 
     std::vector<ReturnElement> result;
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < std::min(count, indices.size()); i++) {
         result.emplace_back(extracter(elements[indices[i]]));
     }
     return result;
