@@ -4,6 +4,7 @@
 
 #include "utils.h"
 #include "check.h"
+#include "Log.h"
 
 static const QString sqliteSettings = "PRAGMA foreign_keys=on";
 
@@ -72,19 +73,8 @@ void DBStorage::setSettings(const QString &key, const QString &value)
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-void DBStorage::beginTransaction()
-{
-    CHECK(database().transaction(), "Transaction Begin");
-}
-
-void DBStorage::commitTransaction()
-{
-    CHECK(database().commit(), "Transaction Commit");
-}
-
-void DBStorage::rollbackTransaction()
-{
-    CHECK(database().rollback(), "Transaction Rollback");
+DBStorage::TransactionGuard DBStorage::beginTransaction() {
+    return TransactionGuard(*this);
 }
 
 void DBStorage::setPath(const QString &path)
@@ -128,4 +118,36 @@ QSqlDatabase DBStorage::database() const
 bool DBStorage::dbExist() const
 {
     return m_dbExist;
+}
+
+DBStorage::TransactionGuard::TransactionGuard(const DBStorage &storage)
+    : storage(storage)
+{
+    CHECK(storage.database().transaction(), "Transaction not open");
+
+    isClose = true;
+}
+
+DBStorage::TransactionGuard::~TransactionGuard() {
+    if (isClose) {
+        if (!storage.database().rollback()) {
+            LOG << "Error while rollback db commit";
+        }
+    }
+}
+
+DBStorage::TransactionGuard::TransactionGuard(DBStorage::TransactionGuard &&second)
+    : storage(second.storage)
+    , isClose(second.isClose)
+    , isCommited(second.isCommited)
+{
+    second.isCommited = true;
+    second.isClose = false;
+}
+
+void DBStorage::TransactionGuard::commit() {
+    CHECK(!isCommited, "already commited");
+    CHECK(storage.database().commit(), "Transaction not commit");
+    isCommited = true;
+    isClose = false;
 }

@@ -180,11 +180,11 @@ void tst_MessengerDBStorage::testMessengerDBSpeed()
         QFile::remove(dbName);
     messenger::MessengerDBStorage db;
     db.init();
-    db.beginTransaction();
+    auto transactionGuard = db.beginTransaction();
     for (int n = 0; n < 1000; n++) {
         db.addMessage("1234", "3454", "abcd", 1000000 + n, 4001 + n, true, true, true, "asdfdf", 1);
     }
-    db.commitTransaction();
+    transactionGuard.commit();
     qDebug() << db.getMessageMaxCounter("1234");
 }
 

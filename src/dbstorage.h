@@ -8,6 +8,30 @@ class DBStorage : public QObject
 {
     Q_OBJECT
 public:
+
+    class TransactionGuard {
+    public:
+
+        TransactionGuard(const DBStorage &storage);
+
+        ~TransactionGuard();
+
+        TransactionGuard(TransactionGuard &&second);
+
+        TransactionGuard(const TransactionGuard &second) = delete;
+        TransactionGuard& operator=(const TransactionGuard &second) = delete;
+        TransactionGuard& operator=(TransactionGuard &&second) = delete;
+
+        void commit();
+
+    private:
+
+        const DBStorage &storage;
+        bool isClose = false;
+        bool isCommited = false;
+    };
+
+public:
     using DbId = qint64;
 
     explicit DBStorage(const QString &dbpath, const QString &dbname, QObject *parent = nullptr);
@@ -20,9 +44,7 @@ public:
     QString getSettings(const QString &key);
     void setSettings(const QString &key, const QString &value);
 
-    void beginTransaction();
-    void commitTransaction();
-    void rollbackTransaction();
+    TransactionGuard beginTransaction();
 
 protected:
     void setPath(const QString &path);

@@ -72,10 +72,12 @@ void tst_TransactionsDBStorage::testGetPayments()
         QFile::remove(dbName);
     transactions::TransactionsDBStorage db;
     db.init();
+    auto transactionGuard = db.beginTransaction();
     for (int n = 0; n < 100; n++) {
         db.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", true, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
         db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address20", true, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
     }
+    transactionGuard.commit();
     qint64 count = db.getPaymentsCountForAddress("address100", "mh", true);
     QCOMPARE(count, 100);
     std::vector<transactions::Transaction> res = db.getPaymentsForAddress("address100", "mh", 55, 10, true);
