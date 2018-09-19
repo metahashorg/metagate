@@ -37,7 +37,10 @@ void MessengerDBStorage::init(bool force)
     createIndex(createLastReadMessageUniqueIndex2);
 }
 
-void MessengerDBStorage::addMessage(const QString &user, const QString &duser, const QString &text, uint64_t timestamp, Message::Counter counter, bool isIncoming, bool canDecrypted, bool isConfirmed, const QString &hash, qint64 fee, const QString &channelSha)
+void MessengerDBStorage::addMessage(const QString &user, const QString &duser, const QString &text,
+                                    uint64_t timestamp, Message::Counter counter, bool isIncoming,
+                                    bool canDecrypted, bool isConfirmed, const QString &hash,
+                                    qint64 fee, const QString &channelSha)
 {
     DbId userid = getUserId(user);
     DbId contactid = -1;
@@ -71,6 +74,18 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
         query.bindValue(":channelid", channelid);
     CHECK(query.exec(), query.lastError().text().toStdString());
     addLastReadRecord(userid, contactid, channelid);
+}
+
+void MessengerDBStorage::addMessages(const std::vector<Message> &messages)
+{
+    beginTransaction();
+    for (const Message &message: messages) {
+        addMessage(message.username, message.collocutor, message.data,
+                   message.timestamp, message.counter, message.isInput,
+                   message.isCanDecrypted, message.isConfirmed, message.hash,
+                   message.fee, message.channel);
+    }
+    commitTransaction();
 }
 
 DBStorage::DbId MessengerDBStorage::getUserId(const QString &username)
@@ -221,37 +236,49 @@ std::vector<Message> MessengerDBStorage::getMessagesForUser(const QString &user,
     query.bindValue(":ob", from);
     query.bindValue(":oe", to);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    createMessagesList(query, res);
+    createMessagesList(query, res, false);
     return res;
 }
 
-std::vector<Message> MessengerDBStorage::getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 to, bool isChannel)
+std::vector<Message> MessengerDBStorage::getMessagesForUserAndDest(const QString &user, const QString &channelOrContact, qint64 from, qint64 to, bool isChannel)
 {
     std::vector<Message> res;
     QSqlQuery query(database());
-    const QString sql = selectMsgMessagesForUserAndDest.arg(isChannel ? selectWhereIsChannel : selectWhereIsNotChannel);
-    CHECK(query.prepare(sql), query.lastError().text().toStdString());
+    if (isChannel) {
+        CHECK(query.prepare(selectMsgMessagesForUserAndChannel), query.lastError().text().toStdString());
+    } else {
+        CHECK(query.prepare(selectMsgMessagesForUserAndDest), query.lastError().text().toStdString());
+    }
     query.bindValue(":user", user);
-    query.bindValue(":duser", duser);
+    if (isChannel)
+        query.bindValue(":shaName", channelOrContact);
+    else
+        query.bindValue(":duser", channelOrContact);
     query.bindValue(":ob", from);
     query.bindValue(":oe", to);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    createMessagesList(query, res);
+    createMessagesList(query, res, isChannel);
     return res;
 }
 
-std::vector<Message> MessengerDBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num, bool isChannel)
+std::vector<Message> MessengerDBStorage::getMessagesForUserAndDestNum(const QString &user, const QString &channelOrContact, qint64 to, qint64 num, bool isChannel)
 {
     std::vector<Message> res;
     QSqlQuery query(database());
-    const QString sql = selectMsgMessagesForUserAndDestNum.arg(isChannel ? selectWhereIsChannel : selectWhereIsNotChannel);
-    CHECK(query.prepare(sql), query.lastError().text().toStdString());
+    if (isChannel) {
+        CHECK(query.prepare(selectMsgMessagesForUserAndChannelNum), query.lastError().text().toStdString());
+    } else {
+        CHECK(query.prepare(selectMsgMessagesForUserAndDestNum), query.lastError().text().toStdString());
+    }
     query.bindValue(":user", user);
-    query.bindValue(":duser", duser);
+    if (isChannel)
+        query.bindValue(":shaName", channelOrContact);
+    else
+        query.bindValue(":duser", channelOrContact);
     query.bindValue(":oe", to);
     query.bindValue(":num", num);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    createMessagesList(query, res, true);
+    createMessagesList(query, res, isChannel, true);
     return res;
 }
 
@@ -458,6 +485,8 @@ void MessengerDBStorage::addChannel(DBStorage::DbId userid, const QString &chann
     query.bindValue(":isWriter", isWriter);
     query.bindValue(":isVisited", isVisited);
     CHECK(query.exec(), query.lastError().text().toStdString());
+    DBStorage::DbId id = query.lastInsertId().toLongLong();
+    addLastReadRecord(userid, -1, id);
 }
 
 void MessengerDBStorage::setChannelsNotVisited(const QString &user)
@@ -526,11 +555,18 @@ void MessengerDBStorage::setChannelIsWriterForUserShaName(const QString &user, c
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool reverse)
+void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse)
 {
     while (query.next()) {
         Message msg;
-        msg.collocutor = query.value("duser").toString();
+        msg.isChannel = isChannel;
+        if (msg.isChannel) {
+            msg.channel = query.value("dest").toString();
+            msg.collocutor = QString();
+        } else {
+            msg.collocutor = query.value("dest").toString();
+            msg.channel = QString();
+        }
         msg.isInput = query.value("isIncoming").toBool();
         msg.data = query.value("text").toString();
         msg.counter = query.value("morder").toLongLong();

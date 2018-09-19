@@ -22,6 +22,8 @@ public:
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
                     const QString &hash, qint64 fee, const QString &channelSha = QString());
 
+    void addMessages(const std::vector<Message> &messages);
+
     DbId getUserId(const QString &username);
     QStringList getUsersList();
 
@@ -40,8 +42,8 @@ public:
     Message::Counter getMessageMaxConfirmedCounter(const QString &user);
 
     std::vector<Message> getMessagesForUser(const QString &user, qint64 from, qint64 to);
-    std::vector<Message> getMessagesForUserAndDest(const QString &user, const QString &duser, qint64 from, qint64 tos, bool isChannel = false);
-    std::vector<Message> getMessagesForUserAndDestNum(const QString &user, const QString &duser, qint64 to, qint64 num, bool isChannel = false);
+    std::vector<Message> getMessagesForUserAndDest(const QString &user, const QString &channelOrContact, qint64 from, qint64 tos, bool isChannel = false);
+    std::vector<Message> getMessagesForUserAndDestNum(const QString &user, const QString &channelOrContact, qint64 to, qint64 num, bool isChannel = false);
     qint64 getMessagesCountForUserAndDest(const QString &user, const QString &duser, qint64 from);
 
     bool hasMessageWithCounter(const QString &username, Message::Counter counter, const QString &channelSha = QString());
@@ -68,7 +70,7 @@ public:
     void setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter);
 
 private:
-    void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool reverse = false);
+    void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse = false);
     void addLastReadRecord(DbId userid, DbId contactid, DBStorage::DbId channelid);
 };
 

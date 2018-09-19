@@ -7,11 +7,12 @@ namespace messenger {
 
 struct Message {
     using Counter = qint64;
-
+    QString username;
     QString collocutor;
     bool isInput;
     quint64 timestamp;
     QString data;
+    QString hash;
     Counter counter;
     int64_t fee;
     bool isCanDecrypted = true;

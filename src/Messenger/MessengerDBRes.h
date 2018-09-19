@@ -98,7 +98,7 @@ static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder)
                                                     "WHERE m.isConfirmed = 1 "
                                                     "AND u.username = :user";
 
-static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS dest, m.isIncoming, m.text, "
                                                 "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                 "FROM messages m "
                                                 "INNER JOIN users u ON u.id = m.userid "
@@ -107,25 +107,43 @@ static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.usernam
                                                 "AND u.username = :user "
                                                 "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, "
                                                        "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                        "FROM messages m "
                                                        "INNER JOIN users u ON u.id = m.userid "
-                                                       "INNER JOIN contacts du ON du.id = m.contactid "
+                                                       "INNER JOIN contacts c ON c.id = m.contactid "
                                                        "WHERE m.morder >= :ob AND m.morder <= :oe "
-                                                       "AND u.username = :user AND du.username = :duser %1 "
+                                                       "AND u.username = :user AND c.username = :duser "
                                                        "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, du.username AS duser, m.isIncoming, m.text, "
+static const QString selectMsgMessagesForUserAndChannel = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, "
+                                                             "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                             "FROM messages m "
+                                                             "INNER JOIN users u ON u.id = m.userid "
+                                                             "INNER JOIN channels c ON c.id = m.channelid "
+                                                             "WHERE m.morder >= :ob AND m.morder <= :oe "
+                                                             "AND u.username = :user AND c.shaName = :shaName "
+                                                             "ORDER BY m.morder";
+
+static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, "
                                                           "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                           "FROM messages m "
                                                           "INNER JOIN users u ON u.id = m.userid "
-                                                          "INNER JOIN contacts du ON du.id = m.contactid "
+                                                          "INNER JOIN contacts c ON c.id = m.contactid "
                                                           "WHERE m.morder <= :oe "
-                                                          "AND u.username = :user AND du.username = :duser %1 "
+                                                          "AND u.username = :user AND c.username = :duser "
                                                           "ORDER BY m.morder DESC "
                                                           "LIMIT :num";
 
+static const QString selectMsgMessagesForUserAndChannelNum = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, "
+                                                          "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                          "FROM messages m "
+                                                          "INNER JOIN users u ON u.id = m.userid "
+                                                          "INNER JOIN channels c ON c.id = m.channelid "
+                                                          "WHERE m.morder <= :oe "
+                                                          "AND u.username = :user AND c.shaName = :shaName "
+                                                          "ORDER BY m.morder DESC "
+                                                          "LIMIT :num";
 
 static const QString selectMsgUsersList = "SELECT username FROM users ORDER BY id";
 
@@ -275,7 +293,7 @@ static const QString updateChannelIsWriterForUserShaName = "UPDATE channels "
                                                             "WHERE username = :user) "
                                                             "AND shaName = :shaName";
 
-static const QString selectWhereIsChannel = "AND m.channelid IS NOT NULL";
+//static const QString selectWhereIsChannel = "AND m.channelid IS NOT NULL";
 static const QString selectWhereIsNotChannel = "AND m.channelid IS NULL";
 static const QString selectJoinChannel = "INNER JOIN channels c ON c.id = m.channelid AND c.shaName = :channelSha";
 
