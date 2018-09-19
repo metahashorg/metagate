@@ -308,7 +308,15 @@ void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, ui
 }
 
 std::string Wallet::genDataDelegateHex(bool isDelegate, uint64_t value) {
-    return toHex(std::string("{\"method\":\"") + (isDelegate ? "delegate" : "undelegate") + "\",\"params\":{\"value\":\"" + std::to_string(value) + "\"}}");
+    std::string result = std::string("{\"method\":\"");
+    if (isDelegate) {
+        result += "delegate";
+        result += "\",\"params\":{\"value\":\"" + std::to_string(value) + "\"}}";
+    } else {
+        result += "undelegate";
+        result += "\"}";
+    }
+    return toHex(result);
 }
 
 std::string Wallet::calcHash(const std::string &txHex) {
