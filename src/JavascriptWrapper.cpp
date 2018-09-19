@@ -314,7 +314,7 @@ QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath) {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get mth wallets json " << result.size() << " " << walletPath;
+        LOG << "get mth wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -330,7 +330,7 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath) {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get mth wallets json " << result.size() << " " << walletPath;
+        LOG << "get mth wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -714,7 +714,7 @@ QString JavascriptWrapper::getAllEthWalletsJson() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPathEth);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get eth wallets json " << result.size();
+        LOG << "get eth wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -730,7 +730,7 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPathEth);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get eth wallets json " << result.size();
+        LOG << "get eth wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -956,7 +956,7 @@ QString JavascriptWrapper::getAllBtcWalletsJson() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPathBtc);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get btc wallets json " << result.size();
+        LOG << "get btc wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -972,7 +972,7 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPathBtc);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get btc wallets json " << result.size();
+        LOG << "get btc wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
