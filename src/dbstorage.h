@@ -44,6 +44,7 @@ public:
     QString getSettings(const QString &key);
     void setSettings(const QString &key, const QString &value);
 
+    void execPragma(const QString &sql);
     TransactionGuard beginTransaction();
 
 protected:

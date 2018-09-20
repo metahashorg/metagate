@@ -73,6 +73,11 @@ void DBStorage::setSettings(const QString &key, const QString &value)
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
+void DBStorage::execPragma(const QString &sql)
+{
+    database().exec(sql);
+}
+
 DBStorage::TransactionGuard DBStorage::beginTransaction() {
     return TransactionGuard(*this);
 }
