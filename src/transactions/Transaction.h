@@ -40,7 +40,7 @@ struct BalanceInfo {
     BigNumber undelegated;
 
     BigNumber calcBalance() const {
-        return received - spent - (delegate - undelegate);
+        return received - spent;
     };
 };
 

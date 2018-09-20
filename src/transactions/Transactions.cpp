@@ -221,6 +221,9 @@ BalanceInfo Transactions::getBalance(const QString &address, const QString &curr
     balance.undelegate = db.calcIsSetDelegateValueForAddress(address, currency, false, true).getDecimal();
     balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false).getDecimal();
     balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false).getDecimal();
+
+    balance.received += balance.undelegate;
+    balance.spent += balance.delegate;
     return balance;
 }
 
