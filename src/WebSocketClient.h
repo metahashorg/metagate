@@ -50,6 +50,10 @@ public slots:
 
     void onAddHelloString(QString message);
 
+private slots:
+
+    void socketError(QAbstractSocket::SocketError error);
+
 private:
 
     void sendMessagesInternal();
