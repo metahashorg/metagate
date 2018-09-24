@@ -114,6 +114,29 @@ void tst_Metahash::testCreateMth() {
     Wallet wallet("./", address, passwd);
 }
 
+void tst_Metahash::testCreateFromRawMth_data() {
+    QTest::addColumn<std::string>("rawkey");
+    QTest::addColumn<std::string>("passwd");
+    QTest::addColumn<std::string>("answer");
+
+    QTest::newRow("CreateMthFromRaw 1") << std::string("0x307702010104201cfb36c121f0161295dc0cd721eb62151f0255bb471bd0c15d11628e3687da68a00a06082a8648ce3d030107a144034200044a9f9bb95b0e9229ef152a8ac12209f069c8e0f79c4de9cdcbffd175ffb636b1466a364bfeed15abc5e29449bb90f0574fc76c57650dd07f7c39f3948a7c1f3f") << std::string("123") << std::string("0x004d95a8f26e1a8a2e5ca1a2e6c690b380bf157cf2892c00eb");
+    QTest::newRow("CreateMthFromRaw 2") << std::string("0x30770201010420946ce29f427aa48955b94e58f5f4a9c3319f719a4535541eef4c05a380a6617ea00a06082a8648ce3d030107a14403420004af926191fc92e2ea6bb57efc5bd8986760a50bed22e2fd51694023dee50839b5c95a249ffb8b2e44ede63a4e8f7058fa37e000729a524c85a15b50b3e82f395a") << std::string("123") << std::string("0x000ddc100d8e4a878069225e1b0b7d91ccec16c73f49c98524");
+    QTest::newRow("CreateMthFromRaw 3") << std::string("0x30770201010420233a238f85733b22ab0cbe5d0db58d92d7b45c00276298844376a30dec096fd8a00a06082a8648ce3d030107a14403420004194b7ea5a7e043acbf8bc96bd545fa83271f03f26833334a2c98c88f3531e8b814c8a870bfce06089dfe2166f74679f1ba58c4fa087c5d06e4b3d8cdd86b3e1c") << std::string("123") << std::string("0x00299caf7b42be84ce1221966b62178c2093231f229c5fae50");
+    QTest::newRow("CreateMthFromRaw 4") << std::string("0x307702010104208125a9cb98614a38e39da5f90f80d07578a53fde4f214d16442eebad32566b05a00a06082a8648ce3d030107a1440342000499a5a7252eda8b4d690293a05e1c44cd1879ade3004d8f56daf98d7448bf259b8feb8eec3920b7942ff96d88b43fc1a688af85c50f883d85c286592bd06657b2") << std::string("123") << std::string("0x00d91abc103e0633f237b2b1f95ad4183d84199644793690c6");
+    QTest::newRow("CreateMthFromRaw 5") << std::string("0x30770201010420d3e7fcdc744cd4450845d003d46781932de0f5b10e9ff60e76d5e1d1b8886ef5a00a06082a8648ce3d030107a144034200046e9a2109c932714e4301504781ffae1ddb72104d8c0005bde0203a6e52b9f6ff5f145ca156ceffeb848d79f86c48ad47eada12d3ddfa8140ebd837e7db43c494") << std::string("123") << std::string("0x00acf75f0752d2c469be8b4c5ac5335fc8364f1c4c96ee1234");
+}
+
+void tst_Metahash::testCreateFromRawMth() {
+    QFETCH(std::string, rawkey);
+    QFETCH(std::string, passwd);
+    QFETCH(std::string, answer);
+    std::string tmp;
+    std::string address;
+    Wallet::createWalletFromRaw("./", rawkey, passwd, tmp, address);
+    QCOMPARE(address, answer);
+    Wallet wallet("./", address, passwd);
+}
+
 void tst_Metahash::testNotCreateMth() {
     std::string tmp;
     std::string address;

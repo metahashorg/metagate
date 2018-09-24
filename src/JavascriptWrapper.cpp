@@ -763,6 +763,31 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, QString walletPath, QString jsNameResult) {
+    std::string pubkey;
+    Opt<std::string> address;
+    const TypedException exception = apiVrapper2([&]() {
+        std::string addr;
+        Wallet::createWalletFromRaw(walletPath, rawPrivKey.toStdString(), password.toStdString(), pubkey, addr);
+        address = addr;
+    });
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), address);
+}
+
+void JavascriptWrapper::saveRawPrivKey(QString requestId, QString rawPrivKey, QString password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "saveRawPrivkeyResultJs";
+    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, walletPath, JS_NAME_RESULT);
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "saveRawPrivkeyMHCResultJs";
+    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, walletPathMth, JS_NAME_RESULT);
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";

@@ -156,18 +156,11 @@ void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
     }
 }
 
-void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){
+void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr) {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
 
-    CryptoPP::AutoSeededRandomPool prng;
-    CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
-
-    privateKey.Initialize(prng, CryptoPP::ASN1::secp256r1());
-    const bool resultCreatePrivate = privateKey.Validate(prng, 3);
-    CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create private key");
-
-    publicKey = getPublicKey(privateKey);
-    const std::string pubKeyElements = getPublicKeyElements(privateKey);
+    publicKey = getPublicKey(privKey);
+    const std::string pubKeyElements = getPublicKeyElements(privKey);
     const std::string pubKeyBinary = fromHex(pubKeyElements);
 
     const std::string hexAddr = createAddress(pubKeyBinary);
@@ -180,9 +173,32 @@ void Wallet::createWallet(const QString &folder, const std::string &password, st
 #endif
     std::ofstream file1(fileNameCStr);
     CryptoPP::FileSink fs(file1);
-    CryptoPP::PEM_Save(fs, prng, privateKey, "AES-128-CBC", password.c_str(), password.size());
+    CryptoPP::AutoSeededRandomPool prng;
+    CryptoPP::PEM_Save(fs, prng, privKey, "AES-128-CBC", password.c_str(), password.size());
 
     addr = hexAddr;
+}
+
+void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){
+    CryptoPP::AutoSeededRandomPool prng;
+    CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
+
+    privateKey.Initialize(prng, CryptoPP::ASN1::secp256r1());
+    const bool resultCreatePrivate = privateKey.Validate(prng, 3);
+    CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create private key");
+
+    savePrivateKey(folder, privateKey, password, publicKey, addr);
+}
+
+void Wallet::createWalletFromRaw(const QString &folder, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr) {
+    CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
+
+    CHECK_TYPED(isHex(rawPrivateHex), TypeErrors::INCORRECT_USER_DATA, "Raw private key invalid");
+    const std::string rawPrivkey = fromHex(rawPrivateHex.substr(2));
+    CryptoPP::StringSource ss(rawPrivkey, true);
+    privateKey.BERDecodePrivateKey(ss, true, rawPrivkey.size());
+
+    savePrivateKey(folder, privateKey, password, publicKey, addr);
 }
 
 std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder) {
