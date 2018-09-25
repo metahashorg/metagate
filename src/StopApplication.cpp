@@ -77,7 +77,7 @@ void updateAndRestart() {
 
     if (!isUac) {
         QProcess process;
-        std::cout << "Tt " << ("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\"").toStdString() << std::endl;
+        LOG << "Tt " << "\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\"";
         CHECK(process.startDetached("\"" + updaterPath + "\" \"" + newAppPath + "\" \"" + zipAppPath + "\" " + thisName + " \"" + thisPath + "\""), "dont start updater process");
     } else {
         LOG << "UAC mode";
@@ -157,6 +157,7 @@ void updateAndRestart() {
     CHECK(QFile(scriptPatch).exists(), "scriptPatch path not exist");
 
     QProcess process;
+    LOG << "Tt " << updaterPath + " --install-dir \"" + thisPath + "\" --package-dir " + newAppPath + " --script " + scriptPatch;
     CHECK(process.startDetached(updaterPath + " --install-dir \"" + thisPath + "\" --package-dir " + newAppPath + " --script " + scriptPatch), "dont start updater process");
     QApplication::exit(SIMPLE_EXIT);
 }
