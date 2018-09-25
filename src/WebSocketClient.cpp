@@ -18,6 +18,9 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     qRegisterMetaType<std::vector<QString>>();
 
     m_url = url;
+    if (!QSslSocket::supportsSsl()) {
+        m_url.setScheme("ws");
+    }
 
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
 
