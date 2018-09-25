@@ -8,6 +8,10 @@
 namespace transactions {
 
 struct Transaction {
+    enum Status {
+        OK = 0, PENDING = 1, ERROR = 2
+    };
+
     QString currency;
     QString tx;
     QString address;
@@ -23,6 +27,9 @@ struct Transaction {
     bool isSetDelegate = false;
     bool isDelegate;
     QString delegateValue;
+    QString delegateHash;
+
+    Status status = Status::OK;
 };
 
 struct BalanceInfo {
