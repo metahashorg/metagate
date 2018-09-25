@@ -45,10 +45,11 @@ struct BalanceInfo {
     BigNumber undelegate;
     BigNumber delegated;
     BigNumber undelegated;
+    BigNumber reserved = QString("0");
 
     BigNumber calcBalance() const {
-        return received - spent;
-    };
+        return received - spent - reserved;
+    }
 };
 
 struct AddressInfo {

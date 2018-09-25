@@ -58,6 +58,7 @@ static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     messagesBalanceJson.insert("undelegate", QString(balance.undelegate.getDecimal()));
     messagesBalanceJson.insert("delegated", QString(balance.delegated.getDecimal()));
     messagesBalanceJson.insert("undelegated", QString(balance.undelegated.getDecimal()));
+    messagesBalanceJson.insert("reserved", QString(balance.reserved.getDecimal()));
     messagesBalanceJson.insert("balance", QString(balance.calcBalance().getDecimal()));
     return messagesBalanceJson;
 }
@@ -80,7 +81,22 @@ static QJsonObject txToJson(const Transaction &tx) {
     if (tx.isSetDelegate) {
         txJson.insert("isDelegate", tx.isDelegate);
         txJson.insert("delegate_value", tx.delegateValue);
+        if (!tx.delegateHash.isEmpty()) {
+            txJson.insert("delegate_hash", tx.delegateHash);
+        }
     }
+
+    QString statusStr;
+    if (tx.status == Transaction::OK) {
+        statusStr = "ok";
+    } else if (tx.status == Transaction::PENDING) {
+        statusStr = "pending";
+    } else if (tx.status == Transaction::ERROR) {
+        statusStr = "error";
+    } else {
+        throwErr("Incorrect transaction status " + std::to_string(tx.status));
+    }
+    txJson.insert("status", statusStr);
     return txJson;
 }
 

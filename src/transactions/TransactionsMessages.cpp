@@ -53,6 +53,11 @@ BalanceInfo parseBalanceResponse(const QString &response) {
         result.undelegate = getIntOrString(json, "undelegate");
         result.delegated = getIntOrString(json, "delegated");
         result.undelegated = getIntOrString(json, "undelegated");
+        if (json.contains("reserved")) {
+            result.reserved = getIntOrString(json, "reserved");
+        } else {
+            result.reserved = QString("0");
+        }
     }
 
     return result;
@@ -98,6 +103,19 @@ static Transaction parseTransaction(const QJsonObject &txJson) {
         res.isSetDelegate = true;
         res.isDelegate = txJson.value("isDelegate").toBool();
         res.delegateValue = getIntOrString(txJson, "delegate");
+        if (txJson.contains("delegateHash") && txJson.value("delegateHash").isString()) {
+            res.delegateHash = txJson.value("delegateHash").toString();
+        }
+    }
+    if (txJson.contains("status") && txJson.value("status").isString()) {
+        const QString status = txJson.value("status").toString();
+        if (status == "ok") {
+            res.status = Transaction::OK;
+        } else if (status == "error") {
+            res.status = Transaction::ERROR;
+        } else if (status == "pending") {
+            res.status = Transaction::PENDING;
+        }
     }
 
     return res;
