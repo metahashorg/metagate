@@ -85,3 +85,7 @@ txsSendedTxJs(requestId, server, result, errorNum, errorMessage)
 txOnTorrentJs(requestId, server, hash, result, errorNum, errorMessage)
 Возвращается при появлении на сервере торрента отправленной транзакции
 result - json с транзакцией (см выше)
+
+txStatusChangedJs(address, currency, txHash, txJson, errorNum, errorMessage)
+Возвращается при изменении статуса транзакции
+txJson - json с транзакцией (см выше)

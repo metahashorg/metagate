@@ -117,7 +117,7 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
-void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct) {
+void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs) {
     if (servers.empty()) {
         return;
     }
@@ -133,6 +133,15 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     };
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(servers.size());
+
+    const auto processPendingTx = [this, address, currency](const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
+        const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
+        if (tx.status != Transaction::PENDING) {
+            // update-им транзакцию в бд
+            emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
+        }
+    };
 
     const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
@@ -169,7 +178,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), 1s);
     };
 
-    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback, pendingTxs, processPendingTx](const QString &server, const std::string &response, const TypedException &exception) {
         balanceStruct->countResponses--;
 
         if (!exception.isSet()) {
@@ -195,6 +204,12 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 client.sendMessagePost(server, requestForTxs, std::bind(getHistoryCallback, server, _1, _2), 1s);
             } else {
                 updateBalanceTime(currency, servStruct);
+            }
+
+            // Проверяем статусы pending транзакций
+            for (const QString &txHash: pendingTxs) {
+                const QString message = makeGetTxRequest(txHash);
+                client.sendMessagePost(server, message, processPendingTx);
             }
         } else if (balanceStruct->countResponses == 0 && balanceStruct->server.isEmpty()) {
             throwErr(server.toStdString() + ". " + exception.description);
@@ -224,6 +239,7 @@ BalanceInfo Transactions::getBalance(const QString &address, const QString &curr
     balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false).getDecimal();
     balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false).getDecimal();
 
+    // Подсчитать reserved и правильно пересчитать countDelegated
     balance.received += balance.undelegate;
     balance.spent += balance.delegate;
     return balance;
@@ -252,7 +268,9 @@ BEGIN_SLOT_WRAPPER
             servStructs.emplace(std::piecewise_construct, std::forward_as_tuple(addr.currency), std::forward_as_tuple(std::make_shared<ServersStruct>(addr.currency)));
         }
         servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
-        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency));
+        // Получить список pending транзакций
+        std::vector<QString> pendingTxs;
+        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxs);
     }
 END_SLOT_WRAPPER
 }

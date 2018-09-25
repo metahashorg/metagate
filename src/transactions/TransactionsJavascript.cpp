@@ -21,6 +21,7 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     CHECK(connect(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance), "not connect onNewBalance");
     CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
     CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
+    CHECK(connect(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged), "not connect onTransactionStatusChanged");
 
     qRegisterMetaType<Callback>("Callback");
 
@@ -450,6 +451,13 @@ void TransactionsJavascript::onTransactionInTorrent(const QString &server, const
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txOnTorrentJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, server, txHash, txInfoToJson(tx));
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::onTransactionStatusChanged(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "txStatusChangedJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, currency, txHash, txInfoToJson(tx));
 END_SLOT_WRAPPER
 }
 
