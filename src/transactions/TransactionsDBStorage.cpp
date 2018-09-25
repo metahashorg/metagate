@@ -31,7 +31,8 @@ void transactions::TransactionsDBStorage::init(bool force)
 void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
-                                       bool isSetDelegate, bool isDelegate, QString delegateValue)
+                                       bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
+                                       Transaction::Status status)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
@@ -49,6 +50,8 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":isSetDelegate", isSetDelegate);
     query.bindValue(":isDelegate", isDelegate);
     query.bindValue(":delegateValue", delegateValue);
+    query.bindValue(":delegateHash", delegateHash);
+    query.bindValue(":status", status);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
@@ -57,7 +60,8 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
     addPayment(trans.currency, trans.tx, trans.address, trans.isInput,
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
-               trans.isSetDelegate, trans.isDelegate, trans.delegateValue);
+               trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
+               trans.status);
 }
 
 std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QString &address, const QString &currency,
@@ -233,6 +237,8 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Tra
         trans.isSetDelegate = query.value("isSetDelegate").toBool();
         trans.isDelegate = query.value("isDelegate").toBool();
         trans.delegateValue = query.value("delegateValue").toString();
+        trans.delegateHash = query.value("delegateHash").toString();
+        trans.status = static_cast<Transaction::Status>(query.value("delegateHash").toInt());
         payments.push_back(trans);
     }
 }

@@ -19,7 +19,8 @@ public:
     void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
-                    bool isSetDelegate, bool isDelegate, QString delegateValue);
+                    bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
+                    Transaction::Status status);
     void addPayment(const Transaction &trans);
 
     std::vector<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
