@@ -196,6 +196,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
             } else {
                 updateBalanceTime(currency, servStruct);
             }
+        } else if (balanceStruct->countResponses == 0 && balanceStruct->server.isEmpty()) {
+            throwErr(server.toStdString() + ". " + exception.description);
         }
     };
 
