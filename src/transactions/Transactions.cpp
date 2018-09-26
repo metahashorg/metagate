@@ -138,7 +138,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
         if (tx.status != Transaction::PENDING) {
-            // update-им транзакцию в бд
+            db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
         }
     };
@@ -206,7 +206,6 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 updateBalanceTime(currency, servStruct);
             }
 
-            // Проверяем статусы pending транзакций
             for (const QString &txHash: pendingTxs) {
                 const QString message = makeGetTxRequest(txHash);
                 client.sendMessagePost(server, message, processPendingTx);
@@ -268,9 +267,11 @@ BEGIN_SLOT_WRAPPER
             servStructs.emplace(std::piecewise_construct, std::forward_as_tuple(addr.currency), std::forward_as_tuple(std::make_shared<ServersStruct>(addr.currency)));
         }
         servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
-        // Получить список pending транзакций
-        std::vector<QString> pendingTxs;
-        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxs);
+        const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(addr.address, addr.currency, true);
+        std::vector<QString> pendingTxsStrs;
+        pendingTxsStrs.reserve(pendingTxs.size());
+        std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});
+        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxsStrs);
     }
 END_SLOT_WRAPPER
 }
