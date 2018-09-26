@@ -121,6 +121,7 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
     query.bindValue(":isDelegate", isDelegate);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
+        trans.id = query.value("id").toLongLong();
         trans.currency = query.value("currency").toString();
         trans.address = query.value("address").toString();
         trans.tx = query.value("txid").toString();
@@ -139,7 +140,6 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
         trans.status = static_cast<Transaction::Status>(query.value("delegateHash").toInt());
     }
     return trans;
-    // TODO ??? empty result
 }
 
 void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans)
@@ -296,6 +296,7 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Tra
 {
     while (query.next()) {
         Transaction trans;
+        trans.id = query.value("id").toLongLong();
         trans.currency = query.value("currency").toString();
         trans.address = query.value("address").toString();
         trans.tx = query.value("txid").toString();
