@@ -28,6 +28,14 @@ public:
     std::vector<Transaction> getPaymentsForCurrency(const QString &currency,
                                                   qint64 offset, qint64 count, bool asc) const;
 
+    std::vector<Transaction> getPaymentsForAddressPending(const QString &address, const QString &currency,
+                                                            bool asc) const;
+
+    Transaction getLastPaymentIsSetDelegate(const QString &address, const QString &currency,
+                                            const QString &from, const QString &to,
+                                            bool isInput, bool isDelegate);
+
+    void updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans);
     void removePaymentsForDest(const QString &address, const QString &currency);
 
     qint64 getPaymentsCountForAddress(const QString &address, const QString &currency, bool input);
@@ -36,7 +44,7 @@ public:
     BigNumber calcOutValueForAddress(const QString &address, const QString &currency);
 
     qint64 getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency);
-    BigNumber calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput);
+    BigNumber calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status = Transaction::OK);
 
     void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
     void addTracked(const AddressInfo &info);

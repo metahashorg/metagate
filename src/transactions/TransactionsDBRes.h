@@ -62,6 +62,29 @@ static const QString selectPaymentsForCurrency = "SELECT id, currency, txid, add
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 
+static const QString selectPaymentsForDestPending = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
+                                                        "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
+                                                        "WHERE address = :address AND  currency = :currency  "
+                                                        "AND status = 1 "
+                                                        "ORDER BY ts %1, txid %1";
+
+static const QString selectLastPaymentIsSetDelegate = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
+                                                            "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
+                                                            "WHERE address = :address AND  currency = :currency "
+                                                            "AND ufrom = :ufrom AND uto = :uto AND isInput = :isInput AND isDelegate = :isDelegate "
+                                                            "AND isSetDelegate = 1 "
+                                                            "ORDER BY ts DESC "
+                                                            "LIMIT 1";
+
+static const QString updatePaymentForAddress = "UPDATE payments "
+                                                    "SET ufrom = :ufrom, uto = :uto, "
+                                                    "    value = :value, ts = :ts, data = :data, fee = :fee, nonce = :nonce, "
+                                                    "    isSetDelegate = :isSetDelegate, isDelegate = :isDelegate, "
+                                                    "    delegateValue = :delegateValue, delegateHash = :delegateHash, "
+                                                    "    status = :status "
+                                                    "WHERE currency = :currency AND txid = :txid "
+                                                    "    AND address = :address AND isInput = :isInput";
+
 static const QString deletePaymentsForAddress = "DELETE FROM payments "
                                                 "WHERE address = :address AND  currency = :currency";
 
@@ -80,7 +103,7 @@ static const QString selectIsSetDelegatePaymentsCountForAddress = "SELECT COUNT(
 static const QString selectIsSetDelegatePaymentsValuesForAddress = "SELECT delegateValue FROM payments "
                                                                         "WHERE address = :address AND currency = :currency "
                                                                         "AND isInput = :isInput AND isDelegate = :isDelegate "
-                                                                        "AND isSetDelegate = 1";
+                                                                        "AND isSetDelegate = 1 AND status = :status";
 
 static const QString selectPaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
                                                     "WHERE address = :address AND currency = :currency "
