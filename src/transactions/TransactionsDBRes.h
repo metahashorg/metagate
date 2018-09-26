@@ -98,7 +98,7 @@ static const QString selectOutPaymentsValuesForAddress = "SELECT value FROM paym
 
 static const QString selectIsSetDelegatePaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
                                                                         "WHERE address = :address AND currency = :currency "
-                                                                        "AND isSetDelegate = 1";
+                                                                        "AND isSetDelegate = 1 AND status = :status";
 
 static const QString selectIsSetDelegatePaymentsValuesForAddress = "SELECT delegateValue FROM payments "
                                                                         "WHERE address = :address AND currency = :currency "

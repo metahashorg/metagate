@@ -4,6 +4,7 @@
 #include <QString>
 
 #include "BigNumber.h"
+#include "dbstorage.h"
 
 namespace transactions {
 
@@ -16,6 +17,7 @@ struct Transaction {
         OK = 0, PENDING = 1, ERROR = 2
     };
 
+    DBStorage::DbId id = -1;
     QString currency;
     QString tx;
     QString address;
