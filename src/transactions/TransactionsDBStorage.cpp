@@ -95,6 +95,77 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QSt
     return res;
 }
 
+std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddressPending(const QString &address, const QString &currency, bool asc) const
+{
+    std::vector<Transaction> res;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectPaymentsForDestPending.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+          query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    createPaymentsList(query, res);
+    return res;
+}
+
+Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, bool isDelegate)
+{
+    Transaction trans;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectLastPaymentIsSetDelegate), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    query.bindValue(":ufrom", from);
+    query.bindValue(":uto", to);
+    query.bindValue(":isInput", isInput);
+    query.bindValue(":isDelegate", isDelegate);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    if (query.next()) {
+        trans.currency = query.value("currency").toString();
+        trans.address = query.value("address").toString();
+        trans.tx = query.value("txid").toString();
+        trans.from = query.value("ufrom").toString();
+        trans.to = query.value("uto").toString();
+        trans.value = query.value("value").toString();
+        trans.data = query.value("data").toString();
+        trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
+        trans.fee = query.value("fee").toString();
+        trans.nonce = query.value("nonce").toLongLong();
+        trans.isInput = query.value("isInput").toBool();
+        trans.isSetDelegate = query.value("isSetDelegate").toBool();
+        trans.isDelegate = query.value("isDelegate").toBool();
+        trans.delegateValue = query.value("delegateValue").toString();
+        trans.delegateHash = query.value("delegateHash").toString();
+        trans.status = static_cast<Transaction::Status>(query.value("delegateHash").toInt());
+    }
+    return trans;
+    // TODO ??? empty result
+}
+
+void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans)
+{
+    QSqlQuery query(database());
+    CHECK(query.prepare(updatePaymentForAddress), query.lastError().text().toStdString())
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    query.bindValue(":txid", txid);
+    query.bindValue(":isInput", isInput);
+
+    query.bindValue(":ufrom", trans.from);
+    query.bindValue(":uto", trans.to);
+    query.bindValue(":value", trans.value);
+    query.bindValue(":ts", static_cast<qint64>(trans.timestamp));
+    query.bindValue(":data", trans.data);
+    query.bindValue(":fee", trans.fee);
+    query.bindValue(":nonce", static_cast<qint64>(trans.nonce));
+    query.bindValue(":isSetDelegate", trans.isSetDelegate);
+    query.bindValue(":isDelegate", trans.isDelegate);
+    query.bindValue(":delegateValue", trans.delegateValue);
+    query.bindValue(":delegateHash", trans.delegateHash);
+    query.bindValue(":status", trans.status);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
 void TransactionsDBStorage::removePaymentsForDest(const QString &address, const QString &currency)
 {
     QSqlQuery query(database());
@@ -165,7 +236,7 @@ qint64 TransactionsDBStorage::getIsSetDelegatePaymentsCountForAddress(const QStr
     return 0;
 }
 
-BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput)
+BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(selectIsSetDelegatePaymentsValuesForAddress), query.lastError().text().toStdString());
@@ -173,6 +244,7 @@ BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString 
     query.bindValue(":currency", currency);
     query.bindValue(":isDelegate", isDelegate);
     query.bindValue(":isInput", isInput);
+    query.bindValue(":status", status);
     CHECK(query.exec(), query.lastError().text().toStdString());
     BigNumber res;
     BigNumber r;
