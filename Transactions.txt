@@ -74,6 +74,13 @@ Q_INVOKABLE void getLastUpdatedBalance(QString currency);
 txsGetLastUpdatedBalanceResultJs(currency, timestampString, nowString, errorNum, errorMessage)
 Результат в милисекундах
 
+Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString from, QString to);
+Получение статуса делегирования
+Результат вернется в функцию
+txsGetStatusDelegationResultJs(address, currency, from, to, status, errorNum, errorMessage)
+status == delegate, not_found, pending, undelegate
+
+
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу

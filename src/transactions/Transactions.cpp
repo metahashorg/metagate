@@ -40,6 +40,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
     CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
     CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
+    CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<size_t>("size_t");
@@ -52,7 +53,10 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<GetTxCallback>("GetTxCallback");
     qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
     qRegisterMetaType<GetNonceCallback>("GetNonceCallback");
+    qRegisterMetaType<GetStatusDelegateCallback>("GetStatusDelegateCallback");
+
     qRegisterMetaType<seconds>("seconds");
+    qRegisterMetaType<DelegateStatus>("DelegateStatus");
     qRegisterMetaType<SendParameters>("SendParameters");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
@@ -546,6 +550,16 @@ BEGIN_SLOT_WRAPPER
         result = found->second;
     }
     runCallback(std::bind(callback, result, now));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    DelegateStatus status = DelegateStatus::NOT_FOUND;
+    const TypedException exception = apiVrapper2([&, this] {
+        // Получить статус
+    });
+    runCallback(std::bind(callback, exception, status));
 END_SLOT_WRAPPER
 }
 

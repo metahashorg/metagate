@@ -25,6 +25,7 @@ class TransactionsDBStorage;
 struct BalanceInfo;
 struct Transaction;
 struct AddressInfo;
+enum class DelegateStatus;
 
 class Transactions : public TimerClass {
     Q_OBJECT
@@ -134,6 +135,8 @@ public:
 
     using GetNonceCallback = std::function<void(size_t nonce, const QString &server, const TypedException &exception)>;
 
+    using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -170,6 +173,8 @@ signals:
 
     void getLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
 
+    void getDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -195,6 +200,8 @@ public slots:
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
     void onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
+
+    void onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
 
 private slots:
 

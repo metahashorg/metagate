@@ -440,6 +440,43 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::getStatusDelegation(QString address, QString currency, QString from, QString to) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetStatusDelegationResultJs";
+
+    LOG << "getStatusDelegation " << address << " " << currency << " " << to;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QString &from, const QString &to, const QString &status) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, from, to, status);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getDelegateStatus(address, currency, from, to, address == from, [address, currency, from, to, makeFunc](const TypedException &exception, const DelegateStatus &status) {
+            QString statusString;
+            if (status == DelegateStatus::DELEGATE) {
+                statusString = "delegate";
+            } else if (status == DelegateStatus::NOT_FOUND) {
+                statusString = "not_found";
+            } else if (status == DelegateStatus::PENDING) {
+                statusString = "pending";
+            } else if (status == DelegateStatus::UNDELEGATE) {
+                statusString = "undelegate";
+            } else {
+                throwErr("Incorrect status");
+            }
+            LOG << "Get getStatusDelegation ok " << statusString;
+            makeFunc(exception, address, currency, from, to, statusString);
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, address, currency, from, to, "");
+    }
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";
