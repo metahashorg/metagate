@@ -557,7 +557,17 @@ void Transactions::onGetDelegateStatus(const QString &address, const QString &cu
 BEGIN_SLOT_WRAPPER
     DelegateStatus status = DelegateStatus::NOT_FOUND;
     const TypedException exception = apiVrapper2([&, this] {
-        // Получить статус
+        const Transaction txDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, true);
+        const Transaction txUnDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, false);
+        if (txDelegate.id == -1) {
+            status = DelegateStatus::NOT_FOUND;
+        } else if (txDelegate.status == Transaction::PENDING) {
+            status = DelegateStatus::PENDING;
+        } else if (txUnDelegate.id != -1 && txUnDelegate.timestamp > txDelegate.timestamp) {
+            status = DelegateStatus::UNDELEGATE;
+        } else {
+            status = DelegateStatus::DELEGATE;
+        }
     });
     runCallback(std::bind(callback, exception, status));
 END_SLOT_WRAPPER
