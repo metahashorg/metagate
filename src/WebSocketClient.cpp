@@ -30,7 +30,9 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(this, SIGNAL(setHelloString(const std::vector<QString> &)), this, SLOT(onSetHelloString(const std::vector<QString> &))), "not connect setHelloString");
     CHECK(connect(this, SIGNAL(addHelloString(QString)), this, SLOT(onAddHelloString(QString))), "not connect setHelloString");
 
-    CHECK(connect(&m_webSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError))), "not connect error");
+    CHECK(connect(&m_webSocket, static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
+        LOG << "Wss Web socket error " << m_webSocket.errorString();
+    }), "not connect error");
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
     CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
@@ -50,10 +52,6 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     m_webSocket.moveToThread(&thread1);
 
     LOG << "Wss client started. Url " << m_url.toString();
-}
-
-void WebSocketClient::socketError(QAbstractSocket::SocketError error) {
-    LOG << "Wss Web socket error " << m_webSocket.errorString();
 }
 
 void WebSocketClient::onStarted() {
