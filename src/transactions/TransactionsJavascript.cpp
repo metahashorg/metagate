@@ -459,6 +459,8 @@ BEGIN_SLOT_WRAPPER
                 statusString = "delegate";
             } else if (status == DelegateStatus::NOT_FOUND) {
                 statusString = "not_found";
+            } else if (status == DelegateStatus::ERROR) {
+                statusString = "error";
             } else if (status == DelegateStatus::PENDING) {
                 statusString = "pending";
             } else if (status == DelegateStatus::UNDELEGATE) {

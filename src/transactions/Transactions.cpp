@@ -567,6 +567,8 @@ BEGIN_SLOT_WRAPPER
             status = DelegateStatus::NOT_FOUND;
         } else if (txDelegate.status == Transaction::PENDING) {
             status = DelegateStatus::PENDING;
+        } else if (txDelegate.status == Transaction::ERROR) {
+            status = DelegateStatus::ERROR;
         } else if (txUnDelegate.id != -1 && txUnDelegate.timestamp > txDelegate.timestamp) {
             status = DelegateStatus::UNDELEGATE;
         } else {

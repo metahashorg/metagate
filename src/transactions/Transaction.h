@@ -9,7 +9,7 @@
 namespace transactions {
 
 enum class DelegateStatus {
-    NOT_FOUND, PENDING, DELEGATE, UNDELEGATE
+    NOT_FOUND, PENDING, ERROR, DELEGATE, UNDELEGATE
 };
 
 struct Transaction {

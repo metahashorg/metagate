@@ -78,7 +78,7 @@ Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString 
 Получение статуса делегирования
 Результат вернется в функцию
 txsGetStatusDelegationResultJs(address, currency, from, to, status, txDelegate, txUndelegate, errorNum, errorMessage)
-status == delegate, not_found, pending, undelegate
+status == delegate, not_found, pending, undelegate, error
 Формат tx см выше
 
 Q_INVOKABLE void clearDb(QString currency);
