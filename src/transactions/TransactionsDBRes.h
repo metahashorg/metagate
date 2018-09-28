@@ -6,7 +6,7 @@
 namespace transactions {
 
 static const QString databaseFileName = "payments.db";
-static const QString databaseVersion = "1";
+static const int databaseVersion = 1;
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "

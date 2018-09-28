@@ -20,6 +20,8 @@ static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (
 
 static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
 
+static const QString settingsDBVersion = "dbversion";
+
 DBStorage::DBStorage(const QString &dbpath, const QString &dbname, QObject *parent)
     : QObject(parent)
     , m_dbExist(false)
@@ -41,30 +43,32 @@ QString DBStorage::dbName() const
     return  m_dbName;
 }
 
-void DBStorage::init(bool force)
+void DBStorage::init()
 {
-    if (dbExist() && !force)
+    if (dbExist())
         return;
+    // Create settings
     QSqlQuery query(sqliteSettings, m_db);
     CHECK(query.exec(), query.lastError().text().toStdString());
-
     createTable(QStringLiteral("settings"), createSettingsTable);
-    setSettings(QStringLiteral("dbversion"), "1"); // TODO
+    setSettings(settingsDBVersion, currentVersion());
+
+    createDatabase();
 }
 
-QString DBStorage::getSettings(const QString &key)
+QVariant DBStorage::getSettings(const QString &key)
 {
     QSqlQuery query(m_db);
     CHECK(query.prepare(selectSettingsKeyValue), query.lastError().text().toStdString());
     query.bindValue(":key", key);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
-        return query.value("value").toString();
+        return query.value("value");
     }
     return QString();
 }
 
-void DBStorage::setSettings(const QString &key, const QString &value)
+void DBStorage::setSettings(const QString &key, const QVariant &value)
 {
     QSqlQuery query(m_db);
     CHECK(query.prepare(insertSettingsKeyValue), query.lastError().text().toStdString());
@@ -123,6 +127,25 @@ QSqlDatabase DBStorage::database() const
 bool DBStorage::dbExist() const
 {
     return m_dbExist;
+}
+
+void DBStorage::updateDB()
+{
+    int ver = getSettings(settingsDBVersion).toInt();
+    int nver = currentVersion();
+    CHECK(ver <= nver, "DB version greater than current");
+    // TODO not crush?
+    for (int v = ver; v < nver; v++) {
+        updateToNewVersion(v, v + 1);
+
+    }
+    setSettings(settingsDBVersion, nver);
+}
+
+void DBStorage::updateToNewVersion(int vcur, int vnew)
+{
+    CHECK(vcur + 1 == vnew, "");
+    qDebug() << "update " << dbName() << " version " << vcur << vnew;
 }
 
 DBStorage::TransactionGuard::TransactionGuard(const DBStorage &storage)

@@ -1,5 +1,7 @@
 #include "tst_transactionsdbstorage.h"
 
+#include "SlotWrapper.h"
+
 const QString dbName = "payments.db";
 
 tst_TransactionsDBStorage::tst_TransactionsDBStorage(QObject *parent)

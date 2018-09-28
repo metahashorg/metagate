@@ -15,7 +15,7 @@ public:
 
     MessengerDBStorage(const QString &path = QString());
 
-    virtual void init(bool force = false) override;
+    virtual int currentVersion() const final;
 
     void addMessage(const QString &user, const QString &duser,
                     const QString &text, uint64_t timestamp, Message::Counter counter,
@@ -68,6 +68,9 @@ public:
 
     ChannelInfo getChannelInfoForUserShaName(const QString &user, const QString &shaName);
     void setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter);
+
+protected:
+    virtual void createDatabase() final;
 
 private:
     void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse = false);

@@ -16,6 +16,7 @@
 #include <list>
 #include <vector>
 #include "HttpClient.h"
+#include <iostream>
 
 #include <QSettings>
 
@@ -25,6 +26,39 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    if (QFile::exists("messenger.db"))
+        QFile::remove("messenger.db");
+    if (QFile::exists("payments.db"))
+        QFile::remove("payments.db");
+    BEGIN_SLOT_WRAPPER
+    {
+            messenger::MessengerDBStorage db;
+
+    //db.openDB();
+    db.init();
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    db.beginTransaction();
+    //db.addChannel(id1, "channel", "jkgfjkgfgfitrrtoioriojk", true, "ktkt", false, true, true);
+    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
+    db.commitTransaction();
+    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() <<std::endl;
+    }
+    {
+        transactions::TransactionsDBStorage tdb;
+        tdb.init();
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        tdb.beginTransaction();
+        tdb.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
+        tdb.commitTransaction();
+        std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+
+        std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() <<std::endl;
+
+    }
+END_SLOT_WRAPPER
+    return;
 
     /*{
         QList<TestStructure> list;
