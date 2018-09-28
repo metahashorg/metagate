@@ -24,23 +24,55 @@ void tst_TransactionsDBStorage::testDB1()
     db.addPayment("mh", "gfklklklti5o0rruidgjkg", "address100", true, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK);
     db.addPayment("mh2", "gfklklklti5o0rruidgjkg", "address100", true, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK);
 
+    db.addPayment("mh", "gfklklkltrkjtrtritrdf1", "address100", true, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING);
+    db.addPayment("mh", "wuklklkltrkjtrtritrdf1", "address100", true, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING);
+    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf1", "address100", true, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING);
+
+    db.addPayment("mh", "gfklklkltrkjtrtritrdf12", "address100", true, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "100", "jkgh", transactions::Transaction::PENDING);
+    db.addPayment("mh", "wuklklkltrе1tritrdf11", "address100", true, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "100", "jkgh", transactions::Transaction::PENDING);
+
+    db.addPayment("mh", "gfklklkltrkjtrtritrdf134", "address100", false, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "33", "jkgh", transactions::Transaction::PENDING);
+    db.addPayment("mh", "wuklklkltrkjtrtritrdf215", "address100", false, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1", "jkgh", transactions::Transaction::PENDING);
+    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", false, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING);
+
 
     BigNumber ires = db.calcInValueForAddress("address100", "mh");
     BigNumber ores = db.calcOutValueForAddress("address100", "mh");
-    QCOMPARE(ires.getDecimal(), QByteArray("7614"));
-    QCOMPARE(ores.getDecimal(), QByteArray("9360"));
+    QCOMPARE(ires.getDecimal(), QByteArray("14784"));
+    QCOMPARE(ores.getDecimal(), QByteArray("13362"));
     QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", true, false).getDecimal(), QByteArray("16870300"));
     QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", false, false).getDecimal(), QByteArray("2058070"));
     QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", true, true).getDecimal(), QByteArray("1069590"));
     QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", false, true).getDecimal(), QByteArray("1334430"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", true, false, transactions::Transaction::PENDING).getDecimal(), QByteArray("33"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", false, false, transactions::Transaction::PENDING).getDecimal(), QByteArray("101"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", true, true, transactions::Transaction::PENDING).getDecimal(), QByteArray("200"));
+    QCOMPARE(db.calcIsSetDelegateValueForAddress("address100", "mh", false, true, transactions::Transaction::PENDING).getDecimal(), QByteArray("300"));
     QCOMPARE(db.getIsSetDelegatePaymentsCountForAddress("address100", "mh"), 6);
 
-    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 5);
-    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", false), 4);
+    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 10);
+    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", false), 7);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh2", false), 0);
 
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK);
-    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 5);
+    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 10);
+
+    std::vector<transactions::Transaction> res = db.getPaymentsForAddressPending("address100", "mh", true);
+    QCOMPARE(res.size(), 8);
+    QCOMPARE(res.at(0).address, QStringLiteral("address100"));
+    QCOMPARE(res.at(0).currency, QStringLiteral("mh"));
+    QCOMPARE(res.at(0).isInput, true);
+    QCOMPARE(res.at(0).from, QStringLiteral("user7"));
+    QCOMPARE(res.at(0).to, QStringLiteral("user2"));
+    QCOMPARE(res.at(0).value, QStringLiteral("1334"));
+    QCOMPARE(res.at(0).timestamp, 545869453456);
+    QCOMPARE(res.at(0).data, QStringLiteral("nvcmnjkdfjkgf"));
+    QCOMPARE(res.at(0).fee, QStringLiteral("100"));
+    QCOMPARE(res.at(0).nonce, 8896865);
+    QCOMPARE(res.at(0).isSetDelegate, true);
+    QCOMPARE(res.at(0).delegateValue, QStringLiteral("100"));
+    QCOMPARE(res.at(0).status, transactions::Transaction::PENDING);
+    QCOMPARE(res.at(0).delegateHash, QStringLiteral("jkgh"));
 }
 
 void tst_TransactionsDBStorage::testBigNumSum()
@@ -63,7 +95,6 @@ void tst_TransactionsDBStorage::testBigNumSum()
     BigNumber ores = db.calcOutValueForAddress("address100", "mh");
     QCOMPARE(ires.getDecimal(), QByteArray("36000000000000000400"));
     QCOMPARE(ores.getDecimal(), QByteArray("36000000000000000000"));
-
 }
 
 void tst_TransactionsDBStorage::testGetPayments()

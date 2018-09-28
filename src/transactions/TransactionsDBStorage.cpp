@@ -137,7 +137,7 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
         trans.isDelegate = query.value("isDelegate").toBool();
         trans.delegateValue = query.value("delegateValue").toString();
         trans.delegateHash = query.value("delegateHash").toString();
-        trans.status = static_cast<Transaction::Status>(query.value("delegateHash").toInt());
+        trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
     }
     return trans;
 }
@@ -312,7 +312,7 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Tra
         trans.isDelegate = query.value("isDelegate").toBool();
         trans.delegateValue = query.value("delegateValue").toString();
         trans.delegateHash = query.value("delegateHash").toString();
-        trans.status = static_cast<Transaction::Status>(query.value("delegateHash").toInt());
+        trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
         payments.push_back(trans);
     }
 }
