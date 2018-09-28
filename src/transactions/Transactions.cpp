@@ -578,7 +578,7 @@ END_SLOT_WRAPPER
 void Transactions::onClearDb(const QString &currency, const ClearDbCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-    // clear db
+        db.removePaymentsForCurrency(currency);
     });
     runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER
