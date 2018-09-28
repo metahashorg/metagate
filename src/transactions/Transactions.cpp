@@ -558,9 +558,11 @@ END_SLOT_WRAPPER
 void Transactions::onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback) {
 BEGIN_SLOT_WRAPPER
     DelegateStatus status = DelegateStatus::NOT_FOUND;
+    Transaction txDelegate;
+    Transaction txUnDelegate;
     const TypedException exception = apiVrapper2([&, this] {
-        const Transaction txDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, true);
-        const Transaction txUnDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, false);
+        txDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, true);
+        txUnDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, false);
         if (txDelegate.id == -1) {
             status = DelegateStatus::NOT_FOUND;
         } else if (txDelegate.status == Transaction::PENDING) {
@@ -571,7 +573,7 @@ BEGIN_SLOT_WRAPPER
             status = DelegateStatus::DELEGATE;
         }
     });
-    runCallback(std::bind(callback, exception, status));
+    runCallback(std::bind(callback, exception, status, txDelegate, txUnDelegate));
 END_SLOT_WRAPPER
 }
 

@@ -77,8 +77,9 @@ txsGetLastUpdatedBalanceResultJs(currency, timestampString, nowString, errorNum,
 Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString from, QString to);
 Получение статуса делегирования
 Результат вернется в функцию
-txsGetStatusDelegationResultJs(address, currency, from, to, status, errorNum, errorMessage)
+txsGetStatusDelegationResultJs(address, currency, from, to, status, txDelegate, txUndelegate, errorNum, errorMessage)
 status == delegate, not_found, pending, undelegate
+Формат tx см выше
 
 Q_INVOKABLE void clearDb(QString currency);
 Очищает bd записи, связанные с currency

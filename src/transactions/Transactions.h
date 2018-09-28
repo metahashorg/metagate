@@ -135,7 +135,7 @@ public:
 
     using GetNonceCallback = std::function<void(size_t nonce, const QString &server, const TypedException &exception)>;
 
-    using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status)>;
+    using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate)>;
 
     using ClearDbCallback = std::function<void(const TypedException &exception)>;
 

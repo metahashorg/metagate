@@ -448,12 +448,12 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "getStatusDelegation " << address << " " << currency << " " << to;
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QString &from, const QString &to, const QString &status) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, from, to, status);
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QString &from, const QString &to, const QString &status, const QJsonDocument &txDelegate, const QJsonDocument &txUndelegate) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, from, to, status, txDelegate, txUndelegate);
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->getDelegateStatus(address, currency, from, to, address == from, [address, currency, from, to, makeFunc](const TypedException &exception, const DelegateStatus &status) {
+        emit transactionsManager->getDelegateStatus(address, currency, from, to, address == from, [address, currency, from, to, makeFunc](const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate) {
             QString statusString;
             if (status == DelegateStatus::DELEGATE) {
                 statusString = "delegate";
@@ -467,12 +467,12 @@ BEGIN_SLOT_WRAPPER
                 throwErr("Incorrect status");
             }
             LOG << "Get getStatusDelegation ok " << statusString;
-            makeFunc(exception, address, currency, from, to, statusString);
+            makeFunc(exception, address, currency, from, to, statusString, txInfoToJson(txDelegate), txInfoToJson(txUndelegate));
         });
     });
 
     if (exception.isSet()) {
-        makeFunc(exception, address, currency, from, to, "");
+        makeFunc(exception, address, currency, from, to, "", QJsonDocument(), QJsonDocument());
     }
 END_SLOT_WRAPPER
 }
