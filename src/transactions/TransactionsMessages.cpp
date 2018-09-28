@@ -118,6 +118,9 @@ static Transaction parseTransaction(const QJsonObject &txJson) {
         }
     }
 
+    if (txJson.contains("blockNumber") && txJson.value("blockNumber").isDouble()) {
+        res.blockNumber = (int64_t)txJson.value("blockNumber").toDouble();
+    }
     return res;
 }
 

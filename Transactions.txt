@@ -33,8 +33,8 @@ count == -1 выдать все
 Результат вернется в функцию
 txsGetTxsJs(address, currency, result, errorNum, errorMessage)
 где result - json массив вида
-[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\",\"isInput\":true, \"isDelegate\": true, \"delegate_value\": \"500\"}]
-Параметры isDelegate и delegate_value - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
+[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\",\"isInput\":true, \"isDelegate\": true, \"delegate_value\": \"500\", \"blockNumber\":\"0\", \"delegate_hash\":\"546450\"}]
+Параметры isDelegate и delegate_value, delegate_hash - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
 
 Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 Получение транзакций

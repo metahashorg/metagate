@@ -29,6 +29,7 @@ struct Transaction {
     QString fee;
     int64_t nonce = 0;
     bool isInput;
+    int64_t blockNumber = 0;
 
     bool isSetDelegate = false;
     bool isDelegate;
