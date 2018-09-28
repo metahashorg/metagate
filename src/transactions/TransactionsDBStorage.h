@@ -51,6 +51,8 @@ public:
 
     std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
+    void removePaymentsForCurrency(const QString &currency);
+
 private:
     void createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const;
 };

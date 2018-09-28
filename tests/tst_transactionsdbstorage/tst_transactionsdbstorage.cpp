@@ -73,6 +73,15 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(res.at(0).delegateValue, QStringLiteral("100"));
     QCOMPARE(res.at(0).status, transactions::Transaction::PENDING);
     QCOMPARE(res.at(0).delegateHash, QStringLiteral("jkgh"));
+
+    qint64 count = db.getPaymentsCountForAddress("address100", "mh", true);
+    QCOMPARE(count, 10);
+
+    db.removePaymentsForCurrency("mh");
+    res = db.getPaymentsForAddressPending("address100", "mh", true);
+    QCOMPARE(res.size(), 0);
+    count = db.getPaymentsCountForAddress("address100", "mh", true);
+    QCOMPARE(count, 0);
 }
 
 void tst_TransactionsDBStorage::testBigNumSum()

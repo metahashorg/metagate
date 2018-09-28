@@ -292,6 +292,19 @@ std::vector<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString
     return res;
 }
 
+void TransactionsDBStorage::removePaymentsForCurrency(const QString &currency)
+{
+    auto transactionGuard = beginTransaction();
+    QSqlQuery query(database());
+    CHECK(query.prepare(removePaymentsForCurrencyQuery), query.lastError().text().toStdString());
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    CHECK(query.prepare(removeTrackedForCurrencyQuery), query.lastError().text().toStdString());
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    transactionGuard.commit();
+}
+
 void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const
 {
     while (query.next()) {
