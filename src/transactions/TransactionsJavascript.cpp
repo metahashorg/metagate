@@ -477,6 +477,30 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::clearDb(QString currency) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsClearDbResultJs";
+
+    LOG << "clear db " << currency;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const std::string &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->clearDb(currency, [currency, makeFunc](const TypedException &exception) {
+            makeFunc(exception, currency, exception.isSet() ? "Not ok" : "Ok");
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, currency, "Not ok");
+    }
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";

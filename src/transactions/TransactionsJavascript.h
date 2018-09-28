@@ -86,6 +86,8 @@ public slots:
 
     Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString from, QString to);
 
+    Q_INVOKABLE void clearDb(QString currency);
+
 private:
 
     template<typename... Args>

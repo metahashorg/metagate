@@ -80,6 +80,11 @@ Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString 
 txsGetStatusDelegationResultJs(address, currency, from, to, status, errorNum, errorMessage)
 status == delegate, not_found, pending, undelegate
 
+Q_INVOKABLE void clearDb(QString currency);
+Очищает bd записи, связанные с currency
+Результат вернется в функцию
+txsClearDbResultJs(currency, "Ok"/"Not ok", errorNum, errorMessage)
+
 
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)

@@ -95,6 +95,13 @@
         });
     }
         
+    function clearDb() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.clearDb(document.createWalletForm.currency.value);
+        });
+    }
+        
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -142,6 +149,7 @@
             <input type="button" value="sendTx" onclick="sendTx()"><br>
             <input type="button" value="sendTxAutoCalcNonce" onclick="sendTx2()"><br>
             <input type="button" value="statusDelegate" onclick="statusDelegate()"><br>
+            <input type="button" value="clearDb" onclick="clearDb()"><br>
             </FORM>
         </left>
     </p>

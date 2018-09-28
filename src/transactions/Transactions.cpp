@@ -41,9 +41,9 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
     CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
     CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
+    CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
 
     qRegisterMetaType<Callback>("Callback");
-    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
     qRegisterMetaType<GetTxsCallback>("GetTxsCallback");
     qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
@@ -54,7 +54,9 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
     qRegisterMetaType<GetNonceCallback>("GetNonceCallback");
     qRegisterMetaType<GetStatusDelegateCallback>("GetStatusDelegateCallback");
+    qRegisterMetaType<ClearDbCallback>("ClearDbCallback");
 
+    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<seconds>("seconds");
     qRegisterMetaType<DelegateStatus>("DelegateStatus");
     qRegisterMetaType<SendParameters>("SendParameters");
@@ -570,6 +572,15 @@ BEGIN_SLOT_WRAPPER
         }
     });
     runCallback(std::bind(callback, exception, status));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onClearDb(const QString &currency, const ClearDbCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+    // clear db
+    });
+    runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER
 }
 

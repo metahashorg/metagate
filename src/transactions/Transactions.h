@@ -137,6 +137,8 @@ public:
 
     using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status)>;
 
+    using ClearDbCallback = std::function<void(const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -175,6 +177,8 @@ signals:
 
     void getDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
 
+    void clearDb(const QString &currency, const ClearDbCallback &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -202,6 +206,8 @@ public slots:
     void onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
 
     void onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
+
+    void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
 private slots:
 
