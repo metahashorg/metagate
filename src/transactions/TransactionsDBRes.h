@@ -115,6 +115,13 @@ static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, a
 static const QString  selectTrackedForGroup = "SELECT currency, address, name, type FROM tracked "
                                                 "WHERE tgroup = :tgroup "
                                                 "ORDER BY address ASC";
+
+static const QString removePaymentsForCurrencyQuery = "DELETE FROM payments "
+                                                "WHERE currency = :currency";
+
+static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked "
+                                                "WHERE currency = :currency";
+
 };
 
 #endif // TRANSACTIONSDBRES_H
