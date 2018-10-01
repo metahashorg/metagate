@@ -58,8 +58,10 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 10);
 
     std::vector<transactions::Transaction> res = db.getPaymentsForAddressPending("address100", "mh", true);
+    transactions::Transaction trans = res.at(0);
     QCOMPARE(res.size(), 8);
     QCOMPARE(res.at(0).address, QStringLiteral("address100"));
+    QCOMPARE(res.at(0).tx, QStringLiteral("fkfkgkgktrkjtrtritrdf1"));
     QCOMPARE(res.at(0).currency, QStringLiteral("mh"));
     QCOMPARE(res.at(0).isInput, true);
     QCOMPARE(res.at(0).from, QStringLiteral("user7"));
@@ -69,10 +71,50 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(res.at(0).data, QStringLiteral("nvcmnjkdfjkgf"));
     QCOMPARE(res.at(0).fee, QStringLiteral("100"));
     QCOMPARE(res.at(0).nonce, 8896865);
+    QCOMPARE(res.at(0).isDelegate, false);
     QCOMPARE(res.at(0).isSetDelegate, true);
     QCOMPARE(res.at(0).delegateValue, QStringLiteral("100"));
     QCOMPARE(res.at(0).status, transactions::Transaction::PENDING);
     QCOMPARE(res.at(0).delegateHash, QStringLiteral("jkgh"));
+
+
+    trans.from = "a1";
+    trans.to = "a2";
+    trans.value = "a3";
+    trans.timestamp = 1;
+    trans.data = "a5";
+    trans.fee = "a6";
+    trans.nonce = 7;
+    trans.isSetDelegate = false;
+    trans.isDelegate = true;
+    trans.delegateValue = "a8";
+    trans.delegateHash = "a9";
+    trans.status = transactions::Transaction::ERROR;
+    db.updatePayment("address100", "mh", "fkfkgkgktrkjtrtritrdf1", true, trans);
+
+
+    res = db.getPaymentsForAddressPending("address100", "mh", true);
+    QCOMPARE(res.size(), 7);
+
+
+    res = db.getPaymentsForAddress("address100", "mh", 0, 2, true);
+    trans = res.at(0);
+    QCOMPARE(trans.address, QStringLiteral("address100"));
+    QCOMPARE(trans.tx, QStringLiteral("fkfkgkgktrkjtrtritrdf1"));
+    QCOMPARE(trans.currency, QStringLiteral("mh"));
+    QCOMPARE(trans.isInput, true);
+    QCOMPARE(trans.from, QStringLiteral("a1"));
+    QCOMPARE(trans.to, QStringLiteral("a2"));
+    QCOMPARE(trans.value, QStringLiteral("a3"));
+    QCOMPARE(trans.timestamp, 1);
+    QCOMPARE(trans.data, QStringLiteral("a5"));
+    QCOMPARE(trans.fee, QStringLiteral("a6"));
+    QCOMPARE(trans.nonce, 7);
+    QCOMPARE(trans.isDelegate, true);
+    QCOMPARE(trans.isSetDelegate, false);
+    QCOMPARE(trans.delegateValue, QStringLiteral("a8"));
+    QCOMPARE(trans.status, transactions::Transaction::ERROR);
+    QCOMPARE(trans.delegateHash, QStringLiteral("a9"));
 
     qint64 count = db.getPaymentsCountForAddress("address100", "mh", true);
     QCOMPARE(count, 10);
@@ -158,7 +200,8 @@ void tst_TransactionsDBStorage::testGetPayments()
     }
 }
 
-void tst_TransactionsDBStorage::testAddressInfos() {
+void tst_TransactionsDBStorage::testAddressInfos()
+{
     if (QFile::exists(dbName))
         QFile::remove(dbName);
     transactions::TransactionsDBStorage db;
