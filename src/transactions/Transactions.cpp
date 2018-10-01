@@ -581,6 +581,7 @@ void Transactions::onClearDb(const QString &currency, const ClearDbCallback &cal
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         db.removePaymentsForCurrency(currency);
+        nsLookup.resetFile();
     });
     runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER

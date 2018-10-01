@@ -88,6 +88,10 @@ NsLookup::~NsLookup() {
         thread1.terminate();
         thread1.wait();
     }
+
+    if (isResetFilledFile.load()) {
+        removeFile(savedNodesPath);
+    }
 }
 
 void NsLookup::callbackCall(SimpleClient::ReturnCallback callback) {
@@ -301,4 +305,8 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     const auto &nodes = found->second;
 
     return ::getRandom<QString>(nodes, limit, count, process);
+}
+
+void NsLookup::resetFile() {
+     isResetFilledFile = true;
 }

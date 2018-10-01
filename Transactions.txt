@@ -82,7 +82,8 @@ status == delegate, not_found, pending, undelegate, error
 Формат tx см выше
 
 Q_INVOKABLE void clearDb(QString currency);
-Очищает bd записи, связанные с currency
+Очищает bd записи, связанные с currency.
+После вызова функции необходимо перезагрузить приложение
 Результат вернется в функцию
 txsClearDbResultJs(currency, "Ok"/"Not ok", errorNum, errorMessage)
 

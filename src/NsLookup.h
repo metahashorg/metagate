@@ -9,6 +9,7 @@
 #include <map>
 #include <deque>
 #include <mutex>
+#include <atomic>
 
 #include "duration.h"
 
@@ -43,6 +44,8 @@ public:
     std::vector<QString> getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const;
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count) const;
+
+    void resetFile();
 
 signals:
 
@@ -105,6 +108,8 @@ private:
     SimpleClient client;
 
     time_point startScanTime;
+
+    std::atomic<bool> isResetFilledFile{false};
 
 };
 
