@@ -387,12 +387,13 @@ BEGIN_SLOT_WRAPPER
         const TransactionHash &hash = iter->first;
         SendedTransactionWatcher &watcher = iter->second;
 
+        std::shared_ptr<bool> isFirst = std::make_shared<bool>(true);
         const QString message = makeGetTxRequest(QString::fromStdString(hash));
         const auto serversCopy = watcher.getServersCopy();
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash](const std::string &response, const TypedException &exception) {
+            client.sendMessagePost(server, message, [this, server, hash, isFirst](const std::string &response, const TypedException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
@@ -400,6 +401,10 @@ BEGIN_SLOT_WRAPPER
                 if (!exception.isSet()) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+                        if (*isFirst) {
+                            *isFirst = false;
+                            emit timerEvent();
+                        }
                         emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
                         found->second.okServer(server);
                         return;
