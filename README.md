@@ -97,8 +97,8 @@ Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString passwor
 decryptMessageResultJs(requestId, message, errorNum, errorMessage)
 
 Q_INVOKABLE void saveRawPrivKey(QString requestId, QString rawPrivKey, QString password);
-# Сохраняет приватный ключ
-# rawPrivKey - незашифрованный приватный ключ
+# Saves private key
+# rawPrivKey - unencrypted private key
 # javascript is called after completion of this function 
 saveRawPrivkeyResultJs(requestId, address, errorNum, errorMessage)
 ```
@@ -160,8 +160,8 @@ getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
 # The isCompact parameter is used if you need a more compact format.
 
 Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password);
-# Сохраняет приватный ключ
-# rawPrivKey - незашифрованный приватный ключ
+# Saves private key
+# rawPrivKey - unencrypted private key
 # javascript is called after completion of this function 
 saveRawPrivkeyMHCResultJs(requestId, address, errorNum, errorMessage)
 
