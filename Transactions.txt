@@ -35,6 +35,7 @@ txsGetTxsJs(address, currency, result, errorNum, errorMessage)
 где result - json массив вида
 [{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\",\"isInput\":true, \"isDelegate\": true, \"delegate_value\": \"500\", \"blockNumber\":\"0\", \"delegate_hash\":\"546450\"}]
 Параметры isDelegate и delegate_value, delegate_hash - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
+blockNumber - пока не заполняется
 
 Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 Получение транзакций
@@ -91,7 +92,7 @@ txsClearDbResultJs(currency, "Ok"/"Not ok", errorNum, errorMessage)
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу
-balanceJson вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"currBlock\":\"1234567\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\"}
+balanceJson вида как в txsCalcBalanceResultJs
 
 txsSendedTxJs(requestId, server, result, errorNum, errorMessage)
 Возвращается при ответе сервера на запрос отправки транзакции
