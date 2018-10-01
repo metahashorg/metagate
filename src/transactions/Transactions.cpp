@@ -102,9 +102,7 @@ void Transactions::runCallbackJsWrap(const Func &callback) {
 
 void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
     auto transactionGuard = db.beginTransaction();
-    for (Transaction tx: txs) {
-        tx.address = address;
-        tx.currency = currency;
+    for (const Transaction &tx: txs) {
         db.addPayment(tx);
     }
     transactionGuard.commit();
@@ -142,7 +140,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     const auto processPendingTx = [this, address, currency](const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
-        const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
+        const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
             db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
@@ -151,7 +149,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
-        const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
+        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted2 " << address << " " << txs.size();
         newBalance(address, currency, balance, txs, servStruct);
@@ -173,9 +171,9 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
     };
 
-    const auto getHistoryCallback = [this, address, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getHistoryCallback = [this, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
-        const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
+        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted " << address << " " << txs.size();
 
@@ -401,7 +399,7 @@ BEGIN_SLOT_WRAPPER
                 }
                 if (!exception.isSet()) {
                     try {
-                        const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
+                        const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
                         emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
                         found->second.okServer(server);
                         return;
@@ -531,7 +529,7 @@ BEGIN_SLOT_WRAPPER
             Transaction tx;
             const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!error.isSet(), error.numError, error.description);
-                tx = parseGetTxResponse(QString::fromStdString(response));
+                tx = parseGetTxResponse(QString::fromStdString(response), "", "");
             });
             runCallback(std::bind(callback, tx, exception));
         });
