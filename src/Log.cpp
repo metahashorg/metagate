@@ -47,11 +47,28 @@ void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
 }
 
 void initLog() {
+    const QString logPath = getLogPath();
+
+    const size_t MAX_LOG_FILES = 20;
+    const QDate today = QDate::currentDate();
+    std::vector<QFileInfo> files;
+    const auto tmp = QDir(logPath).entryInfoList(QStringList("log.*.txt"), QDir::Files);
+    std::copy(tmp.begin(), tmp.end(), std::back_inserter(files));
+    std::sort(files.begin(), files.end(), [&today](const QFileInfo &f1, const QFileInfo &f2) {
+        return f1.created().date().daysTo(today) < f2.created().date().daysTo(today);
+    });
+    files.erase(files.begin(), files.begin() + std::min(MAX_LOG_FILES, files.size()));
+
+    for (const QFileInfo &fileInfo: files) {
+        const QString filepath = fileInfo.absoluteFilePath();
+        removeFile(filepath);
+    }
+
     const system_time_point now = ::system_now();
     const QString logFile = QString::fromStdString("log." + std::to_string(systemTimePointToInt(now)) + ".txt");
     const QString logFile2 = makePath(QApplication::applicationDirPath(), "log.txt");
 
-    const QString fullLogPath = makePath(getLogPath(), logFile);
+    const QString fullLogPath = makePath(logPath, logFile);
 #ifdef TARGET_WINDOWS
     auto path = fullLogPath.toStdWString();
     auto path2 = logFile2.toStdWString();

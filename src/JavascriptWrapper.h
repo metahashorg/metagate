@@ -73,7 +73,7 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKey(QString requestId, QString keyName, bool isCompact);
 
-    void savePrivateKey(QString requestId, QString privateKey, QString password);
+    Q_INVOKABLE void saveRawPrivKey(QString requestId, QString rawPrivKey, QString password);
 
 public slots:
 
@@ -95,7 +95,7 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact);
 
-    void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
+    Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password);
 
 public slots:
 
@@ -123,8 +123,6 @@ public slots:
 
     Q_INVOKABLE void getOnePrivateKeyEth(QString requestId, QString keyName);
 
-    void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
-
 public slots:
 
     Q_INVOKABLE void createWalletBtc(QString requestId);
@@ -144,8 +142,6 @@ public slots:
     Q_INVOKABLE QString getAllBtcWalletsAndPathsJson();
 
     Q_INVOKABLE void getOnePrivateKeyBtc(QString requestId, QString keyName);
-
-    void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
 
 public slots:
 
@@ -214,6 +210,16 @@ private slots:
     void onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 private:
+
+    void savePrivateKey(QString requestId, QString privateKey, QString password);
+
+    void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
+
+    void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
+
+    void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+
+    void saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, QString walletPath, QString jsNameResult);
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
 

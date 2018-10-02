@@ -4,10 +4,20 @@
 #include <QString>
 
 #include "BigNumber.h"
+#include "dbstorage.h"
 
 namespace transactions {
 
+enum class DelegateStatus {
+    NOT_FOUND, PENDING, ERROR, DELEGATE, UNDELEGATE
+};
+
 struct Transaction {
+    enum Status {
+        OK = 0, PENDING = 1, ERROR = 2
+    };
+
+    DBStorage::DbId id = -1;
     QString currency;
     QString tx;
     QString address;
@@ -19,10 +29,14 @@ struct Transaction {
     QString fee;
     int64_t nonce = 0;
     bool isInput;
+    int64_t blockNumber = 0;
 
     bool isSetDelegate = false;
     bool isDelegate;
     QString delegateValue;
+    QString delegateHash;
+
+    Status status = Status::OK;
 };
 
 struct BalanceInfo {
@@ -38,10 +52,11 @@ struct BalanceInfo {
     BigNumber undelegate;
     BigNumber delegated;
     BigNumber undelegated;
+    BigNumber reserved = QString("0");
 
     BigNumber calcBalance() const {
-        return received - spent - (delegate - undelegate);
-    };
+        return received - spent - reserved;
+    }
 };
 
 struct AddressInfo {

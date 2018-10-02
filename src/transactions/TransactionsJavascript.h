@@ -44,6 +44,8 @@ signals:
 
     void transactionInTorrentSig(const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error);
 
+    void transactionStatusChangedSig(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx);
+
 public slots:
 
     void onCallbackCall(const Callback &callback);
@@ -55,6 +57,8 @@ private slots:
     void onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error);
 
     void onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error);
+
+    void onTransactionStatusChanged(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx);
 
 public slots:
 
@@ -79,6 +83,10 @@ public slots:
     Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 
     Q_INVOKABLE void getLastUpdatedBalance(QString currency);
+
+    Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString from, QString to);
+
+    Q_INVOKABLE void clearDb(QString currency);
 
 private:
 

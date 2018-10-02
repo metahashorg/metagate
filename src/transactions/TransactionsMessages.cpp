@@ -53,6 +53,11 @@ BalanceInfo parseBalanceResponse(const QString &response) {
         result.undelegate = getIntOrString(json, "undelegate");
         result.delegated = getIntOrString(json, "delegated");
         result.undelegated = getIntOrString(json, "undelegated");
+        if (json.contains("reserved")) {
+            result.reserved = getIntOrString(json, "reserved");
+        } else {
+            result.reserved = QString("0");
+        }
     }
 
     return result;
@@ -70,7 +75,7 @@ QString makeGetTxRequest(const QString &hash) {
     return "{\"id\":1,\"params\":{\"hash\": \"" + hash + "\"},\"method\":\"get-tx\", \"pretty\": false}";
 }
 
-static Transaction parseTransaction(const QJsonObject &txJson) {
+static Transaction parseTransaction(const QJsonObject &txJson, const QString &address, const QString &currency) {
     Transaction res;
 
     CHECK(txJson.contains("from") && txJson.value("from").isString(), "Incorrect json: from field not found");
@@ -98,12 +103,32 @@ static Transaction parseTransaction(const QJsonObject &txJson) {
         res.isSetDelegate = true;
         res.isDelegate = txJson.value("isDelegate").toBool();
         res.delegateValue = getIntOrString(txJson, "delegate");
+        if (txJson.contains("delegateHash") && txJson.value("delegateHash").isString()) {
+            res.delegateHash = txJson.value("delegateHash").toString();
+        }
+    }
+    if (txJson.contains("status") && txJson.value("status").isString()) {
+        const QString status = txJson.value("status").toString();
+        if (status == "ok") {
+            res.status = Transaction::OK;
+        } else if (status == "error") {
+            res.status = Transaction::ERROR;
+        } else if (status == "pending") {
+            res.status = Transaction::PENDING;
+        }
     }
 
+    if (txJson.contains("blockNumber") && txJson.value("blockNumber").isDouble()) {
+        res.blockNumber = (int64_t)txJson.value("blockNumber").toDouble();
+    }
+
+    res.address = address;
+    res.currency = currency;
+    res.isInput = res.address == res.from;
     return res;
 }
 
-std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &response) {
+std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &currency, const QString &response) {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
@@ -116,9 +141,7 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
         CHECK(elementJson.isObject(), "Incorrect json");
         const QJsonObject txJson = elementJson.toObject();
 
-        Transaction res = parseTransaction(txJson);
-
-        res.isInput = res.from == address;
+        const Transaction res = parseTransaction(txJson, address, currency);
 
         result.emplace_back(res);
         if (res.from == address && res.to == address) {
@@ -157,7 +180,7 @@ QString parseSendTransactionResponse(const QString &response) {
     return json1.value("params").toString();
 }
 
-Transaction parseGetTxResponse(const QString &response) {
+Transaction parseGetTxResponse(const QString &response, const QString &address, const QString &currency) {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
@@ -167,7 +190,7 @@ Transaction parseGetTxResponse(const QString &response) {
     const QJsonObject &obj = json1.value("result").toObject();
     CHECK(obj.contains("transaction") && obj.value("transaction").isObject(), "Incorrect json: transaction field not found");
     const QJsonObject &transaction = obj.value("transaction").toObject();
-    return parseTransaction(transaction);
+    return parseTransaction(transaction, address, currency);
 }
 
 }

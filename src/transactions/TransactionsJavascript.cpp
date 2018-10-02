@@ -21,6 +21,7 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     CHECK(connect(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance), "not connect onNewBalance");
     CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
     CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
+    CHECK(connect(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged), "not connect onTransactionStatusChanged");
 
     qRegisterMetaType<Callback>("Callback");
 
@@ -58,6 +59,7 @@ static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     messagesBalanceJson.insert("undelegate", QString(balance.undelegate.getDecimal()));
     messagesBalanceJson.insert("delegated", QString(balance.delegated.getDecimal()));
     messagesBalanceJson.insert("undelegated", QString(balance.undelegated.getDecimal()));
+    messagesBalanceJson.insert("reserved", QString(balance.reserved.getDecimal()));
     messagesBalanceJson.insert("balance", QString(balance.calcBalance().getDecimal()));
     return messagesBalanceJson;
 }
@@ -77,10 +79,26 @@ static QJsonObject txToJson(const Transaction &tx) {
     txJson.insert("fee", tx.fee);
     txJson.insert("nonce", QString::fromStdString(std::to_string(tx.nonce)));
     txJson.insert("isInput", tx.isInput);
+    txJson.insert("blockNumber", QString::fromStdString(std::to_string(tx.blockNumber)));
     if (tx.isSetDelegate) {
         txJson.insert("isDelegate", tx.isDelegate);
         txJson.insert("delegate_value", tx.delegateValue);
+        if (!tx.delegateHash.isEmpty()) {
+            txJson.insert("delegate_hash", tx.delegateHash);
+        }
     }
+
+    QString statusStr;
+    if (tx.status == Transaction::OK) {
+        statusStr = "ok";
+    } else if (tx.status == Transaction::PENDING) {
+        statusStr = "pending";
+    } else if (tx.status == Transaction::ERROR) {
+        statusStr = "error";
+    } else {
+        throwErr("Incorrect transaction status " + std::to_string(tx.status));
+    }
+    txJson.insert("status", statusStr);
     return txJson;
 }
 
@@ -423,6 +441,69 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::getStatusDelegation(QString address, QString currency, QString from, QString to) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetStatusDelegationResultJs";
+
+    LOG << "getStatusDelegation " << address << " " << currency << " " << to;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QString &from, const QString &to, const QString &status, const QJsonDocument &txDelegate, const QJsonDocument &txUndelegate) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, from, to, status, txDelegate, txUndelegate);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->getDelegateStatus(address, currency, from, to, address == from, [address, currency, from, to, makeFunc](const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate) {
+            QString statusString;
+            if (status == DelegateStatus::DELEGATE) {
+                statusString = "delegate";
+            } else if (status == DelegateStatus::NOT_FOUND) {
+                statusString = "not_found";
+            } else if (status == DelegateStatus::ERROR) {
+                statusString = "error";
+            } else if (status == DelegateStatus::PENDING) {
+                statusString = "pending";
+            } else if (status == DelegateStatus::UNDELEGATE) {
+                statusString = "undelegate";
+            } else {
+                throwErr("Incorrect status");
+            }
+            LOG << "Get getStatusDelegation ok " << statusString;
+            makeFunc(exception, address, currency, from, to, statusString, txInfoToJson(txDelegate), txInfoToJson(txUndelegate));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, address, currency, from, to, "", QJsonDocument(), QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::clearDb(QString currency) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsClearDbResultJs";
+
+    LOG << "clear db " << currency;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const std::string &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit transactionsManager->clearDb(currency, [currency, makeFunc](const TypedException &exception) {
+            makeFunc(exception, currency, exception.isSet() ? "Not ok" : "Ok");
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, currency, "Not ok");
+    }
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsSendedTxJs";
@@ -434,6 +515,13 @@ void TransactionsJavascript::onTransactionInTorrent(const QString &server, const
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txOnTorrentJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, server, txHash, txInfoToJson(tx));
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::onTransactionStatusChanged(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "txStatusChangedJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, currency, txHash, txInfoToJson(tx));
 END_SLOT_WRAPPER
 }
 

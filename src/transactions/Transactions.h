@@ -25,6 +25,7 @@ class TransactionsDBStorage;
 struct BalanceInfo;
 struct Transaction;
 struct AddressInfo;
+enum class DelegateStatus;
 
 class Transactions : public TimerClass {
     Q_OBJECT
@@ -134,6 +135,10 @@ public:
 
     using GetNonceCallback = std::function<void(size_t nonce, const QString &server, const TypedException &exception)>;
 
+    using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate)>;
+
+    using ClearDbCallback = std::function<void(const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -170,6 +175,10 @@ signals:
 
     void getLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
 
+    void getDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
+
+    void clearDb(const QString &currency, const ClearDbCallback &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -196,6 +205,10 @@ public slots:
 
     void onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
 
+    void onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
+
+    void onClearDb(const QString &currency, const ClearDbCallback &callback);
+
 private slots:
 
     void onCallbackCall(Callback callback);
@@ -208,7 +221,7 @@ private slots:
 
 private:
 
-    void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
+    void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs);
 
     void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 

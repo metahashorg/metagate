@@ -18,6 +18,9 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     qRegisterMetaType<std::vector<QString>>();
 
     m_url = url;
+    if (!QSslSocket::supportsSsl()) {
+        m_url.setScheme("ws");
+    }
 
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
 
@@ -27,6 +30,9 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(this, SIGNAL(setHelloString(const std::vector<QString> &)), this, SLOT(onSetHelloString(const std::vector<QString> &))), "not connect setHelloString");
     CHECK(connect(this, SIGNAL(addHelloString(QString)), this, SLOT(onAddHelloString(QString))), "not connect setHelloString");
 
+    CHECK(connect(&m_webSocket, static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
+        LOG << "Wss Web socket error " << m_webSocket.errorString();
+    }), "not connect error");
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
     CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{

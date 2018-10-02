@@ -95,6 +95,12 @@ Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString passwor
 # Decrypts message generated via rsa key
 # javascript is called after completion of this function 
 decryptMessageResultJs(requestId, message, errorNum, errorMessage)
+
+Q_INVOKABLE void saveRawPrivKey(QString requestId, QString rawPrivKey, QString password);
+# Saves private key
+# rawPrivKey - unencrypted private key
+# javascript is called after completion of this function 
+saveRawPrivkeyResultJs(requestId, address, errorNum, errorMessage)
 ```
 
 ### How to work with MHC Metahash wallets
@@ -152,6 +158,12 @@ Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool is
 # Returns private key to the function
 getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
 # The isCompact parameter is used if you need a more compact format.
+
+Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password);
+# Saves private key
+# rawPrivKey - unencrypted private key
+# javascript is called after completion of this function 
+saveRawPrivkeyMHCResultJs(requestId, address, errorNum, errorMessage)
 
 ```
 

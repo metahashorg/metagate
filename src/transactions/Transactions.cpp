@@ -40,9 +40,10 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
     CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
     CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
+    CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
+    CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
 
     qRegisterMetaType<Callback>("Callback");
-    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
     qRegisterMetaType<GetTxsCallback>("GetTxsCallback");
     qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
@@ -52,7 +53,12 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<GetTxCallback>("GetTxCallback");
     qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
     qRegisterMetaType<GetNonceCallback>("GetNonceCallback");
+    qRegisterMetaType<GetStatusDelegateCallback>("GetStatusDelegateCallback");
+    qRegisterMetaType<ClearDbCallback>("ClearDbCallback");
+
+    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<seconds>("seconds");
+    qRegisterMetaType<DelegateStatus>("DelegateStatus");
     qRegisterMetaType<SendParameters>("SendParameters");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
@@ -96,9 +102,7 @@ void Transactions::runCallbackJsWrap(const Func &callback) {
 
 void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
     auto transactionGuard = db.beginTransaction();
-    for (Transaction tx: txs) {
-        tx.address = address;
-        tx.currency = currency;
+    for (const Transaction &tx: txs) {
         db.addPayment(tx);
     }
     transactionGuard.commit();
@@ -117,7 +121,7 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
-void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct) {
+void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs) {
     if (servers.empty()) {
         return;
     }
@@ -134,9 +138,18 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(servers.size());
 
+    const auto processPendingTx = [this, address, currency](const std::string &response, const TypedException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description);
+        const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
+        if (tx.status != Transaction::PENDING) {
+            db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
+            emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
+        }
+    };
+
     const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
-        const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
+        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted2 " << address << " " << txs.size();
         newBalance(address, currency, balance, txs, servStruct);
@@ -158,9 +171,9 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
     };
 
-    const auto getHistoryCallback = [this, address, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getHistoryCallback = [this, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const TypedException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description);
-        const std::vector<Transaction> txs = parseHistoryResponse(address, QString::fromStdString(response));
+        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted " << address << " " << txs.size();
 
@@ -169,7 +182,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), 1s);
     };
 
-    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback, pendingTxs, processPendingTx](const QString &server, const std::string &response, const TypedException &exception) {
         balanceStruct->countResponses--;
 
         if (!exception.isSet()) {
@@ -196,6 +209,13 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
             } else {
                 updateBalanceTime(currency, servStruct);
             }
+
+            for (const QString &txHash: pendingTxs) {
+                const QString message = makeGetTxRequest(txHash);
+                client.sendMessagePost(server, message, processPendingTx);
+            }
+        } else if (balanceStruct->countResponses == 0 && balanceStruct->server.isEmpty()) {
+            throwErr(server.toStdString() + ". " + exception.description);
         }
     };
 
@@ -216,11 +236,15 @@ BalanceInfo Transactions::getBalance(const QString &address, const QString &curr
     balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
     balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
 
-    balance.countDelegated = db.getIsSetDelegatePaymentsCountForAddress(address, currency);
-    balance.delegate = db.calcIsSetDelegateValueForAddress(address, currency, true, true).getDecimal();
-    balance.undelegate = db.calcIsSetDelegateValueForAddress(address, currency, false, true).getDecimal();
-    balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false).getDecimal();
-    balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false).getDecimal();
+    balance.countDelegated = db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::PENDING) + 2 * (db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::OK) + db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::ERROR));
+    balance.delegate = db.calcIsSetDelegateValueForAddress(address, currency, true, true, Transaction::OK).getDecimal();
+    balance.undelegate = db.calcIsSetDelegateValueForAddress(address, currency, false, true, Transaction::OK).getDecimal();
+    balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false, Transaction::OK).getDecimal();
+    balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false, Transaction::OK).getDecimal();
+    balance.reserved = db.calcIsSetDelegateValueForAddress(address, currency, true, true, Transaction::PENDING).getDecimal();
+
+    balance.received += balance.undelegate;
+    balance.spent += balance.delegate;
     return balance;
 }
 
@@ -247,7 +271,11 @@ BEGIN_SLOT_WRAPPER
             servStructs.emplace(std::piecewise_construct, std::forward_as_tuple(addr.currency), std::forward_as_tuple(std::make_shared<ServersStruct>(addr.currency)));
         }
         servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
-        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency));
+        const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(addr.address, addr.currency, true);
+        std::vector<QString> pendingTxsStrs;
+        pendingTxsStrs.reserve(pendingTxs.size());
+        std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});
+        processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxsStrs);
     }
 END_SLOT_WRAPPER
 }
@@ -359,19 +387,24 @@ BEGIN_SLOT_WRAPPER
         const TransactionHash &hash = iter->first;
         SendedTransactionWatcher &watcher = iter->second;
 
+        std::shared_ptr<bool> isFirst = std::make_shared<bool>(true);
         const QString message = makeGetTxRequest(QString::fromStdString(hash));
         const auto serversCopy = watcher.getServersCopy();
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash](const std::string &response, const TypedException &exception) {
+            client.sendMessagePost(server, message, [this, server, hash, isFirst](const std::string &response, const TypedException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
                 }
                 if (!exception.isSet()) {
                     try {
-                        const Transaction tx = parseGetTxResponse(QString::fromStdString(response));
+                        const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+                        if (*isFirst) {
+                            *isFirst = false;
+                            emit timerEvent();
+                        }
                         emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
                         found->second.okServer(server);
                         return;
@@ -501,7 +534,7 @@ BEGIN_SLOT_WRAPPER
             Transaction tx;
             const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!error.isSet(), error.numError, error.description);
-                tx = parseGetTxResponse(QString::fromStdString(response));
+                tx = parseGetTxResponse(QString::fromStdString(response), "", "");
             });
             runCallback(std::bind(callback, tx, exception));
         });
@@ -522,6 +555,40 @@ BEGIN_SLOT_WRAPPER
         result = found->second;
     }
     runCallback(std::bind(callback, result, now));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    DelegateStatus status = DelegateStatus::NOT_FOUND;
+    Transaction txDelegate;
+    Transaction txUnDelegate;
+    const TypedException exception = apiVrapper2([&, this] {
+        txDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, true);
+        txUnDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, false);
+        if (txDelegate.id == -1) {
+            status = DelegateStatus::NOT_FOUND;
+        } else if (txDelegate.status == Transaction::PENDING) {
+            status = DelegateStatus::PENDING;
+        } else if (txDelegate.status == Transaction::ERROR) {
+            status = DelegateStatus::ERROR;
+        } else if (txUnDelegate.id != -1 && txUnDelegate.timestamp > txDelegate.timestamp) {
+            status = DelegateStatus::UNDELEGATE;
+        } else {
+            status = DelegateStatus::DELEGATE;
+        }
+    });
+    runCallback(std::bind(callback, exception, status, txDelegate, txUnDelegate));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onClearDb(const QString &currency, const ClearDbCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        db.removePaymentsForCurrency(currency);
+        nsLookup.resetFile();
+    });
+    runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER
 }
 
