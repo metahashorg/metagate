@@ -6,6 +6,8 @@
 #include "check.h"
 #include "Log.h"
 
+static const QString dbFileNameSuffix = "db";
+
 static const QString sqliteSettings = "PRAGMA foreign_keys=on";
 
 static const QString dropTable = "DROP TABLE IF EXISTS %1";
@@ -40,14 +42,18 @@ DBStorage::~DBStorage()
 
 QString DBStorage::dbName() const
 {
-    return  m_dbName;
+    return m_dbName;
 }
 
-void DBStorage::init()
+QString DBStorage::dbFileName() const
+{
+    return QString("%1.%2").arg(m_dbName).arg(dbFileNameSuffix);
+}
+
+bool DBStorage::init()
 {
     if (dbExist()) {
-        updateDB();
-        return;
+        return updateDB();
     }
     // Create settings
     QSqlQuery query(sqliteSettings, m_db);
@@ -56,6 +62,7 @@ void DBStorage::init()
     setSettings(settingsDBVersion, currentVersion());
 
     createDatabase();
+    return true;
 }
 
 QVariant DBStorage::getSettings(const QString &key)
@@ -95,7 +102,7 @@ void DBStorage::setPath(const QString &path)
 
 void DBStorage::openDB()
 {
-    const QString pathToDB = makePath(m_dbPath, m_dbName);
+    const QString pathToDB = makePath(m_dbPath, dbFileName());
 
     m_dbExist = QFile::exists(pathToDB);
     m_db = QSqlDatabase::addDatabase("QSQLITE", m_dbName);
@@ -131,26 +138,28 @@ bool DBStorage::dbExist() const
     return m_dbExist;
 }
 
-void DBStorage::updateDB()
+bool DBStorage::updateDB()
 {
     int ver = getSettings(settingsDBVersion).toInt();
     int nver = currentVersion();
     if (ver == nver)
-        return;
-    CHECK(ver <= nver, "DB version greater than current");
-    // TODO not crush?
+        return true;
+    if (ver > nver)
+        return false; //DB version greater than current
     for (int v = ver; v < nver; v++) {
         updateToNewVersion(v, v + 1);
-
     }
     setSettings(settingsDBVersion, nver);
+    return true;
 }
 
 void DBStorage::updateToNewVersion(int vcur, int vnew)
 {
-    CHECK(vcur + 1 == vnew, "");
+    CHECK(vcur + 1 == vnew, "possible update to incremented version");
     qDebug() << "update " << dbName() << " version " << vcur << vnew;
-    execFromFile("update.sql");
+    QString filename = QStringLiteral("dbupdates/%1_%2to%3.sql").arg(dbName()).arg(vcur).arg(vnew);
+    qDebug() << "SQL filename " << filename;
+    execFromFile(filename);
 }
 
 void DBStorage::execFromFile(const QString &filename)
@@ -167,6 +176,8 @@ void DBStorage::execFromFile(const QString &filename)
     QSqlQuery query(m_db);
     for (const QString &sql : sqls) {
         qDebug() << sql;
+        if (sql.trimmed().isEmpty())
+            continue;
         CHECK(query.prepare(sql), query.lastError().text().toStdString());
         CHECK(query.exec(), query.lastError().text().toStdString());
     }

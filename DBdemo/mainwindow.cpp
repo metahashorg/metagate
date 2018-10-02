@@ -6,6 +6,7 @@
 #include "dbstorage.h"
 #include "MessengerDBStorage.h"
 #include "TransactionsDBStorage.h"
+#include "TransactionsDBRes.h"
 #include "SlotWrapper.h"
 #include "BigNumber.h"
 #include "Transaction.h"
@@ -28,7 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 BEGIN_SLOT_WRAPPER
-    /*if (QFile::exists("messenger.db"))
+
+#ifndef TRANS_V2
+    if (QFile::exists("messenger.db"))
         QFile::remove("messenger.db");
     if (QFile::exists("payments.db"))
         QFile::remove("payments.db");
@@ -38,10 +41,11 @@ BEGIN_SLOT_WRAPPER
         tdb.init();
         auto transactionGuard = tdb.beginTransaction();
         for (qint64 n = 0; n < 3000; n++) {
-            tdb.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", true, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
+            tdb.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", true, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "gffkl", transactions::Transaction::OK);
         }
         transactionGuard.commit();
-    }*/
+    }
+#else
     {
         transactions::TransactionsDBStorage tdb;
         tdb.init();
@@ -49,6 +53,7 @@ BEGIN_SLOT_WRAPPER
         qDebug() << r.size();
 
     }
+#endif
 
     return;
 

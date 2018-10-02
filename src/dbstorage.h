@@ -38,9 +38,10 @@ public:
     virtual ~DBStorage();
 
     QString dbName() const;
+    QString dbFileName() const;
     virtual int currentVersion() const = 0;
 
-    virtual void init();
+    bool init();
 
     QVariant getSettings(const QString &key);
     void setSettings(const QString &key, const QVariant &value);
@@ -59,7 +60,7 @@ protected:
     bool dbExist() const;
 
 private:
-    void updateDB();
+    bool updateDB();
     void updateToNewVersion(int vcur, int vnew);
     void execFromFile(const QString &filename);
 

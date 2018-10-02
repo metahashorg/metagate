@@ -1,0 +1,1 @@
+ALTER TABLE payments ADD blockNumber INTEGER DEFAULT 0;

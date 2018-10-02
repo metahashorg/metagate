@@ -8,8 +8,8 @@
 
 namespace transactions {
 
-TransactionsDBStorage::TransactionsDBStorage(const QString &path)
-    : DBStorage(path, databaseFileName)
+TransactionsDBStorage::TransactionsDBStorage(const QString &path, QObject *parent)
+    : DBStorage(path, databaseName, parent)
 {
 
 }
@@ -350,6 +350,7 @@ void TransactionsDBStorage::removePaymentsForCurrency(const QString &currency)
 std::vector<qint64> TransactionsDBStorage::getBlockNumbers()
 {
     std::vector<qint64> res;
+#ifdef TRANS_V2
     QSqlQuery query(database());
     CHECK(query.prepare(selectBlockNumbers),
           query.lastError().text().toStdString());
@@ -357,6 +358,7 @@ std::vector<qint64> TransactionsDBStorage::getBlockNumbers()
     while (query.next()) {
         res.push_back(query.value("blockNumber").toLongLong());
     }
+#endif
     return res;
 }
 

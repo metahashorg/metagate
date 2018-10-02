@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#define TRANS_V2
+
 namespace transactions {
 
 static const QString databaseName = "payments";
@@ -30,6 +32,9 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "isDelegate BOOLEAN, "
                                                 "delegateValue TEXT, "
                                                 "delegateHash TEXT, "
+#ifdef TRANS_V2
+                                                "blockNumber INTEGER DEFAULT 0, "
+#endif
                                                 "status INT8 "
                                                 ")";
 
@@ -127,8 +132,10 @@ static const QString removePaymentsForCurrencyQuery = "DELETE FROM payments "
 static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked "
                                                 "WHERE currency = :currency";
 
+#ifdef TRANS_V2
 // TODO demo
 static const QString selectBlockNumbers = "SELECT blockNumber FROM payments";
+#endif
 
 };
 
