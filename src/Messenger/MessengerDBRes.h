@@ -5,6 +5,7 @@
 
 namespace messenger {
 
+static const QString databaseName = "messenger";
 static const QString databaseFileName = "messenger.db";
 static const int databaseVersion = 1;
 

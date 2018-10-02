@@ -257,6 +257,19 @@ std::vector<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString
     return res;
 }
 
+std::vector<qint64> TransactionsDBStorage::getBlockNumbers()
+{
+    std::vector<qint64> res;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectBlockNumbers),
+          query.lastError().text().toStdString());
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    while (query.next()) {
+        res.push_back(query.value("blockNumber").toLongLong());
+    }
+    return res;
+}
+
 void TransactionsDBStorage::createDatabase()
 {
     createTable(QStringLiteral("payments"), createPaymentsTable);

@@ -26,21 +26,43 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    if (QFile::exists("messenger.db"))
+
+BEGIN_SLOT_WRAPPER
+    /*if (QFile::exists("messenger.db"))
         QFile::remove("messenger.db");
     if (QFile::exists("payments.db"))
         QFile::remove("payments.db");
-    BEGIN_SLOT_WRAPPER
+
+    {
+        transactions::TransactionsDBStorage tdb;
+        tdb.init();
+        auto transactionGuard = tdb.beginTransaction();
+        for (qint64 n = 0; n < 3000; n++) {
+            tdb.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", true, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
+        }
+        transactionGuard.commit();
+    }*/
+    {
+        transactions::TransactionsDBStorage tdb;
+        tdb.init();
+        std::vector<qint64> r = tdb.getBlockNumbers();
+        qDebug() << r.size();
+
+    }
+
+    return;
+
+
     {
             messenger::MessengerDBStorage db;
 
     //db.openDB();
     db.init();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    db.beginTransaction();
+    auto transactionGuard = db.beginTransaction();
     //db.addChannel(id1, "channel", "jkgfjkgfgfitrrtoioriojk", true, "ktkt", false, true, true);
     db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
-    db.commitTransaction();
+    transactionGuard.commit();
     std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
 
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() <<std::endl;
@@ -49,9 +71,10 @@ MainWindow::MainWindow(QWidget *parent) :
         transactions::TransactionsDBStorage tdb;
         tdb.init();
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        tdb.beginTransaction();
+
+        auto transactionGuard = tdb.beginTransaction();
         tdb.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100");
-        tdb.commitTransaction();
+        transactionGuard.commit();
         std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
 
         std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() <<std::endl;

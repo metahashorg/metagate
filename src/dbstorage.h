@@ -61,6 +61,7 @@ protected:
 private:
     void updateDB();
     void updateToNewVersion(int vcur, int vnew);
+    void execFromFile(const QString &filename);
 
     QSqlDatabase m_db;
     bool m_dbExist;

@@ -45,8 +45,10 @@ QString DBStorage::dbName() const
 
 void DBStorage::init()
 {
-    if (dbExist())
+    if (dbExist()) {
+        updateDB();
         return;
+    }
     // Create settings
     QSqlQuery query(sqliteSettings, m_db);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -133,6 +135,8 @@ void DBStorage::updateDB()
 {
     int ver = getSettings(settingsDBVersion).toInt();
     int nver = currentVersion();
+    if (ver == nver)
+        return;
     CHECK(ver <= nver, "DB version greater than current");
     // TODO not crush?
     for (int v = ver; v < nver; v++) {
@@ -146,6 +150,26 @@ void DBStorage::updateToNewVersion(int vcur, int vnew)
 {
     CHECK(vcur + 1 == vnew, "");
     qDebug() << "update " << dbName() << " version " << vcur << vnew;
+    execFromFile("update.sql");
+}
+
+void DBStorage::execFromFile(const QString &filename)
+{
+    QFile file(filename);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        // check
+        return;
+    }
+    QTextStream in(&file);
+    QString data = in.readAll();
+    QStringList sqls = data.split(';');
+    QSqlQuery query(m_db);
+    for (const QString &sql : sqls) {
+        qDebug() << sql;
+        CHECK(query.prepare(sql), query.lastError().text().toStdString());
+        CHECK(query.exec(), query.lastError().text().toStdString());
+    }
 }
 
 DBStorage::TransactionGuard::TransactionGuard(const DBStorage &storage)

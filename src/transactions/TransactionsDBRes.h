@@ -5,8 +5,13 @@
 
 namespace transactions {
 
+static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
+#ifdef TRANS_V2
+static const int databaseVersion = 2;
+#else
 static const int databaseVersion = 1;
+#endif
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -90,6 +95,9 @@ static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, a
 static const QString  selectTrackedForGroup = "SELECT currency, address, name, type FROM tracked "
                                                 "WHERE tgroup = :tgroup "
                                                 "ORDER BY address ASC";
+
+// TODO demo
+static const QString selectBlockNumbers = "SELECT blockNumber FROM payments";
 };
 
 #endif // TRANSACTIONSDBRES_H

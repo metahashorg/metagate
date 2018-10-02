@@ -47,6 +47,9 @@ public:
 
     std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
+    // TODO demo!!!
+    std::vector<qint64> getBlockNumbers();
+
 protected:
     virtual void createDatabase() final;
 
