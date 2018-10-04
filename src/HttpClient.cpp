@@ -34,12 +34,12 @@ void HttpSimpleClient::startTimer()
     }
 }
 
-static void addRequestId(HttpSocket *socket, const std::string &id)
+static void addRequestId(HttpSocket *socket, const int id)
 {
     socket->setRequestId(id);
 }
 
-static std::string getRequestId(HttpSocket *socket)
+static int getRequestId(HttpSocket *socket)
 {
     return socket->requestId();
 }
@@ -71,7 +71,6 @@ BEGIN_SLOT_WRAPPER
     const time_point timeEnd = ::now();
     for (auto &iter: sockets) {
         HttpSocket *socket = iter.second;
-
         if (socket->hasTimeOut()) {
             const milliseconds timeout = getTimeout(socket);
             const time_point timeBegin = getBeginTime(socket);
@@ -91,18 +90,18 @@ BEGIN_SLOT_WRAPPER
 
 void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout)
 {
-    const std::string requestId = std::to_string(id++);
     startTimer();
 
     std::unique_ptr<HttpSocket> socket(new HttpSocket(url, message));
-    callbacks_[requestId] = callback;
-    addRequestId(socket.get(), requestId);
+    callbacks[id] = callback;
+    sockets[id] = socket.get();
+    addRequestId(socket.get(), id);
+    id++;
     if (isTimeout) {
         const time_point time = ::now();
         addBeginTime(socket.get(), time);
         addTimeout(socket.get(), timeout);
     }
-
     connect(socket.get(), &HttpSocket::finished, this, &HttpSimpleClient::onSocketFinished);
     socket.release()->start();
     LOG << "post message sended";
@@ -118,7 +117,7 @@ void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, 
 }
 
 template<class Callbacks, typename... Message>
-void HttpSimpleClient::runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages)
+void HttpSimpleClient::runCallback(Callbacks &callbacks, const int id, Message&&... messages)
 {
     const auto foundCallback = callbacks.find(id);
     CHECK(foundCallback != callbacks.end(), "not found callback on id " + id);
@@ -134,14 +133,12 @@ void HttpSimpleClient::onSocketFinished()
 BEGIN_SLOT_WRAPPER
     HttpSocket *socket = qobject_cast<HttpSocket *>(sender());
     CHECK(socket, "Not socket object");
-
-    const std::string requestId = getRequestId(socket);
-
+    const int requestId = getRequestId(socket);
     if (socket->hasError()) {
-        runCallback(callbacks_, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, "error"));
+        runCallback(callbacks, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, "error"));
     } else {
         QByteArray content = socket->getReply();
-        runCallback(callbacks_, requestId, std::string(content.data(), content.size()), TypedException());
+        runCallback(callbacks, requestId, std::string(content.data(), content.size()), TypedException());
     }
 
     socket->deleteLater();
@@ -171,12 +168,12 @@ void HttpSocket::stop()
     emit finished();
 }
 
-std::string HttpSocket::requestId() const
+int HttpSocket::requestId() const
 {
-    return  m_requestId;
+    return m_requestId;
 }
 
-void HttpSocket::setRequestId(const std::string &s)
+void HttpSocket::setRequestId(const int s)
 {
     m_requestId = s;
 }

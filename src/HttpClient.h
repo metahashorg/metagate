@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <functional>
-#include <unordered_map>
+#include <map>
 #include <string>
 
 #include "duration.h"
@@ -24,8 +24,8 @@ public:
     void start();
     void stop();
 
-    std::string requestId() const;
-    void setRequestId(const std::string &s);
+    int requestId() const;
+    void setRequestId(const int s);
 
     bool hasTimeOut() const;
     bool hasError() const;
@@ -50,7 +50,7 @@ private:
     QByteArray getHttpPostHeader() const;
     void parseResponseHeader();
 
-    std::string m_requestId;
+    int m_requestId;
     time_point m_timePoint;
     milliseconds m_timeOut;
     bool m_hasTimeOut = false;
@@ -99,13 +99,13 @@ private:
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
     template<class Callbacks, typename... Message>
-    void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);
+    void runCallback(Callbacks &callbacks, const int id, Message&&... messages);
 
     void startTimer();
 
 private:
-    std::unordered_map<std::string, ClientCallback> callbacks_;
-    std::unordered_map<std::string, HttpSocket *> sockets;
+    std::map<int, ClientCallback> callbacks;
+    std::map<int, HttpSocket *> sockets;
 
     QTimer* timer = nullptr;
     QThread *thread1 = nullptr;

@@ -24,7 +24,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    //        SimpleClient client;
+    //        client.sendMessagePost(QUrl("http://188.246.233.140:9999/"), "{\"jsonrpc\":\"2.0\",\"method\":\"mhc_send\",\"params\":{\"data\":\"\",\"fee\":\"\",\"nonce\":\"3\",\"pubkey\":\"3059301306072A8648CE3D020106082A8648CE3D030107034200047FAF41D8AC6C965467EC24A8B78E528892DFEBAA91EEE770443EA574F4A384D0C305ED6FE97A2652241C4F6E2EE7A2306354EF39AFAAE2C0156C7FF69ECE3110\",\"sign\":\"3044022035538e5d047d394b58cb3046d4bc387d456cf850bcfe5231244438e98740acf8022045dc2d1750689f820c43ef26a4058cdbcaa5e5dbd2e7e80115baf3639989587b\",\"to\":\"0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff\",\"value\":\"1\"}}", [](const std::string &response) {
+    //            LOG << "Ups";
+    //        });
+    HttpSimpleClient *client = new HttpSimpleClient();
+    client->sendMessagePost(QUrl("http://191.96.70.33:9999/"), "{\"jsonrpc\":\"2.0\",\"method\":\"mhc_send\",\"params\":{\"data\":\"\",\"fee\":\"\",\"nonce\":\"3\",\"pubkey\":\"3059301306072A8648CE3D020106082A8648CE3D030107034200047FAF41D8AC6C965467EC24A8B78E528892DFEBAA91EEE770443EA574F4A384D0C305ED6FE97A2652241C4F6E2EE7A2306354EF39AFAAE2C0156C7FF69ECE3110\",\"sign\":\"3044022035538e5d047d394b58cb3046d4bc387d456cf850bcfe5231244438e98740acf8022045dc2d1750689f820c43ef26a4058cdbcaa5e5dbd2e7e80115baf3639989587b\",\"to\":\"0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff\",\"value\":\"1\"}}",
+                            [](const std::string &response, const TypedException &exception) {
+        LOG << "Ups " << response;
+    }, milliseconds(2000));
 
     /*{
         QList<TestStructure> list;
@@ -97,6 +105,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     HttpSocket *httpsocket = new HttpSocket(QUrl("http://188.246.233.140:9999/"), message);
     */
+    return;
     if (QFile::exists("messenger.db"))
         QFile::remove("messenger.db");
     BEGIN_SLOT_WRAPPER
