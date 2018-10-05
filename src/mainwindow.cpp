@@ -397,6 +397,7 @@ void MainWindow::softReloadApp() {
 }
 
 void MainWindow::loadUrl(const QString &page) {
+    LOG << "Reload. " << page << ".";
     shemeHandler->setLog();
     QUrl url(page);
     if (url.path().isEmpty())
@@ -406,7 +407,6 @@ void MainWindow::loadUrl(const QString &page) {
 }
 
 void MainWindow::loadFile(const QString &pageName) {
-    LOG << "Reload. Last version " << lastHtmls.lastVersion;
     loadUrl("file:///" + makePath(lastHtmls.fullPath, pageName));
 }
 
