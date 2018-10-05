@@ -23,6 +23,7 @@ static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (
 static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
 
 static const QString settingsDBVersion = "dbversion";
+static const QString updatesLocationPrefix = ":/";
 
 DBStorage::DBStorage(const QString &dbpath, const QString &dbname, QObject *parent)
     : QObject(parent)
@@ -157,7 +158,7 @@ void DBStorage::updateToNewVersion(int vcur, int vnew)
 {
     CHECK(vcur + 1 == vnew, "possible update to incremented version");
     qDebug() << "update " << dbName() << " version " << vcur << vnew;
-    QString filename = QStringLiteral("dbupdates/%1_%2to%3.sql").arg(dbName()).arg(vcur).arg(vnew);
+    QString filename = updatesLocationPrefix + QStringLiteral("%1_%2to%3.sql").arg(dbName()).arg(vcur).arg(vnew);
     qDebug() << "SQL filename " << filename;
     execFromFile(filename);
 }

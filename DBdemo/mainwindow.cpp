@@ -30,6 +30,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 BEGIN_SLOT_WRAPPER
 
+        QFile file(":/payments_1to2.sql");
+
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            // check
+            qDebug() << "1111";
+            return;
+        }
+        QTextStream in(&file);
+        QString data = in.readAll();
+        qDebug() << data;
+
 #ifndef TRANS_V2
     if (QFile::exists("messenger.db"))
         QFile::remove("messenger.db");

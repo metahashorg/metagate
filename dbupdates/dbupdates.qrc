@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>payments_1to2.sql</file>
+    </qresource>
+</RCC>
