@@ -20,6 +20,9 @@
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
+namespace auth {
+class AuthJavascript;
+}
 namespace messenger {
 class MessengerJavascript;
 }
@@ -53,7 +56,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(JavascriptWrapper &jsWrapper, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent = 0);
+    explicit MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJavascript, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent = 0);
 
     void showExpanded();
 

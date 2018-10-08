@@ -33,6 +33,7 @@
 
 #include "mhurlschemehandler.h"
 
+#include "auth/AuthJavascript.h"
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
 
@@ -57,7 +58,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(JavascriptWrapper &jsWrapper, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent)
+MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJavascript, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , jsWrapper(jsWrapper)
@@ -83,6 +84,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, messenger::MessengerJavascr
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
     CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
@@ -97,6 +99,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, messenger::MessengerJavascr
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
     channel->registerObject(QString("mainWindow"), &jsWrapper);
+    channel->registerObject(QString("auth"), &authJavascript);
     channel->registerObject(QString("messenger"), &messengerJavascript);
     channel->registerObject(QString("transactions"), &transactionsJavascript);
 

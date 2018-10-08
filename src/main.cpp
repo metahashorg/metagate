@@ -30,6 +30,9 @@
 #include "TypedException.h"
 #include "Paths.h"
 
+#include "auth/Auth.h"
+#include "auth/AuthJavascript.h"
+
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/MessengerDBStorage.h"
@@ -108,6 +111,9 @@ int main(int argc, char *argv[]) {
         transactions::TransactionsDBStorage dbTransactions(getDbPath());
         dbTransactions.init();
         while (true) {
+            auth::AuthJavascript authJavascript;
+            auth::Auth authManager(authJavascript);
+
             messenger::MessengerJavascript messengerJavascript;
 
             /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
@@ -129,7 +135,7 @@ int main(int argc, char *argv[]) {
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, QString::fromStdString(versionString));
             transactionsManager.setJavascriptWrapper(jsWrapper);
 
-            MainWindow mainWindow(jsWrapper, messengerJavascript, transactionsJavascript);
+            MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript);
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

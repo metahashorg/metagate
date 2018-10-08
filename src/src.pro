@@ -60,7 +60,9 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/TransactionsMessages.cpp \
     transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
-    HttpClient.cpp
+    HttpClient.cpp \
+    auth/Auth.cpp \
+    auth/AuthJavascript.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -128,7 +130,9 @@ HEADERS += mainwindow.h \
     transactions/TransactionsDBStorage.h \
     transactions/TransactionsJavascript.h \
     HttpClient.h \
-    duration.h
+    duration.h \
+    auth/Auth.h \
+    auth/AuthJavascript.h
 
 FORMS += mainwindow.ui
 
