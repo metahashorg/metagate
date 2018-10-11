@@ -22,6 +22,8 @@ const static QString PAGES_PATH = "pages/";
 
 const static QString SETTINGS_NAME = "settings.ini";
 
+const static QString STORAGE_NAME = "storage.ini";
+
 const static QString DB_PATH = "database/";
 
 const static QString AUTOUPDATER_PATH = "autoupdater/";
@@ -129,6 +131,16 @@ QString getSettingsPath() {
 
     return settings;
 }
+
+
+QString getStoragePath()
+{
+    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH);
+    createFolder(res);
+    const QString storage = makePath(res, STORAGE_NAME);
+    return storage;
+}
+
 
 QString getAutoupdaterPath() {
     const QString path1(makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, AUTOUPDATER_PATH));

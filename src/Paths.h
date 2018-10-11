@@ -15,6 +15,8 @@ QString getPagesPath();
 
 QString getSettingsPath();
 
+QString getStoragePath();
+
 QString getAutoupdaterPath();
 
 QString getTmpAutoupdaterPath();
