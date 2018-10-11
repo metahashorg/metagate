@@ -37,8 +37,6 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Auth::logout, this, &Auth::onLogout), "not connect onLogout");
     CHECK(connect(this, &Auth::check, this, &Auth::onCheck), "not connect onCheck");
 
-    CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect");
-
     qRegisterMetaType<LoginInfo>("LoginInfo");
 
     tcpClient.setParent(this);
