@@ -21,9 +21,11 @@ public:
 public:
     explicit AuthJavascript(QObject *parent = nullptr);
 
+    Auth *authManager() const {return m_authManager; }
+
     void setAuthManager(Auth &auth)
     {
-        authManager = &auth;
+        m_authManager = &auth;
     }
 
 public slots:
@@ -61,7 +63,7 @@ private:
     void runJs(const QString &script);
 
 private:
-    Auth *authManager;
+    Auth *m_authManager;
 };
 
 }

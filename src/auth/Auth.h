@@ -10,12 +10,14 @@ namespace auth
 class AuthJavascript;
 struct LoginInfo
 {
+    QString login = QString();
     QString token = QString();
     bool isAuth = false;
     bool isTest = false;
 
     void clear()
     {
+        login = QString();
         token = QString();
         isAuth = false;
         isTest = false;

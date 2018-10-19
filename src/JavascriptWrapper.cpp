@@ -90,6 +90,13 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
+static QString makeMessageLogoutForWss()
+{
+    QJsonObject allJson;
+    QJsonDocument json(allJson);
+    return json.toJson(QJsonDocument::Compact);
+}
+
 JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const QString &applicationVersion, QObject */*parent*/)
     : wssClient(wssClient)
     , nsLookup(nsLookup)
@@ -130,6 +137,16 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
+void JavascriptWrapper::onLogined()
+{
+
+}
+
+void JavascriptWrapper::onLogouted()
+{
+    LOG << "Logouted";
+}
+
 template<typename... Args>
 void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
     const QString res = makeJsFunc2<true>(function, lastArg, exception, std::forward<Args>(args)...);
@@ -157,6 +174,12 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         emit wssClient.setHelloString(message);
         sendedUserName = newUserName;
     }
+}
+
+void JavascriptWrapper::sendLogoutInfoToWss()
+{
+    const QString message = makeMessageLogoutForWss();
+    emit wssClient.sendMessage(message);
 }
 
 void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
@@ -1116,6 +1139,7 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
 
 void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
 BEGIN_SLOT_WRAPPER
+    qDebug() << newPatch << newUserName;
     const QString JS_NAME_RESULT = "setPathsJs";
 
     Opt<QString> result;

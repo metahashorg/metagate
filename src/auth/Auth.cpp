@@ -53,7 +53,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeLoginRequest(login, password);
         qDebug() << request;
-        tcpClient.sendMessagePost(authUrl, request, [this](const std::string &response, const TypedException &error) {
+        tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const TypedException &error) {
             if (error.isSet()) {
                 qDebug() << "Login error";
                 emit javascriptWrapper.sendLoginErrorResponseSig(error);
@@ -61,6 +61,7 @@ BEGIN_SLOT_WRAPPER
                 qDebug() << "RES " << QString::fromStdString(response);
                 const TypedException exception = apiVrapper2([&] {
                 info = parseLoginResponse(QString::fromStdString(response));
+                info.login = login;
                 writeLoginInfo();
 
                 });
@@ -117,6 +118,7 @@ void auth::Auth::readLoginInfo()
 {
     QSettings settings(getStoragePath(), QSettings::IniFormat);
     settings.beginGroup("Login");
+    info.login = settings.value("login", QString()).toString();
     info.token = settings.value("token", QString()).toString();
     info.isAuth = settings.value("isAuth", false).toBool();
     info.isTest = settings.value("isTest", false).toBool();
@@ -127,6 +129,7 @@ void auth::Auth::writeLoginInfo()
 {
     QSettings settings(getStoragePath(), QSettings::IniFormat);
     settings.beginGroup("Login");
+    settings.setValue("login", info.login);
     settings.setValue("token", info.token);
     settings.setValue("isAuth", info.isAuth);
     settings.setValue("isTest", info.isTest);
@@ -141,13 +144,19 @@ void auth::Auth::checkToken()
         const QString request = makeCheckTokenRequest(info.token);
         qDebug() << request;
         tcpClient.sendMessagePost(authUrl, request, [this](const std::string &response, const TypedException &error) {
-            QString result;
             qDebug() << "RES1 " << QString::fromStdString(response);
-            const TypedException exception = apiVrapper2([&] {
-                bool res = parseCheckTokenResponse(QString::fromStdString(response));
-
-            });
-            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+            if (error.isSet()) {
+                logout();
+                emit javascriptWrapper.sendLoginInfoResponseSig(info, error);
+            }
+            else {
+                const TypedException exception = apiVrapper2([&] {
+                    bool res = parseCheckTokenResponse(QString::fromStdString(response));
+                    if (!res)
+                        logout();
+                });
+                emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+            }
         });
     });
 }

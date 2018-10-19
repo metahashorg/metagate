@@ -34,6 +34,7 @@
 #include "mhurlschemehandler.h"
 
 #include "auth/AuthJavascript.h"
+#include "auth/Auth.h"
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
 
@@ -88,6 +89,8 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
+    CHECK(connect(authJavascript.authManager(), SIGNAL(logouted()), &jsWrapper, SLOT(onLogouted())), "not connect onLogouted");
+
     qRegisterMetaType<WindowEvent>("WindowEvent");
 
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
@@ -115,6 +118,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
     qtimer.start();
 
+    authJavascript.login("alaves17@gmail.com", "qwerty12345");
     emit onUpdateMhsReferences();
 }
 

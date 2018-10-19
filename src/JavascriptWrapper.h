@@ -52,6 +52,11 @@ signals:
     void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 public slots:
+    void onLogined();
+
+    void onLogouted();
+
+public slots:
 
     Q_INVOKABLE void createWallet(QString requestId, QString password);
 
@@ -252,6 +257,8 @@ private:
     void openFolderInStandartExplored(const QString &folder);
 
     void sendAppInfoToWss(QString userName, bool force);
+
+    void sendLogoutInfoToWss();
 
 private:
 
