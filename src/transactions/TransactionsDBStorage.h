@@ -20,7 +20,7 @@ public:
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                     bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                    Transaction::Status status);
+                    Transaction::Status status, qint64 blockNumber);
     void addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,

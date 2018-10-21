@@ -39,7 +39,7 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 ")";
 
 static const QString createPaymentsUniqueIndex = "CREATE UNIQUE INDEX paymentsUniqueIdx ON payments ( "
-                                                    "currency ASC, address ASC, txid ASC, isInput ASC ) ";
+                                                    "currency ASC, address ASC, txid ASC, isInput ASC, blockNumber ASC ) ";
 
 static const QString createPaymentsIndex1 = "CREATE INDEX paymentsIdx1 ON payments(address, currency, isInput, isDelegate, isSetDelegate)";
 static const QString createPaymentsIndex2 = "CREATE INDEX paymentsIdx2 ON payments(address, currency, ts, txid)";
@@ -57,8 +57,8 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency, name, type ) ";
 
-static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status) "
-                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status)";
+static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, blockNumber) "
+                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :blockNumber)";
 
 static const QString selectPaymentsForDest = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
                                                     "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "

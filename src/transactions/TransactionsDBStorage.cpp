@@ -23,7 +23,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                                        bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                                       Transaction::Status status)
+                                       Transaction::Status status, qint64 blockNumber)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
@@ -43,6 +43,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":delegateValue", delegateValue);
     query.bindValue(":delegateHash", delegateHash);
     query.bindValue(":status", status);
+    query.bindValue(":blockNumber", blockNumber);
     CHECK(query.exec(), query.lastError().text().toStdString());
 
 }
@@ -78,7 +79,7 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
-               trans.status);
+               trans.status, trans.blockNumber);
 }
 
 void TransactionsDBStorage::addPayments(const std::vector<Transaction> &transactions)

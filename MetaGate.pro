@@ -4,4 +4,4 @@ CONFIG += ordered
 #include(libs-unix.pri)
 
 SUBDIRS += src
-SUBDIRS += tests
+#SUBDIRS += tests

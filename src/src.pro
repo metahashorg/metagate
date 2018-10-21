@@ -157,4 +157,5 @@ macx: include(../libs-macos.pri)
 DISTFILES +=
 
 RESOURCES += \
-    ../svg1.qrc
+    ../svg1.qrc \
+    ../dbupdates/dbupdates.qrc

@@ -56,6 +56,7 @@ bool DBStorage::init()
     if (dbExist()) {
         return updateDB();
     }
+    LOG << "Create DB " << dbName();
     // Create settings
     QSqlQuery query(sqliteSettings, m_db);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -143,6 +144,7 @@ bool DBStorage::updateDB()
 {
     int ver = getSettings(settingsDBVersion).toInt();
     int nver = currentVersion();
+    LOG << "Database " << dbName() << " app's version " << ver << " new version " << nver;
     if (ver == nver)
         return true;
     if (ver > nver)
@@ -157,26 +159,22 @@ bool DBStorage::updateDB()
 void DBStorage::updateToNewVersion(int vcur, int vnew)
 {
     CHECK(vcur + 1 == vnew, "possible update to incremented version");
-    qDebug() << "update " << dbName() << " version " << vcur << vnew;
+    LOG << "Update " << dbName() << " version " << vcur << "->" << vnew;
     QString filename = updatesLocationPrefix + QStringLiteral("%1_%2to%3.sql").arg(dbName()).arg(vcur).arg(vnew);
-    qDebug() << "SQL filename " << filename;
     execFromFile(filename);
 }
 
 void DBStorage::execFromFile(const QString &filename)
 {
+    LOG << "DB update " << filename;
     QFile file(filename);
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        // check
-        return;
-    }
+    CHECK(file.open(QIODevice::ReadOnly | QIODevice::Text), "can't open file")
     QTextStream in(&file);
     QString data = in.readAll();
     QStringList sqls = data.split(';');
     QSqlQuery query(m_db);
     for (const QString &sql : sqls) {
-        qDebug() << sql;
         if (sql.trimmed().isEmpty())
             continue;
         CHECK(query.prepare(sql), query.lastError().text().toStdString());
