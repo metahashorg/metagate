@@ -106,6 +106,7 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
         if (txJson.contains("delegateHash") && txJson.value("delegateHash").isString()) {
             res.delegateHash = txJson.value("delegateHash").toString();
         }
+        res.type = Transaction::DELEGATE;
     }
     if (txJson.contains("status") && txJson.value("status").isString()) {
         const QString status = txJson.value("status").toString();
@@ -120,6 +121,10 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
 
     if (txJson.contains("blockNumber") && txJson.value("blockNumber").isDouble()) {
         res.blockNumber = (int64_t)txJson.value("blockNumber").toDouble();
+    }
+
+    if (txJson.contains("forging") && txJson.value("forging").isBool() && txJson.value("forging").toBool()) {
+        res.type = Transaction::FORGING;
     }
 
     res.address = address;

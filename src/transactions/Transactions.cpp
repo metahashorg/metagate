@@ -245,6 +245,8 @@ BalanceInfo Transactions::getBalance(const QString &address, const QString &curr
 
     balance.received += balance.undelegate;
     balance.spent += balance.delegate;
+
+    // Заполнить forged
     return balance;
 }
 

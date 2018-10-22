@@ -35,7 +35,7 @@ struct Transaction {
     bool isInput;
     int64_t blockNumber = 0;
 
-    bool isSetDelegate = false;
+    bool isSetDelegate = false; // TODO после введения type стало избыточным полем. Удалить
     bool isDelegate;
     QString delegateValue;
     QString delegateHash;
@@ -59,6 +59,7 @@ struct BalanceInfo {
     BigNumber delegated;
     BigNumber undelegated;
     BigNumber reserved = QString("0");
+    BigNumber forged = QString("0");
 
     BigNumber calcBalance() const {
         return received - spent - reserved;
