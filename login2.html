@@ -88,6 +88,19 @@
         });
     }
         
+    function sendTxData() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        result='';
+        for (i = 0; i < document.createWalletForm.data.value.length; i++) {
+            hex = document.createWalletForm.data.value.charCodeAt(i).toString(16);
+            result += hex;
+        }
+        alert(result);
+        mainWindow.signMessageV3("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "10", "" + (document.createWalletForm.data.value.length + 10), "", result, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        });
+    }
+        
     function statusDelegate() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.transactions;
@@ -136,6 +149,7 @@
             <input name="nonce" type="text" value="8" size="60"><label for="nonce">nonce</label><br>
             <input name="transaction" type="text" value="01cbd06593e093da63c836145e19083fe92899e8468696009a904d28cfd8bba9" size="60"><label for="transaction">transaction</label><br>
             <input name="to" type="text" value="0x00caceded040cdbfcc6bc4f43a72133252f4cb402478356dff" size="60"><label for="to">to</label><br>
+           <input name="data" type="text" value="" size="3000"><label for="data">data</label><br>
             <input type="button" value="register" onclick="registerAddress()"><br>
             <input type="button" value="setGroup" onclick="setGroup()"><br>
             <input type="button" value="getGroup" onclick="getGroup()"><br>
@@ -148,6 +162,7 @@
             <input type="button" value="getLastUpdate" onclick="getLastUpdate()"><br>
             <input type="button" value="sendTx" onclick="sendTx()"><br>
             <input type="button" value="sendTxAutoCalcNonce" onclick="sendTx2()"><br>
+            <input type="button" value="sendTxData" onclick="sendTxData()"><br>
             <input type="button" value="statusDelegate" onclick="statusDelegate()"><br>
             <input type="button" value="clearDb" onclick="clearDb()"><br>
             </FORM>

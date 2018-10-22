@@ -1,5 +1,5 @@
-/* crypto/cast/cast.h */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
+/* crypto/idea/idea.h */
+/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
@@ -56,50 +56,48 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_CAST_H
-# define HEADER_CAST_H
+#ifndef HEADER_IDEA_H
+# define HEADER_IDEA_H
+
+# include <openssl/opensslconf.h>/* IDEA_INT, OPENSSL_NO_IDEA */
+
+# ifdef OPENSSL_NO_IDEA
+#  error IDEA is disabled.
+# endif
+
+# define IDEA_ENCRYPT    1
+# define IDEA_DECRYPT    0
+
+# define IDEA_BLOCK      8
+# define IDEA_KEY_LENGTH 16
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-# include <openssl/opensslconf.h>
+typedef struct idea_key_st {
+    IDEA_INT data[9][6];
+} IDEA_KEY_SCHEDULE;
 
-# ifdef OPENSSL_NO_CAST
-#  error CAST is disabled.
-# endif
-
-# define CAST_ENCRYPT    1
-# define CAST_DECRYPT    0
-
-# define CAST_LONG unsigned int
-
-# define CAST_BLOCK      8
-# define CAST_KEY_LENGTH 16
-
-typedef struct cast_key_st {
-    CAST_LONG data[32];
-    int short_key;              /* Use reduced rounds for short key */
-} CAST_KEY;
-
+const char *idea_options(void);
+void idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
+                      IDEA_KEY_SCHEDULE *ks);
 # ifdef OPENSSL_FIPS
-void private_CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
+void private_idea_set_encrypt_key(const unsigned char *key,
+                                  IDEA_KEY_SCHEDULE *ks);
 # endif
-void CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
-void CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
-                      const CAST_KEY *key, int enc);
-void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key);
-void CAST_decrypt(CAST_LONG *data, const CAST_KEY *key);
-void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, const CAST_KEY *ks, unsigned char *iv,
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks);
+void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk);
+void idea_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                      long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
                       int enc);
-void CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
-                        long length, const CAST_KEY *schedule,
-                        unsigned char *ivec, int *num, int enc);
-void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-                        long length, const CAST_KEY *schedule,
-                        unsigned char *ivec, int *num);
-
+void idea_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+                        long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
+                        int *num, int enc);
+void idea_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+                        long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
+                        int *num);
+void idea_encrypt(unsigned long *in, IDEA_KEY_SCHEDULE *ks);
 #ifdef  __cplusplus
 }
 #endif

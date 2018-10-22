@@ -85,6 +85,7 @@ QString getPagesPath() {
     if (!isExistFolder(newPagesPath)) {
         LOG << "Create pages folder: " << newPagesPath << " " << oldPagesPath;
         CHECK(copyRecursively(oldPagesPath, newPagesPath, true, false), "not copy pages");
+        removeFile(makePath(newPagesPath, SETTINGS_NAME));
     }
 
     return newPagesPath;

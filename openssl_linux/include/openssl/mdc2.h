@@ -1,4 +1,4 @@
-/* crypto/cast/cast.h */
+/* crypto/mdc2/mdc2.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,49 +56,36 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_CAST_H
-# define HEADER_CAST_H
+#ifndef HEADER_MDC2_H
+# define HEADER_MDC2_H
+
+# include <openssl/des.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-# include <openssl/opensslconf.h>
-
-# ifdef OPENSSL_NO_CAST
-#  error CAST is disabled.
+# ifdef OPENSSL_NO_MDC2
+#  error MDC2 is disabled.
 # endif
 
-# define CAST_ENCRYPT    1
-# define CAST_DECRYPT    0
+# define MDC2_BLOCK              8
+# define MDC2_DIGEST_LENGTH      16
 
-# define CAST_LONG unsigned int
-
-# define CAST_BLOCK      8
-# define CAST_KEY_LENGTH 16
-
-typedef struct cast_key_st {
-    CAST_LONG data[32];
-    int short_key;              /* Use reduced rounds for short key */
-} CAST_KEY;
+typedef struct mdc2_ctx_st {
+    unsigned int num;
+    unsigned char data[MDC2_BLOCK];
+    DES_cblock h, hh;
+    int pad_type;               /* either 1 or 2, default 1 */
+} MDC2_CTX;
 
 # ifdef OPENSSL_FIPS
-void private_CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
+int private_MDC2_Init(MDC2_CTX *c);
 # endif
-void CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
-void CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
-                      const CAST_KEY *key, int enc);
-void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key);
-void CAST_decrypt(CAST_LONG *data, const CAST_KEY *key);
-void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, const CAST_KEY *ks, unsigned char *iv,
-                      int enc);
-void CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
-                        long length, const CAST_KEY *schedule,
-                        unsigned char *ivec, int *num, int enc);
-void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-                        long length, const CAST_KEY *schedule,
-                        unsigned char *ivec, int *num);
+int MDC2_Init(MDC2_CTX *c);
+int MDC2_Update(MDC2_CTX *c, const unsigned char *data, size_t len);
+int MDC2_Final(unsigned char *md, MDC2_CTX *c);
+unsigned char *MDC2(const unsigned char *d, size_t n, unsigned char *md);
 
 #ifdef  __cplusplus
 }

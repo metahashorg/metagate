@@ -1123,7 +1123,6 @@ BEGIN_SLOT_WRAPPER
         userName = newUserName;
 
         emit setUserNameSig(newUserName);
-        sendAppInfoToWss(newUserName, false);
 
         if (walletPath == newPatch) {
             result = "Ok";
@@ -1159,6 +1158,8 @@ BEGIN_SLOT_WRAPPER
             copyRecursively(walletPathOldTmh, walletPathTmh, true);
             oldTmhPath.removeRecursively();
         }
+
+        sendAppInfoToWss(newUserName, false);
 
         result = "Ok";
     });
