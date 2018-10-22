@@ -17,6 +17,10 @@ struct Transaction {
         OK = 0, PENDING = 1, ERROR = 2
     };
 
+    enum Type {
+        SIMPLE = 0, FORGING = 1, DELEGATE = 2
+    };
+
     DBStorage::DbId id = -1;
     QString currency;
     QString tx;
@@ -35,6 +39,8 @@ struct Transaction {
     bool isDelegate;
     QString delegateValue;
     QString delegateHash;
+
+    Type type = Type::SIMPLE;
 
     Status status = Status::OK;
 };
