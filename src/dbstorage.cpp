@@ -149,10 +149,12 @@ bool DBStorage::updateDB()
         return true;
     if (ver > nver)
         return false; //DB version greater than current
+    auto transactionGuard = beginTransaction();
     for (int v = ver; v < nver; v++) {
         updateToNewVersion(v, v + 1);
     }
     setSettings(settingsDBVersion, nver);
+    transactionGuard.commit();
     return true;
 }
 
