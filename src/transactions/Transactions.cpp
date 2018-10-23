@@ -231,13 +231,7 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
     BalanceInfo balance;
-    db.calcBalance(address, currency,
-                   balance.received, balance.spent,
-                   balance.delegate, balance.undelegate,
-                   balance.delegated, balance.undelegated,
-                   balance.reserved, balance.forged,
-                   balance.countReceived, balance.countSpent,
-                   balance.countDelegated);
+    db.calcBalance(address, currency, balance);
 //    balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
 //    balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
 //    balance.received = db.calcOutValueForAddress(address, currency).getDecimal();

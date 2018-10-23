@@ -53,12 +53,7 @@ public:
     BigNumber calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status = Transaction::OK);
 
     void calcBalance(const QString &address, const QString &currency,
-                     BigNumber &received, BigNumber &spent,
-                     BigNumber &delegate, BigNumber &undelegate,
-                     BigNumber &delegated, BigNumber &undelegated,
-                     BigNumber &reserved, BigNumber &forged,
-                     uint64_t &countReceived, uint64_t &countSpent,
-                     uint64_t &countDelegated);
+                     BalanceInfo &balance);
 
     void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
     void addTracked(const AddressInfo &info);

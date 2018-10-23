@@ -305,29 +305,24 @@ BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString 
 }
 
 void TransactionsDBStorage::calcBalance(const QString &address, const QString &currency,
-                                        BigNumber &received, BigNumber &spent,
-                                        BigNumber &delegate, BigNumber &undelegate,
-                                        BigNumber &delegated, BigNumber &undelegated,
-                                        BigNumber &reserved, BigNumber &forged,
-                                        uint64_t &countReceived, uint64_t &countSpent,
-                                        uint64_t &countDelegated)
+                                        BalanceInfo &balance)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(selectAllPaymentsValuesForAddress), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    received = BigNumber();
-    spent = BigNumber();
-    delegate = BigNumber();
-    undelegate = BigNumber();
-    delegated = BigNumber();
-    undelegated = BigNumber();
-    reserved = BigNumber();
-    forged = BigNumber();
-    countReceived = 0;
-    countSpent = 0;
-    countDelegated = 0;
+    balance.received = BigNumber();
+    balance.spent = BigNumber();
+    balance.delegate = BigNumber();
+    balance.undelegate = BigNumber();
+    balance.delegated = BigNumber();
+    balance.undelegated = BigNumber();
+    balance.reserved = BigNumber();
+    balance.forged = BigNumber();
+    balance.countReceived = 0;
+    balance.countSpent = 0;
+    balance.countDelegated = 0;
 
     BigNumber value;
     BigNumber fee;
@@ -348,33 +343,33 @@ void TransactionsDBStorage::calcBalance(const QString &address, const QString &c
         status = static_cast<Transaction::Status>(query.value("status").toInt());
         type = static_cast<Transaction::Type>(query.value("type").toInt());
         if (isInput) {
-            spent += value;
-            spent += fee;
-            countSpent++;
+            balance.spent += value;
+            balance.spent += fee;
+            balance.countSpent++;
         } else {
-            received += value;
-            countReceived++;
+            balance.received += value;
+            balance.countReceived++;
         }
         if (isSetDelegate){
-            countDelegated++;
+            balance.countDelegated++;
             if (status == Transaction::Status::OK) {
-                countDelegated++; // count transaction twice
+                balance.countDelegated++; // count transaction twice
                 if (isInput && isDelegate) {
-                    delegate += delegateValue;
+                    balance.delegate += delegateValue;
                 } else if (!isInput && isDelegate) {
-                    delegate += delegateValue;
+                    balance.delegated += delegateValue;
                 } else if (isInput && !isDelegate) {
-                    undelegate += delegateValue;
+                    balance.undelegate += delegateValue;
                 } else if (!isInput && !isDelegate) {
-                    undelegate += delegateValue;
+                    balance.undelegated += delegateValue;
                 }
             }
             if (isInput && isDelegate  && status == Transaction::Status::PENDING) {
-                reserved += delegateValue;
+                balance.reserved += delegateValue;
             }
         }
-        if (type == Transaction::Type::FORGING && isInput) {
-            forged += value;
+        if (type == Transaction::Type::FORGING && !isInput) {
+            balance.forged += value;
         }
 
     }
