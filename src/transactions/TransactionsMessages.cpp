@@ -123,7 +123,7 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
         res.blockNumber = (int64_t)txJson.value("blockNumber").toDouble();
     }
 
-    if (txJson.contains("forging") && txJson.value("forging").isBool() && txJson.value("forging").toBool()) {
+    if (txJson.contains("type") && txJson.value("type").isString() && txJson.value("type").toString() == "forging") {
         res.type = Transaction::FORGING;
     }
 
