@@ -17,15 +17,12 @@
 namespace auth
 {
 
-const QString AuthURL = "http://id.metahash.org/api/";
-
-
 Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     : TimerClass(1min, parent)
     , javascriptWrapper(javascriptWrapper)
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    authUrl = settings.value("servers/auth", AuthURL).toString();
+    authUrl = settings.value("servers/auth").toString();
     hardwareId = QString::fromStdString(::getMachineUid());
 
     readLoginInfo();
