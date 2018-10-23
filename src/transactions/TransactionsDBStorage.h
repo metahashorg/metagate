@@ -20,7 +20,7 @@ public:
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                     bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                    Transaction::Status status, qint64 blockNumber);
+                    Transaction::Status status, Transaction::Type type, qint64 blockNumber);
     void addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
@@ -52,15 +52,20 @@ public:
     qint64 getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency, Transaction::Status status = Transaction::OK);
     BigNumber calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status = Transaction::OK);
 
+    void calcBalance(const QString &address, const QString &currency,
+                     BigNumber &received, BigNumber &spent,
+                     BigNumber &delegate, BigNumber &undelegate,
+                     BigNumber &delegated, BigNumber &undelegated,
+                     BigNumber &reserved, BigNumber &forged,
+                     uint64_t &countReceived, uint64_t &countSpent,
+                     uint64_t &countDelegated);
+
     void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
     void addTracked(const AddressInfo &info);
 
     std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
     void removePaymentsForCurrency(const QString &currency);
-
-    // TODO demo!!!
-    std::vector<qint64> getBlockNumbers();
 
 protected:
     virtual void createDatabase() final;

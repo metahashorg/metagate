@@ -9,11 +9,7 @@ namespace transactions {
 
 static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
-#ifdef TRANS_V2
 static const int databaseVersion = 2;
-#else
-static const int databaseVersion = 1;
-#endif
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -32,9 +28,8 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "isDelegate BOOLEAN, "
                                                 "delegateValue TEXT, "
                                                 "delegateHash TEXT, "
-#ifdef TRANS_V2
                                                 "blockNumber INTEGER DEFAULT 0, "
-#endif
+                                                "type INTEGER DEFAULT 0, "
                                                 "status INT8 "
                                                 ")";
 
@@ -57,8 +52,8 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency, name, type ) ";
 
-static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, blockNumber) "
-                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :blockNumber)";
+static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber) "
+                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber)";
 
 static const QString selectPaymentsForDest = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
                                                     "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
@@ -98,6 +93,9 @@ static const QString updatePaymentForAddress = "UPDATE payments "
 static const QString deletePaymentsForAddress = "DELETE FROM payments "
                                                 "WHERE address = :address AND  currency = :currency";
 
+static const QString selectAllPaymentsValuesForAddress = "SELECT value, fee, isInput, delegateValue,isSetDelegate,isDelegate, status, type FROM payments "
+                                                         "WHERE address = :address AND currency = :currency ";
+
 static const QString selectInPaymentsValuesForAddress = "SELECT value, fee FROM payments "
                                                          "WHERE address = :address AND currency = :currency "
                                                          "AND isInput = 1";
@@ -131,11 +129,6 @@ static const QString removePaymentsForCurrencyQuery = "DELETE FROM payments "
 
 static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked "
                                                 "WHERE currency = :currency";
-
-#ifdef TRANS_V2
-// TODO demo
-static const QString selectBlockNumbers = "SELECT blockNumber FROM payments";
-#endif
 
 };
 
