@@ -46,31 +46,24 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
 void Auth::onLogin(const QString &login, const QString &password)
 {
 BEGIN_SLOT_WRAPPER
-    qDebug() << "START";
-    const TypedException exception = apiVrapper2([&, this] {
-        const QString request = makeLoginRequest(login, password);
-        qDebug() << request;
-        tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const TypedException &error) {
-            if (error.isSet()) {
-                qDebug() << "Login error";
-                emit javascriptWrapper.sendLoginErrorResponseSig(error);
-            } else {
-                qDebug() << "RES " << QString::fromStdString(response);
-                const TypedException exception = apiVrapper2([&] {
-                info = parseLoginResponse(QString::fromStdString(response));
-                info.login = login;
-                writeLoginInfo();
-
-                });
-                emit logined();
-                emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
-            }
-        });
+    const QString request = makeLoginRequest(login, password);
+    tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const TypedException &error) {
+       if (error.isSet()) {
+            emit javascriptWrapper.sendLoginErrorResponseSig(error);
+       } else {
+           const TypedException exception = apiVrapper2([&] {
+               info = parseLoginResponse(QString::fromStdString(response));
+               info.login = login;
+               writeLoginInfo();
+           });
+           emit logined();
+           emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+       }
     });
 END_SLOT_WRAPPER
 }
 
-void Auth::onLogout(/*const Auth::LoginCallback &callback*/)
+void Auth::onLogout()
 {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
@@ -80,7 +73,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Auth::onCheck(/*const Auth::LoginCallback &callback*/)
+void Auth::onCheck()
 {
     emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
 }
@@ -94,13 +87,11 @@ END_SLOT_WRAPPER
 
 void auth::Auth::onStarted()
 {
-    qDebug() << "auth::Auth::onStarted()";
     checkToken();
 }
 
 void auth::Auth::onTimerEvent()
 {
-    qDebug() << "auth::Auth::onTimerEvent()";
     checkToken();
 }
 
@@ -135,27 +126,27 @@ void auth::Auth::writeLoginInfo()
 
 void auth::Auth::checkToken()
 {
+BEGIN_SLOT_WRAPPER
     if (!info.isAuth)
         return;
-    const TypedException exception = apiVrapper2([&, this] {
-        const QString request = makeCheckTokenRequest(info.token);
-        qDebug() << request;
-        tcpClient.sendMessagePost(authUrl, request, [this](const std::string &response, const TypedException &error) {
-            qDebug() << "RES1 " << QString::fromStdString(response);
-            if (error.isSet()) {
+    const QString request = makeCheckTokenRequest(info.token);
+    const QString token = info.token;
+    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const TypedException &error) {
+        if (info.token != token)
+            return;
+        if (error.isSet()) {
+            logout();
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, error);
+        } else {
+            const TypedException exception = apiVrapper2([&] {
+            bool res = parseCheckTokenResponse(QString::fromStdString(response));
+            if (!res)
                 logout();
-                emit javascriptWrapper.sendLoginInfoResponseSig(info, error);
-            }
-            else {
-                const TypedException exception = apiVrapper2([&] {
-                    bool res = parseCheckTokenResponse(QString::fromStdString(response));
-                    if (!res)
-                        logout();
-                });
-                emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
-            }
-        });
+            });
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+        }
     });
+END_SLOT_WRAPPER
 }
 
 template<typename Func>
