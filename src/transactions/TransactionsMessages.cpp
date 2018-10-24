@@ -60,6 +60,10 @@ BalanceInfo parseBalanceResponse(const QString &response) {
         }
     }
 
+    if (json.contains("forged") && json.value("forged").isDouble()) {
+        result.forged = getIntOrString(json, "forged");
+    }
+
     return result;
 }
 
