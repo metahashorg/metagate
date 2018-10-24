@@ -55,26 +55,22 @@ static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniq
 static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber) "
                                         "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber)";
 
-static const QString selectPaymentsForDest = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
-                                                    "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
+static const QString selectPaymentsForDest = "SELECT * FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 
-static const QString selectPaymentsForCurrency = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
-                                                    "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
+static const QString selectPaymentsForCurrency = "SELECT * FROM payments "
                                                     "WHERE currency = :currency "
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 
-static const QString selectPaymentsForDestPending = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
-                                                        "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
+static const QString selectPaymentsForDestPending = "SELECT * FROM payments "
                                                         "WHERE address = :address AND  currency = :currency  "
                                                         "AND status = 1 "
                                                         "ORDER BY ts %1, txid %1";
 
-static const QString selectLastPaymentIsSetDelegate = "SELECT id, currency, txid, address, isInput, ufrom, uto, "
-                                                            "value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status FROM payments "
+static const QString selectLastPaymentIsSetDelegate = "SELECT * FROM payments "
                                                             "WHERE address = :address AND  currency = :currency "
                                                             "AND ufrom = :ufrom AND uto = :uto AND isInput = :isInput AND isDelegate = :isDelegate "
                                                             "AND isSetDelegate = 1 "
