@@ -205,14 +205,14 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
                 const QString requestForTxs = makeGetHistoryRequest(address, true, requestCountTxs);
 
-                client.sendMessagePost(server, requestForTxs, std::bind(getHistoryCallback, server, _1, _2), 1s);
+                client.sendMessagePost(balanceStruct->server, requestForTxs, std::bind(getHistoryCallback, balanceStruct->server, _1, _2), 1s);
             } else {
                 updateBalanceTime(currency, servStruct);
             }
 
             for (const QString &txHash: pendingTxs) {
                 const QString message = makeGetTxRequest(txHash);
-                client.sendMessagePost(server, message, processPendingTx);
+                client.sendMessagePost(balanceStruct->server, message, processPendingTx);
             }
         } else if (balanceStruct->countResponses == 0 && balanceStruct->server.isEmpty()) {
             throwErr(server.toStdString() + ". " + exception.description);
