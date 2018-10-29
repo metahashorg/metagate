@@ -35,7 +35,12 @@ void AuthJavascript::login(const QString &login, const QString &password)
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
     LOG << "Login " << login;
-    emit m_authManager->login(login, password);
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit m_authManager->login(login, password);
+    });
+    if (exception.isSet()) {
+        emit sendLoginInfoResponseSig(LoginInfo(), exception);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -43,7 +48,12 @@ void AuthJavascript::logout()
 {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
-    emit m_authManager->logout();
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit m_authManager->logout();
+    });
+    if (exception.isSet()) {
+        emit sendLoginInfoResponseSig(LoginInfo(), exception);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -52,7 +62,12 @@ void AuthJavascript::check()
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
 
-    emit m_authManager->check();
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit m_authManager->check();
+    });
+    if (exception.isSet()) {
+        emit sendLoginInfoResponseSig(LoginInfo(), exception);
+    }
 END_SLOT_WRAPPER
 }
 
