@@ -75,7 +75,9 @@ END_SLOT_WRAPPER
 
 void Auth::onCheck()
 {
+BEGIN_SLOT_WRAPPER
     emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
+END_SLOT_WRAPPER
 }
 
 void auth::Auth::onCallbackCall(Callback callback)
@@ -87,12 +89,16 @@ END_SLOT_WRAPPER
 
 void auth::Auth::onStarted()
 {
+BEGIN_SLOT_WRAPPER
     checkToken();
+END_SLOT_WRAPPER
 }
 
 void auth::Auth::onTimerEvent()
 {
+BEGIN_SLOT_WRAPPER
     checkToken();
+END_SLOT_WRAPPER
 }
 
 void auth::Auth::doLogout()

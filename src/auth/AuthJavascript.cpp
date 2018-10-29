@@ -52,10 +52,7 @@ void AuthJavascript::check()
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
 
-    const TypedException exception = apiVrapper2([&, this]()
-    {
-        emit m_authManager->check();
-    });
+    emit m_authManager->check();
 END_SLOT_WRAPPER
 }
 
