@@ -124,6 +124,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     }
     QNetworkReply* reply = manager->post(request, message.toUtf8());
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
+    requests[requestId] = reply;
     //LOG << "post message sended";
 }
 
@@ -206,10 +207,16 @@ BEGIN_SLOT_WRAPPER
     const std::string requestId = getRequestId(*reply);
 
     if (reply->error() == QNetworkReply::NoError) {
-        QByteArray content = reply->readAll();
+        QByteArray content;
+        if (reply->isReadable()) {
+            content = reply->readAll();
+        }
         runCallback(callbacks_, requestId, std::string(content.data(), content.size()), TypedException());
     } else {
-        const std::string error = reply->errorString().toStdString() + ". " + QString(reply->readAll()).toStdString();
+        std::string error = reply->errorString().toStdString() + ". ";
+        if (reply->isReadable()) {
+            error += QString(reply->readAll()).toStdString();
+        }
         //LOG << error;
 
         runCallback(callbacks_, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, error));
