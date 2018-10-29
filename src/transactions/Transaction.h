@@ -17,6 +17,10 @@ struct Transaction {
         OK = 0, PENDING = 1, ERROR = 2
     };
 
+    enum Type {
+        SIMPLE = 0, FORGING = 1, DELEGATE = 2
+    };
+
     DBStorage::DbId id = -1;
     QString currency;
     QString tx;
@@ -31,10 +35,12 @@ struct Transaction {
     bool isInput;
     int64_t blockNumber = 0;
 
-    bool isSetDelegate = false;
+    bool isSetDelegate = false; // TODO после введения type стало избыточным полем. Удалить
     bool isDelegate;
     QString delegateValue;
     QString delegateHash;
+
+    Type type = Type::SIMPLE;
 
     Status status = Status::OK;
 };
@@ -53,6 +59,7 @@ struct BalanceInfo {
     BigNumber delegated;
     BigNumber undelegated;
     BigNumber reserved = QString("0");
+    BigNumber forged = QString("0");
 
     BigNumber calcBalance() const {
         return received - spent - reserved;

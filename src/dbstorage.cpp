@@ -6,6 +6,8 @@
 #include "check.h"
 #include "Log.h"
 
+static const QString dbFileNameSuffix = "db";
+
 static const QString sqliteSettings = "PRAGMA foreign_keys=on";
 
 static const QString dropTable = "DROP TABLE IF EXISTS %1";
@@ -19,6 +21,9 @@ static const QString insertSettingsKeyValue = "INSERT OR REPLACE INTO settings (
                                              " VALUES (:key, :value)";
 
 static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE key = :key";
+
+static const QString settingsDBVersion = "dbversion";
+static const QString updatesLocationPrefix = ":/";
 
 DBStorage::DBStorage(const QString &dbpath, const QString &dbname, QObject *parent)
     : QObject(parent)
@@ -38,39 +43,54 @@ DBStorage::~DBStorage()
 
 QString DBStorage::dbName() const
 {
-    return  m_dbName;
+    return m_dbName;
 }
 
-void DBStorage::init(bool force)
+QString DBStorage::dbFileName() const
 {
-    if (dbExist() && !force)
-        return;
+    return QString("%1.%2").arg(m_dbName).arg(dbFileNameSuffix);
+}
+
+bool DBStorage::init()
+{
+    if (dbExist()) {
+        return updateDB();
+    }
+    LOG << "Create DB " << dbName();
+    // Create settings
     QSqlQuery query(sqliteSettings, m_db);
     CHECK(query.exec(), query.lastError().text().toStdString());
-
     createTable(QStringLiteral("settings"), createSettingsTable);
-    setSettings(QStringLiteral("dbversion"), "1"); // TODO
+    setSettings(settingsDBVersion, currentVersion());
+
+    createDatabase();
+    return true;
 }
 
-QString DBStorage::getSettings(const QString &key)
+QVariant DBStorage::getSettings(const QString &key)
 {
     QSqlQuery query(m_db);
     CHECK(query.prepare(selectSettingsKeyValue), query.lastError().text().toStdString());
     query.bindValue(":key", key);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
-        return query.value("value").toString();
+        return query.value("value");
     }
     return QString();
 }
 
-void DBStorage::setSettings(const QString &key, const QString &value)
+void DBStorage::setSettings(const QString &key, const QVariant &value)
 {
     QSqlQuery query(m_db);
     CHECK(query.prepare(insertSettingsKeyValue), query.lastError().text().toStdString());
     query.bindValue(":key", key);
     query.bindValue(":value", value);
     CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+void DBStorage::execPragma(const QString &sql)
+{
+    database().exec(sql);
 }
 
 DBStorage::TransactionGuard DBStorage::beginTransaction() {
@@ -84,7 +104,7 @@ void DBStorage::setPath(const QString &path)
 
 void DBStorage::openDB()
 {
-    const QString pathToDB = makePath(m_dbPath, m_dbName);
+    const QString pathToDB = makePath(m_dbPath, dbFileName());
 
     m_dbExist = QFile::exists(pathToDB);
     m_db = QSqlDatabase::addDatabase("QSQLITE", m_dbName);
@@ -118,6 +138,50 @@ QSqlDatabase DBStorage::database() const
 bool DBStorage::dbExist() const
 {
     return m_dbExist;
+}
+
+bool DBStorage::updateDB()
+{
+    int ver = getSettings(settingsDBVersion).toInt();
+    int nver = currentVersion();
+    LOG << "Database " << dbName() << " app's version " << ver << " new version " << nver;
+    if (ver == nver)
+        return true;
+    if (ver > nver)
+        return false; //DB version greater than current
+    auto transactionGuard = beginTransaction();
+    for (int v = ver; v < nver; v++) {
+        updateToNewVersion(v, v + 1);
+    }
+    setSettings(settingsDBVersion, nver);
+    transactionGuard.commit();
+    return true;
+}
+
+void DBStorage::updateToNewVersion(int vcur, int vnew)
+{
+    CHECK(vcur + 1 == vnew, "possible update to incremented version");
+    LOG << "Update " << dbName() << " version " << vcur << "->" << vnew;
+    QString filename = updatesLocationPrefix + QStringLiteral("%1_%2to%3.sql").arg(dbName()).arg(vcur).arg(vnew);
+    execFromFile(filename);
+}
+
+void DBStorage::execFromFile(const QString &filename)
+{
+    LOG << "DB update " << filename;
+    QFile file(filename);
+
+    CHECK(file.open(QIODevice::ReadOnly | QIODevice::Text), "can't open file")
+    QTextStream in(&file);
+    QString data = in.readAll();
+    QStringList sqls = data.split(';');
+    QSqlQuery query(m_db);
+    for (const QString &sql : sqls) {
+        if (sql.trimmed().isEmpty())
+            continue;
+        CHECK(query.prepare(sql), query.lastError().text().toStdString());
+        CHECK(query.exec(), query.lastError().text().toStdString());
+    }
 }
 
 DBStorage::TransactionGuard::TransactionGuard(const DBStorage &storage)

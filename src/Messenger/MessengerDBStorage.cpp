@@ -8,33 +8,16 @@
 
 namespace messenger {
 
-static const QString databaseFileName = "messenger.db";
-static const QString databaseVersion = "1";
 
-MessengerDBStorage::MessengerDBStorage(const QString &path)
-    : DBStorage(path, databaseFileName)
+MessengerDBStorage::MessengerDBStorage(const QString &path, QObject *parent)
+    : DBStorage(path, databaseName, parent)
 {
 
 }
 
-void MessengerDBStorage::init(bool force)
+int messenger::MessengerDBStorage::currentVersion() const
 {
-    if (dbExist() && !force)
-        return;
-    DBStorage::init(force);
-    createTable(QStringLiteral("users"), createMsgUsersTable);
-    createTable(QStringLiteral("contacts"), createMsgContactsTable);
-    createTable(QStringLiteral("channels"), createMsgChannelsTable);
-    createTable(QStringLiteral("messages"), createMsgMessagesTable);
-    createTable(QStringLiteral("lastreadmessage"), createMsgLastReadMessageTable);
-
-    createIndex(createUsersSortingIndex);
-    createIndex(createContactsSortingIndex);
-    createIndex(createMsgMessageUniqueIndex);
-    createIndex(createMsgMessageCounterIndex);
-
-    createIndex(createLastReadMessageUniqueIndex1);
-    createIndex(createLastReadMessageUniqueIndex2);
+    return databaseVersion;
 }
 
 void MessengerDBStorage::addMessage(const QString &user, const QString &duser, const QString &text,
@@ -553,6 +536,23 @@ void MessengerDBStorage::setChannelIsWriterForUserShaName(const QString &user, c
     query.bindValue(":shaName", shaName);
     query.bindValue(":isWriter", isWriter);
     CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+void messenger::MessengerDBStorage::createDatabase()
+{
+    createTable(QStringLiteral("users"), createMsgUsersTable);
+    createTable(QStringLiteral("contacts"), createMsgContactsTable);
+    createTable(QStringLiteral("channels"), createMsgChannelsTable);
+    createTable(QStringLiteral("messages"), createMsgMessagesTable);
+    createTable(QStringLiteral("lastreadmessage"), createMsgLastReadMessageTable);
+
+    createIndex(createUsersSortingIndex);
+    createIndex(createContactsSortingIndex);
+    createIndex(createMsgMessageUniqueIndex);
+    createIndex(createMsgMessageCounterIndex);
+
+    createIndex(createLastReadMessageUniqueIndex1);
+    createIndex(createLastReadMessageUniqueIndex2);
 }
 
 void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse)

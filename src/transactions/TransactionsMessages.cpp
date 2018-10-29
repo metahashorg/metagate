@@ -60,6 +60,10 @@ BalanceInfo parseBalanceResponse(const QString &response) {
         }
     }
 
+    if (json.contains("forged") && json.value("forged").isDouble()) {
+        result.forged = getIntOrString(json, "forged");
+    }
+
     return result;
 }
 
@@ -106,6 +110,7 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
         if (txJson.contains("delegateHash") && txJson.value("delegateHash").isString()) {
             res.delegateHash = txJson.value("delegateHash").toString();
         }
+        res.type = Transaction::DELEGATE;
     }
     if (txJson.contains("status") && txJson.value("status").isString()) {
         const QString status = txJson.value("status").toString();
@@ -120,6 +125,10 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
 
     if (txJson.contains("blockNumber") && txJson.value("blockNumber").isDouble()) {
         res.blockNumber = (int64_t)txJson.value("blockNumber").toDouble();
+    }
+
+    if (txJson.contains("type") && txJson.value("type").isString() && txJson.value("type").toString() == "forging") {
+        res.type = Transaction::FORGING;
     }
 
     res.address = address;

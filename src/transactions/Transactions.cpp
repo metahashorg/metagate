@@ -231,20 +231,23 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
     BalanceInfo balance;
-    balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
-    balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
-    balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
-    balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
+    db.calcBalance(address, currency, balance);
+//    balance.countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
+//    balance.countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
+//    balance.received = db.calcOutValueForAddress(address, currency).getDecimal();
+//    balance.spent = db.calcInValueForAddress(address, currency).getDecimal();
 
-    balance.countDelegated = db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::PENDING) + 2 * (db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::OK) + db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::ERROR));
-    balance.delegate = db.calcIsSetDelegateValueForAddress(address, currency, true, true, Transaction::OK).getDecimal();
-    balance.undelegate = db.calcIsSetDelegateValueForAddress(address, currency, false, true, Transaction::OK).getDecimal();
-    balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false, Transaction::OK).getDecimal();
-    balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false, Transaction::OK).getDecimal();
-    balance.reserved = db.calcIsSetDelegateValueForAddress(address, currency, true, true, Transaction::PENDING).getDecimal();
+//    balance.countDelegated = db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::PENDING) + 2 * (db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::OK) + db.getIsSetDelegatePaymentsCountForAddress(address, currency, Transaction::ERROR));
+//    balance.delegate = db.calcIsSetDelegateValueForAddress(address, currency, true, true, Transaction::OK).getDecimal();
+//    balance.undelegate = db.calcIsSetDelegateValueForAddress(address, currency, false, true, Transaction::OK).getDecimal();
+//    balance.delegated = db.calcIsSetDelegateValueForAddress(address, currency, true, false, Transaction::OK).getDecimal();
+//    balance.undelegated = db.calcIsSetDelegateValueForAddress(address, currency, false, false, Transaction::OK).getDecimal();
+//    balance.reserved = db.calcIsSetDelegateValueForAddress(address, currency, true, true, Transaction::PENDING).getDecimal();
 
     balance.received += balance.undelegate;
     balance.spent += balance.delegate;
+
+    // Заполнить forged
     return balance;
 }
 

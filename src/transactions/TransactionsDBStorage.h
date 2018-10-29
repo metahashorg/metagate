@@ -6,25 +6,31 @@
 #include "BigNumber.h"
 #include <vector>
 
+#include <QSqlQuery>
 namespace transactions {
 
 class TransactionsDBStorage : public DBStorage
 {
 public:
-    TransactionsDBStorage(const QString &path = QString());
+    TransactionsDBStorage(const QString &path = QString(), QObject *parent = nullptr);
 
-    virtual void init(bool force = false) override;
-
+    virtual int currentVersion() const final;
 
     void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                     bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                    Transaction::Status status);
+                    Transaction::Status status, Transaction::Type type, qint64 blockNumber);
+    void addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput,
+                    const QString &ufrom, const QString &uto, const QString &value,
+                    quint64 ts, const QString &data, const QString &fee, qint64 nonce,
+                    bool isSetDelegate, bool isDelegate, QString delegateValue);
+
     void addPayment(const Transaction &trans);
+    void addPayments(const std::vector<Transaction> &transactions);
 
     std::vector<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
-                                              qint64 offset, qint64 count, bool asc) const;
+                                              qint64 offset, qint64 count, bool asc);
     std::vector<Transaction> getPaymentsForCurrency(const QString &currency,
                                                   qint64 offset, qint64 count, bool asc) const;
 
@@ -46,6 +52,9 @@ public:
     qint64 getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency, Transaction::Status status = Transaction::OK);
     BigNumber calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status = Transaction::OK);
 
+    void calcBalance(const QString &address, const QString &currency,
+                     BalanceInfo &balance);
+
     void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
     void addTracked(const AddressInfo &info);
 
@@ -53,8 +62,12 @@ public:
 
     void removePaymentsForCurrency(const QString &currency);
 
+protected:
+    virtual void createDatabase() final;
+
 private:
     void createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const;
+
 };
 
 }

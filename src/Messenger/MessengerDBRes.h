@@ -5,6 +5,10 @@
 
 namespace messenger {
 
+static const QString databaseName = "messenger";
+static const QString databaseFileName = "messenger.db";
+static const int databaseVersion = 1;
+
 static const QString createMsgUsersTable = "CREATE TABLE users ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
                                            "username VARCHAR(100) UNIQUE, "

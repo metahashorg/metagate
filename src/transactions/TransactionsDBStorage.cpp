@@ -8,31 +8,22 @@
 
 namespace transactions {
 
-TransactionsDBStorage::TransactionsDBStorage(const QString &path)
-    : DBStorage(path, databaseFileName)
+TransactionsDBStorage::TransactionsDBStorage(const QString &path, QObject *parent)
+    : DBStorage(path, databaseName, parent)
 {
 
 }
 
-void transactions::TransactionsDBStorage::init(bool force)
+int TransactionsDBStorage::currentVersion() const
 {
-    if (dbExist() && !force)
-        return;
-    DBStorage::init(force);
-    createTable(QStringLiteral("payments"), createPaymentsTable);
-    createTable(QStringLiteral("tracked"), createTrackedTable);
-    createIndex(createPaymentsIndex1);
-    createIndex(createPaymentsIndex2);
-    createIndex(createPaymentsIndex3);
-    createIndex(createPaymentsUniqueIndex);
-    createIndex(createTrackedUniqueIndex);
+    return databaseVersion;
 }
 
 void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                                        bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                                       Transaction::Status status)
+                                       Transaction::Status status, Transaction::Type type, qint64 blockNumber)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
@@ -52,7 +43,35 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":delegateValue", delegateValue);
     query.bindValue(":delegateHash", delegateHash);
     query.bindValue(":status", status);
+    query.bindValue(":type", type);
+    query.bindValue(":blockNumber", blockNumber);
     CHECK(query.exec(), query.lastError().text().toStdString());
+
+}
+
+void TransactionsDBStorage::addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput, const QString &ufrom, const QString &uto, const QString &value, quint64 ts, const QString &data, const QString &fee, qint64 nonce, bool isSetDelegate, bool isDelegate, QString delegateValue)
+{
+    static QSqlQuery m_iquery(database());
+    bool prepared = false;
+    if (!prepared) {
+        CHECK(m_iquery.prepare(insertPayment), m_iquery.lastError().text().toStdString());
+        prepared = true;
+    }
+    m_iquery.bindValue(":currency", currency);
+    m_iquery.bindValue(":txid", txid);
+    m_iquery.bindValue(":address", address);
+    m_iquery.bindValue(":isInput", isInput);
+    m_iquery.bindValue(":ufrom", ufrom);
+    m_iquery.bindValue(":uto", uto);
+    m_iquery.bindValue(":value", value);
+    m_iquery.bindValue(":ts", ts);
+    m_iquery.bindValue(":data", data);
+    m_iquery.bindValue(":fee", fee);
+    m_iquery.bindValue(":nonce", nonce);
+    m_iquery.bindValue(":isSetDelegate", isSetDelegate);
+    m_iquery.bindValue(":isDelegate", isDelegate);
+    m_iquery.bindValue(":delegateValue", delegateValue);
+    CHECK(m_iquery.exec(), m_iquery.lastError().text().toStdString());
 }
 
 void TransactionsDBStorage::addPayment(const Transaction &trans)
@@ -61,11 +80,40 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
-               trans.status);
+               trans.status, trans.type, trans.blockNumber);
+}
+
+void TransactionsDBStorage::addPayments(const std::vector<Transaction> &transactions)
+{
+    auto transactionGuard = beginTransaction();
+    QSqlQuery query(database());
+    CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
+    for (const Transaction &transaction: transactions) {
+        query.bindValue(":currency", transaction.currency);
+        query.bindValue(":txid", transaction.tx);
+        query.bindValue(":address", transaction.address);
+        query.bindValue(":isInput", transaction.isInput);
+        query.bindValue(":ufrom", transaction.from);
+        query.bindValue(":uto", transaction.to);
+        query.bindValue(":value", transaction.value);
+        query.bindValue(":ts", static_cast<qint64>(transaction.timestamp));
+        query.bindValue(":data", transaction.data);
+        query.bindValue(":fee", transaction.fee);
+        query.bindValue(":nonce", static_cast<qint64>(transaction.nonce));
+        query.bindValue(":isSetDelegate", transaction.isSetDelegate);
+        query.bindValue(":isDelegate", transaction.isDelegate);
+        query.bindValue(":delegateValue", transaction.delegateValue);
+        query.bindValue(":delegateHash", transaction.delegateHash);
+        query.bindValue(":status", transaction.status);
+        query.bindValue(":type", transaction.type);
+        query.bindValue(":blockNumber", static_cast<qint64>(transaction.blockNumber));
+        CHECK(query.exec(), query.lastError().text().toStdString());
+    }
+    transactionGuard.commit();
 }
 
 std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QString &address, const QString &currency,
-                                                                 qint64 offset, qint64 count, bool asc) const
+                                                                      qint64 offset, qint64 count, bool asc)
 {
     std::vector<Transaction> res;
     QSqlQuery query(database());
@@ -81,7 +129,7 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QStr
 }
 
 std::vector<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QString &currency,
-                                                                     qint64 offset, qint64 count, bool asc) const
+                                                                       qint64 offset, qint64 count, bool asc) const
 {
     std::vector<Transaction> res;
     QSqlQuery query(database());
@@ -146,7 +194,7 @@ void TransactionsDBStorage::updatePayment(const QString &address, const QString 
 {
     QSqlQuery query(database());
     CHECK(query.prepare(updatePaymentForAddress), query.lastError().text().toStdString())
-    query.bindValue(":address", address);
+            query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
     query.bindValue(":isInput", isInput);
@@ -256,6 +304,77 @@ BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString 
     return res;
 }
 
+void TransactionsDBStorage::calcBalance(const QString &address, const QString &currency,
+                                        BalanceInfo &balance)
+{
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectAllPaymentsValuesForAddress), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    balance.received = BigNumber();
+    balance.spent = BigNumber();
+    balance.delegate = BigNumber();
+    balance.undelegate = BigNumber();
+    balance.delegated = BigNumber();
+    balance.undelegated = BigNumber();
+    balance.reserved = BigNumber();
+    balance.forged = BigNumber();
+    balance.countReceived = 0;
+    balance.countSpent = 0;
+    balance.countDelegated = 0;
+
+    BigNumber value;
+    BigNumber fee;
+    BigNumber delegateValue;
+    bool isSetDelegate;
+    bool isDelegate;
+    bool isInput;
+    Transaction::Status status;
+    Transaction::Type type;
+
+    while (query.next()) {
+        value.setDecimal(query.value("value").toByteArray());
+        fee.setDecimal(query.value("fee").toByteArray());
+        delegateValue.setDecimal(query.value("delegateValue").toByteArray());
+        isSetDelegate = query.value("isSetDelegate").toBool();
+        isDelegate = query.value("isDelegate").toBool();
+        isInput = query.value("isInput").toBool();
+        status = static_cast<Transaction::Status>(query.value("status").toInt());
+        type = static_cast<Transaction::Type>(query.value("type").toInt());
+        if (isInput) {
+            balance.spent += value;
+            balance.spent += fee;
+            balance.countSpent++;
+        } else {
+            balance.received += value;
+            balance.countReceived++;
+        }
+        if (isSetDelegate){
+            balance.countDelegated++;
+            if (status == Transaction::Status::OK) {
+                balance.countDelegated++; // count transaction twice
+                if (isInput && isDelegate) {
+                    balance.delegate += delegateValue;
+                } else if (!isInput && isDelegate) {
+                    balance.delegated += delegateValue;
+                } else if (isInput && !isDelegate) {
+                    balance.undelegate += delegateValue;
+                } else if (!isInput && !isDelegate) {
+                    balance.undelegated += delegateValue;
+                }
+            }
+            if (isInput && isDelegate  && status == Transaction::Status::PENDING) {
+                balance.reserved += delegateValue;
+            }
+        }
+        if (type == Transaction::Type::FORGING && !isInput) {
+            balance.forged += value;
+        }
+
+    }
+}
+
 void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
 {
     QSqlQuery query(database());
@@ -305,6 +424,17 @@ void TransactionsDBStorage::removePaymentsForCurrency(const QString &currency)
     transactionGuard.commit();
 }
 
+void TransactionsDBStorage::createDatabase()
+{
+    createTable(QStringLiteral("payments"), createPaymentsTable);
+    createTable(QStringLiteral("tracked"), createTrackedTable);
+    createIndex(createPaymentsIndex1);
+    createIndex(createPaymentsIndex2);
+    createIndex(createPaymentsIndex3);
+    createIndex(createPaymentsUniqueIndex);
+    createIndex(createTrackedUniqueIndex);
+}
+
 void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const
 {
     while (query.next()) {
@@ -326,6 +456,8 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Tra
         trans.delegateValue = query.value("delegateValue").toString();
         trans.delegateHash = query.value("delegateHash").toString();
         trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
+        trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
+        trans.blockNumber = query.value("blockNumber").toLongLong();
         payments.push_back(trans);
     }
 }

@@ -60,6 +60,7 @@ static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     messagesBalanceJson.insert("delegated", QString(balance.delegated.getDecimal()));
     messagesBalanceJson.insert("undelegated", QString(balance.undelegated.getDecimal()));
     messagesBalanceJson.insert("reserved", QString(balance.reserved.getDecimal()));
+    messagesBalanceJson.insert("forged", QString(balance.forged.getDecimal()));
     messagesBalanceJson.insert("balance", QString(balance.calcBalance().getDecimal()));
     return messagesBalanceJson;
 }
@@ -99,6 +100,18 @@ static QJsonObject txToJson(const Transaction &tx) {
         throwErr("Incorrect transaction status " + std::to_string(tx.status));
     }
     txJson.insert("status", statusStr);
+
+    QString typeStr;
+    if (tx.type == Transaction::SIMPLE) {
+        typeStr = "simple";
+    } else if (tx.type == Transaction::DELEGATE) {
+        typeStr = "delegate";
+    } else if (tx.type == Transaction::FORGING) {
+        typeStr = "forging";
+    } else {
+        throwErr("Incorrect transaction type " + std::to_string(tx.type));
+    }
+    txJson.insert("type", typeStr);
     return txJson;
 }
 

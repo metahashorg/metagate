@@ -38,24 +38,32 @@ public:
     virtual ~DBStorage();
 
     QString dbName() const;
+    QString dbFileName() const;
+    virtual int currentVersion() const = 0;
 
-    virtual void init(bool force);
+    bool init();
 
-    QString getSettings(const QString &key);
-    void setSettings(const QString &key, const QString &value);
+    QVariant getSettings(const QString &key);
+    void setSettings(const QString &key, const QVariant &value);
 
+    void execPragma(const QString &sql);
     TransactionGuard beginTransaction();
 
 protected:
     void setPath(const QString &path);
     void openDB();
 
+    virtual void createDatabase() = 0;
     void createTable(const QString &table, const QString &createQuery);
     void createIndex(const QString &createQuery);
     QSqlDatabase database() const;
     bool dbExist() const;
 
 private:
+    bool updateDB();
+    void updateToNewVersion(int vcur, int vnew);
+    void execFromFile(const QString &filename);
+
     QSqlDatabase m_db;
     bool m_dbExist;
     QString m_dbPath;
