@@ -38,18 +38,18 @@ struct Opt {
     }
 };
 
-inline QString toJsString(const QJsonDocument &arg) {
-    QString json = arg.toJson(QJsonDocument::Compact);
-    json.replace('\"', "\\\"");
-    return "\"" + json + "\"";
-}
-
-inline QString toJsString(const QString &arg) {
+inline QString toJsString(QString arg) {
+    arg.replace('\"', "\\\"");
     return "\"" + arg + "\"";
 }
 
+inline QString toJsString(const QJsonDocument &arg) {
+    const QString json = arg.toJson(QJsonDocument::Compact);
+    return toJsString(json);
+}
+
 inline QString toJsString(const std::string &arg) {
-    return "\"" + QString::fromStdString(arg) + "\"";
+    return toJsString(QString::fromStdString(arg));
 }
 
 inline QString toJsString(const int &arg) {
@@ -111,8 +111,7 @@ inline QString makeJsFunc2(const QString &function, const QString &lastArg, cons
 template<bool isLastArg, typename... Args>
 inline QString makeJsFunc3(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args) {
     QString jScript = function + "(";
-    jScript += append<Args...>(std::forward<Args>(args)...) + ", ";
-    jScript += append(exception.numError, exception.description);
+    jScript += append<Args..., int, const std::string&>(std::forward<Args>(args)..., (int)exception.numError, exception.description);
     if (isLastArg) {
         jScript += ", " + toJsString(lastArg);
     }
