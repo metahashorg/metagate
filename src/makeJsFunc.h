@@ -38,13 +38,13 @@ struct Opt {
     }
 };
 
-inline QString toJsString(QString arg) {
-    arg.replace('\"', "\\\"");
+inline QString toJsString(const QString &arg) {
     return "\"" + arg + "\"";
 }
 
 inline QString toJsString(const QJsonDocument &arg) {
-    const QString json = arg.toJson(QJsonDocument::Compact);
+    QString json = arg.toJson(QJsonDocument::Compact);
+    json.replace('\"', "\\\"");
     return toJsString(json);
 }
 
