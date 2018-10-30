@@ -515,7 +515,6 @@ END_SLOT_WRAPPER
 
 void MainWindow::onJsRun(QString jsString) {
 BEGIN_SLOT_WRAPPER
-        qDebug() << "RUN JS " << jsString;
     ui->webView->page()->runJavaScript(jsString);
 END_SLOT_WRAPPER
 }

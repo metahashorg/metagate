@@ -49,7 +49,9 @@ BEGIN_SLOT_WRAPPER
     const QString request = makeLoginRequest(login, password);
     tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const SimpleClient::ServerException &error) {
        if (error.isSet()) {
-            emit javascriptWrapper.sendLoginErrorResponseSig(TypedException());
+           QString content = QString::fromStdString(error.content);
+           content.replace('\"', "\\\"");
+           emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
        } else {
            const TypedException exception = apiVrapper2([&] {
                info = parseLoginResponse(QString::fromStdString(response));
@@ -142,7 +144,9 @@ BEGIN_SLOT_WRAPPER
             return;
         if (error.isSet()) {
             logout();
-            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
+            QString content = QString::fromStdString(error.content);
+            content.replace('\"', "\\\"");
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
         } else {
             const TypedException exception = apiVrapper2([&] {
             bool res = parseCheckTokenResponse(QString::fromStdString(response));
