@@ -52,6 +52,37 @@ static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::S
     return publicKeyStr;
 }
 
+static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
+    std::string result = "0x3077";
+    {
+        std::string privateKeyStr;
+        privateKeyStr.reserve(1000); // Обязательно для windows
+        CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(privateKeyStr), true);
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey copy = privateKey;
+        copy.DEREncodePrivateKey(encoder);
+
+        result += privateKeyStr.substr(4);
+    }
+    result += "a00a";
+
+    {
+        std::string privateKeyStr;
+        privateKeyStr.reserve(1000); // Обязательно для windows
+        CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(privateKeyStr), true);
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey copy = privateKey;
+        copy.AccessGroupParameters().SetEncodeAsOID(true);
+        copy.DEREncodeAlgorithmParameters(encoder);
+
+        result += privateKeyStr;
+    }
+
+    result += "a144";
+
+    result += ::getPublicKey(privateKey).substr(46);
+
+    return toLower(result);
+}
+
 static std::string getPublicKeyElements(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PublicKey publicKey;
     privateKey.MakePublicKey(publicKey);
@@ -401,4 +432,8 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
 
     const QString filePath = makeFullWalletPath(folder, hexAddr);
     writeToFile(filePath, result, true);
+}
+
+std::string Wallet::getNotProtectedKeyHex() const {
+    return ::getPrivateKey(privateKey);
 }

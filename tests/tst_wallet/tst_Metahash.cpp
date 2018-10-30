@@ -135,6 +135,31 @@ void tst_Metahash::testCreateFromRawMth() {
     Wallet::createWalletFromRaw("./", rawkey, passwd, tmp, address);
     QCOMPARE(address, answer);
     Wallet wallet("./", address, passwd);
+    const std::string rawPrivate = wallet.getNotProtectedKeyHex();
+    QCOMPARE(rawkey, rawPrivate);
+}
+
+void tst_Metahash::testCreateRawMth_data() {
+    QTest::addColumn<std::string>("passwd");
+
+    QTest::newRow("CreateMth 1") << std::string("1");
+    QTest::newRow("CreateMth 2") << std::string("123");
+    QTest::newRow("CreateMth 3") << std::string("Password 1");
+    QTest::newRow("CreateMth 4") << std::string("Password 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+}
+
+void tst_Metahash::testCreateRawMth() {
+    QFETCH(std::string, passwd);
+    std::string tmp;
+    std::string address;
+    Wallet::createWallet("./", passwd, tmp, address);
+    Wallet wallet("./", address, passwd);
+
+    const std::string privKey = wallet.getNotProtectedKeyHex();
+    std::string address2;
+    Wallet::createWalletFromRaw("./", privKey, passwd, tmp, address2);
+    QCOMPARE(address2, address);
+    Wallet wallet2("./", address, passwd);
 }
 
 void tst_Metahash::testNotCreateMth() {

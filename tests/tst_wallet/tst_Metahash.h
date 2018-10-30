@@ -24,6 +24,9 @@ private slots:
     void testCreateFromRawMth_data();
     void testCreateFromRawMth();
 
+    void testCreateRawMth_data();
+    void testCreateRawMth();
+
     void testNotCreateMth();
 
     void testMthSignTransaction_data();

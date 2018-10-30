@@ -17,10 +17,10 @@ int main(int argc, char *argv[]) {
         delete obj;
     };
 
+    ASSERT_TEST(new tst_Metahash());
     ASSERT_TEST(new tst_rsa());
     ASSERT_TEST(new tst_Bitcoin());
     ASSERT_TEST(new tst_Ethereum());
-    ASSERT_TEST(new tst_Metahash());
 
     return status;
 }

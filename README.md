@@ -104,6 +104,11 @@ Q_INVOKABLE void saveRawPrivKey(QString requestId, QString rawPrivKey, QString p
 # rawPrivKey - unencrypted private key
 # javascript is called after completion of this function 
 saveRawPrivkeyResultJs(requestId, address, errorNum, errorMessage)
+
+Q_INVOKABLE void getRawPrivKey(QString requestId, QString address, QString password);
+Выдает незашифрованный приватный ключ
+# javascript is called after completion of this function 
+getRawPrivkeyResultJs(requestId, result, errorNum, errorMessage)
 ```
 
 ### How to work with MHC Metahash wallets
@@ -170,6 +175,10 @@ Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QStrin
 # javascript is called after completion of this function 
 saveRawPrivkeyMHCResultJs(requestId, address, errorNum, errorMessage)
 
+Q_INVOKABLE void getRawPrivKeyMHC(QString requestId, QString address, QString password);
+Выдает незашифрованный приватный ключ
+# javascript is called after completion of this function 
+getRawPrivkeyMHCResultJs(requestId, result, errorNum, errorMessage)
 ```
 
 ### How to work with Ethereum wallets
