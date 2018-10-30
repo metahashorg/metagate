@@ -116,6 +116,9 @@ int main(int argc, char *argv[]) {
             authManager.start();
             authJavascript.setAuthManager(authManager);
 
+            //authJavascript.login("adfsa", "adsfasd");
+
+
             messenger::MessengerJavascript messengerJavascript;
 
             /*messenger::Messenger messenger(messengerJavascript, dbMessenger);

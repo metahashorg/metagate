@@ -85,7 +85,15 @@ void AuthJavascript::onSendLoginErrorResponseSig(const TypedException &error)
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "authLoginErrorJs";
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, error, QString());
+    TypedException copy = error;
+
+    QJsonParseError pasreError;
+    const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(copy.description).toUtf8(), &pasreError);
+    if (pasreError.error == QJsonParseError::NoError) {
+        copy.description = QString(document.toJson(QJsonDocument::Compact)).toStdString();
+    }
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, copy, QString());
 END_SLOT_WRAPPER
 }
 
@@ -104,6 +112,7 @@ void AuthJavascript::makeAndRunJsFuncParams(const QString &function, const Typed
 
 void AuthJavascript::runJs(const QString &script)
 {
+    LOG << "Js " << script;
     emit jsRunSig(script);
 }
 

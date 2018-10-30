@@ -118,7 +118,6 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
     qtimer.start();
 
-    authJavascript.login("alaves17@gmail.com", "qwerty12345");
     emit onUpdateMhsReferences();
 }
 

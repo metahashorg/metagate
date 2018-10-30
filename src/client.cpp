@@ -147,7 +147,7 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
     addRequestId(request, requestId);
     QNetworkReply* reply = manager->get(request);
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
-    LOG << "get message sended";
+    //LOG << "get message sended";
 }
 
 void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {
@@ -213,9 +213,16 @@ BEGIN_SLOT_WRAPPER
         }
         runCallback(callbacks_, requestId, std::string(content.data(), content.size()), TypedException());
     } else {
-        std::string error = reply->errorString().toStdString() + ". ";
+        std::string errorStr;
         if (reply->isReadable()) {
-            error += QString(reply->readAll()).toStdString();
+            errorStr = QString(reply->readAll()).toStdString();
+        }
+
+        std::string error;
+        if (errorStr.empty()) {
+            error = reply->errorString().toStdString();
+        } else {
+            error = errorStr;
         }
         //LOG << error;
 
