@@ -138,8 +138,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(servers.size());
 
-    const auto processPendingTx = [this, address, currency](const std::string &response, const TypedException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description);
+    const auto processPendingTx = [this, address, currency](const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
             db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
@@ -147,16 +147,16 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
     };
 
-    const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, const std::string &response, const TypedException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description);
+    const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted2 " << address << " " << txs.size();
         newBalance(address, currency, balance, txs, servStruct);
     };
 
-    const auto getBalanceConfirmeCallback = [this, balanceStruct, address, currency, getAllHistoryCallback, servStruct](const std::vector<Transaction> &txs, const QString &server, const std::string &response, const TypedException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description);
+    const auto getBalanceConfirmeCallback = [this, balanceStruct, address, currency, getAllHistoryCallback, servStruct](const std::vector<Transaction> &txs, const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countReceived + balance.countSpent;
         const uint64_t countSave = balanceStruct->balance.countReceived + balanceStruct->balance.countSpent;
@@ -171,8 +171,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
     };
 
-    const auto getHistoryCallback = [this, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const TypedException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description);
+    const auto getHistoryCallback = [this, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted " << address << " " << txs.size();
@@ -182,7 +182,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), 1s);
     };
 
-    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback, pendingTxs, processPendingTx](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback, pendingTxs, processPendingTx](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
         balanceStruct->countResponses--;
 
         if (!exception.isSet()) {
@@ -215,7 +215,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 client.sendMessagePost(balanceStruct->server, message, processPendingTx);
             }
         } else if (balanceStruct->countResponses == 0 && balanceStruct->server.isEmpty()) {
-            throwErr(server.toStdString() + ". " + exception.description);
+            throwErr(server.toStdString() + ". " + exception.description + ". " + exception.content);
         }
     };
 
@@ -396,7 +396,7 @@ BEGIN_SLOT_WRAPPER
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash, isFirst](const std::string &response, const TypedException &exception) {
+            client.sendMessagePost(server, message, [this, server, hash, isFirst](const std::string &response, const SimpleClient::ServerException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
@@ -496,7 +496,7 @@ BEGIN_SLOT_WRAPPER
 
     std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
 
-    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const TypedException &exception) {
+    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
         nonceStruct->count--;
 
         if (!exception.isSet()) {
@@ -504,7 +504,7 @@ BEGIN_SLOT_WRAPPER
             nonceStruct->isSet = true;
             nonceStruct->nonce = std::max(nonceStruct->nonce, balanceResponse.countSpent);
         } else {
-            nonceStruct->exception = exception;
+            nonceStruct->exception = TypedException(TypeErrors::CLIENT_ERROR, exception.description);
             nonceStruct->serverError = server;
         }
 
@@ -533,10 +533,10 @@ BEGIN_SLOT_WRAPPER
         CHECK(servers.size() == 1, "Incorrect servers");
         const QString &server = servers[0];
 
-        client.sendMessagePost(server, message, [this, callback](const std::string &response, const TypedException &error) mutable {
+        client.sendMessagePost(server, message, [this, callback](const std::string &response, const SimpleClient::ServerException &error) mutable {
             Transaction tx;
             const TypedException exception = apiVrapper2([&] {
-                CHECK_TYPED(!error.isSet(), error.numError, error.description);
+                CHECK_TYPED(!error.isSet(), TypeErrors::CLIENT_ERROR, error.description);
                 tx = parseGetTxResponse(QString::fromStdString(response), "", "");
             });
             runCallback(std::bind(callback, tx, exception));

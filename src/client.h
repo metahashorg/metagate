@@ -12,8 +12,6 @@
 
 #include "duration.h"
 
-struct TypedException;
-
 /*
    На каждый поток должен быть один экземпляр класса.
    */
@@ -23,7 +21,30 @@ class SimpleClient : public QObject
 
 public:
 
-    using ClientCallback = std::function<void(const std::string &response, const TypedException &exception)>;
+    struct ServerException {
+
+        ServerException() = default;
+
+        ServerException(int code, const std::string &description, const std::string &content)
+            : code(code)
+            , description(description)
+            , content(content)
+        {}
+
+        std::string description;
+
+        std::string content;
+
+        bool isSet() const {
+            return code != 0;
+        }
+
+        int code = 0;
+    };
+
+public:
+
+    using ClientCallback = std::function<void(const std::string &response, const ServerException &exception)>;
 
     using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
 

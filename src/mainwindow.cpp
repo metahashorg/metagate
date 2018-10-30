@@ -126,7 +126,7 @@ BEGIN_SLOT_WRAPPER
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("dns/metahash"), "dns/metahash setting not found");
 
-    client.sendMessageGet(QUrl(settings.value("dns/metahash").toString()), [this](const std::string &response, const TypedException &exception) {
+    client.sendMessageGet(QUrl(settings.value("dns/metahash").toString()), [this](const std::string &response, const SimpleClient::ServerException &exception) {
         LOG << "Set mappings mh " << QString::fromStdString(response).simplified();
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         pagesMappings.setMappingsMh(QString::fromStdString(response));

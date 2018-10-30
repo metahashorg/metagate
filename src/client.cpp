@@ -211,22 +211,15 @@ BEGIN_SLOT_WRAPPER
         if (reply->isReadable()) {
             content = reply->readAll();
         }
-        runCallback(callbacks_, requestId, std::string(content.data(), content.size()), TypedException());
+        runCallback(callbacks_, requestId, std::string(content.data(), content.size()), ServerException());
     } else {
         std::string errorStr;
         if (reply->isReadable()) {
             errorStr = QString(reply->readAll()).toStdString();
         }
-
-        std::string error;
-        if (errorStr.empty()) {
-            error = reply->errorString().toStdString();
-        } else {
-            error = errorStr;
-        }
         //LOG << error;
 
-        runCallback(callbacks_, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, error));
+        runCallback(callbacks_, requestId, "", ServerException(reply->error(), reply->errorString().toStdString(), errorStr));
     }
 
     reply->deleteLater();

@@ -47,9 +47,9 @@ void Auth::onLogin(const QString &login, const QString &password)
 {
 BEGIN_SLOT_WRAPPER
     const QString request = makeLoginRequest(login, password);
-    tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const TypedException &error) {
+    tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const SimpleClient::ServerException &error) {
        if (error.isSet()) {
-            emit javascriptWrapper.sendLoginErrorResponseSig(error);
+            emit javascriptWrapper.sendLoginErrorResponseSig(TypedException());
        } else {
            const TypedException exception = apiVrapper2([&] {
                info = parseLoginResponse(QString::fromStdString(response));
@@ -137,12 +137,12 @@ BEGIN_SLOT_WRAPPER
         return;
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
-    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const TypedException &error) {
+    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
         if (info.token != token)
             return;
         if (error.isSet()) {
             logout();
-            emit javascriptWrapper.sendLoginInfoResponseSig(info, error);
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
         } else {
             const TypedException exception = apiVrapper2([&] {
             bool res = parseCheckTokenResponse(QString::fromStdString(response));

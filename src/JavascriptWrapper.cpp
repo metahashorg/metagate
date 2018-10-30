@@ -1367,7 +1367,7 @@ BEGIN_SLOT_WRAPPER
     const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
     CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
 
-    client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response, const TypedException &exception) {
+    client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Error load image: " + exception.description);
         writeToFileBinary(file, response, false);
         if (openAfterSave) {
@@ -1398,7 +1398,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
 BEGIN_SLOT_WRAPPER
     LOG << "print url";
-    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response, const TypedException &exception) {
+    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Error load image: " + exception.description);
 
         QImage image;
