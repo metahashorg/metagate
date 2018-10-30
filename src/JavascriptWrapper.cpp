@@ -591,7 +591,7 @@ void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey
 void JavascriptWrapper::saveRawPrivKey(QString requestId, QString rawPrivKey, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "saveRawPrivkeyResultJs";
-    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, walletPath, JS_NAME_RESULT);
+    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, walletPathTmh, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -614,7 +614,7 @@ void JavascriptWrapper::getRawPrivKeyMTHS(QString requestId, QString address, QS
 void JavascriptWrapper::getRawPrivKey(QString requestId, QString address, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getRawPrivkeyResultJs";
-    getRawPrivKeyMTHS(requestId, address, password, walletPath, JS_NAME_RESULT);
+    getRawPrivKeyMTHS(requestId, address, password, walletPathTmh, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
