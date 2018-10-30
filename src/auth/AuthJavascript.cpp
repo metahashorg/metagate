@@ -27,7 +27,6 @@ AuthJavascript::AuthJavascript(QObject *parent)
 {
     CHECK(connect(this, &AuthJavascript::callbackCall, this, &AuthJavascript::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig), "not connect onSendLoginInfoResponseSig");
-    CHECK(connect(this, &AuthJavascript::sendLoginErrorResponseSig, this, &AuthJavascript::onSendLoginErrorResponseSig), "not connect onSendLoginErrorResponseSig");
 }
 
 void AuthJavascript::login(const QString &login, const QString &password)
@@ -77,23 +76,6 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "authLoginInfoJs";
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, loginInfoToJson(response));
-END_SLOT_WRAPPER
-}
-
-void AuthJavascript::onSendLoginErrorResponseSig(const TypedException &error)
-{
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "authLoginErrorJs";
-
-    TypedException copy = error;
-
-    QJsonParseError pasreError;
-    const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(copy.description).toUtf8(), &pasreError);
-    if (pasreError.error == QJsonParseError::NoError) {
-        copy.description = QString(document.toJson(QJsonDocument::Compact)).toStdString();
-    }
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, copy, QString());
 END_SLOT_WRAPPER
 }
 

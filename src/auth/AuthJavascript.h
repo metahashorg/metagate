@@ -44,13 +44,9 @@ signals:
 signals:
     void sendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error);
 
-    void sendLoginErrorResponseSig(const TypedException &error);
-
 public slots:
 
     void onSendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error);
-
-    void onSendLoginErrorResponseSig(const TypedException &error);
 
     void onCallbackCall(const Callback &callback);
 
