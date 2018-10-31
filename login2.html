@@ -77,14 +77,14 @@
     function sendTx() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", document.createWalletForm.nonce.value, "500", '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", document.createWalletForm.nonce.value, document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
         });
     }
     
     function sendTx2() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", "", "500", '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", "", document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
         });
     }
         
@@ -97,7 +97,7 @@
             result += hex;
         }
         alert(result);
-        mainWindow.signMessageV3("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "10", "" + (document.createWalletForm.data.value.length + 10), "", result, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        mainWindow.signMessageV3("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, document.createWalletForm.value.value, "" + (document.createWalletForm.data.value.length + 0), "", result, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
         });
     }
         
@@ -147,6 +147,7 @@
             <input name="count" type="text" value="10" size="60"><label for="count">count</label><br>
             <input name="ack" type="text" value="true" size="60"><label for="ack">ack</label><br>
             <input name="nonce" type="text" value="8" size="60"><label for="nonce">nonce</label><br>
+            <input name="value" type="text" value="100000000" size="60"><label for="value">value</label><br>
             <input name="transaction" type="text" value="01cbd06593e093da63c836145e19083fe92899e8468696009a904d28cfd8bba9" size="60"><label for="transaction">transaction</label><br>
             <input name="to" type="text" value="0x666174686572206f662077616c6c65747320666f7267696e67" size="60"><label for="to">to</label><br>
            <input name="data" type="text" value="" size="3000"><label for="data">data</label><br>
