@@ -116,6 +116,7 @@ void auth::Auth::readLoginInfo()
     settings.beginGroup("Login");
     info.login = settings.value("login", QString()).toString();
     info.token = settings.value("token", QString()).toString();
+    info.refresh = settings.value("refresh", QString()).toString();
     info.isAuth = settings.value("isAuth", false).toBool();
     info.isTest = settings.value("isTest", false).toBool();
     settings.endGroup();
@@ -127,6 +128,7 @@ void auth::Auth::writeLoginInfo()
     settings.beginGroup("Login");
     settings.setValue("login", info.login);
     settings.setValue("token", info.token);
+    settings.setValue("refresh", info.refresh);
     settings.setValue("isAuth", info.isAuth);
     settings.setValue("isTest", info.isTest);
     settings.endGroup();
@@ -137,23 +139,54 @@ void auth::Auth::checkToken()
 BEGIN_SLOT_WRAPPER
     if (!info.isAuth)
         return;
+    const auto tryRefreshToken = [this]{
+        const QString request = makeRefreshTokenRequest(info.refresh);
+        const QString token = info.token;
+
+        tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
+            if (info.token != token) {
+                return;
+            }
+            if (error.isSet()) {
+                logout();
+                QString content = QString::fromStdString(error.content);
+                content.replace('\"', "\\\"");
+                emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
+            } else {
+                const TypedException exception = apiVrapper2([&] {
+                    const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
+                    if (!newLogin.isAuth) {
+                        logout();
+                    } else {
+                        info.token = newLogin.token;
+                        info.refresh = newLogin.refresh;
+                        writeLoginInfo();
+                    }
+                });
+                emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+            }
+        });
+    };
+
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
-    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
-        if (info.token != token)
+    tcpClient.sendMessagePost(authUrl, request, [this, token, tryRefreshToken](const std::string &response, const SimpleClient::ServerException &error) {
+        if (info.token != token) {
             return;
+        }
+
         if (error.isSet()) {
-            logout();
-            QString content = QString::fromStdString(error.content);
-            content.replace('\"', "\\\"");
-            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
+            tryRefreshToken();
         } else {
             const TypedException exception = apiVrapper2([&] {
-            bool res = parseCheckTokenResponse(QString::fromStdString(response));
-            if (!res)
-                logout();
+                bool res = parseCheckTokenResponse(QString::fromStdString(response));
+                if (!res) {
+                    tryRefreshToken();
+                }
             });
-            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+            if (exception.isSet()) {
+                emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+            }
         }
     });
 END_SLOT_WRAPPER
@@ -165,7 +198,7 @@ void Auth::runCallback(const Func &callback)
     emit javascriptWrapper.callbackCall(callback);
 }
 
-QString Auth::makeLoginRequest(const QString &login, const QString &password)
+QString Auth::makeLoginRequest(const QString &login, const QString &password) const
 {
     QJsonObject request;
     request.insert("id", "1");
@@ -182,7 +215,7 @@ QString Auth::makeLoginRequest(const QString &login, const QString &password)
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
 
-QString auth::Auth::makeCheckTokenRequest(const QString &token)
+QString Auth::makeCheckTokenRequest(const QString &token) const
 {
     QJsonObject request;
     request.insert("id", "1");
@@ -195,7 +228,19 @@ QString auth::Auth::makeCheckTokenRequest(const QString &token)
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
 
-LoginInfo Auth::parseLoginResponse(const QString &response)
+QString Auth::makeRefreshTokenRequest(const QString &token) const {
+    QJsonObject request;
+    request.insert("id", "1");
+    request.insert("version", "1.0.0");
+    request.insert("method", "user.token.refresh");
+    request.insert("token", token);
+    request.insert("uid", hardwareId);
+    QJsonObject params;
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
+LoginInfo Auth::parseLoginResponse(const QString &response) const
 {
     LoginInfo result;
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
@@ -204,7 +249,9 @@ LoginInfo Auth::parseLoginResponse(const QString &response)
 
     CHECK(json1.contains("result") && json1.value("result").isString(), "Incorrect json: result field not found");
 
-    //result: "OK",
+    if (json1.value("result").toString() != "OK") {
+        return result;
+    }
 
     CHECK(json1.contains("data") && json1.value("data").isObject(), "Incorrect json: data field not found");
     const QJsonObject &json = json1.value("data").toObject();
@@ -212,15 +259,44 @@ LoginInfo Auth::parseLoginResponse(const QString &response)
     CHECK(json.contains("token") && json.value("token").isString(), "Incorrect json: token field not found");
     result.token = json.value("token").toString();
 
+    CHECK(json.contains("refresh_token") && json.value("refresh_token").isString(), "Incorrect json: refresh_token field not found");
+    result.refresh = json.value("refresh_token").toString();
+
     CHECK(json.contains("is_test_user") && json.value("is_test_user").isBool(), "Incorrect json: is_test_user field not found");
     result.isTest = json.value("is_test_user").toBool();
 
-    result.isAuth = result.token.isEmpty() ? false : true;
+    result.isAuth = !result.token.isEmpty();
 
     return result;
 }
 
-bool auth::Auth::parseCheckTokenResponse(const QString &response)
+LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
+    LoginInfo result;
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json");
+    const QJsonObject &json1 = jsonResponse.object();
+
+    CHECK(json1.contains("result") && json1.value("result").isString(), "Incorrect json: result field not found");
+
+    if (json1.value("result").toString() != "OK") {
+        return result;
+    }
+
+    CHECK(json1.contains("data") && json1.value("data").isObject(), "Incorrect json: data field not found");
+    const QJsonObject &json = json1.value("data").toObject();
+
+    CHECK(json.contains("refresh") && json.value("refresh").isString(), "Incorrect json: refresh field not found");
+    result.refresh = json.value("refresh").toString();
+
+    CHECK(json.contains("access") && json.value("access").isString(), "Incorrect json: access field not found");
+    result.token = json.value("access").toString();
+
+    result.isAuth = !result.token.isEmpty();
+
+    return result;
+}
+
+bool auth::Auth::parseCheckTokenResponse(const QString &response) const
 {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");

@@ -12,6 +12,7 @@ struct LoginInfo
 {
     QString login = QString();
     QString token = QString();
+    QString refresh = QString();
     bool isAuth = false;
     bool isTest = false;
 
@@ -75,13 +76,17 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
 
-    QString makeLoginRequest(const QString &login, const QString &password);
+    QString makeLoginRequest(const QString &login, const QString &password) const;
 
-    QString makeCheckTokenRequest(const QString &token);
+    QString makeCheckTokenRequest(const QString &token) const;
 
-    LoginInfo parseLoginResponse(const QString &response);
+    QString makeRefreshTokenRequest(const QString &token) const;
 
-    bool parseCheckTokenResponse(const QString &response);
+    LoginInfo parseLoginResponse(const QString &response) const;
+
+    bool parseCheckTokenResponse(const QString &response) const;
+
+    LoginInfo parseRefreshTokenResponse(const QString &response) const;
 
 private:
     AuthJavascript &javascriptWrapper;
