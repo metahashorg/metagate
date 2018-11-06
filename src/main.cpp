@@ -113,8 +113,8 @@ int main(int argc, char *argv[]) {
         while (true) {
             auth::AuthJavascript authJavascript;
             auth::Auth authManager(authJavascript);
-            authManager.start();
             authJavascript.setAuthManager(authManager);
+            authManager.start();
 
             messenger::MessengerJavascript messengerJavascript;
 

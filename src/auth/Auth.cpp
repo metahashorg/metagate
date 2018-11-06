@@ -35,6 +35,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Auth::check, this, &Auth::onCheck), "not connect onCheck");
 
     qRegisterMetaType<LoginInfo>("LoginInfo");
+    qRegisterMetaType<TypedException>("TypedException");
 
     tcpClient.setParent(this);
     CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect");
@@ -93,6 +94,7 @@ void auth::Auth::onStarted()
 {
 BEGIN_SLOT_WRAPPER
     checkToken();
+    emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
 END_SLOT_WRAPPER
 }
 
@@ -140,6 +142,7 @@ BEGIN_SLOT_WRAPPER
     if (!info.isAuth)
         return;
     const auto tryRefreshToken = [this]{
+        LOG << "Try refresh token";
         const QString request = makeRefreshTokenRequest(info.refresh);
         const QString token = info.token;
 
@@ -148,6 +151,7 @@ BEGIN_SLOT_WRAPPER
                 return;
             }
             if (error.isSet()) {
+                LOG << "Refresh token failed";
                 logout();
                 QString content = QString::fromStdString(error.content);
                 content.replace('\"', "\\\"");
@@ -156,6 +160,7 @@ BEGIN_SLOT_WRAPPER
                 const TypedException exception = apiVrapper2([&] {
                     const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
                     if (!newLogin.isAuth) {
+                        LOG << "Refresh token failed";
                         logout();
                     } else {
                         info.token = newLogin.token;
