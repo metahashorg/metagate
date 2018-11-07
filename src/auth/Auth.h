@@ -47,6 +47,8 @@ signals:
 
     void check();
 
+    void forceRefresh();
+
 public slots:
 
     void onLogin(const QString &login, const QString &password);
@@ -54,6 +56,8 @@ public slots:
     void onLogout();
 
     void onCheck();
+
+    void onForceRefresh();
 
 private slots:
 
@@ -72,6 +76,8 @@ private:
     void writeLoginInfo();
 
     void checkToken();
+
+    void forceRefreshInternal();
 
     template<typename Func>
     void runCallback(const Func &callback);

@@ -35,6 +35,8 @@ public slots:
 
     Q_INVOKABLE void check();
 
+    Q_INVOKABLE void forceRefresh();
+
 signals:
 
     void jsRunSig(QString jsString);

@@ -33,6 +33,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Auth::login, this, &Auth::onLogin), "not connect onLogin");
     CHECK(connect(this, &Auth::logout, this, &Auth::onLogout), "not connect onLogout");
     CHECK(connect(this, &Auth::check, this, &Auth::onCheck), "not connect onCheck");
+    CHECK(connect(this, &Auth::forceRefresh, this, &Auth::onForceRefresh), "not connect onForceRefresh");
 
     qRegisterMetaType<LoginInfo>("LoginInfo");
     qRegisterMetaType<TypedException>("TypedException");
@@ -124,7 +125,7 @@ void auth::Auth::readLoginInfo()
     settings.endGroup();
 }
 
-void auth::Auth::writeLoginInfo()
+void Auth::writeLoginInfo()
 {
     QSettings settings(getStoragePath(), QSettings::IniFormat);
     settings.beginGroup("Login");
@@ -136,57 +137,64 @@ void auth::Auth::writeLoginInfo()
     settings.endGroup();
 }
 
-void auth::Auth::checkToken()
+void Auth::onForceRefresh() {
+BEGIN_SLOT_WRAPPER
+    forceRefreshInternal();
+END_SLOT_WRAPPER
+}
+
+void Auth::forceRefreshInternal() {
+    LOG << "Try refresh token";
+    const QString request = makeRefreshTokenRequest(info.refresh);
+    const QString token = info.token;
+
+    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
+        if (info.token != token) {
+            return;
+        }
+        if (error.isSet()) {
+            LOG << "Refresh token failed";
+            logout();
+            QString content = QString::fromStdString(error.content);
+            content.replace('\"', "\\\"");
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
+        } else {
+            const TypedException exception = apiVrapper2([&] {
+                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
+                if (!newLogin.isAuth) {
+                    LOG << "Refresh token failed";
+                    logout();
+                } else {
+                    LOG << "Refresh token ok";
+                    info.token = newLogin.token;
+                    info.refresh = newLogin.refresh;
+                    writeLoginInfo();
+                }
+            });
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+        }
+    });
+}
+
+void Auth::checkToken()
 {
 BEGIN_SLOT_WRAPPER
     if (!info.isAuth)
         return;
-    const auto tryRefreshToken = [this]{
-        LOG << "Try refresh token";
-        const QString request = makeRefreshTokenRequest(info.refresh);
-        const QString token = info.token;
-
-        tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
-            if (info.token != token) {
-                return;
-            }
-            if (error.isSet()) {
-                LOG << "Refresh token failed";
-                logout();
-                QString content = QString::fromStdString(error.content);
-                content.replace('\"', "\\\"");
-                emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
-            } else {
-                const TypedException exception = apiVrapper2([&] {
-                    const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
-                    if (!newLogin.isAuth) {
-                        LOG << "Refresh token failed";
-                        logout();
-                    } else {
-                        info.token = newLogin.token;
-                        info.refresh = newLogin.refresh;
-                        writeLoginInfo();
-                    }
-                });
-                emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
-            }
-        });
-    };
-
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
-    tcpClient.sendMessagePost(authUrl, request, [this, token, tryRefreshToken](const std::string &response, const SimpleClient::ServerException &error) {
+    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
         if (info.token != token) {
             return;
         }
 
         if (error.isSet()) {
-            tryRefreshToken();
+            forceRefreshInternal();
         } else {
             const TypedException exception = apiVrapper2([&] {
                 bool res = parseCheckTokenResponse(QString::fromStdString(response));
                 if (!res) {
-                    tryRefreshToken();
+                    forceRefreshInternal();
                 }
             });
             if (exception.isSet()) {

@@ -70,6 +70,19 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void AuthJavascript::forceRefresh() {
+BEGIN_SLOT_WRAPPER
+    CHECK(m_authManager, "auth not set");
+
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit m_authManager->forceRefresh();
+    });
+    if (exception.isSet()) {
+        emit sendLoginInfoResponseSig(LoginInfo(), exception);
+    }
+END_SLOT_WRAPPER
+}
+
 void AuthJavascript::onSendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error)
 {
 BEGIN_SLOT_WRAPPER
