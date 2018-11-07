@@ -1,0 +1,23 @@
+Auth регестрируется в javascript по имени auth 
+
+Q_INVOKABLE void login(const QString &login, const QString &password);
+Зарегестрировать пользователя
+Результат вернется в функцию
+authLoginInfoJs(result, errorNum, errorMessage)
+где result это json вида "{\"is_auth\":true,\"is_test\":true,\"token\":\"4a4e282c54607f247ed6cf91e6c98a9047463571f5312e725b15cc1dbcf948828b9a134f\"}"
+
+Q_INVOKABLE void logout();
+логаут пользователя
+
+Q_INVOKABLE void check();
+Выдать информацию о текущем токене
+Результат вернется в функцию
+authLoginInfoJs(result, errorNum, errorMessage)
+
+Q_INVOKABLE void forceRefresh();
+Принудительно попробовать рефрешнуть токен
+Результат вернется в функцию
+authLoginInfoJs(result, errorNum, errorMessage)
+
+Также приложение само время от времени проверяет валидность токена, в случае если токен изменился или истек срок действия, будет вызвана функция 
+authLoginInfoJs(result, errorNum, errorMessage)
