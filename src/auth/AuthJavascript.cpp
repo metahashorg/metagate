@@ -47,6 +47,9 @@ void AuthJavascript::logout()
 {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
+
+    LOG << "logout";
+
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_authManager->logout();
     });
@@ -61,6 +64,8 @@ void AuthJavascript::check()
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
 
+    LOG << "check";
+
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_authManager->check();
     });
@@ -73,6 +78,8 @@ END_SLOT_WRAPPER
 void AuthJavascript::forceRefresh() {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
+
+    LOG << "Force refresh";
 
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_authManager->forceRefresh();
