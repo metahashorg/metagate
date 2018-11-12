@@ -46,8 +46,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
-void Auth::onLogin(const QString &login, const QString &password)
-{
+void Auth::onLogin(const QString &login, const QString &password) {
 BEGIN_SLOT_WRAPPER
     const QString request = makeLoginRequest(login, password);
     tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const SimpleClient::ServerException &error) {
@@ -60,62 +59,51 @@ BEGIN_SLOT_WRAPPER
                info = parseLoginResponse(QString::fromStdString(response));
                info.login = login;
                writeLoginInfo();
+               emit logined(info.login);
            });
-           emit logined(info.login);
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
     });
 END_SLOT_WRAPPER
 }
 
-void Auth::onLogout()
-{
+void Auth::onLogout() {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        doLogout();
+        info.clear();
+        writeLoginInfo();
+        emit logouted();
     });
     emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
 END_SLOT_WRAPPER
 }
 
-void Auth::onCheck()
-{
+void Auth::onCheck() {
 BEGIN_SLOT_WRAPPER
     emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
 END_SLOT_WRAPPER
 }
 
-void auth::Auth::onCallbackCall(Callback callback)
-{
+void auth::Auth::onCallbackCall(Callback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
 }
 
-void auth::Auth::onStarted()
-{
+void auth::Auth::onStarted() {
 BEGIN_SLOT_WRAPPER
     checkToken();
     emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
 END_SLOT_WRAPPER
 }
 
-void auth::Auth::onTimerEvent()
-{
+void auth::Auth::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     checkToken();
 END_SLOT_WRAPPER
 }
 
-void auth::Auth::doLogout()
-{
-    info.clear();
-    writeLoginInfo();
-    emit logouted();
-}
-
-void auth::Auth::readLoginInfo()
-{
+void auth::Auth::readLoginInfo() {
     QSettings settings(getStoragePath(), QSettings::IniFormat);
     settings.beginGroup("Login");
     info.login = settings.value("login", QString()).toString();
@@ -126,8 +114,7 @@ void auth::Auth::readLoginInfo()
     settings.endGroup();
 }
 
-void Auth::writeLoginInfo()
-{
+void Auth::writeLoginInfo() {
     QSettings settings(getStoragePath(), QSettings::IniFormat);
     settings.beginGroup("Login");
     settings.setValue("login", info.login);
@@ -178,8 +165,7 @@ void Auth::forceRefreshInternal() {
     });
 }
 
-void Auth::checkToken()
-{
+void Auth::checkToken() {
 BEGIN_SLOT_WRAPPER
     if (!info.isAuth)
         return;
@@ -209,19 +195,17 @@ END_SLOT_WRAPPER
 
 void Auth::onReEmit() {
 BEGIN_SLOT_WRAPPER
-    LOG << "auth Reemit";
+    LOG << "Auth Reemit";
     emit logined(info.login);
 END_SLOT_WRAPPER
 }
 
 template<typename Func>
-void Auth::runCallback(const Func &callback)
-{
+void Auth::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
-QString Auth::makeLoginRequest(const QString &login, const QString &password) const
-{
+QString Auth::makeLoginRequest(const QString &login, const QString &password) const {
     QJsonObject request;
     request.insert("id", "1");
     request.insert("version", "1.0.0");
@@ -237,8 +221,7 @@ QString Auth::makeLoginRequest(const QString &login, const QString &password) co
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
 
-QString Auth::makeCheckTokenRequest(const QString &token) const
-{
+QString Auth::makeCheckTokenRequest(const QString &token) const {
     QJsonObject request;
     request.insert("id", "1");
     request.insert("version", "1.0.0");
@@ -262,8 +245,7 @@ QString Auth::makeRefreshTokenRequest(const QString &token) const {
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
 
-LoginInfo Auth::parseLoginResponse(const QString &response) const
-{
+LoginInfo Auth::parseLoginResponse(const QString &response) const {
     LoginInfo result;
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
@@ -318,8 +300,7 @@ LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
     return result;
 }
 
-bool auth::Auth::parseCheckTokenResponse(const QString &response) const
-{
+bool auth::Auth::parseCheckTokenResponse(const QString &response) const {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json = jsonResponse.object();

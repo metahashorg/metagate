@@ -73,8 +73,6 @@ private slots:
 
 private:
 
-    void doLogout();
-
     void readLoginInfo();
 
     void writeLoginInfo();
