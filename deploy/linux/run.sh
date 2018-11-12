@@ -18,4 +18,4 @@ echo Qml2Imports = qml >> ./qt.conf
 
 chmod +x ./libexec/QtWebEngineProcess
 chmod +x ./MetaGate
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/" QT_QPA_PLATFORM_PLUGIN_PATH="./plugins/" ./MetaGate
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/" QT_QPA_PLATFORM_PLUGIN_PATH="./plugins/" ./MetaGate --remote-debugging-port=8081
