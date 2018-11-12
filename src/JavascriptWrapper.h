@@ -33,7 +33,7 @@ public:
 using ReturnCallback = std::function<void()>;
 
 public:
-    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -224,6 +224,8 @@ private slots:
 
 private:
 
+    void setPathsImpl(QString newPatch, QString newUserName);
+
     void savePrivateKey(QString requestId, QString privateKey, QString password);
 
     void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
@@ -270,6 +272,12 @@ private:
 
     void sendLogoutInfoToWss();
 
+public:
+
+    const QString walletDefaultPath;
+
+    const static QString defaultUsername;
+
 private:
 
     WebSocketClient &wssClient;
@@ -285,10 +293,6 @@ private:
     LastHtmlVersion lastHtmls;
 
     QString hardwareId;
-
-    QString walletDefaultPath;
-
-    const static QString defaultUsername;
 
     QString walletPath;
 

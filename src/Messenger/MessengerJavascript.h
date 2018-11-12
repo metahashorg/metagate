@@ -10,6 +10,12 @@
 
 struct TypedException;
 
+namespace auth {
+class Auth;
+}
+
+class JavascriptWrapper;
+
 namespace messenger {
 
 class Messenger;
@@ -21,7 +27,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m) {
         messenger = &m;
@@ -32,6 +38,11 @@ signals:
     void jsRunSig(QString jsString);
 
     void callbackCall(const Callback &callback);
+
+public slots:
+    void onLogined(const QString login);
+
+    void onLogouted();
 
 public slots:
 
@@ -111,6 +122,10 @@ public slots:
 
 private:
 
+    void setPathsImpl(QString newPatch, QString newUserName);
+
+private:
+
     template<typename... Args>
     void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 
@@ -123,6 +138,10 @@ private:
     MessengerWaletManager walletManager;
 
     QString walletPath;
+
+    QString defaultWalletPath;
+
+    QString defaultUserName;
 
 };
 

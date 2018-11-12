@@ -49,6 +49,8 @@ signals:
 
     void forceRefresh();
 
+    void reEmit();
+
 public slots:
 
     void onLogin(const QString &login, const QString &password);
@@ -58,6 +60,8 @@ public slots:
     void onCheck();
 
     void onForceRefresh();
+
+    void onReEmit();
 
 private slots:
 

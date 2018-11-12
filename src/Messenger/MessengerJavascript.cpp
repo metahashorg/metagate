@@ -16,9 +16,12 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include "auth/Auth.h"
+#include "JavascriptWrapper.h"
+
 namespace messenger {
 
-MessengerJavascript::MessengerJavascript(QObject *parent)
+MessengerJavascript::MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, QObject *parent)
     : QObject(parent)
 {
     CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
@@ -27,9 +30,15 @@ MessengerJavascript::MessengerJavascript(QObject *parent)
     CHECK(connect(this, &MessengerJavascript::deletedFromChannelSig, this, &MessengerJavascript::onDeletedFromChannel), "not connect onDeletedFromChannel");
     CHECK(connect(this, &MessengerJavascript::newMessegesChannelSig, this, &MessengerJavascript::onNewMessegesChannel), "not connect onNewMessegesChannel");
 
+    CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
+    CHECK(connect(&authManager, &auth::Auth::logouted, this, &MessengerJavascript::onLogouted), "not connect onLogouted");
+
     qRegisterMetaType<Callback>("Callback");
 
-    setPaths(getWalletPath(), "");
+    defaultWalletPath = jManager.walletDefaultPath;
+    defaultUserName = jManager.defaultUsername;
+
+    emit authManager.reEmit();
 }
 
 void MessengerJavascript::onCallbackCall(const std::function<void()> &callback) {
@@ -795,16 +804,19 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::setPaths(QString newPatch, QString /*newUserName*/) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "setMessengerPathsJs";
-
+void MessengerJavascript::setPathsImpl(QString newPatch, QString /*newUserName*/) {
     LOG << "Set messenger javascript path " << newPatch;
 
+    walletPath = makePath(newPatch, Wallet::WALLET_PATH_MTH);
+    CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+}
+
+void MessengerJavascript::setPaths(QString newPatch, QString newUserName) {
+BEGIN_SLOT_WRAPPER
+    /*const QString JS_NAME_RESULT = "setMessengerPathsJs";
     QString result;
     const TypedException exception = apiVrapper2([&, this]() {
-        walletPath = makePath(newPatch, Wallet::WALLET_PATH_MTH);
-        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        setPathsImpl(newPatch, newUserName);
 
         result = "Ok";
     });
@@ -812,7 +824,7 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         result = "Not ok";
     }
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);*/
 END_SLOT_WRAPPER
 }
 
@@ -829,6 +841,22 @@ void MessengerJavascript::lockWallet() {
 void MessengerJavascript::runJs(const QString &script) {
     LOG << "Javascript " << script;
     emit jsRunSig(script);
+}
+
+void MessengerJavascript::onLogined(const QString login) {
+BEGIN_SLOT_WRAPPER
+    if (!login.isEmpty()) {
+        setPathsImpl(makePath(defaultWalletPath, login), login);
+    } else {
+        setPathsImpl(makePath(defaultWalletPath, defaultUserName), defaultUserName);
+    }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::onLogouted() {
+BEGIN_SLOT_WRAPPER
+    setPathsImpl(makePath(defaultWalletPath, defaultUserName), defaultUserName);
+END_SLOT_WRAPPER
 }
 
 }

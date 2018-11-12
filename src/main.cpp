@@ -116,12 +116,6 @@ int main(int argc, char *argv[]) {
             authJavascript.setAuthManager(authManager);
             authManager.start();
 
-            messenger::MessengerJavascript messengerJavascript;
-
-            /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
-            messenger.start();
-            messengerJavascript.setMessenger(messenger);*/
-
             NsLookup nsLookup;
             nsLookup.start();
 
@@ -136,6 +130,12 @@ int main(int argc, char *argv[]) {
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
             transactionsManager.setJavascriptWrapper(jsWrapper);
+
+            messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
+
+            /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
+            messenger.start();
+            messengerJavascript.setMessenger(messenger);*/
 
             MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript);
             mainWindow.showExpanded();

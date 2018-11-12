@@ -16,6 +16,7 @@ namespace auth
 static QJsonDocument loginInfoToJson(const LoginInfo &info)
 {
     QJsonObject obj;
+    obj["login"] = info.login;
     obj["token"] = info.token;
     obj["is_auth"] = info.isAuth;
     obj["is_test"] = info.isTest;

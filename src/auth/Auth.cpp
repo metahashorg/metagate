@@ -34,6 +34,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Auth::logout, this, &Auth::onLogout), "not connect onLogout");
     CHECK(connect(this, &Auth::check, this, &Auth::onCheck), "not connect onCheck");
     CHECK(connect(this, &Auth::forceRefresh, this, &Auth::onForceRefresh), "not connect onForceRefresh");
+    CHECK(connect(this, &Auth::reEmit, this, &Auth::onReEmit), "not connect onReEmit");
 
     qRegisterMetaType<LoginInfo>("LoginInfo");
     qRegisterMetaType<TypedException>("TypedException");
@@ -203,6 +204,13 @@ BEGIN_SLOT_WRAPPER
             }
         }
     });
+END_SLOT_WRAPPER
+}
+
+void Auth::onReEmit() {
+BEGIN_SLOT_WRAPPER
+    LOG << "auth Reemit";
+    emit logined(info.login);
 END_SLOT_WRAPPER
 }
 

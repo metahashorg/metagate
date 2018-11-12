@@ -100,8 +100,9 @@ static QString makeMessageLogoutForWss()
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
-    : wssClient(wssClient)
+JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
+    : walletDefaultPath(getWalletPath())
+    , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
     , applicationVersion(applicationVersion)
@@ -110,10 +111,7 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
 
     lastHtmls = Uploader::getLastHtmlVersion();
 
-    walletDefaultPath = getWalletPath();
     LOG << "Wallets default path " << walletDefaultPath;
-
-    setPaths(walletDefaultPath, "");
 
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
     CHECK(connect(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
@@ -125,10 +123,12 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
-    CHECK(connect(&authManager, &auth::Auth::logouted, this, &JavascriptWrapper::onLogouted), "not connect onLogined");
+    CHECK(connect(&authManager, &auth::Auth::logouted, this, &JavascriptWrapper::onLogouted), "not connect onLogouted");
 
     qRegisterMetaType<TypedException>("TypedException");
     qRegisterMetaType<ReturnCallback>("ReturnCallback");
+
+    emit authManager.reEmit();
 
     sendAppInfoToWss("", true);
 }
@@ -144,11 +144,19 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
 }
 
 void JavascriptWrapper::onLogined(const QString login) {
-    emit setPaths(makePath(walletDefaultPath, login), login);
+BEGIN_SLOT_WRAPPER
+    if (!login.isEmpty()) {
+        setPathsImpl(makePath(walletDefaultPath, login), login);
+    } else {
+        setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
+    }
+END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::onLogouted() {
-    emit setPaths(makePath(walletDefaultPath, defaultUsername), defaultUsername);
+BEGIN_SLOT_WRAPPER
+    setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
+END_SLOT_WRAPPER
 }
 
 template<typename... Args>
@@ -1167,53 +1175,54 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
     return true;
 }
 
+void JavascriptWrapper::setPathsImpl(QString newPatch, QString newUserName) {
+    userName = newUserName;
+
+    emit setUserNameSig(newUserName);
+
+    if (walletPath == newPatch) {
+        return;
+    }
+
+    walletPath = newPatch;
+    CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+    createFolder(walletPath);
+
+    for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
+        fileSystemWatcher.removePath(folderInfo.walletPath.absolutePath());
+    }
+    folderWalletsInfos.clear();
+
+    auto setPathToWallet = [this](QString &curPath, const QString &suffix, const QString &name) {
+        curPath = makePath(walletPath, suffix);
+        createFolder(curPath);
+        folderWalletsInfos.emplace_back(curPath, name);
+        fileSystemWatcher.addPath(curPath);
+    };
+
+    setPathToWallet(walletPathEth, WALLET_PATH_ETH, "eth");
+    setPathToWallet(walletPathBtc, WALLET_PATH_BTC, "btc");
+    setPathToWallet(walletPathMth, Wallet::WALLET_PATH_MTH, "mhc");
+    setPathToWallet(walletPathTmh, WALLET_PATH_TMH, "tmh");
+
+    walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);
+    LOG << "Wallets path " << walletPath;
+
+    QDir oldTmhPath(walletPathOldTmh);
+    if (oldTmhPath.exists()) {
+        copyRecursively(walletPathOldTmh, walletPathTmh, true);
+        oldTmhPath.removeRecursively();
+    }
+
+    sendAppInfoToWss(newUserName, false);
+}
+
 void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "setPathsJs";
-
+    /*const QString JS_NAME_RESULT = "setPathsJs";
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
-        userName = newUserName;
-
-        emit setUserNameSig(newUserName);
-
-        if (walletPath == newPatch) {
-            result = "Ok";
-            return;
-        }
-
-        walletPath = newPatch;
-        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        createFolder(walletPath);
-
-        for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
-            fileSystemWatcher.removePath(folderInfo.walletPath.absolutePath());
-        }
-        folderWalletsInfos.clear();
-
-        auto setPathToWallet = [this](QString &curPath, const QString &suffix, const QString &name) {
-            curPath = makePath(walletPath, suffix);
-            createFolder(curPath);
-            folderWalletsInfos.emplace_back(curPath, name);
-            fileSystemWatcher.addPath(curPath);
-        };
-
-        setPathToWallet(walletPathEth, WALLET_PATH_ETH, "eth");
-        setPathToWallet(walletPathBtc, WALLET_PATH_BTC, "btc");
-        setPathToWallet(walletPathMth, Wallet::WALLET_PATH_MTH, "mhc");
-        setPathToWallet(walletPathTmh, WALLET_PATH_TMH, "tmh");
-
-        walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);
-        LOG << "Wallets path " << walletPath;
-
-        QDir oldTmhPath(walletPathOldTmh);
-        if (oldTmhPath.exists()) {
-            copyRecursively(walletPathOldTmh, walletPathTmh, true);
-            oldTmhPath.removeRecursively();
-        }
-
-        sendAppInfoToWss(newUserName, false);
-
+        setPathsImpl(newPatch, newUserName);
         result = "Ok";
     });
 
@@ -1221,7 +1230,7 @@ BEGIN_SLOT_WRAPPER
         result = "Not ok";
     }
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);*/
 END_SLOT_WRAPPER
 }
 
