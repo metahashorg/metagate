@@ -270,8 +270,6 @@ private:
 
     void sendAppInfoToWss(QString userName, bool force);
 
-    void sendLogoutInfoToWss();
-
 public:
 
     const QString walletDefaultPath;

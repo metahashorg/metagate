@@ -93,13 +93,6 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeMessageLogoutForWss()
-{
-    QJsonObject allJson;
-    QJsonDocument json(allJson);
-    return json.toJson(QJsonDocument::Compact);
-}
-
 JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
     : walletDefaultPath(getWalletPath())
     , wssClient(wssClient)
@@ -186,12 +179,6 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         emit wssClient.setHelloString(message);
         sendedUserName = newUserName;
     }
-}
-
-void JavascriptWrapper::sendLogoutInfoToWss()
-{
-    const QString message = makeMessageLogoutForWss();
-    emit wssClient.sendMessage(message);
 }
 
 void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
