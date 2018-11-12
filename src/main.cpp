@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
             WebSocketClient webSocketClient(getUrlToWss());
             webSocketClient.start();
 
-            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, QString::fromStdString(versionString));
+            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
             transactionsManager.setJavascriptWrapper(jsWrapper);
 
             MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript);

@@ -60,7 +60,7 @@ BEGIN_SLOT_WRAPPER
                info.login = login;
                writeLoginInfo();
            });
-           emit logined();
+           emit logined(info.login);
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
     });
@@ -154,7 +154,7 @@ void Auth::forceRefreshInternal() {
         }
         if (error.isSet()) {
             LOG << "Refresh token failed";
-            logout();
+            emit logout();
             QString content = QString::fromStdString(error.content);
             content.replace('\"', "\\\"");
             emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
@@ -163,12 +163,13 @@ void Auth::forceRefreshInternal() {
                 const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
                 if (!newLogin.isAuth) {
                     LOG << "Refresh token failed";
-                    logout();
+                    emit logout();
                 } else {
                     LOG << "Refresh token ok";
                     info.token = newLogin.token;
                     info.refresh = newLogin.refresh;
                     writeLoginInfo();
+                    emit logined(info.login);
                 }
             });
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);

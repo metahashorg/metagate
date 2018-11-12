@@ -89,8 +89,6 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
-    CHECK(connect(authJavascript.authManager(), SIGNAL(logouted()), &jsWrapper, SLOT(onLogouted())), "not connect onLogouted");
-
     qRegisterMetaType<WindowEvent>("WindowEvent");
 
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");

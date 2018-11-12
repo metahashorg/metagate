@@ -18,6 +18,10 @@ namespace transactions {
 class Transactions;
 }
 
+namespace auth {
+class Auth;
+}
+
 template<bool isLastArg, typename... Args>
 struct JsFunc;
 
@@ -29,7 +33,7 @@ public:
 using ReturnCallback = std::function<void()>;
 
 public:
-    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -52,7 +56,7 @@ signals:
     void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 public slots:
-    void onLogined();
+    void onLogined(const QString login);
 
     void onLogouted();
 
@@ -283,6 +287,8 @@ private:
     QString hardwareId;
 
     QString walletDefaultPath;
+
+    const static QString defaultUsername;
 
     QString walletPath;
 

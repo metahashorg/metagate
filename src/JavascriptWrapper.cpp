@@ -40,12 +40,15 @@
 #include "machine_uid.h"
 
 #include "transactions/Transactions.h"
+#include "auth/Auth.h"
 
 const static QString WALLET_PREV_PATH = ".metahash_wallets/";
 const static QString WALLET_PATH_ETH = "eth/";
 const static QString WALLET_PATH_BTC = "btc/";
 const static QString WALLET_PATH_TMH_OLD = "mth/";
 const static QString WALLET_PATH_TMH = "tmh/";
+
+const QString JavascriptWrapper::defaultUsername = "_unregistered";
 
 static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
     QJsonObject allJson;
@@ -97,7 +100,7 @@ static QString makeMessageLogoutForWss()
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const QString &applicationVersion, QObject */*parent*/)
+JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, const auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
     : wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
@@ -121,6 +124,9 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
 
     CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
 
+    CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
+    CHECK(connect(&authManager, &auth::Auth::logouted, this, &JavascriptWrapper::onLogouted), "not connect onLogined");
+
     qRegisterMetaType<TypedException>("TypedException");
     qRegisterMetaType<ReturnCallback>("ReturnCallback");
 
@@ -137,14 +143,12 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-void JavascriptWrapper::onLogined()
-{
-
+void JavascriptWrapper::onLogined(const QString login) {
+    emit setPaths(makePath(walletDefaultPath, login), login);
 }
 
-void JavascriptWrapper::onLogouted()
-{
-    LOG << "Logouted";
+void JavascriptWrapper::onLogouted() {
+    emit setPaths(makePath(walletDefaultPath, defaultUsername), defaultUsername);
 }
 
 template<typename... Args>
@@ -1165,7 +1169,6 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
 
 void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
 BEGIN_SLOT_WRAPPER
-    qDebug() << newPatch << newUserName;
     const QString JS_NAME_RESULT = "setPathsJs";
 
     Opt<QString> result;
