@@ -169,6 +169,7 @@ void Auth::checkToken() {
 BEGIN_SLOT_WRAPPER
     if (!info.isAuth)
         return;
+    LOG << "Check token1";
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
     tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
