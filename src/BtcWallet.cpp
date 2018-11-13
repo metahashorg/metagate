@@ -148,11 +148,7 @@ static std::vector<Element> greedyAlg(const std::vector<Element> &elements, cons
     std::vector<Element> result;
     Value currValue = 0;
     while (currValue < allValue && !sortedVect.empty()) {
-        auto foundIter = std::upper_bound(sortedVect.begin(), sortedVect.end(), Element(allValue - currValue));
-        auto foundIter2 = foundIter - 1;
-        if ((Value)foundIter2->outBalance == allValue - currValue) {
-            foundIter = foundIter2;
-        }
+        auto foundIter = std::lower_bound(sortedVect.begin(), sortedVect.end(), Element(allValue - currValue));
         if (foundIter == sortedVect.end()) {
             foundIter--;
         }
