@@ -5,7 +5,9 @@
 #include <QThread>
 #include <QtWebSockets/QWebSocket>
 
-class WebSocketClient : public QObject
+#include "TimerClass.h"
+
+class WebSocketClient : public TimerClass
 {
     Q_OBJECT
 public:
@@ -50,6 +52,12 @@ public slots:
 
     void onAddHelloString(QString message);
 
+private slots:
+
+    void onTimerEvent();
+
+    void onPong(quint64 elapsedTime, const QByteArray &payload);
+
 private:
 
     void sendMessagesInternal();
@@ -65,9 +73,9 @@ private:
 
     std::vector<QString> messageQueue;
 
-    QThread thread1;
-
     std::vector<QString> helloStrings;
+
+    time_point prevPongTime;
 };
 
 #endif // WEBSOCKETCLIENT_H

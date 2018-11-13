@@ -12,7 +12,7 @@
 #include <thread>
 
 WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
-    : QObject(parent)
+    : TimerClass(1min, parent)
 {
     qRegisterMetaType<QAbstractSocket::SocketState>();
     qRegisterMetaType<std::vector<QString>>();
@@ -34,6 +34,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         LOG << "Wss Web socket error " << m_webSocket.errorString();
     }), "not connect error");
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
+    CHECK(connect(&m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong), "not connect onPong");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
     CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
         LOG << "Wss client disconnected";
@@ -48,6 +49,10 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         m_webSocket.close();
     }), "not connect finished");
 
+    CHECK(connect(this, &WebSocketClient::timerEvent, this, &WebSocketClient::onTimerEvent), "not connect onTimerEvent");
+
+    prevPongTime = ::now();
+
     moveToThread(&thread1);
     m_webSocket.moveToThread(&thread1);
 
@@ -59,6 +64,24 @@ BEGIN_SLOT_WRAPPER
     m_webSocket.open(m_url);
     LOG << "Wss client onStarted. Url " << m_url.toString();
 END_SLOT_WRAPPER
+}
+
+void WebSocketClient::onTimerEvent() {
+BEGIN_SLOT_WRAPPER
+    LOG << "Wss check ping";
+    const time_point now = ::now();
+    if (std::chrono::duration_cast<seconds>(now - prevPongTime) >= 3min) {
+        LOG << "Wss close";
+        m_webSocket.close();
+    } else {
+        emit m_webSocket.ping();
+    }
+END_SLOT_WRAPPER
+}
+
+void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {
+    LOG << "Wss check pong";
+    prevPongTime = ::now();
 }
 
 WebSocketClient::~WebSocketClient() {
