@@ -1,6 +1,7 @@
 #include "JavascriptWrapper.h"
 
 #include <map>
+#include <fstream>
 
 #include <QApplication>
 
@@ -1526,6 +1527,17 @@ BEGIN_SLOT_WRAPPER
 
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     }
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::logTmp(QString log) {
+BEGIN_SLOT_WRAPPER
+    const QString logFile2 = makePath(QApplication::applicationDirPath(), "logTmp.txt");
+    std::ofstream log_file__;
+    log_file__.open(logFile2.toStdString(), std::ios_base::app);
+    const QDateTime now = QDateTime::currentDateTime();
+    const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
+    log_file__ << time << " " << log.toStdString() << std::endl;
 END_SLOT_WRAPPER
 }
 
