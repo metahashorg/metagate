@@ -39,6 +39,8 @@ public:
             return code != 0;
         }
 
+        const static int BAD_REQUEST_ERROR;
+
         int code = 0;
     };
 

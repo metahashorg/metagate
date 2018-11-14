@@ -140,13 +140,13 @@ void Auth::forceRefreshInternal() {
         if (info.token != token) {
             return;
         }
-        if (error.isSet()) {
+        if (error.isSet() && error.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
             LOG << "Refresh token failed";
             emit logout();
             QString content = QString::fromStdString(error.content);
             content.replace('\"', "\\\"");
             emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
-        } else {
+        } else if (!error.isSet()) {
             const TypedException exception = apiVrapper2([&] {
                 const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
                 if (!newLogin.isAuth) {
@@ -161,6 +161,8 @@ void Auth::forceRefreshInternal() {
                 }
             });
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+        } else {
+            CHECK(!error.isSet(), error.description);
         }
     });
 }
@@ -177,9 +179,9 @@ BEGIN_SLOT_WRAPPER
             return;
         }
 
-        if (error.isSet()) {
+        if (error.isSet() && error.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
             forceRefreshInternal();
-        } else {
+        } else if (!error.isSet()) {
             const TypedException exception = apiVrapper2([&] {
                 bool res = parseCheckTokenResponse(QString::fromStdString(response));
                 if (!res) {
@@ -189,6 +191,8 @@ BEGIN_SLOT_WRAPPER
             if (exception.isSet()) {
                 emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
             }
+        } else {
+            CHECK(!error.isSet(), error.description);
         }
     });
 END_SLOT_WRAPPER

@@ -17,6 +17,8 @@ const static QNetworkRequest::Attribute REQUEST_ID_FIELD = QNetworkRequest::Attr
 const static QNetworkRequest::Attribute TIME_BEGIN_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 1);
 const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 2);
 
+const int SimpleClient::ServerException::BAD_REQUEST_ERROR = QNetworkReply::ProtocolInvalidOperationError;
+
 SimpleClient::SimpleClient() {
     manager = std::make_unique<QNetworkAccessManager>(this);
     qRegisterMetaType<ReturnCallback>("ReturnCallback");
