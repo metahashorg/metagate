@@ -37,9 +37,14 @@ public:
     std::vector<Transaction> getPaymentsForAddressPending(const QString &address, const QString &currency,
                                                             bool asc) const;
 
+    std::vector<Transaction> getForgingPaymentsForAddress(const QString &address, const QString &currency,
+                                              qint64 offset, qint64 count, bool asc);
+
     Transaction getLastPaymentIsSetDelegate(const QString &address, const QString &currency,
                                             const QString &from, const QString &to,
                                             bool isInput, bool isDelegate);
+
+    Transaction getLastForgingTransaction(const QString &address, const QString &currency);
 
     void updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans);
     void removePaymentsForDest(const QString &address, const QString &currency);

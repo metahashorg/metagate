@@ -70,10 +70,22 @@ static const QString selectPaymentsForDestPending = "SELECT * FROM payments "
                                                         "AND status = 1 "
                                                         "ORDER BY ts %1, txid %1";
 
+static const QString selectForgingPaymentsForDest = "SELECT * FROM payments "
+                                                    "WHERE address = :address AND  currency = :currency "
+                                                    "AND type = 1 "
+                                                    "ORDER BY ts %1, txid %1 "
+                                                    "LIMIT :count OFFSET :offset";
+
 static const QString selectLastPaymentIsSetDelegate = "SELECT * FROM payments "
                                                             "WHERE address = :address AND  currency = :currency "
                                                             "AND ufrom = :ufrom AND uto = :uto AND isInput = :isInput AND isDelegate = :isDelegate "
                                                             "AND isSetDelegate = 1 "
+                                                            "ORDER BY ts DESC "
+                                                            "LIMIT 1";
+
+static const QString selectLastForgingTransaction = "SELECT * FROM payments "
+                                                            "WHERE address = :address AND  currency = :currency "
+                                                            "AND type = 1 "
                                                             "ORDER BY ts DESC "
                                                             "LIMIT 1";
 

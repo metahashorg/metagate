@@ -156,6 +156,21 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddressPending(con
     return res;
 }
 
+std::vector<transactions::Transaction> transactions::TransactionsDBStorage::getForgingPaymentsForAddress(const QString &address, const QString &currency, qint64 offset, qint64 count, bool asc)
+{
+    std::vector<Transaction> res;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectForgingPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+          query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    query.bindValue(":offset", offset);
+    query.bindValue(":count", count);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    createPaymentsList(query, res);
+    return res;
+}
+
 Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, bool isDelegate)
 {
     Transaction trans;
@@ -167,6 +182,36 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
     query.bindValue(":uto", to);
     query.bindValue(":isInput", isInput);
     query.bindValue(":isDelegate", isDelegate);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    if (query.next()) {
+        trans.id = query.value("id").toLongLong();
+        trans.currency = query.value("currency").toString();
+        trans.address = query.value("address").toString();
+        trans.tx = query.value("txid").toString();
+        trans.from = query.value("ufrom").toString();
+        trans.to = query.value("uto").toString();
+        trans.value = query.value("value").toString();
+        trans.data = query.value("data").toString();
+        trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
+        trans.fee = query.value("fee").toString();
+        trans.nonce = query.value("nonce").toLongLong();
+        trans.isInput = query.value("isInput").toBool();
+        trans.isSetDelegate = query.value("isSetDelegate").toBool();
+        trans.isDelegate = query.value("isDelegate").toBool();
+        trans.delegateValue = query.value("delegateValue").toString();
+        trans.delegateHash = query.value("delegateHash").toString();
+        trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
+    }
+    return trans;
+}
+
+Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &address, const QString &currency)
+{
+    Transaction trans;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectLastForgingTransaction), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         trans.id = query.value("id").toLongLong();
