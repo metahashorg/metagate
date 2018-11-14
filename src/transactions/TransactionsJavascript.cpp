@@ -374,6 +374,58 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         makeFunc(exception, currency, QJsonDocument());
     }
+    END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::getForgingTxsAll(QString address, QString currency, int from, int count, bool asc)
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetForgingTxsJs";
+
+    LOG << "get forging txs address " << address << " " << currency << " " << from;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit transactionsManager->getForgingTxs(address, currency, from, count, asc, [address, currency, makeFunc](const std::vector<Transaction> &txs, const TypedException &exception) {
+            LOG << "Get txs ok " << address << " " << currency << " " << txs.size();
+            makeFunc(exception, address, currency, txsToJson(txs));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, address, currency, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::getLastForgingTx(QString address, QString currency)
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetLastForgingTxJs";
+
+    LOG << "get forging tx address " << address << " " << currency;
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit transactionsManager->getLastForgingTx(address, currency, [address, currency, makeFunc](const Transaction &txs, const TypedException &exception) {
+            LOG << "Get txs ok " << address << " " << currency << " " << txs.tx;
+            makeFunc(exception, address, currency, txInfoToJson(txs));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, address, currency, QJsonDocument());
+    }
 END_SLOT_WRAPPER
 }
 

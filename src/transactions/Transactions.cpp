@@ -35,6 +35,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2), "not connect onGetTxs2");
     CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
     CHECK(connect(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2), "not connect onGetTxsAll2");
+    CHECK(connect(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs), "not connect onGetForgingTxs");
+    CHECK(connect(this, &Transactions::getLastForgingTx, this, &Transactions::onGetLastForgingTx), "not connect onGetLastForgingTx");
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
     CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
@@ -353,6 +355,27 @@ BEGIN_SLOT_WRAPPER
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getPaymentsForCurrency(currency, from, count, asc);
+    });
+    runCallback(std::bind(callback, txs, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<Transaction> txs;
+    const TypedException exception = apiVrapper2([&, this] {
+        txs = db.getForgingPaymentsForAddress(address, currency, from, count, asc);
+    });
+    runCallback(std::bind(callback, txs, exception));
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback)
+{
+BEGIN_SLOT_WRAPPER
+    Transaction txs;
+    const TypedException exception = apiVrapper2([&, this] {
+        txs = db.getLastForgingTransaction(address, currency);
     });
     runCallback(std::bind(callback, txs, exception));
 END_SLOT_WRAPPER

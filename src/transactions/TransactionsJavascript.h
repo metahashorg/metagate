@@ -16,7 +16,7 @@ struct Transaction;
 
 class TransactionsJavascript
     : public QObject
-{    
+{
     Q_OBJECT
 public:
 
@@ -77,6 +77,10 @@ public slots:
     Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 
     Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
+
+    Q_INVOKABLE void getForgingTxsAll(QString address, QString currency, int from, int count, bool asc);
+
+    Q_INVOKABLE void getLastForgingTx(QString address, QString currency);
 
     Q_INVOKABLE void calcBalance(QString address, QString currency);
 
