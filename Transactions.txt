@@ -38,9 +38,9 @@ txsGetTxsJs(address, currency, result, errorNum, errorMessage)
 type == simple, delegate, forging
 
 Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
-Получение транзакций
-fromTx транзакция, с которой продолжать поиск. Если пустая, то с первой (или с последней, в зависимости от параметра asc) транзакции
+Получение транзакций в порядке возрастания или убывания
 asc порядок сортировки
+Выдаются транзакции, начиная с порядкового номера from (в зависимости от сортировки) и количеством count
 count == -1 выдать все
 Результат вернется в функцию
 txsGetTxs2Js(address, currency, result, errorNum, errorMessage)
@@ -87,6 +87,19 @@ Q_INVOKABLE void clearDb(QString currency);
 После вызова функции необходимо перезагрузить приложение
 Результат вернется в функцию
 txsClearDbResultJs(currency, "Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void getForgingTxsAll(QString address, QString currency, int from, int count, bool asc)
+Получение транзакций типа FORGING по address и currency
+asc порядок сортировки
+Выдаются транзакции, начиная с порядкового номера from (в зависимости от сортировки) и количеством count
+count == -1 выдать все
+Результат вернется в функцию
+txsGetForgingTxsJs(address, currency, result, errorNum, errorMessage)
+
+Q_INVOKABLE void getLastForgingTx(QString address, QString currency)
+Получить последнюю транзакцию с типом FORGING по address и currency
+Результат вернется в функцию
+txsGetLastForgingTxJs(address, currency, result, errorNum, errorMessage)
 
 
 
