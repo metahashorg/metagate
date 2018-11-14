@@ -72,7 +72,7 @@ static const QString selectPaymentsForDestPending = "SELECT * FROM payments "
 
 static const QString selectForgingPaymentsForDest = "SELECT * FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "
-                                                    "AND type = 1 "
+                                                    "AND type = %2 "
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 
@@ -85,7 +85,7 @@ static const QString selectLastPaymentIsSetDelegate = "SELECT * FROM payments "
 
 static const QString selectLastForgingTransaction = "SELECT * FROM payments "
                                                             "WHERE address = :address AND  currency = :currency "
-                                                            "AND type = 1 "
+                                                            "AND type = %1 "
                                                             "ORDER BY ts DESC "
                                                             "LIMIT 1";
 
@@ -94,7 +94,7 @@ static const QString updatePaymentForAddress = "UPDATE payments "
                                                     "    value = :value, ts = :ts, data = :data, fee = :fee, nonce = :nonce, "
                                                     "    isSetDelegate = :isSetDelegate, isDelegate = :isDelegate, "
                                                     "    delegateValue = :delegateValue, delegateHash = :delegateHash, "
-                                                    "    status = :status "
+                                                    "    status = :status, type = :type, blockNumber = :blockNumber "
                                                     "WHERE currency = :currency AND txid = :txid "
                                                     "    AND address = :address AND isInput = :isInput";
 

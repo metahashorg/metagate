@@ -71,6 +71,8 @@ protected:
     virtual void createDatabase() final;
 
 private:
+    void setTransactionFromQuery(QSqlQuery &query, Transaction &trans) const;
+
     void createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const;
 
 };

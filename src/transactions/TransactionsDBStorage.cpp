@@ -160,7 +160,7 @@ std::vector<transactions::Transaction> transactions::TransactionsDBStorage::getF
 {
     std::vector<Transaction> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectForgingPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+    CHECK(query.prepare(selectForgingPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")).arg(Transaction::FORGING)),
           query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
@@ -175,7 +175,7 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
 {
     Transaction trans;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectLastPaymentIsSetDelegate), query.lastError().text().toStdString());
+    CHECK(query.prepare(selectLastPaymentIsSetDelegate.arg(Transaction::FORGING)), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":ufrom", from);
@@ -184,23 +184,7 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
     query.bindValue(":isDelegate", isDelegate);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
-        trans.id = query.value("id").toLongLong();
-        trans.currency = query.value("currency").toString();
-        trans.address = query.value("address").toString();
-        trans.tx = query.value("txid").toString();
-        trans.from = query.value("ufrom").toString();
-        trans.to = query.value("uto").toString();
-        trans.value = query.value("value").toString();
-        trans.data = query.value("data").toString();
-        trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
-        trans.fee = query.value("fee").toString();
-        trans.nonce = query.value("nonce").toLongLong();
-        trans.isInput = query.value("isInput").toBool();
-        trans.isSetDelegate = query.value("isSetDelegate").toBool();
-        trans.isDelegate = query.value("isDelegate").toBool();
-        trans.delegateValue = query.value("delegateValue").toString();
-        trans.delegateHash = query.value("delegateHash").toString();
-        trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
+        setTransactionFromQuery(query, trans);
     }
     return trans;
 }
@@ -214,23 +198,7 @@ Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &addr
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
-        trans.id = query.value("id").toLongLong();
-        trans.currency = query.value("currency").toString();
-        trans.address = query.value("address").toString();
-        trans.tx = query.value("txid").toString();
-        trans.from = query.value("ufrom").toString();
-        trans.to = query.value("uto").toString();
-        trans.value = query.value("value").toString();
-        trans.data = query.value("data").toString();
-        trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
-        trans.fee = query.value("fee").toString();
-        trans.nonce = query.value("nonce").toLongLong();
-        trans.isInput = query.value("isInput").toBool();
-        trans.isSetDelegate = query.value("isSetDelegate").toBool();
-        trans.isDelegate = query.value("isDelegate").toBool();
-        trans.delegateValue = query.value("delegateValue").toString();
-        trans.delegateHash = query.value("delegateHash").toString();
-        trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
+        setTransactionFromQuery(query, trans);
     }
     return trans;
 }
@@ -256,6 +224,8 @@ void TransactionsDBStorage::updatePayment(const QString &address, const QString 
     query.bindValue(":delegateValue", trans.delegateValue);
     query.bindValue(":delegateHash", trans.delegateHash);
     query.bindValue(":status", trans.status);
+    query.bindValue(":type", trans.type);
+    query.bindValue(":blockNumber", static_cast<qint64>(trans.blockNumber));
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
@@ -480,29 +450,34 @@ void TransactionsDBStorage::createDatabase()
     createIndex(createTrackedUniqueIndex);
 }
 
+void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transaction &trans) const
+{
+    trans.id = query.value("id").toLongLong();
+    trans.currency = query.value("currency").toString();
+    trans.address = query.value("address").toString();
+    trans.tx = query.value("txid").toString();
+    trans.from = query.value("ufrom").toString();
+    trans.to = query.value("uto").toString();
+    trans.value = query.value("value").toString();
+    trans.data = query.value("data").toString();
+    trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
+    trans.fee = query.value("fee").toString();
+    trans.nonce = query.value("nonce").toLongLong();
+    trans.isInput = query.value("isInput").toBool();
+    trans.isSetDelegate = query.value("isSetDelegate").toBool();
+    trans.isDelegate = query.value("isDelegate").toBool();
+    trans.delegateValue = query.value("delegateValue").toString();
+    trans.delegateHash = query.value("delegateHash").toString();
+    trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
+    trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
+    trans.blockNumber = query.value("blockNumber").toLongLong();
+}
+
 void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const
 {
     while (query.next()) {
         Transaction trans;
-        trans.id = query.value("id").toLongLong();
-        trans.currency = query.value("currency").toString();
-        trans.address = query.value("address").toString();
-        trans.tx = query.value("txid").toString();
-        trans.from = query.value("ufrom").toString();
-        trans.to = query.value("uto").toString();
-        trans.value = query.value("value").toString();
-        trans.data = query.value("data").toString();
-        trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
-        trans.fee = query.value("fee").toString();
-        trans.nonce = query.value("nonce").toLongLong();
-        trans.isInput = query.value("isInput").toBool();
-        trans.isSetDelegate = query.value("isSetDelegate").toBool();
-        trans.isDelegate = query.value("isDelegate").toBool();
-        trans.delegateValue = query.value("delegateValue").toString();
-        trans.delegateHash = query.value("delegateHash").toString();
-        trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
-        trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
-        trans.blockNumber = query.value("blockNumber").toLongLong();
+        setTransactionFromQuery(query, trans);
         payments.push_back(trans);
     }
 }

@@ -382,7 +382,7 @@ void TransactionsJavascript::getForgingTxsAll(QString address, QString currency,
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
-    const QString JS_NAME_RESULT = "txsGetTxs2Js";
+    const QString JS_NAME_RESULT = "txsGetForgingTxsJs";
 
     LOG << "get forging txs address " << address << " " << currency << " " << from;
 
