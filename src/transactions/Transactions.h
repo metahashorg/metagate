@@ -270,6 +270,8 @@ private:
     std::map<TransactionHash, SendedTransactionWatcher> sendTxWathcers;
 
     std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
+
+    seconds timeout;
 };
 
 }

@@ -104,6 +104,8 @@ private:
     QString authUrl;
     QString hardwareId;
     LoginInfo info;
+
+    seconds timeout;
 };
 
 }

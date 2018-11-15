@@ -138,7 +138,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     sendMessagePost(url, message, callback, true, timeout);
 }
 
-void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
+void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
     const std::string requestId = std::to_string(id++);
 
     startTimer1();
@@ -147,9 +147,23 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     addRequestId(request, requestId);
+    if (isTimeout) {
+        const time_point time = ::now();
+        addBeginTime(request, time);
+        addTimeout(request, timeout);
+    }
     QNetworkReply* reply = manager->get(request);
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
+    requests[requestId] = reply;
     //LOG << "get message sended";
+}
+
+void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
+    sendMessageGet(url, callback, false, milliseconds(0));
+}
+
+void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout) {
+    sendMessageGet(url, callback, true, timeout);
 }
 
 void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {

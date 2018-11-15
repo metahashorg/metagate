@@ -123,12 +123,14 @@ void MainWindow::onUpdateMhsReferences() {
 BEGIN_SLOT_WRAPPER
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("dns/metahash"), "dns/metahash setting not found");
+    CHECK(settings.contains("timeouts_sec/dns_metahash"), "timeouts_sec setting not found");
+    const seconds timeout(settings.value("timeouts_sec/dns_metahash").toInt());
 
     client.sendMessageGet(QUrl(settings.value("dns/metahash").toString()), [this](const std::string &response, const SimpleClient::ServerException &exception) {
         LOG << "Set mappings mh " << QString::fromStdString(response).simplified();
         CHECK(!exception.isSet(), "Server error: " + exception.description);
         pagesMappings.setMappingsMh(QString::fromStdString(response));
-    });
+    }, timeout);
 
 END_SLOT_WRAPPER
 }

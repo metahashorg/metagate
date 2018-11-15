@@ -101,6 +101,8 @@ private:
 
     QTimer qtimer;
 
+    seconds timeout;
+
 private:
 
     static std::mutex lastVersionMut;

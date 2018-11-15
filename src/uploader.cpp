@@ -106,6 +106,10 @@ Uploader::Uploader(MainWindow *mainWindow)
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect");
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect");
 
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("timeouts_sec/uploader"), "timeouts not found");
+    timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
+
     const milliseconds msTimer = 10s;
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
@@ -215,11 +219,11 @@ BEGIN_SLOT_WRAPPER
 
         LOG << "download html";
         versionHtmlForUpdate = version;
-        client.sendMessageGet(url, interfaceGetCallback);
+        client.sendMessageGet(url, interfaceGetCallback); // Без таймаута, так как загрузка большого бинарника
         id++;
     };
 
-    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls);
+    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls, timeout);
     id++;
 
     auto callbackAppVersion = [this, UPDATE_API](const std::string &result, const SimpleClient::ServerException &exception) {
@@ -264,12 +268,12 @@ BEGIN_SLOT_WRAPPER
         };
 
         LOG << "New app version download";
-        client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback);
+        client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback); // Без таймаута, так как загрузка большого бинарника
 
         versionForUpdate = version;
     };
 
-    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion);
+    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion, timeout);
     id++;
 END_SLOT_WRAPPER
 }

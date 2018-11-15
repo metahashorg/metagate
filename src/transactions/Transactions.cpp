@@ -3,8 +3,11 @@
 #include <functional>
 using namespace std::placeholders;
 
+#include <QSettings>
+
 #include "check.h"
 #include "SlotWrapper.h"
+#include "Paths.h"
 
 #include "NsLookup.h"
 #include "JavascriptWrapper.h"
@@ -64,6 +67,10 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     qRegisterMetaType<SendParameters>("SendParameters");
 
     qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
+
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("timeouts_sec/transactions"), "timeout not found");
+    timeout = seconds(settings.value("timeouts_sec/transactions").toInt());
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
@@ -169,7 +176,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
             LOG << "Balance " << address << " not confirmed";
             const QString requestForTxs = makeGetHistoryRequest(address, false, 0);
 
-            client.sendMessagePost(server, requestForTxs, std::bind(getAllHistoryCallback, balance, _1, _2), 1s);
+            client.sendMessagePost(server, requestForTxs, std::bind(getAllHistoryCallback, balance, _1, _2), timeout);
         }
     };
 
@@ -181,7 +188,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
         const QString requestBalance = makeGetBalanceRequest(address);
 
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), 1s);
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, txs, server, _1, _2), timeout);
     };
 
     const auto getBalanceCallback = [this, balanceStruct, servStruct, address, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback, pendingTxs, processPendingTx](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
@@ -207,14 +214,14 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
                 const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
                 const QString requestForTxs = makeGetHistoryRequest(address, true, requestCountTxs);
 
-                client.sendMessagePost(balanceStruct->server, requestForTxs, std::bind(getHistoryCallback, balanceStruct->server, _1, _2), 1s);
+                client.sendMessagePost(balanceStruct->server, requestForTxs, std::bind(getHistoryCallback, balanceStruct->server, _1, _2), timeout);
             } else {
                 updateBalanceTime(currency, servStruct);
             }
 
             for (const QString &txHash: pendingTxs) {
                 const QString message = makeGetTxRequest(txHash);
-                client.sendMessagePost(balanceStruct->server, message, processPendingTx);
+                client.sendMessagePost(balanceStruct->server, message, processPendingTx, timeout);
             }
         } else if (balanceStruct->countResponses == 0 && balanceStruct->server.isEmpty()) {
             throwErr(server.toStdString() + ". " + exception.description + ". " + exception.content);
@@ -223,7 +230,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     const QString requestBalance = makeGetBalanceRequest(address);
     for (const QString &server: servers) {
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), 1s);
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), timeout);
     }
 }
 
@@ -430,7 +437,7 @@ BEGIN_SLOT_WRAPPER
                     }
                 }
                 found->second.returnServer(server);
-            });
+            }, timeout);
         }
 
         if (watcher.isTimeout(now)) {
@@ -483,7 +490,7 @@ BEGIN_SLOT_WRAPPER
                     servResp->isSended = true;
                 });
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
-            });
+            }, timeout);
         }
     });
 END_SLOT_WRAPPER
@@ -531,7 +538,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString requestBalance = makeGetBalanceRequest(from);
     for (const QString &server: servers) {
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), 1s);
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), timeout);
     }
 END_SLOT_WRAPPER
 }
@@ -552,7 +559,7 @@ BEGIN_SLOT_WRAPPER
                 tx = parseGetTxResponse(QString::fromStdString(response), "", "");
             });
             runCallback(std::bind(callback, tx, exception));
-        });
+        }, timeout);
     });
 
     if (exception.isSet()) {

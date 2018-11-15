@@ -22,8 +22,11 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     , javascriptWrapper(javascriptWrapper)
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("servers/auth"), "server not found");
     authUrl = settings.value("servers/auth").toString();
     hardwareId = QString::fromStdString(::getMachineUid());
+    CHECK(settings.contains("timeouts_sec/auth"), "timeout not found");
+    timeout = seconds(settings.value("timeouts_sec/auth").toInt());
 
     readLoginInfo();
 
@@ -63,7 +66,7 @@ BEGIN_SLOT_WRAPPER
            });
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
-    });
+    }, timeout);
 END_SLOT_WRAPPER
 }
 
@@ -164,7 +167,7 @@ void Auth::forceRefreshInternal() {
         } else {
             CHECK(!error.isSet(), error.description);
         }
-    });
+    }, timeout);
 }
 
 void Auth::checkToken() {
@@ -194,7 +197,7 @@ BEGIN_SLOT_WRAPPER
         } else {
             CHECK(!error.isSet(), error.description);
         }
-    });
+    }, timeout);
 END_SLOT_WRAPPER
 }
 

@@ -63,6 +63,7 @@ public:
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
+    void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
     void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
 
@@ -87,6 +88,7 @@ private Q_SLOTS:
 private:
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
+    void sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
     template<class Callbacks, typename... Message>
     void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);
