@@ -15,6 +15,8 @@ struct LoginInfo
     QString refresh = QString();
     bool isAuth = false;
     bool isTest = false;
+    seconds expire;
+    time_point saveTime;
 
     void clear()
     {
@@ -72,6 +74,8 @@ private slots:
     void onTimerEvent();
 
 private:
+
+    void logoutImpl();
 
     void readLoginInfo();
 

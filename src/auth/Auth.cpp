@@ -73,12 +73,16 @@ END_SLOT_WRAPPER
 void Auth::onLogout() {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        info.clear();
-        writeLoginInfo();
-        emit logouted();
+        logoutImpl();
     });
     emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
 END_SLOT_WRAPPER
+}
+
+void Auth::logoutImpl() {
+    info.clear();
+    writeLoginInfo();
+    emit logouted();
 }
 
 void Auth::onCheck() {
@@ -114,6 +118,7 @@ void auth::Auth::readLoginInfo() {
     info.refresh = settings.value("refresh", QString()).toString();
     info.isAuth = settings.value("isAuth", false).toBool();
     info.isTest = settings.value("isTest", false).toBool();
+    info.expire = seconds(settings.value("expire", 0).toInt());
     settings.endGroup();
 }
 
@@ -125,6 +130,7 @@ void Auth::writeLoginInfo() {
     settings.setValue("refresh", info.refresh);
     settings.setValue("isAuth", info.isAuth);
     settings.setValue("isTest", info.isTest);
+    settings.setValue("expire", (int)info.expire.count());
     settings.endGroup();
 }
 
@@ -145,7 +151,7 @@ void Auth::forceRefreshInternal() {
         }
         if (error.isSet() && error.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
             LOG << "Refresh token failed";
-            emit logout();
+            logoutImpl();
             QString content = QString::fromStdString(error.content);
             content.replace('\"', "\\\"");
             emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
@@ -154,11 +160,14 @@ void Auth::forceRefreshInternal() {
                 const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
                 if (!newLogin.isAuth) {
                     LOG << "Refresh token failed";
-                    emit logout();
+                    logoutImpl();
                 } else {
                     LOG << "Refresh token ok";
                     info.token = newLogin.token;
                     info.refresh = newLogin.refresh;
+                    info.expire = newLogin.expire;
+                    info.saveTime = newLogin.saveTime;
+                    info.isAuth = true;
                     writeLoginInfo();
                     emit logined(info.login);
                 }
@@ -172,9 +181,16 @@ void Auth::forceRefreshInternal() {
 
 void Auth::checkToken() {
 BEGIN_SLOT_WRAPPER
-    if (!info.isAuth)
+    if (!info.isAuth) {
         return;
+    }
     LOG << "Check token1";
+    const time_point now = ::now();
+    if (now - info.saveTime >= info.expire - minutes(1)) {
+        LOG << "Token expire";
+        forceRefreshInternal();
+        return;
+    }
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
     tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
@@ -255,6 +271,8 @@ QString Auth::makeRefreshTokenRequest(const QString &token) const {
 
 LoginInfo Auth::parseLoginResponse(const QString &response) const {
     LoginInfo result;
+    result.saveTime = ::now();
+
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();
@@ -277,6 +295,9 @@ LoginInfo Auth::parseLoginResponse(const QString &response) const {
     CHECK(json.contains("is_test_user") && json.value("is_test_user").isBool(), "Incorrect json: is_test_user field not found");
     result.isTest = json.value("is_test_user").toBool();
 
+    CHECK(json.contains("expire") && json.value("expire").isDouble(), "Incorrect json: expire field not found");
+    result.expire = seconds(json.value("expire").toInt());
+
     result.isAuth = !result.token.isEmpty();
 
     return result;
@@ -284,6 +305,7 @@ LoginInfo Auth::parseLoginResponse(const QString &response) const {
 
 LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
     LoginInfo result;
+    result.saveTime = ::now();
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();
@@ -302,6 +324,9 @@ LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
 
     CHECK(json.contains("access") && json.value("access").isString(), "Incorrect json: access field not found");
     result.token = json.value("access").toString();
+
+    CHECK(json.contains("expire") && json.value("expire").isDouble(), "Incorrect json: expire field not found");
+    result.expire = seconds(json.value("expire").toInt());
 
     result.isAuth = !result.token.isEmpty();
 
