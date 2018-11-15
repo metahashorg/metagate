@@ -24,6 +24,8 @@ const static QString NODES_FILE = "nodes.txt";
 
 const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
+const static std::string CURRENT_VERSION = "v2";
+
 const milliseconds UPDATE_PERIOD = days(1);
 
 NsLookup::NsLookup(QObject *parent)
@@ -43,16 +45,9 @@ NsLookup::NsLookup(QObject *parent)
     settings.endArray();
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
-    const system_time_point lastFill = fillNodesFromFile(savedNodesPath);
+    const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
     const system_time_point now = system_now();
     milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
-    bool isNotFull = false;
-    for (const NodeType &node: nodes) {
-        if (allNodesForTypes.find(node.type) == allNodesForTypes.end()) {
-            isNotFull = true;
-            break;
-        }
-    }
     if (lastFill - now >= hours(1)) {
         // Защита от перевода времени назад
         passedTime = UPDATE_PERIOD;
@@ -62,7 +57,7 @@ NsLookup::NsLookup(QObject *parent)
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect finished");
 
     milliseconds msTimer;
-    if (passedTime >= UPDATE_PERIOD || isNotFull) {
+    if (passedTime >= UPDATE_PERIOD) {
         msTimer = 1ms;
     } else {
         msTimer = UPDATE_PERIOD - passedTime;
@@ -113,7 +108,7 @@ void NsLookup::finalizeLookup() {
     allNodes.swap(allNodesNew);
     allNodesForTypes.swap(allNodesForTypesNew);
     sortAll();
-    saveToFile(savedNodesPath, system_now());
+    saveToFile(savedNodesPath, system_now(), nodes);
 
     const time_point stopScan = ::now();
     LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
@@ -235,15 +230,37 @@ static void createSymlink(const QString &file) {
     QFile::link(file, symlink);
 }
 
-system_time_point NsLookup::fillNodesFromFile(const QString &file) {
+static std::string calcHashNodes(const std::vector<NodeType> &expectedNodes) {
+    std::vector<NodeType> copyNodes = expectedNodes;
+    std::sort(copyNodes.begin(), copyNodes.end(), [](const NodeType &first, const NodeType &second) {
+        return first.type < second.type;
+    });
+    const std::string strNodes = std::accumulate(copyNodes.begin(), copyNodes.end(), std::string(), [](const std::string &a, const NodeType &b) {
+        return a + b.type.toStdString() + b.node.toStdString() + b.port.toStdString();
+    });
+    return QString(QCryptographicHash::hash(QString::fromStdString(strNodes).toUtf8(), QCryptographicHash::Md5).toHex()).toStdString();
+}
+
+system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::vector<NodeType> &expectedNodes) {
     QFile inputFile(file);
     if(!inputFile.open(QIODevice::ReadOnly)) {
         return intToSystemTimePoint(0);
     }
     QTextStream in(&inputFile);
     CHECK(!in.atEnd(), "Incorrect file " + file.toStdString());
-    const std::string firstLineStr = in.readLine().toStdString();
-    const system_time_point timePoint = intToSystemTimePoint(std::stoull(firstLineStr));
+    const std::string versionStr = in.readLine().toStdString();
+    if (versionStr != CURRENT_VERSION) {
+        return intToSystemTimePoint(0);
+    }
+
+    const std::string hashNodes = calcHashNodes(expectedNodes);
+    const std::string hashNodesStr = in.readLine().toStdString();
+    if (hashNodes != hashNodesStr) {
+        return intToSystemTimePoint(0);
+    }
+
+    const std::string timePointStr = in.readLine().toStdString();
+    const system_time_point timePoint = intToSystemTimePoint(std::stoull(timePointStr));
     while (!in.atEnd()) {
         const QString line = in.readLine();
         if (!line.isNull() && !line.isEmpty()) {
@@ -270,8 +287,10 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file) {
     return timePoint;
 }
 
-void NsLookup::saveToFile(const QString &file, const system_time_point &tp) {
+void NsLookup::saveToFile(const QString &file, const system_time_point &tp, const std::vector<NodeType> &expectedNodes) {
     std::string content;
+    content += CURRENT_VERSION + "\n";
+    content += calcHashNodes(expectedNodes) + "\n";
     content += std::to_string(systemTimePointToInt(tp)) + "\n";
     for (const auto &element1: allNodesForTypes) {
         for (const NodeInfo &node: element1.second) {

@@ -65,9 +65,9 @@ private:
 
     void sortAll();
 
-    system_time_point fillNodesFromFile(const QString &file);
+    system_time_point fillNodesFromFile(const QString &file, const std::vector<NodeType> &expectedNodes);
 
-    void saveToFile(const QString &file, const system_time_point &tp);
+    void saveToFile(const QString &file, const system_time_point &tp, const std::vector<NodeType> &expectedNodes);
 
     void continueResolve();
 
