@@ -91,7 +91,7 @@ private:
     template<class Callbacks, typename... Message>
     void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);
 
-    void startTimer();
+    void startTimer1();
 
 private:
     std::unique_ptr<QNetworkAccessManager> manager;

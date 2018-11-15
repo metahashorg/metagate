@@ -101,7 +101,7 @@ private:
     template<class Callbacks, typename... Message>
     void runCallback(Callbacks &callbacks, const int id, Message&&... messages);
 
-    void startTimer();
+    void startTimer1();
 
 private:
     std::map<int, ClientCallback> callbacks;

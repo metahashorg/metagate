@@ -33,7 +33,7 @@ void SimpleClient::moveToThread(QThread *thread) {
     QObject::moveToThread(thread);
 }
 
-void SimpleClient::startTimer() {
+void SimpleClient::startTimer1() {
     if (timer == nullptr) {
         timer = new QTimer();
         CHECK(connect(timer, SIGNAL(timeout()), this, SLOT(onTimerEvent())), "not connect timeout");
@@ -113,7 +113,7 @@ END_SLOT_WRAPPER
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
     const std::string requestId = std::to_string(id++);
 
-    startTimer();
+    startTimer1();
 
     callbacks_[requestId] = callback;
     QNetworkRequest request(url);
@@ -141,7 +141,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
     const std::string requestId = std::to_string(id++);
 
-    startTimer();
+    startTimer1();
 
     callbacks_[requestId] = callback;
     QNetworkRequest request(url);
@@ -155,7 +155,7 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
 void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {
     const std::string requestId = std::to_string(id++);
 
-    startTimer();
+    startTimer1();
 
     pingCallbacks_[requestId] = std::bind(callback, address, _1, _2);
     QNetworkRequest request(address);

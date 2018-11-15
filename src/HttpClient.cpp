@@ -21,7 +21,7 @@ void HttpSimpleClient::moveToThread(QThread *thread)
     QObject::moveToThread(thread);
 }
 
-void HttpSimpleClient::startTimer()
+void HttpSimpleClient::startTimer1()
 {
     if (timer == nullptr) {
         timer = new QTimer();
@@ -90,7 +90,7 @@ BEGIN_SLOT_WRAPPER
 
 void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout)
 {
-    startTimer();
+    startTimer1();
 
     std::unique_ptr<HttpSocket> socket(new HttpSocket(url, message));
     callbacks[id] = callback;
