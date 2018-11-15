@@ -175,7 +175,7 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
 {
     Transaction trans;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectLastPaymentIsSetDelegate.arg(Transaction::FORGING)), query.lastError().text().toStdString());
+    CHECK(query.prepare(selectLastPaymentIsSetDelegate), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":ufrom", from);
@@ -193,7 +193,7 @@ Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &addr
 {
     Transaction trans;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectLastForgingTransaction), query.lastError().text().toStdString());
+    CHECK(query.prepare(selectLastForgingTransaction.arg(Transaction::FORGING)), query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
