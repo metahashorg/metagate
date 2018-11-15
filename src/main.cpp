@@ -74,8 +74,6 @@ int main(int argc, char *argv[]) {
     try {
         qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1));
 
-        initializeAllPaths();
-
         for (int i = 1; i < argc; i++) {
             if (argv[i] == std::string("--version")) {
                 std::cout << VERSION_STRING << std::endl;
@@ -92,6 +90,7 @@ int main(int argc, char *argv[]) {
         QApplication app(argc, argv);
         initLog();
         InitOpenSSL();
+        initializeAllPaths();
 
         /*tests2();
         return 0;*/

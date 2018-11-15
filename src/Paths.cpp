@@ -3,6 +3,7 @@
 #include <QStandardPaths>
 #include <QApplication>
 #include <QSettings>
+#include <QMessageBox>
 
 #include <mutex>
 
@@ -117,15 +118,31 @@ static void initializeSettingsPath() {
     const QString pagesPath = getPagesPath();
 
     const auto replaceSettings = [&] {
+        bool isNotify = false;
         if (isExistFile(settings)) {
             const QString settingsOld = makePath(res, SETTINGS_NAME_OLD);
             copyFile(settings, settingsOld, true);
+
+            QSettings qsettings(settings, QSettings::IniFormat);
+            if (qsettings.contains("notify") && qsettings.value("notify").toBool()) {
+                isNotify = true;
+            }
         }
         copyFile(oldSettingsPath, settings, true);
         removeFile(makePath(pagesPath, "nodes.txt"));
         removeFile(makePath(pagesPath, "servers.txt"));
         removeFile(makePath(pagesPath, "web_socket.txt"));
         removeFile(makePath(pagesPath, "version.txt"));
+
+        if (isNotify) {
+            QSettings qsettings(settings, QSettings::IniFormat);
+            qsettings.setValue("notify", true);
+            qsettings.sync();
+
+            QMessageBox msgBox;
+            msgBox.setText("Settings modified. See path " + settings);
+            msgBox.exec();
+        }
     };
 
     if (!isExistFile(settings)) {
