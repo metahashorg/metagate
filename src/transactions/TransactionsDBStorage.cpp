@@ -430,11 +430,13 @@ void TransactionsDBStorage::removePaymentsForCurrency(const QString &currency)
 {
     auto transactionGuard = beginTransaction();
     QSqlQuery query(database());
-    CHECK(query.prepare(removePaymentsForCurrencyQuery), query.lastError().text().toStdString());
-    query.bindValue(":currency", currency);
+    CHECK(query.prepare(removePaymentsForCurrencyQuery.arg(currency.isEmpty() ? QStringLiteral(""): removePaymentsCurrencyWhere)), query.lastError().text().toStdString());
+    if (!currency.isEmpty())
+        query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    CHECK(query.prepare(removeTrackedForCurrencyQuery), query.lastError().text().toStdString());
-    query.bindValue(":currency", currency);
+    CHECK(query.prepare(removeTrackedForCurrencyQuery.arg(currency.isEmpty() ? QStringLiteral(""): removePaymentsCurrencyWhere)), query.lastError().text().toStdString());
+    if (!currency.isEmpty())
+        query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
     transactionGuard.commit();
 }

@@ -132,11 +132,11 @@ static const QString  selectTrackedForGroup = "SELECT currency, address, name, t
                                                 "WHERE tgroup = :tgroup "
                                                 "ORDER BY address ASC";
 
-static const QString removePaymentsForCurrencyQuery = "DELETE FROM payments "
-                                                "WHERE currency = :currency";
+static const QString removePaymentsForCurrencyQuery = "DELETE FROM payments %1";
 
-static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked "
-                                                "WHERE currency = :currency";
+static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked %1";
+
+static const QString removePaymentsCurrencyWhere = "WHERE currency = :currency";
 
 };
 
