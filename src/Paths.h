@@ -23,4 +23,6 @@ QString getTmpAutoupdaterPath();
 
 void clearAutoupdatersPath();
 
+void initializeAllPaths();
+
 #endif // PATHS_H

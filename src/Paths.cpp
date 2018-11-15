@@ -30,6 +30,10 @@ const static QString AUTOUPDATER_PATH = "autoupdater/";
 
 const static QString NS_LOOKUP_PATH = "./";
 
+static bool isInitializePagesPath = false;
+
+static bool isInitializeSettingsPath = false;
+
 QString getWalletPath() {
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PATH_DEFAULT);
     createFolder(res);
@@ -76,25 +80,30 @@ static QString getOldPagesPath() {
     return currentBeginPath;
 }
 
-QString getPagesPath() {
-    static std::mutex mut;
+static void initializePagesPath() {
+    CHECK(!isInitializePagesPath, "Already initialized page path");
 
     const QString oldPagesPath = getOldPagesPath();
 
     const QString newPagesPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, PAGES_PATH);
 
-    std::lock_guard<std::mutex> lock(mut);
     if (!isExistFolder(newPagesPath)) {
         LOG << "Create pages folder: " << newPagesPath << " " << oldPagesPath;
         CHECK(copyRecursively(oldPagesPath, newPagesPath, true, false), "not copy pages");
         removeFile(makePath(newPagesPath, SETTINGS_NAME));
     }
 
-    return newPagesPath;
+    isInitializePagesPath = true;
 }
 
-QString getSettingsPath() {
-    static std::mutex mut;
+QString getPagesPath() {
+    CHECK(isInitializePagesPath, "Not initialize page path");
+
+    return makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, PAGES_PATH);
+}
+
+static void initializeSettingsPath() {
+    CHECK(!isInitializeSettingsPath, "Already initialized settings path");
 
     const QString oldPagesPath = getOldPagesPath();
     const QString oldSettingsPath = makePath(oldPagesPath, SETTINGS_NAME);
@@ -113,7 +122,6 @@ QString getSettingsPath() {
         removeFile(makePath(pagesPath, "version.txt"));
     };
 
-    std::lock_guard<std::mutex> lock(mut);
     if (!isExistFile(settings)) {
         LOG << "Create settings: " << oldSettingsPath << " " << settings;
         replaceSettings();
@@ -129,18 +137,23 @@ QString getSettingsPath() {
         replaceSettings();
     }
 
+    isInitializeSettingsPath = true;
+}
+
+QString getSettingsPath() {
+    CHECK(isInitializeSettingsPath, "Not initialize settings path");
+
+    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH);
+    const QString settings = makePath(res, SETTINGS_NAME);
     return settings;
 }
 
-
-QString getStoragePath()
-{
+QString getStoragePath() {
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH);
     createFolder(res);
     const QString storage = makePath(res, STORAGE_NAME);
     return storage;
 }
-
 
 QString getAutoupdaterPath() {
     const QString path1(makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_COMMON_PATH, AUTOUPDATER_PATH));
@@ -166,4 +179,9 @@ void clearAutoupdatersPath() {
 
     remove(getAutoupdaterPath());
     remove(getTmpAutoupdaterPath());
+}
+
+void initializeAllPaths() {
+    initializePagesPath();
+    initializeSettingsPath();
 }
