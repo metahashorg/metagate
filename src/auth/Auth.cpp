@@ -18,7 +18,7 @@ namespace auth
 {
 
 Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
-    : TimerClass(1min, parent)
+    : TimerClass(1s, parent)
     , javascriptWrapper(javascriptWrapper)
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
@@ -145,7 +145,43 @@ void Auth::forceRefreshInternal() {
     const QString request = makeRefreshTokenRequest(info.refresh);
     const QString token = info.token;
 
-    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
+    class GuardRefresh {
+    public:
+
+        GuardRefresh(int &guard)
+            : guardRefresh(guard)
+        {
+            guardRefresh++;
+            isLock = true;
+        }
+
+        void unlock() {
+            if (isLock) {
+                guardRefresh--;
+                isLock = false;
+            }
+        }
+
+        ~GuardRefresh() {
+            unlock();
+        }
+
+    private:
+
+        int &guardRefresh;
+        bool isLock = false;
+    };
+
+    if (guardRefresh != 0) {
+        LOG << "Refresh token block";
+        return;
+    }
+
+    std::shared_ptr<GuardRefresh> guard = std::make_shared<GuardRefresh>(guardRefresh);
+
+    tcpClient.sendMessagePost(authUrl, request, [this, token, guard](const std::string &response, const SimpleClient::ServerException &error) {
+        guard->unlock();
+
         if (info.token != token) {
             return;
         }
@@ -184,13 +220,19 @@ BEGIN_SLOT_WRAPPER
     if (!info.isAuth) {
         return;
     }
-    LOG << "Check token1";
     const time_point now = ::now();
     if (now - info.saveTime >= info.expire - minutes(1)) {
         LOG << "Token expire";
         forceRefreshInternal();
         return;
     }
+
+    if (now - info.prevCheck < 1min) {
+        return;
+    }
+
+    LOG << "Check token1";
+    info.prevCheck = now;
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
     tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {

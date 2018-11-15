@@ -17,6 +17,7 @@ struct LoginInfo
     bool isTest = false;
     seconds expire;
     time_point saveTime;
+    time_point prevCheck;
 
     void clear()
     {
@@ -110,6 +111,8 @@ private:
     LoginInfo info;
 
     seconds timeout;
+
+    int guardRefresh = 0;
 };
 
 }
