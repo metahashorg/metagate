@@ -238,19 +238,19 @@ END_SLOT_WRAPPER
 }
 
 QString JavascriptWrapper::getAllWalletsJson() {
-    return getAllMTHSWalletsJson(walletPathTmh);
+    return getAllMTHSWalletsJson(walletPathTmh, "tmh");
 }
 
 QString JavascriptWrapper::getAllMHCWalletsJson() {
-    return getAllMTHSWalletsJson(walletPathMth);
+    return getAllMTHSWalletsJson(walletPathMth, "mhc");
 }
 
 QString JavascriptWrapper::getAllWalletsAndPathsJson() {
-    return getAllMTHSWalletsAndPathsJson(walletPathTmh);
+    return getAllMTHSWalletsAndPathsJson(walletPathTmh, "tmh");
 }
 
 QString JavascriptWrapper::getAllMHCWalletsAndPathsJson() {
-    return getAllMTHSWalletsAndPathsJson(walletPathMth);
+    return getAllMTHSWalletsAndPathsJson(walletPathMth, "mhc");
 }
 
 void JavascriptWrapper::signMessage(QString requestId, QString keyName, QString text, QString password) {
@@ -334,12 +334,12 @@ static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QStr
     return json.toJson(QJsonDocument::Compact);
 }
 
-QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath) {
+QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath, QString name) {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get mth wallets json " << jsonStr << " " << walletPath;
+        LOG << PeriodicLog::make("w2_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -350,12 +350,12 @@ QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath) {
     }
 }
 
-QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath) {
+QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath, QString name) {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get mth wallets json " << jsonStr << " " << walletPath;
+        LOG << PeriodicLog::make("w_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -788,7 +788,7 @@ QString JavascriptWrapper::getAllEthWalletsJson() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPathEth);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get eth wallets json " << jsonStr;
+        LOG << PeriodicLog::make("w_eth") << "get eth wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -804,7 +804,7 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPathEth);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get eth wallets json " << jsonStr;
+        LOG << PeriodicLog::make("w2_eth") << "get eth wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -1030,7 +1030,7 @@ QString JavascriptWrapper::getAllBtcWalletsJson() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPathBtc);
         const QString jsonStr = makeJsonWallets(result);
-        LOG << "get btc wallets json " << jsonStr;
+        LOG << PeriodicLog::make("w_btc") << "get btc wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -1046,7 +1046,7 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
         const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPathBtc);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
-        LOG << "get btc wallets json " << jsonStr;
+        LOG << PeriodicLog::make("w2_btc") << "get btc wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;

@@ -172,7 +172,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(dataJson.contains("url") && dataJson.value("url").isString(), "url field not found");
         const QString url = dataJson.value("url").toString();
 
-        LOG << "Server html version " << version << " " << hash << " " << url.toStdString().substr(0, url.toStdString().find("?secure")) << ". Current version " << lastVersion;
+        LOG << PeriodicLog::make("n_htm") << "Server html version " << version << " " << hash << " " << url.toStdString().substr(0, url.toStdString().find("?secure")) << ". Current version " << lastVersion;
 
         const QString folderServer = toHash(UPDATE_API);
         if (hash == "false") {
@@ -238,7 +238,7 @@ BEGIN_SLOT_WRAPPER
 
         const Version nextVersion(version.toStdString());
 
-        LOG << "New app version " << nextVersion.makeStr() << " " << reference << " " << autoupdater.toStdString().substr(0, autoupdater.toStdString().find("?secure")) << ". Current app version " << currentAppVersion.makeStr();
+        LOG << PeriodicLog::make("n_app") << "New app version " << nextVersion.makeStr() << " " << reference << " " << autoupdater.toStdString().substr(0, autoupdater.toStdString().find("?secure")) << ". Current app version " << currentAppVersion.makeStr();
 
         if (reference == "false") {
             return;

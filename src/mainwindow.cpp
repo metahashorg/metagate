@@ -506,7 +506,7 @@ END_SLOT_WRAPPER
 
 void MainWindow::onSetMappings(QString mapping) {
 BEGIN_SLOT_WRAPPER
-    LOG << "Set mappings " << mapping;
+    LOG << PeriodicLog::make("s_mp") << "Set mappings " << mapping;
     pagesMappings.setMappings(mapping);
 END_SLOT_WRAPPER
 }

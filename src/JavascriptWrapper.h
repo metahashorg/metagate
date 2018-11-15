@@ -246,9 +246,9 @@ private:
 
     void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult);
 
-    QString getAllMTHSWalletsJson(QString walletPath);
+    QString getAllMTHSWalletsJson(QString walletPath, QString name);
 
-    QString getAllMTHSWalletsAndPathsJson(QString walletPath);
+    QString getAllMTHSWalletsAndPathsJson(QString walletPath, QString name);
 
     void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
 

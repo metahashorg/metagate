@@ -56,7 +56,7 @@ void MessengerWaletManager::unlockWallet(const QString &folder, const std::strin
 void MessengerWaletManager::onResetWallets() {
 BEGIN_SLOT_WRAPPER
     CHECK(threadId == ::threadId(), "Incorrect thread");
-    LOG << "Try reset wallets";
+    LOG << PeriodicLog::make("r_wlt") << "Try reset wallets";
     if (wallet != nullptr || walletRsa != nullptr) {
         const time_point now = ::now();
         const milliseconds elapsedTime = std::chrono::duration_cast<milliseconds>(now - startTime);
