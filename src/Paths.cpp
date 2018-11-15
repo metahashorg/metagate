@@ -22,6 +22,8 @@ const static QString PAGES_PATH = "pages/";
 
 const static QString SETTINGS_NAME = "settings.ini";
 
+const static QString SETTINGS_NAME_OLD = "settingsOld.ini";
+
 const static QString STORAGE_NAME = "storage.ini";
 
 const static QString DB_PATH = "database/";
@@ -115,6 +117,10 @@ static void initializeSettingsPath() {
     const QString pagesPath = getPagesPath();
 
     const auto replaceSettings = [&] {
+        if (isExistFile(settings)) {
+            const QString settingsOld = makePath(res, SETTINGS_NAME_OLD);
+            copyFile(settings, settingsOld, true);
+        }
         copyFile(oldSettingsPath, settings, true);
         removeFile(makePath(pagesPath, "nodes.txt"));
         removeFile(makePath(pagesPath, "servers.txt"));
