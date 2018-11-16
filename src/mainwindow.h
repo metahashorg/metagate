@@ -62,6 +62,8 @@ public:
 
     QString getServerIp(const QString &text) const;
 
+    LastHtmlVersion getCurrentHtmls() const;
+
 private:
 
     void softReloadPage();
@@ -124,7 +126,7 @@ private:
 
     JavascriptWrapper &jsWrapper;
 
-    LastHtmlVersion lastHtmls;
+    const LastHtmlVersion lastHtmls;
 
     QString currentTextCommandLine;
 

@@ -144,7 +144,7 @@ void Uploader::run() {
     emit uploadEvent();
 }
 
-static void clearFolderHtmls(const QString &folderHtmls, const QString &currentVersion) {
+static void removeOlderFolders(const QString &folderHtmls, const QString &currentVersion) {
     QDir sourceDir(folderHtmls);
     const auto mask = QDir::Dirs | QDir::NoDotAndDotDot;
     for (const QString &dirName: sourceDir.entryList(mask)) {
@@ -199,7 +199,8 @@ BEGIN_SLOT_WRAPPER
             const QString hashStr(hashAlg.result().toHex());
             CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
 
-            clearFolderHtmls(makePath(currentBeginPath, folderServer), lastVersion);
+            CHECK(mainWindow != nullptr, "Mainwindow nullptr");
+            removeOlderFolders(makePath(currentBeginPath, mainWindow->getCurrentHtmls().folderName), mainWindow->getCurrentHtmls().lastVersion);
 
             const QString archiveFilePath = makePath(currentBeginPath, version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);

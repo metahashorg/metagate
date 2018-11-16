@@ -63,6 +63,7 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , jsWrapper(jsWrapper)
+    , lastHtmls(Uploader::getLastHtmlVersion())
 {
     ui->setupUi(this);
 
@@ -73,7 +74,6 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
 
     configureMenu();
 
-    lastHtmls = Uploader::getLastHtmlVersion();
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
 
     loadFile("login.html");
@@ -527,4 +527,8 @@ QString MainWindow::getServerIp(const QString &text) const {
     QString ip = pagesMappings.getIp(text);
     QUrl url(ip);
     return url.host();
+}
+
+LastHtmlVersion MainWindow::getCurrentHtmls() const {
+    return lastHtmls;
 }
