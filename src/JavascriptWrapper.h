@@ -212,8 +212,6 @@ public slots:
 
     Q_INVOKABLE void metaOnline();
 
-    Q_INVOKABLE void logTmp(QString log);
-
 private slots:
 
     void onCallbackCall(ReturnCallback callback);

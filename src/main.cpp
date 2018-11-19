@@ -7,7 +7,6 @@
 #endif
 
 #include <iostream>
-#include <fstream>
 
 #include <QSurfaceFormat>
 #include <QSettings>
@@ -134,13 +133,6 @@ int main(int argc, char *argv[]) {
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
             transactionsManager.setJavascriptWrapper(jsWrapper);
-
-            const QString logFile2 = makePath(QApplication::applicationDirPath(), "logTmp.txt");
-            std::ofstream log_file__;
-            log_file__.open(logFile2.toStdString(), std::ios_base::trunc);
-
-            jsWrapper.logTmp("adsfadsfadf");
-            jsWrapper.logTmp("3354353435");
 
             messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
 
