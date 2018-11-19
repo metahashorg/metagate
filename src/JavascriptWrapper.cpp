@@ -526,6 +526,7 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
 
         QString res = QString::fromStdString(privKey);
         res.replace("\n", "\\n");
+        res.replace("\r", "");
         result = res;
 
         LOG << "Getted private key " << keyName;
