@@ -1,0 +1,248 @@
+'\" t
+.\"     Title: zbarcam
+.\"    Author: Jeff Brown <spadix@users.sourceforge.net>
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 2009-10-23
+.\"    Manual: ZBar Barcode Reader
+.\"    Source: zbar-0.10
+.\"  Language: English
+.\"
+.TH "ZBARCAM" "1" "2009-10-23" "zbar-0.10" "ZBar Barcode Reader"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+zbarcam \- scan and decode bar codes from a video device
+.SH "SYNOPSIS"
+.HP \w'\fBzbarcam\fR\ 'u
+\fBzbarcam\fR [\fB\-qv\fR] [\fB\-\-quiet\fR] [\fB\-\-nodisplay\fR] [\fB\-\-xml\fR] [\fB\-\-verbose\fR\fB[=\fIn\fR]\fR] [\fB\-\-prescale=\fR\fB\fIW\fR\fR\fBx\fR\fB\fIH\fR\fR] [\fB\-S\fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR] [\fB\-\-set\ \fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR] [\fIdevice\fR]
+.HP \w'\fBzbarcam\fR\ 'u
+\fBzbarcam\fR {\fB\-h\fR | \fB\-\-help\fR | \fB\-\-version\fR}
+.SH "DESCRIPTION"
+.PP
+\fBzbarcam\fR
+scans a video4linux video source (eg, a webcam) for bar codes and prints any decoded data to the standard output\&. The video stream is also displayed to the screen\&.
+.PP
+\fIdevice\fR
+is the path to the video4linux (version 1 or 2) character device special file (major number 81 and minor number 0 thru 63)\&. It defaults to
+/dev/video0
+.PP
+The underlying library currently supports EAN\-13 (including UPC and ISBN subsets), EAN\-8, Code 128, Code 39, and Interleaved 2 of 5 symbologies\&. The specific type of each detected symbol is printed with the decoded data\&.
+.SH "OPTIONS"
+.PP
+This program follows the usual GNU command line syntax\&. Single letter options may be bundled, long options start with two dashes (`\-\')\&.
+.PP
+\fB\-h\fR, \fB\-\-help\fR
+.RS 4
+Print a short help message describing command line options to standard output and exit
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Print program version information to standard output and exit
+.RE
+.PP
+\fB\-v\fR, \fB\-\-verbose\fR\fB[=\fIn\fR]\fR
+.RS 4
+Increase debug output level\&. Multiple
+\fB\-v\fR
+options create more spew\&. Alternatively specify
+\fIn\fR
+to set the debug level directly
+.RE
+.PP
+\fB\-S\fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR, \fB\-\-set \fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR
+.RS 4
+Set decoder configuration option
+\fIconfig\fR
+for
+\fIsymbology\fR
+to
+\fIvalue\fR\&.
+\fIvalue\fR
+defaults to 1 if omitted\&.
+\fIsymbology\fR
+is one of
+\fBean13\fR,
+\fBean8\fR,
+\fBupca\fR,
+\fBupce\fR,
+\fBisbn13\fR,
+\fBisbn10\fR,
+\fBi25\fR,
+\fBcode39\fR,
+\fBcode128\fR
+or the special value
+\fB*\fR\&. If
+\fIsymbology\fR
+is omitted or
+\fB*\fR, the
+\fIconfig\fR
+will be set for all applicable symbologies\&. These are the currently recognized
+\fIconfig\fRs\&. Prefix a config with "no\-" to negate it\&. Not all configs are appropriate for every symbology\&.
+.PP
+\fBenable\fR
+.RS 4
+Control decoding/reporting of a symbology\&. For symbologies which are just subsets of
+\fBean13\fR
+(\fBupca\fR,
+\fBupce\fR,
+\fBisbn13\fR,
+\fBisbn10\fR), this config controls whether the subsets are detected and reported as such\&. These special cases are disabled by default, all other symbologies default to enabled
+.RE
+.PP
+\fBdisable\fR
+.RS 4
+Antonym for
+\fBenable\fR
+.RE
+.PP
+\fBemit\-check\fR
+.RS 4
+Control whether check digits are included in the decoded output\&. Enabled by default\&. This config does not apply for
+\fBcode128\fR, which never returns the check digit\&. It also not apply for cases where the check digit is disabled (see
+\fBadd\-check\fR)\&. Check digits are currently not implemented for
+\fBi25\fR
+or
+\fBcode39\fR
+.RE
+.PP
+\fBadd\-check\fR
+.RS 4
+Enable decode and verification of a check digit for symbologies where it is optional: this will include
+\fBcode39\fR
+and
+\fBi25\fR, neither of which implements the check digit yet
+.RE
+.PP
+\fBascii\fR
+.RS 4
+Enable escape sequences that encode the full ASCII character set\&. This would apply to
+\fBcode39\fR, except that it\'s not implemented either\&.\&.\&.
+.RE
+.PP
+\fBposition\fR
+.RS 4
+Enable collection of symbol position information\&. Enabled by default\&. Currently, the position information is unusable, so you can save a few cycles by disabling this\&.
+.RE
+.PP
+\fBmin\-length=\fR\fB\fIn\fR\fR, \fBmax\-length=\fR\fB\fIn\fR\fR
+.RS 4
+Bound the number of decoded characters in a valid symbol\&. If a decode result is outside the configured min/max range (inclusive), it will not be reported\&. Set to 0 to disable the corresponding check\&. This setting applies to variable\-length symbologies:
+\fBi25\fR,
+\fBcode39\fR,
+\fBcode128\fR
+and
+\fBpdf417\fR\&.
+\fBmin\-length\fR
+defaults to 6 for
+\fBi25\fR
+and 1 for
+\fBcode39\fR
+(per Code 39 autodiscrimination recommendation); all others default to 0
+.RE
+.PP
+\fBx\-density=\fR\fB\fIn\fR\fR, \fBy\-density=\fR\fB\fIn\fR\fR
+.RS 4
+Adjust the density of the scanner passes\&. Lower values scan more of the image at the cost of decreased performance\&. Setting to 0 disables scanning along that axis\&. Defaults are both 1\&.
+.RE
+.RE
+.PP
+\fB\-q\fR, \fB\-\-quiet\fR
+.RS 4
+Quiet operation; disable the audible beep otherwise emitted when a symbol is decoded
+.RE
+.PP
+\fB\-\-nodisplay\fR
+.RS 4
+Disable output video window\&. Video input will be scanned until the program is interrupted or otherwise signaled
+.RE
+.PP
+\fB\-\-xml\fR
+.RS 4
+Stream results using an XML output format\&. This format wraps the raw data from the symbol with information about the scan in an easy to parse format\&. The latest schema is available from
+\m[blue]\fB\%http://zbar.sourceforge.net/2008/barcode.xsd\fR\m[]
+.RE
+.PP
+\fB\-\-raw\fR
+.RS 4
+Use raw symbol data output format\&. This format prints symbol data separated by newlines without the additional symbology type information that is printed by default
+.RE
+.PP
+\fB\-\-prescale=\fR\fB\fIW\fR\fR\fBx\fR\fB\fIH\fR\fR
+.RS 4
+Request video input scaling from the camera driver\&. Possibly useful for reducing huge frames to achieve a higher frame rate\&. Note that the driver may adjust or completely ignore the scaling request
+.RE
+.SH "EXAMPLES"
+.PP
+Scan for barcodes using the second video device and pipe the resulting data through a script that searches for each code in a database and does something useful with them:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBzbarcam\fR /dev/video1 | \fBupcrpc\&.py\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The
+\fBupcrpc\&.py\fR
+example script included in the
+examples/
+subdirectory of the distribution will make an XMLRPC call to a popular internet UPC database and print the product description if found\&.
+.PP
+Scan for barcodes using the default video device and stream results to stdout in XML format, also disable recognition of Interleaved 2 of 5 codes to prevent confusion with other symbologies or background noise:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBzbarcam\fR \fB\-\-xml\fR \fB\-Si25\&.disable\fR
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Scan only for Code 39, without using the preview window \- maybe for a fixed installation\&. To enable only Code 39, first all symbologies are disabled, then Code 39 is re\-enabled:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBzbarcam\fR \fB\-\-nodisplay\fR \fB\-Sdisable\fR \fB\-Scode39\&.enable\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "SEE ALSO"
+.PP
+zbarimg(1)
+.PP
+\m[blue]\fB\%http://zbar.sf.net/\fR\m[]
+.SH "BUGS"
+.PP
+See
+\m[blue]\fB\%http://sf.net/tracker/?group_id=189236&atid=928515\fR\m[]
+.SH "AUTHOR"
+.PP
+\fBJeff Brown\fR <\&spadix@users.sourceforge.net\&>
+.RS 4
+Lead developer
+.RE
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2007-2009 Jeff Brown
+.br
+.PP
+All Rights Reserved
+.sp

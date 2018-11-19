@@ -1,0 +1,252 @@
+'\" t
+.\"     Title: zbarimg
+.\"    Author: Jeff Brown <spadix@users.sourceforge.net>
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 2009-10-23
+.\"    Manual: ZBar Barcode Reader
+.\"    Source: zbar-0.10
+.\"  Language: English
+.\"
+.TH "ZBARIMG" "1" "2009-10-23" "zbar-0.10" "ZBar Barcode Reader"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+zbarimg \- scan and decode bar codes from image file(s)
+.SH "SYNOPSIS"
+.HP \w'\fBzbarimg\fR\ 'u
+\fBzbarimg\fR [\fB\-qv\fR] [\fB\-\-quiet\fR] [\fB\-\-verbose\fR\fB[=\fIn\fR]\fR]
+.br
+{\fB\-dD\fR | \fB\-\-display\fR | \fB\-\-nodisplay\fR | \fB\-\-xml\fR | \fB\-\-noxml\fR | \fB\-S\fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR | \fB\-\-set\ \fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR | \fIimage\fR...}
+.HP \w'\fBzbarimg\fR\ 'u
+\fBzbarimg\fR {\fB\-h\fR | \fB\-\-help\fR | \fB\-\-version\fR}
+.SH "DESCRIPTION"
+.PP
+For each specified
+\fIimage\fR
+file
+\fBzbarimg\fR
+scans the image for bar codes and prints any decoded data to stdout\&. Images may optionally be displayed to the screen\&.
+.PP
+The underlying library currently supports EAN\-13 (including UPC and ISBN subsets), EAN\-8, Code 128, Code 39, and Interleaved 2 of 5 symbologies\&. The specific type of each detected symbol is printed with the decoded data\&.
+.PP
+Note that "\fIimage\fR" in this context refers to any format supported by ImageMagick, including many vector formats such as PDF and PostScript\&. Keep in mind that vector formats are rasterized before scanning; manually rasterize vector images before scanning to avoid unintentionally corrupting embedded barcode bitmaps\&.
+.SH "OPTIONS"
+.PP
+This program follows the usual GNU command line syntax\&. Single letter options may be bundled, long options start with two dashes (`\-\')\&.
+.PP
+\fB\-h\fR, \fB\-\-help\fR
+.RS 4
+Print a short help message describing command line options to standard output and exit
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Print program version information to standard output and exit
+.RE
+.PP
+\fB\-v\fR, \fB\-\-verbose\fR\fB[=\fIn\fR]\fR
+.RS 4
+Increase debug output level\&. Multiple
+\fB\-v\fR
+options create more spew\&. Alternatively specify
+\fIn\fR
+to set the debug level directly
+.RE
+.PP
+\fB\-S\fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR, \fB\-\-set \fR\fB[\fIsymbology\fR\&.]\fR\fB\fIconfig\fR\fR\fB[=\fIvalue\fR]\fR
+.RS 4
+Set decoder configuration option
+\fIconfig\fR
+for
+\fIsymbology\fR
+to
+\fIvalue\fR\&.
+\fIvalue\fR
+defaults to 1 if omitted\&.
+\fIsymbology\fR
+is one of
+\fBean13\fR,
+\fBean8\fR,
+\fBupca\fR,
+\fBupce\fR,
+\fBisbn13\fR,
+\fBisbn10\fR,
+\fBi25\fR,
+\fBcode39\fR,
+\fBcode128\fR
+or the special value
+\fB*\fR\&. If
+\fIsymbology\fR
+is omitted or
+\fB*\fR, the
+\fIconfig\fR
+will be set for all applicable symbologies\&. These are the currently recognized
+\fIconfig\fRs\&. Prefix a config with "no\-" to negate it\&. Not all configs are appropriate for every symbology\&.
+.PP
+\fBenable\fR
+.RS 4
+Control decoding/reporting of a symbology\&. For symbologies which are just subsets of
+\fBean13\fR
+(\fBupca\fR,
+\fBupce\fR,
+\fBisbn13\fR,
+\fBisbn10\fR), this config controls whether the subsets are detected and reported as such\&. These special cases are disabled by default, all other symbologies default to enabled
+.RE
+.PP
+\fBdisable\fR
+.RS 4
+Antonym for
+\fBenable\fR
+.RE
+.PP
+\fBemit\-check\fR
+.RS 4
+Control whether check digits are included in the decoded output\&. Enabled by default\&. This config does not apply for
+\fBcode128\fR, which never returns the check digit\&. It also not apply for cases where the check digit is disabled (see
+\fBadd\-check\fR)\&. Check digits are currently not implemented for
+\fBi25\fR
+or
+\fBcode39\fR
+.RE
+.PP
+\fBadd\-check\fR
+.RS 4
+Enable decode and verification of a check digit for symbologies where it is optional: this will include
+\fBcode39\fR
+and
+\fBi25\fR, neither of which implements the check digit yet
+.RE
+.PP
+\fBascii\fR
+.RS 4
+Enable escape sequences that encode the full ASCII character set\&. This would apply to
+\fBcode39\fR, except that it\'s not implemented either\&.\&.\&.
+.RE
+.PP
+\fBposition\fR
+.RS 4
+Enable collection of symbol position information\&. Enabled by default\&. Currently, the position information is unusable, so you can save a few cycles by disabling this\&.
+.RE
+.PP
+\fBmin\-length=\fR\fB\fIn\fR\fR, \fBmax\-length=\fR\fB\fIn\fR\fR
+.RS 4
+Bound the number of decoded characters in a valid symbol\&. If a decode result is outside the configured min/max range (inclusive), it will not be reported\&. Set to 0 to disable the corresponding check\&. This setting applies to variable\-length symbologies:
+\fBi25\fR,
+\fBcode39\fR,
+\fBcode128\fR
+and
+\fBpdf417\fR\&.
+\fBmin\-length\fR
+defaults to 6 for
+\fBi25\fR
+and 1 for
+\fBcode39\fR
+(per Code 39 autodiscrimination recommendation); all others default to 0
+.RE
+.PP
+\fBx\-density=\fR\fB\fIn\fR\fR, \fBy\-density=\fR\fB\fIn\fR\fR
+.RS 4
+Adjust the density of the scanner passes\&. Lower values scan more of the image at the cost of decreased performance\&. Setting to 0 disables scanning along that axis\&. Defaults are both 1\&.
+.RE
+.RE
+.PP
+\fB\-q\fR, \fB\-\-quiet\fR
+.RS 4
+Quiet operation; only output decoded symbol data\&. specifically this disables the statistics line printed (to stderr) before exiting, as well as the warning message printed (also to stderr) when no barcodes are found in an image
+.RE
+.PP
+\fB\-d\fR, \fB\-\-display\fR, \fB\-D\fR, \fB\-\-nodisplay\fR
+.RS 4
+Enable/disable display of subsequent
+\fIimage\fR
+files, until next
+\fB\-\-display\fR
+or
+\fB\-\-nodisplay\fR
+is encountered\&. This option may appear multiple times to enable display of specific images\&. Image display is disabled by default
+.RE
+.PP
+\fB\-\-xml\fR, \fB\-\-noxml\fR
+.RS 4
+Enable/disable result output using an XML format\&. This format wraps the raw data from the symbol with information about the scan (such as page indices) in an easy to parse format\&. The latest schema is available from
+\m[blue]\fB\%http://zbar.sourceforge.net/2008/barcode.xsd\fR\m[]\&.
+.RE
+.PP
+\fB\-\-raw\fR
+.RS 4
+Enable raw symbol data output\&. This format prints symbol data separated by newlines without the additional symbology type information that is printed by default
+.RE
+.SH "EXAMPLES"
+.PP
+Scan a PNG image of a UPC bar code symbol and pass resulting data to a script that searches for the code in a database and does something useful with it:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBzbarimg\fR product\&.png | \fBupcrpc\&.py\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The
+\fBupcrpc\&.py\fR
+example script included in the
+examples/
+subdirectory of the distribution will make an XMLRPC call to a popular internet UPC database and print the product description if found\&.
+.PP
+Scan a JPEG image containing several barcodes and display the image in a window, also disabling recognition of Interleaved 2 of 5 codes to prevent confusion with other symbologies or background noise:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBzbarimg\fR \fB\-\-display\fR \fB\-Si25\&.disable\fR label\&.jpg
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Look in a scanned document only for Code 39, using XML output format so the page numbers are available\&. To enable only Code 39, first all symbologies are disabled, then Code 39 is re\-enabled:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBzbarimg\fR \fB\-\-xml\fR \fB\-Sdisable\fR \fB\-Scode39\&.enable\fR scan\&.tiff
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "SEE ALSO"
+.PP
+zbarcam(1)
+.PP
+\m[blue]\fB\%http://zbar.sf.net/\fR\m[]
+.SH "BUGS"
+.PP
+See
+\m[blue]\fB\%http://sf.net/tracker/?group_id=189236&atid=928515\fR\m[]
+.SH "AUTHOR"
+.PP
+\fBJeff Brown\fR <\&spadix@users.sourceforge.net\&>
+.RS 4
+Lead developer
+.RE
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2007-2009 Jeff Brown
+.br
+.PP
+All Rights Reserved
+.sp
