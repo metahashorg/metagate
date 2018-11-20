@@ -63,6 +63,7 @@ void WebSocketClient::onStarted() {
 BEGIN_SLOT_WRAPPER
     m_webSocket.open(m_url);
     LOG << "Wss client onStarted. Url " << m_url.toString();
+    prevPongTime = ::now();
 END_SLOT_WRAPPER
 }
 
@@ -101,6 +102,7 @@ void WebSocketClient::onConnected() {
 BEGIN_SLOT_WRAPPER
     LOG << "Wss client connected";
     isConnected = true;
+    prevPongTime = ::now();
     for (const QString &helloString: helloStrings) {
         LOG << "Wss Set hello message " << helloString;
         m_webSocket.sendTextMessage(helloString);
