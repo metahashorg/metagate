@@ -66,7 +66,7 @@ BEGIN_SLOT_WRAPPER
            });
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
-    }, timeout);
+    }, timeout, true);
 END_SLOT_WRAPPER
 }
 
@@ -141,7 +141,7 @@ END_SLOT_WRAPPER
 }
 
 void Auth::forceRefreshInternal() {
-    LOG << "Try refresh token";
+    LOG << "Try refresh token ";
     const QString request = makeRefreshTokenRequest(info.refresh);
     const QString token = info.token;
 
@@ -212,7 +212,7 @@ void Auth::forceRefreshInternal() {
         } else {
             CHECK(!error.isSet(), error.description);
         }
-    }, timeout);
+    }, timeout, true);
 }
 
 void Auth::checkToken() {

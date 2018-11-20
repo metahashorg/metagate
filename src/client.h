@@ -61,7 +61,7 @@ public:
     explicit SimpleClient();
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
-    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
+    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache=false);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
@@ -87,7 +87,7 @@ private Q_SLOTS:
 
 private:
 
-    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
+    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
     template<class Callbacks, typename... Message>

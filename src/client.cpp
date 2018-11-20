@@ -110,7 +110,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
+void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache) {
     const std::string requestId = std::to_string(id++);
 
     startTimer1();
@@ -124,6 +124,10 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
         addBeginTime(request, time);
         addTimeout(request, timeout);
     }
+    if (isClearCache) {
+        manager->clearAccessCache();
+        manager->clearConnectionCache();
+    }
     QNetworkReply* reply = manager->post(request, message.toUtf8());
     CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
     requests[requestId] = reply;
@@ -131,11 +135,11 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
 }
 
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
-    sendMessagePost(url, message, callback, false, milliseconds(0));
+    sendMessagePost(url, message, callback, false, milliseconds(0), false);
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout) {
-    sendMessagePost(url, message, callback, true, timeout);
+void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache) {
+    sendMessagePost(url, message, callback, true, timeout, isClearCache);
 }
 
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
