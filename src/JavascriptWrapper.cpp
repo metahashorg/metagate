@@ -1514,7 +1514,7 @@ BEGIN_SLOT_WRAPPER
         const TypedException exception = apiVrapper2([&, this](){
             CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
             const QJsonObject data = root.value("data").toObject();
-            LOG << "Meta online response: " << QString(QJsonDocument(data).toJson(QJsonDocument::Compact));
+            LOG << "Meta online response";
             result = QJsonDocument(data);
         });
 
