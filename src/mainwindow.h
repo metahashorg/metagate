@@ -22,6 +22,7 @@ class JavascriptWrapper;
 class MHUrlSchemeHandler;
 namespace auth {
 class AuthJavascript;
+class Auth;
 }
 namespace messenger {
 class MessengerJavascript;
@@ -56,7 +57,14 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJavascript, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent = 0);
+    explicit MainWindow(
+        JavascriptWrapper &jsWrapper,
+        auth::AuthJavascript &authJavascript,
+        messenger::MessengerJavascript &messengerJavascript,
+        transactions::TransactionsJavascript &transactionsJavascript,
+        auth::Auth &authManager,
+        QWidget *parent = 0
+    );
 
     void showExpanded();
 
@@ -73,6 +81,8 @@ private:
     void loadUrl(const QString &page);
 
     void loadFile(const QString &pageName);
+
+    bool currentFileIsEqual(const QString &pageName);
 
     void configureMenu();
 
@@ -115,6 +125,8 @@ private slots:
     void onEnterCommandAndAddToHistoryNoDuplicate(const QString &text);
 
     void onBrowserLoadFinished(const QUrl &url2);
+
+    void onLogined(const QString &login);
 
 private:
 

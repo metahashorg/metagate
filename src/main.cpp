@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
             messenger.start();
             messengerJavascript.setMessenger(messenger);*/
 
-            MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript);
+            MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
             mainWindow.showExpanded();
 
             mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

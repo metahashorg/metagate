@@ -116,7 +116,6 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
-    CHECK(connect(&authManager, &auth::Auth::logouted, this, &JavascriptWrapper::onLogouted), "not connect onLogouted");
 
     qRegisterMetaType<TypedException>("TypedException");
     qRegisterMetaType<ReturnCallback>("ReturnCallback");
@@ -143,12 +142,6 @@ BEGIN_SLOT_WRAPPER
     } else {
         setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
     }
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::onLogouted() {
-BEGIN_SLOT_WRAPPER
-    setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
 END_SLOT_WRAPPER
 }
 

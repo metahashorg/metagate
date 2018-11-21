@@ -82,7 +82,7 @@ END_SLOT_WRAPPER
 void Auth::logoutImpl() {
     info.clear();
     writeLoginInfo();
-    emit logouted();
+    emit logined("");
 }
 
 void Auth::onCheck() {
@@ -203,6 +203,7 @@ void Auth::forceRefreshInternal() {
                     info.refresh = newLogin.refresh;
                     info.expire = newLogin.expire;
                     info.saveTime = newLogin.saveTime;
+                    info.prevCheck = newLogin.prevCheck;
                     info.isAuth = true;
                     writeLoginInfo();
                     emit logined(info.login);
@@ -232,7 +233,6 @@ BEGIN_SLOT_WRAPPER
     }
 
     LOG << "Check token1";
-    info.prevCheck = now;
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
     tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
@@ -314,6 +314,7 @@ QString Auth::makeRefreshTokenRequest(const QString &token) const {
 LoginInfo Auth::parseLoginResponse(const QString &response) const {
     LoginInfo result;
     result.saveTime = ::now();
+    result.prevCheck = ::now();
 
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
@@ -348,6 +349,7 @@ LoginInfo Auth::parseLoginResponse(const QString &response) const {
 LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
     LoginInfo result;
     result.saveTime = ::now();
+    result.prevCheck = ::now();
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();

@@ -59,7 +59,14 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJavascript, messenger::MessengerJavascript &messengerJavascript, transactions::TransactionsJavascript &transactionsJavascript, QWidget *parent)
+MainWindow::MainWindow(
+    JavascriptWrapper &jsWrapper,
+    auth::AuthJavascript &authJavascript,
+    messenger::MessengerJavascript &messengerJavascript,
+    transactions::TransactionsJavascript &transactionsJavascript,
+    auth::Auth &authManager,
+    QWidget *parent
+)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , jsWrapper(jsWrapper)
@@ -97,6 +104,8 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
     CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
 
+    CHECK(connect(&authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
+
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
     channel->registerObject(QString("mainWindow"), &jsWrapper);
@@ -115,6 +124,8 @@ MainWindow::MainWindow(JavascriptWrapper &jsWrapper, auth::AuthJavascript &authJ
     qtimer.setSingleShot(false);
     CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
     qtimer.start();
+
+    emit authManager.reEmit();
 
     emit onUpdateMhsReferences();
 }
@@ -417,6 +428,10 @@ void MainWindow::loadFile(const QString &pageName) {
     loadUrl("file:///" + makePath(lastHtmls.fullPath, pageName));
 }
 
+bool MainWindow::currentFileIsEqual(const QString &pageName) {
+    return ui->webView->url().toString().endsWith(makePath(lastHtmls.fullPath, pageName));
+}
+
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
     LOG << "scl " << text;
 
@@ -531,4 +546,16 @@ QString MainWindow::getServerIp(const QString &text) const {
 
 LastHtmlVersion MainWindow::getCurrentHtmls() const {
     return lastHtmls;
+}
+
+void MainWindow::onLogined(const QString &login) {
+BEGIN_SLOT_WRAPPER
+    if (login.isEmpty()) {
+        LOG << "Try Swith to login";
+        if (!currentFileIsEqual("login.html")) {
+            LOG << "Swith to login";
+            loadFile("login.html");
+        }
+    }
+END_SLOT_WRAPPER
 }

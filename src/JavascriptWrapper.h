@@ -58,8 +58,6 @@ signals:
 public slots:
     void onLogined(const QString login);
 
-    void onLogouted();
-
 public slots:
 
     Q_INVOKABLE void createWallet(QString requestId, QString password);

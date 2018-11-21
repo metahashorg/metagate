@@ -42,8 +42,6 @@ signals:
 public slots:
     void onLogined(const QString login);
 
-    void onLogouted();
-
 public slots:
 
     void onCallbackCall(const Callback &callback);

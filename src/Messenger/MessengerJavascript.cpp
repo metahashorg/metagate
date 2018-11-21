@@ -31,7 +31,6 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, const Javascri
     CHECK(connect(this, &MessengerJavascript::newMessegesChannelSig, this, &MessengerJavascript::onNewMessegesChannel), "not connect onNewMessegesChannel");
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
-    CHECK(connect(&authManager, &auth::Auth::logouted, this, &MessengerJavascript::onLogouted), "not connect onLogouted");
 
     qRegisterMetaType<Callback>("Callback");
 
@@ -850,12 +849,6 @@ BEGIN_SLOT_WRAPPER
     } else {
         setPathsImpl(makePath(defaultWalletPath, defaultUserName), defaultUserName);
     }
-END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::onLogouted() {
-BEGIN_SLOT_WRAPPER
-    setPathsImpl(makePath(defaultWalletPath, defaultUserName), defaultUserName);
 END_SLOT_WRAPPER
 }
 

@@ -41,8 +41,6 @@ public:
 signals:
     void logined(const QString &login);
 
-    void logouted();
-
 signals:
     void login(const QString &login, const QString &password);
 
