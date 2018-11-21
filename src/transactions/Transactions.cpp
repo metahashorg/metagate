@@ -125,7 +125,7 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     servStruct->countRequests--;
     if (servStruct->countRequests == 0) {
         const system_time_point now = ::system_now();
-        LOG << "Updated currency: " << currency << " " << systemTimePointToInt(now);
+        LOG << PeriodicLog::make("uc") << "Updated currency: " << currency;
         lastSuccessUpdateTimestamps[currency] = now;
     }
 }
