@@ -2,7 +2,6 @@
 #define AUTH_H
 
 #include "TimerClass.h"
-#include "HttpClient.h"
 #include "client.h"
 
 namespace auth
@@ -102,7 +101,6 @@ private:
 
 private:
     AuthJavascript &javascriptWrapper;
-    //HttpSimpleClient tcpClient;
     SimpleClient tcpClient;
 
     QString authUrl;
