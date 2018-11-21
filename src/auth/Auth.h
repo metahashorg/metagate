@@ -17,6 +17,7 @@ struct LoginInfo
     bool isTest = false;
     seconds expire;
     time_point saveTime;
+    system_time_point saveTimeSystem;
     time_point prevCheck;
 
     void clear()

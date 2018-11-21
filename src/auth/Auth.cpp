@@ -203,6 +203,7 @@ void Auth::forceRefreshInternal() {
                     info.refresh = newLogin.refresh;
                     info.expire = newLogin.expire;
                     info.saveTime = newLogin.saveTime;
+                    info.saveTimeSystem = newLogin.saveTimeSystem;
                     info.prevCheck = newLogin.prevCheck;
                     info.isAuth = true;
                     writeLoginInfo();
@@ -222,7 +223,8 @@ BEGIN_SLOT_WRAPPER
         return;
     }
     const time_point now = ::now();
-    if (now - info.saveTime >= info.expire - minutes(1)) {
+    const system_time_point systemNow = ::system_now();
+    if (now - info.saveTime >= info.expire - minutes(1) || systemNow - info.saveTimeSystem >= info.expire - minutes(1)) {
         LOG << "Token expire";
         forceRefreshInternal();
         return;
@@ -314,6 +316,7 @@ QString Auth::makeRefreshTokenRequest(const QString &token) const {
 LoginInfo Auth::parseLoginResponse(const QString &response) const {
     LoginInfo result;
     result.saveTime = ::now();
+    result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();
 
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
@@ -349,6 +352,7 @@ LoginInfo Auth::parseLoginResponse(const QString &response) const {
 LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
     LoginInfo result;
     result.saveTime = ::now();
+    result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
