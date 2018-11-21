@@ -94,11 +94,11 @@ private:
 
     QString makeRefreshTokenRequest(const QString &token) const;
 
-    LoginInfo parseLoginResponse(const QString &response) const;
+    LoginInfo parseLoginResponse(const QString &response, const QString &login) const;
 
     bool parseCheckTokenResponse(const QString &response) const;
 
-    LoginInfo parseRefreshTokenResponse(const QString &response) const;
+    LoginInfo parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const;
 
 private:
     AuthJavascript &javascriptWrapper;
