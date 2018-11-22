@@ -184,16 +184,27 @@ std::string CreateWIF(bool isTestnet, bool isCompressed) {
     return privateKeyToWif(privateKeyStr, isTestnet, isCompressed);
 }
 
-void checkAddressBase56(const std::string &address) {
+bool isAddressBase56(const std::string &address) {
     std::vector<unsigned char> addr;
     const bool res = DecodeBase58(address.c_str(), addr);
-    CHECK_TYPED(res, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
-    CHECK_TYPED(addr.size() == 25, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+    if (!res) {
+        return false;
+    }
+    if (addr.size() != 25) {
+        return false;
+    }
     const std::string data(addr.begin(), addr.begin() + 21);
     const std::string addrHash = doubleHash(data);
     for (size_t i = 0; i < 4; i++) {
-        CHECK_TYPED(addr.at(21 + i) == (unsigned char)addrHash.at(i), TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+        if (addr.at(21 + i) != (unsigned char)addrHash.at(i)) {
+            return false;
+        }
     }
+    return true;
+}
+
+void checkAddressBase56(const std::string &address) {
+    CHECK_TYPED(isAddressBase56(address), TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
 }
 
 std::string getAddress(const std::string &wif, bool &isCompressed, bool isTestnet) {

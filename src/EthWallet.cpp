@@ -82,7 +82,7 @@ std::vector<std::pair<QString, QString>> EthWallet::getAllWalletsInFolder(const 
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         const std::string fileName = file.toStdString();
-        if (fileName.substr(0, 2) == "0x") {
+        if (isHex(fileName)) {
             const std::string addressPart = fileName.substr(2);
             const std::string address = "0x" + MixedCaseEncoding(HexStringToDump(addressPart));
             result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
