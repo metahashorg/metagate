@@ -135,7 +135,7 @@ BEGIN_SLOT_WRAPPER
     CHECK(socket, "Not socket object");
     const int requestId = getRequestId(socket);
     if (socket->hasError()) {
-        runCallback(callbacks, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, "error"));
+        runCallback(callbacks, requestId, "", TypedException(TypeErrors::CLIENT_ERROR, std::to_string(socket->errorC()) + " " + socket->errorString().toStdString()));
     } else {
         QByteArray content = socket->getReply();
         runCallback(callbacks, requestId, std::string(content.data(), content.size()), TypedException());
@@ -223,7 +223,7 @@ void HttpSocket::onConnected()
 
 void HttpSocket::onError(QAbstractSocket::SocketError socketError)
 {
-    Q_UNUSED(socketError);
+    errorCode = socketError;
     m_error = true;
     emit finished();
 }

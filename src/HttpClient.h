@@ -38,6 +38,10 @@ public:
 
     QByteArray getReply() const;
 
+    int errorC() const {
+        return errorCode;
+    }
+
 signals:
     void finished();
 
@@ -63,6 +67,7 @@ private:
     QByteArray m_reply;
     bool m_error = false;
     bool m_firstHeaderStringParsed = false;
+    int errorCode = 0;
 };
 
 /*
