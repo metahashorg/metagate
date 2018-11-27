@@ -2,7 +2,6 @@
 #define AUTH_H
 
 #include "TimerClass.h"
-#include "HttpClient.h"
 #include "client.h"
 
 namespace auth
@@ -94,15 +93,14 @@ private:
 
     QString makeRefreshTokenRequest(const QString &token) const;
 
-    LoginInfo parseLoginResponse(const QString &response) const;
+    LoginInfo parseLoginResponse(const QString &response, const QString &login) const;
 
     bool parseCheckTokenResponse(const QString &response) const;
 
-    LoginInfo parseRefreshTokenResponse(const QString &response) const;
+    LoginInfo parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const;
 
 private:
     AuthJavascript &javascriptWrapper;
-    //HttpSimpleClient tcpClient;
     SimpleClient tcpClient;
 
     QString authUrl;

@@ -59,8 +59,7 @@ BEGIN_SLOT_WRAPPER
            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
        } else {
            const TypedException exception = apiVrapper2([&] {
-               info = parseLoginResponse(QString::fromStdString(response));
-               info.login = login;
+               info = parseLoginResponse(QString::fromStdString(response), login);
                writeLoginInfo();
                emit logined(info.login);
            });
@@ -193,19 +192,13 @@ void Auth::forceRefreshInternal() {
             emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
         } else if (!error.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response));
+                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response), info.login, info.isTest);
                 if (!newLogin.isAuth) {
                     LOG << "Refresh token failed";
                     logoutImpl();
                 } else {
                     LOG << "Refresh token ok";
-                    info.token = newLogin.token;
-                    info.refresh = newLogin.refresh;
-                    info.expire = newLogin.expire;
-                    info.saveTime = newLogin.saveTime;
-                    info.saveTimeSystem = newLogin.saveTimeSystem;
-                    info.prevCheck = newLogin.prevCheck;
-                    info.isAuth = true;
+                    info = newLogin;
                     writeLoginInfo();
                     emit logined(info.login);
                 }
@@ -247,7 +240,7 @@ BEGIN_SLOT_WRAPPER
             forceRefreshInternal();
         } else if (!error.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                bool res = parseCheckTokenResponse(QString::fromStdString(response));
+                const bool res = parseCheckTokenResponse(QString::fromStdString(response));
                 if (!res) {
                     forceRefreshInternal();
                 }
@@ -314,8 +307,9 @@ QString Auth::makeRefreshTokenRequest(const QString &token) const {
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
 
-LoginInfo Auth::parseLoginResponse(const QString &response) const {
+LoginInfo Auth::parseLoginResponse(const QString &response, const QString &login) const {
     LoginInfo result;
+    result.login = login;
     result.saveTime = ::now();
     result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();
@@ -350,11 +344,14 @@ LoginInfo Auth::parseLoginResponse(const QString &response) const {
     return result;
 }
 
-LoginInfo Auth::parseRefreshTokenResponse(const QString &response) const {
+LoginInfo Auth::parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const {
     LoginInfo result;
+    result.login = login;
+    result.isTest = isTest;
     result.saveTime = ::now();
     result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();
+
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();

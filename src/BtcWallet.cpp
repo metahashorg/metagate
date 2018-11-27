@@ -293,7 +293,12 @@ std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const 
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         const std::string address = getWifAndAddress(folder, file.toStdString(), true).second;
-        CHECK_TYPED(!address.empty(), TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "empty result");
+        if (address.empty()) {
+            continue;
+        }
+        if (!isAddressBase56(address)) {
+            continue;
+        }
         result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
     }
 

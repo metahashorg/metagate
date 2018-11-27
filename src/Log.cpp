@@ -69,7 +69,7 @@ Log_::Log_() {
     const QDateTime now = QDateTime::currentDateTime();
     const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
     const auto tId = std::this_thread::get_id();
-    ssLog << std::hex << tId << std::dec << " " << time;
+    ssLog << std::hex << std::noshowbase << tId << std::dec << " " << time;
 }
 
 bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
