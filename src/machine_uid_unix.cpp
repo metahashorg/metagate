@@ -2,6 +2,9 @@
 
 #include <machine_uid.h>
 
+#include <vector>
+#include <algorithm>
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -68,6 +71,8 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
     mac1 = 0;
     mac2 = 0;
 
+    std::vector<unsigned short> addrs;
+
 #ifdef TARGET_OS_MAC
 
     struct ifaddrs* ifaphead;
@@ -75,21 +80,13 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
         return;
 
     // iterate over the net interfaces
-    bool foundMac1 = false;
     struct ifaddrs* ifap;
     for ( ifap = ifaphead; ifap; ifap = ifap->ifa_next )
     {
         struct sockaddr_dl* sdl = (struct sockaddr_dl*)ifap->ifa_addr;
         if ( sdl && ( sdl->sdl_family == AF_LINK ) && ( sdl->sdl_type == IFT_ETHER ))
         {
-            if ( !foundMac1 )
-            {
-                foundMac1 = true;
-                mac1 = hashMacAddress( (unsigned char*)(LLADDR(sdl))); //sdl->sdl_data) + sdl->sdl_nlen) );
-            } else {
-                mac2 = hashMacAddress( (unsigned char*)(LLADDR(sdl))); //sdl->sdl_data) + sdl->sdl_nlen) );
-                break;
-            }
+            addrs.emplace_back(hashMacAddress( (unsigned char*)(LLADDR(sdl))); //sdl->sdl_data) + sdl->sdl_nlen) ));
         }
     }
 
@@ -113,7 +110,6 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
     }
 
     // get MAC address
-    bool foundMac1 = false;
     struct ifreq* ifr;
     for ( ifr = conf.ifc_req; (char*)ifr < (char*)conf.ifc_req + conf.ifc_len; ifr++ )
     {
@@ -124,14 +120,7 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
             continue;  // failed to get flags, skip it
         if ( ioctl( sock, SIOCGIFHWADDR, ifr ) == 0 )
         {
-            if ( !foundMac1 )
-            {
-                foundMac1 = true;
-                mac1 = hashMacAddress( (unsigned char*)&(ifr->ifr_addr.sa_data));
-            } else {
-                mac2 = hashMacAddress( (unsigned char*)&(ifr->ifr_addr.sa_data));
-                break;
-            }
+            addrs.emplace_back(hashMacAddress( (unsigned char*)&(ifr->ifr_addr.sa_data)));
         }
     }
 
@@ -139,14 +128,12 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
 
 #endif // !TARGET_OS_MAC
 
-    // sort the mac addresses. We don't want to invalidate
-    // both macs if they just change order.
-    if ( mac1 > mac2 )
-    {
-        unsigned short tmp = mac2;
-        mac2 = mac1;
-        mac1 = tmp;
+    if (addrs.empty()) {
+        return;
     }
+    const auto pair = std::minmax_element(addrs.begin(), addrs.end());
+    mac1 = *pair.first;
+    mac2 = *pair.second;
 }
 
 static unsigned short getVolumeHash()
