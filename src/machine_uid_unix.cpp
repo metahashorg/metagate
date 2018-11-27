@@ -86,7 +86,7 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
         struct sockaddr_dl* sdl = (struct sockaddr_dl*)ifap->ifa_addr;
         if ( sdl && ( sdl->sdl_family == AF_LINK ) && ( sdl->sdl_type == IFT_ETHER ))
         {
-            addrs.emplace_back(hashMacAddress( (unsigned char*)(LLADDR(sdl))); //sdl->sdl_data) + sdl->sdl_nlen) ));
+            addrs.emplace_back(hashMacAddress( (unsigned char*)(LLADDR(sdl))));
         }
     }
 
