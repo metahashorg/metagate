@@ -134,7 +134,10 @@ static uint16_t getVolumeHash()
    DWORD serialNum = 0;
 
    // Determine if this volume uses an NTFS file system.
-   GetVolumeInformation( LPCWSTR("c:\\"), NULL, 0, &serialNum, NULL, NULL, NULL, 0 );
+   const bool res = GetVolumeInformationA( LPCSTR("C:\\"), NULL, 0, &serialNum, NULL, NULL, NULL, 0);
+   if (!res) {
+       serialNum = 0;
+   }
    uint16_t hash = (uint16_t)(( serialNum + ( serialNum >> 16 )) & 0xFFFF );
 
    return hash;
