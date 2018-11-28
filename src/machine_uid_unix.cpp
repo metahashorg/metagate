@@ -47,7 +47,7 @@ static const char* getMachineName()
     return u.nodename;
 }
 
-std::string osNameImpl() {
+static std::string osNameImpl() {
     struct utsname uts;
     uname(&uts);
     return std::string(uts.sysname) + std::string(uts.release);
@@ -186,7 +186,7 @@ static unsigned short getCpuHash()
 }
 #endif // !TARGET_OS_MAC
 
-std::string getMachineUid() {
+std::string getMachineUidInternal() {
     std::string result;
     result += std::to_string(getCpuHash()) + std::string(";");
     result += std::to_string(getVolumeHash()) + std::string(";");

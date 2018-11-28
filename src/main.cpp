@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
         initLog();
         InitOpenSSL();
         initializeAllPaths();
+        initializeMachineUid();
 
         /*tests2();
         return 0;*/

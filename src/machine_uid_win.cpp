@@ -12,7 +12,7 @@
 #include <lm.h>
 #pragma comment(lib, "netapi32.lib")
 
-bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
+static bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
 {
     bool bRetCode = false;
     LPBYTE pinfoRawData = 0;
@@ -28,7 +28,7 @@ bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
 }
 
 
-std::string osNameImpl(){
+static std::string osNameImpl(){
     std::string     winver;
     OSVERSIONINFOEX osver;
     SYSTEM_INFO     sysInfo;
@@ -159,7 +159,7 @@ static uint16_t getCpuHash()
    return hash;
 }
 
-static std::string getMachineName()
+static static std::string getMachineName()
 {
    static char computerName[1024];
    DWORD size = 1024;
@@ -167,7 +167,7 @@ static std::string getMachineName()
    return std::string(computerName);
 }
 
-std::string getMachineUid() {
+std::string getMachineUidInternal() {
     std::string result;
     result += std::to_string(getCpuHash()) + std::string(";");
     result += std::to_string(getVolumeHash()) + std::string(";");

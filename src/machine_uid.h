@@ -3,6 +3,8 @@
 
 #include <string>
 
+void initializeMachineUid();
+
 std::string getMachineUid();
 
 #endif // MACHINE_UID_H

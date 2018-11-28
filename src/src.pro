@@ -62,7 +62,8 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/TransactionsJavascript.cpp \
     HttpClient.cpp \
     auth/Auth.cpp \
-    auth/AuthJavascript.cpp
+    auth/AuthJavascript.cpp \
+    machine_uid.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
