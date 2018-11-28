@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <cpuid.h>
 
 #ifdef TARGET_OS_MAC
 #include <net/if_dl.h>
@@ -148,29 +149,14 @@ static unsigned short getVolumeHash()
     return hash;
 }
 
-#ifdef TARGET_OS_MAC
-#include <mach-o/arch.h>
-static unsigned short getCpuHash()
-{
-    const NXArchInfo* info = NXGetLocalArchInfo();
-    unsigned short val = 0;
-    val += (unsigned short)info->cputype;
-    val += (unsigned short)info->cpusubtype;
-    return val;
-}
-
-#else // !TARGET_OS_MAC
-
 static void getCpuid( unsigned int* p, unsigned int ax )
 {
-    __asm __volatile
-            (   "movl %%ebx, %%esi\n\t"
-                "cpuid\n\t"
-                "xchgl %%ebx, %%esi"
-                : "=a" (p[0]), "=S" (p[1]),
-            "=c" (p[2]), "=d" (p[3])
-        : "0" (ax)
-        );
+    if (__get_cpuid(ax, &p[0], &p[1], &p[2], &p[3]) == 0) {
+        p[0] = 0;
+        p[1] = 0;
+        p[2] = 0;
+        p[3] = 0;
+    }
 }
 
 static unsigned short getCpuHash()
@@ -184,7 +170,6 @@ static unsigned short getCpuHash()
 
     return hash;
 }
-#endif // !TARGET_OS_MAC
 
 std::string getMachineUidInternal() {
     std::string result;
