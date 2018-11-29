@@ -25,7 +25,10 @@ SOURCES += \
         ../src/btctx/Base58.cpp \
         \
         proxy/UPnPDevices.cpp \
-        proxy/UPnPRouter.cpp
+        proxy/UPnPRouter.cpp \
+    proxy/ProxyServer.cpp \
+    proxy/ConnectionRunnable.cpp \
+    proxy/ProxyClient.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -35,7 +38,10 @@ HEADERS += \
         ../src/btctx/Base58.h \
         \
         proxy/UPnPDevices.h \
-        proxy/UPnPRouter.h
+        proxy/UPnPRouter.h \
+    proxy/ProxyServer.h \
+    proxy/ConnectionRunnable.h \
+    proxy/ProxyClient.h
 
 FORMS += \
         mainwindow.ui
