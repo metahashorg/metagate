@@ -53,12 +53,18 @@ private:
 
     bool parseXML(QByteArray &data);
     void parseXMLRoot(QXmlStreamReader &xml);
-    void parseXMLDevice(QXmlStreamReader &xml);
+    void parseXMLDeviceList(QXmlStreamReader &xml);
     void parseXMLServiceList(QXmlStreamReader &xml);
+    void parseXMLDevice(QXmlStreamReader &xml);
     void parseXMLService(QXmlStreamReader &xml);
+
+    QString getLocalAddress(const QString &hostName, quint16 port) const;
 
     QString m_server;
     QUrl m_location;
+    QUrl m_url;
+    QString m_serviceType;
+    QString m_localAddress;
 
     QString m_friendlyName;
     QString m_manufacturer;

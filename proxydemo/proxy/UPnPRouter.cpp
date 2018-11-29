@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QBuffer>
 #include <QXmlStreamReader>
+#include <QHostAddress>
 
 using SOAPArg = QPair<QString, QString>;
 
@@ -56,7 +57,7 @@ void UPnPRouter::addPortMapping(quint16 internalPort, quint16 externalPort, Prot
     args.append(SOAPArg("NewExternalPort", QString::number(externalPort)));
     args.append(SOAPArg("NewProtocol", protocol == TCP ? "TCP" : "UDP"));
     args.append(SOAPArg("NewInternalPort", QString::number(internalPort)));
-    args.append(SOAPArg("NewInternalClient", "192.168.100.104"));
+    args.append(SOAPArg("NewInternalClient", m_localAddress));
     args.append(SOAPArg("NewEnabled", "1"));
     args.append(SOAPArg("NewPortMappingDescription", "MetaGate"));
     args.append(SOAPArg("NewLeaseDuration", "0"));
@@ -109,6 +110,7 @@ void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol)
 
 void UPnPRouter::downloadXMLFile()
 {
+    m_serviceType = QString();
     QNetworkRequest request(m_location);
     QNetworkReply *reply = m_manager.get(request);
     QObject::connect(reply, &QNetworkReply::finished,
@@ -124,6 +126,22 @@ void UPnPRouter::downloadXMLFile()
         //UPnPDescriptionParser desc_parse;
         //bool ret = desc_parse.parse(reply->readAll(), this);
         //CHECK
+
+        QString controlUrl;
+        for (const UPnPService& s : services) {
+            if(s.servicetype.contains(QLatin1Literal("WANIPConnection")) ||
+                    s.servicetype.contains(QLatin1Literal("WANPPPConnection"))) {
+                m_serviceType = s.servicetype;
+                controlUrl = s.controlurl;
+            }
+        }
+        QUrl curl(controlUrl);
+        QString host = curl.host().isEmpty() ? m_location.host() : curl.host();
+        int port = curl.port() != -1 ? curl.port() : m_location.port(80);
+        m_url = m_location;
+        m_url.setPath(curl.path());
+        m_localAddress = getLocalAddress(host, port);
+        qDebug() << m_localAddress;
 
         emit xmlFileDownloaded(this, true);
         //getExternalIP();
@@ -169,17 +187,13 @@ QString UPnPRouter::modelNumber() const
     return  m_modelNumber;
 }
 
-void UPnPRouter::sendSoapQuery(const QString& query, const QString& soapact, const QString& controlurl)
+void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, const QString &controlurl)
 {
     QUrl curl(controlurl);
-    QString host = curl.host().isEmpty() ? m_location.host() : curl.host();
-    int port = curl.port() != -1 ? curl.port() : m_location.port(80);
-    QUrl url(m_location);
-    url.setPath(curl.path());
 
     QNetworkRequest req;
-    req.setUrl(url);
-    req.setRawHeader("Host", host.toLatin1() + QByteArrayLiteral(":") + QByteArray::number(port));
+    req.setUrl(m_url);
+    req.setRawHeader("Host", m_url.host().toLatin1() + QByteArrayLiteral(":") + QByteArray::number(m_url.port()));
     req.setRawHeader("User-Agent", "MetaGate");
     req.setHeader(QNetworkRequest::ContentTypeHeader, QLatin1String("text/xml"));
     req.setRawHeader("SOAPAction", QString("\"%1\"").arg(soapact).toLatin1());
@@ -201,13 +215,12 @@ void UPnPRouter::sendSoapQuery(const QString& query, const QString& soapact, con
 
 bool UPnPRouter::parseXML(QByteArray &data)
 {
-    qDebug() << "!!!!!!!";
     QBuffer buffer(&data, this);
     buffer.open(QIODevice::ReadOnly);
     QXmlStreamReader xml(&buffer);
 
     while (xml.readNextStartElement()) {
-        qDebug() << xml.name();
+        //qDebug() << xml.name();
         if (xml.name() == "root") {
             parseXMLRoot(xml);
         } else {
@@ -221,9 +234,34 @@ bool UPnPRouter::parseXML(QByteArray &data)
 void UPnPRouter::parseXMLRoot(QXmlStreamReader &xml)
 {
     while (xml.readNextStartElement()) {
-        qDebug() << xml.name();
+        //qDebug() << xml.name();
         if (xml.name() == "device") {
             parseXMLDevice(xml);
+        } else {
+            xml.skipCurrentElement();
+        }
+
+    }
+}
+
+void UPnPRouter::parseXMLDeviceList(QXmlStreamReader &xml)
+{
+    while (xml.readNextStartElement()) {
+        //qDebug() << xml.name();
+        if (xml.name() == "device") {
+            parseXMLDevice(xml);
+        } else {
+            xml.skipCurrentElement();
+        }
+    }
+}
+
+void UPnPRouter::parseXMLServiceList(QXmlStreamReader &xml)
+{
+    while (xml.readNextStartElement()) {
+        //qDebug() << xml.name();
+        if (xml.name() == "service") {
+            parseXMLService(xml);
         } else {
             xml.skipCurrentElement();
         }
@@ -234,9 +272,11 @@ void UPnPRouter::parseXMLRoot(QXmlStreamReader &xml)
 void UPnPRouter::parseXMLDevice(QXmlStreamReader &xml)
 {
     while (xml.readNextStartElement()) {
-        qDebug() << xml.name();
+        //qDebug() << xml.name();
         if (xml.name() == "serviceList") {
             parseXMLServiceList(xml);
+        } else if (xml.name() == "deviceList") {
+            parseXMLDeviceList(xml);
         } else if (xml.name() == "friendlyName") {
             m_friendlyName = xml.readElementText();
         } else if (xml.name() == "manufacturer") {
@@ -253,25 +293,16 @@ void UPnPRouter::parseXMLDevice(QXmlStreamReader &xml)
     }
 }
 
-void UPnPRouter::parseXMLServiceList(QXmlStreamReader &xml)
-{
-    while (xml.readNextStartElement()) {
-        qDebug() << xml.name();
-        if (xml.name() == "service") {
-            parseXMLService(xml);
-        } else {
-            xml.skipCurrentElement();
-        }
-
-    }
-}
-
 void UPnPRouter::parseXMLService(QXmlStreamReader &xml)
 {
     UPnPService service;
     while (xml.readNextStartElement()) {
-        qDebug() << xml.name();
-        if (xml.name() == "serviceType") {
+        //qDebug() << xml.name();
+        if (xml.name() == "serviceList") {
+            parseXMLServiceList(xml);
+        } else if (xml.name() == "deviceList") {
+            parseXMLDeviceList(xml);
+        } else if (xml.name() == "serviceType") {
             service.servicetype = xml.readElementText();
         } else if (xml.name() == "serviceId") {
             service.serviceid = xml.readElementText();
@@ -282,6 +313,18 @@ void UPnPRouter::parseXMLService(QXmlStreamReader &xml)
         }
     }
     services.append(service);
+}
+
+QString UPnPRouter::getLocalAddress(const QString &hostName, quint16 port) const
+{
+    QTcpSocket socket;
+    QString localAddress;
+    socket.connectToHost(hostName, port);
+    if (socket.waitForConnected()) {
+        localAddress = socket.localAddress().toString();
+     }
+    socket.close();
+    return localAddress;
 }
 
 }

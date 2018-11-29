@@ -84,7 +84,7 @@ void UPnPDevices::onReadyRead()
 {
     while (m_mcsocket.hasPendingDatagrams()) {
         QNetworkDatagram dgram = m_mcsocket.receiveDatagram();
-        qDebug() << "Received : " << dgram.data();
+        //qDebug() << "Received : " << dgram.data();
         // try to make a router of it
         UPnPRouter *r = parseResponse(dgram.data());
         if (r)
