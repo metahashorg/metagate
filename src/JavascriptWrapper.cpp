@@ -1278,6 +1278,8 @@ void JavascriptWrapper::getMachineUid() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "machineUidJs";
 
+    LOG << "Get machine uid " << hardwareId;
+
     const QString uid = "\"" + hardwareId + "\"";
     runJs(JS_NAME_RESULT + "(" +
         uid + "" +
