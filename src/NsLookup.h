@@ -77,6 +77,10 @@ private:
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
+    std::vector<QString> requestDns(const NodeType &node) const;
+
+    static QString makeAddress(const QString &ip, const QString &port);
+
 private:
 
     QString savedNodesPath;
@@ -88,16 +92,15 @@ private:
     std::vector<QString> ipsTemp;
 
     size_t posInIpsTemp;
+    size_t countSuccessfullTemp;
 
     std::deque<NodeInfo> allNodes;
 
     std::deque<NodeInfo> allNodesNew;
 
-    size_t requestsInProcess = 0;
+    std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> allNodesForTypes;
 
-    std::map<QString, std::vector<std::reference_wrapper<const NodeInfo>>> allNodesForTypes;
-
-    std::map<QString, std::vector<std::reference_wrapper<const NodeInfo>>> allNodesForTypesNew;
+    std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> allNodesForTypesNew;
 
     mutable std::mutex nodeMutex;
 
@@ -110,6 +113,10 @@ private:
     time_point startScanTime;
 
     std::atomic<bool> isResetFilledFile{false};
+
+    bool isSafeCheck = false;
+
+    milliseconds passedTime;
 
 };
 
