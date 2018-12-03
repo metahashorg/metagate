@@ -117,7 +117,6 @@ int main(int argc, char *argv[]) {
         while (true) {
             auth::AuthJavascript authJavascript;
             auth::Auth authManager(authJavascript);
-            authJavascript.setAuthManager(authManager);
             authManager.start();
 
             NsLookup nsLookup;
@@ -127,13 +126,11 @@ int main(int argc, char *argv[]) {
 
             transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
             transactionsManager.start();
-            transactionsJavascript.setTransactions(transactionsManager);
 
             WebSocketClient webSocketClient(getUrlToWss());
             webSocketClient.start();
 
             JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
-            transactionsManager.setJavascriptWrapper(jsWrapper);
 
             messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
 

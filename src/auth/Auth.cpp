@@ -46,6 +46,8 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect");
     tcpClient.moveToThread(&thread1);
 
+    javascriptWrapper.setAuthManager(*this);
+
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
