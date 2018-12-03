@@ -275,7 +275,7 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     const std::string pubKeyElements = getPublicKeyElements(privateKey);
     const std::string pubKeyBinary = fromHex(pubKeyElements);
     const std::string hexAddr = createAddress(pubKeyBinary);
-    CHECK_TYPED(hexAddr == name, TypeErrors::PRIVATE_KEY_ERROR, "Private key error: address calc incorrect");
+    CHECK_TYPED(hexAddr == name, TypeErrors::PRIVATE_KEY_ERROR, "Private key error: address calc incorrect ." + hexAddr + "." + name + ".");
 }
 
 std::string Wallet::sign(const std::string &message, std::string &publicKey) const {
