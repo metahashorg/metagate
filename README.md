@@ -53,7 +53,7 @@ Q_INVOKABLE void signMessageV3(QString requestId, QString keyName, QString passw
 # Result returns to 
 # if nonce empty, then calc nonce
 signMessageV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
-Если вернулось Ok, значит нужно ждать событий от transactions (txsSendedTxJs и т.д.). Статус Ok не гарантирует, что транзакция корректно обработалась на сервере
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
 
 Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
@@ -61,7 +61,7 @@ Q_INVOKABLE void signMessageDelegate(QString requestId, QString keyName, QString
 paramsJson - json of {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6} type
 # Result returns to 
 signMessageDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
-Если вернулось Ok, значит нужно ждать событий от transactions (txsSendedTxJs и т.д.). Статус Ok не гарантирует, что транзакция корректно обработалась на сервере
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
 
 Q_INVOKABLE void signMessageUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
@@ -69,7 +69,7 @@ Q_INVOKABLE void signMessageUnDelegate(QString requestId, QString keyName, QStri
 paramsJson - json of {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6} type
 # Result returns to 
 signMessageUnDelegateResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
-Если вернулось Ok, значит нужно ждать событий от transactions (txsSendedTxJs и т.д.). Статус Ok не гарантирует, что транзакция корректно обработалась на сервере
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
 
 Q_INVOKABLE void checkAddress(QString requestId, QString address);
 # To check the address for correctness. The result will return to the function:
@@ -106,7 +106,7 @@ Q_INVOKABLE void saveRawPrivKey(QString requestId, QString rawPrivKey, QString p
 saveRawPrivkeyResultJs(requestId, address, errorNum, errorMessage)
 
 Q_INVOKABLE void getRawPrivKey(QString requestId, QString address, QString password);
-Выдает незашифрованный приватный ключ
+# Returns unencrypted  private key
 # javascript is called after completion of this function 
 getRawPrivkeyResultJs(requestId, result, errorNum, errorMessage)
 ```
@@ -143,7 +143,7 @@ Q_INVOKABLE void signMessageMHCV3(QString requestId, QString keyName, QString pa
 # if nonce empty, then calc nonce
 # Result returns to 
 signMessageMHCV3ResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
-Если вернулось Ok, значит нужно ждать событий от transactions (txsSendedTxJs и т.д.). Статус Ok не гарантирует, что транзакция корректно обработалась на сервере
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
 
 Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
@@ -151,7 +151,7 @@ Q_INVOKABLE void signMessageMHCDelegate(QString requestId, QString keyName, QStr
 paramsJson - json of {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6} type
 # Result returns to 
 signMessageDelegateMhcResultJs(requestId, "Ok/Not ok", errorNum, errorMessage)
-Если вернулось Ok, значит нужно ждать событий от transactions (txsSendedTxJs и т.д.). Статус Ok не гарантирует, что транзакция корректно обработалась на сервере
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
 
 Q_INVOKABLE void signMessageMHCUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson);
 # signs the transaction in a new binary format with delegate data
@@ -176,7 +176,7 @@ Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QStrin
 saveRawPrivkeyMHCResultJs(requestId, address, errorNum, errorMessage)
 
 Q_INVOKABLE void getRawPrivKeyMHC(QString requestId, QString address, QString password);
-Выдает незашифрованный приватный ключ
+# Returns unencrypted  private key
 # javascript is called after completion of this function 
 getRawPrivkeyMHCResultJs(requestId, result, errorNum, errorMessage)
 ```
