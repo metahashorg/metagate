@@ -112,47 +112,39 @@ int main(int argc, char *argv[]) {
         /*messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();*/
 
+        auth::AuthJavascript authJavascript;
+        auth::Auth authManager(authJavascript);
+        authManager.start();
+
+        NsLookup nsLookup;
+        nsLookup.start();
+
         transactions::TransactionsDBStorage dbTransactions(getDbPath());
         dbTransactions.init();
-        while (true) {
-            auth::AuthJavascript authJavascript;
-            auth::Auth authManager(authJavascript);
-            authManager.start();
+        transactions::TransactionsJavascript transactionsJavascript;
+        transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
+        transactionsManager.start();
 
-            NsLookup nsLookup;
-            nsLookup.start();
+        WebSocketClient webSocketClient(getUrlToWss());
+        webSocketClient.start();
 
-            transactions::TransactionsJavascript transactionsJavascript;
+        JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
-            transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
-            transactionsManager.start();
+        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
+        /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
+        messenger.start();
+        messengerJavascript.setMessenger(messenger);*/
 
-            WebSocketClient webSocketClient(getUrlToWss());
-            webSocketClient.start();
+        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
+        mainWindow.showExpanded();
 
-            JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
+        mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
 
-            messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
+        Uploader uploader(&mainWindow);
+        uploader.start();
 
-            /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
-            messenger.start();
-            messengerJavascript.setMessenger(messenger);*/
-
-            MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
-            mainWindow.showExpanded();
-
-            mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
-
-            Uploader uploader(&mainWindow);
-            uploader.start();
-
-            const int returnCode = app.exec();
-            LOG << "Return code " << returnCode;
-            if (returnCode != RESTART_BROWSER) {
-                break;
-            }
-        }
-
+        const int returnCode = app.exec();
+        LOG << "Return code " << returnCode;
         return 0;
     } catch (const Exception &e) {
         LOG << "Error " << e;
