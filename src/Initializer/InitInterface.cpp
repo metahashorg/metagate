@@ -14,7 +14,7 @@ InitInterface::InitInterface(QThread *mainThread, Initializer &manager, int from
 
 void InitInterface::sendState(const InitState &state) {
     CHECK(fromNumber <= state.number && state.number < toNumber, "Number incorrect from state " + state.type.toStdString());
-    manager.sendState(state);
+    emit manager.sendState(state);
 }
 
 }

@@ -62,18 +62,28 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Javascript ready";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->javascriptReadySig([makeFunc](const TypedException &exception) {
-            makeFunc(exception);
+        emit m_initializer->javascriptReadySig([makeFunc](const Initializer::ReadyType &result, const TypedException &exception) {
+            QString r;
+            if (result == Initializer::ReadyType::Error) {
+                r = "error";
+            } else if (result == Initializer::ReadyType::Finish) {
+                r = "finish";
+            } else if (result == Initializer::ReadyType::Advance) {
+                r = "advance";
+            } else {
+                throwErr("Unknown type");
+            }
+            makeFunc(exception, r);
         });
     });
 
     if (exception.isSet()) {
-        makeFunc(exception);
+        makeFunc(exception, "error");
     }
 END_SLOT_WRAPPER
 }

@@ -31,9 +31,13 @@ class Initializer: public QObject {
     Q_OBJECT
 public:
 
+    enum class ReadyType {
+        Error, Advance, Finish
+    };
+
     using GetAllStatesCallback = std::function<void(const TypedException &exception)>;
 
-    using ReadyCallback = std::function<void(const TypedException &exception)>;
+    using ReadyCallback = std::function<void(const ReadyType &result, const TypedException &exception)>;
 
     using Callback = std::function<void()>;
 
@@ -57,9 +61,13 @@ public:
         return fut;
     }
 
-public:
+signals:
 
     void sendState(const InitState &state);
+
+private slots:
+
+    void onSendState(const InitState &state);
 
 private:
 

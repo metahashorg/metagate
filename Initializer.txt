@@ -5,7 +5,15 @@ Q_INVOKABLE void resendEvents();
 Результат вернется в функцию
 txsResendEventsJs(errorNum, errorMessage)
 
+Q_INVOKABLE void ready();
+Говорит о готовности javascript-а начать запуск программы. Вызывать после прихода события initInitializedJs
+Результат вернется в функцию
+txsReadyResultJs(result, errorNum, errorMessage)
+result = "error" | "finish" | "advance"
+
 initStateChangedJs(number, totalNumber, type, subType, message, errorNum, errorMessage)
+number не обязательно идет по порядку
+number и type не связаны
 Возвращается при изменении статуса инициализации компонента
 
 initInitializedJs(errorNum, errorMessage)

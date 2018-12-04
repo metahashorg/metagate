@@ -29,16 +29,22 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
 {
     CHECK(connect(this, &Initializer::resendAllStatesSig, this, &Initializer::onResendAllStates), "not connect onGetAllStates");
     CHECK(connect(this, &Initializer::javascriptReadySig, this, &Initializer::onJavascriptReady), "not connect onJavascriptReady");
+    CHECK(connect(this, &Initializer::sendState, this, &Initializer::onSendState), "not connect onSendState");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<GetAllStatesCallback>("GetAllStatesCallback");
     qRegisterMetaType<ReadyCallback>("ReadyCallback");
+    qRegisterMetaType<InitState>("InitState");
 }
 
 Initializer::~Initializer() = default;
 
 void Initializer::complete() {
     isComplete = true;
+    if (isComplete && !isInitFinished && (int)states.size() == totalStates) {
+        isInitFinished = true;
+        sendInitializedToJs();
+    }
 }
 
 template<typename Func>
@@ -54,15 +60,17 @@ void Initializer::sendInitializedToJs() {
     emit javascriptWrapper.initializedSig(TypedException());
 }
 
-void Initializer::sendState(const InitState &state) {
+void Initializer::onSendState(const InitState &state) {
+BEGIN_SLOT_WRAPPER
     CHECK(states.find(state.number) == states.end(), "State already setted");
     CHECK(0 <= state.number && state.number < totalStates, "Incorrect state number");
     states[state.number] = state;
     sendStateToJs(state);
-    if (isComplete && (int)states.size() == totalStates) {
+    if (isComplete && !isInitFinished && (int)states.size() == totalStates) {
         isInitFinished = true;
         sendInitializedToJs();
     }
+END_SLOT_WRAPPER
 }
 
 void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
@@ -81,12 +89,18 @@ END_SLOT_WRAPPER
 
 void Initializer::onJavascriptReady(const ReadyCallback &callback) {
 BEGIN_SLOT_WRAPPER
+    ReadyType result = ReadyType::Error;
     const TypedException exception = apiVrapper2([&, this] {
-        for (std::unique_ptr<InitInterface> &init: initializiers) {
-            init->complete();
+        if (isInitFinished) {
+            for (std::unique_ptr<InitInterface> &init: initializiers) {
+                init->complete();
+            }
+            result = ReadyType::Finish;
+        } else {
+            result = ReadyType::Advance;
         }
     });
-    runCallback(std::bind(callback, exception));
+    runCallback(std::bind(callback, result, exception));
 END_SLOT_WRAPPER
 }
 
