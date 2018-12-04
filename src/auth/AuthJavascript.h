@@ -19,7 +19,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit AuthJavascript(QObject *parent = nullptr);
+    explicit AuthJavascript(QThread *mainThread, QObject *parent = nullptr);
 
     Auth *authManager() const {return m_authManager; }
 

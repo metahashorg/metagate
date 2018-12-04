@@ -8,8 +8,8 @@
 
 namespace initializer {
 
-InitMainWindow::InitMainWindow(Initializer &manager, int fromNumber, int toNumber)
-    : InitInterface(manager, fromNumber, toNumber)
+InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber)
+    : InitInterface(mainThread, manager, fromNumber, toNumber)
 {}
 
 InitMainWindow::~InitMainWindow() = default;

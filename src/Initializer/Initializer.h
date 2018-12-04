@@ -8,6 +8,8 @@
 #include "client.h"
 #include "TypedException.h"
 
+#include <QThread>
+
 namespace initializer {
 
 class InitInterface;
@@ -48,7 +50,7 @@ public:
     template<typename ReturnType, class Init, bool isDefferred, typename... Args>
     std::shared_future<ReturnType> addInit(Args&& ...args) {
         const int countStates = Init::countEvents();
-        std::unique_ptr<Init> result = std::make_unique<Init>(*this, totalStates, totalStates + countStates);
+        std::unique_ptr<Init> result = std::make_unique<Init>(QThread::currentThread(), *this, totalStates, totalStates + countStates);
         totalStates += countStates;
         auto fut = std::async((isDefferred ? std::launch::deferred : std::launch::async), &Init::initialize, result.get(), std::forward<Args>(args)...);
         initializiers.emplace_back(std::move(result));

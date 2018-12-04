@@ -129,12 +129,7 @@ int main(int argc, char *argv[]) {
             );
         initManager.complete();
 
-        /*auth::AuthJavascript authJavascript;
-        auth::Auth authManager(authJavascript);
-        authManager.start();
-        mainWindow.setAuthJavascript(authJavascript);
-        mainWindow.setAuth(authManager);
-
+        /*
         NsLookup nsLookup;
         nsLookup.start();
 

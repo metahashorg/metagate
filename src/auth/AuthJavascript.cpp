@@ -23,11 +23,12 @@ static QJsonDocument loginInfoToJson(const LoginInfo &info)
     return QJsonDocument(obj);
 }
 
-AuthJavascript::AuthJavascript(QObject *parent)
+AuthJavascript::AuthJavascript(QThread *mainThread, QObject *parent)
     : QObject(parent)
 {
     CHECK(connect(this, &AuthJavascript::callbackCall, this, &AuthJavascript::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig), "not connect onSendLoginInfoResponseSig");
+    moveToThread(mainThread);
 }
 
 void AuthJavascript::login(const QString &login, const QString &password)

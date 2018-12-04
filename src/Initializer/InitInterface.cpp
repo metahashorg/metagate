@@ -5,8 +5,9 @@
 
 namespace initializer {
 
-InitInterface::InitInterface(Initializer &manager, int fromNumber, int toNumber)
-    : manager(manager)
+InitInterface::InitInterface(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber)
+    : mainThread(mainThread)
+    , manager(manager)
     , fromNumber(fromNumber)
     , toNumber(toNumber)
 {}

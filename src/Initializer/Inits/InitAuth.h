@@ -20,7 +20,7 @@ class InitializerJavascript;
 class InitAuth: public InitInterface {
 public:
 
-    InitAuth(Initializer &manager, int fromNumber, int toNumber);
+    InitAuth(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
 
     ~InitAuth() override;
 

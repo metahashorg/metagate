@@ -14,7 +14,7 @@ class InitializerJavascript;
 class InitMainWindow: public InitInterface {
 public:
 
-    InitMainWindow(Initializer &manager, int fromNumber, int toNumber);
+    InitMainWindow(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
 
     ~InitMainWindow() override;
 

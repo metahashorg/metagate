@@ -10,8 +10,8 @@
 
 namespace initializer {
 
-InitAuth::InitAuth(Initializer &manager, int fromNumber, int toNumber)
-    : InitInterface(manager, fromNumber, toNumber)
+InitAuth::InitAuth(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber)
+    : InitInterface(mainThread, manager, fromNumber, toNumber)
 {}
 
 InitAuth::~InitAuth() = default;
@@ -28,7 +28,7 @@ void InitAuth::sendInitSuccess() {
 std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>> InitAuth::initialize(
     std::shared_future<std::reference_wrapper<MainWindow>> mainWindow
 ) {
-    authJavascript = std::make_unique<auth::AuthJavascript>();
+    authJavascript = std::make_unique<auth::AuthJavascript>(mainThread);
     authManager = std::make_unique<auth::Auth>(*authJavascript);
     authManager->start();
     MainWindow &mw = mainWindow.get();
