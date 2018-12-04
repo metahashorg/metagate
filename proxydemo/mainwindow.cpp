@@ -26,7 +26,7 @@ MainWindow::~MainWindow()
 void MainWindow::routerDiscovered(proxy::UPnPRouter *router)
 {
     ui->listWidget->addItem(router->server());
-    router->addPortMapping(1235, 1235, proxy::TCP);
+    router->addPortMapping(1234, 1234, proxy::TCP);
     /*net::Port port;
     port.proto = net::TCP;
     port.number = 7777;

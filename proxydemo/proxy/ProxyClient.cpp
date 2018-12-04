@@ -9,8 +9,6 @@
 
 #include <iostream>
 
-static QByteArray lastHeaderField;
-
 class ProxyClientPrivate
 {
 public:
@@ -26,8 +24,6 @@ public:
     void headerComplete();
     void sendBody(const QByteArray &data);
     void connectionEstablished();
-
-
 
     static int reqOnMessageBegin(http_parser* p);
     static int reqOnHeadersComplete(http_parser* p);
@@ -51,7 +47,7 @@ public:
     static int respOnStatus(http_parser* p, const char *at, size_t length);
     static int respOnBody(http_parser* p, const char *at, size_t length);
 
-
+    QByteArray lastHeaderField;
     http_parser reqParser;
     http_parser respParser;
     http_parser_settings reqSettings;
@@ -197,7 +193,7 @@ int ProxyClientPrivate::reqOnHeaderField(http_parser *p, const char *at, size_t 
 {
     QByteArray data(at, length);
     qDebug() << "on_header_field " << data;
-    lastHeaderField = data;
+    static_cast<ProxyClientPrivate *>(p->data)->lastHeaderField = data;
     return 0;
 }
 
@@ -205,7 +201,7 @@ int ProxyClientPrivate::reqOnHeaderValue(http_parser *p, const char *at, size_t 
 {
     QByteArray data(at, length);
     qDebug() << "on_header_value " << data;
-    static_cast<ProxyClientPrivate *>(p->data)->sendHeader(lastHeaderField, data);
+    static_cast<ProxyClientPrivate *>(p->data)->sendHeader(static_cast<ProxyClientPrivate *>(p->data)->lastHeaderField, data);
     return 0;
 }
 
