@@ -4,6 +4,8 @@
 #include <QTcpSocket>
 #include <QNetworkAccessManager>
 
+class ProxyClientPrivate;
+
 class ProxyClient : public QTcpSocket
 {
     Q_OBJECT
@@ -18,19 +20,19 @@ private slots:
     void onReadyRead();
 
 private:
-    void startNewQuery();
-    void parse();
-    void parseHeader();
-    void sendQuery();
+    void parseResp(const QByteArray &data);
 
-    QByteArray m_data;
+
+    /*QByteArray m_data;
     bool m_headerParsed;
     int m_contentLength;
     QByteArray m_firstHeaderString;
     QList<QByteArray> m_headers;
     QByteArray m_body;
 
-    QNetworkAccessManager m_manager;
+    QTcpSocket *m_socket;
+    QNetworkAccessManager m_manager;*/
+    ProxyClientPrivate *d;
 };
 
 #endif // PROXYCLIENT_H

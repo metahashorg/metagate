@@ -15,6 +15,9 @@ CONFIG += c++14
 INCLUDEPATH = ./ ./proxy
 INCLUDEPATH = ../src
 
+QMAKE_CFLAGS += -std=c99 -Wunused-parameter
+SOURCES +=  proxy/http_parser.c
+
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
