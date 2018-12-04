@@ -32,6 +32,10 @@ namespace Ui {
     class MainWindow;
 }
 
+namespace initializer {
+class InitializerJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -57,7 +61,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
 
     void showExpanded();
 

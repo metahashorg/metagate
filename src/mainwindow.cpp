@@ -37,6 +37,7 @@
 #include "auth/Auth.h"
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
+#include "Initializer/InitializerJavascript.h"
 
 #include "machine_uid.h"
 
@@ -59,7 +60,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , lastHtmls(Uploader::getLastHtmlVersion())
@@ -88,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
+    channel->registerObject(QString("initializer"), &initializerJs);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");

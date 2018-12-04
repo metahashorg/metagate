@@ -41,6 +41,9 @@
 #include "transactions/TransactionsJavascript.h"
 #include "transactions/TransactionsDBStorage.h"
 
+#include "Initializer/Initializer.h"
+#include "Initializer/InitializerJavascript.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -109,7 +112,13 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        MainWindow mainWindow;
+        initializer::InitializerJavascript initJavascript;
+        initializer::Initializer initManager(initJavascript);
+        initJavascript.setInitializerManager(initManager);
+
+        MainWindow mainWindow(initJavascript);
+        mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
+        mainWindow.showExpanded();
 
         /*messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();*/
@@ -141,10 +150,6 @@ int main(int argc, char *argv[]) {
         /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
         messenger.start();
         messengerJavascript.setMessenger(messenger);*/
-
-        mainWindow.showExpanded();
-
-        mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
 
         Uploader uploader(&mainWindow);
         uploader.start();
