@@ -159,7 +159,7 @@ static uint16_t getCpuHash()
    return hash;
 }
 
-static static std::string getMachineName()
+static std::string getMachineName()
 {
    static char computerName[1024];
    DWORD size = 1024;
