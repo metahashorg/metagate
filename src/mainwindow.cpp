@@ -59,17 +59,9 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(
-    JavascriptWrapper &jsWrapper,
-    auth::AuthJavascript &authJavascript,
-    messenger::MessengerJavascript &messengerJavascript,
-    transactions::TransactionsJavascript &transactionsJavascript,
-    auth::Auth &authManager,
-    QWidget *parent
-)
+MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , jsWrapper(jsWrapper)
     , lastHtmls(Uploader::getLastHtmlVersion())
 {
     ui->setupUi(this);
@@ -89,32 +81,13 @@ MainWindow::MainWindow(
     loadFile("login.html");
     addElementToHistoryAndCommandLine("app://Login", true, true);
 
-    jsWrapper.setWidget(this);
-
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
-    CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-
     qRegisterMetaType<WindowEvent>("WindowEvent");
-
-    CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
-    CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
-    CHECK(connect(&jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect setUserNameSig");
-    CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
-    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
-
-    CHECK(connect(&authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
-    channel->registerObject(QString("mainWindow"), &jsWrapper);
-    channel->registerObject(QString("auth"), &authJavascript);
-    channel->registerObject(QString("messenger"), &messengerJavascript);
-    channel->registerObject(QString("transactions"), &transactionsJavascript);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");
@@ -128,9 +101,40 @@ MainWindow::MainWindow(
     CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
     qtimer.start();
 
-    emit authManager.reEmit();
-
     emit onUpdateMhsReferences();
+}
+
+void MainWindow::setJavascriptWrapper(JavascriptWrapper &jsWrapper1) {
+    jsWrapper = &jsWrapper1;
+    jsWrapper->setWidget(this);
+    CHECK(connect(jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("mainWindow"), jsWrapper);
+    CHECK(connect(jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
+    CHECK(connect(jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
+    CHECK(connect(jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect setUserNameSig");
+    CHECK(connect(jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
+    CHECK(connect(jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
+    doConfigureMenu();
+}
+
+void MainWindow::setAuthJavascript(auth::AuthJavascript &authJavascript) {
+    CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("auth"), &authJavascript);
+}
+
+void MainWindow::setAuth(auth::Auth &authManager) {
+    CHECK(connect(&authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
+    emit authManager.reEmit();
+}
+
+void MainWindow::setMessengerJavascript(messenger::MessengerJavascript &messengerJavascript) {
+    CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("messenger"), &messengerJavascript);
+}
+
+void MainWindow::setTransactionsJavascript(transactions::TransactionsJavascript &transactionsJavascript) {
+    CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("transactions"), &transactionsJavascript);
 }
 
 void MainWindow::onUpdateMhsReferences() {
@@ -153,6 +157,29 @@ void MainWindow::onCallbackCall(SimpleClient::ReturnCallback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
+}
+
+void MainWindow::doConfigureMenu() {
+    CHECK(jsWrapper != nullptr, "jsWrapper not set");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
+        countFocusLineEditChanged++;
+    }), "Not connect editingFinished");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        lineEditUserChanged = true;
+        emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
+    }), "Not connect textChanged");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
+        if (!lineEditUserChanged) {
+            emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
+        }
+    }), "Not connect textChanged");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+        emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
+        ui->commandLine->lineEdit()->setText(currentTextCommandLine);
+    }), "Not connect returnPressed");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
+        lineEditUserChanged = false;
+    }), "Not connect textChanged");
 }
 
 void MainWindow::configureMenu() {
@@ -243,27 +270,6 @@ void MainWindow::configureMenu() {
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("MetaApps");
     }), "not connect metaAppsButton::pressed");
-
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
-        countFocusLineEditChanged++;
-    }), "Not connect editingFinished");
-
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
-        lineEditUserChanged = true;
-        emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
-    }), "Not connect textChanged");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
-        if (!lineEditUserChanged) {
-            emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
-        }
-    }), "Not connect textChanged");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
-        emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
-        ui->commandLine->lineEdit()->setText(currentTextCommandLine);
-    }), "Not connect returnPressed");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
-        lineEditUserChanged = false;
-    }), "Not connect textChanged");
 }
 
 void MainWindow::registerCommandLine() {

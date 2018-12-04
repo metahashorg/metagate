@@ -109,12 +109,16 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
+        MainWindow mainWindow;
+
         /*messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();*/
 
         auth::AuthJavascript authJavascript;
         auth::Auth authManager(authJavascript);
         authManager.start();
+        mainWindow.setAuthJavascript(authJavascript);
+        mainWindow.setAuth(authManager);
 
         NsLookup nsLookup;
         nsLookup.start();
@@ -124,18 +128,20 @@ int main(int argc, char *argv[]) {
         transactions::TransactionsJavascript transactionsJavascript;
         transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
         transactionsManager.start();
+        mainWindow.setTransactionsJavascript(transactionsJavascript);
 
         WebSocketClient webSocketClient(getUrlToWss());
         webSocketClient.start();
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
+        mainWindow.setJavascriptWrapper(jsWrapper);
 
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
+        mainWindow.setMessengerJavascript(messengerJavascript);
         /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
         messenger.start();
         messengerJavascript.setMessenger(messenger);*/
 
-        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
         mainWindow.showExpanded();
 
         mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

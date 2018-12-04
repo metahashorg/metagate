@@ -57,20 +57,23 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(
-        JavascriptWrapper &jsWrapper,
-        auth::AuthJavascript &authJavascript,
-        messenger::MessengerJavascript &messengerJavascript,
-        transactions::TransactionsJavascript &transactionsJavascript,
-        auth::Auth &authManager,
-        QWidget *parent = 0
-    );
+    explicit MainWindow(QWidget *parent = 0);
 
     void showExpanded();
 
     QString getServerIp(const QString &text) const;
 
     LastHtmlVersion getCurrentHtmls() const;
+
+    void setJavascriptWrapper(JavascriptWrapper &jsWrapper);
+
+    void setAuthJavascript(auth::AuthJavascript &authJavascript);
+
+    void setAuth(auth::Auth &authManager);
+
+    void setMessengerJavascript(messenger::MessengerJavascript &messengerJavascript);
+
+    void setTransactionsJavascript(transactions::TransactionsJavascript &transactionsJavascript);
 
 private:
 
@@ -85,6 +88,8 @@ private:
     bool currentFileIsEqual(const QString &pageName);
 
     void configureMenu();
+
+    void doConfigureMenu();
 
     void registerCommandLine();
 
@@ -136,7 +141,7 @@ private:
 
     std::unique_ptr<QWebChannel> channel;
 
-    JavascriptWrapper &jsWrapper;
+    JavascriptWrapper *jsWrapper = nullptr;
 
     const LastHtmlVersion lastHtmls;
 
