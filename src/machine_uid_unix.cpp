@@ -84,6 +84,9 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
     struct ifaddrs* ifap;
     for ( ifap = ifaphead; ifap; ifap = ifap->ifa_next )
     {
+        if (ifap->ifa_name[0] != 'e') {
+            continue;
+        }
         struct sockaddr_dl* sdl = (struct sockaddr_dl*)ifap->ifa_addr;
         if ( sdl && ( sdl->sdl_family == AF_LINK ) && ( sdl->sdl_type == IFT_ETHER ))
         {
