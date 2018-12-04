@@ -1,0 +1,12 @@
+Initializer регестрируется в javascript по имени initializer
+
+Q_INVOKABLE void resendEvents();
+Переотправляет все накопленные event-ы, если есть (stateChanged, initialized)
+Результат вернется в функцию
+txsResendEventsJs(errorNum, errorMessage)
+
+initStateChangedJs(number, totalNumber, type, subType, message, errorNum, errorMessage)
+Возвращается при изменении статуса инициализации компонента
+
+initInitializedJs(errorNum, errorMessage)
+Возвращается при окончании инициализации всех компонентов

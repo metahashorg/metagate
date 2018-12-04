@@ -63,7 +63,9 @@ SOURCES += main.cpp mainwindow.cpp \
     HttpClient.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
-    machine_uid.cpp
+    machine_uid.cpp \
+    Initializer/Initializer.cpp \
+    Initializer/InitializerJavascript.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -133,7 +135,9 @@ HEADERS += mainwindow.h \
     HttpClient.h \
     duration.h \
     auth/Auth.h \
-    auth/AuthJavascript.h
+    auth/AuthJavascript.h \
+    Initializer/Initializer.h \
+    Initializer/InitializerJavascript.h
 
 FORMS += mainwindow.ui
 
