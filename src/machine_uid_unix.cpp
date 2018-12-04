@@ -114,6 +114,9 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
     struct ifreq* ifr;
     for ( ifr = conf.ifc_req; (char*)ifr < (char*)conf.ifc_req + conf.ifc_len; ifr++ )
     {
+        if (ifr->ifr_name[0] != 'e') {
+            continue;
+        }
         if ( ifr->ifr_addr.sa_data == (ifr+1)->ifr_addr.sa_data )
             continue;  // duplicate, skip it
 
