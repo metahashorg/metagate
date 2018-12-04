@@ -47,8 +47,8 @@ public:
 
 public:
 
-    template<typename ReturnType, class Init, bool isDefferred, typename... Args>
-    std::shared_future<ReturnType> addInit(Args&& ...args) {
+    template<class Init, bool isDefferred, typename... Args>
+    std::shared_future<typename Init::Return> addInit(Args&& ...args) {
         const int countStates = Init::countEvents();
         std::unique_ptr<Init> result = std::make_unique<Init>(QThread::currentThread(), *this, totalStates, totalStates + countStates);
         totalStates += countStates;

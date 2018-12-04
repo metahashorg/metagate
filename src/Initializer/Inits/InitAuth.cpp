@@ -25,9 +25,7 @@ void InitAuth::sendInitSuccess() {
     sendState(InitState(fromNumber, "auth", "init", "auth initialized", TypedException()));
 }
 
-std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>> InitAuth::initialize(
-    std::shared_future<std::reference_wrapper<MainWindow>> mainWindow
-) {
+InitAuth::Return InitAuth::initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow) {
     authJavascript = std::make_unique<auth::AuthJavascript>(mainThread);
     authManager = std::make_unique<auth::Auth>(*authJavascript);
     authManager->start();

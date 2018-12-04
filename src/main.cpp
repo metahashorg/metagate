@@ -118,15 +118,10 @@ int main(int argc, char *argv[]) {
         initializer::Initializer initManager(initJavascript);
         initJavascript.setInitializerManager(initManager);
 
-        const std::shared_future<std::reference_wrapper<MainWindow>> mainWindow =
-            initManager.addInit<std::reference_wrapper<MainWindow>, initializer::InitMainWindow, true>(
-                std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1
-            );
+        using namespace initializer;
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
-        const std::shared_future<std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>> auth =
-            initManager.addInit<std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>, initializer::InitAuth, false>(
-                mainWindow
-            );
+        const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth, false>(mainWindow);
         initManager.complete();
 
         /*

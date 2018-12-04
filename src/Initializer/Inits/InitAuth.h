@@ -20,15 +20,17 @@ class InitializerJavascript;
 class InitAuth: public InitInterface {
 public:
 
+    using Return = std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>;
+
+public:
+
     InitAuth(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
 
     ~InitAuth() override;
 
     void complete() override;
 
-    std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>> initialize(
-        std::shared_future<std::reference_wrapper<MainWindow>> mainWindow
-    );
+    Return initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow);
 
     static int countEvents() {
         return 1;

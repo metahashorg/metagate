@@ -14,13 +14,17 @@ class InitializerJavascript;
 class InitMainWindow: public InitInterface {
 public:
 
+    using Return = std::reference_wrapper<MainWindow>;
+
+public:
+
     InitMainWindow(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
 
     ~InitMainWindow() override;
 
     void complete() override;
 
-    std::reference_wrapper<MainWindow> initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString);
+    Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString);
 
     static int countEvents() {
         return 1;
