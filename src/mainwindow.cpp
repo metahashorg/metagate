@@ -82,6 +82,9 @@ MainWindow::MainWindow(
     configureMenu();
 
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
+    const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
+    LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
+    pagesMappings.setMappings(QString::fromStdString(contentMappings));
 
     loadFile("login.html");
     addElementToHistoryAndCommandLine("app://Login", true, true);

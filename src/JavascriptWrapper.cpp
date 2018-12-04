@@ -1320,7 +1320,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::setPagesMapping(QString mapping) {
 BEGIN_SLOT_WRAPPER
-    emit setMappingsSig(mapping);
+    //emit setMappingsSig(mapping);
 END_SLOT_WRAPPER
 }
 
