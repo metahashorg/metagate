@@ -43,6 +43,8 @@
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"
+#include "Initializer/Inits/InitMainwindow.h"
+#include "Initializer/Inits/InitAuth.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -116,14 +118,18 @@ int main(int argc, char *argv[]) {
         initializer::Initializer initManager(initJavascript);
         initJavascript.setInitializerManager(initManager);
 
-        MainWindow mainWindow(initJavascript);
-        mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
-        mainWindow.showExpanded();
+        const std::shared_future<std::reference_wrapper<MainWindow>> mainWindow =
+            initManager.addInit<std::reference_wrapper<MainWindow>, initializer::InitMainWindow, true>(
+                std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1
+            );
+        mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
+        const std::shared_future<std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>> auth =
+            initManager.addInit<std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>, initializer::InitAuth, false>(
+                mainWindow
+            );
+        initManager.complete();
 
-        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
-        dbMessenger.init();*/
-
-        auth::AuthJavascript authJavascript;
+        /*auth::AuthJavascript authJavascript;
         auth::Auth authManager(authJavascript);
         authManager.start();
         mainWindow.setAuthJavascript(authJavascript);
@@ -147,12 +153,15 @@ int main(int argc, char *argv[]) {
 
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
         mainWindow.setMessengerJavascript(messengerJavascript);
-        /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
-        messenger.start();
-        messengerJavascript.setMessenger(messenger);*/
 
         Uploader uploader(&mainWindow);
-        uploader.start();
+        uploader.start();*/
+
+        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
+        dbMessenger.init();
+        messenger::Messenger messenger(messengerJavascript, dbMessenger);
+        messenger.start();
+        messengerJavascript.setMessenger(messenger);*/
 
         const int returnCode = app.exec();
         LOG << "Return code " << returnCode;

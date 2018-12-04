@@ -11,6 +11,7 @@
 #include "Paths.h"
 
 #include "InitializerJavascript.h"
+#include "InitInterface.h"
 
 namespace initializer {
 
@@ -33,6 +34,8 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
     qRegisterMetaType<GetAllStatesCallback>("GetAllStatesCallback");
     qRegisterMetaType<ReadyCallback>("ReadyCallback");
 }
+
+Initializer::~Initializer() = default;
 
 void Initializer::complete() {
     isComplete = true;
@@ -79,6 +82,9 @@ END_SLOT_WRAPPER
 void Initializer::onJavascriptReady(const ReadyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
+        for (std::unique_ptr<InitInterface> &init: initializiers) {
+            init->complete();
+        }
     });
     runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER
