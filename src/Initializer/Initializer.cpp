@@ -34,19 +34,42 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
     qRegisterMetaType<ReadyCallback>("ReadyCallback");
 }
 
+void Initializer::complete() {
+    isComplete = true;
+}
+
 template<typename Func>
 void Initializer::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
+void Initializer::sendStateToJs(const InitState &state) {
+    emit javascriptWrapper.stateChangedSig(totalStates, state);
+}
+
+void Initializer::sendInitializedToJs() {
+    emit javascriptWrapper.initializedSig(TypedException());
+}
+
+void Initializer::sendState(const InitState &state) {
+    CHECK(states.find(state.number) == states.end(), "State already setted");
+    CHECK(0 <= state.number && state.number < totalStates, "Incorrect state number");
+    states[state.number] = state;
+    sendStateToJs(state);
+    if (isComplete && (int)states.size() == totalStates) {
+        isInitFinished = true;
+        sendInitializedToJs();
+    }
+}
+
 void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        for (const InitState &state: states) {
-            emit javascriptWrapper.stateChangedSig(totalStates, state);
+        for (const auto &statePair: states) {
+            sendStateToJs(statePair.second);
         }
         if (isInitFinished) {
-            emit javascriptWrapper.initializedSig(TypedException());
+            sendInitializedToJs();
         }
     });
     runCallback(std::bind(callback, exception));

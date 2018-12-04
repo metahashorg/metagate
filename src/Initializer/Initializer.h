@@ -2,6 +2,7 @@
 #define INITIALIZER_H
 
 #include <vector>
+#include <map>
 
 #include "client.h"
 #include "TypedException.h"
@@ -36,10 +37,22 @@ public:
 
     explicit Initializer(InitializerJavascript &javascriptWrapper, QObject *parent = nullptr);
 
+    void complete();
+
+public:
+
+    void sendState(const InitState &state);
+
 private:
 
     template<typename Func>
     void runCallback(const Func &callback);
+
+private:
+
+    void sendStateToJs(const InitState &state);
+
+    void sendInitializedToJs();
 
 signals:
 
@@ -61,9 +74,11 @@ private:
 
     int totalStates = 0;
 
-    std::vector<InitState> states;
+    std::map<int, InitState> states;
 
     bool isInitFinished = false;
+
+    bool isComplete = false;
 };
 
 }
