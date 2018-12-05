@@ -46,6 +46,7 @@
 #include "Initializer/Inits/InitMainwindow.h"
 #include "Initializer/Inits/InitAuth.h"
 #include "Initializer/Inits/InitNsLookup.h"
+#include "Initializer/Inits/InitTransactions.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -128,16 +129,11 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup, false>();
 
+        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions, false>(mainWindow, nsLookup);
+
         initManager.complete();
 
         /*
-        transactions::TransactionsDBStorage dbTransactions(getDbPath());
-        dbTransactions.init();
-        transactions::TransactionsJavascript transactionsJavascript;
-        transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
-        transactionsManager.start();
-        emit mainWindow.setTransactionsJavascript(transactionsJavascript);
-
         WebSocketClient webSocketClient(getUrlToWss());
         webSocketClient.start();
 

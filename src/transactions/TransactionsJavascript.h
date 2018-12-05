@@ -5,6 +5,8 @@
 
 #include <functional>
 
+class QThread;
+
 struct TypedException;
 
 namespace transactions {
@@ -24,7 +26,7 @@ public:
 
 public:
 
-    explicit TransactionsJavascript(QObject *parent = nullptr);
+    explicit TransactionsJavascript(QThread *mainThread, QObject *parent = nullptr);
 
     void setTransactions(Transactions &trans) {
         transactionsManager = &trans;
