@@ -15,9 +15,8 @@
 
 namespace initializer {
 
-InitState::InitState(int number, const QString &type, const QString &subType, const QString &message, const TypedException &exception)
-    : number(number)
-    , type(type)
+InitState::InitState(const QString &type, const QString &subType, const QString &message, const TypedException &exception)
+    : type(type)
     , subType(subType)
     , message(message)
     , exception(exception)
@@ -52,8 +51,8 @@ void Initializer::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
-void Initializer::sendStateToJs(const InitState &state) {
-    emit javascriptWrapper.stateChangedSig(totalStates, state);
+void Initializer::sendStateToJs(const InitState &state, int number) {
+    emit javascriptWrapper.stateChangedSig(number, totalStates, state);
 }
 
 void Initializer::sendInitializedToJs() {
@@ -62,10 +61,12 @@ void Initializer::sendInitializedToJs() {
 
 void Initializer::onSendState(const InitState &state) {
 BEGIN_SLOT_WRAPPER
-    CHECK(states.find(state.number) == states.end(), "State already setted");
-    CHECK(0 <= state.number && state.number < totalStates, "Incorrect state number");
-    states[state.number] = state;
-    sendStateToJs(state);
+    CHECK(existStates.size() == states.size(), "Incorrect existStates struct");
+    CHECK(existStates.find(std::make_pair(state.type, state.subType)) == existStates.end(), "State already setted");
+    CHECK((int)states.size() < totalStates, "Incorrect state number");
+    existStates.emplace(state.type, state.subType);
+    states.emplace_back(state);
+    sendStateToJs(state, (int)states.size() - 1);
     if (isComplete && !isInitFinished && (int)states.size() == totalStates) {
         isInitFinished = true;
         sendInitializedToJs();
@@ -76,8 +77,8 @@ END_SLOT_WRAPPER
 void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        for (const auto &statePair: states) {
-            sendStateToJs(statePair.second);
+        for (size_t i = 0; i < states.size(); i++) {
+            sendStateToJs(states[i], (int)i);
         }
         if (isInitFinished) {
             sendInitializedToJs();

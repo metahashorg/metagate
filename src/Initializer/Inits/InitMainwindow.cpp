@@ -8,8 +8,8 @@
 
 namespace initializer {
 
-InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber)
-    : InitInterface(mainThread, manager, fromNumber, toNumber)
+InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager)
+    : InitInterface(mainThread, manager)
 {}
 
 InitMainWindow::~InitMainWindow() = default;
@@ -19,7 +19,7 @@ void InitMainWindow::complete() {
 }
 
 void InitMainWindow::sendInitSuccess() {
-    sendState(InitState(fromNumber, "mainwindow", "init", "mainwindow initialized", TypedException()));
+    sendState(InitState("mainwindow", "init", "mainwindow initialized", TypedException()));
 }
 
 InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString) {

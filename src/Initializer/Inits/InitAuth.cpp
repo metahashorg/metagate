@@ -10,8 +10,8 @@
 
 namespace initializer {
 
-InitAuth::InitAuth(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber)
-    : InitInterface(mainThread, manager, fromNumber, toNumber)
+InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
+    : InitInterface(mainThread, manager)
 {}
 
 InitAuth::~InitAuth() = default;
@@ -22,7 +22,7 @@ void InitAuth::complete() {
 }
 
 void InitAuth::sendInitSuccess() {
-    sendState(InitState(fromNumber, "auth", "init", "auth initialized", TypedException()));
+    sendState(InitState("auth", "init", "auth initialized", TypedException()));
 }
 
 InitAuth::Return InitAuth::initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow) {

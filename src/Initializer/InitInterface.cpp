@@ -5,15 +5,12 @@
 
 namespace initializer {
 
-InitInterface::InitInterface(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber)
+InitInterface::InitInterface(QThread *mainThread, Initializer &manager)
     : mainThread(mainThread)
     , manager(manager)
-    , fromNumber(fromNumber)
-    , toNumber(toNumber)
 {}
 
 void InitInterface::sendState(const InitState &state) {
-    CHECK(fromNumber <= state.number && state.number < toNumber, "Number incorrect from state " + state.type.toStdString());
     emit manager.sendState(state);
 }
 

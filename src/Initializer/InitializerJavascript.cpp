@@ -88,12 +88,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitializerJavascript::onStateChanged(int totalStates, const InitState &state) {
+void InitializerJavascript::onStateChanged(int number, int totalStates, const InitState &state) {
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initStateChangedJs";
-    makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, state.number, totalStates, state.type, state.subType, state.message);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, number, totalStates, state.type, state.subType, state.message);
 END_SLOT_WRAPPER
 }
 

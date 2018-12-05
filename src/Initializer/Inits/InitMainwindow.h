@@ -18,7 +18,7 @@ public:
 
 public:
 
-    InitMainWindow(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
+    InitMainWindow(QThread *mainThread, Initializer &manager);
 
     ~InitMainWindow() override;
 

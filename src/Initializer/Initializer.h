@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <future>
+#include <set>
 
 #include "client.h"
 #include "TypedException.h"
@@ -16,7 +17,6 @@ class InitInterface;
 class InitializerJavascript;
 
 struct InitState {
-    int number;
     QString type;
     QString subType;
     QString message;
@@ -24,7 +24,7 @@ struct InitState {
 
     InitState() = default;
 
-    InitState(int number, const QString &type, const QString &subType, const QString &message, const TypedException &exception);
+    InitState(const QString &type, const QString &subType, const QString &message, const TypedException &exception);
 };
 
 class Initializer: public QObject {
@@ -53,9 +53,8 @@ public:
 
     template<class Init, bool isDefferred, typename... Args>
     std::shared_future<typename Init::Return> addInit(Args&& ...args) {
-        const int countStates = Init::countEvents();
-        std::unique_ptr<Init> result = std::make_unique<Init>(QThread::currentThread(), *this, totalStates, totalStates + countStates);
-        totalStates += countStates;
+        totalStates += Init::countEvents();
+        std::unique_ptr<Init> result = std::make_unique<Init>(QThread::currentThread(), *this);
         auto fut = std::async((isDefferred ? std::launch::deferred : std::launch::async), &Init::initialize, result.get(), std::forward<Args>(args)...);
         initializiers.emplace_back(std::move(result));
         return fut;
@@ -76,7 +75,7 @@ private:
 
 private:
 
-    void sendStateToJs(const InitState &state);
+    void sendStateToJs(const InitState &state, int number);
 
     void sendInitializedToJs();
 
@@ -100,7 +99,9 @@ private:
 
     int totalStates = 0;
 
-    std::map<int, InitState> states;
+    std::vector<InitState> states;
+
+    std::set<std::pair<QString, QString>> existStates;
 
     bool isInitFinished = false;
 

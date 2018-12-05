@@ -24,7 +24,7 @@ public:
 
 public:
 
-    InitAuth(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
+    InitAuth(QThread *mainThread, Initializer &manager);
 
     ~InitAuth() override;
 

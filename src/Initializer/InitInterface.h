@@ -11,7 +11,7 @@ struct InitState;
 class InitInterface {
 public:
 
-    InitInterface(QThread *mainThread, Initializer &manager, int fromNumber, int toNumber);
+    InitInterface(QThread *mainThread, Initializer &manager);
 
     virtual ~InitInterface() = default;
 
@@ -25,9 +25,6 @@ protected:
 
     Initializer &manager;
 
-    int fromNumber;
-
-    int toNumber;
 };
 
 }
