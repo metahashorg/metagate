@@ -71,7 +71,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitAuth.cpp \
     Initializer/Inits/InitNsLookup.cpp \
     Initializer/Inits/InitTransactions.cpp \
-    Initializer/Inits/InitWebSocket.cpp
+    Initializer/Inits/InitWebSocket.cpp \
+    Initializer/Inits/InitJavascriptWrapper.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -149,7 +150,8 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitAuth.h \
     Initializer/Inits/InitNsLookup.h \
     Initializer/Inits/InitTransactions.h \
-    Initializer/Inits/InitWebSocket.h
+    Initializer/Inits/InitWebSocket.h \
+    Initializer/Inits/InitJavascriptWrapper.h
 
 FORMS += mainwindow.ui
 
