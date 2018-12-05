@@ -67,7 +67,7 @@ std::string HexStringToDump(const std::string& hexstr)
 
 std::string IntToRLP(int val) {
     if (val == 0)
-        return std::string('\x00', 1);
+        return std::string(1, '\x00');
     uint8_t rlpval[sizeof(val)];
     unsigned char* valptr = (unsigned char*)&val + sizeof(val) - 1;
 
