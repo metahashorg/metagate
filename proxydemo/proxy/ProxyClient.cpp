@@ -3,7 +3,9 @@
 #include <QNetworkReply>
 #include <QEvent>
 #include <QThread>
+#include <QHostAddress>
 #include <QDebug>
+
 
 #include "http_parser.h"
 
@@ -24,6 +26,7 @@ public:
     void headerComplete();
     void sendBody(const QByteArray &data);
     void connectionEstablished();
+    void sendErrorPage();
 
     static int reqOnMessageBegin(http_parser* p);
     static int reqOnHeadersComplete(http_parser* p);
@@ -54,6 +57,8 @@ public:
     http_parser_settings respSettings;
     QTcpSocket *srcSocket = nullptr;
     QTcpSocket *socket = nullptr;
+    QString curHost;
+    int curPort = -1;
 };
 
 ProxyClientPrivate::ProxyClientPrivate(QTcpSocket *parent)
@@ -110,6 +115,7 @@ void ProxyClientPrivate::startQuery(const QByteArray &method, const QUrl &url)
     QUrl u(url);
     u.setScheme("http");
     qDebug() << u.host() << u.port(80);
+    qDebug() << socket->peerAddress();
     socket->connectToHost(u.host(), u.port(80));
     if (socket->waitForConnected()) {
         qDebug() << "connected";
@@ -150,6 +156,11 @@ void ProxyClientPrivate::connectionEstablished()
     srcSocket->flush();
     qDebug() << srcSocket->waitForBytesWritten();
     qDebug() << srcSocket->errorString();
+}
+
+void ProxyClientPrivate::sendErrorPage()
+{
+
 }
 
 int ProxyClientPrivate::reqOnMessageBegin(http_parser *p)
@@ -225,7 +236,7 @@ int ProxyClientPrivate::reqOnStatus(http_parser *p, const char *at, size_t lengt
 int ProxyClientPrivate::reqOnBody(http_parser *p, const char *at, size_t length)
 {
     QByteArray a(at, length);
-    qDebug() << "on_body " << a;
+    //qDebug() << "on_body " << a;
     return 0;
 }
 
@@ -298,7 +309,7 @@ int ProxyClientPrivate::respOnStatus(http_parser* p, const char *at, size_t leng
 int ProxyClientPrivate::respOnBody(http_parser* p, const char *at, size_t length)
 {
     QByteArray a(at, length);
-    qDebug() << "on_body " << a;
+    //qDebug() << "on_body " << a;
     return 0;
 }
 
@@ -320,6 +331,7 @@ ProxyClient::ProxyClient(QObject *parent)
     qDebug() << "create " << QThread::currentThread();
 
     connect(this, &QAbstractSocket::connected, this, &ProxyClient::onConnected);
+    connect(this, &QAbstractSocket::disconnected, this, &ProxyClient::onDisconnected);
     connect(this, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), this, &ProxyClient::onError);
     connect(this, &QIODevice::readyRead, this, &ProxyClient::onReadyRead);
 
@@ -344,6 +356,12 @@ void ProxyClient::onConnected()
     qDebug() << "connected";
 }
 
+void ProxyClient::onDisconnected()
+{
+    qDebug() << "disconnected";
+    deleteLater();
+}
+
 void ProxyClient::onError(QAbstractSocket::SocketError socketError)
 {
 
@@ -352,7 +370,7 @@ void ProxyClient::onError(QAbstractSocket::SocketError socketError)
 void ProxyClient::onReadyRead()
 {
     QByteArray data = readAll();
-    qDebug() << data;
+    //qDebug() << data;
     //write(QByteArray("Hello"));
     d->parseRequestData(data);
 

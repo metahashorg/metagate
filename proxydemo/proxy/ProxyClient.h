@@ -16,6 +16,7 @@ public:
 
 private slots:
     void onConnected();
+    void onDisconnected();
     void onError(QAbstractSocket::SocketError socketError);
     void onReadyRead();
 

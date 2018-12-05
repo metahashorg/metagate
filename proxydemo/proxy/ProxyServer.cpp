@@ -10,7 +10,6 @@ namespace proxy
 ProxyServer::ProxyServer(QObject *parent)
     : QTcpServer(parent)
 {
-    m_pool = new QThreadPool(this);
 }
 
 void ProxyServer::start()
@@ -22,15 +21,13 @@ void ProxyServer::start()
 void ProxyServer::incomingConnection(qintptr socketDescriptor)
 {
     qDebug() << "connect";
-    QThread *thread = new QThread();
+    QThread *thread = new QThread(this);
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     ProxyClient *client = new ProxyClient();
-    //client->moveToThread(thread);
-    thread->start();
+    connect(client, &ProxyClient::destroyed, thread, &QThread::quit);
     client->setSocketDescriptor(socketDescriptor);
-    //ConnectionRunnable *task = new ConnectionRunnable(socketDescriptor);
-    //task->setAutoDelete(true);
-    //m_pool->start(task);
+    client->moveToThread(thread);
+    thread->start();
 }
 
 }

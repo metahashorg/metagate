@@ -2,7 +2,6 @@
 #define PROXYSERVER_H
 
 #include <QTcpServer>
-#include <QThreadPool>
 
 namespace proxy
 {
@@ -19,7 +18,6 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private:
-    QThreadPool *m_pool;
 };
 
 }
