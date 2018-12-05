@@ -69,15 +69,29 @@ public:
 
     LastHtmlVersion getCurrentHtmls() const;
 
-    void setJavascriptWrapper(JavascriptWrapper &jsWrapper);
+signals:
 
-    void setAuthJavascript(auth::AuthJavascript &authJavascript);
+    void setJavascriptWrapper(JavascriptWrapper *jsWrapper);
 
-    void setAuth(auth::Auth &authManager);
+    void setAuthJavascript(auth::AuthJavascript *authJavascript);
 
-    void setMessengerJavascript(messenger::MessengerJavascript &messengerJavascript);
+    void setAuth(auth::Auth *authManager);
 
-    void setTransactionsJavascript(transactions::TransactionsJavascript &transactionsJavascript);
+    void setMessengerJavascript(messenger::MessengerJavascript *messengerJavascript);
+
+    void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript);
+
+private slots:
+
+    void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper);
+
+    void onSetAuthJavascript(auth::AuthJavascript *authJavascript);
+
+    void onSetAuth(auth::Auth *authManager);
+
+    void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript);
+
+    void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript);
 
 private:
 

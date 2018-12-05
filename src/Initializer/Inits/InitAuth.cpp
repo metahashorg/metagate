@@ -30,8 +30,8 @@ InitAuth::Return InitAuth::initialize(std::shared_future<std::reference_wrapper<
     authManager = std::make_unique<auth::Auth>(*authJavascript);
     authManager->start();
     MainWindow &mw = mainWindow.get();
-    mw.setAuthJavascript(*authJavascript);
-    mw.setAuth(*authManager);
+    emit mw.setAuthJavascript(authJavascript.get());
+    emit mw.setAuth(authManager.get());
 
     sendInitSuccess();
     return std::make_pair(std::ref(*authManager), std::ref(*authJavascript));

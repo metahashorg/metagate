@@ -120,8 +120,6 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     qRegisterMetaType<TypedException>("TypedException");
     qRegisterMetaType<ReturnCallback>("ReturnCallback");
 
-    transactionsManager.setJavascriptWrapper(*this);
-
     emit authManager.reEmit();
 
     sendAppInfoToWss("", true);

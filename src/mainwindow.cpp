@@ -67,6 +67,12 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 {
     ui->setupUi(this);
 
+    CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
+    CHECK(connect(this, &MainWindow::setAuthJavascript, this, &MainWindow::onSetAuthJavascript), "not connect onSetAuthJavascript");
+    CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
+    CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
+    CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
+
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
 
@@ -106,8 +112,10 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     emit onUpdateMhsReferences();
 }
 
-void MainWindow::setJavascriptWrapper(JavascriptWrapper &jsWrapper1) {
-    jsWrapper = &jsWrapper1;
+void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1) {
+BEGIN_SLOT_WRAPPER
+    CHECK(jsWrapper1 != nullptr, "Incorrect jsWrapper1");
+    jsWrapper = jsWrapper1;
     jsWrapper->setWidget(this);
     CHECK(connect(jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     channel->registerObject(QString("mainWindow"), jsWrapper);
@@ -117,26 +125,39 @@ void MainWindow::setJavascriptWrapper(JavascriptWrapper &jsWrapper1) {
     CHECK(connect(jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
     CHECK(connect(jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
     doConfigureMenu();
+END_SLOT_WRAPPER
 }
 
-void MainWindow::setAuthJavascript(auth::AuthJavascript &authJavascript) {
-    CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    channel->registerObject(QString("auth"), &authJavascript);
+void MainWindow::onSetAuthJavascript(auth::AuthJavascript *authJavascript) {
+BEGIN_SLOT_WRAPPER
+    CHECK(authJavascript != nullptr, "Incorrect authJavascript");
+    CHECK(connect(authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("auth"), authJavascript);
+END_SLOT_WRAPPER
 }
 
-void MainWindow::setAuth(auth::Auth &authManager) {
-    CHECK(connect(&authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
-    emit authManager.reEmit();
+void MainWindow::onSetAuth(auth::Auth *authManager) {
+BEGIN_SLOT_WRAPPER
+    CHECK(authManager != nullptr, "Incorrect authManager");
+    CHECK(connect(authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
+    emit authManager->reEmit();
+END_SLOT_WRAPPER
 }
 
-void MainWindow::setMessengerJavascript(messenger::MessengerJavascript &messengerJavascript) {
-    CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    channel->registerObject(QString("messenger"), &messengerJavascript);
+void MainWindow::onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messengerJavascript != nullptr, "Incorrect messengerJavascript");
+    CHECK(connect(messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("messenger"), messengerJavascript);
+END_SLOT_WRAPPER
 }
 
-void MainWindow::setTransactionsJavascript(transactions::TransactionsJavascript &transactionsJavascript) {
-    CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    channel->registerObject(QString("transactions"), &transactionsJavascript);
+void MainWindow::onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
+    CHECK(connect(transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    channel->registerObject(QString("transactions"), transactionsJavascript);
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onUpdateMhsReferences() {
