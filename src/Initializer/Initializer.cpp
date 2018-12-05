@@ -28,7 +28,7 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
 {
     CHECK(connect(this, &Initializer::resendAllStatesSig, this, &Initializer::onResendAllStates), "not connect onGetAllStates");
     CHECK(connect(this, &Initializer::javascriptReadySig, this, &Initializer::onJavascriptReady), "not connect onJavascriptReady");
-    CHECK(connect(this, &Initializer::sendState, this, &Initializer::onSendState), "not connect onSendState");
+    CHECK(connect(this, &Initializer::sendState, this, &Initializer::onSendState, Qt::ConnectionType::QueuedConnection), "not connect onSendState");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<GetAllStatesCallback>("GetAllStatesCallback");
@@ -40,10 +40,6 @@ Initializer::~Initializer() = default;
 
 void Initializer::complete() {
     isComplete = true;
-    if (isComplete && !isInitFinished && (int)states.size() == totalStates) {
-        isInitFinished = true;
-        sendInitializedToJs();
-    }
 }
 
 template<typename Func>
@@ -61,13 +57,14 @@ void Initializer::sendInitializedToJs() {
 
 void Initializer::onSendState(const InitState &state) {
 BEGIN_SLOT_WRAPPER
+    CHECK(isComplete, "Not complete"); // Запросы приходят в QueuedConnection, поэтому флаг isComplete в этот момент уже должен быть установлен
     CHECK(existStates.size() == states.size(), "Incorrect existStates struct");
     CHECK(existStates.find(std::make_pair(state.type, state.subType)) == existStates.end(), "State already setted");
     CHECK((int)states.size() < totalStates, "Incorrect state number");
     existStates.emplace(state.type, state.subType);
     states.emplace_back(state);
     sendStateToJs(state, (int)states.size() - 1);
-    if (isComplete && !isInitFinished && (int)states.size() == totalStates) {
+    if (!isInitFinished && (int)states.size() == totalStates) {
         isInitFinished = true;
         sendInitializedToJs();
     }
@@ -77,11 +74,13 @@ END_SLOT_WRAPPER
 void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        for (size_t i = 0; i < states.size(); i++) {
-            sendStateToJs(states[i], (int)i);
-        }
-        if (isInitFinished) {
-            sendInitializedToJs();
+        if (isComplete) {
+            for (size_t i = 0; i < states.size(); i++) {
+                sendStateToJs(states[i], (int)i);
+            }
+            if (isInitFinished) {
+                sendInitializedToJs();
+            }
         }
     });
     runCallback(std::bind(callback, exception));

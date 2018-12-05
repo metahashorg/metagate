@@ -8,6 +8,7 @@
 
 #include "client.h"
 #include "TypedException.h"
+#include "check.h"
 
 #include <QThread>
 
@@ -53,6 +54,7 @@ public:
 
     template<class Init, bool isDefferred, typename... Args>
     std::shared_future<typename Init::Return> addInit(Args&& ...args) {
+        CHECK(!isComplete, "Already complete");
         totalStates += Init::countEvents();
         std::unique_ptr<Init> result = std::make_unique<Init>(QThread::currentThread(), *this);
         auto fut = std::async((isDefferred ? std::launch::deferred : std::launch::async), &Init::initialize, result.get(), std::forward<Args>(args)...);
