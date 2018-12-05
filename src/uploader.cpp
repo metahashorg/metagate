@@ -73,11 +73,9 @@ Uploader::Servers Uploader::getServers() {
     return servers;
 }
 
-Uploader::Uploader(MainWindow *mainWindow)
+Uploader::Uploader(MainWindow &mainWindow)
     : mainWindow(mainWindow)
 {
-    CHECK(mainWindow != nullptr, "maiWindow == nullptr");
-
     const Servers servers = getServers();
     if (isProductionSetup) {
         LOG << "Set production server " << servers.prod;
@@ -89,8 +87,8 @@ Uploader::Uploader(MainWindow *mainWindow)
         serverName = QString::fromStdString(servers.dev);
     }
 
-    CHECK(connect(this, SIGNAL(generateEvent(WindowEvent)), mainWindow, SLOT(processEvent(WindowEvent))), "not connect");
-    CHECK(connect(this, SIGNAL(generateUpdateApp(QString,QString,QString)), mainWindow, SLOT(updateAppEvent(QString,QString,QString))), "not connect");
+    CHECK(connect(this, SIGNAL(generateEvent(WindowEvent)), &mainWindow, SLOT(processEvent(WindowEvent))), "not connect");
+    CHECK(connect(this, SIGNAL(generateUpdateApp(QString,QString,QString)), &mainWindow, SLOT(updateAppEvent(QString,QString,QString))), "not connect");
 
     client.setParent(this);
 
@@ -180,9 +178,16 @@ BEGIN_SLOT_WRAPPER
 
         const QString folderServer = toHash(UPDATE_API);
         if (hash == "false") {
+            emit checkedUpdatesHtmls();
+            isCheckedUpdatesHtmls1 = true;
             return;
         }
-        if ((version == lastVersion && folderServer == currFolder) || version == versionHtmlForUpdate) {
+        if (version == lastVersion && folderServer == currFolder) {
+            emit checkedUpdatesHtmls();
+            isCheckedUpdatesHtmls1 = true;
+            return;
+        }
+        if (version == versionHtmlForUpdate) {
             return;
         }
 
@@ -199,8 +204,7 @@ BEGIN_SLOT_WRAPPER
             const QString hashStr(hashAlg.result().toHex());
             CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
 
-            CHECK(mainWindow != nullptr, "Mainwindow nullptr");
-            removeOlderFolders(makePath(currentBeginPath, mainWindow->getCurrentHtmls().folderName), mainWindow->getCurrentHtmls().lastVersion);
+            removeOlderFolders(makePath(currentBeginPath, mainWindow.getCurrentHtmls().folderName), mainWindow.getCurrentHtmls().lastVersion);
 
             const QString archiveFilePath = makePath(currentBeginPath, version + ".zip");
             writeToFileBinary(archiveFilePath, result, false);
@@ -216,6 +220,9 @@ BEGIN_SLOT_WRAPPER
             currFolder = folderServer;
 
             emit generateEvent(WindowEvent::RELOAD_PAGE);
+
+            emit checkedUpdatesHtmls();
+            isCheckedUpdatesHtmls1 = true;
         };
 
         LOG << "download html";

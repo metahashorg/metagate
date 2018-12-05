@@ -49,6 +49,7 @@
 #include "Initializer/Inits/InitTransactions.h"
 #include "Initializer/Inits/InitWebSocket.h"
 #include "Initializer/Inits/InitJavascriptWrapper.h"
+#include "Initializer/Inits/InitUploader.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -131,12 +132,9 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper, false>(webSocketClient, nsLookup, mainWindow, transactions, auth, QString::fromStdString(versionString));
 
-        initManager.complete();
+        const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader, false>(mainWindow);
 
-        /*
-        Uploader uploader(&mainWindow);
-        uploader.start();
-        */
+        initManager.complete();
 
         /*
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);

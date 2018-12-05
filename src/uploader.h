@@ -39,9 +39,17 @@ private:
 
 public:
 
-    explicit Uploader(MainWindow *mainWindow);
+    explicit Uploader(MainWindow &mainWindow);
 
     ~Uploader() override;
+
+    bool isCheckedUpdatesHtmls() const {
+        return isCheckedUpdatesHtmls1.load();
+    }
+
+signals:
+
+    void checkedUpdatesHtmls();
 
 public:
 
@@ -77,7 +85,7 @@ signals:
 
 private:
 
-    MainWindow *mainWindow;
+    MainWindow &mainWindow;
 
     QString serverName;
 
@@ -102,6 +110,8 @@ private:
     QTimer qtimer;
 
     seconds timeout;
+
+    std::atomic<bool> isCheckedUpdatesHtmls1{false};
 
 private:
 
