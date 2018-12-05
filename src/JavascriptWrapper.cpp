@@ -1,6 +1,8 @@
 #include "JavascriptWrapper.h"
 
 #include <map>
+#include <functional>
+using namespace std::placeholders;
 
 #include <QApplication>
 
@@ -446,7 +448,7 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
         const bool isNonce = !nonce.isEmpty();
         if (!isNonce) {
             Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
-            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, [this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server, const TypedException &exception) {
+            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, std::bind(&JavascriptWrapper::callbackCall, this, _1), [this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server, const TypedException &exception) {
                 Opt<QString> result(QString("Not ok"));
                 const TypedException &exception2 = apiVrapper2([&] {
                     CHECK_TYPED(!exception.isSet(), exception.numError, exception.description);
