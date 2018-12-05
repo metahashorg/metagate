@@ -45,6 +45,7 @@
 #include "Initializer/InitializerJavascript.h"
 #include "Initializer/Inits/InitMainwindow.h"
 #include "Initializer/Inits/InitAuth.h"
+#include "Initializer/Inits/InitNsLookup.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -125,12 +126,11 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth, false>(mainWindow);
 
+        const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup, false>();
+
         initManager.complete();
 
         /*
-        NsLookup nsLookup;
-        nsLookup.start();
-
         transactions::TransactionsDBStorage dbTransactions(getDbPath());
         dbTransactions.init();
         transactions::TransactionsJavascript transactionsJavascript;

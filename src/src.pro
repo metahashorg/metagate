@@ -68,7 +68,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/InitializerJavascript.cpp \
     Initializer/InitInterface.cpp \
     Initializer/Inits/InitMainwindow.cpp \
-    Initializer/Inits/InitAuth.cpp
+    Initializer/Inits/InitAuth.cpp \
+    Initializer/Inits/InitNsLookup.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -143,7 +144,8 @@ HEADERS += mainwindow.h \
     Initializer/InitializerJavascript.h \
     Initializer/InitInterface.h \
     Initializer/Inits/InitMainwindow.h \
-    Initializer/Inits/InitAuth.h
+    Initializer/Inits/InitAuth.h \
+    Initializer/Inits/InitNsLookup.h
 
 FORMS += mainwindow.ui
 

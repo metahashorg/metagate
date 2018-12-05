@@ -47,9 +47,13 @@ public:
 
     void resetFile();
 
+    bool isServFlushed() const;
+
 signals:
 
     void finished();
+
+    void serversFlushed();
 
 public slots:
 
@@ -118,6 +122,7 @@ private:
 
     milliseconds passedTime;
 
+    std::atomic<bool> isServersFlushed{false};
 };
 
 #endif // NSLOOKUP_H
