@@ -442,7 +442,7 @@ static transactions::Transactions::SendParameters parseSendParams(const QString 
 void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce) {
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
-
+        result = QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
 }
