@@ -95,7 +95,7 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
+JavascriptWrapper::JavascriptWrapper(QThread *mainThread, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
     : walletDefaultPath(getWalletPath())
     , wssClient(wssClient)
     , nsLookup(nsLookup)
@@ -125,6 +125,8 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     emit authManager.reEmit();
 
     sendAppInfoToWss("", true);
+
+    moveToThread(mainThread);
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {

@@ -33,7 +33,7 @@ public:
 using ReturnCallback = std::function<void()>;
 
 public:
-    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(QThread *mainThread, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
