@@ -9,6 +9,7 @@
 #include <future>
 
 class NsLookup;
+class TypedException;
 
 namespace initializer {
 
@@ -36,7 +37,7 @@ public:
 
 private:
 
-    void sendInitSuccess();
+    void sendInitSuccess(const TypedException &exception);
 
     void sendFlushSuccess();
 

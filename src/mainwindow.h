@@ -52,6 +52,8 @@ public:
     QIcon icoHover;
 };
 
+class TypedException;
+
 namespace transactions {
 class TransactionsJavascript;
 }
@@ -59,6 +61,20 @@ class TransactionsJavascript;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+public:
+
+    using SignalFunc = std::function<void(const std::function<void()> &callback)>;
+
+    using SetJavascriptWrapperCallback = std::function<void(const TypedException &exception)>;
+
+    using SetAuthJavascriptCallback = std::function<void(const TypedException &exception)>;
+
+    using SetAuthCallback = std::function<void(const TypedException &exception)>;
+
+    using SetMessengerJavascriptCallback = std::function<void(const TypedException &exception)>;
+
+    using SetTransactionsJavascriptCallback = std::function<void(const TypedException &exception)>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
@@ -71,27 +87,27 @@ public:
 
 signals:
 
-    void setJavascriptWrapper(JavascriptWrapper *jsWrapper);
+    void setJavascriptWrapper(JavascriptWrapper *jsWrapper, const SignalFunc &signal, const SetJavascriptWrapperCallback &callback);
 
-    void setAuthJavascript(auth::AuthJavascript *authJavascript);
+    void setAuthJavascript(auth::AuthJavascript *authJavascript, const SignalFunc &signal, const SetAuthJavascriptCallback &callback);
 
-    void setAuth(auth::Auth *authManager);
+    void setAuth(auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback);
 
-    void setMessengerJavascript(messenger::MessengerJavascript *messengerJavascript);
+    void setMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SignalFunc &signal, const SetMessengerJavascriptCallback &callback);
 
-    void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript);
+    void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SignalFunc &signal, const SetTransactionsJavascriptCallback &callback);
 
 private slots:
 
-    void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper);
+    void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SignalFunc &signal, const SetJavascriptWrapperCallback &callback);
 
-    void onSetAuthJavascript(auth::AuthJavascript *authJavascript);
+    void onSetAuthJavascript(auth::AuthJavascript *authJavascript, const SignalFunc &signal, const SetAuthJavascriptCallback &callback);
 
-    void onSetAuth(auth::Auth *authManager);
+    void onSetAuth(auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback);
 
-    void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript);
+    void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SignalFunc &signal, const SetMessengerJavascriptCallback &callback);
 
-    void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript);
+    void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SignalFunc &signal, const SetTransactionsJavascriptCallback &callback);
 
 private:
 

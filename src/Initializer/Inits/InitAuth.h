@@ -3,8 +3,12 @@
 
 #include "../InitInterface.h"
 
+#include <QObject>
+
 #include <memory>
 #include <future>
+
+class TypedException;
 
 namespace auth {
 class Auth;
@@ -17,10 +21,13 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitAuth: public InitInterface {
+class InitAuth: public QObject, public InitInterface {
+    Q_OBJECT
 public:
 
     using Return = std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>;
+
+    using Callback = std::function<void()>;
 
 public:
 
@@ -38,7 +45,15 @@ public:
 
 private:
 
-    void sendInitSuccess();
+    void sendInitSuccess(const TypedException &exception);
+
+signals:
+
+    void callbackCall(const Callback &callback);
+
+private slots:
+
+    void onCallbackCall(const Callback &callback);
 
 private:
 

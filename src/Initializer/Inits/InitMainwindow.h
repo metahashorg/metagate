@@ -7,6 +7,8 @@
 
 class MainWindow;
 
+class TypedException;
+
 namespace initializer {
 
 class InitializerJavascript;
@@ -32,7 +34,7 @@ public:
 
 private:
 
-    void sendInitSuccess();
+    void sendInitSuccess(const TypedException &exception);
 
 private:
 
