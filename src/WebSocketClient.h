@@ -17,6 +17,8 @@ public:
 
     void start();
 
+    bool isConnectedSock() const;
+
 signals:
 
     void closed();
@@ -30,6 +32,8 @@ signals:
     void setHelloString(const std::vector<QString> &messages);
 
     void addHelloString(QString message);
+
+    void connectedSock();
 
 signals:
 
@@ -69,7 +73,7 @@ private:
 
     bool isStopped = false;
 
-    bool isConnected = false;
+    std::atomic<bool> isConnected{false};
 
     std::vector<QString> messageQueue;
 

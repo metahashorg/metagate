@@ -47,6 +47,7 @@
 #include "Initializer/Inits/InitAuth.h"
 #include "Initializer/Inits/InitNsLookup.h"
 #include "Initializer/Inits/InitTransactions.h"
+#include "Initializer/Inits/InitWebSocket.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -59,12 +60,6 @@ static void crash_handler(int sig) {
     exit(1);
 }
 #endif
-
-QString getUrlToWss() {
-    QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
-    return settings.value("web_socket/meta_online").toString();
-}
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -131,12 +126,11 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions, false>(mainWindow, nsLookup);
 
+        const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket, false>();
+
         initManager.complete();
 
         /*
-        WebSocketClient webSocketClient(getUrlToWss());
-        webSocketClient.start();
-
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
         emit mainWindow.setJavascriptWrapper(jsWrapper);
         transactionsManager.setJavascriptWrapper(&jsWrapper);

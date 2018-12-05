@@ -1,4 +1,4 @@
-#include "InitNsLookup.h"
+﻿#include "InitNsLookup.h"
 
 #include "../Initializer.h"
 
@@ -18,6 +18,7 @@ InitNsLookup::~InitNsLookup() = default;
 
 void InitNsLookup::complete() {
     CHECK(nsLookup != nullptr, "nsLookup not initialized");
+    CHECK(isFlushed, "Not flushed");
 }
 
 void InitNsLookup::sendInitSuccess(const TypedException &exception) {
