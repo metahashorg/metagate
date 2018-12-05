@@ -109,6 +109,11 @@ Q_INVOKABLE void getRawPrivKey(QString requestId, QString address, QString passw
 # Returns unencrypted  private key
 # javascript is called after completion of this function 
 getRawPrivkeyResultJs(requestId, result, errorNum, errorMessage)
+
+Q_INVOKABLE void createV8Address(QString requestId, QString address, int nonce);
+# Создает адрес контракта v8 на основе address и nonce
+# javascript is called after completion of this function 
+createV8AddressResultJs(requestId, result, errorNum, errorMessage)
 ```
 
 ### How to work with MHC Metahash wallets
@@ -179,6 +184,11 @@ Q_INVOKABLE void getRawPrivKeyMHC(QString requestId, QString address, QString pa
 # Returns unencrypted  private key
 # javascript is called after completion of this function 
 getRawPrivkeyMHCResultJs(requestId, result, errorNum, errorMessage)
+
+Q_INVOKABLE void createV8AddressMHC(QString requestId, QString address, int nonce);
+# Создает адрес контракта v8 на основе address и nonce
+# javascript is called after completion of this function 
+createV8AddressMHCResultJs(requestId, result, errorNum, errorMessage)
 ```
 
 ### How to work with Ethereum wallets

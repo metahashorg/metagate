@@ -32,6 +32,8 @@ public:
 
     static void checkAddress(const std::string &address, bool isCheckHash=true);
 
+    static std::string createV8Address(const std::string &address, int nonce);
+
 public:
 
     Wallet(const QString &folder, const std::string &name, const std::string &password);
