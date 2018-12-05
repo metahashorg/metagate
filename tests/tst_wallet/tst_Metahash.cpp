@@ -231,3 +231,48 @@ void tst_Metahash::testHashMth() {
     const std::string result = Wallet::calcHash(transaction);
     QCOMPARE(result, answer);
 }
+
+void tst_Metahash::testCreateV8Address_data() {
+    QTest::addColumn<std::string>("address");
+    QTest::addColumn<int>("nonce");
+    QTest::addColumn<std::string>("answer");
+
+    QTest::newRow("v8 addr 1")
+        << std::string("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56")
+        << 70
+        << std::string("0x08b381a9d0467ce741211d1db58ebc6fca3ace5045ec522cca");
+
+    QTest::newRow("v8 addr 2")
+        << std::string("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56")
+        << 69
+        << std::string("0x08814ad8bde17747c2b55b1dbfc1274fb2df36ca5fe13a19f0");
+
+    QTest::newRow("v8 addr 3")
+        << std::string("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56")
+        << 68
+        << std::string("0x0887ae515be612744bab148152b0ed34cfc885c762afb94b6a");
+
+    QTest::newRow("v8 addr 4")
+        << std::string("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56")
+        << 66
+        << std::string("0x081099c99b02cd4a11d2a15dab0b8241e01db433d1732221c7");
+
+    QTest::newRow("v8 addr 5")
+        << std::string("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56")
+        << 45
+        << std::string("0x0830e2f224106fcbcb8e18a5cf6c6742ea245576d29bfd6a78");
+
+    QTest::newRow("v8 addr 6")
+        << std::string("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56")
+        << 13
+        << std::string("0x085cf57b422e6648743afb25b07320e2c687f98c6e23ac0017");
+}
+
+void tst_Metahash::testCreateV8Address() {
+    QFETCH(std::string, address);
+    QFETCH(int, nonce);
+    QFETCH(std::string, answer);
+
+    const std::string result = Wallet::createV8Address(address, nonce);
+    QCOMPARE(result, answer);
+}

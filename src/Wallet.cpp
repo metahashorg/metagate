@@ -17,6 +17,10 @@
 
 #include "openssl_wrapper/openssl_wrapper.h"
 
+#include "ethtx/utils2.h"
+#include "ethtx/rlp.h"
+#include "ethtx/cert.h"
+
 #include "check.h"
 #include "Log.h"
 #include "utils.h"
@@ -185,6 +189,27 @@ void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
         const std::string doubleHash = doubleSha(payload);
         CHECK_TYPED(doubleHash.substr(0, hash.size()) == hash, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
     }
+}
+
+std::string Wallet::createV8Address(const std::string &addr, int nonce) {
+    checkAddress(addr, true);
+    std::string hexowner = addr.substr(2, addr.size()-2);
+    std::string binowner = HexStringToDump(hexowner);
+    std::vector<std::string> fields;
+    fields.push_back(binowner);
+    if (nonce > 0) {
+        std::string rlpnonce = IntToRLP(nonce);
+        fields.push_back(rlpnonce);
+    } else {
+        fields.push_back("");
+    }
+    std::string rlpenc = RLP(fields);
+    const std::string hs = keccak(rlpenc);
+    std::string address;
+    address += 0x08;
+    address += hs.substr(12, 20);
+    address += doubleSha(address).substr(0, 4);
+    return "0x" + toHex(address);
 }
 
 void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr) {
