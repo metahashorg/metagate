@@ -14,7 +14,7 @@
 
 namespace transactions {
 
-TransactionsJavascript::TransactionsJavascript(QThread *mainThread, QObject *parent)
+TransactionsJavascript::TransactionsJavascript(QObject *parent)
     : QObject(parent)
 {
     CHECK(connect(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall), "not connect onCallbackCall");
@@ -28,8 +28,6 @@ TransactionsJavascript::TransactionsJavascript(QThread *mainThread, QObject *par
     qRegisterMetaType<BalanceInfo>("BalanceInfo");
     qRegisterMetaType<BalanceInfo>("BalanceInfo");
     qRegisterMetaType<Transaction>("Transaction");
-
-    moveToThread(mainThread);
 }
 
 void TransactionsJavascript::onCallbackCall(const Callback &callback) {

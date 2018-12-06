@@ -26,7 +26,7 @@ public:
 
 public:
 
-    explicit TransactionsJavascript(QThread *mainThread, QObject *parent = nullptr);
+    explicit TransactionsJavascript(QObject *parent = nullptr);
 
     void setTransactions(Transactions &trans) {
         transactionsManager = &trans;

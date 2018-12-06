@@ -42,7 +42,8 @@ void InitAuth::sendInitSuccess(const TypedException &exception) {
 
 InitAuth::Return InitAuth::initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
-        authJavascript = std::make_unique<auth::AuthJavascript>(mainThread);
+        authJavascript = std::make_unique<auth::AuthJavascript>();
+        authJavascript->moveToThread(mainThread);
         authManager = std::make_unique<auth::Auth>(*authJavascript);
         authManager->start();
         MainWindow &mw = mainWindow.get();

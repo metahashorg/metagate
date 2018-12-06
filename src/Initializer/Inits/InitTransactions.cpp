@@ -47,7 +47,8 @@ InitTransactions::Return InitTransactions::initialize(std::shared_future<std::re
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<transactions::TransactionsDBStorage>(getDbPath());
         database->init();
-        txJavascript = std::make_unique<transactions::TransactionsJavascript>(mainThread);
+        txJavascript = std::make_unique<transactions::TransactionsJavascript>();
+        txJavascript->moveToThread(mainThread);
         txManager = std::make_unique<transactions::Transactions>(nsLookup.get(), *txJavascript, *database);
         txManager->start();
         MainWindow &mw = mainWindow.get();
