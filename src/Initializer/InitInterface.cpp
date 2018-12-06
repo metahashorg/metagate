@@ -1,6 +1,5 @@
 #include "InitInterface.h"
 
-#include "check.h"
 #include "Initializer.h"
 
 namespace initializer {

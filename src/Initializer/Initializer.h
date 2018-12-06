@@ -6,7 +6,6 @@
 #include <future>
 #include <set>
 
-#include "client.h"
 #include "TypedException.h"
 #include "check.h"
 

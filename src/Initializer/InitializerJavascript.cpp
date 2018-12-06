@@ -1,9 +1,5 @@
 #include "InitializerJavascript.h"
 
-#include <QJsonDocument>
-#include <QJsonValue>
-#include <QJsonObject>
-
 #include "check.h"
 #include "SlotWrapper.h"
 #include "makeJsFunc.h"

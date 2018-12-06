@@ -1,9 +1,5 @@
 #include "Initializer.h"
 
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonValue>
-#include <QJsonObject>
 #include <QSettings>
 
 #include "check.h"
