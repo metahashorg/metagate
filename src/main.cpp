@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include <QSurfaceFormat>
-#include <QSettings>
 
 #include "RunGuard.h"
 
@@ -22,24 +21,9 @@
 #include "machine_uid.h"
 #include "openssl_wrapper/openssl_wrapper.h"
 
-#include "uploader.h"
-#include "NsLookup.h"
 #include "StopApplication.h"
-#include "WebSocketClient.h"
-#include "JavascriptWrapper.h"
 #include "TypedException.h"
 #include "Paths.h"
-
-#include "auth/Auth.h"
-#include "auth/AuthJavascript.h"
-
-#include "Messenger/Messenger.h"
-#include "Messenger/MessengerJavascript.h"
-#include "Messenger/MessengerDBStorage.h"
-
-#include "transactions/Transactions.h"
-#include "transactions/TransactionsJavascript.h"
-#include "transactions/TransactionsDBStorage.h"
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"
