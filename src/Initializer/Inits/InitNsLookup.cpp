@@ -42,9 +42,6 @@ InitNsLookup::Return InitNsLookup::initialize() {
     const TypedException exception = apiVrapper2([&, this] {
         nsLookup = std::make_unique<NsLookup>();
         CHECK(connect(nsLookup.get(), &NsLookup::serversFlushed, this, &InitNsLookup::onServersFlushed), "not connect onServersFlushed");
-        if (nsLookup->isServFlushed()) { // Так как сигнал мог прийти до коннекта, проверим здесь
-            sendFlushSuccess();
-        }
         nsLookup->start();
     });
     sendInitSuccess(exception);

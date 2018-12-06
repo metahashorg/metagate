@@ -43,10 +43,6 @@ public:
 
     ~Uploader() override;
 
-    bool isCheckedUpdatesHtmls() const {
-        return isCheckedUpdatesHtmls1.load();
-    }
-
 signals:
 
     void checkedUpdatesHtmls();
@@ -110,8 +106,6 @@ private:
     QTimer qtimer;
 
     seconds timeout;
-
-    std::atomic<bool> isCheckedUpdatesHtmls1{false};
 
 private:
 

@@ -42,9 +42,6 @@ InitUploader::Return InitUploader::initialize(std::shared_future<MainWindow*> ma
     const TypedException exception = apiVrapper2([&, this] {
         uploader = std::make_unique<Uploader>(*mainWindow.get());
         CHECK(connect(uploader.get(), &Uploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
-        if (uploader->isCheckedUpdatesHtmls()) { // Так как сигнал мог прийти до коннекта, проверим здесь
-            sendCheckedUpdatesHtmls();
-        }
         uploader->start();
     });
     sendInitSuccess(exception);

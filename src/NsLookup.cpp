@@ -109,10 +109,6 @@ void NsLookup::run() {
     // empty
 }
 
-bool NsLookup::isServFlushed() const {
-    return isServersFlushed.load();
-}
-
 void NsLookup::finalizeLookup() {
     std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
@@ -158,7 +154,6 @@ void NsLookup::finalizeLookup() {
     }
     if (isSuccessFl) {
         emit serversFlushed();
-        isServersFlushed = true;
     }
     isSafeCheck = false;
     qtimer.setInterval(msTimer.count());

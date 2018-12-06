@@ -47,8 +47,6 @@ public:
 
     void resetFile();
 
-    bool isServFlushed() const;
-
 signals:
 
     void finished();
@@ -121,8 +119,6 @@ private:
     bool isSafeCheck = false;
 
     milliseconds passedTime;
-
-    std::atomic<bool> isServersFlushed{false};
 };
 
 #endif // NSLOOKUP_H
