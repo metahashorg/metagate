@@ -72,7 +72,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     ui->setupUi(this);
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
-    CHECK(connect(this, &MainWindow::setAuthJavascript, this, &MainWindow::onSetAuthJavascript), "not connect onSetAuthJavascript");
     CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
     CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
     CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
@@ -80,7 +79,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     qRegisterMetaType<SignalFunc>("SignalFunc");
     qRegisterMetaType<SetJavascriptWrapperCallback>("SetJavascriptWrapperCallback");
-    qRegisterMetaType<SetAuthJavascriptCallback>("SetAuthJavascriptCallback");
     qRegisterMetaType<SetAuthCallback>("SetAuthCallback");
     qRegisterMetaType<SetMessengerJavascriptCallback>("SetMessengerJavascriptCallback");
     qRegisterMetaType<SetTransactionsJavascriptCallback>("SetTransactionsJavascriptCallback");
@@ -141,20 +139,13 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onSetAuthJavascript(auth::AuthJavascript *authJavascript, const SignalFunc &signal, const SetAuthJavascriptCallback &callback) {
+void MainWindow::onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(authJavascript != nullptr, "Incorrect authJavascript");
         CHECK(connect(authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
         channel->registerObject(QString("auth"), authJavascript);
-    });
-    emit signal(std::bind(callback, exception));
-END_SLOT_WRAPPER
-}
 
-void MainWindow::onSetAuth(auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
         CHECK(authManager != nullptr, "Incorrect authManager");
         CHECK(connect(authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
         emit authManager->reEmit();

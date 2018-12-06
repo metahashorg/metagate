@@ -57,7 +57,7 @@ private slots:
 
     void onCallbackCall(const Callback &callback);
 
-    void onCheckTokenFinished();
+    void onCheckTokenFinished(const TypedException &exception);
 
 private:
 
@@ -65,6 +65,7 @@ private:
     std::unique_ptr<auth::AuthJavascript> authJavascript;
 
     bool isCheckTokenFinished = false;
+    bool isInitSuccess = false;
 
 };
 

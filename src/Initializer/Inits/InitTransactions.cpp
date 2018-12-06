@@ -37,10 +37,12 @@ void InitTransactions::complete() {
     CHECK(database != nullptr, "database not initialized");
     CHECK(txJavascript != nullptr, "txJavascript not initialized");
     CHECK(txManager != nullptr, "txManager not initialized");
+    CHECK(isInitSuccess, "initialize not success");
 }
 
 void InitTransactions::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("transactions", "init", "transactions initialized", exception));
+    isInitSuccess = !exception.isSet();
 }
 
 InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup) {

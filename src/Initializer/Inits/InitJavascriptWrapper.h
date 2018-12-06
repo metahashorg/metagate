@@ -74,6 +74,8 @@ private:
 
     std::unique_ptr<JavascriptWrapper> jsWrapper;
 
+    bool isInitSuccess = false;
+
 };
 
 }

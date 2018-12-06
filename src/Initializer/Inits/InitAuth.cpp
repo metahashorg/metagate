@@ -35,20 +35,22 @@ void InitAuth::complete() {
     CHECK(authManager != nullptr, "authManager not initialized");
     CHECK(authJavascript != nullptr, "authJavascript not initialized");
     CHECK(isCheckTokenFinished, "token not checked");
+    CHECK(isInitSuccess, "initialize not success");
 }
 
 void InitAuth::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("auth", "init", "auth initialized", exception));
+    isInitSuccess = !exception.isSet();
 }
 
 void InitAuth::sendLoginCheckedSuccess(const TypedException &exception) {
     sendState(InitState("auth", "checked", "auth checked", exception));
 }
 
-void InitAuth::onCheckTokenFinished() {
+void InitAuth::onCheckTokenFinished(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isCheckTokenFinished) {
-        sendLoginCheckedSuccess(TypedException());
+        sendLoginCheckedSuccess(exception);
         isCheckTokenFinished = true;
     }
 END_SLOT_WRAPPER
@@ -62,15 +64,8 @@ InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow
         CHECK(connect(authManager.get(), &auth::Auth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished), "not connect onCheckTokenFinished");
         authManager->start();
         MainWindow &mw = *mainWindow.get();
-        emit mw.setAuthJavascript(authJavascript.get(), std::bind(&InitAuth::callbackCall, this, _1), [this, mainWindow](const TypedException &e) {
-            MainWindow &mw = *mainWindow.get();
-            if (e.isSet()) {
-                sendInitSuccess(e);
-                return;
-            }
-            emit mw.setAuth(authManager.get(), std::bind(&InitAuth::callbackCall, this, _1), [this, mainWindow](const TypedException &e) {
-                sendInitSuccess(e);
-            });
+        emit mw.setAuth(authJavascript.get(), authManager.get(), std::bind(&InitAuth::callbackCall, this, _1), [this](const TypedException &e) {
+            sendInitSuccess(e);
         });
     });
 

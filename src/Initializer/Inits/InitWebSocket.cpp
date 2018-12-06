@@ -33,16 +33,12 @@ void InitWebSocket::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("websocket", "init", "websocket initialized", exception));
 }
 
-void InitWebSocket::sendConnected(const TypedException &exception) {
-    if (!isConnected) {
-        sendState(InitState("websocket", "connected", "websocket connected", exception));
-        isConnected = true;
-    }
-}
-
 void InitWebSocket::onConnectedSock() {
 BEGIN_SLOT_WRAPPER
-    sendConnected(TypedException());
+    if (!isConnected) {
+        sendState(InitState("websocket", "connected", "websocket connected", TypedException()));
+        isConnected = true;
+    }
 END_SLOT_WRAPPER
 }
 
@@ -50,9 +46,6 @@ InitWebSocket::Return InitWebSocket::initialize() {
     const TypedException exception = apiVrapper2([&, this] {
         webSocket = std::make_unique<WebSocketClient>(getUrlToWss());
         CHECK(connect(webSocket.get(), &WebSocketClient::connectedSock, this, &InitWebSocket::onConnectedSock), "not connect onConnectedSock");
-        if (webSocket->isConnectedSock()) { // Так как сигнал мог прийти до коннекта, проверим здесь
-            sendConnected(TypedException());
-        }
         webSocket->start();
     });
     sendInitSuccess(exception);

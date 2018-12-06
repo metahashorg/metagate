@@ -67,8 +67,6 @@ public:
 
     using SetJavascriptWrapperCallback = std::function<void(const TypedException &exception)>;
 
-    using SetAuthJavascriptCallback = std::function<void(const TypedException &exception)>;
-
     using SetAuthCallback = std::function<void(const TypedException &exception)>;
 
     using SetMessengerJavascriptCallback = std::function<void(const TypedException &exception)>;
@@ -89,9 +87,7 @@ signals:
 
     void setJavascriptWrapper(JavascriptWrapper *jsWrapper, const SignalFunc &signal, const SetJavascriptWrapperCallback &callback);
 
-    void setAuthJavascript(auth::AuthJavascript *authJavascript, const SignalFunc &signal, const SetAuthJavascriptCallback &callback);
-
-    void setAuth(auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback);
+    void setAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback);
 
     void setMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SignalFunc &signal, const SetMessengerJavascriptCallback &callback);
 
@@ -103,9 +99,7 @@ private slots:
 
     void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SignalFunc &signal, const SetJavascriptWrapperCallback &callback);
 
-    void onSetAuthJavascript(auth::AuthJavascript *authJavascript, const SignalFunc &signal, const SetAuthJavascriptCallback &callback);
-
-    void onSetAuth(auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback);
+    void onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback);
 
     void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SignalFunc &signal, const SetMessengerJavascriptCallback &callback);
 

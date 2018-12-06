@@ -39,8 +39,6 @@ private:
 
     void sendInitSuccess(const TypedException &exception);
 
-    void sendFlushSuccess();
-
 private slots:
 
     void onServersFlushed();

@@ -43,8 +43,6 @@ private:
 
     void sendInitSuccess(const TypedException &exception);
 
-    void sendConnected(const TypedException &exception);
-
 private:
 
     std::unique_ptr<WebSocketClient> webSocket;

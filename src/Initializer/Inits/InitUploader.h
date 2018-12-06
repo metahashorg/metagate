@@ -40,8 +40,6 @@ private:
 
     void sendInitSuccess(const TypedException &exception);
 
-    void sendCheckedUpdatesHtmls();
-
 private slots:
 
     void onCheckedUpdatesHtmls();

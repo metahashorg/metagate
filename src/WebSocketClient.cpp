@@ -98,10 +98,6 @@ void WebSocketClient::start() {
     thread1.start();
 }
 
-bool WebSocketClient::isConnectedSock() const {
-    return isConnected.load();
-}
-
 void WebSocketClient::onConnected() {
 BEGIN_SLOT_WRAPPER
     LOG << "Wss client connected";

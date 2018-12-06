@@ -64,6 +64,8 @@ private:
     std::unique_ptr<transactions::TransactionsJavascript> txJavascript;
     std::unique_ptr<transactions::Transactions> txManager;
 
+    bool isInitSuccess = false;
+
 };
 
 }

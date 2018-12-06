@@ -33,10 +33,12 @@ END_SLOT_WRAPPER
 
 void InitJavascriptWrapper::complete() {
     CHECK(jsWrapper != nullptr, "jsWrapper not initialized");
+    CHECK(isInitSuccess, "initialize not success");
 }
 
 void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("jsWrapper", "init", "jsWrapper initialized", exception));
+    isInitSuccess = !exception.isSet();
 }
 
 InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(

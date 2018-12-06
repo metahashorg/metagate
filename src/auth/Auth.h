@@ -4,6 +4,8 @@
 #include "TimerClass.h"
 #include "client.h"
 
+struct TypedException;
+
 namespace auth
 {
 class AuthJavascript;
@@ -41,7 +43,7 @@ public:
 signals:
     void logined(const QString &login);
 
-    void checkTokenFinished();
+    void checkTokenFinished(const TypedException &error);
 
 signals:
     void login(const QString &login, const QString &password);

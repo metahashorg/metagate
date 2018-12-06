@@ -103,7 +103,7 @@ BEGIN_SLOT_WRAPPER
     const bool isChecked = checkToken();
     if (isChecked) {
         emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
-        emit checkTokenFinished();
+        emit checkTokenFinished(TypedException());
     }
 END_SLOT_WRAPPER
 }
@@ -194,8 +194,9 @@ void Auth::forceRefreshInternal() {
             logoutImpl();
             QString content = QString::fromStdString(error.content);
             content.replace('\"', "\\\"");
-            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
-            emit checkTokenFinished();
+            const TypedException except(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description);
+            emit javascriptWrapper.sendLoginInfoResponseSig(info, except);
+            emit checkTokenFinished(except);
         } else if (!error.isSet()) {
             const TypedException exception = apiVrapper2([&] {
                 const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response), info.login, info.isTest);
@@ -210,7 +211,7 @@ void Auth::forceRefreshInternal() {
                 }
             });
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
-            emit checkTokenFinished();
+            emit checkTokenFinished(exception);
         } else {
             CHECK(!error.isSet(), error.description);
         }
@@ -253,7 +254,7 @@ bool Auth::checkToken() {
             });
             if (exception.isSet()) {
                 emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
-                emit checkTokenFinished();
+                emit checkTokenFinished(exception);
             }
         } else {
             CHECK(!error.isSet(), error.description);

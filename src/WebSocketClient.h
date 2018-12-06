@@ -17,8 +17,6 @@ public:
 
     void start();
 
-    bool isConnectedSock() const;
-
 signals:
 
     void closed();
