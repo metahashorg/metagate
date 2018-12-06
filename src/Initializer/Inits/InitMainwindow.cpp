@@ -15,12 +15,12 @@ InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager)
 InitMainWindow::~InitMainWindow() = default;
 
 void InitMainWindow::complete() {
-    CHECK(mainWindow != nullptr, "mainwindow not initialized");
+    CHECK(mainWindow != nullptr, "window not initialized");
     emit mainWindow->initFinished();
 }
 
 void InitMainWindow::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("mainwindow", "init", "mainwindow initialized", exception));
+    sendState(InitState("window", "init", "window initialized", exception));
 }
 
 InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString) {

@@ -27,7 +27,7 @@ result == false, если хотябы один из states ошибочный
 
 
 Список states:
-mainwindow init. Закончена загрузка окна приложения. Не относится к модулю mainWindow в javascript (см jsWrapper)
+window init. Закончена загрузка окна приложения. Не относится к модулю mainWindow в javascript (см jsWrapper)
 auth init. Закончена загрузка модуля auth. Можно совершать к нему запросы по javascript
 auth checked. Модуль авторизации проверил и установил токен юзера
 nslookup init. Закончена загрузка модуля nslookup. Можно совершать к нему запросы через mainWindow по javascript, но не факт, что к этому времени он успел актуализировать список dns
