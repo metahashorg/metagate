@@ -96,7 +96,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     pagesMappings.setMappings(QString::fromStdString(contentMappings));
 
     loadFile("core/loader/index.html");
-    addElementToHistoryAndCommandLine("app://Login", true, true);
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
