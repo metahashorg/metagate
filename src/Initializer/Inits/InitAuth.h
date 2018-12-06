@@ -8,7 +8,7 @@
 #include <memory>
 #include <future>
 
-class TypedException;
+struct TypedException;
 
 namespace auth {
 class Auth;

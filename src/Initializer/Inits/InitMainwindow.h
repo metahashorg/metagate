@@ -4,10 +4,11 @@
 #include "../InitInterface.h"
 
 #include <memory>
+#include <string>
 
 class MainWindow;
 
-class TypedException;
+struct TypedException;
 
 namespace initializer {
 

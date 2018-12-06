@@ -10,7 +10,7 @@
 
 class MainWindow;
 class Uploader;
-class TypedException;
+struct TypedException;
 
 namespace initializer {
 

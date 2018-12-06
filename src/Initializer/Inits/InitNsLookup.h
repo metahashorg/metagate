@@ -9,7 +9,7 @@
 #include <future>
 
 class NsLookup;
-class TypedException;
+struct TypedException;
 
 namespace initializer {
 

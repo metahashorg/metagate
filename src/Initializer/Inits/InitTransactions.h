@@ -7,8 +7,9 @@
 
 #include <memory>
 #include <future>
+#include <functional>
 
-class TypedException;
+struct TypedException;
 
 namespace transactions {
 class TransactionsDBStorage;

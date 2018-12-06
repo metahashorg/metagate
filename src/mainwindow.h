@@ -52,7 +52,7 @@ public:
     QIcon icoHover;
 };
 
-class TypedException;
+struct TypedException;
 
 namespace transactions {
 class TransactionsJavascript;

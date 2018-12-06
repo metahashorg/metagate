@@ -7,7 +7,7 @@
 
 #include <memory>
 
-class TypedException;
+struct TypedException;
 
 class WebSocketClient;
 

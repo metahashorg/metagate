@@ -8,7 +8,7 @@
 #include <memory>
 #include <future>
 
-class TypedException;
+struct TypedException;
 
 class JavascriptWrapper;
 class MainWindow;
