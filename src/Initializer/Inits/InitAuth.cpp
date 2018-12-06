@@ -34,10 +34,24 @@ END_SLOT_WRAPPER
 void InitAuth::complete() {
     CHECK(authManager != nullptr, "authManager not initialized");
     CHECK(authJavascript != nullptr, "authJavascript not initialized");
+    CHECK(isCheckTokenFinished, "token not checked");
 }
 
 void InitAuth::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("auth", "init", "auth initialized", exception));
+}
+
+void InitAuth::sendLoginCheckedSuccess(const TypedException &exception) {
+    sendState(InitState("auth", "checked", "auth checked", exception));
+}
+
+void InitAuth::onCheckTokenFinished() {
+BEGIN_SLOT_WRAPPER
+    if (!isCheckTokenFinished) {
+        sendLoginCheckedSuccess(TypedException());
+        isCheckTokenFinished = true;
+    }
+END_SLOT_WRAPPER
 }
 
 InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow) {
@@ -45,6 +59,7 @@ InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow
         authJavascript = std::make_unique<auth::AuthJavascript>();
         authJavascript->moveToThread(mainThread);
         authManager = std::make_unique<auth::Auth>(*authJavascript);
+        CHECK(connect(authManager.get(), &auth::Auth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished), "not connect onCheckTokenFinished");
         authManager->start();
         MainWindow &mw = *mainWindow.get();
         emit mw.setAuthJavascript(authJavascript.get(), std::bind(&InitAuth::callbackCall, this, _1), [this, mainWindow](const TypedException &e) {

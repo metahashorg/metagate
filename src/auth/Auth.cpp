@@ -100,8 +100,11 @@ END_SLOT_WRAPPER
 
 void auth::Auth::onStarted() {
 BEGIN_SLOT_WRAPPER
-    checkToken();
-    emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
+    const bool isChecked = checkToken();
+    if (isChecked) {
+        emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
+        emit checkTokenFinished();
+    }
 END_SLOT_WRAPPER
 }
 
@@ -192,6 +195,7 @@ void Auth::forceRefreshInternal() {
             QString content = QString::fromStdString(error.content);
             content.replace('\"', "\\\"");
             emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
+            emit checkTokenFinished();
         } else if (!error.isSet()) {
             const TypedException exception = apiVrapper2([&] {
                 const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response), info.login, info.isTest);
@@ -206,27 +210,27 @@ void Auth::forceRefreshInternal() {
                 }
             });
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+            emit checkTokenFinished();
         } else {
             CHECK(!error.isSet(), error.description);
         }
     }, timeout, true);
 }
 
-void Auth::checkToken() {
-BEGIN_SLOT_WRAPPER
+bool Auth::checkToken() {
     if (!info.isAuth) {
-        return;
+        return true;
     }
     const time_point now = ::now();
     const system_time_point systemNow = ::system_now();
     if (now - info.saveTime >= info.expire - minutes(1) || systemNow - info.saveTimeSystem >= info.expire - minutes(1)) {
         LOG << "Token expire";
         forceRefreshInternal();
-        return;
+        return false;
     }
 
     if (now - info.prevCheck < 1min) {
-        return;
+        return true;
     }
 
     LOG << "Check token1";
@@ -249,12 +253,13 @@ BEGIN_SLOT_WRAPPER
             });
             if (exception.isSet()) {
                 emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+                emit checkTokenFinished();
             }
         } else {
             CHECK(!error.isSet(), error.description);
         }
     }, timeout);
-END_SLOT_WRAPPER
+    return false;
 }
 
 void Auth::onReEmit() {

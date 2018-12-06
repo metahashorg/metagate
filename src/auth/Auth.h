@@ -41,6 +41,8 @@ public:
 signals:
     void logined(const QString &login);
 
+    void checkTokenFinished();
+
 signals:
     void login(const QString &login, const QString &password);
 
@@ -80,7 +82,8 @@ private:
 
     void writeLoginInfo();
 
-    void checkToken();
+    // return true если проверка прошла и асинхронно она не будет выполняться
+    bool checkToken();
 
     void forceRefreshInternal();
 

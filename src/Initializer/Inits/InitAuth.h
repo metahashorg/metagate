@@ -40,12 +40,14 @@ public:
     Return initialize(std::shared_future<MainWindow*> mainWindow);
 
     static int countEvents() {
-        return 1;
+        return 2;
     }
 
 private:
 
     void sendInitSuccess(const TypedException &exception);
+
+    void sendLoginCheckedSuccess(const TypedException &exception);
 
 signals:
 
@@ -55,10 +57,14 @@ private slots:
 
     void onCallbackCall(const Callback &callback);
 
+    void onCheckTokenFinished();
+
 private:
 
     std::unique_ptr<auth::Auth> authManager;
     std::unique_ptr<auth::AuthJavascript> authJavascript;
+
+    bool isCheckTokenFinished = false;
 
 };
 
