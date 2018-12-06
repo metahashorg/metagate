@@ -1183,8 +1183,6 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
 void JavascriptWrapper::setPathsImpl(QString newPatch, QString newUserName) {
     userName = newUserName;
 
-    emit setUserNameSig(newUserName);
-
     if (walletPath == newPatch) {
         return;
     }

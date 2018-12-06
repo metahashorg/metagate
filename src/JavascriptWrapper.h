@@ -47,8 +47,6 @@ signals:
 
     void setCommandLineTextSig(QString text);
 
-    void setUserNameSig(QString name);
-
     void setMappingsSig(QString name);
 
     void lineEditReturnPressedSig(QString text);
