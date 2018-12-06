@@ -5,19 +5,25 @@ Q_INVOKABLE void resendEvents();
 Результат вернется в функцию
 txsResendEventsJs(errorNum, errorMessage)
 
-Q_INVOKABLE void ready();
+Q_INVOKABLE void ready(bool force);
 Говорит о готовности javascript-а начать запуск программы. Вызывать после прихода события initInitializedJs
+force - принудительно продолжить загрузку, если result этой функции not_success. (В текущей версии не даст результата)
 Результат вернется в функцию
 txsReadyResultJs(result, errorNum, errorMessage)
-result = "error" | "finish" | "advance"
+result = "error" | "finish" | "advance" | "not_success"
+error - при выполнении этого запроса произошла ошибка.
+finish - переход в нормальный режим работы произошел успешно
+advance - преждевременный вызов функции.
+not_success - один из state-ов завершился с ошибкой
 
 
 initStateChangedJs(number, totalNumber, type, subType, message, errorNum, errorMessage)
 number и type не связаны
 Возвращается при изменении статуса инициализации компонента
 
-initInitializedJs(errorNum, errorMessage)
+initInitializedJs(resultBool, errorNum, errorMessage)
 Возвращается при окончании инициализации всех компонентов
+result == false, если хотябы один из states ошибочный
 
 
 Список states:
@@ -25,11 +31,10 @@ mainwindow init. Закончена загрузка окна приложени
 auth init. Закончена загрузка модуля auth. Можно совершать к нему запросы по javascript
 auth checked. Модуль авторизации проверил и установил токен юзера
 nslookup init. Закончена загрузка модуля nslookup. Можно совершать к нему запросы через mainWindow по javascript, но не факт, что к этому времени он успел актуализировать список dns
-nslookup flushed. Модуль nslookup обновил список серверов. Можно совершать к нему запросы через mainWindow
+nslookup flushed. Модуль nslookup обновил список серверов.
 transactions init. Закончена загрузка модуля transactions. Можно совершать к нему запросы по javascript
-websocket init. Закончена загрузка модуля websocket. Можно совершать к нему запросы через mainWindow по javascript (metaonline, etc). Но не факт, что к этому 
-websocket connected. Модуль websocket приконнектился к серверу. Можно совершать к нему запросы через mainWindow
+websocket init. Закончена загрузка модуля websocket. Можно совершать к нему запросы через mainWindow по javascript (metaonline, etc). Но не факт, что к этому  времени он приконнектился к серверу
+websocket connected. Модуль websocket приконнектился к серверу.
 jsWrapper init. Закончена загрузка модуля mainWindow. Можно совершать к нему запросы по javascript
 uploader init. Закончена загрузка модуля uploader.
 uploader check_updates_htmls. Модуль updater проверил и загрузил новые html страницы
-времени он приконнектился к серверу

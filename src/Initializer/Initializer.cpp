@@ -48,9 +48,9 @@ void Initializer::sendStateToJs(const InitState &state, int number) {
     emit javascriptWrapper.stateChangedSig(number, totalStates, state);
 }
 
-void Initializer::sendInitializedToJs() {
-    LOG << "Initialized sended";
-    emit javascriptWrapper.initializedSig(TypedException());
+void Initializer::sendInitializedToJs(bool isErrorExist) {
+    LOG << "Initialized sended " << isErrorExist;
+    emit javascriptWrapper.initializedSig(!isErrorExist, TypedException());
 }
 
 void Initializer::onSendState(const InitState &state) {
@@ -61,10 +61,13 @@ BEGIN_SLOT_WRAPPER
     CHECK((int)states.size() < totalStates, "Incorrect state number");
     existStates.emplace(state.type, state.subType);
     states.emplace_back(state);
+    if (state.exception.isSet()) {
+        isErrorExist = true;
+    }
     sendStateToJs(state, (int)states.size() - 1);
     if (!isInitFinished && (int)states.size() == totalStates) {
         isInitFinished = true;
-        sendInitializedToJs();
+        sendInitializedToJs(isErrorExist);
     }
 END_SLOT_WRAPPER
 }
@@ -77,7 +80,7 @@ BEGIN_SLOT_WRAPPER
                 sendStateToJs(states[i], (int)i);
             }
             if (isInitFinished) {
-                sendInitializedToJs();
+                sendInitializedToJs(isErrorExist);
             }
         }
     });
@@ -85,18 +88,22 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Initializer::onJavascriptReady(const ReadyCallback &callback) {
+void Initializer::onJavascriptReady(bool force, const ReadyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     ReadyType result = ReadyType::Error;
     const TypedException exception = apiVrapper2([&, this] {
-        if (isInitFinished) {
-            for (std::unique_ptr<InitInterface> &init: initializiers) {
-                init->complete();
-            }
-            result = ReadyType::Finish;
-        } else {
+        if (!isInitFinished) {
             result = ReadyType::Advance;
+            return;
         }
+        if (isErrorExist && !force) {
+            result = ReadyType::NotSuccess;
+            return;
+        }
+        for (std::unique_ptr<InitInterface> &init: initializiers) {
+            init->complete();
+        }
+        result = ReadyType::Finish;
     });
     runCallback(std::bind(callback, result, exception));
 END_SLOT_WRAPPER

@@ -28,7 +28,7 @@ public slots:
 
     Q_INVOKABLE void resendEvents();
 
-    Q_INVOKABLE void ready();
+    Q_INVOKABLE void ready(bool force);
 
 signals:
 
@@ -44,13 +44,13 @@ signals:
 
     void stateChangedSig(int number, int totalStates, const InitState &state);
 
-    void initializedSig(const TypedException &exception);
+    void initializedSig(bool isSuccess, const TypedException &exception);
 
 private slots:
 
     void onStateChanged(int number, int totalStates, const InitState &state);
 
-    void onInitialized(const TypedException &exception);
+    void onInitialized(bool isSuccess, const TypedException &exception);
 
 private:
 

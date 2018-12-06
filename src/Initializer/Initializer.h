@@ -32,7 +32,7 @@ class Initializer: public QObject {
 public:
 
     enum class ReadyType {
-        Error, Advance, Finish
+        Error, Advance, Finish, NotSuccess
     };
 
     using GetAllStatesCallback = std::function<void(const TypedException &exception)>;
@@ -78,19 +78,19 @@ private:
 
     void sendStateToJs(const InitState &state, int number);
 
-    void sendInitializedToJs();
+    void sendInitializedToJs(bool isErrorExist);
 
 signals:
 
     void resendAllStatesSig(const GetAllStatesCallback &callback);
 
-    void javascriptReadySig(const ReadyCallback &callback);
+    void javascriptReadySig(bool force, const ReadyCallback &callback);
 
 private slots:
 
     void onResendAllStates(const GetAllStatesCallback &callback);
 
-    void onJavascriptReady(const ReadyCallback &callback);
+    void onJavascriptReady(bool force, const ReadyCallback &callback);
 
 private:
 
@@ -109,6 +109,8 @@ private:
     bool isComplete = false;
 
     std::vector<std::unique_ptr<InitInterface>> initializiers;
+
+    bool isErrorExist = false;
 };
 
 }

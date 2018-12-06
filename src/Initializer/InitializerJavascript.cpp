@@ -50,7 +50,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitializerJavascript::ready() {
+void InitializerJavascript::ready(bool force) {
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "transactions not set");
 
@@ -63,7 +63,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->javascriptReadySig([makeFunc](const Initializer::ReadyType &result, const TypedException &exception) {
+        emit m_initializer->javascriptReadySig(force, [makeFunc](const Initializer::ReadyType &result, const TypedException &exception) {
             QString r;
             if (result == Initializer::ReadyType::Error) {
                 r = "error";
@@ -71,6 +71,8 @@ BEGIN_SLOT_WRAPPER
                 r = "finish";
             } else if (result == Initializer::ReadyType::Advance) {
                 r = "advance";
+            } else if (result == Initializer::ReadyType::NotSuccess) {
+                r = "not_success";
             } else {
                 throwErr("Unknown type");
             }
@@ -93,12 +95,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitializerJavascript::onInitialized(const TypedException &exception) {
+void InitializerJavascript::onInitialized(bool isSuccess, const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initInitializedJs";
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isSuccess);
 END_SLOT_WRAPPER
 }
 
