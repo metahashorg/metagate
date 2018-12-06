@@ -181,7 +181,8 @@ private:
 
     JavascriptWrapper *jsWrapper = nullptr;
 
-    const LastHtmlVersion lastHtmls;
+    LastHtmlVersion last_htmls;
+    mutable std::mutex mutLastHtmls;
 
     QString currentTextCommandLine;
 
@@ -203,6 +204,8 @@ private:
     QString prevTextCommandLine;
 
     bool lineEditUserChanged = false;
+
+    bool isInitFinished = false;
 };
 
 #endif // MAINWINDOW_H

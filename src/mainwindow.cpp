@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include <map>
+#include <mutex>
 
 #include <QWebEnginePage>
 
@@ -65,7 +66,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , lastHtmls(Uploader::getLastHtmlVersion())
+    , last_htmls(Uploader::getLastHtmlVersion())
 {
     ui->setupUi(this);
 
@@ -90,8 +91,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     configureMenu();
 
-    pagesMappings.setFullPagesPath(lastHtmls.fullPath);
-    const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
+    pagesMappings.setFullPagesPath(last_htmls.fullPath);
+    const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
     LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
     pagesMappings.setMappings(QString::fromStdString(contentMappings));
 
@@ -185,7 +186,9 @@ END_SLOT_WRAPPER
 
 void MainWindow::onInitFinished() {
 BEGIN_SLOT_WRAPPER
+    isInitFinished = true;
     loadFile("login.html");
+    ui->grid_layout->show();
 END_SLOT_WRAPPER
 }
 
@@ -235,6 +238,8 @@ void MainWindow::doConfigureMenu() {
 }
 
 void MainWindow::configureMenu() {
+    ui->grid_layout->hide();
+
     this->setStyleSheet("QMainWindow {background: rgb(242,242,242);}");
 
     QFontDatabase::addApplicationFont(":/resources/Roboto-Regular.ttf");
@@ -468,7 +473,12 @@ END_SLOT_WRAPPER
 
 void MainWindow::softReloadPage() {
     LOG << "updateReady()";
-    ui->webView->page()->runJavaScript("updateReady();");
+    if (!isInitFinished) {
+        std::lock_guard<std::mutex> lock(mutLastHtmls);
+        last_htmls = Uploader::getLastHtmlVersion();
+    } else {
+        ui->webView->page()->runJavaScript("updateReady();");
+    }
 }
 
 void MainWindow::softReloadApp() {
@@ -486,11 +496,11 @@ void MainWindow::loadUrl(const QString &page) {
 }
 
 void MainWindow::loadFile(const QString &pageName) {
-    loadUrl("file:///" + makePath(lastHtmls.fullPath, pageName));
+    loadUrl("file:///" + makePath(last_htmls.fullPath, pageName));
 }
 
 bool MainWindow::currentFileIsEqual(const QString &pageName) {
-    return ui->webView->url().toString().endsWith(makePath(lastHtmls.fullPath, pageName));
+    return ui->webView->url().toString().endsWith(makePath(last_htmls.fullPath, pageName));
 }
 
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
@@ -604,16 +614,19 @@ QString MainWindow::getServerIp(const QString &text) const {
 }
 
 LastHtmlVersion MainWindow::getCurrentHtmls() const {
-    return lastHtmls;
+    std::lock_guard<std::mutex> lock(mutLastHtmls);
+    return last_htmls;
 }
 
 void MainWindow::onLogined(const QString &login) {
 BEGIN_SLOT_WRAPPER
     if (login.isEmpty()) {
-        LOG << "Try Swith to login";
-        if (!currentFileIsEqual("login.html")) {
-            LOG << "Swith to login";
-            loadFile("login.html");
+        if (isInitFinished) {
+            LOG << "Try Swith to login";
+            if (!currentFileIsEqual("login.html")) {
+                LOG << "Swith to login";
+                loadFile("login.html");
+            }
         }
         setUserName(DEFAULT_USERNAME);
     } else {
