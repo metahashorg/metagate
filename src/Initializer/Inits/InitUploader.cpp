@@ -28,7 +28,7 @@ void InitUploader::sendInitSuccess(const TypedException &exception) {
 void InitUploader::onCheckedUpdatesHtmls() {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState("uploader", "check_updates", "uploader check updates", TypedException()));
+        sendState(InitState("uploader", "check_updates_htmls", "uploader check updates", TypedException()));
         isFlushed = true;
     }
 END_SLOT_WRAPPER

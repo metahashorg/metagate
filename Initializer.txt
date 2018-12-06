@@ -11,10 +11,25 @@ Q_INVOKABLE void ready();
 txsReadyResultJs(result, errorNum, errorMessage)
 result = "error" | "finish" | "advance"
 
+
 initStateChangedJs(number, totalNumber, type, subType, message, errorNum, errorMessage)
-number не обязательно идет по порядку
 number и type не связаны
 Возвращается при изменении статуса инициализации компонента
 
 initInitializedJs(errorNum, errorMessage)
 Возвращается при окончании инициализации всех компонентов
+
+
+Список states:
+mainwindow init. Закончена загрузка окна приложения. Не относится к модулю mainWindow в javascript (см jsWrapper)
+auth init. Закончена загрузка модуля auth. Можно совершать к нему запросы по javascript
+auth checked. Модуль авторизации проверил и установил токен юзера
+nslookup init. Закончена загрузка модуля nslookup. Можно совершать к нему запросы через mainWindow по javascript, но не факт, что к этому времени он успел актуализировать список dns
+nslookup flushed. Модуль nslookup обновил список серверов. Можно совершать к нему запросы через mainWindow
+transactions init. Закончена загрузка модуля transactions. Можно совершать к нему запросы по javascript
+websocket init. Закончена загрузка модуля websocket. Можно совершать к нему запросы через mainWindow по javascript (metaonline, etc). Но не факт, что к этому 
+websocket connected. Модуль websocket приконнектился к серверу. Можно совершать к нему запросы через mainWindow
+jsWrapper init. Закончена загрузка модуля mainWindow. Можно совершать к нему запросы по javascript
+uploader init. Закончена загрузка модуля uploader.
+uploader check_updates_htmls. Модуль updater проверил и загрузил новые html страницы
+времени он приконнектился к серверу

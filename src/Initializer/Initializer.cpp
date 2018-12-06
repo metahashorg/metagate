@@ -44,10 +44,12 @@ void Initializer::runCallback(const Func &callback) {
 }
 
 void Initializer::sendStateToJs(const InitState &state, int number) {
+    LOG << "State sended " << number << " " << totalStates << " " << state.type << " " << state.subType << " " << state.exception.numError << " " << state.exception.description;
     emit javascriptWrapper.stateChangedSig(number, totalStates, state);
 }
 
 void Initializer::sendInitializedToJs() {
+    LOG << "Initialized sended";
     emit javascriptWrapper.initializedSig(TypedException());
 }
 
