@@ -97,6 +97,8 @@ signals:
 
     void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SignalFunc &signal, const SetTransactionsJavascriptCallback &callback);
 
+    void initFinished();
+
 private slots:
 
     void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SignalFunc &signal, const SetJavascriptWrapperCallback &callback);
@@ -108,6 +110,8 @@ private slots:
     void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SignalFunc &signal, const SetMessengerJavascriptCallback &callback);
 
     void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SignalFunc &signal, const SetTransactionsJavascriptCallback &callback);
+
+    void onInitFinished();
 
 private:
 

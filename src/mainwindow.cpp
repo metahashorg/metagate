@@ -72,6 +72,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
     CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
     CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
+    CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
 
     qRegisterMetaType<SignalFunc>("SignalFunc");
     qRegisterMetaType<SetJavascriptWrapperCallback>("SetJavascriptWrapperCallback");
@@ -92,7 +93,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
     pagesMappings.setMappings(QString::fromStdString(contentMappings));
 
-    loadFile("login.html");
+    loadFile("core/loader/index.html");
     addElementToHistoryAndCommandLine("app://Login", true, true);
 
     client.setParent(this);
@@ -179,6 +180,12 @@ BEGIN_SLOT_WRAPPER
         channel->registerObject(QString("transactions"), transactionsJavascript);
     });
     emit signal(std::bind(callback, exception));
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onInitFinished() {
+BEGIN_SLOT_WRAPPER
+    loadFile("login.html");
 END_SLOT_WRAPPER
 }
 

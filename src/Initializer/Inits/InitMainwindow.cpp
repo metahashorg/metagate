@@ -16,6 +16,7 @@ InitMainWindow::~InitMainWindow() = default;
 
 void InitMainWindow::complete() {
     CHECK(mainWindow != nullptr, "mainwindow not initialized");
+    emit mainWindow->initFinished();
 }
 
 void InitMainWindow::sendInitSuccess(const TypedException &exception) {
