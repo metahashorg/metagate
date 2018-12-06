@@ -33,7 +33,7 @@ class InitJavascriptWrapper: public QObject, public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = std::reference_wrapper<JavascriptWrapper>;
+    using Return = JavascriptWrapper*;
 
     using Callback = std::function<void()>;
 
@@ -46,11 +46,11 @@ public:
     void complete() override;
 
     Return initialize(
-        std::shared_future<std::reference_wrapper<WebSocketClient>> wssClient,
-        std::shared_future<std::reference_wrapper<NsLookup>> nsLookup,
-        std::shared_future<std::reference_wrapper<MainWindow>> mainWindow,
-        std::shared_future<std::pair<std::reference_wrapper<transactions::TransactionsJavascript>, std::reference_wrapper<transactions::Transactions>>> transactions,
-        std::shared_future<std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>> auth,
+        std::shared_future<WebSocketClient*> wssClient,
+        std::shared_future<NsLookup*> nsLookup,
+        std::shared_future<MainWindow*> mainWindow,
+        std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
+        std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
         const QString &versionString
     );
 

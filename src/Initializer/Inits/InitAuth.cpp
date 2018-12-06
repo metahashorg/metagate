@@ -40,15 +40,15 @@ void InitAuth::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("auth", "init", "auth initialized", exception));
 }
 
-InitAuth::Return InitAuth::initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow) {
+InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
         authJavascript = std::make_unique<auth::AuthJavascript>();
         authJavascript->moveToThread(mainThread);
         authManager = std::make_unique<auth::Auth>(*authJavascript);
         authManager->start();
-        MainWindow &mw = mainWindow.get();
+        MainWindow &mw = *mainWindow.get();
         emit mw.setAuthJavascript(authJavascript.get(), std::bind(&InitAuth::callbackCall, this, _1), [this, mainWindow](const TypedException &e) {
-            MainWindow &mw = mainWindow.get();
+            MainWindow &mw = *mainWindow.get();
             if (e.isSet()) {
                 sendInitSuccess(e);
                 return;
@@ -63,7 +63,7 @@ InitAuth::Return InitAuth::initialize(std::shared_future<std::reference_wrapper<
         sendInitSuccess(exception);
         throw exception;
     }
-    return std::make_pair(std::ref(*authManager), std::ref(*authJavascript));
+    return std::make_pair(authManager.get(), authJavascript.get());
 }
 
 }

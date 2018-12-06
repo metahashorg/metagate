@@ -59,7 +59,7 @@ InitWebSocket::Return InitWebSocket::initialize() {
     if (exception.isSet()) {
         throw exception;
     }
-    return *webSocket;
+    return webSocket.get();
 }
 
 }

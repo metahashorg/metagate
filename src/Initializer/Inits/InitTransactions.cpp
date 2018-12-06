@@ -43,15 +43,15 @@ void InitTransactions::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("transactions", "init", "transactions initialized", exception));
 }
 
-InitTransactions::Return InitTransactions::initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow, std::shared_future<std::reference_wrapper<NsLookup>> nsLookup) {
+InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup) {
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<transactions::TransactionsDBStorage>(getDbPath());
         database->init();
         txJavascript = std::make_unique<transactions::TransactionsJavascript>();
         txJavascript->moveToThread(mainThread);
-        txManager = std::make_unique<transactions::Transactions>(nsLookup.get(), *txJavascript, *database);
+        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get(), *txJavascript, *database);
         txManager->start();
-        MainWindow &mw = mainWindow.get();
+        MainWindow &mw = *mainWindow.get();
         emit mw.setTransactionsJavascript(txJavascript.get(), std::bind(&InitTransactions::callbackCall, this, _1), [this, mainWindow](const TypedException &e) {
             sendInitSuccess(e);
         });
@@ -61,7 +61,7 @@ InitTransactions::Return InitTransactions::initialize(std::shared_future<std::re
         sendInitSuccess(exception);
         throw exception;
     }
-    return std::make_pair(std::ref(*txJavascript), std::ref(*txManager));
+    return std::make_pair(txJavascript.get(), txManager.get());
 }
 
 }

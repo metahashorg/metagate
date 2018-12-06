@@ -20,7 +20,7 @@ class InitUploader: public QObject, public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = std::reference_wrapper<Uploader>;
+    using Return = Uploader*;
 
 public:
 
@@ -30,7 +30,7 @@ public:
 
     void complete() override;
 
-    Return initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow);
+    Return initialize(std::shared_future<MainWindow*> mainWindow);
 
     static int countEvents() {
         return 2;

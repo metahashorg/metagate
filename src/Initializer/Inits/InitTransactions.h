@@ -28,7 +28,7 @@ class InitTransactions: public QObject, public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = std::pair<std::reference_wrapper<transactions::TransactionsJavascript>, std::reference_wrapper<transactions::Transactions>>;
+    using Return = std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>;
 
     using Callback = std::function<void()>;
 
@@ -40,7 +40,7 @@ public:
 
     void complete() override;
 
-    Return initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow, std::shared_future<std::reference_wrapper<NsLookup>> nsLookup);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup);
 
     static int countEvents() {
         return 1;

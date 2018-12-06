@@ -51,7 +51,7 @@ InitNsLookup::Return InitNsLookup::initialize() {
     if (exception.isSet()) {
         throw exception;
     }
-    return *nsLookup;
+    return nsLookup.get();
 }
 
 }

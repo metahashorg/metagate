@@ -19,7 +19,7 @@ class InitWebSocket: public QObject, public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = std::reference_wrapper<WebSocketClient>;
+    using Return = WebSocketClient*;
 
 public:
 

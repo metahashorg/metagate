@@ -25,7 +25,7 @@ class InitAuth: public QObject, public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>;
+    using Return = std::pair<auth::Auth*, auth::AuthJavascript*>;
 
     using Callback = std::function<void()>;
 
@@ -37,7 +37,7 @@ public:
 
     void complete() override;
 
-    Return initialize(std::shared_future<std::reference_wrapper<MainWindow>> mainWindow);
+    Return initialize(std::shared_future<MainWindow*> mainWindow);
 
     static int countEvents() {
         return 1;

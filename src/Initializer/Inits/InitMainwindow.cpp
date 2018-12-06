@@ -33,7 +33,7 @@ InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initial
     if (exception.isSet()) {
         throw exception;
     }
-    return *mainWindow;
+    return mainWindow.get();
 }
 
 }

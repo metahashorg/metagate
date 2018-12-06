@@ -40,17 +40,17 @@ void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
 }
 
 InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
-    std::shared_future<std::reference_wrapper<WebSocketClient>> wssClient,
-    std::shared_future<std::reference_wrapper<NsLookup>> nsLookup,
-    std::shared_future<std::reference_wrapper<MainWindow>> mainWindow,
-    std::shared_future<std::pair<std::reference_wrapper<transactions::TransactionsJavascript>, std::reference_wrapper<transactions::Transactions>>> transactions,
-    std::shared_future<std::pair<std::reference_wrapper<auth::Auth>, std::reference_wrapper<auth::AuthJavascript>>> auth,
-    const QString &versionString
+        std::shared_future<WebSocketClient*> wssClient,
+        std::shared_future<NsLookup*> nsLookup,
+        std::shared_future<MainWindow*> mainWindow,
+        std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
+        std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
+        const QString &versionString
 ) {
     const TypedException exception = apiVrapper2([&, this] {
-        jsWrapper = std::make_unique<JavascriptWrapper>(wssClient.get(), nsLookup.get(), transactions.get().second, auth.get().first, versionString);
+        jsWrapper = std::make_unique<JavascriptWrapper>(*wssClient.get(), *nsLookup.get(), *transactions.get().second, *auth.get().first, versionString);
         jsWrapper->moveToThread(mainThread);
-        MainWindow &mw = mainWindow.get();
+        MainWindow &mw = *mainWindow.get();
         emit mw.setJavascriptWrapper(jsWrapper.get(), std::bind(&InitJavascriptWrapper::callbackCall, this, _1), [this](const TypedException &e) {
             sendInitSuccess(e);
         });
@@ -60,7 +60,7 @@ InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
         sendInitSuccess(exception);
         throw exception;
     }
-    return *jsWrapper;
+    return jsWrapper.get();
 }
 
 }

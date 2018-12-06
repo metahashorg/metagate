@@ -17,7 +17,7 @@ class InitializerJavascript;
 class InitMainWindow: public InitInterface {
 public:
 
-    using Return = std::reference_wrapper<MainWindow>;
+    using Return = MainWindow*;
 
 public:
 

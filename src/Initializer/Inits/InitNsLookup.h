@@ -19,7 +19,7 @@ class InitNsLookup: public QObject, public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = std::reference_wrapper<NsLookup>;
+    using Return = NsLookup*;
 
 public:
 
