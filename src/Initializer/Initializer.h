@@ -51,7 +51,7 @@ public:
 
 public:
 
-    template<class Init, bool isDefferred, typename... Args>
+    template<class Init, bool isDefferred=false, typename... Args>
     std::shared_future<typename Init::Return> addInit(Args&& ...args) {
         CHECK(!isComplete, "Already complete");
         totalStates += Init::countEvents();

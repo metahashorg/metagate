@@ -106,17 +106,17 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
-        const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth, false>(mainWindow);
+        const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
 
-        const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup, false>();
+        const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup>();
 
-        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions, false>(mainWindow, nsLookup);
+        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup);
 
-        const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket, false>();
+        const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
-        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper, false>(webSocketClient, nsLookup, mainWindow, transactions, auth, QString::fromStdString(versionString));
+        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, QString::fromStdString(versionString));
 
-        const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader, false>(mainWindow);
+        const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow);
 
         initManager.complete();
 

@@ -38,3 +38,7 @@ websocket connected. Модуль websocket приконнектился к се
 jsWrapper init. Закончена загрузка модуля mainWindow. Можно совершать к нему запросы по javascript
 uploader init. Закончена загрузка модуля uploader.
 uploader check_updates_htmls. Модуль updater проверил и загрузил новые html страницы
+
+Таким образом, для успешного вызова некоторых методов, нужно дожидаться группы событий, например
+nslookup init, nslookup flushed, jsWrapper init
+для того, чтобы успешно получать список серверов

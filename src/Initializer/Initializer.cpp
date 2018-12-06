@@ -49,7 +49,7 @@ void Initializer::sendStateToJs(const InitState &state, int number) {
 }
 
 void Initializer::sendInitializedToJs(bool isErrorExist) {
-    LOG << "Initialized sended " << isErrorExist;
+    LOG << "Initialized sended " << !isErrorExist;
     emit javascriptWrapper.initializedSig(!isErrorExist, TypedException());
 }
 
