@@ -41,6 +41,8 @@
 
 #include "machine_uid.h"
 
+const static QString DEFAULT_USERNAME = "_unregistered";
+
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     QToolButton * button = qobject_cast<QToolButton*>(watched);
     if (!button) {
@@ -130,7 +132,6 @@ BEGIN_SLOT_WRAPPER
         channel->registerObject(QString("mainWindow"), jsWrapper);
         CHECK(connect(jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
         CHECK(connect(jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
-        CHECK(connect(jsWrapper, SIGNAL(setUserNameSig(QString)), this, SLOT(onSetUserName(QString))), "not connect setUserNameSig");
         CHECK(connect(jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
         CHECK(connect(jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
         doConfigureMenu();
@@ -565,8 +566,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onSetUserName(QString userName) {
-BEGIN_SLOT_WRAPPER
+void MainWindow::setUserName(QString userName) {
     LOG << "Set user name " << userName;
     ui->userButton->setText(userName);
     ui->userButton->adjustSize();
@@ -579,7 +579,6 @@ BEGIN_SLOT_WRAPPER
     const int estimatedWidth = button->style()->sizeFromContents(QStyle::CT_ToolButton, &opt, textSize, button).width() + 25;
     button->setMaximumWidth(estimatedWidth);
     button->setMinimumWidth(estimatedWidth);
-END_SLOT_WRAPPER
 }
 
 void MainWindow::onSetMappings(QString mapping) {
@@ -617,6 +616,9 @@ BEGIN_SLOT_WRAPPER
             LOG << "Swith to login";
             loadFile("login.html");
         }
+        setUserName(DEFAULT_USERNAME);
+    } else {
+        setUserName(login);
     }
 END_SLOT_WRAPPER
 }

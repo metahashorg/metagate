@@ -65,6 +65,24 @@ std::string HexStringToDump(const std::string& hexstr)
     return decoded;
 }
 
+std::string IntToRLP(int val) {
+    if (val == 0)
+        return std::string(1, '\x00');
+    uint8_t rlpval[sizeof(val)];
+    unsigned char* valptr = (unsigned char*)&val + sizeof(val) - 1;
+
+    size_t j = 0;
+    bool start = false;
+    for (size_t i = 0; i < sizeof(val); ++i)
+    {
+        if (*(valptr-i))
+            start = true;
+        if (start)
+            rlpval[j++] = *(valptr-i);
+    }
+
+    return std::string((const char*)rlpval, j);
+}
 
 std::string SettingsToRLP(std::vector<std::string>& fields, bool adddefault)
 {
