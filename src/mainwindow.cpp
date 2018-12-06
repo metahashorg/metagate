@@ -67,6 +67,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , last_htmls(Uploader::getLastHtmlVersion())
+    , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
 
@@ -187,7 +188,11 @@ END_SLOT_WRAPPER
 void MainWindow::onInitFinished() {
 BEGIN_SLOT_WRAPPER
     isInitFinished = true;
-    loadFile("login.html");
+    if (currentUserName == DEFAULT_USERNAME) {
+        enterCommandAndAddToHistory("app://Login", true, true);
+    } else {
+        enterCommandAndAddToHistory("app://MetaApps", true, true);
+    }
     ui->grid_layout->show();
 END_SLOT_WRAPPER
 }
@@ -576,6 +581,7 @@ END_SLOT_WRAPPER
 }
 
 void MainWindow::setUserName(QString userName) {
+    currentUserName = userName;
     LOG << "Set user name " << userName;
     ui->userButton->setText(userName);
     ui->userButton->adjustSize();

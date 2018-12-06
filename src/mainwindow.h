@@ -203,6 +203,8 @@ private:
 
     QString prevTextCommandLine;
 
+    QString currentUserName;
+
     bool lineEditUserChanged = false;
 
     bool isInitFinished = false;
