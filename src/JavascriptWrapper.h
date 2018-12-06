@@ -13,6 +13,7 @@
 class NsLookup;
 class WebSocketClient;
 struct TypedException;
+class MainWindow;
 
 namespace transactions {
 class Transactions;
@@ -33,7 +34,7 @@ public:
 using ReturnCallback = std::function<void()>;
 
 public:
-    explicit JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -280,6 +281,8 @@ public:
 
 private:
 
+    MainWindow &mainWindow;
+
     WebSocketClient &wssClient;
 
     NsLookup &nsLookup;
@@ -289,8 +292,6 @@ private:
     const QString applicationVersion;
 
     QString sendedUserName;
-
-    LastHtmlVersion lastHtmls;
 
     QString hardwareId;
 

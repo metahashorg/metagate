@@ -23,6 +23,8 @@ using namespace std::placeholders;
 #include "EthWallet.h"
 #include "BtcWallet.h"
 
+#include "mainwindow.h"
+
 #include "NsLookup.h"
 #include "WebSocketClient.h"
 
@@ -95,16 +97,15 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
-    : walletDefaultPath(getWalletPath())
+JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
+    : mainWindow(mainWindow)
+    , walletDefaultPath(getWalletPath())
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
-
-    lastHtmls = Uploader::getLastHtmlVersion();
 
     LOG << "Wallets default path " << walletDefaultPath;
 
@@ -169,7 +170,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
-        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion, keysTmh, keysMth);
+        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message);
         sendedUserName = newUserName;
