@@ -2,6 +2,9 @@
 
 #include "machine_uid.h"
 
+#include <vector>
+#include <algorithm>
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <intrin.h>
@@ -9,7 +12,7 @@
 #include <lm.h>
 #pragma comment(lib, "netapi32.lib")
 
-bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
+static bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
 {
     bool bRetCode = false;
     LPBYTE pinfoRawData = 0;
@@ -25,7 +28,7 @@ bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
 }
 
 
-std::string osNameImpl(){
+static std::string osNameImpl(){
     std::string     winver;
     OSVERSIONINFOEX osver;
     SYSTEM_INFO     sysInfo;
@@ -107,6 +110,8 @@ static uint16_t hashMacAddress( PIP_ADAPTER_INFO info )
 
 static void getMacHash( uint16_t& mac1, uint16_t& mac2 )
 {
+   mac1 = 0;
+   mac2 = 0;
    IP_ADAPTER_INFO AdapterInfo[32];
    DWORD dwBufLen = sizeof( AdapterInfo );
 
@@ -114,19 +119,30 @@ static void getMacHash( uint16_t& mac1, uint16_t& mac2 )
    if ( dwStatus != ERROR_SUCCESS )
       return; // no adapters.
 
+   std::vector<uint16_t> addrs;
    PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
-   mac1 = hashMacAddress( pAdapterInfo );
-   if ( pAdapterInfo->Next )
-      mac2 = hashMacAddress( pAdapterInfo->Next );
-
-   // sort the mac addresses. We don't want to invalidate
-   // both macs if they just change order.
-   if ( mac1 > mac2 )
-   {
-      uint16_t tmp = mac2;
-      mac2 = mac1;
-      mac1 = tmp;
+   while (pAdapterInfo) {
+       addrs.emplace_back(hashMacAddress(pAdapterInfo));
+       pAdapterInfo = pAdapterInfo->Next;
    }
+   if (addrs.empty()) {
+       return;
+   }
+   const auto pair = std::minmax_element(addrs.begin(), addrs.end());
+   mac1 = *pair.first;
+   mac2 = *pair.second;
+
+   const auto savedPair = findMacAddressFile();
+   if (!savedPair.first.empty()) {
+       const uint16_t savedMac1 = std::stoul(savedPair.first);
+       const uint16_t savedMac2 = std::stoul(savedPair.second);
+       if (std::find(addrs.begin(), addrs.end(), savedMac1) != addrs.end() || std::find(addrs.begin(), addrs.end(), savedMac2) != addrs.end()) {
+           mac1 = savedMac1;
+           mac2 = savedMac2;
+           return;
+       }
+   }
+   saveMacAddressesToFile(std::to_string(mac1), std::to_string(mac2));
 }
 
 static uint16_t getVolumeHash()
@@ -134,7 +150,10 @@ static uint16_t getVolumeHash()
    DWORD serialNum = 0;
 
    // Determine if this volume uses an NTFS file system.
-   GetVolumeInformation( LPCWSTR("c:\\"), NULL, 0, &serialNum, NULL, NULL, NULL, 0 );
+   const bool res = GetVolumeInformationA( LPCSTR("C:\\"), NULL, 0, &serialNum, NULL, NULL, NULL, 0);
+   if (!res) {
+       serialNum = 0;
+   }
    uint16_t hash = (uint16_t)(( serialNum + ( serialNum >> 16 )) & 0xFFFF );
 
    return hash;
@@ -160,7 +179,7 @@ static std::string getMachineName()
    return std::string(computerName);
 }
 
-std::string getMachineUid() {
+std::string getMachineUidInternal() {
     std::string result;
     result += std::to_string(getCpuHash()) + std::string(";");
     result += std::to_string(getVolumeHash()) + std::string(";");

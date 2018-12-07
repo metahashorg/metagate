@@ -84,6 +84,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
     CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
 
+    javascriptWrapper.setTransactions(*this);
+
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 

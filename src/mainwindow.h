@@ -96,6 +96,8 @@ private:
 
     void qtOpenInBrowser(QString url);
 
+    void setUserName(QString userName);
+
 public slots:
 
     void processEvent(WindowEvent event);
@@ -115,8 +117,6 @@ private slots:
     void onSetHasNativeToolbarVariable();
 
     void onSetCommandLineText(QString text);
-
-    void onSetUserName(QString userName);
 
     void onSetMappings(QString mapping);
 

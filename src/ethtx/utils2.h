@@ -10,6 +10,7 @@ std::string HexStringToDump(const std::string& hexstr);
 std::string SettingsToRLP(std::vector<std::string>& strings, bool adddefault = true);
 std::string ReadFile(const std::string &privKeyPath);
 std::string PackInteger(uint64_t value);
+std::string IntToRLP(int val);
 
 template <typename IntType>
 std::string IntegerToBuffer(IntType val)

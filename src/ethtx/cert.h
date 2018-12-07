@@ -27,6 +27,8 @@ std::string AddressFromPrivateKey(const std::string& privkey);
 std::string DeriveAESKeyFromPassword(const std::string& password, CertParams& params);
 std::string MixedCaseEncoding(const std::string& binaryAddress);
 
+std::string keccak(const std::string &data);
+
 std::string getAddressFromFile(const char* certContent);
 
 #endif

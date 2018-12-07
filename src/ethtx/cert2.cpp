@@ -28,18 +28,23 @@ int libscrypt_salt_gen(uint8_t *salt, size_t len);
 extern "C" int libscrypt_salt_gen(uint8_t *salt, size_t len);
 #endif
 
+std::string keccak(const std::string &data) {
+    uint8_t hs[EC_KEY_LENGTH];
+    CryptoPP::Keccak k(EC_KEY_LENGTH);
+    k.Update((uint8_t*)data.c_str(), data.size());
+    k.TruncatedFinal(hs, EC_KEY_LENGTH);
+    return std::string(hs, hs + EC_KEY_LENGTH);
+}
+
 //Кодирование адреса ethereum
 std::string MixedCaseEncoding(const std::string& binaryAddress)
 {
     //Берем 16-ричное представление адреса
     std::string hexaddress = DumpToHexString(binaryAddress);
     //Находим keccak256 от него
-    uint8_t hs[EC_KEY_LENGTH];
-    CryptoPP::Keccak k(EC_KEY_LENGTH);
-    k.Update((uint8_t*)hexaddress.c_str(), hexaddress.size());
-    k.TruncatedFinal(hs, EC_KEY_LENGTH);
+    const std::string hs = keccak(hexaddress);
     //Переводим хэш в 16-ричное представление
-    std::string hexhs = DumpToHexString(hs, EC_KEY_LENGTH);
+    std::string hexhs = DumpToHexString((const uint8_t*)hs.data(), hs.size());
     //Преобразуем исходный адрес в соответсвии с значением keccak256
     char a = 0;
     std::string normalizedAddr = "";

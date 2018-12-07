@@ -47,8 +47,6 @@ signals:
 
     void setCommandLineTextSig(QString text);
 
-    void setUserNameSig(QString name);
-
     void setMappingsSig(QString name);
 
     void lineEditReturnPressedSig(QString text);
@@ -84,6 +82,8 @@ public slots:
 
     Q_INVOKABLE void getRawPrivKey(QString requestId, QString address, QString password);
 
+    Q_INVOKABLE void createV8Address(QString requestId, QString address, int nonce);
+
 public slots:
 
     Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
@@ -107,6 +107,8 @@ public slots:
     Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password);
 
     Q_INVOKABLE void getRawPrivKeyMHC(QString requestId, QString address, QString password);
+
+    Q_INVOKABLE void createV8AddressMHC(QString requestId, QString address, int nonce);
 
 public slots:
 
@@ -255,6 +257,8 @@ private:
     void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult);
 
     void signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction);
+
+    void createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce);
 
     template<typename... Args>
     void makeAndRunJsFuncParams(const QString &function, const QString &lastArg, const TypedException &exception, Args&& ...args);

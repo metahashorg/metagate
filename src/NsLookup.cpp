@@ -1,5 +1,7 @@
 #include "NsLookup.h"
 
+#include <set>
+
 #include <QUdpSocket>
 #include <QApplication>
 
@@ -26,7 +28,11 @@ const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
 const static std::string CURRENT_VERSION = "v2";
 
-const milliseconds UPDATE_PERIOD = days(1);
+const static milliseconds MAX_PING = 100s;
+
+const static milliseconds UPDATE_PERIOD = days(1);
+
+const static size_t ACCEPTABLE_COUNT_ADDRESSES = 3;
 
 NsLookup::NsLookup(QObject *parent)
     : QObject(parent)
@@ -47,7 +53,7 @@ NsLookup::NsLookup(QObject *parent)
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
     const system_time_point now = system_now();
-    milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
+    passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
     if (lastFill - now >= hours(1)) {
         // Защита от перевода времени назад
         passedTime = UPDATE_PERIOD;
@@ -56,11 +62,11 @@ NsLookup::NsLookup(QObject *parent)
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect started");
     CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect finished");
 
-    milliseconds msTimer;
+    milliseconds msTimer = 1ms;
     if (passedTime >= UPDATE_PERIOD) {
-        msTimer = 1ms;
+        isSafeCheck = false;
     } else {
-        msTimer = UPDATE_PERIOD - passedTime;
+        isSafeCheck = true;
     }
     LOG << "Start ns resolve after " << msTimer.count() << " ms";
     qtimer.moveToThread(&thread1);
@@ -104,16 +110,47 @@ void NsLookup::run() {
 }
 
 void NsLookup::finalizeLookup() {
-    std::lock_guard<std::mutex> lock(nodeMutex);
-    allNodes.swap(allNodesNew);
-    allNodesForTypes.swap(allNodesForTypesNew);
+    std::unique_lock<std::mutex> lock(nodeMutex);
+    if (!isSafeCheck) {
+        allNodes.swap(allNodesNew);
+        allNodesForTypes.swap(allNodesForTypesNew);
+    }
     sortAll();
-    saveToFile(savedNodesPath, system_now(), nodes);
+    if (!isSafeCheck) {
+        saveToFile(savedNodesPath, system_now(), nodes);
+    }
+    lock.unlock();
 
     const time_point stopScan = ::now();
     LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
 
-    qtimer.setInterval(UPDATE_PERIOD.count());
+    milliseconds msTimer;
+    if (isSafeCheck) {
+        bool isSuccess = true;
+        for (const auto &elem: allNodesForTypes) {
+            const size_t countSuccess = std::accumulate(elem.second.begin(), elem.second.end(), size_t(0), [](size_t prev, const NodeInfo &subElem) -> size_t {
+                if (subElem.ping != MAX_PING.count()) {
+                    return prev + 1;
+                } else {
+                    return prev + 0;
+                }
+            });
+            if (countSuccess < ACCEPTABLE_COUNT_ADDRESSES) {
+                isSuccess = false;
+            }
+        }
+        if (isSuccess) {
+            LOG << "Dns safe check success";
+            msTimer = UPDATE_PERIOD - passedTime;
+        } else {
+            LOG << "Dns safe check not success. Start full scan";
+            msTimer = 1ms;
+        }
+    } else {
+        msTimer = UPDATE_PERIOD;
+    }
+    isSafeCheck = false;
+    qtimer.setInterval(msTimer.count());
     qtimer.setSingleShot(true);
 }
 
@@ -133,15 +170,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void NsLookup::continueResolve() {
-    if (posInNodes >= nodes.size()) {
-        finalizeLookup();
-        return;
-    }
-
-    const NodeType &node = nodes[posInNodes];
-    posInNodes++;
-
+std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
     QUdpSocket udp;
 
     DnsPacket requestPacket;
@@ -151,65 +180,161 @@ void NsLookup::continueResolve() {
 
     udp.waitForReadyRead();
     std::vector<char> data(512 * 1000, 0);
-    const int size = udp.readDatagram(data.data(), data.size());
+    const qint64 size = udp.readDatagram(data.data(), data.size());
     CHECK(size > 0, "Incorrect response dns");
-    DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
+    const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
 
     LOG << "dns ok " << node.type << ". " << packet.answers().size();
     CHECK(!packet.answers().empty(), "Empty dns response");
-    ipsTemp.clear();
+
+    std::vector<QString> result;
     for (const auto &record : packet.answers()) {
-        ipsTemp.emplace_back(record.toString());
+        result.emplace_back(makeAddress(record.toString(), node.port));
     }
+    return result;
+}
+
+void NsLookup::continueResolve() {
+    if (posInNodes >= nodes.size()) {
+        finalizeLookup();
+        return;
+    }
+
+    const NodeType &node = nodes[posInNodes];
+    posInNodes++;
+
+    ipsTemp = requestDns(node);
     posInIpsTemp = 0;
+    countSuccessfullTemp = 0;
 
     continuePing();
 }
 
-void NsLookup::continuePing() {
-    if (posInIpsTemp >= ipsTemp.size()) {
-        continueResolve();
-        return;
-    }
+QString NsLookup::makeAddress(const QString &ip, const QString &port) {
+    return "http://" + ip + ":" + port;
+}
 
+void NsLookup::continuePing() {
     const NodeType &nodeType = nodes[posInNodes - 1];
 
-    const size_t countSteps = std::min(size_t(10), ipsTemp.size() - posInIpsTemp);
-    requestsInProcess = countSteps;
-    for (size_t i = 0; i < countSteps; i++) {
-        const QString &ip = ipsTemp[posInIpsTemp];
-        posInIpsTemp++;
-        client.ping("http://" + ip + ":" + nodeType.port, [this, type=nodeType.type](const QString &address, const milliseconds &time, const std::string &message) {
-            const milliseconds MAX_PING = 100s;
-            NodeInfo info;
-            info.address = address;
-            info.ping = time.count();
+    if (!isSafeCheck) {
+        if (posInIpsTemp >= ipsTemp.size()) {
+            continueResolve();
+            return;
+        }
 
-            if (message.empty()) {
-                info.ping = MAX_PING.count();
-            } else {
-                QJsonParseError parseError;
-                QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
-                if (parseError.error != QJsonParseError::NoError) {
-                    info.ping = MAX_PING.count();
+        const size_t countSteps = std::min(size_t(10), ipsTemp.size() - posInIpsTemp);
+
+        std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(countSteps);
+
+        for (size_t i = 0; i < countSteps; i++) {
+            const QString &ip = ipsTemp[posInIpsTemp];
+            posInIpsTemp++;
+            client.ping(ip, [this, type=nodeType.type, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
+                try {
+                    NodeInfo info;
+                    info.address = address;
+                    info.ping = time.count();
+
+                    if (message.empty()) {
+                        info.ping = MAX_PING.count();
+                    } else {
+                        QJsonParseError parseError;
+                        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
+                        if (parseError.error != QJsonParseError::NoError) {
+                            info.ping = MAX_PING.count();
+                        }
+                    }
+
+                    addNode(type, info, true);
+                } catch (const Exception &e) {
+                    LOG << "Error " << e;
+                } catch (const std::exception &e) {
+                    LOG << "Error " << e.what();
+                } catch (const TypedException &e) {
+                    LOG << "Error typed " << e.description;
+                } catch (...) {
+                    LOG << "Unknown error";
                 }
-            }
 
-            addNode(type, info, true);
+                (*requestsInProcess)--;
+                if ((*requestsInProcess) == 0) {
+                    continuePing();
+                }
+            }, 2s);
+        }
+    } else {
+        if (posInIpsTemp >= allNodesForTypes[nodeType.type].size()) {
+            continueResolve();
+            return;
+        }
 
-            requestsInProcess--;
-            if (requestsInProcess == 0) {
-                continuePing();
+        const size_t countIterations = allNodesForTypes[nodeType.type].size() - posInIpsTemp;
+        std::vector<size_t> processVectPos;
+        for (size_t i = 0; i < countIterations; i++) {
+            NodeInfo &element = allNodesForTypes[nodeType.type][posInIpsTemp];
+            if (element.ping == MAX_PING.count()) {
+                // skip
+            } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
+                element.ping = MAX_PING.count();
+            } else {
+                processVectPos.emplace_back(posInIpsTemp);
             }
-        }, 2s);
+            posInIpsTemp++;
+            if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES) {
+                break;
+            }
+        }
+        std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(processVectPos.size());
+        for (size_t i = 0; i < processVectPos.size(); i++) {
+            const size_t posInIpsTempSave = processVectPos[i];
+            const QString &address = allNodesForTypes[nodeType.type][posInIpsTempSave].get().address;
+            client.ping(address, [this, type=nodeType.type, posInIpsTempSave, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
+                try {
+                    NodeInfo &info = allNodesForTypes[type][posInIpsTempSave];
+                    CHECK(info.address == address, "Incorrect address");
+
+                    if (message.empty()) {
+                        info.ping = MAX_PING.count();
+                    } else {
+                        QJsonParseError parseError;
+                        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
+                        if (parseError.error != QJsonParseError::NoError) {
+                            info.ping = MAX_PING.count();
+                        }
+                    }
+
+                    if (info.ping != MAX_PING.count()) {
+                        countSuccessfullTemp++;
+                    }
+                } catch (const Exception &e) {
+                    LOG << "Error " << e;
+                } catch (const std::exception &e) {
+                    LOG << "Error " << e.what();
+                } catch (const TypedException &e) {
+                    LOG << "Error typed " << e.description;
+                } catch (...) {
+                    LOG << "Unknown error";
+                }
+
+                (*requestsInProcess)--;
+                if ((*requestsInProcess) == 0) {
+                    if (countSuccessfullTemp >= ACCEPTABLE_COUNT_ADDRESSES) {
+                        continueResolve();
+                    } else {
+                        continuePing();
+                    }
+                }
+            }, 2s);
+        }
     }
 }
 
 void NsLookup::addNode(const QString &type, const NodeInfo &node, bool isNew) {
-    auto processNode = [](std::deque<NodeInfo> &allNodes, std::map<QString, std::vector<std::reference_wrapper<const NodeInfo>>> &allNodesForTypes, const QString &type, const NodeInfo &node) {
+    auto processNode = [](std::deque<NodeInfo> &allNodes, std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> &allNodesForTypes, const QString &type, const NodeInfo &node) {
         allNodes.emplace_back(node);
-        const NodeInfo &ref = allNodes.back();
-        allNodesForTypes[type].emplace_back(std::cref(ref));
+        NodeInfo &ref = allNodes.back();
+        allNodesForTypes[type].emplace_back(std::ref(ref));
     };
 
     if (isNew) {

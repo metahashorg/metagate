@@ -120,6 +120,8 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     qRegisterMetaType<TypedException>("TypedException");
     qRegisterMetaType<ReturnCallback>("ReturnCallback");
 
+    transactionsManager.setJavascriptWrapper(*this);
+
     emit authManager.reEmit();
 
     sendAppInfoToWss("", true);
@@ -437,6 +439,14 @@ static transactions::Transactions::SendParameters parseSendParams(const QString 
     return result;
 }
 
+void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce) {
+    Opt<QString> result;
+    const TypedException exception = apiVrapper2([&, this]() {
+        result = QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
+    });
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+}
+
 void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction) {
     const TypedException exception = apiVrapper2([&, this]() {
         const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
@@ -617,6 +627,20 @@ void JavascriptWrapper::getRawPrivKeyMHC(QString requestId, QString address, QSt
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getRawPrivkeyMHCResultJs";
     getRawPrivKeyMTHS(requestId, address, password, walletPathMth, JS_NAME_RESULT);
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::createV8AddressMHC(QString requestId, QString address, int nonce) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "createV8AddressMHCResultJs";
+    createV8AddressImpl(requestId, JS_NAME_RESULT, address, nonce);
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::createV8Address(QString requestId, QString address, int nonce) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "createV8AddressResultJs";
+    createV8AddressImpl(requestId, JS_NAME_RESULT, address, nonce);
 END_SLOT_WRAPPER
 }
 
@@ -1159,8 +1183,6 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
 void JavascriptWrapper::setPathsImpl(QString newPatch, QString newUserName) {
     userName = newUserName;
 
-    emit setUserNameSig(newUserName);
-
     if (walletPath == newPatch) {
         return;
     }
@@ -1277,6 +1299,8 @@ QString JavascriptWrapper::restoreKeys(QString caption) {
 void JavascriptWrapper::getMachineUid() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "machineUidJs";
+
+    LOG << "Get machine uid " << hardwareId;
 
     const QString uid = "\"" + hardwareId + "\"";
     runJs(JS_NAME_RESULT + "(" +
