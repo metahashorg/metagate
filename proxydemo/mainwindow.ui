@@ -21,6 +21,13 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QLineEdit" name="portEdit">
+        <property name="text">
+         <string>1234</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="addMappingButton">
         <property name="text">
          <string>Add Mapping</string>

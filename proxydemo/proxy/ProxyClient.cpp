@@ -11,12 +11,17 @@
 
 #include <iostream>
 
+const QByteArray error500("HTTP/1.0 500 Unable to connect\r\n"
+                          "Content-Type: text/html\r\n"
+                          "Connection: close\r\n"
+                          "\r\n");
+
 class ProxyClientPrivate
 {
 public:
     enum Method {Get, Post, Connect};
 
-    ProxyClientPrivate(QTcpSocket *parent);
+    ProxyClientPrivate(ProxyClient *parent);
 
     void parseRequestData(const QByteArray &data);
     void parseRespData(const QByteArray &data);
@@ -55,13 +60,13 @@ public:
     http_parser respParser;
     http_parser_settings reqSettings;
     http_parser_settings respSettings;
-    QTcpSocket *srcSocket = nullptr;
+    ProxyClient *srcSocket = nullptr;
     QTcpSocket *socket = nullptr;
     QString curHost;
     int curPort = -1;
 };
 
-ProxyClientPrivate::ProxyClientPrivate(QTcpSocket *parent)
+ProxyClientPrivate::ProxyClientPrivate(ProxyClient *parent)
     : srcSocket(parent)
     , socket(new QTcpSocket(parent))
 {
@@ -120,18 +125,28 @@ void ProxyClientPrivate::startQuery(const QByteArray &method, const QUrl &url)
     if (socket->waitForConnected()) {
         qDebug() << "connected";
     } else {
-        qDebug() << "error";
+        qDebug() << "connection error";
+        //srcSocket->write(error500);
+        srcSocket->sendResponse(error500);
+        //srcSocket->flush();
+        //qDebug() << srcSocket->waitForBytesWritten();
+        return;
     }
     if (method == QByteArrayLiteral("CONNECT")) {
         connectionEstablished();
         return;
     }
-    QString header = QStringLiteral("%1 %2 HTTP/1.1\r\n").arg(QString::fromLatin1(method)).arg(url.path());
+    QString header = QStringLiteral("%1 %2 HTTP/1.1\r\n")
+            .arg(QString::fromLatin1(method))
+            .arg(url.toString(QUrl::RemoveScheme | QUrl::RemoveAuthority));
+    qDebug() << "H " << header;
     socket->write(header.toLatin1());
 }
 
 void ProxyClientPrivate::sendHeader(const QByteArray &name, const QByteArray &value)
 {
+    if (!socket->isOpen())
+        return;
     if (name == QByteArrayLiteral("Proxy-Connection"))
         return;
     socket->write(name + QByteArray(": ") + value + QByteArray("\r\n"));
@@ -139,12 +154,15 @@ void ProxyClientPrivate::sendHeader(const QByteArray &name, const QByteArray &va
 
 void ProxyClientPrivate::headerComplete()
 {
+    if (!socket->isOpen())
+        return;
     socket->write(QByteArray("\r\n"));
-
 }
 
 void ProxyClientPrivate::sendBody(const QByteArray &data)
 {
+    if (!socket->isOpen())
+        return;
     socket->write(data);
 }
 
@@ -337,7 +355,7 @@ ProxyClient::ProxyClient(QObject *parent)
 
     connect(d->socket, &QIODevice::readyRead, [this]() {
         QByteArray data = d->socket->readAll();
-        qDebug() << "RRRR\n" << data;
+        //qDebug() << "RRRR\n" << data;
         parseResp(data);
         d->srcSocket->write(data);
         d->srcSocket->flush();
@@ -351,6 +369,13 @@ bool ProxyClient::event(QEvent *e)
     return QTcpSocket::event(e);
 }
 
+void ProxyClient::sendResponse(const QByteArray &d)
+{
+    write(d);
+    flush();
+    qDebug() << waitForBytesWritten();
+}
+
 void ProxyClient::onConnected()
 {
     qDebug() << "connected";
@@ -358,7 +383,7 @@ void ProxyClient::onConnected()
 
 void ProxyClient::onDisconnected()
 {
-    qDebug() << "disconnected";
+    qDebug() << "!!! disconnected";
     deleteLater();
 }
 
@@ -370,6 +395,7 @@ void ProxyClient::onError(QAbstractSocket::SocketError socketError)
 void ProxyClient::onReadyRead()
 {
     QByteArray data = readAll();
+    //sendResponse(error500);
     //qDebug() << data;
     //write(QByteArray("Hello"));
     d->parseRequestData(data);

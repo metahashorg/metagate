@@ -20,7 +20,7 @@ void ProxyServer::start()
 
 void ProxyServer::incomingConnection(qintptr socketDescriptor)
 {
-    qDebug() << "connect";
+    qDebug() << "!!!!!!!!!!!!!! connect";
     QThread *thread = new QThread(this);
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     ProxyClient *client = new ProxyClient();

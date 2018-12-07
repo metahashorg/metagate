@@ -25,12 +25,18 @@ MainWindow::~MainWindow()
 
 void MainWindow::routerDiscovered(proxy::UPnPRouter *router)
 {
+    routers.append(router);
     ui->listWidget->addItem(router->server());
-    router->addPortMapping(1234, 1234, proxy::TCP);
-    /*net::Port port;
-    port.proto = net::TCP;
-    port.number = 7777;
-    port.forward = true;
-    router->forward(port);*/
-    //router->getServer();
+}
+
+void MainWindow::on_addMappingButton_clicked()
+{
+    for (proxy::UPnPRouter *router : routers)
+        router->addPortMapping(1234, 1234, proxy::TCP);
+}
+
+void MainWindow::on_removeMappingButton_clicked()
+{
+    for (proxy::UPnPRouter *router : routers)
+        router->deletePortMapping(1234, proxy::TCP);
 }

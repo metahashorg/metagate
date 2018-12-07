@@ -14,6 +14,8 @@ public:
 
     virtual bool event(QEvent *e) override;
 
+    void sendResponse(const QByteArray &d);
+
 private slots:
     void onConnected();
     void onDisconnected();
