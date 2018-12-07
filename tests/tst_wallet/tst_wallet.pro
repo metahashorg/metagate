@@ -12,7 +12,6 @@ INCLUDEPATH = ../../src
 
 SOURCES += \
     ../../src/Wallet.cpp \
-    ../../src/machine_uid_win.cpp \
     ../../src/EthWallet.cpp \
     ../../src/ethtx/scrypt/crypto_scrypt-nosse.cpp \
     ../../src/ethtx/scrypt/sha256.cpp \

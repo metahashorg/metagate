@@ -7,4 +7,8 @@ void initializeMachineUid();
 
 std::string getMachineUid();
 
+std::pair<std::string, std::string> findMacAddressFile();
+
+void saveMacAddressesToFile(const std::string &firstAddr, const std::string &secondAddr);
+
 #endif // MACHINE_UID_H
