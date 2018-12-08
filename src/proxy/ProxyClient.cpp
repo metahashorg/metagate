@@ -11,6 +11,9 @@
 
 #include <iostream>
 
+namespace proxy
+{
+
 const QByteArray error500("HTTP/1.0 500 Unable to connect\r\n"
                           "Content-Type: text/html\r\n"
                           "Connection: close\r\n"
@@ -399,5 +402,7 @@ void ProxyClient::onReadyRead()
     //qDebug() << data;
     //write(QByteArray("Hello"));
     d->parseRequestData(data);
+
+}
 
 }

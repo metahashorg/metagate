@@ -41,6 +41,10 @@
 #include "transactions/TransactionsJavascript.h"
 #include "transactions/TransactionsDBStorage.h"
 
+#include "proxy/Proxy.h"
+#include "proxy/ProxyJavascript.h"
+
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -125,6 +129,9 @@ int main(int argc, char *argv[]) {
         transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
         transactionsManager.start();
 
+        proxy::ProxyJavascript proxyJavascript;
+        proxy::Proxy proxyManager(proxyJavascript);
+
         WebSocketClient webSocketClient(getUrlToWss());
         webSocketClient.start();
 
@@ -135,7 +142,7 @@ int main(int argc, char *argv[]) {
         messenger.start();
         messengerJavascript.setMessenger(messenger);*/
 
-        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
+        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, proxyJavascript, authManager);
         mainWindow.showExpanded();
 
         mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

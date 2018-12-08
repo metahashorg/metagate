@@ -27,7 +27,7 @@ class UPnPRouter : public QObject
 {
     Q_OBJECT
 public:
-    UPnPRouter(const QString & server,const QUrl &location);
+    UPnPRouter(const QString &server, const QUrl &location);
     virtual ~UPnPRouter();
 
     QString server() const;

@@ -37,6 +37,7 @@
 #include "auth/Auth.h"
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
+#include "proxy/ProxyJavascript.h"
 
 #include "machine_uid.h"
 
@@ -66,6 +67,7 @@ MainWindow::MainWindow(
     auth::AuthJavascript &authJavascript,
     messenger::MessengerJavascript &messengerJavascript,
     transactions::TransactionsJavascript &transactionsJavascript,
+    proxy::ProxyJavascript &proxyJavascript,
     auth::Auth &authManager,
     QWidget *parent
 )
@@ -97,6 +99,7 @@ MainWindow::MainWindow(
     CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    CHECK(connect(&proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
     qRegisterMetaType<WindowEvent>("WindowEvent");
 
@@ -113,6 +116,7 @@ MainWindow::MainWindow(
     channel->registerObject(QString("auth"), &authJavascript);
     channel->registerObject(QString("messenger"), &messengerJavascript);
     channel->registerObject(QString("transactions"), &transactionsJavascript);
+    channel->registerObject(QString("proxy"), &proxyJavascript);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");

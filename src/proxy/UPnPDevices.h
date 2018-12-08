@@ -12,7 +12,7 @@ class UPnPDevices : public QObject
 {
     Q_OBJECT
 public:
-    UPnPDevices();
+    UPnPDevices(QObject *parent = nullptr);
     virtual ~UPnPDevices();
 
 //    /// Get the number of routers discovered

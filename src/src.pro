@@ -61,9 +61,18 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
     HttpClient.cpp \
+    proxy/UPnPDevices.cpp \
+    proxy/UPnPRouter.cpp \
+    proxy/ProxyServer.cpp \
+    proxy/ProxyClient.cpp \
+    proxy/Proxy.cpp \
+    proxy/ProxyJavascript.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
     machine_uid.cpp
+
+# C code
+SOURCES +=  proxy/http_parser.c
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -132,12 +141,18 @@ HEADERS += mainwindow.h \
     transactions/TransactionsJavascript.h \
     HttpClient.h \
     duration.h \
+    proxy/UPnPDevices.h \
+    proxy/UPnPRouter.h \
+    proxy/ProxyServer.h \
+    proxy/ProxyClient.h \
+    proxy/Proxy.h \
+    proxy/ProxyJavascript.h \
     auth/Auth.h \
-    auth/AuthJavascript.h
+    auth/AuthJavascript.h \
 
 FORMS += mainwindow.ui
 
-QT += webengine webenginewidgets network websockets sql
+QT += webengine webenginewidgets network websockets sql xml
 
 CONFIG += static
 CONFIG += c++14

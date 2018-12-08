@@ -36,7 +36,8 @@ static bool UrlCompare(const QUrl &a, const QUrl & b)
             a.query() == b.query(); //TODO check if ported correctly
 }
 
-UPnPDevices::UPnPDevices()
+UPnPDevices::UPnPDevices(QObject *parent)
+    : QObject(parent)
 {
     QObject::connect(&m_mcsocket, &QUdpSocket::readyRead,
                      this, &UPnPDevices::onReadyRead);

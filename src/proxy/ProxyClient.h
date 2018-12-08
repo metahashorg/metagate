@@ -4,6 +4,9 @@
 #include <QTcpSocket>
 #include <QNetworkAccessManager>
 
+namespace proxy
+{
+
 class ProxyClientPrivate;
 
 class ProxyClient : public QTcpSocket
@@ -37,5 +40,7 @@ private:
     QNetworkAccessManager m_manager;*/
     ProxyClientPrivate *d;
 };
+
+}
 
 #endif // PROXYCLIENT_H

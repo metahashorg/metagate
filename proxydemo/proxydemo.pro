@@ -16,7 +16,7 @@ INCLUDEPATH = ./ ./proxy
 INCLUDEPATH = ../src
 
 QMAKE_CFLAGS += -std=c99 -Wunused-parameter
-SOURCES +=  proxy/http_parser.c
+SOURCES +=  ../src/proxy/http_parser.c
 
 SOURCES += \
         main.cpp \
@@ -27,11 +27,10 @@ SOURCES += \
         ../src/Paths.cpp \
         ../src/btctx/Base58.cpp \
         \
-        proxy/UPnPDevices.cpp \
-        proxy/UPnPRouter.cpp \
-    proxy/ProxyServer.cpp \
-    proxy/ConnectionRunnable.cpp \
-    proxy/ProxyClient.cpp
+        ../src/proxy/UPnPDevices.cpp \
+        ../src/proxy/UPnPRouter.cpp \
+        ../src/proxy/ProxyServer.cpp \
+        ../src/proxy/ProxyClient.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -40,11 +39,10 @@ HEADERS += \
         ../src/Paths.h \
         ../src/btctx/Base58.h \
         \
-        proxy/UPnPDevices.h \
-        proxy/UPnPRouter.h \
-    proxy/ProxyServer.h \
-    proxy/ConnectionRunnable.h \
-    proxy/ProxyClient.h
+        ../src/proxy/UPnPDevices.h \
+        ../src/proxy/UPnPRouter.h \
+        ../src/proxy/ProxyServer.h \
+        ../src/proxy/ProxyClient.h
 
 FORMS += \
         mainwindow.ui

@@ -27,6 +27,9 @@ class Auth;
 namespace messenger {
 class MessengerJavascript;
 }
+namespace proxy {
+class ProxyJavascript;
+}
 
 namespace Ui {
     class MainWindow;
@@ -62,6 +65,7 @@ public:
         auth::AuthJavascript &authJavascript,
         messenger::MessengerJavascript &messengerJavascript,
         transactions::TransactionsJavascript &transactionsJavascript,
+        proxy::ProxyJavascript &proxyJavascript,
         auth::Auth &authManager,
         QWidget *parent = 0
     );
