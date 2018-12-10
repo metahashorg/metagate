@@ -9,7 +9,7 @@
 namespace initializer {
 
 InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager)
+    : InitInterface(mainThread, manager, false)
 {}
 
 InitMainWindow::~InitMainWindow() = default;

@@ -13,10 +13,10 @@ using namespace std::placeholders;
 namespace initializer {
 
 InitUploader::InitUploader(QThread *mainThread, Initializer &manager)
-    : QObject(nullptr)
-    , InitInterface(mainThread, manager)
+    : InitInterface(mainThread, manager, true)
 {
-    setTimerEvent(30s, "uploader check updates", std::bind(&InitUploader::onCheckedUpdatesHtmls, this, _1));
+    CHECK(connect(this, &InitUploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
+    setTimerEvent(30s, "uploader check updates", std::bind(&InitUploader::checkedUpdatesHtmls, this, _1));
 }
 
 InitUploader::~InitUploader() = default;
@@ -42,7 +42,7 @@ END_SLOT_WRAPPER
 InitUploader::Return InitUploader::initialize(std::shared_future<MainWindow*> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
         uploader = std::make_unique<Uploader>(*mainWindow.get());
-        CHECK(connect(uploader.get(), &Uploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
+        CHECK(connect(uploader.get(), &Uploader::checkedUpdatesHtmls, this, &InitUploader::checkedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
         uploader->start();
     });
     sendInitSuccess(exception);

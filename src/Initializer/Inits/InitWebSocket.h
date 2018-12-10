@@ -15,7 +15,7 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitWebSocket: public QObject, public InitInterface {
+class InitWebSocket: public InitInterface {
     Q_OBJECT
 public:
 
@@ -34,6 +34,10 @@ public:
     static int countEvents() {
         return 2;
     }
+
+signals:
+
+    void connectedSock(const TypedException &exception);
 
 private slots:
 

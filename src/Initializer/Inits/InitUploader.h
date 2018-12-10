@@ -16,7 +16,7 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitUploader: public QObject, public InitInterface {
+class InitUploader: public InitInterface {
     Q_OBJECT
 public:
 
@@ -35,6 +35,10 @@ public:
     static int countEvents() {
         return 2;
     }
+
+signals:
+
+    void checkedUpdatesHtmls(const TypedException &exception);
 
 private:
 

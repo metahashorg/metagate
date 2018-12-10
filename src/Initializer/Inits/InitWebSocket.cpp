@@ -22,9 +22,10 @@ static QString getUrlToWss() {
 namespace initializer {
 
 InitWebSocket::InitWebSocket(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager)
+    : InitInterface(mainThread, manager, true)
 {
-    setTimerEvent(15s, "websocket connected updates", std::bind(&InitWebSocket::onConnectedSock, this, _1));
+    CHECK(connect(this, &InitWebSocket::connectedSock, this, &InitWebSocket::onConnectedSock), "not connect onConnectedSock");
+    setTimerEvent(15s, "websocket connected updates", std::bind(&InitWebSocket::connectedSock, this, _1));
 }
 
 InitWebSocket::~InitWebSocket() = default;
@@ -50,7 +51,7 @@ END_SLOT_WRAPPER
 InitWebSocket::Return InitWebSocket::initialize() {
     const TypedException exception = apiVrapper2([&, this] {
         webSocket = std::make_unique<WebSocketClient>(getUrlToWss());
-        CHECK(connect(webSocket.get(), &WebSocketClient::connectedSock, this, &InitWebSocket::onConnectedSock), "not connect onConnectedSock");
+        CHECK(connect(webSocket.get(), &WebSocketClient::connectedSock, this, &InitWebSocket::connectedSock), "not connect onConnectedSock");
         webSocket->start();
     });
     sendInitSuccess(exception);

@@ -29,7 +29,7 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitJavascriptWrapper: public QObject, public InitInterface {
+class InitJavascriptWrapper: public InitInterface {
     Q_OBJECT
 public:
 

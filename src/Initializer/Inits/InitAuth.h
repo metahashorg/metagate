@@ -21,7 +21,7 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitAuth: public QObject, public InitInterface {
+class InitAuth: public InitInterface {
     Q_OBJECT
 public:
 
@@ -52,6 +52,8 @@ private:
 signals:
 
     void callbackCall(const Callback &callback);
+
+    void checkTokenFinished(const TypedException &exception);
 
 private slots:
 

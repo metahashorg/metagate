@@ -18,8 +18,7 @@ using namespace std::placeholders;
 namespace initializer {
 
 InitTransactions::InitTransactions(QThread *mainThread, Initializer &manager)
-    : QObject(nullptr)
-    , InitInterface(mainThread, manager)
+    : InitInterface(mainThread, manager, false)
 {
     CHECK(connect(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");

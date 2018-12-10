@@ -16,8 +16,7 @@ using namespace std::placeholders;
 namespace initializer {
 
 InitJavascriptWrapper::InitJavascriptWrapper(QThread *mainThread, Initializer &manager)
-    : QObject(nullptr)
-    , InitInterface(mainThread, manager)
+    : InitInterface(mainThread, manager, false)
 {
     CHECK(connect(this, &InitJavascriptWrapper::callbackCall, this, &InitJavascriptWrapper::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");

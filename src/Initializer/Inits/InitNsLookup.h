@@ -15,7 +15,7 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitNsLookup: public QObject, public InitInterface {
+class InitNsLookup: public InitInterface {
     Q_OBJECT
 public:
 
@@ -34,6 +34,10 @@ public:
     static int countEvents() {
         return 2;
     }
+
+signals:
+
+    void serversFlushed(const TypedException &exception);
 
 private:
 

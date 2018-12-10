@@ -6,6 +6,11 @@
 #include <functional>
 
 #include <string>
+#include <vector>
+#include <mutex>
+
+#include <QTimer>
+#include <QObject>
 
 class QThread;
 
@@ -16,10 +21,11 @@ namespace initializer {
 class Initializer;
 struct InitState;
 
-class InitInterface {
+class InitInterface: public QObject {
+    Q_OBJECT
 public:
 
-    InitInterface(QThread *mainThread, Initializer &manager);
+    InitInterface(QThread *mainThread, Initializer &manager, bool isTimerEnabled);
 
     virtual ~InitInterface() = default;
 
@@ -32,6 +38,10 @@ protected:
     // Вызывать только из конструктора, не из стороннего треда
     void setTimerEvent(const milliseconds &timer, const std::string &errorDesc, const std::function<void(const TypedException &e)> &func);
 
+private slots:
+
+    void onTimerEvent();
+
 protected:
 
     QThread *mainThread;
@@ -40,7 +50,12 @@ protected:
 
 private:
 
-    bool eventTimerSetted = false;
+    const bool isTimerEnabled;
+
+    QTimer timer;
+
+    std::vector<std::tuple<time_point, milliseconds, std::string, std::function<void(const TypedException &e)>>> events;
+    std::mutex eventsMut;
 
 };
 

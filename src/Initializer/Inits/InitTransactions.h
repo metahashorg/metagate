@@ -24,7 +24,7 @@ namespace initializer {
 
 class InitializerJavascript;
 
-class InitTransactions: public QObject, public InitInterface {
+class InitTransactions: public InitInterface {
     Q_OBJECT
 public:
 
