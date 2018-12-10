@@ -470,8 +470,11 @@ END_SLOT_WRAPPER
 void MainWindow::softReloadPage() {
     LOG << "updateReady()";
     if (!isInitFinished) {
-        std::lock_guard<std::mutex> lock(mutLastHtmls);
+        std::unique_lock<std::mutex> lock(mutLastHtmls);
         last_htmls = Uploader::getLastHtmlVersion();
+        pagesMappings.setFullPagesPath(last_htmls.fullPath);
+        lock.unlock();
+        loadFile("core/loader/index.html");
     } else {
         ui->webView->page()->runJavaScript("updateReady();");
     }
