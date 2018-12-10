@@ -2,6 +2,9 @@
 
 #include "../Initializer.h"
 
+#include <functional>
+using namespace std::placeholders;
+
 #include "NsLookup.h"
 
 #include "check.h"
@@ -13,9 +16,7 @@ InitNsLookup::InitNsLookup(QThread *mainThread, Initializer &manager)
     : QObject(nullptr)
     , InitInterface(mainThread, manager)
 {
-    QTimer::singleShot(milliseconds(50s).count(), [this]{
-        onServersFlushed(TypedException(INITIALIZER_TIMEOUT_ERROR, "nslookup flushed timeout"));
-    });
+    setTimerEvent(50s, "nslookup flushed timeout", std::bind(&InitNsLookup::onServersFlushed, this, _1));
 }
 
 InitNsLookup::~InitNsLookup() = default;

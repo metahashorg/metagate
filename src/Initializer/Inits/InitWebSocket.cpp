@@ -4,6 +4,9 @@
 
 #include "WebSocketClient.h"
 
+#include <functional>
+using namespace std::placeholders;
+
 #include "check.h"
 #include "Paths.h"
 #include "SlotWrapper.h"
@@ -21,9 +24,7 @@ namespace initializer {
 InitWebSocket::InitWebSocket(QThread *mainThread, Initializer &manager)
     : InitInterface(mainThread, manager)
 {
-    QTimer::singleShot(milliseconds(15s).count(), [this]{
-        onConnectedSock(TypedException(INITIALIZER_TIMEOUT_ERROR, "websocket connected updates"));
-    });
+    setTimerEvent(15s, "websocket connected updates", std::bind(&InitWebSocket::onConnectedSock, this, _1));
 }
 
 InitWebSocket::~InitWebSocket() = default;

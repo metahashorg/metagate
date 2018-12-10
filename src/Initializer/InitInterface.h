@@ -1,7 +1,15 @@
 #ifndef INITINTERFACE_H
 #define INITINTERFACE_H
 
+#include "duration.h"
+
+#include <functional>
+
+#include <string>
+
 class QThread;
+
+struct TypedException;
 
 namespace initializer {
 
@@ -21,9 +29,18 @@ public:
 
 protected:
 
+    // Вызывать только из конструктора, не из стороннего треда
+    void setTimerEvent(const milliseconds &timer, const std::string &errorDesc, const std::function<void(const TypedException &e)> &func);
+
+protected:
+
     QThread *mainThread;
 
     Initializer &manager;
+
+private:
+
+    bool eventTimerSetted = false;
 
 };
 

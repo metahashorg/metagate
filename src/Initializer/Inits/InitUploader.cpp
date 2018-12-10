@@ -4,6 +4,9 @@
 
 #include "uploader.h"
 
+#include <functional>
+using namespace std::placeholders;
+
 #include "check.h"
 #include "SlotWrapper.h"
 
@@ -13,9 +16,7 @@ InitUploader::InitUploader(QThread *mainThread, Initializer &manager)
     : QObject(nullptr)
     , InitInterface(mainThread, manager)
 {
-    QTimer::singleShot(milliseconds(30s).count(), [this]{
-        onCheckedUpdatesHtmls(TypedException(INITIALIZER_TIMEOUT_ERROR, "uploader check updates"));
-    });
+    setTimerEvent(30s, "uploader check updates", std::bind(&InitUploader::onCheckedUpdatesHtmls, this, _1));
 }
 
 InitUploader::~InitUploader() = default;

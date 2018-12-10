@@ -24,9 +24,7 @@ InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
     CHECK(connect(this, &InitAuth::callbackCall, this, &InitAuth::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");
 
-    QTimer::singleShot(milliseconds(10s).count(), [this]{
-        onCheckTokenFinished(TypedException(INITIALIZER_TIMEOUT_ERROR, "auth checked timeout"));
-    });
+    setTimerEvent(10s, "auth checked timeout", std::bind(&InitAuth::onCheckTokenFinished, this, _1));
 }
 
 InitAuth::~InitAuth() = default;
