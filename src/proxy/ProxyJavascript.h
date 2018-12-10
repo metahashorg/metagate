@@ -26,6 +26,18 @@ public:
 public slots:
     Q_INVOKABLE void proxyStart();
     Q_INVOKABLE void proxyStop();
+    Q_INVOKABLE void getPort();
+    Q_INVOKABLE void setPort(quint16 port);
+
+signals:
+    void sendServerStatusResponseSig(bool connected, const TypedException &error);
+
+    void sendServerPortResponseSig(quint16 port, const TypedException &error);
+
+public slots:
+    void onSendServerStatusResponseSig(bool connected, const TypedException &error);
+
+    void onSendServerPortResponseSig(quint16 port, const TypedException &error);
 
 signals:
     void jsRunSig(QString jsString);
