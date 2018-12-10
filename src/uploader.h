@@ -16,6 +16,7 @@
 #include "VersionWrapper.h"
 
 class MainWindow;
+struct TypedException;
 
 struct LastHtmlVersion {
     QString htmlsRootPath;
@@ -45,7 +46,7 @@ public:
 
 signals:
 
-    void checkedUpdatesHtmls();
+    void checkedUpdatesHtmls(const TypedException &exception);
 
 public:
 

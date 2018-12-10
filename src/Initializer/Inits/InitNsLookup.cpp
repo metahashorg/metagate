@@ -12,7 +12,11 @@ namespace initializer {
 InitNsLookup::InitNsLookup(QThread *mainThread, Initializer &manager)
     : QObject(nullptr)
     , InitInterface(mainThread, manager)
-{}
+{
+    QTimer::singleShot(milliseconds(50s).count(), [this]{
+        onServersFlushed(TypedException(INITIALIZER_TIMEOUT_ERROR, "nslookup flushed timeout"));
+    });
+}
 
 InitNsLookup::~InitNsLookup() = default;
 
@@ -25,10 +29,10 @@ void InitNsLookup::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("nslookup", "init", "nslookup initialized", exception));
 }
 
-void InitNsLookup::onServersFlushed() {
+void InitNsLookup::onServersFlushed(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState("nslookup", "flushed", "nslookup flushed", TypedException()));
+        sendState(InitState("nslookup", "flushed", "nslookup flushed", exception));
         isFlushed = true;
     }
 END_SLOT_WRAPPER

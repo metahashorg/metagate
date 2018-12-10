@@ -42,7 +42,7 @@ private:
 
 private slots:
 
-    void onCheckedUpdatesHtmls();
+    void onCheckedUpdatesHtmls(const TypedException &exception);
 
 private:
 

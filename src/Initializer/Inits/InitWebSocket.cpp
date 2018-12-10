@@ -20,7 +20,11 @@ namespace initializer {
 
 InitWebSocket::InitWebSocket(QThread *mainThread, Initializer &manager)
     : InitInterface(mainThread, manager)
-{}
+{
+    QTimer::singleShot(milliseconds(15s).count(), [this]{
+        onConnectedSock(TypedException(INITIALIZER_TIMEOUT_ERROR, "websocket connected updates"));
+    });
+}
 
 InitWebSocket::~InitWebSocket() = default;
 
@@ -33,10 +37,10 @@ void InitWebSocket::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("websocket", "init", "websocket initialized", exception));
 }
 
-void InitWebSocket::onConnectedSock() {
+void InitWebSocket::onConnectedSock(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isConnected) {
-        sendState(InitState("websocket", "connected", "websocket connected", TypedException()));
+        sendState(InitState("websocket", "connected", "websocket connected", exception));
         isConnected = true;
     }
 END_SLOT_WRAPPER

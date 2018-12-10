@@ -153,7 +153,7 @@ void NsLookup::finalizeLookup() {
         isSuccessFl = true;
     }
     if (isSuccessFl) {
-        emit serversFlushed();
+        emit serversFlushed(TypedException());
     }
     isSafeCheck = false;
     qtimer.setInterval(msTimer.count());

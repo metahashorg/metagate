@@ -7,6 +7,8 @@
 
 #include "TimerClass.h"
 
+struct TypedException;
+
 class WebSocketClient : public TimerClass
 {
     Q_OBJECT
@@ -31,7 +33,7 @@ signals:
 
     void addHelloString(QString message);
 
-    void connectedSock();
+    void connectedSock(const TypedException &exception);
 
 signals:
 

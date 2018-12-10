@@ -41,7 +41,7 @@ private:
 
 private slots:
 
-    void onServersFlushed();
+    void onServersFlushed(const TypedException &exception);
 
 private:
 

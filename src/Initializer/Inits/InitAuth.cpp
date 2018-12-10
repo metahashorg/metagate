@@ -2,6 +2,8 @@
 
 #include "../Initializer.h"
 
+#include <QTimer>
+
 #include <functional>
 using namespace std::placeholders;
 
@@ -21,6 +23,10 @@ InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
 {
     CHECK(connect(this, &InitAuth::callbackCall, this, &InitAuth::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");
+
+    QTimer::singleShot(milliseconds(10s).count(), [this]{
+        onCheckTokenFinished(TypedException(INITIALIZER_TIMEOUT_ERROR, "auth checked timeout"));
+    });
 }
 
 InitAuth::~InitAuth() = default;

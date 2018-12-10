@@ -15,6 +15,8 @@
 
 #include "client.h"
 
+struct TypedException;
+
 struct NodeType {
     QString type;
     QString node;
@@ -51,7 +53,7 @@ signals:
 
     void finished();
 
-    void serversFlushed();
+    void serversFlushed(const TypedException &exception);
 
 public slots:
 

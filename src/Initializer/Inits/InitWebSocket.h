@@ -37,7 +37,7 @@ public:
 
 private slots:
 
-    void onConnectedSock();
+    void onConnectedSock(const TypedException &exception);
 
 private:
 

@@ -178,11 +178,11 @@ BEGIN_SLOT_WRAPPER
 
         const QString folderServer = toHash(UPDATE_API);
         if (hash == "false") {
-            emit checkedUpdatesHtmls();
+            emit checkedUpdatesHtmls(TypedException());
             return;
         }
         if (version == lastVersion && folderServer == currFolder) {
-            emit checkedUpdatesHtmls();
+            emit checkedUpdatesHtmls(TypedException());
             return;
         }
         if (version == versionHtmlForUpdate) {
@@ -219,7 +219,7 @@ BEGIN_SLOT_WRAPPER
 
             emit generateEvent(WindowEvent::RELOAD_PAGE);
 
-            emit checkedUpdatesHtmls();
+            emit checkedUpdatesHtmls(TypedException());
         };
 
         LOG << "download html";

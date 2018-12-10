@@ -109,7 +109,7 @@ BEGIN_SLOT_WRAPPER
     }
 
     sendMessagesInternal();
-    emit connectedSock();
+    emit connectedSock(TypedException());
 END_SLOT_WRAPPER
 }
 

@@ -12,7 +12,11 @@ namespace initializer {
 InitUploader::InitUploader(QThread *mainThread, Initializer &manager)
     : QObject(nullptr)
     , InitInterface(mainThread, manager)
-{}
+{
+    QTimer::singleShot(milliseconds(30s).count(), [this]{
+        onCheckedUpdatesHtmls(TypedException(INITIALIZER_TIMEOUT_ERROR, "uploader check updates"));
+    });
+}
 
 InitUploader::~InitUploader() = default;
 
@@ -25,10 +29,10 @@ void InitUploader::sendInitSuccess(const TypedException &exception) {
     sendState(InitState("uploader", "init", "uploader initialized", exception));
 }
 
-void InitUploader::onCheckedUpdatesHtmls() {
+void InitUploader::onCheckedUpdatesHtmls(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState("uploader", "check_updates_htmls", "uploader check updates", TypedException()));
+        sendState(InitState("uploader", "check_updates_htmls", "uploader check updates", exception));
         isFlushed = true;
     }
 END_SLOT_WRAPPER
