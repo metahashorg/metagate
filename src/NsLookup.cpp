@@ -84,6 +84,7 @@ NsLookup::NsLookup(QObject *parent)
 }
 
 NsLookup::~NsLookup() {
+    isStopped = true;
     thread1.quit();
     if (!thread1.wait(3000)) {
         thread1.terminate();
@@ -195,6 +196,9 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
 }
 
 void NsLookup::continueResolve() {
+    if (isStopped.load()) {
+        return;
+    }
     if (posInNodes >= nodes.size()) {
         finalizeLookup();
         return;
@@ -215,6 +219,10 @@ QString NsLookup::makeAddress(const QString &ip, const QString &port) {
 }
 
 void NsLookup::continuePing() {
+    if (isStopped.load()) {
+        return;
+    }
+
     const NodeType &nodeType = nodes[posInNodes - 1];
 
     if (!isSafeCheck) {

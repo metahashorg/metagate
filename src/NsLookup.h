@@ -118,6 +118,8 @@ private:
 
     milliseconds passedTime;
 
+    std::atomic<bool> isStopped{false};
+
 };
 
 #endif // NSLOOKUP_H
