@@ -138,6 +138,26 @@
         });
     }
     
+    function getPort() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.getPort() ;
+        });
+    }
+    
+    function setPort() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.setPort(8888) ;
+        });
+    }
+    
+    
+    function proxyServerPortInfoJs(port) {
+       
+        document.createWalletForm.proxyport.value = port;
+    }
+    
     function sendMsgChannel() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.messenger;
@@ -170,6 +190,12 @@
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.messenger;
         mainWindow.getHistoryAddressChannelCount( document.createWalletForm.from1.value, document.createWalletForm.channelSha.value, document.createWalletForm.count.value, document.createWalletForm.toCnt.value) ;
+        });
+    }
+    
+    function proxyServerStatusInfoJs(connected) {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        document.createWalletForm.channelSha.value = channelSha;
         });
     }
     
@@ -222,6 +248,9 @@
             <input type="button" value="createChannel" onclick="createChannel()"><br>
             <input type="button" value="start proxy" onclick="startProxy()"><br>
             <input type="button" value="stop proxy" onclick="stopProxy()"><br>
+            <input type="button" value="get port" onclick="getPort()"><br>
+            <input type="button" value="set port" onclick="setPort()"><br>
+            <input name="proxyport" type="text" value="-1" size="60"><br>
             <input type="button" value="sendMsgChannel" onclick="sendMsgChannel()"><br>
             <input type="button" value="savePosChannel" onclick="savePosChannel()"><br>
             <input type="button" value="getChannelsList" onclick="getChannelsList()"><br>
