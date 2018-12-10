@@ -27,6 +27,8 @@ class UPnPRouter : public QObject
 {
     Q_OBJECT
 public:
+    using PortMappingCallback = std::function<void(bool result, const QString &error)>;
+
     UPnPRouter(const QString &server, const QUrl &location);
     virtual ~UPnPRouter();
 
@@ -38,10 +40,12 @@ public:
     QString modelDescription() const;
     QString modelName() const;
     QString modelNumber() const;
+    QString serialNumber() const;
+    QString udn() const;
 
 
-    void addPortMapping(quint16 localPort, quint16 externalPort, Protocol protocol);
-    void deletePortMapping(quint16 externalPort, Protocol protocol);
+    void addPortMapping(quint16 localPort, quint16 externalPort, Protocol protocol, const PortMappingCallback &callback);
+    void deletePortMapping(quint16 externalPort, Protocol protocol, const PortMappingCallback &callback);
 
     void downloadXMLFile();
 
@@ -49,13 +53,13 @@ signals:
     void xmlFileDownloaded(UPnPRouter *r, bool success);
 
 private:
-    void sendSoapQuery(const QString &query, const QString &soapact, const QString &controlurl);
+    void sendSoapQuery(const QString &query, const QString &soapact, const QString &controlurl, const PortMappingCallback &callback);
 
     bool parseXML(QByteArray &data);
     void parseXMLRoot(QXmlStreamReader &xml);
     void parseXMLDeviceList(QXmlStreamReader &xml);
     void parseXMLServiceList(QXmlStreamReader &xml);
-    void parseXMLDevice(QXmlStreamReader &xml);
+    void parseXMLDevice(QXmlStreamReader &xml, bool set = false);
     void parseXMLService(QXmlStreamReader &xml);
 
     QString getLocalAddress(const QString &hostName, quint16 port) const;
@@ -71,6 +75,8 @@ private:
     QString m_modelDescription;
     QString m_modelName;
     QString m_modelNumber;
+    QString m_serialNumber;
+    QString m_udn;
 
     QNetworkAccessManager m_manager;
 

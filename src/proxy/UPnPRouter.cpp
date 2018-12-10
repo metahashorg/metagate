@@ -38,7 +38,7 @@ UPnPRouter::~UPnPRouter()
 {
 }
 
-void UPnPRouter::addPortMapping(quint16 internalPort, quint16 externalPort, Protocol protocol)
+void UPnPRouter::addPortMapping(quint16 internalPort, quint16 externalPort, Protocol protocol, const PortMappingCallback &callback)
 {
     QString serviceType;
     QString controlUrl;
@@ -78,12 +78,12 @@ void UPnPRouter::addPortMapping(quint16 internalPort, quint16 externalPort, Prot
             ++itr;
     }*/
 
-    sendSoapQuery(comm, serviceType + "#" + action, controlUrl);
+    sendSoapQuery(comm, serviceType + "#" + action, controlUrl, callback);
     //connect(fw.pending_req, SIGNAL(result(HTTPRequest*)), parent, SLOT(forwardResult(HTTPRequest*)));
     //fwds.append(fw);
 }
 
-void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol)
+void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol, const PortMappingCallback &callback)
 {
     QString serviceType;
     QString controlUrl;
@@ -105,13 +105,14 @@ void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol)
     QString action = "DeletePortMapping";
     QString comm = createSOAPCommand(action, serviceType, args);
     qDebug() << comm;
-    sendSoapQuery(comm, serviceType + "#" + action, controlUrl);
+    sendSoapQuery(comm, serviceType + "#" + action, controlUrl, callback);
 }
 
 void UPnPRouter::downloadXMLFile()
 {
     m_serviceType = QString();
     QNetworkRequest request(m_location);
+    qDebug() << "LOCATION " << m_location;
     QNetworkReply *reply = m_manager.get(request);
     QObject::connect(reply, &QNetworkReply::finished,
                      [this, reply]() {
@@ -187,7 +188,17 @@ QString UPnPRouter::modelNumber() const
     return  m_modelNumber;
 }
 
-void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, const QString &controlurl)
+QString UPnPRouter::serialNumber() const
+{
+    return m_serialNumber;
+}
+
+QString UPnPRouter::udn() const
+{
+    return m_udn;
+}
+
+void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, const QString &controlurl, const PortMappingCallback &callback)
 {
     QUrl curl(controlurl);
 
@@ -199,15 +210,18 @@ void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, con
     req.setRawHeader("SOAPAction", QString("\"%1\"").arg(soapact).toLatin1());
     QNetworkReply *reply = m_manager.post(req, query.toLatin1());
     QObject::connect(reply, &QNetworkReply::finished,
-                     [reply]() {
+                     [reply, callback]() {
         if (reply->error()) {
             //m_error = "Failed to download %1: %2", d->location.toDisplayString(), j->errorString());
             //LOG
-            qDebug() << reply->errorString();
+            qDebug()  << reply->errorString();
+            callback(false, reply->errorString());
+
             return;
         }
 
         qDebug() << "ret " << reply->readAll();
+        callback(true, QStringLiteral("OK"));
         reply->deleteLater();
     });
 
@@ -236,7 +250,7 @@ void UPnPRouter::parseXMLRoot(QXmlStreamReader &xml)
     while (xml.readNextStartElement()) {
         //qDebug() << xml.name();
         if (xml.name() == "device") {
-            parseXMLDevice(xml);
+            parseXMLDevice(xml, true);
         } else {
             xml.skipCurrentElement();
         }
@@ -269,7 +283,7 @@ void UPnPRouter::parseXMLServiceList(QXmlStreamReader &xml)
     }
 }
 
-void UPnPRouter::parseXMLDevice(QXmlStreamReader &xml)
+void UPnPRouter::parseXMLDevice(QXmlStreamReader &xml, bool set)
 {
     while (xml.readNextStartElement()) {
         //qDebug() << xml.name();
@@ -277,16 +291,20 @@ void UPnPRouter::parseXMLDevice(QXmlStreamReader &xml)
             parseXMLServiceList(xml);
         } else if (xml.name() == "deviceList") {
             parseXMLDeviceList(xml);
-        } else if (xml.name() == "friendlyName") {
+        } else if (xml.name() == "friendlyName" && set) {
             m_friendlyName = xml.readElementText();
-        } else if (xml.name() == "manufacturer") {
+        } else if (xml.name() == "manufacturer" && set) {
             m_manufacturer = xml.readElementText();
-        } else if (xml.name() == "modelDescription") {
+        } else if (xml.name() == "modelDescription" && set) {
             m_modelDescription = xml.readElementText();
-        } else if (xml.name() == "modelName") {
+        } else if (xml.name() == "modelName" && set) {
             m_modelName = xml.readElementText();
-        } else if (xml.name() == "modelNumber") {
+        } else if (xml.name() == "modelNumber" && set) {
             m_modelNumber = xml.readElementText();
+        } else if (xml.name() == "serialNumber" && set) {
+            m_serialNumber = xml.readElementText();
+        } else if (xml.name() == "UDN" && set) {
+            m_udn = xml.readElementText();
         } else {
             xml.skipCurrentElement();
         }

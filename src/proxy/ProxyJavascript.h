@@ -3,16 +3,20 @@
 
 #include <QObject>
 
+#include "Proxy.h"
 struct TypedException;
+
 
 namespace proxy
 {
 
-class Proxy;
-
 class ProxyJavascript : public QObject
 {
     Q_OBJECT
+
+public:
+    using Callback = std::function<void()>;
+
 public:
     explicit ProxyJavascript(QObject *parent = nullptr);
 
@@ -28,18 +32,29 @@ public slots:
     Q_INVOKABLE void proxyStop();
     Q_INVOKABLE void getPort();
     Q_INVOKABLE void setPort(quint16 port);
+    Q_INVOKABLE void getRoutersList();
+    Q_INVOKABLE void addPortMapping();
+    Q_INVOKABLE void deletePortMapping();
 
 signals:
     void sendServerStatusResponseSig(bool connected, const TypedException &error);
 
     void sendServerPortResponseSig(quint16 port, const TypedException &error);
 
+    void sendGetRoutersResponseSig(const std::vector<Proxy::Router> &routers, const TypedException &error);
+
 public slots:
     void onSendServerStatusResponseSig(bool connected, const TypedException &error);
 
     void onSendServerPortResponseSig(quint16 port, const TypedException &error);
 
+    void onSendGetRoutersResponseSig(const std::vector<Proxy::Router> &routers, const TypedException &error);
+
+    void onCallbackCall(const Callback &callback);
+
 signals:
+    void callbackCall(const Callback &callback);
+
     void jsRunSig(QString jsString);
 
 private:
