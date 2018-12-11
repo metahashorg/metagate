@@ -454,9 +454,13 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     if (found == allNodesForTypes.end()) {
         return {};
     }
-    const auto &nodes = found->second;
+    const std::vector<std::reference_wrapper<NodeInfo>> &nodes = found->second;
 
-    return ::getRandom<QString>(nodes, limit, count, process);
+    std::vector<std::reference_wrapper<NodeInfo>> filterNodes;
+    std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filterNodes), [](const NodeInfo &node) {
+        return node.ping < MAX_PING.count();
+    });
+    return ::getRandom<QString>(filterNodes, limit, count, process);
 }
 
 void NsLookup::resetFile() {
