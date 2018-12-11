@@ -402,5 +402,10 @@ Q_INVOKABLE void metaOnline();
 # Result returns to the function:
 onlineResultJs(jsonResult, errorNum, errorMessage);
 
+Q_INVOKABLE void clearNsLookup();
+# Очистить файл с сохраненными нодами nsLookup. Требует перезагрузки
+# Result returns to the function:
+clearNsLookupResultJs("Ok", errorNum, errorMessage);
+
 ```
 

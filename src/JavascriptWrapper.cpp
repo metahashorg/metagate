@@ -1,4 +1,4 @@
-#include "JavascriptWrapper.h"
+﻿#include "JavascriptWrapper.h"
 
 #include <map>
 
@@ -1521,6 +1521,15 @@ void JavascriptWrapper::metaOnline() {
 BEGIN_SLOT_WRAPPER
     LOG << "Metaonline request";
     emit wssClient.sendMessage("{\"app\":\"MetaOnline\"}");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::clearNsLookup() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "clearNsLookupResultJs";
+    LOG << "Clear ns lookup";
+    nsLookup.resetFile();
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
 END_SLOT_WRAPPER
 }
 
