@@ -15,25 +15,12 @@ public:
     UPnPDevices(QObject *parent = nullptr);
     virtual ~UPnPDevices();
 
-//    /// Get the number of routers discovered
-//    quint32 getNumDevicesDiscovered() const;
-
-//    /// Find a router using it's server name
-//    UPnPRouter* findDevice(const QString & name);
-
-    /*/// Save all routers to a file (for convenience at startup)
-        void saveRouters(const QString & file);
-
-        /// Load all routers from a file
-        void loadRouters(const QString & file);*/
-
 public slots:
     void discover();
 
 private slots:
     void onReadyRead();
     void onError(QAbstractSocket::SocketError e);
-    //void onXmlFileDownloaded(UPnPRouter *r, bool success);
 
 signals:
     void discovered(UPnPRouter *router);

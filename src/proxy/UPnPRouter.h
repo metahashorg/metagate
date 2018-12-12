@@ -50,12 +50,12 @@ public:
     void downloadXMLFile();
 
 signals:
-    void xmlFileDownloaded(UPnPRouter *r, bool success);
+    void xmlFileDownloaded( bool success);
 
 private:
     void sendSoapQuery(const QString &query, const QString &soapact, const QString &controlurl, const PortMappingCallback &callback);
 
-    bool parseXML(QByteArray &data);
+    void parseXML(QByteArray &data);
     void parseXMLRoot(QXmlStreamReader &xml);
     void parseXMLDeviceList(QXmlStreamReader &xml);
     void parseXMLServiceList(QXmlStreamReader &xml);

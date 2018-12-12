@@ -1,6 +1,8 @@
 #include "UPnPDevices.h"
 
 #include <QNetworkDatagram>
+#include "check.h"
+#include "Log.h"
 
 namespace proxy
 {
@@ -39,23 +41,13 @@ static bool UrlCompare(const QUrl &a, const QUrl & b)
 UPnPDevices::UPnPDevices(QObject *parent)
     : QObject(parent)
 {
-    QObject::connect(&m_mcsocket, &QUdpSocket::readyRead,
-                     this, &UPnPDevices::onReadyRead);
-    QObject::connect(&m_mcsocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
-                     this, &UPnPDevices::onError);
+    CHECK(connect(&m_mcsocket, &QUdpSocket::readyRead,
+                     this, &UPnPDevices::onReadyRead), "onReadyRead is not connected");
+    CHECK(connect(&m_mcsocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
+                     this, &UPnPDevices::onError), "onError is not connected");
 
-    //check
-    m_mcsocket.bind(QHostAddress::AnyIPv4, mcSearchPort, QUdpSocket::ShareAddress);
-    m_mcsocket.joinMulticastGroup(QHostAddress(mcSearchHost));
-
-    /*for (quint32 i = 0;i < 10;i++)
-    {
-        if (!bind(1900 + i,QUdpSocket::ShareAddress))
-            ;//qDebug() << "Cannot bind to UDP port 1900 : " << errorString() << endl;
-        else
-            break;
-    }*/
-
+    CHECK(m_mcsocket.bind(QHostAddress::AnyIPv4, mcSearchPort, QUdpSocket::ShareAddress), "bind error");
+    CHECK(m_mcsocket.joinMulticastGroup(QHostAddress(mcSearchHost)), "joinMulticastGroup error");
 }
 
 
@@ -66,7 +58,7 @@ UPnPDevices::~UPnPDevices()
 
 void UPnPDevices::discover()
 {
-    qDebug() << "Trying to find UPnP devices on the local network" << endl;
+    LOG << "Start to find UPnP routers on the local network";
 
     m_mcsocket.writeDatagram(upnpSearchHeader, QHostAddress(mcSearchHost), mcSearchPort);
     m_mcsocket.writeDatagram(tr64SearchHeader, QHostAddress(mcSearchHost), mcSearchPort);
@@ -85,38 +77,23 @@ void UPnPDevices::onReadyRead()
 {
     while (m_mcsocket.hasPendingDatagrams()) {
         QNetworkDatagram dgram = m_mcsocket.receiveDatagram();
-        //qDebug() << "Received : " << dgram.data();
-        // try to make a router of it
         UPnPRouter *r = parseResponse(dgram.data());
-        if (r)
-        {
-            QObject::connect(r, &UPnPRouter::xmlFileDownloaded,
-                             this, [this](UPnPRouter *r, bool success) {
+        if (r) {
+            CHECK(connect(r, &UPnPRouter::xmlFileDownloaded,
+                             this, [r, this](bool success) {
                 updatingRouters.removeAll(r);
-                if (!success)
-                {
-                    // we couldn't download and parse the XML file so
-                    // get rid of it
+                if (success) {
+                          QUrl location = r->location();
+                          if (findRouter(location)) {
+                              r->deleteLater();
+                          } else {
+                              routers.append(r);
+                              emit discovered(r);
+                          }
+                } else {
                     r->deleteLater();
                 }
-                else
-                {
-                    // add it to the list and emit the signal
-                    QUrl location = r->location();
-                    if (findRouter(location))
-                    {
-                        r->deleteLater();
-                    }
-                    else
-                    {
-                        routers.append(r);
-                        emit discovered(r);
-                    }
-                }
-            }
-            );
-
-            // download it's xml file
+            }), "");
             r->downloadXMLFile();
             updatingRouters.append(r);
         }
@@ -126,7 +103,7 @@ void UPnPDevices::onReadyRead()
 void UPnPDevices::onError(QAbstractSocket::SocketError e)
 {
     Q_UNUSED(e);
-    qDebug() << "Error : " << m_mcsocket.errorString();
+    LOG << "MCast error : " << m_mcsocket.errorString();
 }
 
 UPnPRouter *UPnPDevices::parseResponse(const QByteArray &data)
@@ -135,12 +112,6 @@ UPnPRouter *UPnPDevices::parseResponse(const QByteArray &data)
     QVector<QStringRef> lines = response.splitRef("\r\n");
     QString server;
     QUrl location;
-
-    /*
-        Out(SYS_PNP|LOG_DEBUG) << "Received : " << endl;
-        for (Uint32 idx = 0;idx < lines.count(); idx++)
-            Out(SYS_PNP|LOG_DEBUG) << lines[idx] << endl;
-        */
 
     // first read first line and see if contains a HTTP 200 OK message
     QStringRef line = lines.first();
@@ -154,43 +125,33 @@ UPnPRouter *UPnPDevices::parseResponse(const QByteArray &data)
 
     // quick check that the response being parsed is valid
     bool validDevice = false;
-    for (int idx = 0;idx < lines.count() && !validDevice; idx++)
-    {
+    for (int idx = 0; idx < lines.count() && !validDevice; idx++) {
         line = lines[idx];
-        if ((line.contains(QLatin1String("ST:")) || line.contains(QLatin1String("NT:"))) && line.contains(QLatin1String("InternetGatewayDevice")))
-        {
+        if ((line.contains(QLatin1String("ST:")) || line.contains(QLatin1String("NT:"))) && line.contains(QLatin1String("InternetGatewayDevice"))) {
             validDevice = true;
         }
     }
-    if (!validDevice)
-    {
-        //	qDebug() << "Not a valid Internet Gateway Device" << endl;
-        return 0;
+    if (!validDevice) {
+        return nullptr;
     }
 
     // read all lines and try to find the server and location fields
-    for (int i = 1;i < lines.count();i++)
-    {
+    for (int i = 1; i < lines.count(); i++) {
         line = lines[i];
-        if (line.startsWith(QLatin1String("location"), Qt::CaseInsensitive))
-        {
-            location = QUrl(line.mid(line.indexOf(':') + 1).trimmed().toString()); //TODO fromLocalFile()?
+        if (line.startsWith(QLatin1String("location"), Qt::CaseInsensitive)) {
+            location = QUrl(line.mid(line.indexOf(':') + 1).trimmed().toString());
             if (!location.isValid())
-                return 0;
-        }
-        else if (line.startsWith(QLatin1String("server"), Qt::CaseInsensitive))
-        {
+                return nullptr;
+        } else if (line.startsWith(QLatin1String("server"), Qt::CaseInsensitive)) {
             server = line.mid(line.indexOf(':') + 1).trimmed().toString();
-            if (server.length() == 0)
-                return 0;
-
+            if (server.isEmpty())
+                return nullptr;
         }
     }
 
     if (findRouter(location)) {
         return nullptr;
     } else {
-        qDebug() << "Detected IGD " << server;
         // everything OK, make a new UPnPRouter
         return new UPnPRouter(server, location);
     }

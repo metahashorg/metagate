@@ -8,6 +8,9 @@
 #include <QXmlStreamReader>
 #include <QHostAddress>
 
+#include "check.h"
+#include "Log.h"
+
 using SOAPArg = QPair<QString, QString>;
 
 static QString createSOAPCommand(const QString &action, const QString &service, const QList<SOAPArg> &args)
@@ -26,6 +29,7 @@ static QString createSOAPCommand(const QString &action, const QString &service, 
 
 namespace proxy
 {
+
 UPnPRouter::UPnPRouter(const QString &server, const QUrl &location)
     : m_server(server)
     , m_location(location)
@@ -53,34 +57,19 @@ void UPnPRouter::addPortMapping(quint16 internalPort, quint16 externalPort, Prot
 
     // add all the arguments for the command
     QList<SOAPArg> args;
-    args.append(SOAPArg("NewRemoteHost", ""));
-    args.append(SOAPArg("NewExternalPort", QString::number(externalPort)));
-    args.append(SOAPArg("NewProtocol", protocol == TCP ? "TCP" : "UDP"));
-    args.append(SOAPArg("NewInternalPort", QString::number(internalPort)));
-    args.append(SOAPArg("NewInternalClient", m_localAddress));
-    args.append(SOAPArg("NewEnabled", "1"));
-    args.append(SOAPArg("NewPortMappingDescription", "MetaGate"));
-    args.append(SOAPArg("NewLeaseDuration", "0"));
+    args.append(SOAPArg(QStringLiteral("NewRemoteHost"), ""));
+    args.append(SOAPArg(QStringLiteral("NewExternalPort"), QString::number(externalPort)));
+    args.append(SOAPArg(QStringLiteral("NewProtocol"), protocol == TCP ? QStringLiteral("TCP") : QStringLiteral("UDP")));
+    args.append(SOAPArg(QStringLiteral("NewInternalPort"), QString::number(internalPort)));
+    args.append(SOAPArg(QStringLiteral("NewInternalClient"), m_localAddress));
+    args.append(SOAPArg(QStringLiteral("NewEnabled"), QStringLiteral("1")));
+    args.append(SOAPArg(QStringLiteral("NewPortMappingDescription"), QStringLiteral("MetaGate")));
+    args.append(SOAPArg(QStringLiteral("NewLeaseDuration"), QStringLiteral("0")));
 
-    QString action = "AddPortMapping";
+    QString action = QStringLiteral("AddPortMapping");
     QString comm = createSOAPCommand(action, serviceType, args);
-    qDebug() << comm;
-
-    /*Forwarding fw = {port, 0, srv};
-    // erase old forwarding if one exists
-    QList<Forwarding>::iterator itr = fwds.begin();
-    while(itr != fwds.end())
-    {
-        Forwarding& fwo = *itr;
-        if(fwo.port == port && fwo.service == srv)
-            itr = fwds.erase(itr);
-        else
-            ++itr;
-    }*/
 
     sendSoapQuery(comm, serviceType + "#" + action, controlUrl, callback);
-    //connect(fw.pending_req, SIGNAL(result(HTTPRequest*)), parent, SLOT(forwardResult(HTTPRequest*)));
-    //fwds.append(fw);
 }
 
 void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol, const PortMappingCallback &callback)
@@ -88,7 +77,8 @@ void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol, cons
     QString serviceType;
     QString controlUrl;
     for (const UPnPService& s : services) {
-        if(s.servicetype.contains("WANIPConnection") || s.servicetype.contains("WANPPPConnection")) {
+        if(s.servicetype.contains(QStringLiteral("WANIPConnection"))
+                || s.servicetype.contains(QStringLiteral("WANPPPConnection"))) {
             serviceType = s.servicetype;
             controlUrl = s.controlurl;
         }
@@ -99,12 +89,11 @@ void UPnPRouter::deletePortMapping(quint16 externalPort, Protocol protocol, cons
 
     // add all the arguments for the command
     QList<SOAPArg> args;
-    args.append(SOAPArg("NewExternalPort", QString::number(externalPort)));
-    args.append(SOAPArg("NewProtocol", protocol == TCP ? "TCP" : "UDP"));
+    args.append(SOAPArg(QStringLiteral("NewExternalPort"), QString::number(externalPort)));
+    args.append(SOAPArg(QStringLiteral("NewProtocol"), protocol == TCP ? QStringLiteral("TCP") : QStringLiteral("UDP")));
 
-    QString action = "DeletePortMapping";
+    QString action = QStringLiteral("DeletePortMapping");
     QString comm = createSOAPCommand(action, serviceType, args);
-    qDebug() << comm;
     sendSoapQuery(comm, serviceType + "#" + action, controlUrl, callback);
 }
 
@@ -112,21 +101,20 @@ void UPnPRouter::downloadXMLFile()
 {
     m_serviceType = QString();
     QNetworkRequest request(m_location);
-    qDebug() << "LOCATION " << m_location;
+    //qDebug() << "Router UPnP XML location " << m_location;
     QNetworkReply *reply = m_manager.get(request);
-    QObject::connect(reply, &QNetworkReply::finished,
-                     [this, reply]() {
+    CHECK(connect(reply, &QNetworkReply::finished,
+                  [this, reply]() {
         if (reply->error()) {
             //m_error = "Failed to download %1: %2", d->location.toDisplayString(), j->errorString());
             //LOG
+            emit xmlFileDownloaded(false);
+            reply->deleteLater();
             return;
         }
 
         QByteArray data = reply->readAll();
         parseXML(data);
-        //UPnPDescriptionParser desc_parse;
-        //bool ret = desc_parse.parse(reply->readAll(), this);
-        //CHECK
 
         QString controlUrl;
         for (const UPnPService& s : services) {
@@ -142,12 +130,11 @@ void UPnPRouter::downloadXMLFile()
         m_url = m_location;
         m_url.setPath(curl.path());
         m_localAddress = getLocalAddress(host, port);
-        qDebug() << m_localAddress;
+        LOG << "UPnP: Local address " << m_localAddress;
 
-        emit xmlFileDownloaded(this, true);
-        //getExternalIP();
+        emit xmlFileDownloaded(true);
         reply->deleteLater();
-    });
+    }), "");
 }
 
 
@@ -204,33 +191,31 @@ void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, con
 
     QNetworkRequest req;
     req.setUrl(m_url);
-    req.setRawHeader("Host", m_url.host().toLatin1() + QByteArrayLiteral(":") + QByteArray::number(m_url.port()));
-    req.setRawHeader("User-Agent", "MetaGate");
-    req.setHeader(QNetworkRequest::ContentTypeHeader, QLatin1String("text/xml"));
-    req.setRawHeader("SOAPAction", QString("\"%1\"").arg(soapact).toLatin1());
+    req.setRawHeader(QByteArrayLiteral("Host"), m_url.host().toLatin1() + QByteArrayLiteral(":") + QByteArray::number(m_url.port()));
+    req.setHeader(QNetworkRequest::UserAgentHeader, QByteArrayLiteral("MetaGate"));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("text/xml"));
+    req.setRawHeader(QByteArrayLiteral("SOAPAction"), QStringLiteral("\"%1\"").arg(soapact).toLatin1());
     QNetworkReply *reply = m_manager.post(req, query.toLatin1());
-    QObject::connect(reply, &QNetworkReply::finished,
+    CHECK(connect(reply, &QNetworkReply::finished,
                      [reply, callback]() {
         if (reply->error()) {
-            //m_error = "Failed to download %1: %2", d->location.toDisplayString(), j->errorString());
-            //LOG
-            qDebug()  << reply->errorString();
+            //qDebug()  << reply->errorString();
             callback(false, reply->errorString());
-
+            reply->deleteLater();
             return;
         }
 
-        qDebug() << "ret " << reply->readAll();
+        //qDebug() << "ret " << reply->readAll();
         callback(true, QStringLiteral("OK"));
         reply->deleteLater();
-    });
+    }), "");
 
 }
 
-bool UPnPRouter::parseXML(QByteArray &data)
+void UPnPRouter::parseXML(QByteArray &data)
 {
     QBuffer buffer(&data, this);
-    buffer.open(QIODevice::ReadOnly);
+    CHECK(buffer.open(QIODevice::ReadOnly), "Open error");
     QXmlStreamReader xml(&buffer);
 
     while (xml.readNextStartElement()) {
@@ -340,7 +325,7 @@ QString UPnPRouter::getLocalAddress(const QString &hostName, quint16 port) const
     socket.connectToHost(hostName, port);
     if (socket.waitForConnected()) {
         localAddress = socket.localAddress().toString();
-     }
+    }
     socket.close();
     return localAddress;
 }
