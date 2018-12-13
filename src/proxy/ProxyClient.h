@@ -3,6 +3,7 @@
 
 #include <QTcpSocket>
 #include <QNetworkAccessManager>
+#include <memory>
 
 namespace proxy
 {
@@ -14,6 +15,7 @@ class ProxyClient : public QTcpSocket
     Q_OBJECT
 public:
     explicit ProxyClient(QObject *parent = nullptr);
+    ~ProxyClient();
 
     virtual bool event(QEvent *e) override;
 
@@ -38,7 +40,7 @@ private:
 
     QTcpSocket *m_socket;
     QNetworkAccessManager m_manager;*/
-    ProxyClientPrivate *d;
+    std::unique_ptr<ProxyClientPrivate> d;
 };
 
 }

@@ -4,6 +4,7 @@
 #include <QEvent>
 #include <QThread>
 #include <QHostAddress>
+#include <QSslSocket>
 #include <QDebug>
 
 
@@ -67,11 +68,25 @@ public:
     QTcpSocket *socket = nullptr;
     QString curHost;
     int curPort = -1;
+    QSslSocket *sslSocket;
+    bool ce = false;
 };
 
+/*QSslSocket socket;
+socket.connectToHostEncrypted("http.example.com", 443);
+if (!socket.waitForEncrypted()) {
+    qDebug() << socket.errorString();
+    return false;
+}
+
+socket.write("GET / HTTP/1.0\r\n\r\n");
+while (socket.waitForReadyRead())
+    qDebug() << socket.readAll().data();
+*/
 ProxyClientPrivate::ProxyClientPrivate(ProxyClient *parent)
     : srcSocket(parent)
     , socket(new QTcpSocket(parent))
+    , sslSocket(new QSslSocket(parent))
 {
     http_parser_init(&reqParser, HTTP_REQUEST);
     reqParser.data = this;
@@ -119,25 +134,34 @@ void ProxyClientPrivate::parseRespData(const QByteArray &data)
 void ProxyClientPrivate::startQuery(const QByteArray &method, const QUrl &url)
 {
     //quint16 port = url.port();
-    qDebug() << "Method" << url;
+    qDebug() << "Method" << method;
     QUrl u(url);
     u.setScheme("http");
     qDebug() << u.host() << u.port(80);
     qDebug() << socket->peerAddress();
-    socket->connectToHost(u.host(), u.port(80));
-    if (socket->waitForConnected()) {
-        qDebug() << "connected";
-    } else {
-        qDebug() << "connection error";
-        //srcSocket->write(error500);
-        srcSocket->sendResponse(error500);
-        //srcSocket->flush();
-        //qDebug() << srcSocket->waitForBytesWritten();
-        return;
-    }
+
     if (method == QByteArrayLiteral("CONNECT")) {
-        connectionEstablished();
+        sslSocket->connectToHostEncrypted(u.host(), u.port(443));
+        if (!sslSocket->waitForEncrypted()) {
+            qDebug() << sslSocket->errorString();
+            return;
+        }
+        qDebug() << "SSL connected";
+        ce = true;
+        //connectionEstablished();
         return;
+    } else {
+        socket->connectToHost(u.host(), u.port(80));
+        if (socket->waitForConnected()) {
+            qDebug() << "connected";
+        } else {
+            qDebug() << "connection error";
+            //srcSocket->write(error500);
+            srcSocket->sendResponse(error500);
+            //srcSocket->flush();
+            //qDebug() << srcSocket->waitForBytesWritten();
+            return;
+        }
     }
     QString header = QStringLiteral("%1 %2 HTTP/1.1\r\n")
             .arg(QString::fromLatin1(method))
@@ -171,12 +195,15 @@ void ProxyClientPrivate::sendBody(const QByteArray &data)
 
 void ProxyClientPrivate::connectionEstablished()
 {
+
+
     qDebug() << "send";
     srcSocket->write(QByteArray("HTTP/1.0 200 Connection established\r\n"));
-    srcSocket->write(QByteArray("MetaGate Proxy\r\n"));
+    srcSocket->write(QByteArray("Proxy-agent: MetaGate Proxy\r\n"));
+    srcSocket->write(QByteArray("\r\n"));
     srcSocket->flush();
-    qDebug() << srcSocket->waitForBytesWritten();
-    qDebug() << srcSocket->errorString();
+    //qDebug() << srcSocket->waitForBytesWritten();
+    //qDebug() << srcSocket->errorString();
 }
 
 void ProxyClientPrivate::sendErrorPage()
@@ -241,7 +268,12 @@ int ProxyClientPrivate::reqOnUrl(http_parser *p, const char *at, size_t length)
 {
     QByteArray data(at, length);
     qDebug() << "on_url " << data;
-    QUrl url(QString::fromLatin1(data));
+    QString u = QString::fromLatin1(data);
+    QUrl url(u);
+    if (url.host().isEmpty()) {
+        u.prepend("https://");
+        url = QUrl(u);
+    }
     QByteArray method(http_method_str((enum http_method)p->method));
     static_cast<ProxyClientPrivate *>(p->data)->startQuery(method, url);
     return 0;
@@ -347,7 +379,7 @@ void ProxyClient::parseResp(const QByteArray &data)
 
 ProxyClient::ProxyClient(QObject *parent)
     : QTcpSocket(parent)
-    , d(new ProxyClientPrivate(this))
+    , d(std::make_unique<ProxyClientPrivate>(this))
 {
     qDebug() << "create " << QThread::currentThread();
 
@@ -365,6 +397,8 @@ ProxyClient::ProxyClient(QObject *parent)
         d->srcSocket->waitForBytesWritten();
     });
 }
+
+ProxyClient::~ProxyClient() = default;
 
 bool ProxyClient::event(QEvent *e)
 {
@@ -402,7 +436,8 @@ void ProxyClient::onReadyRead()
     //qDebug() << data;
     //write(QByteArray("Hello"));
     d->parseRequestData(data);
-
+    if (d->ce)
+        d->connectionEstablished();
 }
 
 }
