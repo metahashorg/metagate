@@ -29,11 +29,27 @@ public:
         QString serialNumber;
         QString udn;
 
+        bool mapped;
         UPnPRouter *router;
     };
 
+    struct PortMappingResult {
+        bool ok;
+        quint16 port;
+        QString udn;
+        QString error;
+
+        PortMappingResult(bool ok, quint16 port, const QString &udn, const QString &error)
+            : ok(ok)
+            , port(port)
+            , udn(udn)
+            , error(error)
+        {
+        }
+    };
+
 public:
-    using PortMappingCallback = std::function<void(bool res, const TypedException &exception)>;
+    using PortMappingCallback = std::function<void(const PortMappingResult &res, const TypedException &exception)>;
 
 public:
     explicit Proxy(ProxyJavascript &javascriptWrapper, QObject *parent = nullptr);
@@ -50,7 +66,9 @@ signals:
 
     void getRouters();
 
-    void addPortMapping(const PortMappingCallback &callback);
+    void discoverRouters();
+
+    void addPortMapping(const QString &udn, const PortMappingCallback &callback);
 
     void deletePortMapping(const PortMappingCallback &callback);
 
@@ -67,7 +85,9 @@ public slots:
 
     void onGetRouters();
 
-    void onAddPortMapping(const PortMappingCallback &callback);
+    void onDiscoverRouters();
+
+    void onAddPortMapping(const QString &udn, const PortMappingCallback &callback);
 
     void onDeletePortMapping(const PortMappingCallback &callback);
 
@@ -77,6 +97,7 @@ private slots:
 private:
     template<typename Func>
     void runCallback(const Func &callback);
+    int findRouter(const QString &udn) const;
 
     QThread thread;
 
@@ -85,6 +106,7 @@ private:
     ProxyServer *proxyServer;
     UPnPDevices *upnp;
     std::vector<Router> routers;
+    int mappedRouterIdx;
 };
 
 }

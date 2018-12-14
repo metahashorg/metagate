@@ -27,10 +27,21 @@ static QJsonDocument routersInfoToJson(const std::vector<Proxy::Router> &routers
         rJson.insert("modelNumber", router.modelNumber);
         rJson.insert("serialNumber", router.serialNumber);
         rJson.insert("udn", router.udn);
+        rJson.insert("isMapped", router.mapped);
         routersJson.push_back(rJson);
     }
 
     return QJsonDocument(routersJson);
+}
+
+static QJsonDocument portMappingResultToJson(const Proxy::PortMappingResult &res)
+{
+    QJsonObject resJson;
+    resJson.insert("ok", res.ok);
+    resJson.insert("port", res.port);
+    resJson.insert("udn", res.udn);
+    resJson.insert("error", res.error);
+    return QJsonDocument(resJson);
 }
 
 ProxyJavascript::ProxyJavascript(QObject *parent)
@@ -117,29 +128,43 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void ProxyJavascript::addPortMapping()
+void ProxyJavascript::discoverRouters()
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(m_proxyManager, "proxyManager not set");
+    LOG << "Start routers discover";
+
+    const TypedException exception = apiVrapper2([&, this]() {
+            emit m_proxyManager->getRouters();
+        });
+        if (exception.isSet()) {
+            //emit sendServerPortResponseSig(std::vector<Proxy::Router>(), exception);
+        }
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::addPortMapping(const QString &udn)
 {
 BEGIN_SLOT_WRAPPER
     CHECK(m_proxyManager, "proxyManager not set");
 
     const QString JS_NAME_RESULT = "proxyAddPortMappingResultJs";
 
-    LOG << "Add Port Mapping ";
+    LOG << "Add Port Mapping to router " << udn;
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, bool result) {
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
 
     const TypedException exception = apiVrapper2([&, this]() {
-        emit m_proxyManager->addPortMapping([makeFunc](bool res, const TypedException &exception) {
-                LOG << "Added port mapping " << res;
-                //const QJsonDocument &result = addressInfoToJson(infos);
-                makeFunc(exception, res);
+        emit m_proxyManager->addPortMapping(udn, [makeFunc](const Proxy::PortMappingResult &res, const TypedException &exception) {
+                LOG << "Added port mapping " << res.ok << res.error;
+                makeFunc(exception, portMappingResultToJson(res));
             });
         });
 
     if (exception.isSet()) {
-        makeFunc(exception, false);
+        //makeFunc(exception, false);
     }
 END_SLOT_WRAPPER
 }
@@ -153,19 +178,19 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Delete Port Mapping ";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, bool result) {
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
 
     const TypedException exception = apiVrapper2([&, this]() {
-        emit m_proxyManager->deletePortMapping([makeFunc](bool res, const TypedException &exception) {
-            LOG << "Deleted port mapping " << res;
-            makeFunc(exception, res);
+        emit m_proxyManager->deletePortMapping([makeFunc](const Proxy::PortMappingResult &res, const TypedException &exception) {
+            LOG << "Deleted port mapping " << res.ok << res.error;
+            makeFunc(exception, portMappingResultToJson(res));
         });
     });
 
     if (exception.isSet()) {
-        makeFunc(exception, false);
+        //makeFunc(exception, false);
     }
 END_SLOT_WRAPPER
 }

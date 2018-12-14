@@ -16,6 +16,7 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     , javascriptWrapper(javascriptWrapper)
     , proxyServer(new ProxyServer(this))
     , upnp(new UPnPDevices(this))
+    , mappedRouterIdx(-1)
 {
     qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
 
@@ -26,16 +27,17 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Proxy::getPort, this, &Proxy::onGetPort), "not connect onGetPort");
     CHECK(connect(this, &Proxy::setPort, this, &Proxy::onSetPort), "not connect onSetPort");
     CHECK(connect(this, &Proxy::getRouters, this, &Proxy::onGetRouters), "not connect onGetRouters");
+    CHECK(connect(this, &Proxy::discoverRouters, this, &Proxy::onDiscoverRouters), "not connect onDiscoverRouters");
     CHECK(connect(this, &Proxy::addPortMapping, this, &Proxy::onAddPortMapping), "not connect onAddPortMapping");
     CHECK(connect(this, &Proxy::deletePortMapping, this, &Proxy::onDeletePortMapping), "not connect onDeletePortMapping");
 
     CHECK(connect(upnp, &UPnPDevices::discovered, this, &Proxy::onRouterDiscovered), "not connect onRouterDiscovered");
 
-    upnp->discover();
     javascriptWrapper.setProxyManager(*this);
-
     thread.start();
     moveToThread(&thread);
+
+    upnp->discover();
 }
 
 Proxy::~Proxy()
@@ -90,35 +92,72 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Proxy::onAddPortMapping(const Proxy::PortMappingCallback &callback)
+void Proxy::onDiscoverRouters()
 {
 BEGIN_SLOT_WRAPPER
-    bool result;
+    if (mappedRouterIdx != -1) {
+        qDebug() << "Discover disabled. Port mapped.";
+        return;
+    }
+    routers.clear();
+    upnp->discover();
+END_SLOT_WRAPPER
+}
+
+void Proxy::onAddPortMapping(const QString &udn, const Proxy::PortMappingCallback &callback)
+{
+BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         quint16 port = proxyServer->port();
-        routers.at(0).router->addPortMapping(port+1, port, TCP, [this, callback](bool result, const QString &error){
-            qDebug() << "!!!!!!!!!!!!!!!!!!!!11";
-            runCallback(std::bind(callback, result, TypedException()));
+        int ridx = findRouter(udn);
+        if (ridx == -1) {
+            PortMappingResult res(false, 0, QStringLiteral(""), QStringLiteral("Router not found"));
+            runCallback(std::bind(callback, res, TypedException()));
+            return ;
+        }
+        routers.at(ridx).router->addPortMapping(port, port, TCP, [this, callback, port, ridx](bool r, const QString &error) {
+            qDebug() << "Added port " << r;
+            if (r)
+                mappedRouterIdx = ridx;
+            routers[ridx].mapped = true;
+            PortMappingResult res(r, port, routers[mappedRouterIdx].udn, error);
+            runCallback(std::bind(callback, res, TypedException()));
         });
     });
 
-        //runCallback(std::bind(callback, false, exception));
+    if (exception.isSet()) {
+        PortMappingResult res(false, 0, QStringLiteral(""), QStringLiteral("Exception"));
+        runCallback(std::bind(callback, res, exception));
+    }
 END_SLOT_WRAPPER
 }
 
 void Proxy::onDeletePortMapping(const Proxy::PortMappingCallback &callback)
 {
 BEGIN_SLOT_WRAPPER
-    bool result;
+    if (mappedRouterIdx == -1) {
+        PortMappingResult res(false, 0, QStringLiteral(""), QStringLiteral("No port is mapped"));
+        runCallback(std::bind(callback, res, TypedException()));
+        return ;
+    }
+    CHECK(mappedRouterIdx < routers.size(), "mappedRouterIdx error");
     const TypedException exception = apiVrapper2([&, this] {
         quint16 port = proxyServer->port();
-        routers.at(0).router->deletePortMapping(port, TCP, [this, callback](bool result, const QString &error){
-            qDebug() << "!!!!!!!!!!!!!!!!!!!!11";
-            runCallback(std::bind(callback, result, TypedException()));
+        routers.at(0).router->deletePortMapping(port, TCP, [this, callback, port](bool r, const QString &error) {
+            qDebug() << "Deleted port";
+            QString udn = routers[mappedRouterIdx].udn;
+            routers[mappedRouterIdx].mapped = false;
+            if (r)
+                mappedRouterIdx = -1;
+            PortMappingResult res(r, port, udn, error);
+            runCallback(std::bind(callback, res, TypedException()));
         });
     });
 
-    //runCallback(std::bind(callback, false, exception));
+    if (exception.isSet()) {
+        PortMappingResult res(false, 0, QStringLiteral(""), QStringLiteral("Exception"));
+        runCallback(std::bind(callback, res, exception));
+    }
 END_SLOT_WRAPPER
 }
 
@@ -134,7 +173,19 @@ void Proxy::onRouterDiscovered(UPnPRouter *router)
     r.modelNumber = router->modelNumber();
     r.serialNumber = router->serialNumber();
     r.udn = router->udn();
+    r.mapped = false;
     routers.push_back(r);
+
+    emit javascriptWrapper.sendGetRoutersResponseSig(routers, TypedException());
+}
+
+int Proxy::findRouter(const QString &udn) const
+{
+    for (int i = 0; i < routers.size(); i++) {
+        if (routers[i].udn == udn)
+            return i;
+    }
+    return -1;
 }
 
 template<typename Func>

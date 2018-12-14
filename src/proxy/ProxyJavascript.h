@@ -33,7 +33,8 @@ public slots:
     Q_INVOKABLE void getPort();
     Q_INVOKABLE void setPort(quint16 port);
     Q_INVOKABLE void getRoutersList();
-    Q_INVOKABLE void addPortMapping();
+    Q_INVOKABLE void discoverRouters();
+    Q_INVOKABLE void addPortMapping(const QString &udn);
     Q_INVOKABLE void deletePortMapping();
 
 signals:

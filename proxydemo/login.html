@@ -152,6 +152,13 @@
         });
     }
     
+    function discoverRouters() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.discoverRouters() ;
+        });
+    }
+    
     function setPort() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
@@ -162,7 +169,7 @@
     function addPortMapping() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
-        mainWindow.addPortMapping();
+        mainWindow.addPortMapping('uuid:00e0fc37-2525-2828-2500-001020304050');
         });
     }
     
@@ -282,6 +289,7 @@
             <input type="button" value="get port" onclick="getPort()"><br>
             <input type="button" value="set port" onclick="setPort()"><br>
             <input name="proxyport" type="text" value="-1" size="600"><br>
+            <input type="button" value="Discover Routers" onclick="discoverRouters()"><br>
             <input type="button" value="Get Routers" onclick="getRouters()"><br>
             <input type="button" value="Add Port Mapping" onclick="addPortMapping()"><br>
             <input type="button" value="Delete Port Mapping" onclick="deletePortMapping()"><br>
