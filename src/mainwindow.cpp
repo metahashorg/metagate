@@ -618,7 +618,7 @@ LastHtmlVersion MainWindow::getCurrentHtmls() const {
     return last_htmls;
 }
 
-void MainWindow::onLogined(const QString &login) {
+void MainWindow::onLogined(bool isInit, const QString &login) {
 BEGIN_SLOT_WRAPPER
     if (login.isEmpty()) {
         if (isInitFinished) {

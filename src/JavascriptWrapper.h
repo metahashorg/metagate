@@ -55,7 +55,7 @@ signals:
     void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 public slots:
-    void onLogined(const QString login);
+    void onLogined(bool isInit, const QString login);
 
 public slots:
 
@@ -212,6 +212,8 @@ public slots:
     Q_INVOKABLE void qrDecode(QString requestId, QString pngBase64);
 
     Q_INVOKABLE void metaOnline();
+
+    Q_INVOKABLE void clearNsLookup();
 
 private slots:
 

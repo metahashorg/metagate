@@ -17,6 +17,8 @@ QString getSettingsPath();
 
 QString getStoragePath();
 
+QString getMacFilePath();
+
 QString getAutoupdaterPath();
 
 QString getTmpAutoupdaterPath();

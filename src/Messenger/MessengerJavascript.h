@@ -40,7 +40,7 @@ signals:
     void callbackCall(const Callback &callback);
 
 public slots:
-    void onLogined(const QString login);
+    void onLogined(bool isInit, const QString login);
 
 public slots:
 

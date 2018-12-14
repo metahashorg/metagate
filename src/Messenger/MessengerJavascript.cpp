@@ -122,9 +122,13 @@ BEGIN_SLOT_WRAPPER
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
     };
 
-    const Message::Counter fromC = std::stoll(from.toStdString());
-    const Message::Counter toC = std::stoll(to.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
+        bool isValid;
+        const Message::Counter fromC = from.toLongLong(&isValid);
+        CHECK(isValid, "from field incorrect");
+        const Message::Counter toC = to.toLongLong(&isValid);
+        CHECK(isValid, "to field incorrect");
+
         emit messenger->getHistoryAddress(address, fromC, toC, [this, address, makeFunc](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
             const TypedException exception2 = apiVrapper2([&, this](){
@@ -157,9 +161,13 @@ BEGIN_SLOT_WRAPPER
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor, result);
     };
 
-    const Message::Counter fromC = std::stoll(from.toStdString());
-    const Message::Counter toC = std::stoll(to.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
+        bool isValid;
+        const Message::Counter fromC = from.toLongLong(&isValid);
+        CHECK(isValid, "from field incorrect");
+        const Message::Counter toC = to.toLongLong(&isValid);
+        CHECK(isValid, "to field incorrect");
+
         emit messenger->getHistoryAddressAddress(address, false, collocutor, fromC, toC, [this, address, collocutor, makeFunc](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
             const TypedException exception2 = apiVrapper2([&, this](){
@@ -192,9 +200,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messagesC " << address << " " << collocutor << " " << count << " " << to;
 
-    const Message::Counter countC = std::stoll(count.toStdString());
-    const Message::Counter toC = std::stoll(to.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
+        bool isValid;
+        const Message::Counter countC = count.toLongLong(&isValid);
+        CHECK(isValid, "count field incorrect");
+        const Message::Counter toC = to.toLongLong(&isValid);
+        CHECK(isValid, "to field incorrect");
+
         emit messenger->getHistoryAddressAddressCount(address, false, collocutor, countC, toC, [this, address, collocutor, makeFunc](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
             const TypedException exception2 = apiVrapper2([&, this](){
@@ -227,8 +239,10 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "registerAddress " << address;
 
-    const uint64_t fee = std::stoull(feeStr.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
+        bool isValid;
+        const uint64_t fee = feeStr.toULongLong(&isValid);
+        CHECK(isValid, "Fee field incorrect");
         const QString pubkeyRsa = QString::fromStdString(walletManager.getWalletRsa(address.toStdString()).getPublikKey());
         const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
         std::string pubkey;
@@ -307,8 +321,11 @@ BEGIN_SLOT_WRAPPER
     LOG << "sendMessage " << " " << address << " " << collocutor << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const uint64_t fee = std::stoull(feeStr.toStdString());
-        const uint64_t timestamp = std::stoull(timestampStr.toStdString());
+        bool isValid;
+        const uint64_t fee = feeStr.toULongLong(&isValid);
+        CHECK(isValid, "fee field incorrect");
+        const uint64_t timestamp = timestampStr.toULongLong(&isValid);
+        CHECK(isValid, "timestamp field incorrect");
         emit messenger->getPubkeyAddress(collocutor, [this, makeFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey, const TypedException &exception) mutable {
             const TypedException exception2 = apiVrapper2([&, this](){
                 if (exception.isSet()) {
@@ -431,7 +448,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "savePos " << address << " " << collocutor << " " << counterStr;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const Message::Counter counter = std::stoll(counterStr.toStdString());
+        bool isValid;
+        const Message::Counter counter = counterStr.toLongLong(&isValid);
+        CHECK(isValid, "counter field invalid");
         emit messenger->savePos(address, false, collocutor, counter, [this, makeFunc, address, collocutor](const TypedException &exception){
             LOG << "Save pos ok " << address << " " << collocutor;
             makeFunc(exception, address, collocutor, "Ok");
@@ -457,7 +476,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "getCountMessages " << address << " " << collocutor << " " << from;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const Message::Counter fromI = std::stoll(from.toStdString());
+        bool isValid;
+        const Message::Counter fromI = from.toLongLong(&isValid);
+        CHECK(isValid, "from field invalid");
         emit messenger->getCountMessages(address, collocutor, fromI, [this, makeFunc, address, collocutor, fromI](const Message::Counter &count, const TypedException &exception) {
             LOG << "Count messages " << address << " " << collocutor << " " << fromI << " " << count;
             makeFunc(exception, address, collocutor, count);
@@ -483,7 +504,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "channel create " << address << " " << channelTitle << " " << fee;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const Message::Counter feeI = std::stoull(fee.toStdString());
+        bool isValid;
+        const Message::Counter feeI = fee.toLongLong(&isValid);
+        CHECK(isValid, "fee field invalid");
         const QString titleSha = Messenger::getChannelSha(channelTitle);
         const QString messageToSign = Messenger::makeTextForChannelCreateRequest(channelTitle, titleSha, feeI);
         std::string pub;
@@ -572,8 +595,11 @@ BEGIN_SLOT_WRAPPER
     LOG << "sendMessageToChannel " << " " << address << " " << titleSha << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const uint64_t fee = std::stoull(feeStr.toStdString());
-        const uint64_t timestamp = std::stoull(timestampStr.toStdString());
+        bool isValid;
+        const uint64_t fee = feeStr.toULongLong(&isValid);
+        CHECK(isValid, "Fee field invalid");
+        const uint64_t timestamp = timestampStr.toULongLong(&isValid);
+        CHECK(isValid, "timestamp field invalid");
 
         const QString messageToSign = Messenger::makeTextForSendToChannelRequest(titleSha, dataHex, fee, timestamp);
         std::string pub;
@@ -680,7 +706,9 @@ BEGIN_SLOT_WRAPPER
     LOG << "savePosToChannel " << address << " " << titleSha << " " << counterStr;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const Message::Counter counter = std::stoll(counterStr.toStdString());
+        bool isValid;
+        const Message::Counter counter = counterStr.toLongLong(&isValid);
+        CHECK(isValid, "counter field invalid");
         emit messenger->savePos(address, true, titleSha, counter, [this, makeFunc, address, titleSha](const TypedException &exception){
             LOG << "Save pos ok " << address << " " << titleSha;
             makeFunc(exception, address, titleSha, "Ok");
@@ -705,9 +733,12 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages channel " << address << " " << titleSha << " " << from << " " << to;
 
-    const Message::Counter fromC = std::stoll(from.toStdString());
-    const Message::Counter toC = std::stoll(to.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
+        bool isValid;
+        const Message::Counter fromC = from.toLongLong(&isValid);
+        CHECK(isValid, "from field invalid");
+        const Message::Counter toC = to.toLongLong(&isValid);
+        CHECK(isValid, "to field invalid");
         emit messenger->getHistoryAddressAddress(address, true, titleSha, fromC, toC, [this, makeFunc, address, titleSha](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
             const TypedException exception2 = apiVrapper2([&, this](){
@@ -740,9 +771,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messagesCC " << address << " " << titleSha << " " << count << " " << to;
 
-    const Message::Counter countC = std::stoll(count.toStdString());
-    const Message::Counter toC = std::stoll(to.toStdString());
     const TypedException exception = apiVrapper2([&, this](){
+        bool isValid;
+        const Message::Counter countC = count.toLongLong(&isValid);
+        CHECK(isValid, "count field invalid");
+        const Message::Counter toC = to.toLongLong(&isValid);
+        CHECK(isValid, "to field invalid");
+
         emit messenger->getHistoryAddressAddressCount(address, true, titleSha, countC, toC, [this, makeFunc, address, titleSha](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
             const TypedException exception2 = apiVrapper2([&, this](){
@@ -842,7 +877,7 @@ void MessengerJavascript::runJs(const QString &script) {
     emit jsRunSig(script);
 }
 
-void MessengerJavascript::onLogined(const QString login) {
+void MessengerJavascript::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(defaultWalletPath, login), login);

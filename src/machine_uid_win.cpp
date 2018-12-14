@@ -131,6 +131,18 @@ static void getMacHash( uint16_t& mac1, uint16_t& mac2 )
    const auto pair = std::minmax_element(addrs.begin(), addrs.end());
    mac1 = *pair.first;
    mac2 = *pair.second;
+
+   const auto savedPair = findMacAddressFile();
+   if (!savedPair.first.empty()) {
+       const uint16_t savedMac1 = std::stoul(savedPair.first);
+       const uint16_t savedMac2 = std::stoul(savedPair.second);
+       if (std::find(addrs.begin(), addrs.end(), savedMac1) != addrs.end() || std::find(addrs.begin(), addrs.end(), savedMac2) != addrs.end()) {
+           mac1 = savedMac1;
+           mac2 = savedMac2;
+           return;
+       }
+   }
+   saveMacAddressesToFile(std::to_string(mac1), std::to_string(mac2));
 }
 
 static uint16_t getVolumeHash()

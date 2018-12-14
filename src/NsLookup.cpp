@@ -84,6 +84,7 @@ NsLookup::NsLookup(QObject *parent)
 }
 
 NsLookup::~NsLookup() {
+    isStopped = true;
     thread1.quit();
     if (!thread1.wait(3000)) {
         thread1.terminate();
@@ -201,6 +202,9 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
 }
 
 void NsLookup::continueResolve() {
+    if (isStopped.load()) {
+        return;
+    }
     if (posInNodes >= nodes.size()) {
         finalizeLookup();
         return;
@@ -221,6 +225,10 @@ QString NsLookup::makeAddress(const QString &ip, const QString &port) {
 }
 
 void NsLookup::continuePing() {
+    if (isStopped.load()) {
+        return;
+    }
+
     const NodeType &nodeType = nodes[posInNodes - 1];
 
     if (!isSafeCheck) {
@@ -452,9 +460,13 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     if (found == allNodesForTypes.end()) {
         return {};
     }
-    const auto &nodes = found->second;
+    const std::vector<std::reference_wrapper<NodeInfo>> &nodes = found->second;
 
-    return ::getRandom<QString>(nodes, limit, count, process);
+    std::vector<std::reference_wrapper<NodeInfo>> filterNodes;
+    std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filterNodes), [](const NodeInfo &node) {
+        return node.ping < MAX_PING.count();
+    });
+    return ::getRandom<QString>(filterNodes, limit, count, process);
 }
 
 void NsLookup::resetFile() {

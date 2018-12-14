@@ -121,6 +121,8 @@ private:
     bool isSafeCheck = false;
 
     milliseconds passedTime;
+
+    std::atomic<bool> isStopped{false};
 };
 
 #endif // NSLOOKUP_H

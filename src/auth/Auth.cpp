@@ -63,7 +63,8 @@ BEGIN_SLOT_WRAPPER
            const TypedException exception = apiVrapper2([&] {
                info = parseLoginResponse(QString::fromStdString(response), login);
                writeLoginInfo();
-               emit logined(info.login);
+               isInitialize = true;
+               emit logined(isInitialize, info.login);
            });
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
@@ -83,7 +84,8 @@ END_SLOT_WRAPPER
 void Auth::logoutImpl() {
     info.clear();
     writeLoginInfo();
-    emit logined("");
+    isInitialize = true;
+    emit logined(isInitialize, "");
 }
 
 void Auth::onCheck() {
@@ -207,7 +209,8 @@ void Auth::forceRefreshInternal() {
                     LOG << "Refresh token ok";
                     info = newLogin;
                     writeLoginInfo();
-                    emit logined(info.login);
+                    isInitialize = true;
+                    emit logined(isInitialize, info.login);
                 }
             });
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
@@ -220,6 +223,7 @@ void Auth::forceRefreshInternal() {
 
 bool Auth::checkToken() {
     if (!info.isAuth) {
+        isInitialize = true;
         return true;
     }
     const time_point now = ::now();
@@ -266,7 +270,7 @@ bool Auth::checkToken() {
 void Auth::onReEmit() {
 BEGIN_SLOT_WRAPPER
     LOG << "Auth Reemit";
-    emit logined(info.login);
+    emit logined(isInitialize, info.login);
 END_SLOT_WRAPPER
 }
 
