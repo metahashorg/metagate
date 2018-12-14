@@ -39,7 +39,7 @@ public:
     explicit Auth(AuthJavascript &javascriptWrapper, QObject *parent = nullptr);
 
 signals:
-    void logined(const QString &login);
+    void logined(bool isInit, const QString &login);
 
 signals:
     void login(const QString &login, const QString &password);
@@ -110,6 +110,8 @@ private:
     seconds timeout;
 
     int guardRefresh = 0;
+
+    bool isInitialize = false;
 };
 
 }

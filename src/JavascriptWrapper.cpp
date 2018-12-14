@@ -137,7 +137,7 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-void JavascriptWrapper::onLogined(const QString login) {
+void JavascriptWrapper::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(walletDefaultPath, login), login);

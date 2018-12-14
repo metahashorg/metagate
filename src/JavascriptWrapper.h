@@ -54,7 +54,7 @@ signals:
     void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 public slots:
-    void onLogined(const QString login);
+    void onLogined(bool isInit, const QString login);
 
 public slots:
 

@@ -877,7 +877,7 @@ void MessengerJavascript::runJs(const QString &script) {
     emit jsRunSig(script);
 }
 
-void MessengerJavascript::onLogined(const QString login) {
+void MessengerJavascript::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(defaultWalletPath, login), login);

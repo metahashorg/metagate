@@ -85,8 +85,7 @@ MainWindow::MainWindow(
 
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
 
-    loadFile("login.html");
-    addElementToHistoryAndCommandLine("app://Login", true, true);
+    loadFile("core/loader/index.html");
 
     jsWrapper.setWidget(this);
 
@@ -547,17 +546,24 @@ LastHtmlVersion MainWindow::getCurrentHtmls() const {
     return lastHtmls;
 }
 
-void MainWindow::onLogined(const QString &login) {
+void MainWindow::onLogined(bool isInit, const QString &login) {
 BEGIN_SLOT_WRAPPER
-    if (login.isEmpty()) {
-        LOG << "Try Swith to login";
-        if (!currentFileIsEqual("login.html")) {
-            LOG << "Swith to login";
-            loadFile("login.html");
+    if (isInit) {
+        if (login.isEmpty()) {
+            LOG << "Try Swith to login";
+            if (!currentFileIsEqual("login.html")) {
+                LOG << "Swith to login";
+                loadFile("login.html");
+                addElementToHistoryAndCommandLine("app://Login", true, true);
+            }
+            setUserName(DEFAULT_USERNAME);
+        } else {
+            if (!currentFileIsEqual("apps.html")) {
+                loadFile("apps.html");
+                addElementToHistoryAndCommandLine("app://apps", true, true);
+            }
+            setUserName(login);
         }
-        setUserName(DEFAULT_USERNAME);
-    } else {
-        setUserName(login);
     }
 END_SLOT_WRAPPER
 }

@@ -126,7 +126,7 @@ private slots:
 
     void onBrowserLoadFinished(const QUrl &url2);
 
-    void onLogined(const QString &login);
+    void onLogined(bool isInit, const QString &login);
 
 private:
 
