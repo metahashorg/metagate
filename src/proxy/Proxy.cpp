@@ -26,6 +26,7 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
 
     CHECK(connect(this, &Proxy::proxyStart, this, &Proxy::onProxyStart), "not connect onProxyStart");
     CHECK(connect(this, &Proxy::proxyStop, this, &Proxy::onProxyStop), "not connect onProxyStop");
+    CHECK(connect(this, &Proxy::geProxyStatus, this, &Proxy::onGeProxyStatus), "not connect onGeProxyStatus");
     CHECK(connect(this, &Proxy::getPort, this, &Proxy::onGetPort), "not connect onGetPort");
     CHECK(connect(this, &Proxy::setPort, this, &Proxy::onSetPort), "not connect onSetPort");
     CHECK(connect(this, &Proxy::getRouters, this, &Proxy::onGetRouters), "not connect onGetRouters");
@@ -56,6 +57,7 @@ void Proxy::onProxyStart(const ProxyCallback &callback)
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         proxyServer->start();
+        proxyStarted = true;
         ProxyResult res(true, QStringLiteral("OK"));
         runCallback(std::bind(callback, res, TypedException()));
     });
@@ -72,6 +74,7 @@ void Proxy::onProxyStop(const ProxyCallback &callback)
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         proxyServer->stop();
+        proxyStarted = false;
         ProxyResult res(true, QStringLiteral("OK"));
         runCallback(std::bind(callback, res, TypedException()));
     });
@@ -80,7 +83,16 @@ BEGIN_SLOT_WRAPPER
         ProxyResult res(false, QStringLiteral("Exception"));
         runCallback(std::bind(callback, res, exception));
     }
+    END_SLOT_WRAPPER
+}
+
+void Proxy::onGeProxyStatus()
+{
+BEGIN_SLOT_WRAPPER
+    ProxyStatus status(proxyStarted);
+    emit javascriptWrapper.sendServerStatusResponseSig(status, TypedException());
 END_SLOT_WRAPPER
+
 }
 
 void Proxy::onGetPort()

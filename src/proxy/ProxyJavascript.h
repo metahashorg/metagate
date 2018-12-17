@@ -30,6 +30,7 @@ public:
 public slots:
     Q_INVOKABLE void proxyStart();
     Q_INVOKABLE void proxyStop();
+    Q_INVOKABLE void getProxyStatus();
     Q_INVOKABLE void getPort();
     Q_INVOKABLE void setPort(quint16 port);
     Q_INVOKABLE void getRoutersList();
@@ -38,14 +39,14 @@ public slots:
     Q_INVOKABLE void deletePortMapping();
 
 signals:
-    void sendServerStatusResponseSig(bool connected, const TypedException &error);
+    void sendServerStatusResponseSig(const Proxy::ProxyStatus &status, const TypedException &error);
 
     void sendServerPortResponseSig(quint16 port, const TypedException &error);
 
     void sendGetRoutersResponseSig(const std::vector<Proxy::Router> &routers, const TypedException &error);
 
 public slots:
-    void onSendServerStatusResponseSig(bool connected, const TypedException &error);
+    void onSendServerStatusResponseSig(const Proxy::ProxyStatus &status, const TypedException &error);
 
     void onSendServerPortResponseSig(quint16 port, const TypedException &error);
 

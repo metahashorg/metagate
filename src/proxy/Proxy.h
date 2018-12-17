@@ -33,6 +33,15 @@ public:
         UPnPRouter *router;
     };
 
+    struct ProxyStatus {
+        bool started;
+        ProxyStatus(bool started)
+            : started(started)
+        {
+
+        }
+    };
+
     struct ProxyResult {
         bool ok;
         QString error;
@@ -72,6 +81,8 @@ signals:
 
     void proxyStop(const ProxyCallback &callback);
 
+    void geProxyStatus();
+
     void getPort();
 
     void setPort(quint16 port);
@@ -90,6 +101,8 @@ public slots:
     void onProxyStart(const ProxyCallback &callback);
 
     void onProxyStop(const ProxyCallback &callback);
+
+    void onGeProxyStatus();
 
     void onGetPort();
 
@@ -119,6 +132,7 @@ private:
     UPnPDevices *upnp;
     std::vector<Router> routers;
     int mappedRouterIdx;
+    bool proxyStarted = false;
 };
 
 }

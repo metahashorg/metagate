@@ -34,6 +34,13 @@ static QJsonDocument routersInfoToJson(const std::vector<Proxy::Router> &routers
     return QJsonDocument(routersJson);
 }
 
+static QJsonDocument proxyStatusToJson(const Proxy::ProxyStatus &status)
+{
+    QJsonObject resJson;
+    resJson.insert("started", status.started);
+    return QJsonDocument(resJson);
+}
+
 static QJsonDocument proxyResultToJson(const Proxy::ProxyResult &res)
 {
     QJsonObject resJson;
@@ -111,6 +118,22 @@ BEGIN_SLOT_WRAPPER
 
     if (exception.isSet()) {
         //makeFunc(exception, false);
+    }
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::getProxyStatus()
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(m_proxyManager, "proxyManager not set");
+    LOG << "Get proxy status";
+
+    const TypedException exception = apiVrapper2([&, this]() {
+            emit m_proxyManager->onGeProxyStatus();
+    });
+
+    if (exception.isSet()) {
+        emit sendServerStatusResponseSig(Proxy::ProxyStatus(false), exception);
     }
 END_SLOT_WRAPPER
 }
@@ -236,12 +259,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void ProxyJavascript::onSendServerStatusResponseSig(bool connected, const TypedException &error)
+void ProxyJavascript::onSendServerStatusResponseSig(const Proxy::ProxyStatus &status, const TypedException &error)
 {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "proxyServerStatusInfoJs";
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, error, connected);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, proxyStatusToJson(status));
 END_SLOT_WRAPPER
 }
 
@@ -249,7 +271,6 @@ void ProxyJavascript::onSendServerPortResponseSig(quint16 port, const TypedExcep
 {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "proxyServerPortInfoJs";
-
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, port);
 END_SLOT_WRAPPER
 }
@@ -258,9 +279,8 @@ void ProxyJavascript::onSendGetRoutersResponseSig(const std::vector<Proxy::Route
 {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "proxyGetRoutersJs";
-
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, routersInfoToJson(routers));
-    END_SLOT_WRAPPER
+END_SLOT_WRAPPER
 }
 
 void ProxyJavascript::onCallbackCall(const ProxyJavascript::Callback &callback)
