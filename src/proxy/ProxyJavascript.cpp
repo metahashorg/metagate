@@ -34,6 +34,14 @@ static QJsonDocument routersInfoToJson(const std::vector<Proxy::Router> &routers
     return QJsonDocument(routersJson);
 }
 
+static QJsonDocument proxyResultToJson(const Proxy::ProxyResult &res)
+{
+    QJsonObject resJson;
+    resJson.insert("ok", res.ok);
+    resJson.insert("error", res.error);
+    return QJsonDocument(resJson);
+}
+
 static QJsonDocument portMappingResultToJson(const Proxy::PortMappingResult &res)
 {
     QJsonObject resJson;
@@ -57,30 +65,54 @@ ProxyJavascript::ProxyJavascript(QObject *parent)
 void ProxyJavascript::proxyStart()
 {
 BEGIN_SLOT_WRAPPER
-    CHECK(m_proxyManager, "proxy not set");
+    CHECK(m_proxyManager, "proxyManager not set");
 
     qDebug() << "!!!";
     LOG << "Proxy start";
 
+    const QString JS_NAME_RESULT = "proxyStartResultJs";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
     const TypedException exception = apiVrapper2([&, this]() {
-        emit m_proxyManager->proxyStart();
-    });
-    //if (exception.isSet()) {
-    //    emit sendLoginInfoResponseSig(LoginInfo(), exception);
-    //}
+        emit m_proxyManager->proxyStart([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
+                LOG << "Proxt started " << res.ok << res.error;
+                makeFunc(exception, proxyResultToJson(res));
+            });
+        });
+
+    if (exception.isSet()) {
+        //makeFunc(exception, false);
+    }
+
 END_SLOT_WRAPPER
 }
 
 void ProxyJavascript::proxyStop()
 {
 BEGIN_SLOT_WRAPPER
-    CHECK(m_proxyManager, "proxy not set");
+    CHECK(m_proxyManager, "proxyManager not set");
     LOG << "Proxy stop";
 
+    const QString JS_NAME_RESULT = "proxyStopResultJs";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
     const TypedException exception = apiVrapper2([&, this]() {
-        emit m_proxyManager->proxyStop();
-    });
-    END_SLOT_WRAPPER
+        emit m_proxyManager->proxyStop([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
+                LOG << "Proxt stoped " << res.ok << res.error;
+                makeFunc(exception, proxyResultToJson(res));
+            });
+        });
+
+    if (exception.isSet()) {
+        //makeFunc(exception, false);
+    }
+END_SLOT_WRAPPER
 }
 
 void ProxyJavascript::getPort()
@@ -134,12 +166,21 @@ BEGIN_SLOT_WRAPPER
     CHECK(m_proxyManager, "proxyManager not set");
     LOG << "Start routers discover";
 
+    const QString JS_NAME_RESULT = "proxyDiscoverRoutersResultJs";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, bool result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
     const TypedException exception = apiVrapper2([&, this]() {
-            emit m_proxyManager->getRouters();
+            emit m_proxyManager->discoverRouters([makeFunc](bool res, const TypedException &exception) {
+            LOG << "Started routers discover " << res;
+            makeFunc(exception, res);
         });
-        if (exception.isSet()) {
-            //emit sendServerPortResponseSig(std::vector<Proxy::Router>(), exception);
-        }
+    });
+    if (exception.isSet()) {
+        makeFunc(exception, false);
+    }
 END_SLOT_WRAPPER
 }
 

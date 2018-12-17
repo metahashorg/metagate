@@ -20,6 +20,8 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
 {
     qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
 
+    qRegisterMetaType<ProxyCallback>("ProxyCallback");
+    qRegisterMetaType<DiscoverCallback>("DiscoverCallback");
     qRegisterMetaType<PortMappingCallback>("PortMappingCallback");
 
     CHECK(connect(this, &Proxy::proxyStart, this, &Proxy::onProxyStart), "not connect onProxyStart");
@@ -49,22 +51,35 @@ Proxy::~Proxy()
     }
 }
 
-void Proxy::onProxyStart()
+void Proxy::onProxyStart(const ProxyCallback &callback)
 {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         proxyServer->start();
+        ProxyResult res(true, QStringLiteral("OK"));
+        runCallback(std::bind(callback, res, TypedException()));
     });
+
+    if (exception.isSet()) {
+        ProxyResult res(false, QStringLiteral("Exception"));
+        runCallback(std::bind(callback, res, exception));
+    }
 END_SLOT_WRAPPER
-    //emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
 }
 
-void Proxy::onProxyStop()
+void Proxy::onProxyStop(const ProxyCallback &callback)
 {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         proxyServer->stop();
+        ProxyResult res(true, QStringLiteral("OK"));
+        runCallback(std::bind(callback, res, TypedException()));
     });
+
+    if (exception.isSet()) {
+        ProxyResult res(false, QStringLiteral("Exception"));
+        runCallback(std::bind(callback, res, exception));
+    }
 END_SLOT_WRAPPER
 }
 
@@ -92,15 +107,17 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Proxy::onDiscoverRouters()
+void Proxy::onDiscoverRouters(const DiscoverCallback &callback)
 {
 BEGIN_SLOT_WRAPPER
     if (mappedRouterIdx != -1) {
         qDebug() << "Discover disabled. Port mapped.";
+        runCallback(std::bind(callback, false, TypedException()));
         return;
     }
     routers.clear();
     upnp->discover();
+    runCallback(std::bind(callback, true, TypedException()));
 END_SLOT_WRAPPER
 }
 

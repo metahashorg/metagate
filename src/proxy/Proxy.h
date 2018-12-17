@@ -33,6 +33,16 @@ public:
         UPnPRouter *router;
     };
 
+    struct ProxyResult {
+        bool ok;
+        QString error;
+        ProxyResult(bool ok, const QString &error)
+            : ok(ok)
+            , error(error)
+        {
+        }
+    };
+
     struct PortMappingResult {
         bool ok;
         quint16 port;
@@ -49,6 +59,8 @@ public:
     };
 
 public:
+    using ProxyCallback = std::function<void(const ProxyResult &res, const TypedException &exception)>;
+    using DiscoverCallback = std::function<void(bool res, const TypedException &exception)>;
     using PortMappingCallback = std::function<void(const PortMappingResult &res, const TypedException &exception)>;
 
 public:
@@ -56,9 +68,9 @@ public:
     ~Proxy();
 
 signals:
-    void proxyStart();
+    void proxyStart(const ProxyCallback &callback);
 
-    void proxyStop();
+    void proxyStop(const ProxyCallback &callback);
 
     void getPort();
 
@@ -66,7 +78,7 @@ signals:
 
     void getRouters();
 
-    void discoverRouters();
+    void discoverRouters(const DiscoverCallback &callback);
 
     void addPortMapping(const QString &udn, const PortMappingCallback &callback);
 
@@ -75,9 +87,9 @@ signals:
 
 public slots:
 
-    void onProxyStart();
+    void onProxyStart(const ProxyCallback &callback);
 
-    void onProxyStop();
+    void onProxyStop(const ProxyCallback &callback);
 
     void onGetPort();
 
@@ -85,7 +97,7 @@ public slots:
 
     void onGetRouters();
 
-    void onDiscoverRouters();
+    void onDiscoverRouters(const DiscoverCallback &callback);
 
     void onAddPortMapping(const QString &udn, const PortMappingCallback &callback);
 
