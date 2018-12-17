@@ -124,6 +124,8 @@
         });
     }
     
+//////////////////////////////proxy
+    
     function startProxy() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
@@ -138,12 +140,35 @@
         });
     }
     
+    function proxyStartResultJs(res) {
+       
+        document.createWalletForm.proxyport.value = res;
+    }
+    
+    function proxyStopResultJs(res) {
+       
+        document.createWalletForm.proxyport.value = res;
+    }
+    
+    
     function getPort() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
         mainWindow.getPort() ;
         });
     }
+
+    function setPort() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.setPort(8888) ;
+        });
+    }
+    
+    function proxyServerPortInfoJs(port) {
+        document.createWalletForm.proxyport.value = port;
+    }
+
     
     function getRouters() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
@@ -159,11 +184,12 @@
         });
     }
     
-    function setPort() {
-        new QWebChannel(qt.webChannelTransport, function (channel) {
-        var mainWindow = channel.objects.proxy;
-        mainWindow.setPort(8888) ;
-        });
+    function proxyGetRoutersJs(routers) {
+        document.createWalletForm.proxyport.value = routers;
+    }
+    
+    function proxyDiscoverRoutersResultJs(routers) {
+        document.createWalletForm.proxyport.value = routers;
     }
     
     function addPortMapping() {
@@ -180,21 +206,17 @@
         });
     }
     
+    function proxyAddPortMappingResultJs(res) {
+       
+        document.createWalletForm.proxyport.value = res;
+    }
         
     function proxyDeletePortMappingResultJs(res) {
        
         document.createWalletForm.proxyport.value = res;
     }
     
-    function proxyServerPortInfoJs(port) {
-       
-        document.createWalletForm.proxyport.value = port;
-    }
-    
-    function proxyGetRoutersJs(routers) {
-       
-        document.createWalletForm.proxyport.value = routers;
-    }
+//////////////////////////////////////
     
     function sendMsgChannel() {
         new QWebChannel(qt.webChannelTransport, function (channel) {

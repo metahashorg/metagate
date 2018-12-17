@@ -7,6 +7,7 @@
 #include <QSslSocket>
 #include <QDebug>
 
+#include <QFile>
 
 #include "http_parser.h"
 
@@ -68,8 +69,8 @@ public:
     QTcpSocket *socket = nullptr;
     QString curHost;
     int curPort = -1;
-    QSslSocket *sslSocket;
     bool ce = false;
+    QString host;
 };
 
 /*QSslSocket socket;
@@ -85,8 +86,7 @@ while (socket.waitForReadyRead())
 */
 ProxyClientPrivate::ProxyClientPrivate(ProxyClient *parent)
     : srcSocket(parent)
-    , socket(new QTcpSocket(parent))
-    , sslSocket(new QSslSocket(parent))
+    //, socket(new QTcpSocket(parent->parent()))
 {
     http_parser_init(&reqParser, HTTP_REQUEST);
     reqParser.data = this;
@@ -141,12 +141,13 @@ void ProxyClientPrivate::startQuery(const QByteArray &method, const QUrl &url)
     qDebug() << socket->peerAddress();
 
     if (method == QByteArrayLiteral("CONNECT")) {
-        sslSocket->connectToHostEncrypted(u.host(), u.port(443));
-        if (!sslSocket->waitForEncrypted()) {
-            qDebug() << sslSocket->errorString();
+        host = u.host();
+        //socket->connectToHost(u.host(), u.port(443));
+        /*if (!socket->waitForConnected()) {
+            qDebug() << socket->errorString();
             return;
         }
-        qDebug() << "SSL connected";
+        qDebug() << "SSL connected";*/
         ce = true;
         //connectionEstablished();
         return;
@@ -202,6 +203,9 @@ void ProxyClientPrivate::connectionEstablished()
     srcSocket->write(QByteArray("Proxy-agent: MetaGate Proxy\r\n"));
     srcSocket->write(QByteArray("\r\n"));
     srcSocket->flush();
+
+    //srcSocket->startServerEncryption();
+
     //qDebug() << srcSocket->waitForBytesWritten();
     //qDebug() << srcSocket->errorString();
 }
@@ -383,15 +387,37 @@ ProxyClient::ProxyClient(QObject *parent)
 {
     qDebug() << "create " << QThread::currentThread();
 
+    d->socket = new QTcpSocket(this);
+
+
     connect(this, &QAbstractSocket::connected, this, &ProxyClient::onConnected);
     connect(this, &QAbstractSocket::disconnected, this, &ProxyClient::onDisconnected);
     connect(this, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), this, &ProxyClient::onError);
     connect(this, &QIODevice::readyRead, this, &ProxyClient::onReadyRead);
 
+    /*connect(this, &QSslSocket::encrypted, [](){
+        qDebug() << "Encrypted";
+    });
+
+    connect(this, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors),
+            [](const QList<QSslError> &errors){
+        qDebug() << "SSL errors " << errors.size();
+    });
+
+*/
+    connect(d->socket, &QAbstractSocket::disconnected, [this]() {
+        qDebug() << "DEST disc";
+    });
+
+    connect(d->socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), [](QAbstractSocket::SocketError socketError){
+        qDebug() << "DEST error " << socketError;
+
+    });
+
     connect(d->socket, &QIODevice::readyRead, [this]() {
         QByteArray data = d->socket->readAll();
         //qDebug() << "RRRR\n" << data;
-        parseResp(data);
+        //parseResp(data);
         d->srcSocket->write(data);
         d->srcSocket->flush();
         d->srcSocket->waitForBytesWritten();
@@ -433,11 +459,21 @@ void ProxyClient::onReadyRead()
 {
     QByteArray data = readAll();
     //sendResponse(error500);
-    //qDebug() << data;
+    //qDebug() << "D " <<  data;
     //write(QByteArray("Hello"));
+    if (d->ce) {
+        qDebug() << d->socket->state();
+        d->socket->write(data);
+        //d->socket->waitForBytesWritten();// flush();
+        return;
+    }
     d->parseRequestData(data);
-    if (d->ce)
+    if (d->ce) {
+        d->socket->connectToHost(d->host, 443);
+        qDebug() << "SSL con";
+        qDebug() << d->socket->waitForConnected();
         d->connectionEstablished();
+    }
 }
 
 }
