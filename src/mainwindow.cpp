@@ -83,6 +83,10 @@ MainWindow::MainWindow(
 
     configureMenu();
 
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("dns/metahash"), "dns/metahash server not found");
+    urlDns = settings.value("dns/metahash").toString();
+
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
 
     loadFile("core/loader/index.html");
@@ -120,30 +124,7 @@ MainWindow::MainWindow(
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
-    qtimer.setInterval(milliseconds(hours(1)).count());
-    qtimer.setSingleShot(false);
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
-    qtimer.start();
-
     emit authManager.reEmit();
-
-    emit onUpdateMhsReferences();
-}
-
-void MainWindow::onUpdateMhsReferences() {
-BEGIN_SLOT_WRAPPER
-    QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("dns/metahash"), "dns/metahash setting not found");
-    CHECK(settings.contains("timeouts_sec/dns_metahash"), "timeouts_sec setting not found");
-    const seconds timeout(settings.value("timeouts_sec/dns_metahash").toInt());
-
-    client.sendMessageGet(QUrl(settings.value("dns/metahash").toString()), [this](const std::string &response, const SimpleClient::ServerException &exception) {
-        LOG << "Set mappings mh " << QString::fromStdString(response).simplified();
-        CHECK(!exception.isSet(), "Server error: " + exception.description);
-        pagesMappings.setMappingsMh(QString::fromStdString(response));
-    }, timeout);
-
-END_SLOT_WRAPPER
 }
 
 void MainWindow::onCallbackCall(SimpleClient::ReturnCallback callback) {
@@ -286,8 +267,8 @@ END_SLOT_WRAPPER
 void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
     LOG << "command line " << text1;
 
-    const QString HTTP_1_PREFIX = "http://";
-    const QString HTTP_2_PREFIX = "https://";
+    const static QString HTTP_1_PREFIX = "http://";
+    const static QString HTTP_2_PREFIX = "https://";
 
     QString text = text1;
     if (text.endsWith('/')) {
@@ -298,56 +279,76 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         return;
     }
 
-    const PageInfo pageInfo = pagesMappings.find(text);
-    const QString &reference = pageInfo.page;
+    const auto doProcessCommand = [this, isAddToHistory, text](const PageInfo &pageInfo) {
+        const QString &reference = pageInfo.page;
 
-    if (reference.isNull() || reference.isEmpty()) {
-        if (text.startsWith(APP_URL)) {
-            text = text.mid(APP_URL.size());
-        }
-        QTextDocument td;
-        td.setHtml(text);
-        const QString plained = td.toPlainText();
-        const PageInfo &searchPage = pagesMappings.getSearchPage();
-        QString link = searchPage.page;
-        link += plained;
-        LOG << "Search page " << link;
-        addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text, isAddToHistory, true);
-        loadFile(link);
-    } else if (reference.startsWith(METAHASH_URL)) {
-        QString uri = reference.mid(METAHASH_URL.size());
-        const int pos = uri.indexOf('/');
-        QString other;
-        if (pos != -1) {
-            other = uri.mid(pos);
-            uri = uri.left(pos);
-        }
+        if (reference.isNull() || reference.isEmpty()) {
+            QString text2;
+            if (text2.startsWith(APP_URL)) {
+                text2 = text2.mid(APP_URL.size());
+            }
+            QTextDocument td;
+            td.setHtml(text2);
+            const QString plained = td.toPlainText();
+            const PageInfo &searchPage = pagesMappings.getSearchPage();
+            QString link = searchPage.page;
+            link += plained;
+            LOG << "Search page " << link;
+            addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text2, isAddToHistory, true);
+            loadFile(link);
+        } else if (reference.startsWith(METAHASH_URL)) {
+            QString uri = reference.mid(METAHASH_URL.size());
+            const int pos = uri.indexOf('/');
+            QString other;
+            if (pos != -1) {
+                other = uri.mid(pos);
+                uri = uri.left(pos);
+            }
 
-        QString clText;
-        if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
-            clText = reference;
-        } else {
-            clText = pageInfo.printedName + other;
-        }
-        addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
-        loadUrl(reference);
-    } else {
-        QString clText;
-        if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
-            clText = text;
-        } else {
-            clText = pageInfo.printedName;
-        }
-
-        if (pageInfo.isExternal) {
-            qtOpenInBrowser(reference);
-        } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
+            QString clText;
+            if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
+                clText = reference;
+            } else {
+                clText = pageInfo.printedName + other;
+            }
             addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
             loadUrl(reference);
         } else {
-            addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
-            loadFile(reference);
+            QString clText;
+            if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
+                clText = text;
+            } else {
+                clText = pageInfo.printedName;
+            }
+
+            if (pageInfo.isExternal) {
+                qtOpenInBrowser(reference);
+            } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
+                addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+                loadUrl(reference);
+            } else {
+                addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+                loadFile(reference);
+            }
         }
+    };
+
+    const PageInfo pageInfo = pagesMappings.find(text);
+    if (pageInfo.isApp) {
+        doProcessCommand(pageInfo);
+        return;
+    } else {
+        addElementToHistoryAndCommandLine(text, isAddToHistory, true);
+        const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\"}}";
+        client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const std::string &result, const SimpleClient::ServerException &exception) {
+            if (exception.isSet()) {
+                LOG << "Dns error " << exception.description;
+            } else {
+                pagesMappings.addMappingsMh(QString::fromStdString(result));
+                const PageInfo pageInfo = pagesMappings.find(text);
+                doProcessCommand(pageInfo);
+            }
+        });
     }
 }
 

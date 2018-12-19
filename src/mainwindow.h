@@ -108,8 +108,6 @@ private slots:
 
     void onCallbackCall(SimpleClient::ReturnCallback callback);
 
-    void onUpdateMhsReferences();
-
     void onShowContextMenu(const QPoint &point);
 
     void onJsRun(QString jsString);
@@ -153,11 +151,11 @@ private:
 
     SimpleClient client;
 
-    QTimer qtimer;
-
     QString prevUrl;
 
     QString prevTextCommandLine;
+
+    QString urlDns;
 
     bool lineEditUserChanged = false;
 };

@@ -42,6 +42,7 @@ private:
 };
 
 struct PageInfo {
+    bool isApp = false;
     QString page;
     QString printedName;
     bool isExternal;
@@ -75,6 +76,8 @@ private:
 
         bool operator==(const Name &second) const;
 
+        const QString& toString() const;
+
     private:
 
         QString name;
@@ -85,7 +88,7 @@ public:
 
     PagesMappings();
 
-    void setMappingsMh(QString mapping);
+    void addMappingsMh(QString mapping);
 
     void setMappings(QString mapping);
 
@@ -105,9 +108,13 @@ public:
 
     QString getIp(const QString &text) const;
 
+    static QString getHost(const QString &url);
+
 private:
 
     Optional<PageInfo> findInternal(const QString &url) const;
+
+    static int findSlashInternal(const QString &url);
 
 private:
 
