@@ -63,13 +63,13 @@ private:
 
     void sortAll();
 
-    system_time_point fillNodesFromFile(const QString &file, const std::vector<NodeType> &expectedNodes);
+    system_time_point fillNodesFromFile(const QString &file, const std::map<QString, NodeType> &expectedNodes);
 
-    void saveToFile(const QString &file, const system_time_point &tp, const std::vector<NodeType> &expectedNodes);
+    void saveToFile(const QString &file, const system_time_point &tp, const std::map<QString, NodeType> &expectedNodes);
 
-    void continueResolve();
+    void continueResolve(std::map<QString, NodeType>::const_iterator node);
 
-    void continuePing();
+    void continuePing(std::map<QString, NodeType>::const_iterator node);
 
     void finalizeLookup();
 
@@ -83,17 +83,21 @@ private:
 
     QString savedNodesPath;
 
-    std::vector<NodeType> nodes;
-
-    size_t posInNodes = 0;
+    std::map<QString, NodeType> nodes;
 
     std::vector<QString> ipsTemp;
 
     size_t posInIpsTemp;
 
-    std::map<QString, std::vector<NodeInfo>> allNodesForTypes;
+    struct CmpNodeType {
+        bool operator()(const NodeType& a, const NodeType& b) const {
+            return a.node < b.node;
+        }
+    };
 
-    std::map<QString, std::vector<NodeInfo>> allNodesForTypesNew;
+    std::map<NodeType, std::vector<NodeInfo>, CmpNodeType> allNodesForTypes;
+
+    std::map<NodeType, std::vector<NodeInfo>, CmpNodeType> allNodesForTypesNew;
 
     mutable std::mutex nodeMutex;
 
