@@ -61,8 +61,6 @@ public slots:
 
 private:
 
-    void addNode(const QString &type, const NodeInfo &node, bool isNew);
-
     void sortAll();
 
     system_time_point fillNodesFromFile(const QString &file, const std::vector<NodeType> &expectedNodes);
@@ -92,15 +90,10 @@ private:
     std::vector<QString> ipsTemp;
 
     size_t posInIpsTemp;
-    size_t countSuccessfullTemp;
 
-    std::deque<NodeInfo> allNodes;
+    std::map<QString, std::vector<NodeInfo>> allNodesForTypes;
 
-    std::deque<NodeInfo> allNodesNew;
-
-    std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> allNodesForTypes;
-
-    std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> allNodesForTypesNew;
+    std::map<QString, std::vector<NodeInfo>> allNodesForTypesNew;
 
     mutable std::mutex nodeMutex;
 

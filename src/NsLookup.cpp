@@ -113,14 +113,13 @@ void NsLookup::run() {
 void NsLookup::finalizeLookup() {
     std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
-        allNodes.swap(allNodesNew);
         allNodesForTypes.swap(allNodesForTypesNew);
     }
     sortAll();
+    lock.unlock();
     if (!isSafeCheck) {
         saveToFile(savedNodesPath, system_now(), nodes);
     }
-    lock.unlock();
 
     const time_point stopScan = ::now();
     LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
@@ -164,7 +163,6 @@ BEGIN_SLOT_WRAPPER
 
     posInNodes = 0;
     allNodesForTypesNew.clear();
-    allNodesNew.clear();
 
     LOG << "Dns scan start";
     continueResolve();
@@ -209,7 +207,6 @@ void NsLookup::continueResolve() {
 
     ipsTemp = requestDns(node);
     posInIpsTemp = 0;
-    countSuccessfullTemp = 0;
 
     continuePing();
 }
@@ -254,7 +251,7 @@ void NsLookup::continuePing() {
                         }
                     }
 
-                    addNode(type, info, true);
+                    allNodesForTypesNew[type].emplace_back(info);
                 } catch (const Exception &e) {
                     LOG << "Error " << e;
                 } catch (const std::exception &e) {
@@ -272,31 +269,29 @@ void NsLookup::continuePing() {
             }, 2s);
         }
     } else {
-        if (posInIpsTemp >= allNodesForTypes[nodeType.type].size()) {
+        if (allNodesForTypes[nodeType.type].empty()) {
             continueResolve();
             return;
         }
 
-        const size_t countIterations = allNodesForTypes[nodeType.type].size() - posInIpsTemp;
         std::vector<size_t> processVectPos;
-        for (size_t i = 0; i < countIterations; i++) {
-            NodeInfo &element = allNodesForTypes[nodeType.type][posInIpsTemp];
+        for (size_t i = 0; i < allNodesForTypes[nodeType.type].size(); i++) {
+            NodeInfo &element = allNodesForTypes[nodeType.type][i];
             if (element.ping == MAX_PING.count()) {
                 // skip
             } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
                 element.ping = MAX_PING.count();
             } else {
-                processVectPos.emplace_back(posInIpsTemp);
+                processVectPos.emplace_back(i);
             }
-            posInIpsTemp++;
-            if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES) {
+            if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES + 2) {
                 break;
             }
         }
         std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(processVectPos.size());
         for (size_t i = 0; i < processVectPos.size(); i++) {
             const size_t posInIpsTempSave = processVectPos[i];
-            const QString &address = allNodesForTypes[nodeType.type][posInIpsTempSave].get().address;
+            const QString &address = allNodesForTypes[nodeType.type][posInIpsTempSave].address;
             client.ping(address, [this, type=nodeType.type, posInIpsTempSave, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
                 try {
                     NodeInfo &info = allNodesForTypes[type][posInIpsTempSave];
@@ -311,10 +306,6 @@ void NsLookup::continuePing() {
                             info.ping = MAX_PING.count();
                         }
                     }
-
-                    if (info.ping != MAX_PING.count()) {
-                        countSuccessfullTemp++;
-                    }
                 } catch (const Exception &e) {
                     LOG << "Error " << e;
                 } catch (const std::exception &e) {
@@ -327,28 +318,10 @@ void NsLookup::continuePing() {
 
                 (*requestsInProcess)--;
                 if ((*requestsInProcess) == 0) {
-                    if (countSuccessfullTemp >= ACCEPTABLE_COUNT_ADDRESSES) {
-                        continueResolve();
-                    } else {
-                        continuePing();
-                    }
+                    continueResolve();
                 }
             }, 2s);
         }
-    }
-}
-
-void NsLookup::addNode(const QString &type, const NodeInfo &node, bool isNew) {
-    auto processNode = [](std::deque<NodeInfo> &allNodes, std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> &allNodesForTypes, const QString &type, const NodeInfo &node) {
-        allNodes.emplace_back(node);
-        NodeInfo &ref = allNodes.back();
-        allNodesForTypes[type].emplace_back(std::ref(ref));
-    };
-
-    if (isNew) {
-        processNode(allNodesNew, allNodesForTypesNew, type, node);
-    } else {
-        processNode(allNodes, allNodesForTypes, type, node);
     }
 }
 
@@ -409,7 +382,7 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ve
             }
             info.ping = std::stoull(line.mid(spacePos2 + 1).toStdString());
 
-            addNode(type, info, false);
+            allNodesForTypes[type].emplace_back(info);
         }
     }
 
@@ -454,9 +427,9 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     if (found == allNodesForTypes.end()) {
         return {};
     }
-    const std::vector<std::reference_wrapper<NodeInfo>> &nodes = found->second;
+    const std::vector<NodeInfo> &nodes = found->second;
 
-    std::vector<std::reference_wrapper<NodeInfo>> filterNodes;
+    std::vector<NodeInfo> filterNodes;
     std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filterNodes), [](const NodeInfo &node) {
         return node.ping < MAX_PING.count();
     });
