@@ -348,7 +348,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
                 const PageInfo pageInfo = pagesMappings.find(text);
                 doProcessCommand(pageInfo);
             }
-        });
+        }, 2s);
     }
 }
 
