@@ -17,6 +17,9 @@ public:
     explicit ProxyClient(QObject *parent = nullptr);
     ~ProxyClient();
 
+public slots:
+    void stop();
+
 private slots:
     void onSrcDisconnected();
     void onSrcError(QAbstractSocket::SocketError socketError);

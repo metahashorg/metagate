@@ -12,10 +12,22 @@
 namespace proxy
 {
 
-const QByteArray error500("HTTP/1.0 500 Unable to connect\r\n"
+const QString error500("HTTP/1.0 500 Unable to connect\r\n"
                           "Content-Type: text/html\r\n"
+                          "Content-Length: %1\r\n"
                           "Connection: close\r\n"
                           "\r\n");
+
+const QByteArray error500Html("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+                                "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" "
+                                "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
+                                "<html>\n"
+                                "<head><title>500 Unable to connect</title></head>\n"
+                                "<body>\n"
+                                "<h1>Unable to connect</h1>\n"
+                                "<p>MetaGate was unable to connect to the remote web server.</p>\n"
+                                "</body>\n"
+                                "</html>\n");
 
 class ProxyClientPrivate
 {
@@ -42,6 +54,7 @@ public:
     static int reqOnHeaderField(http_parser *p, const char *at, size_t length);
     static int reqOnHeaderValue(http_parser *p, const char *at, size_t length);
     static int reqOnUrl(http_parser *p, const char *at, size_t length);
+    static int reqOnBody(http_parser *, const char *, size_t);
 
 
 //    static int respOnMessageBegin(http_parser* p);
@@ -62,7 +75,6 @@ public:
 //    http_parser_settings respSettings;
     ProxyClient *srcSocket = nullptr;
     QTcpSocket *socket = nullptr;
-    bool ce = false;
     Result result;
     QString host;
     int port;
@@ -83,6 +95,7 @@ ProxyClientPrivate::ProxyClientPrivate(ProxyClient *parent)
     reqSettings.on_header_field = reqOnHeaderField;
     reqSettings.on_header_value = reqOnHeaderValue;
     reqSettings.on_url = reqOnUrl;
+    reqSettings.on_body = reqOnBody;
 
 //    http_parser_init(&respParser, HTTP_RESPONSE);
 //    respParser.data = this;
@@ -126,7 +139,6 @@ void ProxyClientPrivate::startQuery(const QByteArray &method, const QUrl &url)
     port = u.port(80);
 
     if (method == QByteArrayLiteral("CONNECT")) {
-        ce = true;
         result = ConnectQuery;
         return;
     }
@@ -184,7 +196,9 @@ void ProxyClientPrivate::connectionEstablished()
 
 void ProxyClientPrivate::sendErrorPage()
 {
-
+    srcSocket->write(error500.arg(error500Html.size()).toLatin1());
+    srcSocket->write(error500Html);
+    srcSocket->flush();
 }
 
 int ProxyClientPrivate::reqOnMessageBegin(http_parser *p)
@@ -239,6 +253,11 @@ int ProxyClientPrivate::reqOnUrl(http_parser *p, const char *at, size_t length)
     QByteArray method(http_method_str((enum http_method)p->method));
     qDebug() << "on_url " << method << url;
     static_cast<ProxyClientPrivate *>(p->data)->startQuery(method, url);
+    return 0;
+}
+
+int ProxyClientPrivate::reqOnBody(http_parser *, const char *, size_t)
+{
     return 0;
 }
 
@@ -337,6 +356,11 @@ ProxyClient::ProxyClient(QObject *parent)
     connect(d->socket, &QIODevice::readyRead, this, &ProxyClient::onDestReadyRead);
 }
 
+void ProxyClient::stop()
+{
+    close();
+}
+
 ProxyClient::~ProxyClient() = default;
 
 void ProxyClient::onSrcDisconnected()
@@ -353,6 +377,7 @@ void ProxyClient::onSrcError(QAbstractSocket::SocketError socketError)
 void ProxyClient::onSrcReadyRead()
 {
     QByteArray data = readAll();
+    //qDebug() << data;
     if (d->result == ProxyClientPrivate::ConnectQuery) {
         // CONNECT established
         d->socket->write(data);
@@ -364,17 +389,22 @@ void ProxyClient::onSrcReadyRead()
         d->socket->connectToHost(d->host, d->port);
         if (!d->socket->waitForConnected()) {
             // error
+            d->sendErrorPage();
             return;
         }
         d->connectionEstablished();
     } else if (d->result == ProxyClientPrivate::NotConnected) {
         // error
+        d->sendErrorPage();
+        return;
     }
 }
 
 void ProxyClient::onDestDisconnected()
 {
     qDebug() << "DEST disconnected";
+    // error?
+    stop();
 }
 
 void ProxyClient::onDestError(QAbstractSocket::SocketError socketError)

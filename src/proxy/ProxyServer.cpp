@@ -35,6 +35,7 @@ void ProxyServer::start()
 void ProxyServer::stop()
 {
     close();
+    emit stopClient();
     emit listeningChanged(isListening());
 }
 
@@ -44,7 +45,12 @@ void ProxyServer::incomingConnection(qintptr socketDescriptor)
     QThread *thread = new QThread(this);
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     ProxyClient *client = new ProxyClient();
-    connect(client, &ProxyClient::destroyed, thread, &QThread::quit);
+    connect(this, &ProxyServer::stopClient, client, &ProxyClient::stop);
+    clients.append(client);
+    connect(client, &ProxyClient::destroyed, [thread, client, this]() {
+         thread->quit();
+         clients.removeAll(client);
+    });
     client->setSocketDescriptor(socketDescriptor);
     client->moveToThread(thread);
     thread->start();

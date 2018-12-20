@@ -6,6 +6,8 @@
 namespace proxy
 {
 
+class ProxyClient;
+
 class ProxyServer : public QTcpServer
 {
     Q_OBJECT
@@ -20,12 +22,14 @@ public:
 
 signals:
     void listeningChanged(bool s);
+    void stopClient();
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private:
     quint16 m_port;
+    QList<ProxyClient *> clients;
 };
 
 }
