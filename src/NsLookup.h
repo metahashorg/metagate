@@ -16,8 +16,26 @@
 #include "client.h"
 
 struct NodeType {
+    struct Node {
+        QString node;
+
+        Node() = default;
+
+        explicit Node(const QString &node)
+            : node(node)
+        {}
+
+        const QString &str() const {
+            return node;
+        }
+
+        bool operator< (const Node &second) const {
+            return this->node < second.node;
+        }
+    };
+
     QString type;
-    QString node;
+    Node node;
     QString port;
 };
 
@@ -89,15 +107,9 @@ private:
 
     size_t posInIpsTemp;
 
-    struct CmpNodeType {
-        bool operator()(const NodeType& a, const NodeType& b) const {
-            return a.node < b.node;
-        }
-    };
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
-    std::map<NodeType, std::vector<NodeInfo>, CmpNodeType> allNodesForTypes;
-
-    std::map<NodeType, std::vector<NodeInfo>, CmpNodeType> allNodesForTypesNew;
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
 
     mutable std::mutex nodeMutex;
 
