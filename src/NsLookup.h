@@ -44,8 +44,21 @@ struct NodeInfo {
 
     size_t ping;
 
+    bool isChecked = false;
+    bool isTimeout = false;
+
     bool operator< (const NodeInfo &second) const {
-        return this->ping < second.ping;
+        if (this->isTimeout) {
+            return false;
+        } else if (second.isTimeout) {
+            return true;
+        } else if (this->isChecked && !second.isChecked) {
+            return true;
+        } else if (!this->isChecked && second.isChecked) {
+            return false;
+        } else {
+            return this->ping < second.ping;
+        }
     }
 };
 
