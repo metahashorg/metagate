@@ -6,7 +6,8 @@ CONFIG += c++14
 INCLUDEPATH = ./ ./proxy
 INCLUDEPATH = ../src
 QMAKE_CFLAGS += -std=c99 -Wunused-parameter
-SOURCES  = main.cpp
+SOURCES  = main.cpp \
+    ProxyService.cpp
 
 SOURCES +=  ../src/proxy/http_parser.c
 
@@ -27,6 +28,7 @@ HEADERS += \
 #        ../src/btctx/Base58.h \
         \
         ../src/proxy/ProxyServer.h \
-        ../src/proxy/ProxyClient.h
+        ../src/proxy/ProxyClient.h \
+    ProxyService.h
 
 include(src/qtservice.pri)
