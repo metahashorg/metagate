@@ -160,6 +160,8 @@ private:
     QString prevTextCommandLine;
 
     bool lineEditUserChanged = false;
+
+    bool isSwitched = false;
 };
 
 #endif // MAINWINDOW_H

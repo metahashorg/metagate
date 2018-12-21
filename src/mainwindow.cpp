@@ -558,9 +558,12 @@ BEGIN_SLOT_WRAPPER
             }
             setUserName(DEFAULT_USERNAME);
         } else {
-            if (!currentFileIsEqual("apps.html")) {
-                loadFile("apps.html");
-                addElementToHistoryAndCommandLine("app://apps", true, true);
+            if (!isSwitched) {
+                if (!currentFileIsEqual("apps.html")) {
+                    loadFile("apps.html");
+                    addElementToHistoryAndCommandLine("app://apps", true, true);
+                }
+                isSwitched = true;
             }
             setUserName(login);
         }
