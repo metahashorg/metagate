@@ -208,25 +208,31 @@ void MainWindow::configureMenu() {
     registerCommandLine();
 
     CHECK(connect(ui->backButton, &QToolButton::pressed, [this] {
+        BEGIN_SLOT_WRAPPER
         historyPos--;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
+        END_SLOT_WRAPPER;
     }), "not connect backButton::pressed");
     ui->backButton->setEnabled(false);
 
     CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         historyPos++;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
+        END_SLOT_WRAPPER
     }), "not connect forwardButton::pressed");
     ui->forwardButton->setEnabled(false);
 
     CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect refreshButton::pressed");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Settings");
+        END_SLOT_WRAPPER
     }), "not connect userButton::pressed");
 
     /*CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
@@ -234,32 +240,46 @@ void MainWindow::configureMenu() {
     }), "not connect buyButton::pressed");*/
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Wallet");
+        END_SLOT_WRAPPER
     }), "not connect metaWalletButton::pressed");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("MetaApps");
+        END_SLOT_WRAPPER
     }), "not connect metaAppsButton::pressed");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
+        BEGIN_SLOT_WRAPPER
         countFocusLineEditChanged++;
+        END_SLOT_WRAPPER
     }), "Not connect editingFinished");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        BEGIN_SLOT_WRAPPER
         lineEditUserChanged = true;
         emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
+        END_SLOT_WRAPPER
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
+        BEGIN_SLOT_WRAPPER
         if (!lineEditUserChanged) {
             emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
         }
+        END_SLOT_WRAPPER
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+        BEGIN_SLOT_WRAPPER
         emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
+        END_SLOT_WRAPPER
     }), "Not connect returnPressed");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
+        BEGIN_SLOT_WRAPPER
         lineEditUserChanged = false;
+        END_SLOT_WRAPPER
     }), "Not connect textChanged");
 }
 
