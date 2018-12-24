@@ -37,16 +37,20 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(&m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong), "not connect onPong");
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
     CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
+        BEGIN_SLOT_WRAPPER
         LOG << "Wss client disconnected";
         m_webSocket.close();
         if (!isStopped) {
             QTimer::singleShot(milliseconds(10s).count(), this, SLOT(onStarted()));
         }
         isConnected = false;
+        END_SLOT_WRAPPER
     }), "not connect disconnected");
     CHECK(connect(&thread1, &QThread::finished, [this]{
+        BEGIN_SLOT_WRAPPER
         LOG << "Wss client finished";
         m_webSocket.close();
+        END_SLOT_WRAPPER
     }), "not connect finished");
 
     CHECK(connect(this, &WebSocketClient::timerEvent, this, &WebSocketClient::onTimerEvent), "not connect onTimerEvent");
