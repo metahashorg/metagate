@@ -294,7 +294,11 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
         const bool res = privateKey.Validate(prng, 1);
         CHECK_TYPED(res, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect private key");
     } catch (const std::exception &e) {
-        throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
+        if (std::string(e.what()).find("PEM_Decrypt: invalid PKCS #7 block padding found") != std::string::npos) {
+            throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
+        } else {
+            throwErrTyped(TypeErrors::PRIVATE_KEY_ERROR, std::string("Dont load private key. Possibly file corrupted. ") + e.what());
+        }
     }
 
     const std::string pubKeyElements = getPublicKeyElements(privateKey);

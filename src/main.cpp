@@ -59,6 +59,8 @@ QString getUrlToWss() {
     return settings.value("web_socket/meta_online").toString();
 }
 
+#include "Wallet.h"
+
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
     signal(SIGSEGV, crash_handler);
