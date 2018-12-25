@@ -581,7 +581,7 @@ BEGIN_SLOT_WRAPPER
             if (!isSwitched) {
                 if (!currentFileIsEqual("apps.html")) {
                     loadFile("apps.html");
-                    addElementToHistoryAndCommandLine("app://apps", true, true);
+                    addElementToHistoryAndCommandLine("app://MetaApps", true, true);
                 }
                 isSwitched = true;
             }
