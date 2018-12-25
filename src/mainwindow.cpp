@@ -84,9 +84,14 @@ MainWindow::MainWindow(
     configureMenu();
 
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
-    const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
-    LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
-    pagesMappings.setMappings(QString::fromStdString(contentMappings));
+    const QString routesFile = makePath(lastHtmls.fullPath, "core/routes.json");
+    if (isExistFile(routesFile)) {
+        const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
+        LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
+        pagesMappings.setMappings(QString::fromStdString(contentMappings));
+    } else {
+        LOG << "Warning: routes file not found";
+    }
 
     loadFile("core/loader/index.html");
 
@@ -580,6 +585,7 @@ BEGIN_SLOT_WRAPPER
                 addElementToHistoryAndCommandLine("app://Login", true, true);
             }
             setUserName(DEFAULT_USERNAME);
+            isSwitched = true;
         } else {
             if (!isSwitched) {
                 if (!currentFileIsEqual("apps.html")) {
