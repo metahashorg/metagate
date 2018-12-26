@@ -402,6 +402,10 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
     LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
     Opt<std::string> signature2;
@@ -490,6 +494,10 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
@@ -511,6 +519,10 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
     LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
 
     const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
