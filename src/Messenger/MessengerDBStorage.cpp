@@ -29,8 +29,8 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
     DbId contactid = -1;
     DbId channelid = -1;
     // ignore duser if channelSha is not null (channel message)
-    if (channelSha.isNull()) {
-        CHECK(!duser.isNull(), "No contact or channel");
+    if (channelSha.isEmpty()) {
+        CHECK(!duser.isEmpty(), "No contact or channel");
         contactid = getContactId(duser);
     } else {
         channelid = getChannelForUserShaName(user, channelSha);
