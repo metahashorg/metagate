@@ -402,5 +402,13 @@ Q_INVOKABLE void metaOnline();
 # Result returns to the function:
 onlineResultJs(jsonResult, errorNum, errorMessage);
 
+Q_INVOKABLE void getAppModules(const QString requestId);
+# Возвращает состояния модулей
+# Result returns to the function:
+getAppModulesResultJs(requestId, jsonResult, errorNum, errorMessage);
+# result в виде
+# [{"module":"proxy","state":"found"}]
+# state == wait, not_found, found
+
 ```
 

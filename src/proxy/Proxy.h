@@ -73,6 +73,12 @@ public:
     using PortMappingCallback = std::function<void(const PortMappingResult &res, const TypedException &exception)>;
 
 public:
+
+    static std::string moduleName() {
+        return "proxy";
+    }
+
+public:
     explicit Proxy(ProxyJavascript &javascriptWrapper, QObject *parent = nullptr);
     ~Proxy();
 

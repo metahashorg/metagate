@@ -44,6 +44,7 @@
 #include "proxy/Proxy.h"
 #include "proxy/ProxyJavascript.h"
 
+#include "Module.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -95,6 +96,7 @@ int main(int argc, char *argv[]) {
         InitOpenSSL();
         initializeAllPaths();
         initializeMachineUid();
+        initModules();
 
         /*tests2();
         return 0;*/
@@ -129,8 +131,10 @@ int main(int argc, char *argv[]) {
         transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
         transactionsManager.start();
 
+        addModule(proxy::Proxy::moduleName());
         proxy::ProxyJavascript proxyJavascript;
         proxy::Proxy proxyManager(proxyJavascript);
+        changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
 
         WebSocketClient webSocketClient(getUrlToWss());
         webSocketClient.start();

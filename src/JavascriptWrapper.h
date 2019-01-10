@@ -212,6 +212,8 @@ public slots:
 
     Q_INVOKABLE void metaOnline();
 
+    Q_INVOKABLE void getAppModules(const QString requestId);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);

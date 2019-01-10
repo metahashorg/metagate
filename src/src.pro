@@ -69,7 +69,8 @@ SOURCES += main.cpp mainwindow.cpp \
     proxy/ProxyJavascript.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
-    machine_uid.cpp
+    machine_uid.cpp \
+    Module.cpp
 
 # C code
 SOURCES +=  proxy/http_parser.c
@@ -149,6 +150,7 @@ HEADERS += mainwindow.h \
     proxy/ProxyJavascript.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
+    Module.h
 
 FORMS += mainwindow.ui
 
