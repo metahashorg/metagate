@@ -1,15 +1,14 @@
 Messenger регестрируется в javascript по имени messenger
 
-Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-Установить путь расположения кошельков (аналогичен setPath в mainwindow)
-Результат вернется в функцию
-setMessengerPathsJs("Ok", errorNum, errorMessage)
-
 Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
 Разблокировать кошелек на заданное время. При новой разблокировке старый кошелек блокируется
+Результат вернется в функцию
+msgUnlockWalletResultJs(address, errorNum, errorMessage)
 
 Q_INVOKABLE void lockWallet();
 Заблокировать разблокированный кошелек
+Результат вернется в функцию
+msgLockWalletResultJs(errorNum, errorMessage)
 
 
 Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);

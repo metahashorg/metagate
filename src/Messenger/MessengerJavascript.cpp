@@ -845,31 +845,30 @@ void MessengerJavascript::setPathsImpl(QString newPatch, QString /*newUserName*/
     CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 }
 
-void MessengerJavascript::setPaths(QString newPatch, QString newUserName) {
+void MessengerJavascript::unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds) {
 BEGIN_SLOT_WRAPPER
-    /*const QString JS_NAME_RESULT = "setMessengerPathsJs";
-    QString result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        setPathsImpl(newPatch, newUserName);
+    const QString JS_NAME_RESULT = "msgUnlockWalletResultJs";
 
-        result = "Ok";
+    LOG << "Unlock wallet " << address << " Wallet path " << walletPath;
+    const TypedException exception = apiVrapper2([&, this](){
+        walletManager.unlockWallet(walletPath, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), seconds(timeSeconds));
     });
 
-    if (exception.isSet()) {
-        result = "Not ok";
-    }
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);*/
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds) {
-    LOG << "Unlock wallet " << address << " Wallet path " << walletPath;
-    walletManager.unlockWallet(walletPath, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), seconds(timeSeconds));
-}
-
 void MessengerJavascript::lockWallet() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgLockWalletResultJs";
+
     LOG << "lock wallets";
-    walletManager.lockWallet();
+    const TypedException exception = apiVrapper2([&, this](){
+        walletManager.lockWallet();
+    });
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
+END_SLOT_WRAPPER
 }
 
 void MessengerJavascript::runJs(const QString &script) {

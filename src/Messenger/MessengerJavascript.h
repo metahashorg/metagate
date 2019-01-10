@@ -112,8 +112,6 @@ public slots:
     Q_INVOKABLE void getHistoryAddressChannelCount(QString address, QString titleSha, QString count, QString to);
 
 
-    Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-
     Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
 
     Q_INVOKABLE void lockWallet();

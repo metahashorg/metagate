@@ -111,9 +111,6 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
-        dbMessenger.init();*/
-
         auth::AuthJavascript authJavascript;
         auth::Auth authManager(authJavascript);
         authManager.start();
@@ -133,9 +130,11 @@ int main(int argc, char *argv[]) {
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
-        /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
+        messenger::MessengerDBStorage dbMessenger(getDbPath());
+        dbMessenger.init();
+        messenger::Messenger messenger(messengerJavascript, dbMessenger);
         messenger.start();
-        messengerJavascript.setMessenger(messenger);*/
+        messengerJavascript.setMessenger(messenger);
 
         MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
         mainWindow.showExpanded();
