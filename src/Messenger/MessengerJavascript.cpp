@@ -52,25 +52,16 @@ void MessengerJavascript::makeAndRunJsFuncParams(const QString &function, const 
     runJs(res);
 }
 
-static QJsonDocument messagesToJson(const std::vector<Message> &messages, const WalletRsa &walletRsa) {
+static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
     QJsonArray messagesArrJson;
     for (const Message &message: messages) {
         QJsonObject messageJson;
 
-        const bool isEncrypted = !message.isChannel;
-
         messageJson.insert("collocutor", message.collocutor);
         messageJson.insert("isInput", message.isInput);
         messageJson.insert("timestamp", QString::fromStdString(std::to_string(message.timestamp)));
-        if (!isEncrypted) {
-            messageJson.insert("data", message.data);
-        } else {
-            if (message.isCanDecrypted) {
-                const std::string decryptedData = toHex(walletRsa.decryptMessage(message.data.toStdString()));
-                messageJson.insert("data", QString::fromStdString(decryptedData));
-            }
-        }
-        messageJson.insert("isDecrypter", message.isCanDecrypted || !isEncrypted);
+        messageJson.insert("data", message.decryptedData);
+        messageJson.insert("isDecrypter", message.isDecrypted);
         messageJson.insert("counter", QString::fromStdString(std::to_string(message.counter)));
         messageJson.insert("fee", QString::fromStdString(std::to_string(message.fee)));
         messageJson.insert("isConfirmed", message.isConfirmed);
@@ -81,6 +72,27 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages, const 
         messagesArrJson.push_back(messageJson);
     }
     return QJsonDocument(messagesArrJson);
+}
+
+static std::vector<Message> decryptMessages(const std::vector<Message> &messages, const WalletRsa &walletRsa) {
+    std::vector<Message> result;
+    result.reserve(messages.size());
+    std::transform(messages.begin(), messages.end(), std::back_inserter(result), [&walletRsa](const Message &message) {
+        Message result = message;
+        const bool isEncrypted = !result.isChannel;
+        if (!isEncrypted) {
+            result.decryptedData = result.data;
+            result.isDecrypted = true;
+        } else {
+            if (result.isCanDecrypted) {
+                const std::string decryptedData = toHex(walletRsa.decryptMessage(result.data.toStdString()));
+                result.decryptedData = QString::fromStdString(decryptedData);
+                result.isDecrypted = true;
+            }
+        }
+        return result;
+    });
+    return result;
 }
 
 static QJsonDocument channelListToJson(const std::vector<ChannelInfo> &channels) {
@@ -137,7 +149,8 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messages " << address << " " << messages.size();
-                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
+                const std::vector<Message> &decryptedMessages = decryptMessages(messages, walletManager.getWalletRsa(address.toStdString()));
+                result = messagesToJson(decryptedMessages);
             });
             makeFunc(exception2, address, result);
         });
@@ -176,7 +189,8 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messages " << address << " " << collocutor << " " << messages.size();
-                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
+                const std::vector<Message> &decryptedMessages = decryptMessages(messages, walletManager.getWalletRsa(address.toStdString()));
+                result = messagesToJson(decryptedMessages);
             });
             makeFunc(exception2, address, collocutor, result);
         });
@@ -215,7 +229,8 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messagesC " << address << " " << collocutor << " " << messages.size();
-                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
+                const std::vector<Message> &decryptedMessages = decryptMessages(messages, walletManager.getWalletRsa(address.toStdString()));
+                result = messagesToJson(decryptedMessages);
             });
             makeFunc(exception2, address, collocutor, result);
         });
@@ -747,7 +762,8 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messages " << address << " " << titleSha << " " << messages.size();
-                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
+                const std::vector<Message> &decryptedMessages = decryptMessages(messages, walletManager.getWalletRsa(address.toStdString()));
+                result = messagesToJson(decryptedMessages);
             });
             makeFunc(exception2, address, titleSha, result);
         });
@@ -786,7 +802,8 @@ BEGIN_SLOT_WRAPPER
                 }
 
                 LOG << "Count messagesC " << address << " " << titleSha << " " << messages.size();
-                result = messagesToJson(messages, walletManager.getWalletRsa(address.toStdString()));
+                const std::vector<Message> &decryptedMessages = decryptMessages(messages, walletManager.getWalletRsa(address.toStdString()));
+                result = messagesToJson(decryptedMessages);
             });
             makeFunc(exception2, address, titleSha, result);
         });
