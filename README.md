@@ -403,7 +403,7 @@ Q_INVOKABLE void metaOnline();
 onlineResultJs(jsonResult, errorNum, errorMessage);
 
 Q_INVOKABLE void getAppModules(const QString requestId);
-# Возвращает состояния модулей
+# Возвращает список модулей
 # Result returns to the function:
 getAppModulesResultJs(requestId, jsonResult, errorNum, errorMessage);
 # result в виде
