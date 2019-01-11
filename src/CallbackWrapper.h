@@ -58,6 +58,11 @@ public:
         }
     }
 
+    template<typename ...Args>
+    void operator() (const TypedException &exception, Args ...args) const {
+        emitFunc(exception, std::forward<Args>(args)...);
+    }
+
 private:
 
     Callback callback;

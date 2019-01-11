@@ -466,7 +466,7 @@ BEGIN_SLOT_WRAPPER
     const QString currPubkey = db.getUserPublicKey(address);
     const bool isNew = currPubkey.isEmpty();
     if (!isNew && !isForcibly) {
-        callback(isNew, TypedException());
+        callback.emitFunc(TypedException(), isNew);
         return;
     }
     const size_t idRequest = id.get();
@@ -476,7 +476,7 @@ BEGIN_SLOT_WRAPPER
             LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
             db.setUserPublicKey(address, pubkeyAddressHex);
         }
-        emit javascriptWrapper.callbackCall(std::bind(callback, isNew, exception));
+        callback.emitFunc(exception, isNew);
     };
     callbacks[idRequest] = std::make_pair(callbackWrap, true);
     emit wssClient.sendMessage(message);
@@ -515,12 +515,12 @@ BEGIN_SLOT_WRAPPER
     const QString currSign = db.getUserSignatures(address);
     const bool isNew = currSign.isEmpty();
     if (!isNew && !isForcibly) {
-        callback(isNew, TypedException());
+        callback.emitFunc(TypedException(), isNew);
         return;
     }
     const size_t idRequest = id.get();
     const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::make_pair(std::bind(callback, isNew, _1), false);
+    callbacks[idRequest] = std::make_pair(std::bind(callback, _1, isNew), false);
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -533,7 +533,7 @@ BEGIN_SLOT_WRAPPER
         CHECK_TYPED(!pubkey.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "Collocutor pubkey not found " + address.toStdString());
         LOG << "Publickey found " << address << " " << pubkey;
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, pubkey, exception));
+    callback.emitFunc(exception, pubkey);
 END_SLOT_WRAPPER
 }
 
@@ -566,7 +566,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         lastCounter = db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
+    callback.emitFunc(exception, lastCounter);
 END_SLOT_WRAPPER
 }
 
@@ -580,7 +580,7 @@ BEGIN_SLOT_WRAPPER
             pos = db.getLastReadCountersForContacts(address);
         }
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, pos, exception));
+    callback.emitFunc(exception, pos);
 END_SLOT_WRAPPER
 }
 
@@ -602,7 +602,7 @@ BEGIN_SLOT_WRAPPER
         }
         lastCounter = db.getMessageMaxCounter(address, channel);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
+    callback.emitFunc(exception, lastCounter);
 END_SLOT_WRAPPER
 }
 
@@ -612,7 +612,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         lastCounter = db.getMessagesCountForUserAndDest(address, collocutor, from);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, lastCounter, exception));
+    callback.emitFunc(exception, lastCounter);
 END_SLOT_WRAPPER
 }
 
@@ -622,7 +622,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         messages = db.getMessagesForUser(address, from, to);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
+    callback.emitFunc(exception, messages);
 END_SLOT_WRAPPER
 }
 
@@ -632,7 +632,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         messages = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to, isChannel);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
+    callback.emitFunc(exception, messages);
 END_SLOT_WRAPPER
 }
 
@@ -642,7 +642,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         messages = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count, isChannel);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, messages, exception));
+    callback.emitFunc(exception, messages);
 END_SLOT_WRAPPER
 }
 
@@ -687,7 +687,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         channels = db.getChannelsWithLastReadCounters(address);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, channels, exception));
+    callback.emitFunc(exception, channels);
 END_SLOT_WRAPPER
 }
 

@@ -9,6 +9,8 @@
 #include "RequestId.h"
 #include "Message.h"
 
+#include "CallbackWrapper.h"
+
 #include <map>
 #include <unordered_map>
 #include <functional>
@@ -61,33 +63,33 @@ private:
 
 public:
 
-    using GetMessagesCallback = std::function<void(const std::vector<Message> &messages, const TypedException &exception)>;
+    using GetMessagesCallback = CallbackWrapper<std::function<void(const std::vector<Message> &messages)>>;
 
-    using SavePosCallback = std::function<void(const TypedException &exception)>;
+    using SavePosCallback = CallbackWrapper<std::function<void()>>;
 
-    using GetSavedPosCallback = std::function<void(const Message::Counter &pos, const TypedException &exception)>;
+    using GetSavedPosCallback = CallbackWrapper<std::function<void(const Message::Counter &pos)>>;
 
-    using GetSavedsPosCallback = std::function<void(const std::vector<std::pair<QString, Message::Counter>> &pos, const TypedException &exception)>;
+    using GetSavedsPosCallback = CallbackWrapper<std::function<void(const std::vector<std::pair<QString, Message::Counter>> &pos)>>;
 
-    using RegisterAddressCallback = std::function<void(bool isNew, const TypedException &exception)>;
+    using RegisterAddressCallback = CallbackWrapper<std::function<void(bool isNew)>>;
 
-    using SignedStringsCallback = std::function<void(const TypedException &exception)>;
+    using SignedStringsCallback = CallbackWrapper<std::function<void()>>;
 
-    using SavePubkeyCallback = std::function<void(bool isNew, const TypedException &exception)>;
+    using SavePubkeyCallback = CallbackWrapper<std::function<void(bool isNew)>>;
 
-    using GetPubkeyAddressCallback = std::function<void(const QString &pubkey, const TypedException &exception)>;
+    using GetPubkeyAddressCallback = CallbackWrapper<std::function<void(const QString &pubkey)>>;
 
-    using SendMessageCallback = std::function<void(const TypedException &exception)>;
+    using SendMessageCallback = CallbackWrapper<std::function<void()>>;
 
-    using GetCountMessagesCallback = std::function<void(const Message::Counter &count, const TypedException &exception)>;
+    using GetCountMessagesCallback = CallbackWrapper<std::function<void(const Message::Counter &count)>>;
 
-    using CreateChannelCallback = std::function<void(const TypedException &exception)>;
+    using CreateChannelCallback = CallbackWrapper<std::function<void()>>;
 
-    using AddWriterToChannelCallback = std::function<void(const TypedException &exception)>;
+    using AddWriterToChannelCallback = CallbackWrapper<std::function<void()>>;
 
-    using DelWriterToChannelCallback = std::function<void(const TypedException &exception)>;
+    using DelWriterToChannelCallback = CallbackWrapper<std::function<void()>>;
 
-    using GetChannelListCallback = std::function<void(const std::vector<ChannelInfo> &channels, const TypedException &exception)>;
+    using GetChannelListCallback = CallbackWrapper<std::function<void(const std::vector<ChannelInfo> &channels)>>;
 
 public:
 
