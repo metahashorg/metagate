@@ -139,6 +139,8 @@ private:
 
     QString defaultUserName;
 
+    std::function<void(const std::function<void()> &callback)> signalFunc;
+
 };
 
 }

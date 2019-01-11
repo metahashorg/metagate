@@ -134,7 +134,8 @@ HEADERS += mainwindow.h \
     duration.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
-    Messenger/CryptographicManager.h
+    Messenger/CryptographicManager.h \
+    CallbackWrapper.h
 
 FORMS += mainwindow.ui
 

@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include "TimerClass.h"
+#include "CallbackWrapper.h"
 
 #include "Message.h"
 
@@ -26,57 +27,55 @@ public:
 
 public:
 
-    using SignalFunc = std::function<void(const std::function<void()> &callback)>;
+    using DecryptMessagesCallback = CallbackWrapper<std::function<void(const std::vector<Message> &messages)>>;
 
-    using DecryptMessagesCallback = std::function<void(const std::vector<Message> &messages, const TypedException &exception)>;
+    using SignMessageCallback = CallbackWrapper<std::function<void(const QString &pubkey, const QString &sign)>>;
 
-    using SignMessageCallback = std::function<void(const QString &pubkey, const QString &sign, const TypedException &exception)>;
+    using SignMessagesCallback = CallbackWrapper<std::function<void(const QString &pubkey, const std::vector<QString> &sign)>>;
 
-    using SignMessagesCallback = std::function<void(const QString &pubkey, const std::vector<QString> &sign, const TypedException &exception)>;
+    using GetPubkeyRsaCallback = CallbackWrapper<std::function<void(const QString &pubkeyRsa)>>;
 
-    using GetPubkeyRsaCallback = std::function<void(const QString &pubkeyRsa, const TypedException &exception)>;
+    using EncryptMessageCallback = CallbackWrapper<std::function<void(const QString &encryptedData)>>;
 
-    using EncryptMessageCallback = std::function<void(const QString &encryptedData, const TypedException &exception)>;
+    using UnlockWalletCallback = CallbackWrapper<std::function<void()>>;
 
-    using UnlockWalletCallback = std::function<void(const TypedException &exception)>;
-
-    using LockWalletCallback = std::function<void(const TypedException &exception)>;
+    using LockWalletCallback = CallbackWrapper<std::function<void()>>;
 
 signals:
 
-    void decryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback, const SignalFunc &signalFunc);
+    void decryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
 
-    void signMessage(const QString &address, const QString &message, const SignMessageCallback &callback, const SignalFunc &signalFunc);
+    void signMessage(const QString &address, const QString &message, const SignMessageCallback &callback);
 
-    void signMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback, const SignalFunc &signalFunc);
+    void signMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback);
 
-    void getPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback, const SignalFunc &signalFunc);
+    void getPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback);
 
-    void encryptDataRsa(const QString &dataHex, const QString &pubkeyDest, const EncryptMessageCallback &callback, const SignalFunc &signalFunc);
+    void encryptDataRsa(const QString &dataHex, const QString &pubkeyDest, const EncryptMessageCallback &callback);
 
-    void encryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback, const SignalFunc &signalFunc);
+    void encryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback);
 
-    void unlockWallet(const QString &folder, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_, const UnlockWalletCallback &callback, const SignalFunc &signalFunc);
+    void unlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
 
-    void lockWallet(const LockWalletCallback &callback, const SignalFunc &signalFunc);
+    void lockWallet(const LockWalletCallback &callback);
 
 private slots:
 
-    void onDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback, const SignalFunc &signalFunc);
+    void onDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
 
-    void onSignMessage(const QString &address, const QString &message, const SignMessageCallback &callback, const SignalFunc &signalFunc);
+    void onSignMessage(const QString &address, const QString &message, const SignMessageCallback &callback);
 
-    void onSignMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback, const SignalFunc &signalFunc);
+    void onSignMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback);
 
-    void onGetPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback, const SignalFunc &signalFunc);
+    void onGetPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback);
 
-    void onEncryptDataRsa(const QString &dataHex, const QString &pubkeyDest, const EncryptMessageCallback &callback, const SignalFunc &signalFunc);
+    void onEncryptDataRsa(const QString &dataHex, const QString &pubkeyDest, const EncryptMessageCallback &callback);
 
-    void onEncryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback, const SignalFunc &signalFunc);
+    void onEncryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback);
 
-    void onUnlockWallet(const QString &folder, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_, const UnlockWalletCallback &callback, const SignalFunc &signalFunc);
+    void onUnlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
 
-    void onLockWallet(const LockWalletCallback &callback, const SignalFunc &signalFunc);
+    void onLockWallet(const LockWalletCallback &callback);
 
 private slots:
 
