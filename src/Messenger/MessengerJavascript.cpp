@@ -130,11 +130,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field incorrect");
 
         emit messenger->getHistoryAddress(address, fromC, toC, [this, address, makeFunc, errorFunc](const std::vector<Message> &messages, const TypedException &exception) {
-            const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
-                    throw exception;
-                }
-
+            const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 LOG << "Count messages " << address << " " << messages.size();
                 emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, makeFunc](const std::vector<Message> &messages){
                     makeFunc(TypedException(), address, messagesToJson(messages));
@@ -176,11 +172,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field incorrect");
 
         emit messenger->getHistoryAddressAddress(address, false, collocutor, fromC, toC, [this, address, collocutor, makeFunc, errorFunc](const std::vector<Message> &messages, const TypedException &exception) {
-            const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
-                    throw exception;
-                }
-
+            const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 LOG << "Count messages " << address << " " << collocutor << " " << messages.size();
                 emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, collocutor, makeFunc](const std::vector<Message> &messages){
                     makeFunc(TypedException(), address, collocutor, messagesToJson(messages));
@@ -222,11 +214,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field incorrect");
 
         emit messenger->getHistoryAddressAddressCount(address, false, collocutor, countC, toC, [this, address, collocutor, makeFunc, errorFunc](const std::vector<Message> &messages, const TypedException &exception) {
-            const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
-                    throw exception;
-                }
-
+            const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 LOG << "Count messagesC " << address << " " << collocutor << " " << messages.size();
                 emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, collocutor, makeFunc](const std::vector<Message> &messages){
                     makeFunc(TypedException(), address, collocutor, messagesToJson(messages));
@@ -362,11 +350,7 @@ BEGIN_SLOT_WRAPPER
         const uint64_t timestamp = timestampStr.toULongLong(&isValid);
         CHECK(isValid, "timestamp field incorrect");
         emit messenger->getPubkeyAddress(collocutor, [this, makeFunc, errorFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey, const TypedException &exception) mutable {
-            const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
-                    throw exception;
-                }
-
+            const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 emit cryptoManager.encryptDataRsa(dataHex, pubkey, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex](const QString &encryptedDataToWss) {
                     const TypedException exception2 = apiVrapper2([&, this](){
                         const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee, timestamp);
@@ -801,11 +785,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field invalid");
         emit messenger->getHistoryAddressAddress(address, true, titleSha, fromC, toC, [this, makeFunc, address, titleSha, errorFunc](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
-            const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
-                    throw exception;
-                }
-
+            const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 LOG << "Count messages " << address << " " << titleSha << " " << messages.size();
                 emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, titleSha, makeFunc](const std::vector<Message> &messages){
                     makeFunc(TypedException(), address, titleSha, messagesToJson(messages));
@@ -846,11 +826,7 @@ BEGIN_SLOT_WRAPPER
 
         emit messenger->getHistoryAddressAddressCount(address, true, titleSha, countC, toC, [this, makeFunc, errorFunc, address, titleSha](const std::vector<Message> &messages, const TypedException &exception) {
             QJsonDocument result;
-            const TypedException exception2 = apiVrapper2([&, this](){
-                if (exception.isSet()) {
-                    throw exception;
-                }
-
+            const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 LOG << "Count messagesC " << address << " " << titleSha << " " << messages.size();
                 emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, titleSha, makeFunc](const std::vector<Message> &messages){
                     makeFunc(TypedException(), address, titleSha, messagesToJson(messages));

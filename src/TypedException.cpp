@@ -21,3 +21,10 @@ TypedException apiVrapper2(const std::function<void()> &func) {
         return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
     }
 }
+
+TypedException apiVrapper2(const TypedException &exception, const std::function<void()> &func) {
+    if (exception.isSet()) {
+        return exception;
+    }
+    return apiVrapper2(func);
+}
