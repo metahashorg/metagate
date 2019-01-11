@@ -253,39 +253,29 @@ BEGIN_SLOT_WRAPPER
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field incorrect");
         emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc](const QString &pubkeyRsa){
-            const TypedException exception2 = apiVrapper2([&](){
-                const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
-                emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
-                    const TypedException exception2 = apiVrapper2([&](){
-                        emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, [this, address, isForcibly, makeFunc, errorFunc](bool isNew, const TypedException &exception) mutable {
-                            const TypedException exception2 = apiVrapper2([&, this](){
-                                if (exception.isSet() && !isForcibly) {
-                                    throw exception;
-                                }
+            const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
+            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
+                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, [this, address, isForcibly, makeFunc, errorFunc](bool isNew, const TypedException &exception) mutable {
+                    const TypedException exception2 = apiVrapper2([&, this](){
+                        if (exception.isSet() && !isForcibly) {
+                            throw exception;
+                        }
 
-                                if (isNew || isForcibly) {
-                                    const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-                                    emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc](const QString &pubkey, const std::vector<QString> &sign){
-                                        emit messenger->signedStrings(address, sign, [this, address, makeFunc](const TypedException &exception){
-                                            LOG << "Address registered " << address;
-                                            makeFunc(exception, QString("Ok"));
-                                        });
-                                    }, errorFunc, signalFunc));
-                                }
-                            });
-                            if (exception2.isSet()) {
-                                makeFunc(exception2, QString("Not ok"));
-                            }
-                        });
+                        if (isNew || isForcibly) {
+                            const std::vector<QString> messagesForSign = Messenger::stringsForSign();
+                            emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc](const QString &pubkey, const std::vector<QString> &sign){
+                                emit messenger->signedStrings(address, sign, [this, address, makeFunc](const TypedException &exception){
+                                    LOG << "Address registered " << address;
+                                    makeFunc(exception, QString("Ok"));
+                                });
+                            }, errorFunc, signalFunc));
+                        }
                     });
                     if (exception2.isSet()) {
                         makeFunc(exception2, QString("Not ok"));
                     }
-                }, errorFunc, signalFunc));
-            });
-            if (exception2.isSet()) {
-                makeFunc(exception2, QString("Not ok"));
-            }
+                });
+            }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
     });
 
@@ -352,25 +342,15 @@ BEGIN_SLOT_WRAPPER
         emit messenger->getPubkeyAddress(collocutor, [this, makeFunc, errorFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey, const TypedException &exception) mutable {
             const TypedException exception2 = apiVrapper2(exception, [&, this](){
                 emit cryptoManager.encryptDataRsa(dataHex, pubkey, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex](const QString &encryptedDataToWss) {
-                    const TypedException exception2 = apiVrapper2([&, this](){
-                        const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee, timestamp);
-                        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &pubkey, const QString &sign) {
-                            const TypedException exception2 = apiVrapper2([&, this](){
-                                emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, encryptedDataToWss, pubkey, sign](const QString &encryptedDataToBd) {
-                                    emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, pubkey, sign, fee, timestamp, encryptedDataToBd, [this, makeFunc, address, collocutor](const TypedException &exception) {
-                                        LOG << "Message sended " << address << " " << collocutor;
-                                        makeFunc(exception, address, collocutor);
-                                    });
-                                }, errorFunc, signalFunc));
+                    const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee, timestamp);
+                    emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &pubkey, const QString &sign) {
+                        emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, encryptedDataToWss, pubkey, sign](const QString &encryptedDataToBd) {
+                            emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, pubkey, sign, fee, timestamp, encryptedDataToBd, [this, makeFunc, address, collocutor](const TypedException &exception) {
+                                LOG << "Message sended " << address << " " << collocutor;
+                                makeFunc(exception, address, collocutor);
                             });
-                            if (exception2.isSet()) {
-                                makeFunc(exception2, address, collocutor);
-                            }
                         }, errorFunc, signalFunc));
-                    });
-                    if (exception2.isSet()) {
-                        makeFunc(exception2, address, collocutor);
-                    }
+                    }, errorFunc, signalFunc));
                 }, errorFunc, signalFunc));
             });
             if (exception2.isSet()) {

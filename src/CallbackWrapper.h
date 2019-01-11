@@ -15,12 +15,27 @@ public:
 
     using ErrorCallback = std::function<void(const TypedException &exception)>;
 
+private:
+
+    static Callback makeWrapCallback(bool isWrapError, const Callback &callback, const ErrorCallback &errorCallback) {
+        if (isWrapError) {
+            return [callback, errorCallback](auto ...args) {
+                const TypedException exception = apiVrapper2(std::bind(callback, args...));
+                if (exception.isSet()) {
+                    errorCallback(exception);
+                }
+            };
+        } else {
+            return callback;
+        }
+    }
+
 public:
 
     CallbackWrapper() = default;
 
-    CallbackWrapper(const Callback &callback, const ErrorCallback &errorCallback, const SignalFunc &signal)
-        : callback(callback)
+    CallbackWrapper(const Callback &callback, const ErrorCallback &errorCallback, const SignalFunc &signal, bool isWrapError=true)
+        : callback(makeWrapCallback(isWrapError, callback, errorCallback))
         , errorCallback(errorCallback)
         , signal(signal)
     {}
