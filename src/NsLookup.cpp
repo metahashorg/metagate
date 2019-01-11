@@ -184,7 +184,7 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
     const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
 
     LOG << "dns ok " << node.type << ". " << packet.answers().size();
-    CHECK(!packet.answers().empty(), "Empty dns response");
+    CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(data.begin(), data.begin() + size)));
 
     std::vector<QString> result;
     for (const auto &record : packet.answers()) {
