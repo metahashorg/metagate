@@ -36,6 +36,7 @@
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/MessengerDBStorage.h"
+#include "Messenger/CryptographicManager.h"
 
 #include "transactions/Transactions.h"
 #include "transactions/TransactionsJavascript.h"
@@ -129,7 +130,9 @@ int main(int argc, char *argv[]) {
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
-        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
+        messenger::CryptographicManager messengerCryptManager;
+        messengerCryptManager.start();
+        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
         messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();
         messenger::Messenger messenger(messengerJavascript, dbMessenger);

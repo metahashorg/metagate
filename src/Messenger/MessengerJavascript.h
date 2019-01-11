@@ -6,7 +6,7 @@
 #include <functional>
 
 #include "Message.h"
-#include "MessengerWaletManager.h"
+#include "CryptographicManager.h"
 
 struct TypedException;
 
@@ -27,7 +27,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, CryptographicManager &cryptoManager, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m) {
         messenger = &m;
@@ -131,7 +131,7 @@ private:
 
     Messenger *messenger = nullptr;
 
-    MessengerWaletManager walletManager;
+    CryptographicManager &cryptoManager;
 
     QString walletPath;
 

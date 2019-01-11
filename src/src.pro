@@ -54,7 +54,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/MessengerJavascript.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
-    Messenger/MessengerWaletManager.cpp \
     TypedException.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
@@ -64,7 +63,8 @@ SOURCES += main.cpp mainwindow.cpp \
     HttpClient.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
-    machine_uid.cpp
+    machine_uid.cpp \
+    Messenger/CryptographicManager.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -124,7 +124,6 @@ HEADERS += mainwindow.h \
     RequestId.h \
     dbstorage.h \
     WalletRsa.h \
-    Messenger/MessengerWaletManager.h \
     Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
@@ -134,7 +133,8 @@ HEADERS += mainwindow.h \
     HttpClient.h \
     duration.h \
     auth/Auth.h \
-    auth/AuthJavascript.h
+    auth/AuthJavascript.h \
+    Messenger/CryptographicManager.h
 
 FORMS += mainwindow.ui
 
