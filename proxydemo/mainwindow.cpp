@@ -44,16 +44,21 @@ void MainWindow::routerDiscovered(proxy::UPnPRouter *router)
 {
     routers.append(router);
     ui->listWidget->addItem(router->server());
+    qDebug() << router->server();
 }
 
 void MainWindow::on_addMappingButton_clicked()
 {
     for (proxy::UPnPRouter *router : routers)
-        router->addPortMapping(1234, 1234, proxy::TCP);
+        router->addPortMapping(1234, 1234, proxy::TCP, [](bool r, const QString &error) {
+            qDebug() << "Added port " << r;
+        });
 }
 
 void MainWindow::on_removeMappingButton_clicked()
 {
     for (proxy::UPnPRouter *router : routers)
-        router->deletePortMapping(1234, proxy::TCP);
+        router->deletePortMapping(1234, proxy::TCP,  [](bool r, const QString &error) {
+            qDebug() << "Added port " << r;
+        });
 }
