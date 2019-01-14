@@ -177,7 +177,7 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
     requestPacket.setFlags(DnsFlag::MyFlag);
     udp.writeDatagram(requestPacket.toByteArray(), QHostAddress("8.8.8.8"), 53);
 
-    udp.waitForReadyRead(milliseconds(2s).count());
+    udp.waitForReadyRead(); // Не ставить timeout, так как это вызывает странное поведение
     std::vector<char> data(512 * 1000, 0);
     const qint64 size = udp.readDatagram(data.data(), data.size());
     CHECK(size > 0, "Incorrect response dns " + node.type.toStdString());
