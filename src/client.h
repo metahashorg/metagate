@@ -26,9 +26,9 @@ public:
         ServerException() = default;
 
         ServerException(int code, const std::string &description, const std::string &content)
-            : code(code)
-            , description(description)
+            : description(description)
             , content(content)
+            , code(code)
         {}
 
         std::string description;
