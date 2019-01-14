@@ -486,7 +486,7 @@ BEGIN_SLOT_WRAPPER
             tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, sendParams](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
-                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
+                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                     addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, sendParams.typeGet, sendParams.timeout);
                     servResp->isSended = true;
