@@ -24,13 +24,13 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
 
     CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
 
-    CHECK(connect(this, SIGNAL(sendMessage(QString)), this, SLOT(onSendMessage(QString))), "not connect sendMessage");
-    CHECK(connect(this, SIGNAL(sendMessages(const std::vector<QString> &)), this, SLOT(onSendMessages(const std::vector<QString> &))), "not connect sendMessage");
-    CHECK(connect(this, SIGNAL(setHelloString(QString)), this, SLOT(onSetHelloString(QString))), "not connect setHelloString");
-    CHECK(connect(this, SIGNAL(setHelloString(const std::vector<QString> &)), this, SLOT(onSetHelloString(const std::vector<QString> &))), "not connect setHelloString");
-    CHECK(connect(this, SIGNAL(addHelloString(QString)), this, SLOT(onAddHelloString(QString))), "not connect setHelloString");
+    CHECK(connect(this, &WebSocketClient::sendMessage, this, &WebSocketClient::onSendMessage), "not connect sendMessage");
+    CHECK(connect(this, &WebSocketClient::sendMessages, this, &WebSocketClient::onSendMessages), "not connect sendMessage");
+    CHECK(connect(this, QOverload<QString, QString>::of(&WebSocketClient::setHelloString), this, QOverload<QString, QString>::of(&WebSocketClient::onSetHelloString)), "not connect setHelloString");
+    CHECK(connect(this, QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::setHelloString), this, QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::onSetHelloString)), "not connect setHelloString");
+    CHECK(connect(this, &WebSocketClient::addHelloString, this, &WebSocketClient::onAddHelloString), "not connect setHelloString");
 
-    CHECK(connect(&m_webSocket, static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
+    CHECK(connect(&m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
         LOG << "Wss Web socket error " << m_webSocket.errorString();
     }), "not connect error");
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
