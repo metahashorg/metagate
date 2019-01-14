@@ -32,7 +32,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
     db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd123", 1, 1500, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd123", 1, 1500, true, true, true, "asdfdf", 1, QString(""));
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 3000), 1);
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 5000), 0);
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 0), 2);

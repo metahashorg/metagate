@@ -13,9 +13,9 @@ Version::Version(const std::string &str) {
     const std::string v2Str = str.substr(found1 + 1, found2 - found1 - 1);
     const std::string v3Str = str.substr(found2 + 1);
 
-    v1 = std::atoi(v1Str.c_str());
-    v2 = std::atoi(v2Str.c_str());
-    v3 = std::atoi(v3Str.c_str());
+    v1 = std::stoi(v1Str);
+    v2 = std::stoi(v2Str);
+    v3 = std::stoi(v3Str);
 
     CHECK(makeVersion(v1, v2, v3) == str, "Incorrect version " + str);
 }

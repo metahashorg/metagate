@@ -41,7 +41,6 @@ void DnsQuestion::clear()
 QByteArray DnsQuestion::toBytes() const
 {
     QByteArray result = DnsDataStream::transformDomain( m_domainName );
-    Q_ASSERT( result.size() <= 32 );
     QDataStream( &result, QIODevice::Append ) << (quint16)m_type << (quint16)m_class;
 
     return result;

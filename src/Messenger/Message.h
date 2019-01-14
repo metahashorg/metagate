@@ -12,12 +12,14 @@ struct Message {
     bool isInput;
     quint64 timestamp;
     QString data;
+    QString decryptedData;
     QString hash;
     Counter counter;
     int64_t fee;
     bool isCanDecrypted = true;
     bool isConfirmed = true;
     bool isChannel = false;
+    bool isDecrypted = false;
     QString channel;
 };
 

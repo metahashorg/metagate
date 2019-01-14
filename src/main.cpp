@@ -36,6 +36,7 @@
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/MessengerDBStorage.h"
+#include "Messenger/CryptographicManager.h"
 
 #include "transactions/Transactions.h"
 #include "transactions/TransactionsJavascript.h"
@@ -63,6 +64,8 @@ QString getUrlToWss() {
     CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
     return settings.value("web_socket/meta_online").toString();
 }
+
+#include "Wallet.h"
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -115,9 +118,6 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
-        dbMessenger.init();*/
-
         auth::AuthJavascript authJavascript;
         auth::Auth authManager(authJavascript);
         authManager.start();
@@ -141,8 +141,12 @@ int main(int argc, char *argv[]) {
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
-        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
-        /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
+        messenger::CryptographicManager messengerCryptManager;
+        //messengerCryptManager.start();
+        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
+        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
+        dbMessenger.init();
+        messenger::Messenger messenger(messengerJavascript, dbMessenger);
         messenger.start();
         messengerJavascript.setMessenger(messenger);*/
 
