@@ -44,6 +44,7 @@
 
 #include "proxy/Proxy.h"
 #include "proxy/ProxyJavascript.h"
+#include "proxy/WebSocketSender.h"
 
 #include "Module.h"
 
@@ -131,13 +132,14 @@ int main(int argc, char *argv[]) {
         transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
         transactionsManager.start();
 
+        WebSocketClient webSocketClient(getUrlToWss());
+        webSocketClient.start();
+
         addModule(proxy::Proxy::moduleName());
         proxy::ProxyJavascript proxyJavascript;
         proxy::Proxy proxyManager(proxyJavascript);
+        proxy::WebSocketSender proxyWssSender(webSocketClient);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
-
-        WebSocketClient webSocketClient(getUrlToWss());
-        webSocketClient.start();
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 

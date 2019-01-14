@@ -71,7 +71,8 @@ SOURCES += main.cpp mainwindow.cpp \
     auth/AuthJavascript.cpp \
     machine_uid.cpp \
     Module.cpp \
-    Messenger/CryptographicManager.cpp
+    Messenger/CryptographicManager.cpp \
+    proxy/WebSocketSender.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -150,7 +151,8 @@ HEADERS += mainwindow.h \
     auth/AuthJavascript.h \
     Module.h \
     Messenger/CryptographicManager.h \
-    CallbackWrapper.h
+    CallbackWrapper.h \
+    proxy/WebSocketSender.h
 
 FORMS += mainwindow.ui
 
