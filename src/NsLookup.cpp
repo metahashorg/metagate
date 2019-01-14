@@ -180,7 +180,7 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
     udp.waitForReadyRead(milliseconds(2s).count());
     std::vector<char> data(512 * 1000, 0);
     const qint64 size = udp.readDatagram(data.data(), data.size());
-    CHECK(size > 0, "Incorrect response dns");
+    CHECK(size > 0, "Incorrect response dns " + node.type.toStdString());
     const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
 
     LOG << "dns ok " << node.type << ". " << packet.answers().size();
