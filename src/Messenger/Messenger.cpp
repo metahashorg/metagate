@@ -185,7 +185,7 @@ void Messenger::getMessagesFromChannelFromWss(const QString &fromAddress, const 
 }
 
 void Messenger::clearAddressesToMonitored() {
-    emit wssClient.setHelloString(std::vector<QString>{});
+    emit wssClient.setHelloString(std::vector<QString>{}, "Messenger");
 }
 
 void Messenger::addAddressToMonitored(const QString &address) {
@@ -195,12 +195,12 @@ void Messenger::addAddressToMonitored(const QString &address) {
 
     const QString signHexChannels = getSignFromMethod(address, makeTextForGetMyChannelsRequest());
     const QString messageGetMyChannels = makeGetMyChannelsRequest(pubkeyHex, signHexChannels, id.get());
-    emit wssClient.addHelloString(messageGetMyChannels);
+    emit wssClient.addHelloString(messageGetMyChannels, "Messenger");
     emit wssClient.sendMessage(messageGetMyChannels);
 
     const QString signHex = getSignFromMethod(address, makeTextForMsgAppendKeyOnlineRequest());
     const QString message = makeAppendKeyOnlineRequest(pubkeyHex, signHex, id.get());
-    emit wssClient.addHelloString(message);
+    emit wssClient.addHelloString(message, "Messenger");
     emit wssClient.sendMessage(message);
 }
 

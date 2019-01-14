@@ -107,9 +107,11 @@ BEGIN_SLOT_WRAPPER
     LOG << "Wss client connected";
     isConnected = true;
     prevPongTime = ::now();
-    for (const QString &helloString: helloStrings) {
-        LOG << "Wss Set hello message " << helloString;
-        m_webSocket.sendTextMessage(helloString);
+    for (const auto &pair: helloStrings) {
+        for (const QString &helloString: pair.second) {
+            LOG << "Wss Set hello message " << helloString;
+            m_webSocket.sendTextMessage(helloString);
+        }
     }
 
     sendMessagesInternal();
@@ -144,22 +146,22 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WebSocketClient::onSetHelloString(QString message) {
+void WebSocketClient::onSetHelloString(QString message, QString tag) {
 BEGIN_SLOT_WRAPPER
-    helloStrings.resize(0);
-    helloStrings.emplace_back(message);
+    helloStrings[tag].clear();
+    helloStrings[tag].emplace_back(message);
 END_SLOT_WRAPPER
 }
 
-void WebSocketClient::onSetHelloString(const std::vector<QString> &messages) {
+void WebSocketClient::onSetHelloString(const std::vector<QString> &messages, QString tag) {
 BEGIN_SLOT_WRAPPER
-    helloStrings.assign(messages.begin(), messages.end());
+    helloStrings[tag].assign(messages.begin(), messages.end());
 END_SLOT_WRAPPER
 }
 
-void WebSocketClient::onAddHelloString(QString message) {
+void WebSocketClient::onAddHelloString(QString message, QString tag) {
 BEGIN_SLOT_WRAPPER
-    helloStrings.emplace_back(message);
+    helloStrings[tag].emplace_back(message);
 END_SLOT_WRAPPER
 }
 

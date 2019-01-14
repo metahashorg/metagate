@@ -171,7 +171,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
 
         const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
-        emit wssClient.setHelloString(message);
+        emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
     }
 }
