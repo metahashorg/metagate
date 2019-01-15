@@ -44,6 +44,7 @@
 
 #include "proxy/Proxy.h"
 #include "proxy/ProxyJavascript.h"
+#include "proxy/WebSocketSender.h"
 
 #include "Module.h"
 
@@ -131,9 +132,13 @@ int main(int argc, char *argv[]) {
         transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
         transactionsManager.start();
 
+        WebSocketClient webSocketClient(getUrlToWss());
+        webSocketClient.start();
+
         addModule(proxy::Proxy::moduleName());
         proxy::ProxyJavascript proxyJavascript;
         proxy::Proxy proxyManager(proxyJavascript);
+        proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
         QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
             qDebug() << "PROXY S ";
@@ -149,9 +154,6 @@ int main(int argc, char *argv[]) {
         });
 
         proxyManager.startAutoProxy();
-
-        WebSocketClient webSocketClient(getUrlToWss());
-        webSocketClient.start();
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
