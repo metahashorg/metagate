@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
         addModule(proxy::Proxy::moduleName());
         proxy::ProxyJavascript proxyJavascript;
         proxy::Proxy proxyManager(proxyJavascript);
-        proxy::WebSocketSender proxyWssSender(webSocketClient);
+        proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
         QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
             qDebug() << "PROXY " << r.numError;

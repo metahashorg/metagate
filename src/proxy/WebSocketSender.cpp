@@ -1,6 +1,7 @@
 #include "WebSocketSender.h"
 
 #include "WebSocketClient.h"
+#include "Proxy.h"
 
 #include <vector>
 
@@ -11,9 +12,19 @@
 
 namespace proxy {
 
+const static QString PROXY_TAG = "proxy";
+
 static QString makeGetMyIpMessage() {
     QJsonObject allJson;
     allJson.insert("app", "GetMyIp");
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+static QString makeProxyModuleFound() {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyModuleFound");
     QJsonDocument json(allJson);
 
     return json.toJson(QJsonDocument::Compact);
@@ -31,24 +42,101 @@ static QString makeStartTestMessage(QString ip, int port) {
     return json.toJson(QJsonDocument::Compact);
 };
 
-WebSocketSender::WebSocketSender(WebSocketClient &client, QObject *parent)
+static QString makeProxyStarted(const TypedException &exception) {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyStarted");
+    QJsonObject data;
+    data.insert("errorNum", exception.numError);
+    data.insert("errorMessage", QString::fromStdString(exception.description));
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+static QString makeUpnpStarted(const TypedException &exception) {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyUpnpStarted");
+    QJsonObject data;
+    data.insert("errorNum", exception.numError);
+    data.insert("errorMessage", QString::fromStdString(exception.description));
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+static QString makeProxyStartCompleted(quint16 port) {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyStartCompleted");
+    QJsonObject data;
+    data.insert("port", port);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, QObject *parent)
     : QObject(parent)
     , client(client)
+    , proxyManager(proxyManager)
 {
     CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WebSocketSender::onWssReceived), "not connect onWssReceived");
 
-    emit client.setHelloString(std::vector<QString>(), "proxy");
+    CHECK(connect(this, &WebSocketSender::startTest, this, &WebSocketSender::onStartTest), "not connect onStartTest");
+
+    CHECK(connect(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onModuleFound), "not connect onModuleFound");
+    CHECK(connect(&proxyManager, &Proxy::startAutoProxyResult, this, &WebSocketSender::onStartAutoProxyResult), "not connect onStartAutoProxyResult");
+    CHECK(connect(&proxyManager, &Proxy::startAutoUPnPResult, this, &WebSocketSender::onStartAutoUPnPResult), "not connect onStartAutoUPnPResult");
+    CHECK(connect(&proxyManager, &Proxy::startAutoComplete, this, &WebSocketSender::onStartAutoComplete), "not connect onStartAutoComplete");
+
+    emit client.setHelloString(std::vector<QString>(), PROXY_TAG);
 
     const QString getMyIpMessage = makeGetMyIpMessage();
-    emit client.addHelloString(getMyIpMessage, "proxy");
+    emit client.addHelloString(getMyIpMessage, PROXY_TAG);
     emit client.sendMessage(getMyIpMessage);
 }
 
 void WebSocketSender::onStartTest() {
 BEGIN_SLOT_WRAPPER
     const QString startTestMessage = makeStartTestMessage(myIp, port);
-    emit client.addHelloString(startTestMessage, "proxy");
+    emit client.addHelloString(startTestMessage, PROXY_TAG);
     emit client.sendMessage(startTestMessage);
+END_SLOT_WRAPPER
+}
+
+void WebSocketSender::onModuleFound() {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeProxyModuleFound();
+    emit client.addHelloString(message, PROXY_TAG);
+    emit client.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
+void WebSocketSender::onStartAutoProxyResult(const TypedException &r) {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeProxyStarted(r);
+    emit client.addHelloString(message, PROXY_TAG);
+    emit client.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
+void WebSocketSender::onStartAutoUPnPResult(const TypedException &r) {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeUpnpStarted(r);
+    emit client.addHelloString(message, PROXY_TAG);
+    emit client.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
+void WebSocketSender::onStartAutoComplete(quint16 port) {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeProxyStartCompleted(port);
+    emit client.addHelloString(message, PROXY_TAG);
+    emit client.sendMessage(message);
+
+    emit startTest();
 END_SLOT_WRAPPER
 }
 

@@ -5,14 +5,18 @@
 
 class WebSocketClient;
 
+class TypedException;
+
 namespace proxy {
+
+class Proxy;
 
 class WebSocketSender : public QObject
 {
     Q_OBJECT
 public:
 
-    explicit WebSocketSender(WebSocketClient &client, QObject *parent = nullptr);
+    explicit WebSocketSender(WebSocketClient &client, Proxy &proxyManager, QObject *parent = nullptr);
 
 signals:
 
@@ -26,9 +30,19 @@ private slots:
 
     void onStartTest();
 
+    void onModuleFound();
+
+    void onStartAutoProxyResult(const TypedException &r);
+
+    void onStartAutoUPnPResult(const TypedException &r);
+
+    void onStartAutoComplete(quint16 port);
+
 private:
 
     WebSocketClient &client;
+
+    Proxy &proxyManager;
 
     QString myIp;
 
