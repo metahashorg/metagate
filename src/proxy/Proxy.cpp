@@ -57,13 +57,17 @@ Proxy::~Proxy()
 void Proxy::startAutoProxy()
 {
     // Start proxy
-    qDebug() << "Start";
+    LOG << "Proxy auto start: executed";
+    emit startAutoExecued();
     //proxyServer->setPort(22);
     bool res = proxyServer->start();
     if (!res) {
+        LOG << "Proxy auto start: proxy start error";
         emit startAutoProxyResult(TypedException(PROXY_PROXY_START_ERROR, "Proxy start error"));
         return;
     }
+    LOG << "Proxy auto start: proxy start ok";
+    emit startAutoProxyResult(TypedException(NOT_ERROR, "Proxy started"));
     // Wait 10 sec to find routers
     QTimer::singleShot(10 * 1000, this, &Proxy::onAutoDiscoveryTimeout);
 }
@@ -213,8 +217,7 @@ END_SLOT_WRAPPER
 
 void Proxy::onRouterDiscovered(UPnPRouter *router)
 {
-    qDebug() << "!!!!!";
-    LOG << "Router discovered" << router->friendlyName();
+    LOG << "Router discovered " << router->friendlyName();
     Router r;
     r.router = router;
     r.friendlyName = router->friendlyName();
@@ -233,19 +236,26 @@ void Proxy::onRouterDiscovered(UPnPRouter *router)
 void Proxy::onAutoDiscoveryTimeout()
 {
     if (routers.empty()) {
-        qDebug() << "NO routers";
-        emit startAutoProxyResult(TypedException(PROXY_UPNP_ROUTER_NOT_FOUND, "Routers not found"));
+        LOG << "Proxy auto start: no routers found";
+        emit startAutoUPnPResult(TypedException(PROXY_UPNP_ROUTER_NOT_FOUND, "Routers not found"));
+        LOG << "Proxy auto start: complete";
+        emit startAutoComplete(proxyServer->port());
         return;
     }
 
     // Add port mapping to 1st router
     routers.at(0).router->addPortMapping(proxyServer->port(), proxyServer->port(), proxy::TCP, [this](bool r, const QString &error) {
         qDebug() << "Added port " << r;
-        if (!r) {
-            emit startAutoProxyResult(TypedException(PROXY_UPNP_ADD_PORT_MAPPING_ERROR, error.toStdString()));
-            return;
+        if (r) {
+            LOG << "Proxy auto start: add port mapping ok";
+            emit startAutoUPnPResult(TypedException(NOT_ERROR, "Port mapping ok"));
+        } else {
+            LOG << "Proxy auto start: add port mapping error";
+            emit startAutoUPnPResult(TypedException(PROXY_UPNP_ADD_PORT_MAPPING_ERROR, error.toStdString()));
         }
-        emit startAutoProxyResult(TypedException(PROXY_OK, "Proxy ok"));
+
+        LOG << "Proxy auto start: complete";
+        emit startAutoComplete(proxyServer->port());
     });
 }
 

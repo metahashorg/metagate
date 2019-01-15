@@ -135,9 +135,19 @@ int main(int argc, char *argv[]) {
         proxy::ProxyJavascript proxyJavascript;
         proxy::Proxy proxyManager(proxyJavascript);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
-            qDebug() << "PROXY " << r.numError;
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
+            qDebug() << "PROXY S ";
         });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
+            qDebug() << "PROXY 1 " << r.numError;
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
+            qDebug() << "PROXY 2 " << r.numError;
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
+            qDebug() << "PROXY res " << port;
+        });
+
         proxyManager.startAutoProxy();
 
         WebSocketClient webSocketClient(getUrlToWss());
