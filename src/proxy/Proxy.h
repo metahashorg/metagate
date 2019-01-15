@@ -82,10 +82,19 @@ public:
     explicit Proxy(ProxyJavascript &javascriptWrapper, QObject *parent = nullptr);
     ~Proxy();
 
+public slots:
     void startAutoProxy();
 
+    void proxyTested(bool res);
+
 signals:
+    void startAutoExecued();
+
     void startAutoProxyResult(const TypedException &r);
+
+    void startAutoUPnPResult(const TypedException &r);
+
+    void startAutoComplete(quint16 port);
 
 signals:
     void proxyStart(const ProxyCallback &callback);

@@ -58,6 +58,7 @@ void Proxy::startAutoProxy()
 {
     // Start proxy
     qDebug() << "Start";
+    //proxyServer->setPort(22);
     bool res = proxyServer->start();
     if (!res) {
         emit startAutoProxyResult(TypedException(PROXY_PROXY_START_ERROR, "Proxy start error"));
@@ -65,6 +66,11 @@ void Proxy::startAutoProxy()
     }
     // Wait 10 sec to find routers
     QTimer::singleShot(10 * 1000, this, &Proxy::onAutoDiscoveryTimeout);
+}
+
+void Proxy::proxyTested(bool res)
+{
+    qDebug() << res;
 }
 
 void Proxy::onProxyStart(const ProxyCallback &callback)
