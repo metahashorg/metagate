@@ -135,6 +135,10 @@ int main(int argc, char *argv[]) {
         proxy::ProxyJavascript proxyJavascript;
         proxy::Proxy proxyManager(proxyJavascript);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
+            qDebug() << "PROXY " << r.numError;
+        });
+        proxyManager.startAutoProxy();
 
         WebSocketClient webSocketClient(getUrlToWss());
         webSocketClient.start();
