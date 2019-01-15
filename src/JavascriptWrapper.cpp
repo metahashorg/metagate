@@ -1,4 +1,4 @@
-#include "JavascriptWrapper.h"
+﻿#include "JavascriptWrapper.h"
 
 #include <map>
 
@@ -139,7 +139,7 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-void JavascriptWrapper::onLogined(const QString login) {
+void JavascriptWrapper::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(walletDefaultPath, login), login);
@@ -173,7 +173,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
 
         const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
-        emit wssClient.setHelloString(message);
+        emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
     }
 }
@@ -404,6 +404,10 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
     LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
     Opt<std::string> signature2;
@@ -414,7 +418,13 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce.toULongLong(&tmp, 10), dataHex.toStdString(), tx, signature, publicKey);
+        const uint64_t valueInt = value.toULongLong(&tmp, 10);
+        CHECK(tmp, "Value not valid");
+        const uint64_t feeInt = fee.toULongLong(&tmp, 10);
+        CHECK(tmp, "Fee not valid");
+        const uint64_t nonceInt = nonce.toULongLong(&tmp, 10);
+        CHECK(tmp, "Nonce not valid");
+        wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonceInt, dataHex.toStdString(), tx, signature, publicKey);
         publicKey2 = publicKey;
         tx2 = tx;
         signature2 = signature;
@@ -486,13 +496,21 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce, dataHex.toStdString(), tx, signature, publicKey);
+        const uint64_t valueInt = value.toULongLong(&tmp, 10);
+        CHECK(tmp, "Value not valid");
+        const uint64_t feeInt = fee.toULongLong(&tmp, 10);
+        CHECK(tmp, "Fee not valid");
+        wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex.toStdString(), tx, signature, publicKey);
 
         emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
     };
@@ -504,17 +522,27 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
 
-        const uint64_t delegValue = std::stoull(valueDelegate.toStdString());
+        bool isValid;
+        const uint64_t delegValue = valueDelegate.toULongLong(&isValid);
+        CHECK(isValid, "delegate value not valid");
         const std::string dataHex = Wallet::genDataDelegateHex(isDelegate, delegValue);
 
         std::string publicKey;
         std::string tx;
         std::string signature;
         bool tmp;
-        wallet.sign(toAddress.toStdString(), value.toULongLong(&tmp, 10), fee.toULongLong(&tmp, 10), nonce, dataHex, tx, signature, publicKey, false);
+        const uint64_t valueInt = value.toULongLong(&tmp, 10);
+        CHECK(tmp, "Value not valid");
+        const uint64_t feeInt = fee.toULongLong(&tmp, 10);
+        CHECK(tmp, "Fee not valid");
+        wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex, tx, signature, publicKey, false);
 
         emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
     };
@@ -947,7 +975,9 @@ BEGIN_SLOT_WRAPPER
             const QJsonObject jsonObj = jsonObj2.toObject();
             BtcInput input;
             CHECK(jsonObj.contains("value") && jsonObj.value("value").isString(), "value field not found");
-            input.outBalance = std::stoull(jsonObj.value("value").toString().toStdString());
+            bool isValid;
+            input.outBalance = jsonObj.value("value").toString().toULongLong(&isValid);
+            CHECK(isValid, "Out balance not valid");
             CHECK(jsonObj.contains("scriptPubKey") && jsonObj.value("scriptPubKey").isString(), "scriptPubKey field not found");
             input.scriptPubkey = jsonObj.value("scriptPubKey").toString().toStdString();
             CHECK(jsonObj.contains("tx_index") && jsonObj.value("tx_index").isDouble(), "tx_index field not found");
@@ -1342,7 +1372,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::setPagesMapping(QString mapping) {
 BEGIN_SLOT_WRAPPER
-    emit setMappingsSig(mapping);
+    //emit setMappingsSig(mapping);
 END_SLOT_WRAPPER
 }
 
@@ -1523,6 +1553,15 @@ void JavascriptWrapper::metaOnline() {
 BEGIN_SLOT_WRAPPER
     LOG << "Metaonline request";
     emit wssClient.sendMessage("{\"app\":\"MetaOnline\"}");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::clearNsLookup() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "clearNsLookupResultJs";
+    LOG << "Clear ns lookup";
+    nsLookup.resetFile();
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
 END_SLOT_WRAPPER
 }
 

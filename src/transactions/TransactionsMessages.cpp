@@ -40,15 +40,12 @@ BalanceInfo parseBalanceResponse(const QString &response) {
     result.address = json.value("address").toString();
     result.received = getIntOrString(json, "received");
     result.spent = getIntOrString(json, "spent");
-    CHECK(json.contains("count_received") && json.value("count_received").isDouble(), "Incorrect json: count_received field not found");
-    result.countReceived = static_cast<uint64_t>(json.value("count_received").toDouble());
-    CHECK(json.contains("count_spent") && json.value("count_spent").isDouble(), "Incorrect json: count_spent field not found");
-    result.countSpent = static_cast<uint64_t>(json.value("count_spent").toDouble());
-    CHECK(json.contains("currentBlock") && json.value("currentBlock").isDouble(), "Incorrect json: currentBlock field not found");
-    result.currBlockNum = static_cast<uint64_t>(json.value("currentBlock").toDouble());
+    result.countReceived = getIntOrString(json, "count_received").toULong();
+    result.countSpent = getIntOrString(json, "count_spent").toULong();
+    result.currBlockNum = getIntOrString(json, "currentBlock").toULong();
 
-    if (json.contains("countDelegatedOps") && json.value("countDelegatedOps").isDouble()) {
-        result.countDelegated = json.value("countDelegatedOps").toInt();
+    if (json.contains("countDelegatedOps")) {
+        result.countDelegated = getIntOrString(json, "countDelegatedOps").toULong();
         result.delegate = getIntOrString(json, "delegate");
         result.undelegate = getIntOrString(json, "undelegate");
         result.delegated = getIntOrString(json, "delegated");
@@ -60,7 +57,7 @@ BalanceInfo parseBalanceResponse(const QString &response) {
         }
     }
 
-    if (json.contains("forged") && json.value("forged").isDouble()) {
+    if (json.contains("forged")) {
         result.forged = getIntOrString(json, "forged");
     }
 
@@ -92,16 +89,15 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
     if (txJson.contains("data") && txJson.value("data").isString()) {
         res.data = txJson.value("data").toString();
     }
-    CHECK(txJson.contains("timestamp") && txJson.value("timestamp").isDouble(), "Incorrect json: timestamp field not found");
-    res.timestamp = static_cast<uint64_t>(txJson.value("timestamp").toDouble());
+    res.timestamp = getIntOrString(txJson, "timestamp").toULongLong();
     if (txJson.contains("fee")) {
         res.fee = getIntOrString(txJson, "fee");
     }
     if (res.fee.isEmpty() || res.fee.isNull()) {
         res.fee = "0";
     }
-    if (txJson.contains("nonce") && txJson.value("nonce").isDouble()) {
-        res.nonce = txJson.value("nonce").toInt();
+    if (txJson.contains("nonce")) {
+        res.nonce = getIntOrString(txJson, "nonce").toLong();
     }
     if (txJson.contains("isDelegate") && txJson.value("isDelegate").isBool()) {
         res.isSetDelegate = true;
@@ -123,8 +119,8 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
         }
     }
 
-    if (txJson.contains("blockNumber") && txJson.value("blockNumber").isDouble()) {
-        res.blockNumber = (int64_t)txJson.value("blockNumber").toDouble();
+    if (txJson.contains("blockNumber")) {
+        res.blockNumber = getIntOrString(txJson, "blockNumber").toLong();
     }
 
     if (txJson.contains("type") && txJson.value("type").isString() && txJson.value("type").toString() == "forging") {

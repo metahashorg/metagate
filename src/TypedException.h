@@ -78,4 +78,6 @@ if (!(v)) { \
 
 TypedException apiVrapper2(const std::function<void()> &func);
 
+TypedException apiVrapper2(const TypedException &exception, const std::function<void()> &func);
+
 #endif // TYPEDEXCEPTION_H

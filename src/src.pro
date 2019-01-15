@@ -3,6 +3,7 @@ TEMPLATE = app
 TARGET = MetaGate
 
 DEFINES += VERSION_STRING=\\\"1.18.0\\\"
+DEFINES += VERSION_SETTINGS=\\\"5\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -53,7 +54,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/MessengerJavascript.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
-    Messenger/MessengerWaletManager.cpp \
     TypedException.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
@@ -70,12 +70,11 @@ SOURCES += main.cpp mainwindow.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
     machine_uid.cpp \
-    Module.cpp
-
-# C code
-SOURCES +=  proxy/http_parser.c
+    Module.cpp \
+    Messenger/CryptographicManager.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
+SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
     Wallet.h \
@@ -133,7 +132,6 @@ HEADERS += mainwindow.h \
     RequestId.h \
     dbstorage.h \
     WalletRsa.h \
-    Messenger/MessengerWaletManager.h \
     Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
@@ -150,7 +148,9 @@ HEADERS += mainwindow.h \
     proxy/ProxyJavascript.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
-    Module.h
+    Module.h \
+    Messenger/CryptographicManager.h \
+    CallbackWrapper.h
 
 FORMS += mainwindow.ui
 
