@@ -1,5 +1,7 @@
 #include "Proxy.h"
 
+#include <QTimer>
+
 #include "ProxyJavascript.h"
 #include "ProxyServer.h"
 #include "UPnPDevices.h"
@@ -50,6 +52,19 @@ Proxy::~Proxy()
         thread.terminate();
         thread.wait();
     }
+}
+
+void Proxy::startAutoProxy()
+{
+    // Start proxy
+    qDebug() << "Start";
+    bool res = proxyServer->start();
+    if (!res) {
+        emit startAutoProxyResult(TypedException(PROXY_PROXY_START_ERROR, "Proxy start error"));
+        return;
+    }
+    // Wait 10 sec to find routers
+    QTimer::singleShot(10 * 1000, this, &Proxy::onAutoDiscoveryTimeout);
 }
 
 void Proxy::onProxyStart(const ProxyCallback &callback)
@@ -145,7 +160,7 @@ BEGIN_SLOT_WRAPPER
             return ;
         }
         routers.at(ridx).router->addPortMapping(port, port, TCP, [this, callback, port, ridx](bool r, const QString &error) {
-            qDebug() << "Added port " << r;
+            //qDebug() << "Added port " << r;
             if (r)
                 mappedRouterIdx = ridx;
             routers[ridx].mapped = true;
@@ -192,6 +207,7 @@ END_SLOT_WRAPPER
 
 void Proxy::onRouterDiscovered(UPnPRouter *router)
 {
+    qDebug() << "!!!!!";
     LOG << "Router discovered" << router->friendlyName();
     Router r;
     r.router = router;
@@ -206,6 +222,25 @@ void Proxy::onRouterDiscovered(UPnPRouter *router)
     routers.push_back(r);
 
     emit javascriptWrapper.sendGetRoutersResponseSig(routers, TypedException());
+}
+
+void Proxy::onAutoDiscoveryTimeout()
+{
+    if (routers.empty()) {
+        qDebug() << "NO routers";
+        emit startAutoProxyResult(TypedException(PROXY_UPNP_ROUTER_NOT_FOUND, "Routers not found"));
+        return;
+    }
+
+    // Add port mapping to 1st router
+    routers.at(0).router->addPortMapping(proxyServer->port(), proxyServer->port(), proxy::TCP, [this](bool r, const QString &error) {
+        qDebug() << "Added port " << r;
+        if (!r) {
+            emit startAutoProxyResult(TypedException(PROXY_UPNP_ADD_PORT_MAPPING_ERROR, error.toStdString()));
+            return;
+        }
+        emit startAutoProxyResult(TypedException(PROXY_OK, "Proxy ok"));
+    });
 }
 
 int Proxy::findRouter(const QString &udn) const

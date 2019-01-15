@@ -17,7 +17,7 @@ public:
     quint16 port() const;
     void setPort(quint16 p);
 
-    void start();
+    bool start();
     void stop();
 
 signals:

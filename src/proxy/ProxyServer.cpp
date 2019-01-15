@@ -24,12 +24,11 @@ void ProxyServer::setPort(quint16 p)
     m_port = p;
 }
 
-void ProxyServer::start()
+bool ProxyServer::start()
 {
-    if (!listen(QHostAddress::Any, m_port)) {
-        //
-    }
+    bool r = listen(QHostAddress::Any, m_port);
     emit listeningChanged(isListening());
+    return r;
 }
 
 void ProxyServer::stop()

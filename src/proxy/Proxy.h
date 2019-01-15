@@ -82,6 +82,11 @@ public:
     explicit Proxy(ProxyJavascript &javascriptWrapper, QObject *parent = nullptr);
     ~Proxy();
 
+    void startAutoProxy();
+
+signals:
+    void startAutoProxyResult(const TypedException &r);
+
 signals:
     void proxyStart(const ProxyCallback &callback);
 
@@ -124,6 +129,8 @@ public slots:
 
 private slots:
     void onRouterDiscovered(UPnPRouter *router);
+
+    void onAutoDiscoveryTimeout();
 
 private:
     template<typename Func>
