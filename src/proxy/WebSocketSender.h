@@ -20,7 +20,7 @@ public:
 
 signals:
 
-    void startTest();
+    void tryStartTest();
 
     void testResult(int code, QString message);
 
@@ -28,7 +28,7 @@ private slots:
 
     void onWssReceived(QString message);
 
-    void onStartTest();
+    void onTryStartTest();
 
     void onModuleFound();
 
@@ -47,6 +47,8 @@ private:
     QString myIp;
 
     int port = 0;
+
+    bool startComplete = false;
 };
 
 }

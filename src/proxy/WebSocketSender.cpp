@@ -84,7 +84,7 @@ WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, Q
 {
     CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WebSocketSender::onWssReceived), "not connect onWssReceived");
 
-    CHECK(connect(this, &WebSocketSender::startTest, this, &WebSocketSender::onStartTest), "not connect onStartTest");
+    CHECK(connect(this, &WebSocketSender::tryStartTest, this, &WebSocketSender::onTryStartTest), "not connect onStartTest");
 
     CHECK(connect(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onModuleFound), "not connect onModuleFound");
     CHECK(connect(&proxyManager, &Proxy::startAutoProxyResult, this, &WebSocketSender::onStartAutoProxyResult), "not connect onStartAutoProxyResult");
@@ -98,11 +98,13 @@ WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, Q
     emit client.sendMessage(getMyIpMessage);
 }
 
-void WebSocketSender::onStartTest() {
+void WebSocketSender::onTryStartTest() {
 BEGIN_SLOT_WRAPPER
-    const QString startTestMessage = makeStartTestMessage(myIp, port);
-    emit client.addHelloString(startTestMessage, PROXY_TAG);
-    emit client.sendMessage(startTestMessage);
+    if (startComplete && !myIp.isEmpty()) {
+        const QString startTestMessage = makeStartTestMessage(myIp, port);
+        emit client.addHelloString(startTestMessage, PROXY_TAG);
+        emit client.sendMessage(startTestMessage);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -132,11 +134,13 @@ END_SLOT_WRAPPER
 
 void WebSocketSender::onStartAutoComplete(quint16 port) {
 BEGIN_SLOT_WRAPPER
+    this->port = port;
     const QString message = makeProxyStartCompleted(port);
     emit client.addHelloString(message, PROXY_TAG);
     emit client.sendMessage(message);
+    startComplete = true;
 
-    emit startTest();
+    emit tryStartTest();
 END_SLOT_WRAPPER
 }
 
@@ -154,6 +158,8 @@ BEGIN_SLOT_WRAPPER
         CHECK(data.contains("ip") && data.value("ip").isString(), "ip field not found");
         myIp = data.value("ip").toString();
         LOG << "Proxy My ip is " << myIp;
+
+        emit tryStartTest();
     } else if (appType == "ProxyStartTest") {
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const QJsonObject data = root.value("data").toObject();
