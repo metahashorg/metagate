@@ -24,6 +24,8 @@ signals:
 
     void testResult(int code, QString message);
 
+    void proxyTested(bool res, const QString &error);
+
 private slots:
 
     void onWssReceived(QString message);
