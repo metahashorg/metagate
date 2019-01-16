@@ -5,7 +5,7 @@
 
 class WebSocketClient;
 
-class TypedException;
+struct TypedException;
 
 namespace proxy {
 
