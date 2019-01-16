@@ -66,6 +66,14 @@ ProxyJavascript::ProxyJavascript(QObject *parent)
     CHECK(connect(this, &ProxyJavascript::sendServerPortResponseSig, this, &ProxyJavascript::onSendServerPortResponseSig), "not connect onSendServerPortResponseSig");
     CHECK(connect(this, &ProxyJavascript::sendGetRoutersResponseSig, this, &ProxyJavascript::onSendGetRoutersResponseSig), "not connect onSendGetRoutersResponseSig");
 
+    CHECK(connect(this, &ProxyJavascript::sendAutoStartExecutedResponseSig, this, &ProxyJavascript::onSendAutoStartExecutedResponseSig), "not connect onSendAutoStartExecutedResponseSig");
+    CHECK(connect(this, &ProxyJavascript::sendAutoStartProxyResponseSig, this, &ProxyJavascript::onSendAutoStartProxyResponseSig), "not connect onSendAutoStartProxyResponseSig");
+    CHECK(connect(this, &ProxyJavascript::sendAutoStartRouterResponseSig, this, &ProxyJavascript::onSendAutoStartRouterResponseSig), "not connect onSendAutoStartRouterResponseSig");
+    CHECK(connect(this, &ProxyJavascript::sendAutoStartTestResponseSig, this, &ProxyJavascript::onSendAutoStartTestResponseSig), "not connect onSendAutoStartTestResponseSig");
+    CHECK(connect(this, &ProxyJavascript::sendAutoStartCompleteResponseSig, this, &ProxyJavascript::onSendAutoStartCompleteResponseSig), "not connect onSendAutoStartCompleteResponseSig");
+
+    CHECK(connect(this, &ProxyJavascript::sendConnectedPeersResponseSig, this, &ProxyJavascript::onSendConnectedPeersResponseSig), "not connect onSendConnectedPeersResponseSig");
+
     CHECK(connect(this, &ProxyJavascript::callbackCall, this, &ProxyJavascript::onCallbackCall), "not connect onCallbackCall");
 }
 
@@ -280,6 +288,54 @@ void ProxyJavascript::onSendGetRoutersResponseSig(const std::vector<Proxy::Route
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "proxyGetRoutersJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, routersInfoToJson(routers));
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendAutoStartExecutedResponseSig(const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyAutoStartExecutedResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error);
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendAutoStartProxyResponseSig(const Proxy::ProxyResult &res, const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyAutoStartProxyResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, proxyResultToJson(res));
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendAutoStartRouterResponseSig(const Proxy::ProxyResult &res, const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyAutoStartRouterResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, proxyResultToJson(res));
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendAutoStartTestResponseSig(const Proxy::ProxyResult &res, const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyAutoStartTestResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, proxyResultToJson(res));
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendAutoStartCompleteResponseSig(const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyAutoStartCompleteResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error);
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendConnectedPeersResponseSig(int num, const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyConnectedPeersResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, num);
 END_SLOT_WRAPPER
 }
 

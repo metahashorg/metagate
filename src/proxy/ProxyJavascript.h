@@ -45,12 +45,36 @@ signals:
 
     void sendGetRoutersResponseSig(const std::vector<Proxy::Router> &routers, const TypedException &error);
 
+    void sendAutoStartExecutedResponseSig(const TypedException &error);
+
+    void sendAutoStartProxyResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
+
+    void sendAutoStartRouterResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
+
+    void sendAutoStartTestResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
+
+    void sendAutoStartCompleteResponseSig(const TypedException &error);
+
+    void sendConnectedPeersResponseSig(int num, const TypedException &error);
+
 public slots:
     void onSendServerStatusResponseSig(const Proxy::ProxyStatus &status, const TypedException &error);
 
     void onSendServerPortResponseSig(quint16 port, const TypedException &error);
 
     void onSendGetRoutersResponseSig(const std::vector<Proxy::Router> &routers, const TypedException &error);
+
+    void onSendAutoStartExecutedResponseSig(const TypedException &error);
+
+    void onSendAutoStartProxyResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
+
+    void onSendAutoStartRouterResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
+
+    void onSendAutoStartTestResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
+
+    void onSendAutoStartCompleteResponseSig(const TypedException &error);
+
+    void onSendConnectedPeersResponseSig(int num, const TypedException &error);
 
     void onCallbackCall(const Callback &callback);
 
