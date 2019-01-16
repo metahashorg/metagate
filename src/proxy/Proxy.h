@@ -50,6 +50,10 @@ public:
             , error(error)
         {
         }
+        ProxyResult(): ok(true)
+          , error("")
+      {
+      }
     };
 
     struct PortMappingResult {
@@ -85,7 +89,7 @@ public:
 public slots:
     void startAutoProxy();
 
-    void proxyTested(bool res);
+    void proxyTested(bool res, const QString &error);
 
 signals:
     void startAutoExecued();

@@ -21,6 +21,7 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     , mappedRouterIdx(-1)
 {
     qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
+    qRegisterMetaType<Proxy::ProxyResult>("Proxy::ProxyResult");
 
     qRegisterMetaType<ProxyCallback>("ProxyCallback");
     qRegisterMetaType<DiscoverCallback>("DiscoverCallback");
@@ -59,22 +60,27 @@ void Proxy::startAutoProxy()
     // Start proxy
     LOG << "Proxy auto start: executed";
     emit startAutoExecued();
+    emit javascriptWrapper.sendAutoStartExecutedResponseSig(TypedException());
     //proxyServer->setPort(22);
     bool res = proxyServer->start();
     if (!res) {
         LOG << "Proxy auto start: proxy start error";
         emit startAutoProxyResult(TypedException(PROXY_PROXY_START_ERROR, "Proxy start error"));
+        emit javascriptWrapper.sendAutoStartProxyResponseSig(ProxyResult(false, "Proxy start error"), TypedException());
         return;
     }
     LOG << "Proxy auto start: proxy start ok";
     emit startAutoProxyResult(TypedException(NOT_ERROR, "Proxy started"));
+    emit javascriptWrapper.sendAutoStartProxyResponseSig(ProxyResult(true, "Proxy started"), TypedException());
     // Wait 10 sec to find routers
     QTimer::singleShot(10 * 1000, this, &Proxy::onAutoDiscoveryTimeout);
 }
 
-void Proxy::proxyTested(bool res)
+void Proxy::proxyTested(bool res, const QString &error)
 {
-    qDebug() << res;
+    //qDebug() << res;
+    // LOG ??
+    emit javascriptWrapper.sendAutoStartTestResponseSig(ProxyResult(res, error), TypedException());
 }
 
 void Proxy::onProxyStart(const ProxyCallback &callback)
@@ -108,7 +114,7 @@ BEGIN_SLOT_WRAPPER
         ProxyResult res(false, QStringLiteral("Exception"));
         runCallback(std::bind(callback, res, exception));
     }
-    END_SLOT_WRAPPER
+END_SLOT_WRAPPER
 }
 
 void Proxy::onGeProxyStatus()
@@ -238,8 +244,11 @@ void Proxy::onAutoDiscoveryTimeout()
     if (routers.empty()) {
         LOG << "Proxy auto start: no routers found";
         emit startAutoUPnPResult(TypedException(PROXY_UPNP_ROUTER_NOT_FOUND, "Routers not found"));
+        emit javascriptWrapper.sendAutoStartRouterResponseSig(ProxyResult(false, "Routers not found"), TypedException());
         LOG << "Proxy auto start: complete";
         emit startAutoComplete(proxyServer->port());
+        emit javascriptWrapper.sendAutoStartCompleteResponseSig(TypedException());
+        emit javascriptWrapper.sendConnectedPeersResponseSig(123, TypedException()); // test
         return;
     }
 
@@ -249,13 +258,17 @@ void Proxy::onAutoDiscoveryTimeout()
         if (r) {
             LOG << "Proxy auto start: add port mapping ok";
             emit startAutoUPnPResult(TypedException(NOT_ERROR, "Port mapping ok"));
+            emit javascriptWrapper.sendAutoStartRouterResponseSig(ProxyResult(true, "Port mapping ok"), TypedException());
         } else {
             LOG << "Proxy auto start: add port mapping error";
             emit startAutoUPnPResult(TypedException(PROXY_UPNP_ADD_PORT_MAPPING_ERROR, error.toStdString()));
+            emit javascriptWrapper.sendAutoStartRouterResponseSig(ProxyResult(false, error), TypedException());
         }
 
         LOG << "Proxy auto start: complete";
         emit startAutoComplete(proxyServer->port());
+        emit javascriptWrapper.sendAutoStartCompleteResponseSig(TypedException());
+        emit javascriptWrapper.sendConnectedPeersResponseSig(123, TypedException()); // test
     });
 }
 
