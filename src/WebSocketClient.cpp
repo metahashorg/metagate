@@ -38,7 +38,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
     CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
         BEGIN_SLOT_WRAPPER
-        LOG << "Wss client disconnected";
+        LOG << "Wss client disconnected. Url " << m_url.toString();
         m_webSocket.close();
         if (!isStopped) {
             QTimer::singleShot(milliseconds(10s).count(), this, SLOT(onStarted()));
