@@ -88,7 +88,15 @@ MainWindow::MainWindow(
     if (isExistFile(routesFile)) {
         const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
         LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
-        pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        try {
+            pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        } catch (const Exception &e) {
+            LOG << "Error " << e;
+        } catch (const TypedException &e) {
+            LOG << "Error " << e.description;
+        } catch (...) {
+            LOG << "Error mappings";
+        }
     } else {
         LOG << "Warning: routes file not found";
     }
