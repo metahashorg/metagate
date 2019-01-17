@@ -62,7 +62,7 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
 }
 
 void MessengerDBStorage::addMessage(const Message &message) {
-    addMessage(message.username, message.collocutor, message.data, message.decryptedData, message.isDecrypted,
+    addMessage(message.username, message.collocutor, message.dataHex, message.decryptedDataHex, message.isDecrypted,
                message.timestamp, message.counter, message.isInput,
                message.isCanDecrypted, message.isConfirmed, message.hash,
                message.fee, message.channel);
@@ -573,8 +573,8 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
             msg.channel = QString();
         }
         msg.isInput = query.value("isIncoming").toBool();
-        msg.data = query.value("text").toString();
-        msg.decryptedData = query.value("decryptedText").toString();
+        msg.dataHex = query.value("text").toString();
+        msg.decryptedDataHex = query.value("decryptedText").toString();
         msg.isDecrypted = query.value("isDecrypted").toBool();
         msg.counter = query.value("morder").toLongLong();
         msg.timestamp = static_cast<quint64>(query.value("dt").toLongLong());

@@ -39,7 +39,7 @@ void tst_MessengerDBStorage::testMessengerDB2()
 
     std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "3454", 5000, 20);
     QCOMPARE(r.size(), 2);
-    QCOMPARE(r.front().data, QStringLiteral("abcd123"));
+    QCOMPARE(r.front().dataHex, QStringLiteral("abcd123"));
 
     DBStorage::DbId id7 = db.getUserId("user7");
 
@@ -214,8 +214,8 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
         QCOMPARE(r.size(), 2);
         QCOMPARE(r[0].isDecrypted, true);
         QCOMPARE(r[1].isDecrypted, true);
-        QCOMPARE(r[0].decryptedData, "sadfads");
-        QCOMPARE(r[1].decryptedData, "fdsfd");
+        QCOMPARE(r[0].decryptedDataHex, "sadfads");
+        QCOMPARE(r[1].decryptedDataHex, "fdsfd");
     }
 
     {
@@ -225,8 +225,8 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
         QCOMPARE(r[1].isDecrypted, false);
         QCOMPARE(r[2].isDecrypted, true);
         QCOMPARE(r[3].isDecrypted, true);
-        QCOMPARE(r[2].decryptedData, "sadfads");
-        QCOMPARE(r[3].decryptedData, "fdsfd");
+        QCOMPARE(r[2].decryptedDataHex, "sadfads");
+        QCOMPARE(r[3].decryptedDataHex, "fdsfd");
     }
 
 }

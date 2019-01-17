@@ -11,8 +11,8 @@ struct Message {
     QString collocutor;
     bool isInput;
     quint64 timestamp;
-    QString data;
-    QString decryptedData;
+    QString dataHex;
+    QString decryptedDataHex;
     QString hash;
     Counter counter;
     int64_t fee;

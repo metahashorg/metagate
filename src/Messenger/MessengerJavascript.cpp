@@ -65,7 +65,7 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
         messageJson.insert("collocutor", message.collocutor);
         messageJson.insert("isInput", message.isInput);
         messageJson.insert("timestamp", QString::fromStdString(std::to_string(message.timestamp)));
-        messageJson.insert("data", message.decryptedData);
+        messageJson.insert("data", message.decryptedDataHex);
         messageJson.insert("isDecrypter", message.isDecrypted);
         messageJson.insert("counter", QString::fromStdString(std::to_string(message.counter)));
         messageJson.insert("fee", QString::fromStdString(std::to_string(message.fee)));
@@ -234,23 +234,31 @@ BEGIN_SLOT_WRAPPER
     LOG << "registerAddress " << address;
 
     const TypedException exception = apiVrapper2([&, this](){
+        const auto processFunc = [this, address, isForcibly, makeFunc, errorFunc](bool isNew) {
+            if (isNew || isForcibly) {
+                const std::vector<QString> messagesForSign = Messenger::stringsForSign();
+                emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
+                    emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([address, makeFunc](){
+                        LOG << "Address registered " << address;
+                        makeFunc(TypedException(), QString("Ok"));
+                    }, errorFunc, signalFunc));
+                }, errorFunc, signalFunc));
+            }
+        };
+
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field incorrect");
-        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc](const QString &pubkeyRsa){
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
             const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
-            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
-                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback([this, address, isForcibly, makeFunc, errorFunc](bool isNew) mutable {
-                    if (isNew || isForcibly) {
-                        const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-                        emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
-                            emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([this, address, makeFunc](){
-                                LOG << "Address registered " << address;
-                                makeFunc(TypedException(), QString("Ok"));
-                            }, errorFunc, signalFunc));
-                        }, errorFunc, signalFunc));
+            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
+                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, [isForcibly, processFunc, errorFunc](const TypedException &exception) {
+                    if (isForcibly) {
+                        processFunc(true);
+                    } else {
+                        errorFunc(exception);
                     }
-                }, errorFunc, signalFunc));
+                }, signalFunc));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
     });

@@ -101,7 +101,7 @@ static std::vector<Message> decryptMsg(const std::vector<Message> &messages, con
         Message result = message;
         const bool isEncrypted = !result.isChannel;
         if (!isEncrypted) {
-            result.decryptedData = result.data;
+            result.decryptedDataHex = result.dataHex;
             result.isDecrypted = true;
         } else {
             if (result.isCanDecrypted) {
@@ -113,8 +113,8 @@ static std::vector<Message> decryptMsg(const std::vector<Message> &messages, con
                     }
                 }
                 CHECK_TYPED(walletRsa != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "Wallet rsa not unlock");
-                const std::string decryptedData = toHex(walletRsa->decryptMessage(result.data.toStdString()));
-                result.decryptedData = QString::fromStdString(decryptedData);
+                const std::string decryptedData = toHex(walletRsa->decryptMessage(result.dataHex.toStdString()));
+                result.decryptedDataHex = QString::fromStdString(decryptedData);
                 result.isDecrypted = true;
             }
         }

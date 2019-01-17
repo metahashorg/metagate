@@ -317,7 +317,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         message.isChannel = m.isChannel;
         message.collocutor = m.collocutor;
         message.counter = m.counter;
-        message.data = m.data;
+        message.dataHex = m.data;
         message.isDecrypted = false;
         message.fee = m.fee;
         const QString hashMessage = createHashMessage(m.data); // TODO брать хэш еще и по timestamp
@@ -599,7 +599,7 @@ BEGIN_SLOT_WRAPPER
     }
     QString dData;
     if (isDecryptDataSave) {
-        dData = QString::fromStdString(fromHex(decryptedDataHex.toStdString()));
+        dData = decryptedDataHex;
     } else {
         dData = "";
     }
