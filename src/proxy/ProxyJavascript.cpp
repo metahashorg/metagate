@@ -82,7 +82,6 @@ void ProxyJavascript::proxyStart()
 BEGIN_SLOT_WRAPPER
     CHECK(m_proxyManager, "proxyManager not set");
 
-    qDebug() << "!!!";
     LOG << "Proxy start";
 
     const QString JS_NAME_RESULT = "proxyStartResultJs";
@@ -264,6 +263,15 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         //makeFunc(exception, false);
     }
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::proxyAutoStartResend()
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(m_proxyManager, "proxyManager not set");
+    LOG << "Proxy autostart resend";
+    emit m_proxyManager->autoStartResend();
 END_SLOT_WRAPPER
 }
 

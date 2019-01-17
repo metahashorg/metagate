@@ -19,6 +19,14 @@ class Proxy : public QObject
 {
     Q_OBJECT
 
+    enum State {
+        No,
+        AutoExecuted,
+        AutoProxyStarted,
+        AutoUPNPDone,
+        AutoComplete
+    };
+
 public:
     struct Router {
         QString friendlyName;
@@ -119,6 +127,8 @@ signals:
 
     void deletePortMapping(const PortMappingCallback &callback);
 
+    void autoStartResend();
+
 
 public slots:
 
@@ -140,6 +150,8 @@ public slots:
 
     void onDeletePortMapping(const PortMappingCallback &callback);
 
+    void onAutoStartResend();
+
 private slots:
     void onRouterDiscovered(UPnPRouter *router);
 
@@ -154,11 +166,16 @@ private:
 
     ProxyJavascript &javascriptWrapper;
 
+    State state;
     ProxyServer *proxyServer;
     UPnPDevices *upnp;
     std::vector<Router> routers;
     int mappedRouterIdx;
     bool proxyStarted = false;
+
+    bool autoProxyRes;
+    bool autoRouterRes;
+    bool autoTestRes;
 };
 
 }
