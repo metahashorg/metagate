@@ -21,6 +21,10 @@ struct Message {
     bool isChannel = false;
     bool isDecrypted = false;
     QString channel;
+
+    bool operator< (const Message &second) const {
+        return this->counter < second.counter;
+    }
 };
 
 struct ChannelInfo {

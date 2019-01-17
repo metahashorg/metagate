@@ -320,8 +320,8 @@ BEGIN_SLOT_WRAPPER
             emit cryptoManager.encryptDataRsa(dataHex, pubkey, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex](const QString &encryptedDataToWss) {
                 const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee, timestamp);
                 emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &pubkey, const QString &sign) {
-                    emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, encryptedDataToWss, pubkey, sign](const QString &encryptedDataToBd) {
-                        emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([this, makeFunc, address, collocutor]() {
+                    emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss, pubkey, sign](const QString &encryptedDataToBd) {
+                        emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, dataHex, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([this, makeFunc, address, collocutor]() {
                             LOG << "Message sended " << address << " " << collocutor;
                             makeFunc(TypedException(), address, collocutor);
                         }, errorFunc, signalFunc));
@@ -617,7 +617,7 @@ BEGIN_SLOT_WRAPPER
 
         const QString messageToSign = Messenger::makeTextForSendToChannelRequest(titleSha, dataHex, fee, timestamp);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, dataHex, titleSha, fee, timestamp, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
-            emit messenger->sendMessage(address, address, true, titleSha, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
+            emit messenger->sendMessage(address, address, true, titleSha, dataHex, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
                 LOG << "Message sended " << address << " " << titleSha;
                 makeFunc(TypedException(), address, titleSha);
             }, errorFunc, signalFunc));

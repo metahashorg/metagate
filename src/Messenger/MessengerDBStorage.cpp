@@ -61,14 +61,17 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
     addLastReadRecord(userid, contactid, channelid);
 }
 
-void MessengerDBStorage::addMessages(const std::vector<Message> &messages)
-{
+void MessengerDBStorage::addMessage(const Message &message) {
+    addMessage(message.username, message.collocutor, message.data, message.decryptedData, message.isDecrypted,
+               message.timestamp, message.counter, message.isInput,
+               message.isCanDecrypted, message.isConfirmed, message.hash,
+               message.fee, message.channel);
+}
+
+void MessengerDBStorage::addMessages(const std::vector<Message> &messages) {
     auto transactionGuard = beginTransaction();
     for (const Message &message: messages) {
-        addMessage(message.username, message.collocutor, message.data, message.decryptedData, message.isDecrypted,
-                   message.timestamp, message.counter, message.isInput,
-                   message.isCanDecrypted, message.isConfirmed, message.hash,
-                   message.fee, message.channel);
+        addMessage(message);
     }
     transactionGuard.commit();
 }

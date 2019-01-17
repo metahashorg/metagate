@@ -14,6 +14,7 @@ CryptographicManager::CryptographicManager(QObject *parent)
     CHECK(connect(this, &TimerClass::timerEvent, this, &CryptographicManager::onResetWallets), "not connect onTimerEvent");
 
     CHECK(connect(this, &CryptographicManager::decryptMessages, this, &CryptographicManager::onDecryptMessages), "not connect onDecryptMessages");
+    CHECK(connect(this, &CryptographicManager::tryDecryptMessages, this, &CryptographicManager::onTryDecryptMessages), "not connect onTryDecryptMessages");
     CHECK(connect(this, &CryptographicManager::signMessage, this, &CryptographicManager::onSignMessage), "not connect onSignMessage");
     CHECK(connect(this, &CryptographicManager::signMessages, this, &CryptographicManager::onSignMessages), "not connect onSignMessages");
     CHECK(connect(this, &CryptographicManager::getPubkeyRsa, this, &CryptographicManager::onGetPubkeyRsa), "not connect onGetPubkeyRsa");
@@ -50,6 +51,16 @@ WalletRsa& CryptographicManager::getWalletRsa(const std::string &address) const 
     return *walletRsa;
 }
 
+WalletRsa* CryptographicManager::getWalletRsaWithoutCheck(const std::string &address) const {
+    if (walletRsa == nullptr) {
+        return nullptr;
+    }
+    if (wallet->getAddress() != address) {
+        return nullptr;
+    }
+    return walletRsa.get();
+}
+
 void CryptographicManager::lockWalletImpl() {
     wallet = nullptr;
     walletRsa = nullptr;
@@ -80,10 +91,13 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-static std::vector<Message> decryptMsg(const std::vector<Message> &messages, const WalletRsa &walletRsa) {
+static std::vector<Message> decryptMsg(const std::vector<Message> &messages, const WalletRsa *walletRsa, bool isThrow) {
     std::vector<Message> result;
     result.reserve(messages.size());
-    std::transform(messages.begin(), messages.end(), std::back_inserter(result), [&walletRsa](const Message &message) {
+    std::transform(messages.begin(), messages.end(), std::back_inserter(result), [walletRsa, isThrow](const Message &message) {
+        if (message.isDecrypted) {
+            return message;
+        }
         Message result = message;
         const bool isEncrypted = !result.isChannel;
         if (!isEncrypted) {
@@ -91,7 +105,15 @@ static std::vector<Message> decryptMsg(const std::vector<Message> &messages, con
             result.isDecrypted = true;
         } else {
             if (result.isCanDecrypted) {
-                const std::string decryptedData = toHex(walletRsa.decryptMessage(result.data.toStdString()));
+                if (walletRsa == nullptr) {
+                    if (isThrow) {
+                        throwErrTyped(TypeErrors::WALLET_NOT_UNLOCK, "Wallet rsa not unlock");
+                    } else {
+                        return result;
+                    }
+                }
+                CHECK_TYPED(walletRsa != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "Wallet rsa not unlock");
+                const std::string decryptedData = toHex(walletRsa->decryptMessage(result.data.toStdString()));
                 result.decryptedData = QString::fromStdString(decryptedData);
                 result.isDecrypted = true;
             }
@@ -105,7 +127,18 @@ void CryptographicManager::onDecryptMessages(const std::vector<Message> &message
 BEGIN_SLOT_WRAPPER
     std::vector<Message> result;
     const TypedException exception = apiVrapper2([&, this] {
-        result = decryptMsg(messages, getWalletRsa(address.toStdString()));
+        result = decryptMsg(messages, getWalletRsaWithoutCheck(address.toStdString()), true);
+    });
+
+    callback.emitFunc(exception, result);
+END_SLOT_WRAPPER
+}
+
+void CryptographicManager::onTryDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<Message> result;
+    const TypedException exception = apiVrapper2([&, this] {
+        result = decryptMsg(messages, getWalletRsaWithoutCheck(address.toStdString()), false);
     });
 
     callback.emitFunc(exception, result);

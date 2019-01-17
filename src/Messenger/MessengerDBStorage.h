@@ -22,6 +22,8 @@ public:
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
                     const QString &hash, qint64 fee, const QString &channelSha = QString());
 
+    void addMessage(const Message &message);
+
     void addMessages(const std::vector<Message> &messages);
 
     DbId getUserId(const QString &username);
