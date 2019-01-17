@@ -40,7 +40,7 @@ private slots:
 
     void onStartAutoComplete(quint16 port);
 
-    void onTestResult(int code, QString message);
+    void onTestResult(int code, QString result);
 
 private:
 

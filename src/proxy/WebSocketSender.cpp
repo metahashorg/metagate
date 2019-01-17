@@ -30,18 +30,6 @@ static QString makeProxyModuleFound() {
     return json.toJson(QJsonDocument::Compact);
 };
 
-static QString makeStartTestMessage(QString ip, int port) {
-    QJsonObject allJson;
-    allJson.insert("app", "ProxyStartTest");
-    QJsonObject data;
-    data.insert("ip", ip);
-    data.insert("port", port);
-    allJson.insert("data", data);
-    QJsonDocument json(allJson);
-
-    return json.toJson(QJsonDocument::Compact);
-};
-
 static QString makeProxyStarted(const TypedException &exception) {
     QJsonObject allJson;
     allJson.insert("app", "ProxyStarted");
@@ -71,6 +59,32 @@ static QString makeProxyStartCompleted(quint16 port) {
     allJson.insert("app", "ProxyStartCompleted");
     QJsonObject data;
     data.insert("port", port);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+static QString makeStartTestMessage(const QString &ip, int port) {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyStartTest");
+    QJsonObject data;
+    data.insert("ip", ip);
+    data.insert("port", port);
+    allJson.insert("data", data);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+static QString makeAllCompleteMessage(const QString &ip, int port, int errorNum, const QString &errorMessage) {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyAllComplete");
+    QJsonObject data;
+    data.insert("ip", ip);
+    data.insert("port", port);
+    data.insert("errorNum", errorNum);
+    data.insert("errorMessage", errorMessage);
     allJson.insert("data", data);
     QJsonDocument json(allJson);
 
@@ -146,9 +160,13 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WebSocketSender::onTestResult(int code, QString message) {
+void WebSocketSender::onTestResult(int code, QString result) {
 BEGIN_SLOT_WRAPPER
-    emit proxyTested(code == 0, message);
+    emit proxyTested(code == 0, result);
+
+    const QString message = makeAllCompleteMessage(myIp, port, code, result);
+    emit client.addHelloString(message, PROXY_TAG);
+    emit client.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
