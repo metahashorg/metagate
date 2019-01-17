@@ -147,7 +147,7 @@ CONFIG += c++14
 DEFINES += CRYPTOPP_IMPORTS
 DEFINES += QUAZIP_STATIC
 
-QMAKE_CXXFLAGS += -Wno-unused-parameter -Wall -Wextra
+unix: QMAKE_CXXFLAGS += -Wno-unused-parameter -Wall -Wextra
 #QMAKE_CXXFLAGS += -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 QMAKE_LFLAGS += -rdynamic
