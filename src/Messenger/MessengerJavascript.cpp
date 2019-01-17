@@ -310,6 +310,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "sendMessage " << " " << address << " " << collocutor << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
+        CHECK(!dataHex.isEmpty(), "Empty message");
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "fee field incorrect");
@@ -607,6 +608,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "sendMessageToChannel " << " " << address << " " << titleSha << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
+        CHECK(!dataHex.isEmpty(), "Empty message");
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field invalid");

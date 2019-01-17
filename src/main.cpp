@@ -131,13 +131,13 @@ int main(int argc, char *argv[]) {
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
         messenger::CryptographicManager messengerCryptManager;
-        //messengerCryptManager.start();
+        messengerCryptManager.start();
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
-        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
+        messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();
         messenger::Messenger messenger(messengerJavascript, dbMessenger);
         messenger.start();
-        messengerJavascript.setMessenger(messenger);*/
+        messengerJavascript.setMessenger(messenger);
 
         MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
         mainWindow.showExpanded();
