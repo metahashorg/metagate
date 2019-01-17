@@ -135,7 +135,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     qRegisterMetaType<SavePosCallback>("SavePosCallback");
     qRegisterMetaType<GetSavedPosCallback>("GetSavedPosCallback");
     qRegisterMetaType<GetSavedsPosCallback>("GetSavedsPosCallback");
-    qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
+    qRegisterMetaType<Messenger::RegisterAddressCallback>("Messenger::RegisterAddressCallback");
     qRegisterMetaType<SignedStringsCallback>("SignedStringsCallback");
     qRegisterMetaType<SavePubkeyCallback>("SavePubkeyCallback");
     qRegisterMetaType<GetPubkeyAddressCallback>("GetPubkeyAddressCallback");
