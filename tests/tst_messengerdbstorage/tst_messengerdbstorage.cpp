@@ -27,12 +27,12 @@ void tst_MessengerDBStorage::testMessengerDB2()
     messenger::MessengerDBStorage db;
     db.init();
 
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd123", 1, 1500, true, true, true, "asdfdf", 1, QString(""));
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd123", "", false, 1, 1500, true, true, true, "asdfdf", 1, QString(""));
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 3000), 1);
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 5000), 0);
     QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 0), 2);
@@ -43,14 +43,14 @@ void tst_MessengerDBStorage::testMessengerDB2()
 
     DBStorage::DbId id7 = db.getUserId("user7");
 
-    db.addMessage("user6", "user7", "Hello!", 8458864, 1, true, true, true, "jkfjkjttrjkgfjkgfjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 1, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 2, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 3, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 4, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 5, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 6, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
-    db.addMessage("user7", "user1", "Hello1!", 84583864, 7, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user6", "user7", "Hello!", "", false, 8458864, 1, true, true, true, "jkfjkjttrjkgfjkgfjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 1, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 2, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 3, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 4, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 5, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 6, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
+    db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 7, true, true, false, "dfjkjkgfjkgfjkgfjkjk", 445);
 
     DBStorage::DbId id77 = db.getUserId("user7");
     QCOMPARE(id7, id77);
@@ -118,13 +118,13 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     db.init();
     DBStorage::DbId id1 = db.getUserId("1234");
     db.addChannel(id1, "channel", "jkgfjkgfgfitrrtoioriojk", true, "ktkt", false, true, true);
-    db.addMessage("1234", "3454", "abcd", 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
-    db.addMessage("1234", "3454", "abcd", 1, 4001, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4002, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3457", "abcd", 1, 4003, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 4004, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 1500, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "3454", "abcd", 1, 6000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4001, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4002, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3457", "abcd", "", false, 1, 4003, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4004, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 1500, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 6000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
 
     std::vector<messenger::Message> rr = db.getMessagesForUserAndDestNum("1234", "jkgfjkgfgfitrrtoioriojk", 10000, 1000, true);
     QCOMPARE(rr.size(), 2);
@@ -182,10 +182,53 @@ void tst_MessengerDBStorage::testMessengerDBSpeed()
     db.init();
     auto transactionGuard = db.beginTransaction();
     for (int n = 0; n < 1000; n++) {
-        db.addMessage("1234", "3454", "abcd", 1000000 + n, 4001 + n, true, true, true, "asdfdf", 1);
+        db.addMessage("1234", "3454", "abcd", "", false, 1000000 + n, 4001 + n, true, true, true, "asdfdf", 1);
     }
     transactionGuard.commit();
     qDebug() << db.getMessageMaxCounter("1234");
+}
+
+void tst_MessengerDBStorage::testMessengerDecryptedText()
+{
+    if (QFile::exists(dbName))
+        QFile::remove(dbName);
+    messenger::MessengerDBStorage db;
+    db.init();
+
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "3454", "abcd2", "", false, 1, 4001, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "34546", "abcd", "sadfads", true, 1, 4002, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "34546", "abcdadfas", "fdsfd", true, 1, 4003, true, true, true, "asdfdf", 1);
+    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 3000), 2);
+    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "34546", 3000), 2);
+
+    {
+        std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "3454", 10000, 20);
+        QCOMPARE(r.size(), 2);
+        QCOMPARE(r[0].isDecrypted, false);
+        QCOMPARE(r[1].isDecrypted, false);
+    }
+
+    {
+        std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "34546", 10000, 20);
+        QCOMPARE(r.size(), 2);
+        QCOMPARE(r[0].isDecrypted, true);
+        QCOMPARE(r[1].isDecrypted, true);
+        QCOMPARE(r[0].decryptedData, "sadfads");
+        QCOMPARE(r[1].decryptedData, "fdsfd");
+    }
+
+    {
+        std::vector<messenger::Message> r = db.getMessagesForUser("1234", 1, 10000);
+        QCOMPARE(r.size(), 4);
+        QCOMPARE(r[0].isDecrypted, false);
+        QCOMPARE(r[1].isDecrypted, false);
+        QCOMPARE(r[2].isDecrypted, true);
+        QCOMPARE(r[3].isDecrypted, true);
+        QCOMPARE(r[2].decryptedData, "sadfads");
+        QCOMPARE(r[3].decryptedData, "fdsfd");
+    }
+
 }
 
 QTEST_MAIN(tst_MessengerDBStorage)

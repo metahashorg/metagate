@@ -312,7 +312,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         const QString hashMessage = createHashMessage(m.data); // TODO брать хэш еще и по timestamp
         if (isInput) {
             LOG << "Add message " << address << " " << channel << " " << m.collocutor << " " << m.counter;
-            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee, channel);
+            db.addMessage(address, m.collocutor, m.data, "", false, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee, channel);
             const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
             const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
             if (savedPos == -1) {
@@ -337,7 +337,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage, channel);
                 if (idPair2.first == -1) {
                     LOG << "Insert new output message " << address << " " << channel << " " << m.counter;
-                    db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee, channel);
+                    db.addMessage(address, m.collocutor, m.data, "", false, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee, channel);
                 }
             }
         }
@@ -547,7 +547,7 @@ BEGIN_SLOT_WRAPPER
     if (lastCnt < 0) {
         lastCnt = -1;
     }
-    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
+    db.addMessage(thisAddress, toAddress, encryptedDataHex, "", false, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
     const size_t idRequest = id.get();
     QString message;
     if (!isChannel) {

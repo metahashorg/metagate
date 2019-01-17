@@ -18,7 +18,7 @@ public:
     virtual int currentVersion() const final;
 
     void addMessage(const QString &user, const QString &duser,
-                    const QString &text, uint64_t timestamp, Message::Counter counter,
+                    const QString &text, const QString &decryptedText, bool isDecrypted, uint64_t timestamp, Message::Counter counter,
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
                     const QString &hash, qint64 fee, const QString &channelSha = QString());
 

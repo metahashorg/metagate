@@ -20,7 +20,7 @@ int messenger::MessengerDBStorage::currentVersion() const
     return databaseVersion;
 }
 
-void MessengerDBStorage::addMessage(const QString &user, const QString &duser, const QString &text,
+void MessengerDBStorage::addMessage(const QString &user, const QString &duser, const QString &text, const QString &decryptedText, bool isDecrypted,
                                     uint64_t timestamp, Message::Counter counter, bool isIncoming,
                                     bool canDecrypted, bool isConfirmed, const QString &hash,
                                     qint64 fee, const QString &channelSha)
@@ -46,6 +46,8 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
     query.bindValue(":order", counter);
     query.bindValue(":dt", static_cast<qint64>(timestamp));
     query.bindValue(":text", text);
+    query.bindValue(":decryptedText", decryptedText);
+    query.bindValue(":isDecrypted", isDecrypted);
     query.bindValue(":isIncoming", isIncoming);
     query.bindValue(":canDecrypted", canDecrypted);
     query.bindValue(":isConfirmed", isConfirmed);
@@ -63,7 +65,7 @@ void MessengerDBStorage::addMessages(const std::vector<Message> &messages)
 {
     auto transactionGuard = beginTransaction();
     for (const Message &message: messages) {
-        addMessage(message.username, message.collocutor, message.data,
+        addMessage(message.username, message.collocutor, message.data, message.decryptedData, message.isDecrypted,
                    message.timestamp, message.counter, message.isInput,
                    message.isCanDecrypted, message.isConfirmed, message.hash,
                    message.fee, message.channel);
@@ -569,6 +571,8 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
         }
         msg.isInput = query.value("isIncoming").toBool();
         msg.data = query.value("text").toString();
+        msg.decryptedData = query.value("decryptedText").toString();
+        msg.isDecrypted = query.value("isDecrypted").toBool();
         msg.counter = query.value("morder").toLongLong();
         msg.timestamp = static_cast<quint64>(query.value("dt").toLongLong());
         msg.fee = query.value("fee").toLongLong();
