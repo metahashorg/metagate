@@ -36,6 +36,7 @@
 #include "Paths.h"
 #include "makeJsFunc.h"
 #include "qrcoder.h"
+#include "QRegister.h"
 
 #include "machine_uid.h"
 
@@ -117,8 +118,8 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
 
-    qRegisterMetaType<TypedException>("TypedException");
-    qRegisterMetaType<ReturnCallback>("ReturnCallback");
+    Q_REG2(TypedException, "TypedException", false);
+    Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
 
     transactionsManager.setJavascriptWrapper(*this);
 

@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "mhurlschemehandler.h"
 
@@ -113,7 +114,7 @@ MainWindow::MainWindow(
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
-    qRegisterMetaType<WindowEvent>("WindowEvent");
+    Q_REG(WindowEvent, "WindowEvent");
 
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");

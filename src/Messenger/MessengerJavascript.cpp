@@ -6,6 +6,7 @@
 #include "SlotWrapper.h"
 #include "utils.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "Messenger.h"
 
@@ -35,7 +36,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, const Javascri
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
 
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(MessengerJavascript::Callback, "MessengerJavascript::Callback");
 
     defaultWalletPath = jManager.walletDefaultPath;
     defaultUserName = jManager.defaultUsername;

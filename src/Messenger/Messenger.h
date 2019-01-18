@@ -104,11 +104,11 @@ public:
 
 signals:
 
-    void callbackCall(const Callback &callback);
+    void callbackCall(const Messenger::Callback &callback);
 
 public slots:
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const Messenger::Callback &callback);
 
 public:
 

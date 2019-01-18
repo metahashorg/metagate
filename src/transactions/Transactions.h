@@ -151,6 +151,10 @@ public:
 
 signals:
 
+    void callbackCall(Transactions::Callback callback);
+
+signals:
+
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
     void getAddresses(const QString &group, const GetAddressesCallback &callback);
@@ -219,7 +223,7 @@ public slots:
 
 private slots:
 
-    void onCallbackCall(Callback callback);
+    void onCallbackCall(Transactions::Callback callback);
 
     void onRun();
 

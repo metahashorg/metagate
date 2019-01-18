@@ -73,7 +73,7 @@ public:
 
 Q_SIGNALS:
 
-    void callbackCall(ReturnCallback callback);
+    void callbackCall(SimpleClient::ReturnCallback callback);
 
 Q_SIGNALS:
     void closed();

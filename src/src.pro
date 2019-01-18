@@ -64,7 +64,8 @@ SOURCES += main.cpp mainwindow.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
     machine_uid.cpp \
-    Messenger/CryptographicManager.cpp
+    Messenger/CryptographicManager.cpp \
+    QRegister.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 
@@ -135,7 +136,8 @@ HEADERS += mainwindow.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
     Messenger/CryptographicManager.h \
-    CallbackWrapper.h
+    CallbackWrapper.h \
+    QRegister.h
 
 FORMS += mainwindow.ui
 

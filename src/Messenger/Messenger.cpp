@@ -6,6 +6,7 @@
 #include "makeJsFunc.h"
 #include "Paths.h"
 #include "utils.h"
+#include "QRegister.h"
 
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
@@ -129,26 +130,26 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
     CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
 
-    qRegisterMetaType<uint64_t>("uint64_t");
-    qRegisterMetaType<Callback>("Callback");
-    qRegisterMetaType<Message::Counter>("Message::Counter");
-    qRegisterMetaType<GetMessagesCallback>("GetMessagesCallback");
-    qRegisterMetaType<SavePosCallback>("SavePosCallback");
-    qRegisterMetaType<GetSavedPosCallback>("GetSavedPosCallback");
-    qRegisterMetaType<GetSavedsPosCallback>("GetSavedsPosCallback");
-    qRegisterMetaType<Messenger::RegisterAddressCallback>("Messenger::RegisterAddressCallback");
-    qRegisterMetaType<SignedStringsCallback>("SignedStringsCallback");
-    qRegisterMetaType<SavePubkeyCallback>("SavePubkeyCallback");
-    qRegisterMetaType<GetPubkeyAddressCallback>("GetPubkeyAddressCallback");
-    qRegisterMetaType<SendMessageCallback>("SendMessageCallback");
-    qRegisterMetaType<GetCountMessagesCallback>("GetCountMessagesCallback");
-    qRegisterMetaType<CreateChannelCallback>("CreateChannelCallback");
-    qRegisterMetaType<AddWriterToChannelCallback>("AddWriterToChannelCallback");
-    qRegisterMetaType<DelWriterToChannelCallback>("DelWriterToChannelCallback");
-    qRegisterMetaType<GetChannelListCallback>("GetChannelListCallback");
-    qRegisterMetaType<DecryptUserMessagesCallback>("DecryptUserMessagesCallback");
+    Q_REG2(uint64_t, "uint64_t", false);
+    Q_REG(Messenger::Callback, "Messenger::Callback");
+    Q_REG(Message::Counter, "Message::Counter");
+    Q_REG(GetMessagesCallback, "GetMessagesCallback");
+    Q_REG(SavePosCallback, "SavePosCallback");
+    Q_REG(GetSavedPosCallback, "GetSavedPosCallback");
+    Q_REG(GetSavedsPosCallback, "GetSavedsPosCallback");
+    Q_REG(Messenger::RegisterAddressCallback, "Messenger::RegisterAddressCallback");
+    Q_REG(SignedStringsCallback, "SignedStringsCallback");
+    Q_REG(SavePubkeyCallback, "SavePubkeyCallback");
+    Q_REG(GetPubkeyAddressCallback, "GetPubkeyAddressCallback");
+    Q_REG(SendMessageCallback, "SendMessageCallback");
+    Q_REG(GetCountMessagesCallback, "GetCountMessagesCallback");
+    Q_REG(CreateChannelCallback, "CreateChannelCallback");
+    Q_REG(AddWriterToChannelCallback, "AddWriterToChannelCallback");
+    Q_REG(DelWriterToChannelCallback, "DelWriterToChannelCallback");
+    Q_REG(GetChannelListCallback, "GetChannelListCallback");
+    Q_REG(DecryptUserMessagesCallback, "DecryptUserMessagesCallback");
 
-    qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
+    Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
     if (!isDecryptDataSave) {
         db.removeDecryptedData();

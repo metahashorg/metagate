@@ -4,6 +4,7 @@
 #include "SlotWrapper.h"
 #include "TypedException.h"
 #include "utils.h"
+#include "QRegister.h"
 
 namespace messenger {
 
@@ -23,17 +24,17 @@ CryptographicManager::CryptographicManager(QObject *parent)
     CHECK(connect(this, &CryptographicManager::unlockWallet, this, &CryptographicManager::onUnlockWallet), "not connect onUnlockWallet");
     CHECK(connect(this, &CryptographicManager::lockWallet, this, &CryptographicManager::onLockWallet), "not connect onLockWallet");
 
-    qRegisterMetaType<DecryptMessagesCallback>("DecryptMessagesCallback");
-    qRegisterMetaType<std::vector<Message>>("std::vector<Message>");
-    qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
-    qRegisterMetaType<SignMessageCallback>("SignMessageCallback");
-    qRegisterMetaType<SignMessagesCallback>("SignMessagesCallback");
-    qRegisterMetaType<GetPubkeyRsaCallback>("GetPubkeyRsaCallback");
-    qRegisterMetaType<EncryptMessageCallback>("EncryptMessageCallback");
-    qRegisterMetaType<UnlockWalletCallback>("UnlockWalletCallback");
-    qRegisterMetaType<LockWalletCallback>("LockWalletCallback");
-    qRegisterMetaType<std::string>("std::string");
-    qRegisterMetaType<seconds>("seconds");
+    Q_REG(DecryptMessagesCallback, "DecryptMessagesCallback");
+    Q_REG(std::vector<Message>, "std::vector<Message>");
+    Q_REG2(std::vector<QString>, "std::vector<QString>", false);
+    Q_REG(SignMessageCallback, "SignMessageCallback");
+    Q_REG(SignMessagesCallback, "SignMessagesCallback");
+    Q_REG(GetPubkeyRsaCallback, "GetPubkeyRsaCallback");
+    Q_REG(EncryptMessageCallback, "EncryptMessageCallback");
+    Q_REG(UnlockWalletCallback, "UnlockWalletCallback");
+    Q_REG(LockWalletCallback, "LockWalletCallback");
+    Q_REG2(std::string, "std::string", false);
+    Q_REG2(seconds, "seconds", false);
 
     moveToThread(&thread1);
 }

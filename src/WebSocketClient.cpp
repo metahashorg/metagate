@@ -6,6 +6,7 @@
 #include "SlotWrapper.h"
 #include "Paths.h"
 #include "duration.h"
+#include "QRegister.h"
 
 #include <QTimer>
 
@@ -14,8 +15,8 @@
 WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     : TimerClass(1min, parent)
 {
-    qRegisterMetaType<QAbstractSocket::SocketState>();
-    qRegisterMetaType<std::vector<QString>>();
+    Q_REG2(QAbstractSocket::SocketState, "QAbstractSocket::SocketState", false);
+    Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
     m_url = url;
     if (!QSslSocket::supportsSsl()) {
