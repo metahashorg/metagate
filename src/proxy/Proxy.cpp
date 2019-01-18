@@ -15,6 +15,7 @@ namespace proxy
 
 Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     : QObject(parent)
+    , thread(parent)
     , javascriptWrapper(javascriptWrapper)
     , state(No)
     , proxyServer(new ProxyServer(this))
@@ -235,6 +236,7 @@ END_SLOT_WRAPPER
 
 void Proxy::onAutoStartResend()
 {
+    qDebug() << "RES " << autoProxyRes;
     switch (state) {
     case AutoExecuted:
         emit javascriptWrapper.sendAutoStartExecutedResponseSig(TypedException());
