@@ -157,6 +157,8 @@ private slots:
 
     void onAutoDiscoveryTimeout();
 
+    void onConnedtedPeersChanged(int peers);
+
 private:
     template<typename Func>
     void runCallback(const Func &callback);
@@ -176,6 +178,8 @@ private:
     bool autoProxyRes;
     bool autoRouterRes;
     bool autoTestRes;
+    bool autoActive;
+    int m_peers;
 };
 
 }

@@ -255,6 +255,16 @@
         document.createWalletForm.proxyport.value += '->COMPLT';
     }
 
+    function proxyConnectedPeersResJs(res) {
+        document.createWalletForm.resres.value = res;
+    }
+    
+    function proxyAutoStartIsActiveResJs(res) {
+        document.createWalletForm.resres1.value = res;
+    }
+    
+        
+    
 //////////////////////////////////////
     
     function sendMsgChannel() {
@@ -347,6 +357,8 @@
             <input type="button" value="get port" onclick="getPort()"><br>
             <input type="button" value="set port" onclick="setPort()"><br>
             <input name="proxyport" type="text" value="-1" size="600"><br>
+            <input name="resres" type="text" value="" size="100"><br>
+            <input name="resres1" type="text" value="" size="100"><br>
             <input type="button" value="AUTO resend" onclick="proxyAutoStartResend()"><br>
             <input type="button" value="Discover Routers" onclick="discoverRouters()"><br>
             <input type="button" value="Get Routers" onclick="getRouters()"><br>

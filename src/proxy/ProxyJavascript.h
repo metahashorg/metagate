@@ -57,6 +57,8 @@ signals:
 
     void sendAutoStartCompleteResponseSig(const TypedException &error);
 
+    void sendAutoStartIsActiveResponseSig(bool active, const TypedException &error);
+
     void sendConnectedPeersResponseSig(int num, const TypedException &error);
 
 public slots:
@@ -75,6 +77,8 @@ public slots:
     void onSendAutoStartTestResponseSig(const Proxy::ProxyResult &res, const TypedException &error);
 
     void onSendAutoStartCompleteResponseSig(const TypedException &error);
+
+    void onSendAutoStartIsActiveResponseSig(bool active, const TypedException &error);
 
     void onSendConnectedPeersResponseSig(int num, const TypedException &error);
 

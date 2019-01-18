@@ -2,6 +2,7 @@
 
 #include "ProxyClient.h"
 #include <QThread>
+#include <QTimer>
 
 namespace proxy
 {
@@ -48,12 +49,23 @@ void ProxyServer::incomingConnection(qintptr socketDescriptor)
     connect(this, &ProxyServer::stopClient, client, &ProxyClient::stop);
     clients.append(client);
     connect(client, &ProxyClient::destroyed, [thread, client, this]() {
-         thread->quit();
-         clients.removeAll(client);
+        qDebug() << "Start disc";
+        QTimer::singleShot(60 * 1000, [thread, client, this](){
+            thread->quit();
+            clients.removeAll(client);
+            qDebug() << "Dicsc disc";
+            updateClients();
+        });
+        //milliseconds(1s).count()
     });
     client->setSocketDescriptor(socketDescriptor);
     client->moveToThread(thread);
     thread->start();
+    updateClients();
 }
 
+void ProxyServer::updateClients()
+{
+    emit connectedPeersChanged(clients.count());
+}
 }

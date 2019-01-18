@@ -21,6 +21,8 @@ public:
     void stop();
 
 signals:
+    void connectedPeersChanged(int peers);
+
     void listeningChanged(bool s);
     void stopClient();
 
@@ -28,6 +30,8 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private:
+    void updateClients();
+
     quint16 m_port;
     QList<ProxyClient *> clients;
 };

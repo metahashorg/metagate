@@ -71,6 +71,7 @@ ProxyJavascript::ProxyJavascript(QObject *parent)
     CHECK(connect(this, &ProxyJavascript::sendAutoStartRouterResponseSig, this, &ProxyJavascript::onSendAutoStartRouterResponseSig), "not connect onSendAutoStartRouterResponseSig");
     CHECK(connect(this, &ProxyJavascript::sendAutoStartTestResponseSig, this, &ProxyJavascript::onSendAutoStartTestResponseSig), "not connect onSendAutoStartTestResponseSig");
     CHECK(connect(this, &ProxyJavascript::sendAutoStartCompleteResponseSig, this, &ProxyJavascript::onSendAutoStartCompleteResponseSig), "not connect onSendAutoStartCompleteResponseSig");
+    CHECK(connect(this, &ProxyJavascript::sendAutoStartIsActiveResponseSig, this, &ProxyJavascript::onSendAutoStartIsActiveResponseSig), "not connect onSendAutoStartIsActiveResponseSig");
 
     CHECK(connect(this, &ProxyJavascript::sendConnectedPeersResponseSig, this, &ProxyJavascript::onSendConnectedPeersResponseSig), "not connect onSendConnectedPeersResponseSig");
 
@@ -336,6 +337,14 @@ void ProxyJavascript::onSendAutoStartCompleteResponseSig(const TypedException &e
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "proxyAutoStartCompleteResJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error);
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::onSendAutoStartIsActiveResponseSig(bool active, const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "proxyAutoStartIsActiveResJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, active);
 END_SLOT_WRAPPER
 }
 
