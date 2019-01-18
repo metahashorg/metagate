@@ -28,7 +28,7 @@ bool ProxyServer::start()
 {
     bool r = listen(QHostAddress::Any, m_port);
     emit listeningChanged(isListening());
-    qDebug() << serverError();
+    //qDebug() << serverError();
     return r;
 }
 

@@ -152,8 +152,7 @@ int main(int argc, char *argv[]) {
         QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
             qDebug() << "PROXY res " << port;
         });
-
-        proxyManager.startAutoProxy();
+        QMetaObject::invokeMethod(&proxyManager, "startAutoProxy");
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
