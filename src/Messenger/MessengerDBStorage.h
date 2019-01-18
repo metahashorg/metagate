@@ -71,11 +71,17 @@ public:
     ChannelInfo getChannelInfoForUserShaName(const QString &user, const QString &shaName);
     void setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter);
 
+    void removeDecryptedData();
+
+    std::vector<std::pair<DbId, Message>> getNotDecryptedMessage(const QString &user);
+
+    void updateDecryptedMessage(const std::vector<std::tuple<DbId, bool, QString>> &messages);
+
 protected:
     virtual void createDatabase() final;
 
 private:
-    void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse = false);
+    void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, std::vector<DbId> &ids, bool isIDs, bool isChannel, bool reverse);
     void addLastReadRecord(DbId userid, DbId contactid, DBStorage::DbId channelid);
 };
 

@@ -303,6 +303,33 @@ static const QString updateChannelIsWriterForUserShaName = "UPDATE channels "
 static const QString selectWhereIsNotChannel = "AND m.channelid IS NULL";
 static const QString selectJoinChannel = "INNER JOIN channels c ON c.id = m.channelid AND c.shaName = :channelSha";
 
+static const QString removeDecryptedDataQuery = "UPDATE messages "
+                                        "SET isDecrypted = 0, decryptedText = \'\' "
+                                        "WHERE isDecrypted = 1";
+
+static const QString selectNotDecryptedMessagesContactsQuery = "SELECT m.id, u.username AS user, c.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
+                                                  "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                        "FROM messages m "
+                                                        "INNER JOIN users u ON u.id = m.userid "
+                                                        "INNER JOIN contacts c ON c.id = m.contactid "
+                                                        "WHERE m.isDecrypted = 0 "
+                                                        "AND u.username = :user "
+                                                        "ORDER BY m.morder ASC";
+
+static const QString selectNotDecryptedMessagesChannelsQuery = "SELECT m.id, u.username AS user, c.shaName AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
+                                                  "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                        "FROM messages m "
+                                                        "INNER JOIN users u ON u.id = m.userid "
+                                                        "INNER JOIN channels c ON c.id = m.channelid "
+                                                        "WHERE m.isDecrypted = 0 "
+                                                        "AND u.username = :user "
+                                                        "ORDER BY m.morder ASC";
+
+static const QString updateDecryptedMessageQuery = "UPDATE messages "
+                                        "SET isDecrypted = :isDecrypted, decryptedText = :decryptedText "
+                                        "WHERE id = :id";
+
+
 }
 
 #endif // MESSENGERDBRES_H

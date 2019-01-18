@@ -224,7 +224,8 @@ std::vector<Message> MessengerDBStorage::getMessagesForUser(const QString &user,
     query.bindValue(":ob", from);
     query.bindValue(":oe", to);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    createMessagesList(query, res, false);
+    std::vector<DbId> tmp;
+    createMessagesList(query, res, tmp, false, false, false);
     return res;
 }
 
@@ -245,7 +246,8 @@ std::vector<Message> MessengerDBStorage::getMessagesForUserAndDest(const QString
     query.bindValue(":ob", from);
     query.bindValue(":oe", to);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    createMessagesList(query, res, isChannel);
+    std::vector<DbId> tmp;
+    createMessagesList(query, res, tmp, false, isChannel, false);
     return res;
 }
 
@@ -266,7 +268,8 @@ std::vector<Message> MessengerDBStorage::getMessagesForUserAndDestNum(const QStr
     query.bindValue(":oe", to);
     query.bindValue(":num", num);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    createMessagesList(query, res, isChannel, true);
+    std::vector<DbId> tmp;
+    createMessagesList(query, res, tmp, false, isChannel, true);
     return res;
 }
 
@@ -543,6 +546,62 @@ void MessengerDBStorage::setChannelIsWriterForUserShaName(const QString &user, c
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
+void MessengerDBStorage::removeDecryptedData() {
+    QSqlQuery query(database());
+    CHECK(query.prepare(removeDecryptedDataQuery), query.lastError().text().toStdString());
+    CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+std::vector<std::pair<MessengerDBStorage::DbId, Message>> MessengerDBStorage::getNotDecryptedMessage(const QString &user) {
+    std::vector<Message> result;
+    std::vector<DbId> ids;
+    {
+        std::vector<Message> messages;
+        std::vector<DbId> ids1;
+        QSqlQuery query(database());
+        CHECK(query.prepare(selectNotDecryptedMessagesContactsQuery), query.lastError().text().toStdString());
+        query.bindValue(":user", user);
+        CHECK(query.exec(), query.lastError().text().toStdString());
+        createMessagesList(query, messages, ids1, true, false, false);
+
+        std::move(messages.begin(), messages.end(), std::back_inserter(result));
+        std::move(ids1.begin(), ids1.end(), std::back_inserter(ids));
+    }
+    {
+        std::vector<Message> messages;
+        std::vector<DbId> ids1;
+        QSqlQuery query(database());
+        CHECK(query.prepare(selectNotDecryptedMessagesChannelsQuery), query.lastError().text().toStdString());
+        query.bindValue(":user", user);
+        CHECK(query.exec(), query.lastError().text().toStdString());
+        createMessagesList(query, messages, ids1, true, true, false);
+
+        std::move(messages.begin(), messages.end(), std::back_inserter(result));
+        std::move(ids1.begin(), ids1.end(), std::back_inserter(ids));
+    }
+
+    CHECK(result.size() == ids.size(), "Incorrect result");
+    std::vector<std::pair<MessengerDBStorage::DbId, Message>> answer;
+    answer.reserve(result.size());
+    for (size_t i = 0; i < result.size(); i++) {
+        answer.emplace_back(ids[i], std::move(result[i]));
+    }
+    return answer;
+}
+
+void MessengerDBStorage::updateDecryptedMessage(const std::vector<std::tuple<DbId, bool, QString>> &messages) {
+    auto transactionGuard = beginTransaction();
+    for (const auto &messageTuple: messages) {
+        QSqlQuery query(database());
+        CHECK(query.prepare(updateDecryptedMessageQuery), query.lastError().text().toStdString());
+        query.bindValue(":id", std::get<0>(messageTuple));
+        query.bindValue(":isDecrypted", std::get<1>(messageTuple));
+        query.bindValue(":decryptedText", std::get<2>(messageTuple));
+        query.exec();
+    }
+    transactionGuard.commit();
+}
+
 void messenger::MessengerDBStorage::createDatabase()
 {
     createTable(QStringLiteral("users"), createMsgUsersTable);
@@ -560,7 +619,7 @@ void messenger::MessengerDBStorage::createDatabase()
     createIndex(createLastReadMessageUniqueIndex2);
 }
 
-void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse)
+void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Message> &messages, std::vector<DbId> &ids, bool isIds, bool isChannel, bool reverse)
 {
     while (query.next()) {
         Message msg;
@@ -582,9 +641,15 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
         msg.isCanDecrypted = query.value("canDecrypted").toBool();
         msg.isConfirmed = query.value("isConfirmed").toBool();
         messages.push_back(msg);
+
+        if (isIds) {
+            ids.emplace_back(query.value("id").toLongLong());
+        }
     }
-    if (reverse)
+    if (reverse) {
         std::reverse(std::begin(messages), std::end(messages));
+        std::reverse(std::begin(ids), std::end(ids));
+    }
 }
 
 void MessengerDBStorage::addLastReadRecord(DBStorage::DbId userid, DBStorage::DbId contactid, DBStorage::DbId channelid)

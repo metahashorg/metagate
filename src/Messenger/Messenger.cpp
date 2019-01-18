@@ -148,6 +148,10 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
 
     qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
 
+    if (!isDecryptDataSave) {
+        db.removeDecryptedData();
+    }
+
     moveToThread(&thread1);
 
     wssClient.start();

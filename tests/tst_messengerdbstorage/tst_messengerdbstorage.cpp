@@ -1,5 +1,7 @@
 #include "tst_messengerdbstorage.h"
 
+#include <iostream>
+
 #include "MessengerDBStorage.h"
 #include "SlotWrapper.h"
 const QString dbName = "messenger.db";
@@ -195,40 +197,108 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
     messenger::MessengerDBStorage db;
     db.init();
 
-    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
+    DBStorage::DbId id1 = db.getUserId("1234");
+    db.addChannel(id1, "channel", "ch1", true, "ktkt", false, true, true);
+    db.addChannel(id1, "channel", "ch2", true, "ktkt", false, true, true);
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1, "ch1");
     db.addMessage("1234", "3454", "abcd2", "", false, 1, 4001, true, true, true, "asdfdf", 1);
-    db.addMessage("1234", "34546", "abcd", "sadfads", true, 1, 4002, true, true, true, "asdfdf", 1);
+    db.addMessage("1234", "34546", "abcd", "sadfads", true, 1, 4002, true, true, true, "asdfdf", 1, "ch2");
     db.addMessage("1234", "34546", "abcdadfas", "fdsfd", true, 1, 4003, true, true, true, "asdfdf", 1);
-    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 3000), 2);
-    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "34546", 3000), 2);
+
+    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "3454", 3000), 1);
+    QCOMPARE(db.getMessagesCountForUserAndDest("1234", "34546", 3000), 1);
 
     {
         std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "3454", 10000, 20);
-        QCOMPARE(r.size(), 2);
+        QCOMPARE(r.size(), 1);
         QCOMPARE(r[0].isDecrypted, false);
-        QCOMPARE(r[1].isDecrypted, false);
+    }
+
+    {
+        std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "ch1", 10000, 20, true);
+        QCOMPARE(r.size(), 1);
+        QCOMPARE(r[0].isDecrypted, false);
     }
 
     {
         std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "34546", 10000, 20);
-        QCOMPARE(r.size(), 2);
+        QCOMPARE(r.size(), 1);
         QCOMPARE(r[0].isDecrypted, true);
-        QCOMPARE(r[1].isDecrypted, true);
+        QCOMPARE(r[0].decryptedDataHex, "fdsfd");
+    }
+
+    {
+        std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "ch2", 10000, 20, true);
+        QCOMPARE(r.size(), 1);
+        QCOMPARE(r[0].isDecrypted, true);
         QCOMPARE(r[0].decryptedDataHex, "sadfads");
-        QCOMPARE(r[1].decryptedDataHex, "fdsfd");
     }
 
     {
         std::vector<messenger::Message> r = db.getMessagesForUser("1234", 1, 10000);
-        QCOMPARE(r.size(), 4);
+        QCOMPARE(r.size(), 2);
         QCOMPARE(r[0].isDecrypted, false);
-        QCOMPARE(r[1].isDecrypted, false);
-        QCOMPARE(r[2].isDecrypted, true);
-        QCOMPARE(r[3].isDecrypted, true);
-        QCOMPARE(r[2].decryptedDataHex, "sadfads");
-        QCOMPARE(r[3].decryptedDataHex, "fdsfd");
+        QCOMPARE(r[1].isDecrypted, true);
+        QCOMPARE(r[1].decryptedDataHex, "fdsfd");
     }
 
+    {
+        std::vector<std::pair<messenger::MessengerDBStorage::DbId, messenger::Message>> r = db.getNotDecryptedMessage("1234");
+        QCOMPARE(r.size(), 2);
+        QCOMPARE(r[0].second.isDecrypted, false);
+        QCOMPARE(r[1].second.isDecrypted, false);
+        QCOMPARE(r[0].second.decryptedDataHex, "");
+        QCOMPARE(r[1].second.decryptedDataHex, "");
+    }
+
+    db.removeDecryptedData();
+    {
+        std::vector<messenger::Message> r = db.getMessagesForUser("1234", 1, 10000);
+        QCOMPARE(r.size(), 2);
+        QCOMPARE(r[0].isDecrypted, false);
+        QCOMPARE(r[1].isDecrypted, false);
+        QCOMPARE(r[0].decryptedDataHex, "");
+        QCOMPARE(r[1].decryptedDataHex, "");
+    }
+
+    {
+        std::vector<std::pair<messenger::MessengerDBStorage::DbId, messenger::Message>> r = db.getNotDecryptedMessage("1234");
+        QCOMPARE(r.size(), 4);
+        QCOMPARE(r[0].second.isDecrypted, false);
+        QCOMPARE(r[1].second.isDecrypted, false);
+        QCOMPARE(r[0].second.decryptedDataHex, "");
+        QCOMPARE(r[1].second.decryptedDataHex, "");
+        QCOMPARE(r[2].second.isDecrypted, false);
+        QCOMPARE(r[3].second.isDecrypted, false);
+        QCOMPARE(r[2].second.decryptedDataHex, "");
+        QCOMPARE(r[3].second.decryptedDataHex, "");
+
+        db.updateDecryptedMessage({{r[0].first, true, "sdafdasf"}, {r[1].first, false, ""}, {r[3].first, true, "ereeer"}});
+
+        {
+            std::vector<std::pair<messenger::MessengerDBStorage::DbId, messenger::Message>> r = db.getNotDecryptedMessage("1234");
+            QCOMPARE(r.size(), 2);
+            QCOMPARE(r[0].second.isDecrypted, false);
+            QCOMPARE(r[1].second.isDecrypted, false);
+            QCOMPARE(r[0].second.decryptedDataHex, "");
+            QCOMPARE(r[1].second.decryptedDataHex, "");
+        }
+
+        {
+            std::vector<messenger::Message> r = db.getMessagesForUser("1234", 1, 10000);
+            QCOMPARE(r.size(), 2);
+            QCOMPARE(r[0].isDecrypted, true);
+            QCOMPARE(r[1].isDecrypted, false);
+            QCOMPARE(r[0].decryptedDataHex, "sdafdasf");
+        }
+
+        {
+            std::vector<messenger::Message> r = db.getMessagesForUserAndDestNum("1234", "ch2", 10000, 20, true);
+            QCOMPARE(r.size(), 1);
+            QCOMPARE(r[0].isDecrypted, true);
+            QCOMPARE(r[0].decryptedDataHex, "ereeer");
+        }
+    }
 }
 
 QTEST_MAIN(tst_MessengerDBStorage)
