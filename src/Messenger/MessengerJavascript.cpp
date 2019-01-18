@@ -888,8 +888,10 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Unlock wallet " << address << " Wallet path " << walletPath;
     const TypedException exception = apiVrapper2([&, this](){
-        emit cryptoManager.unlockWallet(walletPath, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, JS_NAME_RESULT]() {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
+        emit cryptoManager.unlockWallet(walletPath, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, JS_NAME_RESULT, errorFunc]() {
+            emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([this, address, JS_NAME_RESULT]() {
+                makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
+            }, errorFunc, signalFunc));
          }, errorFunc, signalFunc));
     });
 

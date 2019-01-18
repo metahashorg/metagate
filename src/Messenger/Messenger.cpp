@@ -127,6 +127,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::addWriterToChannel, this, &Messenger::onAddWriterToChannel), "not connect onAddWriterToChannel");
     CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
+    CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
 
     qRegisterMetaType<uint64_t>("uint64_t");
     qRegisterMetaType<Callback>("Callback");
@@ -145,6 +146,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     qRegisterMetaType<AddWriterToChannelCallback>("AddWriterToChannelCallback");
     qRegisterMetaType<DelWriterToChannelCallback>("DelWriterToChannelCallback");
     qRegisterMetaType<GetChannelListCallback>("GetChannelListCallback");
+    qRegisterMetaType<DecryptUserMessagesCallback>("DecryptUserMessagesCallback");
 
     qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
 
@@ -748,6 +750,38 @@ BEGIN_SLOT_WRAPPER
         channels = db.getChannelsWithLastReadCounters(address);
     });
     callback.emitFunc(exception, channels);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onDecryptMessages(const QString &address, const DecryptUserMessagesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    if (!isDecryptDataSave) {
+        callback.emitCallback();
+        return;
+    }
+    const TypedException exception = apiVrapper2([&, this] {
+        const auto notDecryptedMessagesPair = db.getNotDecryptedMessage(address);
+        CHECK(notDecryptedMessagesPair.first.size() == notDecryptedMessagesPair.second.size(), "Incorrect db.getNotDecryptedMessage");
+        const std::vector<Message> &notDecryptedMessages = notDecryptedMessagesPair.second;
+        cryptManager.tryDecryptMessages(notDecryptedMessages, address, CryptographicManager::DecryptMessagesCallback([this, ids=notDecryptedMessagesPair.first, callback](const std::vector<Message> &answer) {
+            CHECK(ids.size() == answer.size(), "Incorrect db.getNotDecryptedMessage");
+            std::vector<std::tuple<MessengerDBStorage::DbId, bool, QString>> result;
+            result.reserve(ids.size());
+            for (size_t i = 0; i < ids.size(); i++) {
+                result.emplace_back(ids[i], answer[i].isDecrypted, answer[i].decryptedDataHex);
+            }
+            db.updateDecryptedMessage(result);
+
+            LOG << "Decrypted " << result.size() << " messages";
+
+            callback.emitCallback();
+        }, [callback](const TypedException &exception) {
+            callback.emitException(exception);
+        }, std::bind(&Messenger::callbackCall, this, _1), true));
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 

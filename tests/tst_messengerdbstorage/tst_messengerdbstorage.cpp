@@ -243,12 +243,12 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
     }
 
     {
-        std::vector<std::pair<messenger::MessengerDBStorage::DbId, messenger::Message>> r = db.getNotDecryptedMessage("1234");
-        QCOMPARE(r.size(), 2);
-        QCOMPARE(r[0].second.isDecrypted, false);
-        QCOMPARE(r[1].second.isDecrypted, false);
-        QCOMPARE(r[0].second.decryptedDataHex, "");
-        QCOMPARE(r[1].second.decryptedDataHex, "");
+        auto r = db.getNotDecryptedMessage("1234");
+        QCOMPARE(r.second.size(), 2);
+        QCOMPARE(r.second[0].isDecrypted, false);
+        QCOMPARE(r.second[1].isDecrypted, false);
+        QCOMPARE(r.second[0].decryptedDataHex, "");
+        QCOMPARE(r.second[1].decryptedDataHex, "");
     }
 
     db.removeDecryptedData();
@@ -262,26 +262,26 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
     }
 
     {
-        std::vector<std::pair<messenger::MessengerDBStorage::DbId, messenger::Message>> r = db.getNotDecryptedMessage("1234");
-        QCOMPARE(r.size(), 4);
-        QCOMPARE(r[0].second.isDecrypted, false);
-        QCOMPARE(r[1].second.isDecrypted, false);
-        QCOMPARE(r[0].second.decryptedDataHex, "");
-        QCOMPARE(r[1].second.decryptedDataHex, "");
-        QCOMPARE(r[2].second.isDecrypted, false);
-        QCOMPARE(r[3].second.isDecrypted, false);
-        QCOMPARE(r[2].second.decryptedDataHex, "");
-        QCOMPARE(r[3].second.decryptedDataHex, "");
+        auto r = db.getNotDecryptedMessage("1234");
+        QCOMPARE(r.second.size(), 4);
+        QCOMPARE(r.second[0].isDecrypted, false);
+        QCOMPARE(r.second[1].isDecrypted, false);
+        QCOMPARE(r.second[0].decryptedDataHex, "");
+        QCOMPARE(r.second[1].decryptedDataHex, "");
+        QCOMPARE(r.second[2].isDecrypted, false);
+        QCOMPARE(r.second[3].isDecrypted, false);
+        QCOMPARE(r.second[2].decryptedDataHex, "");
+        QCOMPARE(r.second[3].decryptedDataHex, "");
 
-        db.updateDecryptedMessage({{r[0].first, true, "sdafdasf"}, {r[1].first, false, ""}, {r[3].first, true, "ereeer"}});
+        db.updateDecryptedMessage({{r.first[0], true, "sdafdasf"}, {r.first[1], false, ""}, {r.first[3], true, "ereeer"}});
 
         {
-            std::vector<std::pair<messenger::MessengerDBStorage::DbId, messenger::Message>> r = db.getNotDecryptedMessage("1234");
-            QCOMPARE(r.size(), 2);
-            QCOMPARE(r[0].second.isDecrypted, false);
-            QCOMPARE(r[1].second.isDecrypted, false);
-            QCOMPARE(r[0].second.decryptedDataHex, "");
-            QCOMPARE(r[1].second.decryptedDataHex, "");
+            auto r = db.getNotDecryptedMessage("1234");
+            QCOMPARE(r.second.size(), 2);
+            QCOMPARE(r.second[0].isDecrypted, false);
+            QCOMPARE(r.second[1].isDecrypted, false);
+            QCOMPARE(r.second[0].decryptedDataHex, "");
+            QCOMPARE(r.second[1].decryptedDataHex, "");
         }
 
         {

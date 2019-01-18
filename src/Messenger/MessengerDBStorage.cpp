@@ -552,7 +552,7 @@ void MessengerDBStorage::removeDecryptedData() {
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-std::vector<std::pair<MessengerDBStorage::DbId, Message>> MessengerDBStorage::getNotDecryptedMessage(const QString &user) {
+std::pair<std::vector<MessengerDBStorage::DbId>, std::vector<Message>> MessengerDBStorage::getNotDecryptedMessage(const QString &user) {
     std::vector<Message> result;
     std::vector<DbId> ids;
     {
@@ -581,12 +581,7 @@ std::vector<std::pair<MessengerDBStorage::DbId, Message>> MessengerDBStorage::ge
     }
 
     CHECK(result.size() == ids.size(), "Incorrect result");
-    std::vector<std::pair<MessengerDBStorage::DbId, Message>> answer;
-    answer.reserve(result.size());
-    for (size_t i = 0; i < result.size(); i++) {
-        answer.emplace_back(ids[i], std::move(result[i]));
-    }
-    return answer;
+    return std::make_pair(ids, result);
 }
 
 void MessengerDBStorage::updateDecryptedMessage(const std::vector<std::tuple<DbId, bool, QString>> &messages) {

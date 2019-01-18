@@ -96,6 +96,8 @@ public:
 
     using GetChannelListCallback = CallbackWrapper<std::function<void(const std::vector<ChannelInfo> &channels)>>;
 
+    using DecryptUserMessagesCallback = CallbackWrapper<std::function<void()>>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
@@ -168,6 +170,9 @@ signals:
 
     void getChannelList(const QString &address, const GetChannelListCallback &callback);
 
+
+    void decryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
+
 private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
@@ -204,6 +209,9 @@ private slots:
     void onDelWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback);
 
     void onGetChannelList(const QString &address, const GetChannelListCallback &callback);
+
+
+    void onDecryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
 
 private slots:
 

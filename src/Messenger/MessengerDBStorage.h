@@ -73,7 +73,7 @@ public:
 
     void removeDecryptedData();
 
-    std::vector<std::pair<DbId, Message>> getNotDecryptedMessage(const QString &user);
+    std::pair<std::vector<DbId>, std::vector<Message>> getNotDecryptedMessage(const QString &user);
 
     void updateDecryptedMessage(const std::vector<std::tuple<DbId, bool, QString>> &messages);
 
