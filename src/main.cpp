@@ -35,6 +35,17 @@
 #include "Initializer/Inits/InitJavascriptWrapper.h"
 #include "Initializer/Inits/InitUploader.h"
 
+#include "Messenger/Messenger.h"
+#include "Messenger/MessengerJavascript.h"
+#include "Messenger/MessengerDBStorage.h"
+#include "Messenger/CryptographicManager.h"
+
+#include "proxy/Proxy.h"
+#include "proxy/ProxyJavascript.h"
+#include "proxy/WebSocketSender.h"
+
+#include "Module.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -79,6 +90,7 @@ int main(int argc, char *argv[]) {
         InitOpenSSL();
         initializeAllPaths();
         initializeMachineUid();
+        initModules();
 
         /*tests2();
         return 0;*/
@@ -121,7 +133,29 @@ int main(int argc, char *argv[]) {
         initManager.complete();
 
         /*
-        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
+        addModule(proxy::Proxy::moduleName());
+        proxy::ProxyJavascript proxyJavascript;
+        proxy::Proxy proxyManager(proxyJavascript);
+        proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
+        changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
+            qDebug() << "PROXY S ";
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
+            qDebug() << "PROXY 1 " << r.numError;
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
+            qDebug() << "PROXY 2 " << r.numError;
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
+            qDebug() << "PROXY res " << port;
+        });
+        QMetaObject::invokeMethod(&proxyManager, "startAutoProxy");
+        */
+       
+        /*
+        messenger::CryptographicManager messengerCryptManager;
+        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
         emit mainWindow.setMessengerJavascript(messengerJavascript);
         messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();

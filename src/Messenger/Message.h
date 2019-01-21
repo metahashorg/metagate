@@ -11,14 +11,20 @@ struct Message {
     QString collocutor;
     bool isInput;
     quint64 timestamp;
-    QString data;
+    QString dataHex;
+    QString decryptedDataHex;
     QString hash;
     Counter counter;
     int64_t fee;
     bool isCanDecrypted = true;
     bool isConfirmed = true;
     bool isChannel = false;
+    bool isDecrypted = false;
     QString channel;
+
+    bool operator< (const Message &second) const {
+        return this->counter < second.counter;
+    }
 };
 
 struct ChannelInfo {

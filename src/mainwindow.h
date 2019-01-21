@@ -27,6 +27,9 @@ class Auth;
 namespace messenger {
 class MessengerJavascript;
 }
+namespace proxy {
+class ProxyJavascript;
+}
 
 namespace Ui {
     class MainWindow;

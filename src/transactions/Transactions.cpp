@@ -8,6 +8,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "NsLookup.h"
 #include "JavascriptWrapper.h"
@@ -28,6 +29,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     , javascriptWrapper(javascriptWrapper)
     , db(db)
 {
+    CHECK(connect(this, &Transactions::callbackCall, this, &Transactions::onCallbackCall), "not connect onCallbackCall");
+
     CHECK(connect(this, &Transactions::timerEvent, this, &Transactions::onTimerEvent), "not connect onTimerEvent");
     CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
 
@@ -48,36 +51,34 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
     CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
 
-    qRegisterMetaType<SignalFunc>("SignalFunc");
-    qRegisterMetaType<Callback>("Callback");
-    qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
-    qRegisterMetaType<GetTxsCallback>("GetTxsCallback");
-    qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
-    qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
-    qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
-    qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
-    qRegisterMetaType<GetTxCallback>("GetTxCallback");
-    qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
-    qRegisterMetaType<GetNonceCallback>("GetNonceCallback");
-    qRegisterMetaType<GetStatusDelegateCallback>("GetStatusDelegateCallback");
-    qRegisterMetaType<ClearDbCallback>("ClearDbCallback");
+    Q_REG(Transactions::Callback, "Transactions::Callback");
+    Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
+    Q_REG(GetTxsCallback, "GetTxsCallback");
+    Q_REG(CalcBalanceCallback, "CalcBalanceCallback");
+    Q_REG(SetCurrentGroupCallback, "SetCurrentGroupCallback");
+    Q_REG(GetAddressesCallback, "GetAddressesCallback");
+    Q_REG(GetTxCallback, "GetTxCallback");
+    Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
+    Q_REG(GetNonceCallback, "GetNonceCallback");
+    Q_REG(GetStatusDelegateCallback, "GetStatusDelegateCallback");
+    Q_REG(ClearDbCallback, "ClearDbCallback");
 
-    qRegisterMetaType<size_t>("size_t");
-    qRegisterMetaType<seconds>("seconds");
-    qRegisterMetaType<DelegateStatus>("DelegateStatus");
-    qRegisterMetaType<SendParameters>("SendParameters");
+    Q_REG2(size_t, "size_t", false);
+    Q_REG2(seconds, "seconds", false);
+    Q_REG(DelegateStatus, "DelegateStatus");
+    Q_REG(SendParameters, "SendParameters");
 
-    qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
+    Q_REG(std::vector<AddressInfo>, "std::vector<AddressInfo>");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/transactions"), "timeout not found");
     timeout = seconds(settings.value("timeouts_sec/transactions").toInt());
 
     client.setParent(this);
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect");
     client.moveToThread(&thread1);
 
-    CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
+    CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect");
     tcpClient.moveToThread(&thread1);
 
     timerSendTx.moveToThread(&thread1);
@@ -481,7 +482,7 @@ BEGIN_SLOT_WRAPPER
             tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, sendParams](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
-                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
+                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                     addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, sendParams.typeGet, sendParams.timeout);
                     servResp->isSended = true;

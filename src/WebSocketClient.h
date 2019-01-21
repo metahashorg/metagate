@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <map>
 #include <QtWebSockets/QWebSocket>
 
 #include "TimerClass.h"
@@ -27,11 +28,11 @@ signals:
 
     void sendMessages(const std::vector<QString> &messages);
 
-    void setHelloString(QString message);
+    void setHelloString(QString message, QString tag);
 
-    void setHelloString(const std::vector<QString> &messages);
+    void setHelloString(const std::vector<QString> &messages, QString tag);
 
-    void addHelloString(QString message);
+    void addHelloString(QString message, QString tag);
 
     void connectedSock(const TypedException &exception);
 
@@ -50,11 +51,11 @@ public slots:
 
     void onSendMessages(const std::vector<QString> &messages);
 
-    void onSetHelloString(QString message);
+    void onSetHelloString(QString message, QString tag);
 
-    void onSetHelloString(const std::vector<QString> &messages);
+    void onSetHelloString(const std::vector<QString> &messages, QString tag);
 
-    void onAddHelloString(QString message);
+    void onAddHelloString(QString message, QString tag);
 
 private slots:
 
@@ -77,7 +78,7 @@ private:
 
     std::vector<QString> messageQueue;
 
-    std::vector<QString> helloStrings;
+    std::map<QString, std::vector<QString>> helloStrings;
 
     time_point prevPongTime;
 };

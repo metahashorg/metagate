@@ -18,8 +18,26 @@
 struct TypedException;
 
 struct NodeType {
+    struct Node {
+        QString node;
+
+        Node() = default;
+
+        explicit Node(const QString &node)
+            : node(node)
+        {}
+
+        const QString &str() const {
+            return node;
+        }
+
+        bool operator< (const Node &second) const {
+            return this->node < second.node;
+        }
+    };
+
     QString type;
-    QString node;
+    Node node;
     QString port;
 };
 
@@ -28,8 +46,21 @@ struct NodeInfo {
 
     size_t ping;
 
+    bool isChecked = false;
+    bool isTimeout = false;
+
     bool operator< (const NodeInfo &second) const {
-        return this->ping < second.ping;
+        if (this->isTimeout) {
+            return false;
+        } else if (second.isTimeout) {
+            return true;
+        } else if (this->isChecked && !second.isChecked) {
+            return true;
+        } else if (!this->isChecked && second.isChecked) {
+            return false;
+        } else {
+            return this->ping < second.ping;
+        }
     }
 };
 
@@ -65,17 +96,15 @@ public slots:
 
 private:
 
-    void addNode(const QString &type, const NodeInfo &node, bool isNew);
-
     void sortAll();
 
-    system_time_point fillNodesFromFile(const QString &file, const std::vector<NodeType> &expectedNodes);
+    system_time_point fillNodesFromFile(const QString &file, const std::map<QString, NodeType> &expectedNodes);
 
-    void saveToFile(const QString &file, const system_time_point &tp, const std::vector<NodeType> &expectedNodes);
+    void saveToFile(const QString &file, const system_time_point &tp, const std::map<QString, NodeType> &expectedNodes);
 
-    void continueResolve();
+    void continueResolve(std::map<QString, NodeType>::const_iterator node);
 
-    void continuePing();
+    void continuePing(std::map<QString, NodeType>::const_iterator node);
 
     void finalizeLookup();
 
@@ -89,22 +118,15 @@ private:
 
     QString savedNodesPath;
 
-    std::vector<NodeType> nodes;
-
-    size_t posInNodes = 0;
+    std::map<QString, NodeType> nodes;
 
     std::vector<QString> ipsTemp;
 
     size_t posInIpsTemp;
-    size_t countSuccessfullTemp;
 
-    std::deque<NodeInfo> allNodes;
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
-    std::deque<NodeInfo> allNodesNew;
-
-    std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> allNodesForTypes;
-
-    std::map<QString, std::vector<std::reference_wrapper<NodeInfo>>> allNodesForTypesNew;
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
 
     mutable std::mutex nodeMutex;
 

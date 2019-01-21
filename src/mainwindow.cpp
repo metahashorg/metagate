@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "mhurlschemehandler.h"
 
@@ -39,6 +40,7 @@
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
 #include "Initializer/InitializerJavascript.h"
+#include "proxy/ProxyJavascript.h"
 
 #include "machine_uid.h"
 
@@ -91,16 +93,29 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     configureMenu();
 
     pagesMappings.setFullPagesPath(last_htmls.fullPath);
-    const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
-    LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
-    pagesMappings.setMappings(QString::fromStdString(contentMappings));
+    const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
+    if (isExistFile(routesFile)) {
+        const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
+        LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
+        try {
+            pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        } catch (const Exception &e) {
+            LOG << "Error " << e;
+        } catch (const TypedException &e) {
+            LOG << "Error " << e.description;
+        } catch (...) {
+            LOG << "Error mappings";
+        }
+    } else {
+        LOG << "Warning: routes file not found";
+    }
 
     loadFile("core/loader/index.html");
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
-    qRegisterMetaType<WindowEvent>("WindowEvent");
+    Q_REG(WindowEvent, "WindowEvent");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
@@ -291,25 +306,31 @@ void MainWindow::configureMenu() {
     registerCommandLine();
 
     CHECK(connect(ui->backButton, &QToolButton::pressed, [this] {
+        BEGIN_SLOT_WRAPPER
         historyPos--;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
+        END_SLOT_WRAPPER;
     }), "not connect backButton::pressed");
     ui->backButton->setEnabled(false);
 
     CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         historyPos++;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
+        END_SLOT_WRAPPER
     }), "not connect forwardButton::pressed");
     ui->forwardButton->setEnabled(false);
 
     CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect refreshButton::pressed");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Settings");
+        END_SLOT_WRAPPER
     }), "not connect userButton::pressed");
 
     /*CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
@@ -317,11 +338,15 @@ void MainWindow::configureMenu() {
     }), "not connect buyButton::pressed");*/
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Wallet");
+        END_SLOT_WRAPPER
     }), "not connect metaWalletButton::pressed");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("MetaApps");
+        END_SLOT_WRAPPER
     }), "not connect metaAppsButton::pressed");
 }
 
@@ -626,6 +651,7 @@ BEGIN_SLOT_WRAPPER
             if (!currentFileIsEqual("login.html")) {
                 LOG << "Swith to login";
                 loadFile("login.html");
+                addElementToHistoryAndCommandLine("app://Login", true, true);
             }
         }
         setUserName(DEFAULT_USERNAME);

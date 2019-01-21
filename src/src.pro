@@ -2,7 +2,8 @@ TEMPLATE = app
 
 TARGET = MetaGate
 
-DEFINES += VERSION_STRING=\\\"1.17.2\\\"
+DEFINES += VERSION_STRING=\\\"1.18.0\\\"
+DEFINES += VERSION_SETTINGS=\\\"6\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -51,9 +52,9 @@ SOURCES += main.cpp mainwindow.cpp \
     TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
     Messenger/MessengerJavascript.cpp \
+    Messenger/CryptographicManager.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
-    Messenger/MessengerWaletManager.cpp \
     TypedException.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
@@ -61,6 +62,12 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
     HttpClient.cpp \
+    proxy/UPnPDevices.cpp \
+    proxy/UPnPRouter.cpp \
+    proxy/ProxyServer.cpp \
+    proxy/ProxyClient.cpp \
+    proxy/Proxy.cpp \
+    proxy/ProxyJavascript.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
     machine_uid.cpp \
@@ -73,9 +80,13 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitTransactions.cpp \
     Initializer/Inits/InitWebSocket.cpp \
     Initializer/Inits/InitJavascriptWrapper.cpp \
-    Initializer/Inits/InitUploader.cpp
+    Initializer/Inits/InitUploader.cpp \
+    Module.cpp \
+    proxy/WebSocketSender.cpp \
+    QRegister.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
+SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
     Wallet.h \
@@ -133,7 +144,6 @@ HEADERS += mainwindow.h \
     RequestId.h \
     dbstorage.h \
     WalletRsa.h \
-    Messenger/MessengerWaletManager.h \
     Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
@@ -142,6 +152,12 @@ HEADERS += mainwindow.h \
     transactions/TransactionsJavascript.h \
     HttpClient.h \
     duration.h \
+    proxy/UPnPDevices.h \
+    proxy/UPnPRouter.h \
+    proxy/ProxyServer.h \
+    proxy/ProxyClient.h \
+    proxy/Proxy.h \
+    proxy/ProxyJavascript.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
     Initializer/Initializer.h \
@@ -153,11 +169,16 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitTransactions.h \
     Initializer/Inits/InitWebSocket.h \
     Initializer/Inits/InitJavascriptWrapper.h \
-    Initializer/Inits/InitUploader.h
+    Initializer/Inits/InitUploader.h \
+    Module.h \
+    Messenger/CryptographicManager.h \
+    CallbackWrapper.h \
+    proxy/WebSocketSender.h \
+    QRegister.h
 
 FORMS += mainwindow.ui
 
-QT += webengine webenginewidgets network websockets sql
+QT += webengine webenginewidgets network websockets sql xml
 
 CONFIG += static
 CONFIG += c++14
@@ -165,6 +186,7 @@ CONFIG += c++14
 DEFINES += CRYPTOPP_IMPORTS
 DEFINES += QUAZIP_STATIC
 
+unix: QMAKE_CXXFLAGS += -Wno-unused-parameter -Wall -Wextra
 #QMAKE_CXXFLAGS += -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 QMAKE_LFLAGS += -rdynamic

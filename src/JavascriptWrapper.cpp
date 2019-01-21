@@ -40,6 +40,9 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "makeJsFunc.h"
 #include "qrcoder.h"
+#include "QRegister.h"
+
+#include "Module.h"
 
 #include "machine_uid.h"
 
@@ -120,8 +123,8 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
 
-    qRegisterMetaType<TypedException>("TypedException");
-    qRegisterMetaType<ReturnCallback>("ReturnCallback");
+    Q_REG2(TypedException, "TypedException", false);
+    Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
 
     emit authManager.reEmit();
 
@@ -172,7 +175,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
 
         const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
-        emit wssClient.setHelloString(message);
+        emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
     }
 }
@@ -403,6 +406,10 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
     LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
     Opt<std::string> signature2;
@@ -491,6 +498,10 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
+
     const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
@@ -512,6 +523,10 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
     LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+
+    if (fee.isEmpty()) {
+        fee = "0";
+    }
 
     const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
@@ -1572,6 +1587,42 @@ BEGIN_SLOT_WRAPPER
 
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     }
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::getAppModules(const QString requestId) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "getAppModulesResultJs";
+
+    LOG << "app modules";
+
+    Opt<QJsonDocument> result;
+    const TypedException exception = apiVrapper2([&](){
+        const std::vector<std::pair<std::string, StatusModule>> modules = getStatusModules();
+        QJsonArray allJson;
+        for (const auto &module: modules) {
+            QJsonObject moduleJson;
+            moduleJson.insert("module", QString::fromStdString(module.first));
+            const StatusModule &state = module.second;
+            std::string stateStr;
+            if (state == StatusModule::wait) {
+                stateStr = "wait";
+            } else if (state == StatusModule::notFound) {
+                stateStr = "not_found";
+            } else if (state == StatusModule::found) {
+                stateStr = "found";
+            } else {
+                throwErr("Incorrect status module");
+            }
+            moduleJson.insert("state", QString::fromStdString(stateStr));
+            allJson.append(moduleJson);
+        }
+        result = QJsonDocument(allJson);
+
+        LOG << "app modules ok " << QString(result.get().toJson(QJsonDocument::Compact));
+    });
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
 END_SLOT_WRAPPER
 }
 

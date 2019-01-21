@@ -9,6 +9,7 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "AuthJavascript.h"
 
@@ -39,8 +40,8 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Auth::forceRefresh, this, &Auth::onForceRefresh), "not connect onForceRefresh");
     CHECK(connect(this, &Auth::reEmit, this, &Auth::onReEmit), "not connect onReEmit");
 
-    qRegisterMetaType<LoginInfo>("LoginInfo");
-    qRegisterMetaType<TypedException>("TypedException");
+    Q_REG2(TypedException, "TypedException", false);
+    Q_REG2(LoginInfo, "LoginInfo", true);
 
     tcpClient.setParent(this);
     CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect");

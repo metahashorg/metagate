@@ -6,6 +6,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "Log.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -21,7 +22,7 @@ const int SimpleClient::ServerException::BAD_REQUEST_ERROR = QNetworkReply::Prot
 
 SimpleClient::SimpleClient() {
     manager = std::make_unique<QNetworkAccessManager>(this);
-    qRegisterMetaType<ReturnCallback>("ReturnCallback");
+    Q_REG(SimpleClient::ReturnCallback, "SimpleClient::ReturnCallback");
 }
 
 void SimpleClient::setParent(QObject *obj) {

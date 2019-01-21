@@ -6,7 +6,7 @@
 #include <functional>
 
 #include "Message.h"
-#include "MessengerWaletManager.h"
+#include "CryptographicManager.h"
 
 struct TypedException;
 
@@ -27,7 +27,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, CryptographicManager &cryptoManager, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m) {
         messenger = &m;
@@ -37,14 +37,14 @@ signals:
 
     void jsRunSig(QString jsString);
 
-    void callbackCall(const Callback &callback);
+    void callbackCall(const MessengerJavascript::Callback &callback);
 
 public slots:
     void onLogined(bool isInit, const QString login);
 
 public slots:
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const MessengerJavascript::Callback &callback);
 
 signals:
 
@@ -112,8 +112,6 @@ public slots:
     Q_INVOKABLE void getHistoryAddressChannelCount(QString address, QString titleSha, QString count, QString to);
 
 
-    Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-
     Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
 
     Q_INVOKABLE void lockWallet();
@@ -133,13 +131,15 @@ private:
 
     Messenger *messenger = nullptr;
 
-    MessengerWaletManager walletManager;
+    CryptographicManager &cryptoManager;
 
     QString walletPath;
 
     QString defaultWalletPath;
 
     QString defaultUserName;
+
+    std::function<void(const std::function<void()> &callback)> signalFunc;
 
 };
 
