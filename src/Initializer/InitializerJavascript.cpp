@@ -5,9 +5,13 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include <functional>
+using namespace std::placeholders;
+
 #include "check.h"
 #include "SlotWrapper.h"
 #include "makeJsFunc.h"
+#include "QRegister.h"
 
 #include "Initializer.h"
 
@@ -45,8 +49,10 @@ InitializerJavascript::InitializerJavascript(QObject *parent)
     CHECK(connect(this, &InitializerJavascript::initializedSig, this, &InitializerJavascript::onInitialized), "not connect onInitialized");
     CHECK(connect(this, &InitializerJavascript::initializedCriticalSig, this, &InitializerJavascript::onInitializedCritical), "not connect onInitializedCritical");
 
-    qRegisterMetaType<InitState>("InitState");
-    qRegisterMetaType<TypedException>("TypedException");
+    Q_REG3(InitState, "InitState", "initialize");
+    Q_REG2(TypedException, "TypedException", false);
+
+    signalFunc = std::bind(&InitializerJavascript::callbackCall, this, _1);
 }
 
 void InitializerJavascript::onCallbackCall(const Callback &callback) {
@@ -63,14 +69,18 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Resend events";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
     };
 
+    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
+        makeFunc(exception);
+    };
+
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->resendAllStatesSig([makeFunc](const TypedException &exception) {
-            makeFunc(exception);
-        });
+        emit m_initializer->resendAllStatesSig(Initializer::GetAllStatesCallback([makeFunc]() {
+            makeFunc(TypedException());
+        }, errorFunc, signalFunc));
     });
 
     if (exception.isSet()) {
@@ -87,12 +97,16 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Javascript ready";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
 
+    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
+        makeFunc(exception, "");
+    };
+
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->javascriptReadySig(force, [makeFunc](const Initializer::ReadyType &result, const TypedException &exception) {
+        emit m_initializer->javascriptReadySig(force, Initializer::ReadyCallback([makeFunc](const Initializer::ReadyType &result) {
             QString r;
             if (result == Initializer::ReadyType::Error) {
                 r = "error";
@@ -107,8 +121,8 @@ BEGIN_SLOT_WRAPPER
             } else {
                 throwErr("Unknown type");
             }
-            makeFunc(exception, r);
-        });
+            makeFunc(TypedException(), r);
+        }, errorFunc, signalFunc));
     });
 
     if (exception.isSet()) {
@@ -124,18 +138,22 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "initGetAllTypesResultJs";
     LOG << "getAllTypes";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
 
+    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
+        makeFunc(exception, QJsonDocument());
+    };
+
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->getAllTypes([makeFunc](const std::vector<QString> &result, const TypedException &exception) {
-            makeFunc(exception, typesToJson(result));
-        });
+        emit m_initializer->getAllTypes(Initializer::GetTypesCallback([makeFunc](const std::vector<QString> &result) {
+            makeFunc(TypedException(), typesToJson(result));
+        }, errorFunc, signalFunc));
     });
 
     if (exception.isSet()) {
-        makeFunc(exception, QJsonDocument());
+        errorFunc(exception);
     }
 END_SLOT_WRAPPER
 }
@@ -147,14 +165,18 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "initGetAllSubTypesResultJs";
     LOG << "getAllSubTypes";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
 
+    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
+        makeFunc(exception, QJsonDocument());
+    };
+
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->getAllSubTypes([makeFunc](const std::vector<Initializer::StateType> &result, const TypedException &exception) {
-            makeFunc(exception, subTypesToJson(result));
-        });
+        emit m_initializer->getAllSubTypes(Initializer::GetSubTypesCallback([makeFunc](const std::vector<Initializer::StateType> &result) {
+            makeFunc(TypedException(), subTypesToJson(result));
+        }, errorFunc, signalFunc));
     });
 
     if (exception.isSet()) {

@@ -57,13 +57,13 @@ private:
 
 signals:
 
-    void callbackCall(const Callback &callback);
+    void callbackCall(const InitAuth::Callback &callback);
 
     void checkTokenFinished(const TypedException &exception);
 
 private slots:
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const InitAuth::Callback &callback);
 
     void onCheckTokenFinished(const TypedException &exception);
 

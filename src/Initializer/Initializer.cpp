@@ -5,6 +5,7 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "InitializerJavascript.h"
 #include "InitInterface.h"
@@ -30,23 +31,18 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
     CHECK(connect(this, &Initializer::getAllTypes, this, &Initializer::onGetAllTypes, Qt::ConnectionType::QueuedConnection), "not connect onGetAllTypes");
     CHECK(connect(this, &Initializer::getAllSubTypes, this, &Initializer::onGetAllSubTypes, Qt::ConnectionType::QueuedConnection), "not connect onGetAllSubTypes");
 
-    qRegisterMetaType<Callback>("Callback");
-    qRegisterMetaType<GetAllStatesCallback>("GetAllStatesCallback");
-    qRegisterMetaType<ReadyCallback>("ReadyCallback");
-    qRegisterMetaType<InitState>("InitState");
-    qRegisterMetaType<GetTypesCallback>("GetTypesCallback");
-    qRegisterMetaType<GetSubTypesCallback>("GetSubTypesCallback");
+    Q_REG(Initializer::Callback, "Initializer::Callback");
+    Q_REG(GetAllStatesCallback, "GetAllStatesCallback");
+    Q_REG(ReadyCallback, "ReadyCallback");
+    Q_REG3(InitState, "InitState", "initialize");
+    Q_REG(GetTypesCallback, "GetTypesCallback");
+    Q_REG(GetSubTypesCallback, "GetSubTypesCallback");
 }
 
 Initializer::~Initializer() = default;
 
 void Initializer::complete() {
     isComplete = true;
-}
-
-template<typename Func>
-void Initializer::runCallback(const Func &callback) {
-    emit javascriptWrapper.callbackCall(callback);
 }
 
 void Initializer::sendStateToJs(const InitState &state, int number, int numberCritical) {
@@ -130,7 +126,7 @@ BEGIN_SLOT_WRAPPER
             }
         }
     });
-    runCallback(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
@@ -155,7 +151,7 @@ BEGIN_SLOT_WRAPPER
         }
         result = ReadyType::Finish;
     });
-    runCallback(std::bind(callback, result, exception));
+    callback.emitFunc(exception, result);
 END_SLOT_WRAPPER
 }
 
@@ -167,7 +163,7 @@ BEGIN_SLOT_WRAPPER
             result.emplace_back(init->getType());
         }
     });
-    runCallback(std::bind(callback, result, exception));
+    callback.emitFunc(exception, result);
 END_SLOT_WRAPPER
 }
 
@@ -183,7 +179,7 @@ BEGIN_SLOT_WRAPPER
             }
         }
     });
-    runCallback(std::bind(callback, result, exception));
+    callback.emitFunc(exception, result);
 END_SLOT_WRAPPER
 }
 

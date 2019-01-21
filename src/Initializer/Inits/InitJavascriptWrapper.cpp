@@ -12,6 +12,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "TypedException.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 namespace initializer {
 
@@ -23,7 +24,7 @@ InitJavascriptWrapper::InitJavascriptWrapper(QThread *mainThread, Initializer &m
     : InitInterface(stateName(), mainThread, manager, false)
 {
     CHECK(connect(this, &InitJavascriptWrapper::callbackCall, this, &InitJavascriptWrapper::onCallbackCall), "not connect onCallbackCall");
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(InitJavascriptWrapper::Callback, "InitJavascriptWrapper::Callback");
 
     registerStateType("init", "jsWrapper initialized", true, true);
 }
@@ -56,9 +57,9 @@ InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
         MainWindow &mw = *mainWindow.get();
         jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get(), *transactions.get().second, *auth.get().first, versionString);
         jsWrapper->moveToThread(mainThread);
-        emit mw.setJavascriptWrapper(jsWrapper.get(), std::bind(&InitJavascriptWrapper::callbackCall, this, _1), [this](const TypedException &e) {
-            sendInitSuccess(e);
-        });
+        emit mw.setJavascriptWrapper(jsWrapper.get(), MainWindow::SetJavascriptWrapperCallback([this]() {
+            sendInitSuccess(TypedException());
+        }, std::bind(&InitJavascriptWrapper::sendInitSuccess, this, _1), std::bind(&InitJavascriptWrapper::callbackCall, this, _1)));
     });
 
     if (exception.isSet()) {

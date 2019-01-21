@@ -8,6 +8,7 @@
 
 #include "TypedException.h"
 #include "check.h"
+#include "CallbackWrapper.h"
 
 #include <QString>
 #include <QThread>
@@ -54,13 +55,13 @@ public:
 
 public:
 
-    using GetAllStatesCallback = std::function<void(const TypedException &exception)>;
+    using GetAllStatesCallback = CallbackWrapper<std::function<void()>>;
 
-    using ReadyCallback = std::function<void(const ReadyType &result, const TypedException &exception)>;
+    using ReadyCallback = CallbackWrapper<std::function<void(const ReadyType &result)>>;
 
-    using GetTypesCallback = std::function<void(const std::vector<QString> &result, const TypedException &exception)>;
+    using GetTypesCallback = CallbackWrapper<std::function<void(const std::vector<QString> &result)>>;
 
-    using GetSubTypesCallback = std::function<void(const std::vector<StateType> &result, const TypedException &exception)>;
+    using GetSubTypesCallback = CallbackWrapper<std::function<void(const std::vector<StateType> &result)>>;
 
     using Callback = std::function<void()>;
 
@@ -100,11 +101,6 @@ signals:
 private slots:
 
     void onSendState(const InitState &state);
-
-private:
-
-    template<typename Func>
-    void runCallback(const Func &callback);
 
 private:
 

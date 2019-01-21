@@ -68,7 +68,10 @@ private:
     void runJs(const QString &script);
 
 private:
+
     Initializer *m_initializer;
+
+    std::function<void(const std::function<void()> &callback)> signalFunc;
 };
 
 }

@@ -58,11 +58,11 @@ private:
 
 signals:
 
-    void callbackCall(const Callback &callback);
+    void callbackCall(const InitTransactions::Callback &callback);
 
 private slots:
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const InitTransactions::Callback &callback);
 
 private:
 

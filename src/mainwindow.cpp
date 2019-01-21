@@ -79,11 +79,10 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
     CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
 
-    qRegisterMetaType<SignalFunc>("SignalFunc");
-    qRegisterMetaType<SetJavascriptWrapperCallback>("SetJavascriptWrapperCallback");
-    qRegisterMetaType<SetAuthCallback>("SetAuthCallback");
-    qRegisterMetaType<SetMessengerJavascriptCallback>("SetMessengerJavascriptCallback");
-    qRegisterMetaType<SetTransactionsJavascriptCallback>("SetTransactionsJavascriptCallback");
+    Q_REG(SetJavascriptWrapperCallback, "SetJavascriptWrapperCallback");
+    Q_REG(SetAuthCallback, "SetAuthCallback");
+    Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
+    Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -136,7 +135,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     emit onUpdateMhsReferences();
 }
 
-void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SignalFunc &signal, const SetJavascriptWrapperCallback &callback) {
+void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SetJavascriptWrapperCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(jsWrapper1 != nullptr, "Incorrect jsWrapper1");
@@ -150,11 +149,11 @@ BEGIN_SLOT_WRAPPER
         CHECK(connect(jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
         doConfigureMenu();
     });
-    emit signal(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SignalFunc &signal, const SetAuthCallback &callback) {
+void MainWindow::onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SetAuthCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(authJavascript != nullptr, "Incorrect authJavascript");
@@ -165,29 +164,29 @@ BEGIN_SLOT_WRAPPER
         CHECK(connect(authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
         emit authManager->reEmit();
     });
-    emit signal(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SignalFunc &signal, const SetMessengerJavascriptCallback &callback) {
+void MainWindow::onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SetMessengerJavascriptCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(messengerJavascript != nullptr, "Incorrect messengerJavascript");
         CHECK(connect(messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
         channel->registerObject(QString("messenger"), messengerJavascript);
     });
-    emit signal(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SignalFunc &signal, const SetTransactionsJavascriptCallback &callback) {
+void MainWindow::onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
         CHECK(connect(transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
         channel->registerObject(QString("transactions"), transactionsJavascript);
     });
-    emit signal(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 

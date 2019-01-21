@@ -14,6 +14,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "TypedException.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 namespace initializer {
 
@@ -26,7 +27,7 @@ InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
 {
     CHECK(connect(this, &InitAuth::callbackCall, this, &InitAuth::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &InitAuth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished), "not connect onCheckTokenFinished");
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(InitAuth::Callback, "InitAuth::Callback");
 
     registerStateType("init", "auth initialized", true, true);
     registerStateType("checked", "auth checked", false, false, 10s, "auth checked timeout");
@@ -67,9 +68,9 @@ InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow
         CHECK(connect(authManager.get(), &auth::Auth::checkTokenFinished, this, &InitAuth::checkTokenFinished), "not connect checkTokenFinished");
         authManager->start();
         MainWindow &mw = *mainWindow.get();
-        emit mw.setAuth(authJavascript.get(), authManager.get(), std::bind(&InitAuth::callbackCall, this, _1), [this](const TypedException &e) {
-            sendInitSuccess(e);
-        });
+        emit mw.setAuth(authJavascript.get(), authManager.get(), MainWindow::SetAuthCallback([this]() {
+            sendInitSuccess(TypedException());
+        }, std::bind(&InitAuth::sendInitSuccess, this, _1), std::bind(&InitAuth::callbackCall, this, _1)));
     });
 
     if (exception.isSet()) {

@@ -14,6 +14,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "TypedException.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 namespace initializer {
 
@@ -25,7 +26,7 @@ InitTransactions::InitTransactions(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
     CHECK(connect(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall), "not connect onCallbackCall");
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(InitTransactions::Callback, "InitTransactions::Callback");
 
     registerStateType("init", "transactions initialized", true, true);
 }
@@ -57,9 +58,9 @@ InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWin
         txManager = std::make_unique<transactions::Transactions>(*nsLookup.get(), *txJavascript, *database);
         txManager->start();
         MainWindow &mw = *mainWindow.get();
-        emit mw.setTransactionsJavascript(txJavascript.get(), std::bind(&InitTransactions::callbackCall, this, _1), [this, mainWindow](const TypedException &e) {
-            sendInitSuccess(e);
-        });
+        emit mw.setTransactionsJavascript(txJavascript.get(), MainWindow::SetTransactionsJavascriptCallback([this, mainWindow]() {
+            sendInitSuccess(TypedException());
+        }, std::bind(&InitTransactions::sendInitSuccess, this, _1), std::bind(&InitTransactions::callbackCall, this, _1)));
     });
 
     if (exception.isSet()) {
