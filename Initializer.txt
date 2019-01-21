@@ -3,19 +3,33 @@ Initializer регестрируется в javascript по имени initializ
 Q_INVOKABLE void resendEvents();
 Переотправляет все накопленные event-ы, если есть (stateChanged, initialized)
 Результат вернется в функцию
-txsResendEventsJs(errorNum, errorMessage)
+initsResendEventsJs(errorNum, errorMessage)
 
 Q_INVOKABLE void ready(bool force);
 Говорит о готовности javascript-а начать запуск программы. Вызывать после прихода события initInitializedJs
 force - принудительно продолжить загрузку, если result этой функции not_success. (В текущей версии не даст результата)
 Результат вернется в функцию
-txsReadyResultJs(result, errorNum, errorMessage)
+initsReadyResultJs(result, errorNum, errorMessage)
 result = "error" | "finish" | "advance" | "not_success"
 error - при выполнении этого запроса произошла ошибка.
 finish - переход в нормальный режим работы произошел успешно.
 critical_advance - преждевременный вызов функции. Не все критические инициализации завершены.
 advance - преждевременный вызов функции. Можно попробовать продолжить инициализацию.
 not_success - один из state-ов завершился с ошибкой. Можно попробовать продолжить инициализацию.
+
+Q_INVOKABLE void getAllTypes();
+Вернуть список всех types;
+Результат вернется в функцию
+initGetAllTypesResultJs(result, errorNum, errorMessage)
+result - json массив вида
+[\"window\",\"auth\",\"nslookup\",\"transactions\",\"websocket\",\"jsWrapper\",\"uploader\"]
+
+Q_INVOKABLE void getAllSubTypes();
+Вернуть список всех subtypes;
+Результат вернется в функцию
+initGetAllSubTypesResultJs(result, errorNum, errorMessage)
+result - json массив вида
+[{\"subType\":\"init\",\"type\":\"window\"},{\"subType\":\"checked\",\"type\":\"auth\"}]
 
 
 initStateChangedJs(number, totalNumber, numberCritical, totalNumberCritical, type, subType, message, isCritical, isScipped, errorNum, errorMessage)

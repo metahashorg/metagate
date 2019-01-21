@@ -22,6 +22,18 @@ static QJsonDocument typesToJson(const std::vector<QString> &types) {
     return QJsonDocument(messagesJson);
 }
 
+static QJsonDocument subTypesToJson(const std::vector<std::pair<QString, QString>> &types) {
+    QJsonArray messagesJson;
+    for (const auto &pair: types) {
+        QJsonObject messageJson;
+        messageJson.insert("type", pair.first);
+        messageJson.insert("subType", pair.second);
+        messagesJson.push_back(messageJson);
+    }
+
+    return QJsonDocument(messagesJson);
+}
+
 InitializerJavascript::InitializerJavascript(QObject *parent)
     : QObject(parent)
 {
@@ -43,9 +55,9 @@ END_SLOT_WRAPPER
 
 void InitializerJavascript::resendEvents() {
 BEGIN_SLOT_WRAPPER
-    CHECK(m_initializer != nullptr, "transactions not set");
+    CHECK(m_initializer != nullptr, "initializer not set");
 
-    const QString JS_NAME_RESULT = "txsResendEventsJs";
+    const QString JS_NAME_RESULT = "initsResendEventsJs";
 
     LOG << "Resend events";
 
@@ -67,9 +79,9 @@ END_SLOT_WRAPPER
 
 void InitializerJavascript::ready(bool force) {
 BEGIN_SLOT_WRAPPER
-    CHECK(m_initializer != nullptr, "transactions not set");
+    CHECK(m_initializer != nullptr, "initializer not set");
 
-    const QString JS_NAME_RESULT = "txsReadyResultJs";
+    const QString JS_NAME_RESULT = "initsReadyResultJs";
 
     LOG << "Javascript ready";
 
@@ -117,6 +129,29 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         emit m_initializer->getAllTypes([makeFunc](const std::vector<QString> &result, const TypedException &exception) {
             makeFunc(exception, typesToJson(result));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
+void InitializerJavascript::getAllSubTypes() {
+BEGIN_SLOT_WRAPPER
+    CHECK(m_initializer != nullptr, "initializer not set");
+
+    const QString JS_NAME_RESULT = "initGetAllSubTypesResultJs";
+    LOG << "getAllSubTypes";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit m_initializer->getAllSubTypes([makeFunc](const std::vector<std::pair<QString, QString>> &result, const TypedException &exception) {
+            makeFunc(exception, subTypesToJson(result));
         });
     });
 

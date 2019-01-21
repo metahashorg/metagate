@@ -32,6 +32,8 @@ public slots:
 
     Q_INVOKABLE void getAllTypes();
 
+    Q_INVOKABLE void getAllSubTypes();
+
 signals:
 
     void jsRunSig(QString jsString);

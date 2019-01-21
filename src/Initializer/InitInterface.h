@@ -49,6 +49,8 @@ public:
 
     QString getType() const;
 
+    std::vector<QString> getSubtypes() const;
+
 protected:
 
     virtual void completeImpl() = 0;

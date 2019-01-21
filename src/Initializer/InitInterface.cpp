@@ -96,6 +96,14 @@ QString InitInterface::getType() const {
     return type;
 }
 
+std::vector<QString> InitInterface::getSubtypes() const {
+    std::vector<QString> result;
+    std::transform(states.begin(), states.end(), std::back_inserter(result), [](const auto &pair) {
+        return pair.first;
+    });
+    return result;
+}
+
 void InitInterface::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     const time_point now = ::now();

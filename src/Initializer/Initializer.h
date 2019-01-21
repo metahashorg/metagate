@@ -44,6 +44,8 @@ public:
 
     using GetTypesCallback = std::function<void(const std::vector<QString> &result, const TypedException &exception)>;
 
+    using GetSubTypesCallback = std::function<void(const std::vector<std::pair<QString, QString>> &result, const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -104,6 +106,8 @@ signals:
 
     void getAllTypes(const GetTypesCallback &callback);
 
+    void getAllSubTypes(const GetSubTypesCallback &callback);
+
 private slots:
 
     void onResendAllStates(const GetAllStatesCallback &callback);
@@ -111,6 +115,8 @@ private slots:
     void onJavascriptReady(bool force, const ReadyCallback &callback);
 
     void onGetAllTypes(const GetTypesCallback &callback);
+
+    void onGetAllSubTypes(const GetSubTypesCallback &callback);
 
 private:
 
