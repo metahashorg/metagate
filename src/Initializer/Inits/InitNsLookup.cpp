@@ -12,8 +12,12 @@ using namespace std::placeholders;
 
 namespace initializer {
 
+QString InitNsLookup::stateName() {
+    return "nslookup";
+}
+
 InitNsLookup::InitNsLookup(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, true)
+    : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitNsLookup::serversFlushed, this, &InitNsLookup::onServersFlushed), "not connect onServersFlushed");
     setTimerEvent(50s, "nslookup flushed timeout", std::bind(&InitNsLookup::serversFlushed, this, _1));
@@ -27,13 +31,13 @@ void InitNsLookup::complete() {
 }
 
 void InitNsLookup::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("nslookup", "init", "nslookup initialized", true, exception));
+    sendState(InitState(stateName(), "init", "nslookup initialized", true, exception));
 }
 
 void InitNsLookup::onServersFlushed(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState("nslookup", "flushed", "nslookup flushed", false, exception));
+        sendState(InitState(stateName(), "flushed", "nslookup flushed", false, exception));
         isFlushed = true;
     }
 END_SLOT_WRAPPER

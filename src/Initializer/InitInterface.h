@@ -25,7 +25,7 @@ class InitInterface: public QObject {
     Q_OBJECT
 public:
 
-    InitInterface(QThread *mainThread, Initializer &manager, bool isTimerEnabled);
+    InitInterface(const QString &type, QThread *mainThread, Initializer &manager, bool isTimerEnabled);
 
     virtual ~InitInterface() = default;
 
@@ -51,6 +51,8 @@ protected:
 private:
 
     const bool isTimerEnabled;
+
+    const QString type;
 
     QTimer timer;
 

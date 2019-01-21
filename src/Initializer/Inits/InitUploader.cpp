@@ -12,8 +12,12 @@ using namespace std::placeholders;
 
 namespace initializer {
 
+QString InitUploader::stateName() {
+    return "uploader";
+}
+
 InitUploader::InitUploader(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, true)
+    : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitUploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
     setTimerEvent(30s, "uploader check updates", std::bind(&InitUploader::checkedUpdatesHtmls, this, _1));
@@ -27,13 +31,13 @@ void InitUploader::complete() {
 }
 
 void InitUploader::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("uploader", "init", "uploader initialized", true, exception));
+    sendState(InitState(stateName(), "init", "uploader initialized", true, exception));
 }
 
 void InitUploader::onCheckedUpdatesHtmls(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState("uploader", "check_updates_htmls", "uploader check updates", false, exception));
+        sendState(InitState(stateName(), "check_updates_htmls", "uploader check updates", false, exception));
         isFlushed = true;
     }
 END_SLOT_WRAPPER

@@ -9,6 +9,7 @@
 #include "TypedException.h"
 #include "check.h"
 
+#include <QString>
 #include <QThread>
 
 namespace initializer {
@@ -55,11 +56,19 @@ public:
     template<class Init, bool isDefferred=false, typename... Args>
     std::shared_future<typename Init::Return> addInit(Args&& ...args) {
         CHECK(!isComplete, "Already complete");
+
         totalStates += Init::countEvents();
         totalCriticalStates += Init::countCriticalEvents();
+
+        CHECK(countStatesForInits.find(Init::stateName()) == countStatesForInits.end(), "Conflict name: " + Init::stateName().toStdString() + " already exist");
+        countStatesForInits[Init::stateName()] = Init::countEvents();
+        CHECK(countCriticalStatesForInits.find(Init::stateName()) == countCriticalStatesForInits.end(), "Conflict name: " + Init::stateName().toStdString() + " already exist");
+        countCriticalStatesForInits[Init::stateName()] = Init::countCriticalEvents();
+
         std::unique_ptr<Init> result = std::make_unique<Init>(QThread::currentThread(), *this);
         auto fut = std::async((isDefferred ? std::launch::deferred : std::launch::async), &Init::initialize, result.get(), std::forward<Args>(args)...);
         initializiers.emplace_back(std::move(result));
+
         return fut;
     }
 
@@ -123,6 +132,10 @@ private:
     bool isErrorExist = false;
 
     bool isErrorCritical = false;
+
+    std::map<QString, int> countStatesForInits;
+
+    std::map<QString, int> countCriticalStatesForInits;
 };
 
 }

@@ -1,4 +1,4 @@
-#ifndef INIT_MAINWINDOW_H
+﻿#ifndef INIT_MAINWINDOW_H
 #define INIT_MAINWINDOW_H
 
 #include "../InitInterface.h"
@@ -36,6 +36,8 @@ public:
     static int countCriticalEvents() {
         return 1;
     }
+
+    static QString stateName();
 
 private:
 

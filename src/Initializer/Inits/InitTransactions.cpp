@@ -17,8 +17,12 @@ using namespace std::placeholders;
 
 namespace initializer {
 
+QString InitTransactions::stateName() {
+    return "transactions";
+}
+
 InitTransactions::InitTransactions(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, false)
+    : InitInterface(stateName(), mainThread, manager, false)
 {
     CHECK(connect(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");
@@ -40,7 +44,7 @@ void InitTransactions::complete() {
 }
 
 void InitTransactions::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("transactions", "init", "transactions initialized", true, exception));
+    sendState(InitState(stateName(), "init", "transactions initialized", true, exception));
     isInitSuccess = !exception.isSet();
 }
 

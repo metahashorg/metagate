@@ -17,8 +17,12 @@ using namespace std::placeholders;
 
 namespace initializer {
 
+QString InitAuth::stateName() {
+    return "auth";
+}
+
 InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, true)
+    : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitAuth::callbackCall, this, &InitAuth::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &InitAuth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished), "not connect onCheckTokenFinished");
@@ -43,12 +47,12 @@ void InitAuth::complete() {
 }
 
 void InitAuth::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("auth", "init", "auth initialized", true, exception));
+    sendState(InitState(stateName(), "init", "auth initialized", true, exception));
     isInitSuccess = !exception.isSet();
 }
 
 void InitAuth::sendLoginCheckedSuccess(const TypedException &exception) {
-    sendState(InitState("auth", "checked", "auth checked", false, exception));
+    sendState(InitState(stateName(), "checked", "auth checked", false, exception));
 }
 
 void InitAuth::onCheckTokenFinished(const TypedException &exception) {

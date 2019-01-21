@@ -40,6 +40,8 @@ public:
         return 1;
     }
 
+    static QString stateName();
+
 signals:
 
     void checkedUpdatesHtmls(const TypedException &exception);

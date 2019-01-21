@@ -15,8 +15,12 @@ using namespace std::placeholders;
 
 namespace initializer {
 
+QString InitJavascriptWrapper::stateName() {
+    return "jsWrapper";
+}
+
 InitJavascriptWrapper::InitJavascriptWrapper(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, false)
+    : InitInterface(stateName(), mainThread, manager, false)
 {
     CHECK(connect(this, &InitJavascriptWrapper::callbackCall, this, &InitJavascriptWrapper::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");
@@ -36,7 +40,7 @@ void InitJavascriptWrapper::complete() {
 }
 
 void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("jsWrapper", "init", "jsWrapper initialized", true, exception));
+    sendState(InitState(stateName(), "init", "jsWrapper initialized", true, exception));
     isInitSuccess = !exception.isSet();
 }
 

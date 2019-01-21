@@ -39,6 +39,8 @@ public:
         return 1;
     }
 
+    static QString stateName();
+
 signals:
 
     void serversFlushed(const TypedException &exception);

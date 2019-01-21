@@ -9,8 +9,9 @@
 
 namespace initializer {
 
-InitInterface::InitInterface(QThread *mainThread, Initializer &manager, bool isTimerEnabled)
-    : mainThread(mainThread)
+InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializer &manager, bool isTimerEnabled)
+    : type(type)
+    , mainThread(mainThread)
     , manager(manager)
     , isTimerEnabled(isTimerEnabled)
 {
@@ -23,6 +24,7 @@ InitInterface::InitInterface(QThread *mainThread, Initializer &manager, bool isT
 }
 
 void InitInterface::sendState(const InitState &state) {
+    CHECK(state.type == type, "Type incorrect: " + state.type.toStdString() + ". Expected: " + type.toStdString());
     emit manager.sendState(state);
 }
 

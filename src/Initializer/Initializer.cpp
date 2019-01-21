@@ -63,8 +63,19 @@ void Initializer::onSendState(const InitState &state) {
 BEGIN_SLOT_WRAPPER
     CHECK(isComplete, "Not complete"); // Запросы приходят в QueuedConnection, поэтому флаг isComplete в этот момент уже должен быть установлен
     CHECK(existStates.size() == states.size(), "Incorrect existStates struct");
+
     CHECK(existStates.find(std::make_pair(state.type, state.subType)) == existStates.end(), "State already setted");
     CHECK((int)states.size() < totalStates, "Incorrect state number");
+
+    CHECK(countStatesForInits.find(state.type) != countStatesForInits.end(), "Not registered type: " + state.type.toStdString());
+    CHECK(countStatesForInits.at(state.type) > 0, "States overflow for type: " + state.type.toStdString());
+    countStatesForInits[state.type]--;
+    if (state.isCritical) {
+        CHECK(countCriticalStatesForInits.find(state.type) != countCriticalStatesForInits.end(), "Not registered type: " + state.type.toStdString());
+        CHECK(countCriticalStatesForInits.at(state.type) > 0, "States overflow for type: " + state.type.toStdString());
+        countCriticalStatesForInits[state.type]--;
+    }
+
     existStates.emplace(state.type, state.subType);
     states.emplace_back(state);
     if (state.exception.isSet()) {
@@ -79,10 +90,16 @@ BEGIN_SLOT_WRAPPER
     }
     sendStateToJs(state, (int)states.size(), countCritical);
     if (!isCriticalInitFinished && countCritical == totalCriticalStates) {
+        for (const auto &pair: countCriticalStatesForInits) {
+            CHECK(pair.second == 0, "Incorrect countCriticalStatesForInits");
+        }
         isCriticalInitFinished = true;
         sendCriticalInitializedToJs(isErrorCritical);
     }
     if (!isInitFinished && (int)states.size() == totalStates) {
+        for (const auto &pair: countStatesForInits) {
+            CHECK(pair.second == 0, "Incorrect countStatesForInits");
+        }
         isInitFinished = true;
         sendInitializedToJs(isErrorExist);
     }

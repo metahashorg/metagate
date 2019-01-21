@@ -50,6 +50,8 @@ public:
         return 1;
     }
 
+    static QString stateName();
+
 private:
 
     void sendInitSuccess(const TypedException &exception);

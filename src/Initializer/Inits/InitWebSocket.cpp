@@ -21,8 +21,12 @@ static QString getUrlToWss() {
 
 namespace initializer {
 
+QString InitWebSocket::stateName() {
+    return "websocket";
+}
+
 InitWebSocket::InitWebSocket(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, true)
+    : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitWebSocket::connectedSock, this, &InitWebSocket::onConnectedSock), "not connect onConnectedSock");
     setTimerEvent(15s, "websocket connected updates", std::bind(&InitWebSocket::connectedSock, this, _1));
@@ -36,13 +40,13 @@ void InitWebSocket::complete() {
 }
 
 void InitWebSocket::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("websocket", "init", "websocket initialized", true, exception));
+    sendState(InitState(stateName(), "init", "websocket initialized", true, exception));
 }
 
 void InitWebSocket::onConnectedSock(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isConnected) {
-        sendState(InitState("websocket", "connected", "websocket connected", false, exception));
+        sendState(InitState(stateName(), "connected", "websocket connected", false, exception));
         isConnected = true;
     }
 END_SLOT_WRAPPER

@@ -8,8 +8,12 @@
 
 namespace initializer {
 
+QString InitMainWindow::stateName() {
+    return "window";
+}
+
 InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager)
-    : InitInterface(mainThread, manager, false)
+    : InitInterface(stateName(), mainThread, manager, false)
 {}
 
 InitMainWindow::~InitMainWindow() = default;
@@ -20,7 +24,7 @@ void InitMainWindow::complete() {
 }
 
 void InitMainWindow::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("window", "init", "window initialized", true, exception));
+    sendState(InitState(stateName(), "init", "window initialized", true, exception));
 }
 
 InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString) {
