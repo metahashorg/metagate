@@ -27,7 +27,7 @@ public:
 
     ~InitNsLookup() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize();
 
@@ -56,8 +56,6 @@ private slots:
 private:
 
     std::unique_ptr<NsLookup> nsLookup;
-
-    bool isFlushed = false;
 
 };
 

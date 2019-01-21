@@ -3,11 +3,21 @@
 #include "check.h"
 #include "SlotWrapper.h"
 
+#include <functional>
+using namespace std::placeholders;
+
 #include <QTimer>
 
 #include "Initializer.h"
 
 namespace initializer {
+
+InitInterface::StateType::StateType(bool isCritical, const QString &message, bool isTimeout, bool isOneRun)
+    : isCritical(isCritical)
+    , message(message)
+    , isTimeout(isTimeout)
+    , isOneRun(isOneRun)
+{}
 
 InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializer &manager, bool isTimerEnabled)
     : type(type)
@@ -23,9 +33,63 @@ InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializ
     }
 }
 
-void InitInterface::sendState(const InitState &state) {
-    CHECK(state.type == type, "Type incorrect: " + state.type.toStdString() + ". Expected: " + type.toStdString());
-    emit manager.sendState(state);
+void InitInterface::registerStateType(const QString &subType, const QString &message, bool isCritical, bool isOneRun, bool isTimeout, const milliseconds &timer, const std::string &errorDesc) {
+    CHECK(states.find(subType) == states.end(), "Subtype " + subType.toStdString() + " already exist");
+    states.emplace(subType, StateType(isCritical, message, isTimeout, isOneRun));
+    if (isTimeout) {
+        setTimerEvent(timer, errorDesc, std::bind(&InitInterface::sendStateTimeout, this, subType, _1));
+    }
+}
+
+void InitInterface::registerStateType(const QString &subType, const QString &message, bool isCritical, bool isOneRun) {
+    registerStateType(subType, message, isCritical, isOneRun, false, 0ms, "");
+}
+
+void InitInterface::registerStateType(const QString &subType, const QString &message, bool isCritical, bool isOneRun, const milliseconds &timer, const std::string &errorDesc) {
+    registerStateType(subType, message, isCritical, isOneRun, true, timer, errorDesc);
+}
+
+void InitInterface::sendStateTimeout(const QString &subType, const TypedException &exception) {
+    CHECK(states.find(subType) != states.end(), "SubType not found: " + subType.toStdString());
+    StateType &stateType = states.at(subType);
+    if (stateType.isTimeoutSended || stateType.isSended) {
+        return;
+    }
+    stateType.isSuccess = false;
+    stateType.isTimeoutSended = true;
+    emit manager.sendState(InitState(type, subType, stateType.message, stateType.isCritical, false, exception));
+}
+
+void InitInterface::sendState(const QString &subType, bool isScipped, const TypedException &exception) {
+    CHECK(states.find(subType) != states.end(), "SubType not found: " + subType.toStdString());
+    StateType &stateType = states.at(subType);
+    if (stateType.isTimeoutSended) {
+        return;
+    }
+    if (stateType.isOneRun) {
+        CHECK(!stateType.isSended, "Subtype " + subType.toStdString() + " already sended");
+    } else {
+        if (stateType.isSended) {
+            return;
+        }
+    }
+    stateType.isSuccess = !exception.isSet();
+    stateType.isSended = true;
+    emit manager.sendState(InitState(type, subType, stateType.message, stateType.isCritical, isScipped, exception));
+}
+
+void InitInterface::complete() {
+    if (isCompleted) {
+        return;
+    }
+    for (const auto &pair: states) {
+        const StateType &stateType = pair.second;
+        if (stateType.isCritical) {
+            CHECK((stateType.isSended || stateType.isTimeoutSended) && stateType.isSuccess, "State " + type.toStdString() + ":" + pair.first.toStdString() + " not emitted or not success");
+        }
+    }
+    completeImpl();
+    isCompleted = true;
 }
 
 void InitInterface::onTimerEvent() {

@@ -28,7 +28,7 @@ public:
 
     ~InitUploader() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize(std::shared_future<MainWindow*> mainWindow);
 
@@ -57,8 +57,6 @@ private slots:
 private:
 
     std::unique_ptr<Uploader> uploader;
-
-    bool isFlushed = false;
 
 };
 

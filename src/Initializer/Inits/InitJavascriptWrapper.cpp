@@ -24,6 +24,8 @@ InitJavascriptWrapper::InitJavascriptWrapper(QThread *mainThread, Initializer &m
 {
     CHECK(connect(this, &InitJavascriptWrapper::callbackCall, this, &InitJavascriptWrapper::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");
+
+    registerStateType("init", "jsWrapper initialized", true, true);
 }
 
 InitJavascriptWrapper::~InitJavascriptWrapper() = default;
@@ -34,14 +36,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitJavascriptWrapper::complete() {
+void InitJavascriptWrapper::completeImpl() {
     CHECK(jsWrapper != nullptr, "jsWrapper not initialized");
-    CHECK(isInitSuccess, "initialize not success");
 }
 
 void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "jsWrapper initialized", true, false, exception));
-    isInitSuccess = !exception.isSet();
+    sendState("init", false, exception);
 }
 
 InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(

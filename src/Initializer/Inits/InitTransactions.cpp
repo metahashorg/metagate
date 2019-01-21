@@ -26,6 +26,8 @@ InitTransactions::InitTransactions(QThread *mainThread, Initializer &manager)
 {
     CHECK(connect(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall), "not connect onCallbackCall");
     qRegisterMetaType<Callback>("Callback");
+
+    registerStateType("init", "transactions initialized", true, true);
 }
 
 InitTransactions::~InitTransactions() = default;
@@ -36,16 +38,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitTransactions::complete() {
+void InitTransactions::completeImpl() {
     CHECK(database != nullptr, "database not initialized");
     CHECK(txJavascript != nullptr, "txJavascript not initialized");
     CHECK(txManager != nullptr, "txManager not initialized");
-    CHECK(isInitSuccess, "initialize not success");
 }
 
 void InitTransactions::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "transactions initialized", true, false, exception));
-    isInitSuccess = !exception.isSet();
+    sendState("init", false, exception);
 }
 
 InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup) {

@@ -4,9 +4,6 @@
 
 #include "WebSocketClient.h"
 
-#include <functional>
-using namespace std::placeholders;
-
 #include "check.h"
 #include "Paths.h"
 #include "SlotWrapper.h"
@@ -29,26 +26,24 @@ InitWebSocket::InitWebSocket(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitWebSocket::connectedSock, this, &InitWebSocket::onConnectedSock), "not connect onConnectedSock");
-    setTimerEvent(15s, "websocket connected updates", std::bind(&InitWebSocket::connectedSock, this, _1));
+
+    registerStateType("init", "websocket initialized", true, true);
+    registerStateType("connected", "websocket connected", false, false, 15s, "websocket connected updates");
 }
 
 InitWebSocket::~InitWebSocket() = default;
 
-void InitWebSocket::complete() {
+void InitWebSocket::completeImpl() {
     CHECK(webSocket != nullptr, "webSocket not initialized");
-    CHECK(isConnected, "webSocket not connected");
 }
 
 void InitWebSocket::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "websocket initialized", true, false, exception));
+    sendState("init", false, exception);
 }
 
 void InitWebSocket::onConnectedSock(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
-    if (!isConnected) {
-        sendState(InitState(stateName(), "connected", "websocket connected", false, false, exception));
-        isConnected = true;
-    }
+    sendState("connected", false, exception);
 END_SLOT_WRAPPER
 }
 

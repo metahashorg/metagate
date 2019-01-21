@@ -2,9 +2,6 @@
 
 #include "../Initializer.h"
 
-#include <functional>
-using namespace std::placeholders;
-
 #include "NsLookup.h"
 
 #include "check.h"
@@ -20,26 +17,24 @@ InitNsLookup::InitNsLookup(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitNsLookup::serversFlushed, this, &InitNsLookup::onServersFlushed), "not connect onServersFlushed");
-    setTimerEvent(50s, "nslookup flushed timeout", std::bind(&InitNsLookup::serversFlushed, this, _1));
+
+    registerStateType("init", "nslookup initialized", true, true);
+    registerStateType("flushed", "nslookup flushed", false, false, 50s, "nslookup flushed timeout");
 }
 
 InitNsLookup::~InitNsLookup() = default;
 
-void InitNsLookup::complete() {
+void InitNsLookup::completeImpl() {
     CHECK(nsLookup != nullptr, "nsLookup not initialized");
-    CHECK(isFlushed, "Not flushed");
 }
 
 void InitNsLookup::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "nslookup initialized", true, false, exception));
+    sendState("init", false, exception);
 }
 
 void InitNsLookup::onServersFlushed(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
-    if (!isFlushed) {
-        sendState(InitState(stateName(), "flushed", "nslookup flushed", false, false, exception));
-        isFlushed = true;
-    }
+    sendState("flushed", false, exception);
 END_SLOT_WRAPPER
 }
 

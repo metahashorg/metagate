@@ -14,17 +14,19 @@ QString InitMainWindow::stateName() {
 
 InitMainWindow::InitMainWindow(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
-{}
+{
+    registerStateType("init", "window initialized", true, true);
+}
 
 InitMainWindow::~InitMainWindow() = default;
 
-void InitMainWindow::complete() {
+void InitMainWindow::completeImpl() {
     CHECK(mainWindow != nullptr, "window not initialized");
     emit mainWindow->initFinished();
 }
 
 void InitMainWindow::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "window initialized", true, false, exception));
+    sendState("init", false, exception);
 }
 
 InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString) {

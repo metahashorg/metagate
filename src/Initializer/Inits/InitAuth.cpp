@@ -28,7 +28,8 @@ InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
     CHECK(connect(this, &InitAuth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished), "not connect onCheckTokenFinished");
     qRegisterMetaType<Callback>("Callback");
 
-    setTimerEvent(10s, "auth checked timeout", std::bind(&InitAuth::checkTokenFinished, this, _1));
+    registerStateType("init", "auth initialized", true, true);
+    registerStateType("checked", "auth checked", false, false, 10s, "auth checked timeout");
 }
 
 InitAuth::~InitAuth() = default;
@@ -39,28 +40,22 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitAuth::complete() {
+void InitAuth::completeImpl() {
     CHECK(authManager != nullptr, "authManager not initialized");
     CHECK(authJavascript != nullptr, "authJavascript not initialized");
-    CHECK(isCheckTokenFinished, "token not checked");
-    CHECK(isInitSuccess, "initialize not success");
 }
 
 void InitAuth::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "auth initialized", true, false, exception));
-    isInitSuccess = !exception.isSet();
+    sendState("init", false, exception);
 }
 
 void InitAuth::sendLoginCheckedSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "checked", "auth checked", false, false, exception));
+    sendState("checked", false, exception);
 }
 
 void InitAuth::onCheckTokenFinished(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
-    if (!isCheckTokenFinished) {
-        sendLoginCheckedSuccess(exception);
-        isCheckTokenFinished = true;
-    }
+    sendLoginCheckedSuccess(exception);
 END_SLOT_WRAPPER
 }
 

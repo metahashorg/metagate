@@ -27,7 +27,7 @@ public:
 
     ~InitWebSocket() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize();
 
@@ -56,8 +56,6 @@ private:
 private:
 
     std::unique_ptr<WebSocketClient> webSocket;
-
-    bool isConnected = false;
 
 };
 

@@ -4,9 +4,6 @@
 
 #include "uploader.h"
 
-#include <functional>
-using namespace std::placeholders;
-
 #include "check.h"
 #include "SlotWrapper.h"
 
@@ -20,26 +17,24 @@ InitUploader::InitUploader(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
     CHECK(connect(this, &InitUploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
-    setTimerEvent(30s, "uploader check updates", std::bind(&InitUploader::checkedUpdatesHtmls, this, _1));
+
+    registerStateType("init", "uploader initialized", true, true);
+    registerStateType("check_updates_htmls", "uploader check updates", false, false, 30s, "uploader check updates");
 }
 
 InitUploader::~InitUploader() = default;
 
-void InitUploader::complete() {
+void InitUploader::completeImpl() {
     CHECK(uploader != nullptr, "uploader not initialized");
-    CHECK(isFlushed, "Not flushed");
 }
 
 void InitUploader::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "uploader initialized", true, false, exception));
+    sendState("init", false, exception);
 }
 
 void InitUploader::onCheckedUpdatesHtmls(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
-    if (!isFlushed) {
-        sendState(InitState(stateName(), "check_updates_htmls", "uploader check updates", false, false, exception));
-        isFlushed = true;
-    }
+    sendState("check_updates_htmls", false, exception);
 END_SLOT_WRAPPER
 }
 

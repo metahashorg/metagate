@@ -25,7 +25,7 @@ public:
 
     ~InitMainWindow() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString);
 

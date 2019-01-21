@@ -35,7 +35,7 @@ public:
 
     ~InitAuth() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize(std::shared_future<MainWindow*> mainWindow);
 
@@ -71,9 +71,6 @@ private:
 
     std::unique_ptr<auth::Auth> authManager;
     std::unique_ptr<auth::AuthJavascript> authJavascript;
-
-    bool isCheckTokenFinished = false;
-    bool isInitSuccess = false;
 
 };
 

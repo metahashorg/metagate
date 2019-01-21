@@ -38,7 +38,7 @@ public:
 
     ~InitTransactions() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup);
 
@@ -69,8 +69,6 @@ private:
     std::unique_ptr<transactions::TransactionsDBStorage> database;
     std::unique_ptr<transactions::TransactionsJavascript> txJavascript;
     std::unique_ptr<transactions::Transactions> txManager;
-
-    bool isInitSuccess = false;
 
 };
 

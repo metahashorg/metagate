@@ -43,7 +43,7 @@ public:
 
     ~InitJavascriptWrapper() override;
 
-    void complete() override;
+    void completeImpl() override;
 
     Return initialize(
         std::shared_future<WebSocketClient*> wssClient,
@@ -79,8 +79,6 @@ private slots:
 private:
 
     std::unique_ptr<JavascriptWrapper> jsWrapper;
-
-    bool isInitSuccess = false;
 
 };
 
