@@ -82,10 +82,10 @@ public slots:
 
     void onSendConnectedPeersResponseSig(int num, const TypedException &error);
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const ProxyJavascript::Callback &callback);
 
 signals:
-    void callbackCall(const Callback &callback);
+    void callbackCall(const ProxyJavascript::Callback &callback);
 
     void jsRunSig(QString jsString);
 

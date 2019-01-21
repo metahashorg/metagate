@@ -5,12 +5,11 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "makeJsFunc.h"
+#include "QRegister.h"
 
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QDebug>
-
-
 
 namespace proxy
 {
@@ -76,6 +75,8 @@ ProxyJavascript::ProxyJavascript(QObject *parent)
     CHECK(connect(this, &ProxyJavascript::sendConnectedPeersResponseSig, this, &ProxyJavascript::onSendConnectedPeersResponseSig), "not connect onSendConnectedPeersResponseSig");
 
     CHECK(connect(this, &ProxyJavascript::callbackCall, this, &ProxyJavascript::onCallbackCall), "not connect onCallbackCall");
+
+    Q_REG(ProxyJavascript::Callback, "ProxyJavascript::Callback");
 }
 
 void ProxyJavascript::proxyStart()
@@ -93,10 +94,10 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_proxyManager->proxyStart([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
-                LOG << "Proxt started " << res.ok << res.error;
-                makeFunc(exception, proxyResultToJson(res));
-            });
+            LOG << "Proxt started " << res.ok << res.error;
+            makeFunc(exception, proxyResultToJson(res));
         });
+    });
 
     if (exception.isSet()) {
         //makeFunc(exception, false);
@@ -119,10 +120,10 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_proxyManager->proxyStop([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
-                LOG << "Proxt stoped " << res.ok << res.error;
-                makeFunc(exception, proxyResultToJson(res));
-            });
+            LOG << "Proxt stoped " << res.ok << res.error;
+            makeFunc(exception, proxyResultToJson(res));
         });
+    });
 
     if (exception.isSet()) {
         //makeFunc(exception, false);
@@ -137,7 +138,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Get proxy status";
 
     const TypedException exception = apiVrapper2([&, this]() {
-            emit m_proxyManager->onGeProxyStatus();
+        emit m_proxyManager->onGeProxyStatus();
     });
 
     if (exception.isSet()) {
@@ -204,7 +205,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this]() {
-            emit m_proxyManager->discoverRouters([makeFunc](bool res, const TypedException &exception) {
+        emit m_proxyManager->discoverRouters([makeFunc](bool res, const TypedException &exception) {
             LOG << "Started routers discover " << res;
             makeFunc(exception, res);
         });
@@ -230,10 +231,10 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_proxyManager->addPortMapping(udn, [makeFunc](const Proxy::PortMappingResult &res, const TypedException &exception) {
-                LOG << "Added port mapping " << res.ok << res.error;
-                makeFunc(exception, portMappingResultToJson(res));
-            });
+            LOG << "Added port mapping " << res.ok << res.error;
+            makeFunc(exception, portMappingResultToJson(res));
         });
+    });
 
     if (exception.isSet()) {
         //makeFunc(exception, false);

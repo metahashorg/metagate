@@ -3,6 +3,7 @@
 #include <QNetworkDatagram>
 #include "check.h"
 #include "Log.h"
+#include "SlotWrapper.h"
 
 namespace proxy
 {
@@ -58,10 +59,12 @@ UPnPDevices::~UPnPDevices()
 
 void UPnPDevices::discover()
 {
+BEGIN_SLOT_WRAPPER
     LOG << "Start to find UPnP routers on the local network";
 
     m_mcsocket.writeDatagram(upnpSearchHeader, QHostAddress(mcSearchHost), mcSearchPort);
     m_mcsocket.writeDatagram(tr64SearchHeader, QHostAddress(mcSearchHost), mcSearchPort);
+END_SLOT_WRAPPER
 }
 
 UPnPRouter *UPnPDevices::findRouter(const QUrl &location)
@@ -75,6 +78,7 @@ UPnPRouter *UPnPDevices::findRouter(const QUrl &location)
 
 void UPnPDevices::onReadyRead()
 {
+BEGIN_SLOT_WRAPPER
     while (m_mcsocket.hasPendingDatagrams()) {
         QNetworkDatagram dgram = m_mcsocket.receiveDatagram();
         UPnPRouter *r = parseResponse(dgram.data());
@@ -98,12 +102,15 @@ void UPnPDevices::onReadyRead()
             updatingRouters.append(r);
         }
     }
+END_SLOT_WRAPPER
 }
 
 void UPnPDevices::onError(QAbstractSocket::SocketError e)
 {
+BEGIN_SLOT_WRAPPER
     Q_UNUSED(e);
     LOG << "MCast error : " << m_mcsocket.errorString();
+END_SLOT_WRAPPER
 }
 
 UPnPRouter *UPnPDevices::parseResponse(const QByteArray &data)

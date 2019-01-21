@@ -8,6 +8,7 @@
 
 #include "http_parser.h"
 #include "check.h"
+#include "SlotWrapper.h"
 
 namespace proxy
 {
@@ -358,24 +359,31 @@ ProxyClient::ProxyClient(QObject *parent)
 
 void ProxyClient::stop()
 {
+BEGIN_SLOT_WRAPPER
     close();
+END_SLOT_WRAPPER
 }
 
 ProxyClient::~ProxyClient() = default;
 
 void ProxyClient::onSrcDisconnected()
 {
+BEGIN_SLOT_WRAPPER
     qDebug() << "SRC disconnected";
     deleteLater();
+END_SLOT_WRAPPER
 }
 
 void ProxyClient::onSrcError(QAbstractSocket::SocketError socketError)
 {
+BEGIN_SLOT_WRAPPER
     qDebug() << "SRC socket error" << socketError;
+END_SLOT_WRAPPER
 }
 
 void ProxyClient::onSrcReadyRead()
 {
+BEGIN_SLOT_WRAPPER
     QByteArray data = readAll();
     //qDebug() << data;
     if (d->result == ProxyClientPrivate::ConnectQuery) {
@@ -398,25 +406,32 @@ void ProxyClient::onSrcReadyRead()
         d->sendErrorPage();
         return;
     }
+END_SLOT_WRAPPER
 }
 
 void ProxyClient::onDestDisconnected()
 {
+BEGIN_SLOT_WRAPPER
     qDebug() << "DEST disconnected";
     // error?
     stop();
+END_SLOT_WRAPPER
 }
 
 void ProxyClient::onDestError(QAbstractSocket::SocketError socketError)
 {
+BEGIN_SLOT_WRAPPER
     qDebug() << "DEST socket error" << socketError;
+END_SLOT_WRAPPER
 }
 
 void ProxyClient::onDestReadyRead()
 {
+BEGIN_SLOT_WRAPPER
     QByteArray data = d->socket->readAll();
     d->srcSocket->write(data);
     d->srcSocket->waitForBytesWritten();
+END_SLOT_WRAPPER
 }
 
 }

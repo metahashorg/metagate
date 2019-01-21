@@ -65,6 +65,7 @@ Proxy::~Proxy()
 
 void Proxy::startAutoProxy()
 {
+BEGIN_SLOT_WRAPPER
     // Start proxy
     LOG << "Proxy auto start: executed";
     autoActive = true;
@@ -89,10 +90,12 @@ void Proxy::startAutoProxy()
     state = AutoProxyStarted;
     // Wait 10 sec to find routers
     QTimer::singleShot(10 * 1000, this, &Proxy::onAutoDiscoveryTimeout);
+END_SLOT_WRAPPER
 }
 
 void Proxy::proxyTested(bool res, const QString &error)
 {
+BEGIN_SLOT_WRAPPER
     //qDebug() << res;
     // LOG ??
     emit javascriptWrapper.sendAutoStartTestResponseSig(ProxyResult(res, error), TypedException());
@@ -102,6 +105,7 @@ void Proxy::proxyTested(bool res, const QString &error)
     autoActive = false;
     state = AutoComplete;
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
+END_SLOT_WRAPPER
 }
 
 void Proxy::onProxyStart(const ProxyCallback &callback)
@@ -144,7 +148,6 @@ BEGIN_SLOT_WRAPPER
     ProxyStatus status(proxyStarted);
     emit javascriptWrapper.sendServerStatusResponseSig(status, TypedException());
 END_SLOT_WRAPPER
-
 }
 
 void Proxy::onGetPort()
@@ -244,6 +247,7 @@ END_SLOT_WRAPPER
 
 void Proxy::onAutoStartResend()
 {
+BEGIN_SLOT_WRAPPER
     emit  javascriptWrapper.sendAutoStartIsActiveResponseSig(autoActive, TypedException());
     switch (state) {
     case AutoExecuted:
@@ -268,10 +272,12 @@ void Proxy::onAutoStartResend()
         break;
     }
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
+END_SLOT_WRAPPER
 }
 
 void Proxy::onRouterDiscovered(UPnPRouter *router)
 {
+BEGIN_SLOT_WRAPPER
     LOG << "Router discovered " << router->friendlyName();
     Router r;
     r.router = router;
@@ -286,10 +292,12 @@ void Proxy::onRouterDiscovered(UPnPRouter *router)
     routers.push_back(r);
 
     emit javascriptWrapper.sendGetRoutersResponseSig(routers, TypedException());
+END_SLOT_WRAPPER
 }
 
 void Proxy::onAutoDiscoveryTimeout()
 {
+BEGIN_SLOT_WRAPPER
     if (routers.empty()) {
         LOG << "Proxy auto start: no routers found";
         emit startAutoUPnPResult(TypedException(PROXY_UPNP_ROUTER_NOT_FOUND, "Routers not found"));
@@ -319,12 +327,15 @@ void Proxy::onAutoDiscoveryTimeout()
         LOG << "Proxy auto start: complete";
         emit startAutoComplete(proxyServer->port());
     });
+END_SLOT_WRAPPER
 }
 
 void Proxy::onConnedtedPeersChanged(int peers)
 {
+BEGIN_SLOT_WRAPPER
     m_peers = peers;
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
+END_SLOT_WRAPPER
 }
 
 int Proxy::findRouter(const QString &udn) const
