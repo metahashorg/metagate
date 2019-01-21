@@ -9,6 +9,7 @@
 
 #include "check.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 namespace proxy
 {
@@ -24,12 +25,12 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     , autoActive(false)
     , m_peers(0)
 {
-    qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
-    qRegisterMetaType<Proxy::ProxyResult>("Proxy::ProxyResult");
+    Q_REG(std::vector<Proxy::Router>, "std::vector<Proxy::Router>");
+    Q_REG(Proxy::ProxyResult, "Proxy::ProxyResult");
 
-    qRegisterMetaType<ProxyCallback>("ProxyCallback");
-    qRegisterMetaType<DiscoverCallback>("DiscoverCallback");
-    qRegisterMetaType<PortMappingCallback>("PortMappingCallback");
+    Q_REG(ProxyCallback, "ProxyCallback");
+    Q_REG(DiscoverCallback, "DiscoverCallback");
+    Q_REG(PortMappingCallback, "PortMappingCallback");
 
     CHECK(connect(this, &Proxy::proxyStart, this, &Proxy::onProxyStart), "not connect onProxyStart");
     CHECK(connect(this, &Proxy::proxyStop, this, &Proxy::onProxyStop), "not connect onProxyStop");
