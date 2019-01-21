@@ -35,6 +35,10 @@ public:
         return 2;
     }
 
+    static int countCriticalEvents() {
+        return 1;
+    }
+
 signals:
 
     void connectedSock(const TypedException &exception);

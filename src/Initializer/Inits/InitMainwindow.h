@@ -33,6 +33,10 @@ public:
         return 1;
     }
 
+    static int countCriticalEvents() {
+        return 1;
+    }
+
 private:
 
     void sendInitSuccess(const TypedException &exception);

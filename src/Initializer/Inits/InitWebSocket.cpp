@@ -36,13 +36,13 @@ void InitWebSocket::complete() {
 }
 
 void InitWebSocket::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("websocket", "init", "websocket initialized", exception));
+    sendState(InitState("websocket", "init", "websocket initialized", true, exception));
 }
 
 void InitWebSocket::onConnectedSock(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isConnected) {
-        sendState(InitState("websocket", "connected", "websocket connected", exception));
+        sendState(InitState("websocket", "connected", "websocket connected", false, exception));
         isConnected = true;
     }
 END_SLOT_WRAPPER

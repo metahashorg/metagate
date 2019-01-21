@@ -11,10 +11,11 @@
 
 namespace initializer {
 
-InitState::InitState(const QString &type, const QString &subType, const QString &message, const TypedException &exception)
+InitState::InitState(const QString &type, const QString &subType, const QString &message, bool isCritical, const TypedException &exception)
     : type(type)
     , subType(subType)
     , message(message)
+    , isCritical(isCritical)
     , exception(exception)
 {}
 
@@ -43,14 +44,19 @@ void Initializer::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
-void Initializer::sendStateToJs(const InitState &state, int number) {
-    LOG << "State sended " << number << " " << totalStates << " " << state.type << " " << state.subType << " " << state.exception.numError << " " << state.exception.description;
-    emit javascriptWrapper.stateChangedSig(number, totalStates, state);
+void Initializer::sendStateToJs(const InitState &state, int number, int numberCritical) {
+    LOG << "State sended " << number << " " << totalStates << " " << numberCritical << " " << totalCriticalStates << " " << state.type << " " << state.subType << " " << state.exception.numError << " " << state.exception.description;
+    emit javascriptWrapper.stateChangedSig(number, totalStates, numberCritical, totalCriticalStates, state);
 }
 
 void Initializer::sendInitializedToJs(bool isErrorExist) {
     LOG << "Initialized sended " << !isErrorExist;
     emit javascriptWrapper.initializedSig(!isErrorExist, TypedException());
+}
+
+void Initializer::sendCriticalInitializedToJs(bool isErrorExist) {
+    LOG << "Critical initialized sended " << !isErrorExist;
+    emit javascriptWrapper.initializedCriticalSig(!isErrorExist, TypedException());
 }
 
 void Initializer::onSendState(const InitState &state) {
@@ -63,8 +69,19 @@ BEGIN_SLOT_WRAPPER
     states.emplace_back(state);
     if (state.exception.isSet()) {
         isErrorExist = true;
+        if (state.isCritical) {
+            isErrorCritical = true;
+        }
     }
-    sendStateToJs(state, (int)states.size() - 1);
+    if (state.isCritical) {
+        CHECK(countCritical < totalCriticalStates, "Incorrect count critical");
+        countCritical++;
+    }
+    sendStateToJs(state, (int)states.size(), countCritical);
+    if (!isCriticalInitFinished && countCritical == totalCriticalStates) {
+        isCriticalInitFinished = true;
+        sendCriticalInitializedToJs(isErrorCritical);
+    }
     if (!isInitFinished && (int)states.size() == totalStates) {
         isInitFinished = true;
         sendInitializedToJs(isErrorExist);
@@ -76,8 +93,15 @@ void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         if (isComplete) {
+            int cCritical = 0;
             for (size_t i = 0; i < states.size(); i++) {
-                sendStateToJs(states[i], (int)i);
+                if (states[i].isCritical) {
+                    cCritical++;
+                }
+                sendStateToJs(states[i], (int)i, cCritical);
+            }
+            if (isCriticalInitFinished) {
+                sendCriticalInitializedToJs(isErrorCritical);
             }
             if (isInitFinished) {
                 sendInitializedToJs(isErrorExist);
@@ -92,7 +116,11 @@ void Initializer::onJavascriptReady(bool force, const ReadyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     ReadyType result = ReadyType::Error;
     const TypedException exception = apiVrapper2([&, this] {
-        if (!isInitFinished) {
+        if (!isCriticalInitFinished) {
+            result = ReadyType::CriticalAdvance;
+            return;
+        }
+        if (!isInitFinished && !force) {
             result = ReadyType::Advance;
             return;
         }

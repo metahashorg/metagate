@@ -20,7 +20,7 @@ void InitMainWindow::complete() {
 }
 
 void InitMainWindow::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("window", "init", "window initialized", exception));
+    sendState(InitState("window", "init", "window initialized", true, exception));
 }
 
 InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString) {

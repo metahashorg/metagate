@@ -42,15 +42,19 @@ public slots:
 
 signals:
 
-    void stateChangedSig(int number, int totalStates, const InitState &state);
+    void stateChangedSig(int number, int totalStates, int numberCritical, int totalCritical, const InitState &state);
 
     void initializedSig(bool isSuccess, const TypedException &exception);
 
+    void initializedCriticalSig(bool isSuccess, const TypedException &exception);
+
 private slots:
 
-    void onStateChanged(int number, int totalStates, const InitState &state);
+    void onStateChanged(int number, int totalStates, int numberCritical, int totalCritical, const InitState &state);
 
     void onInitialized(bool isSuccess, const TypedException &exception);
+
+    void onInitializedCritical(bool isSuccess, const TypedException &exception);
 
 private:
 

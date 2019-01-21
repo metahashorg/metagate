@@ -15,6 +15,7 @@ InitializerJavascript::InitializerJavascript(QObject *parent)
 
     CHECK(connect(this, &InitializerJavascript::stateChangedSig, this, &InitializerJavascript::onStateChanged), "not connect onStateChanged");
     CHECK(connect(this, &InitializerJavascript::initializedSig, this, &InitializerJavascript::onInitialized), "not connect onInitialized");
+    CHECK(connect(this, &InitializerJavascript::initializedCriticalSig, this, &InitializerJavascript::onInitializedCritical), "not connect onInitializedCritical");
 
     qRegisterMetaType<InitState>("InitState");
     qRegisterMetaType<TypedException>("TypedException");
@@ -71,6 +72,8 @@ BEGIN_SLOT_WRAPPER
                 r = "finish";
             } else if (result == Initializer::ReadyType::Advance) {
                 r = "advance";
+            } else if (result == Initializer::ReadyType::CriticalAdvance) {
+                r = "critical_advance";
             } else if (result == Initializer::ReadyType::NotSuccess) {
                 r = "not_success";
             } else {
@@ -86,12 +89,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void InitializerJavascript::onStateChanged(int number, int totalStates, const InitState &state) {
+void InitializerJavascript::onStateChanged(int number, int totalStates, int numberCritical, int totalCritical, const InitState &state) {
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initStateChangedJs";
-    makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, number, totalStates, state.type, state.subType, state.message);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, number, totalStates, numberCritical, totalCritical, state.type, state.subType, state.message, state.isCritical);
 END_SLOT_WRAPPER
 }
 
@@ -100,6 +103,15 @@ BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initInitializedJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isSuccess);
+END_SLOT_WRAPPER
+}
+
+void InitializerJavascript::onInitializedCritical(bool isSuccess, const TypedException &exception) {
+BEGIN_SLOT_WRAPPER
+    CHECK(m_initializer != nullptr, "initializer not set");
+
+    const QString JS_NAME_RESULT = "initInitializedCriticalJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isSuccess);
 END_SLOT_WRAPPER
 }

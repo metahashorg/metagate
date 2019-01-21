@@ -27,13 +27,13 @@ void InitUploader::complete() {
 }
 
 void InitUploader::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState("uploader", "init", "uploader initialized", exception));
+    sendState(InitState("uploader", "init", "uploader initialized", true, exception));
 }
 
 void InitUploader::onCheckedUpdatesHtmls(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState("uploader", "check_updates_htmls", "uploader check updates", exception));
+        sendState(InitState("uploader", "check_updates_htmls", "uploader check updates", false, exception));
         isFlushed = true;
     }
 END_SLOT_WRAPPER

@@ -36,6 +36,10 @@ public:
         return 2;
     }
 
+    static int countCriticalEvents() {
+        return 1;
+    }
+
 signals:
 
     void checkedUpdatesHtmls(const TypedException &exception);
