@@ -47,6 +47,8 @@ public:
 
     void complete();
 
+    QString getType() const;
+
 protected:
 
     virtual void completeImpl() = 0;

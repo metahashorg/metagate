@@ -27,11 +27,13 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
     CHECK(connect(this, &Initializer::resendAllStatesSig, this, &Initializer::onResendAllStates), "not connect onGetAllStates");
     CHECK(connect(this, &Initializer::javascriptReadySig, this, &Initializer::onJavascriptReady), "not connect onJavascriptReady");
     CHECK(connect(this, &Initializer::sendState, this, &Initializer::onSendState, Qt::ConnectionType::QueuedConnection), "not connect onSendState");
+    CHECK(connect(this, &Initializer::getAllTypes, this, &Initializer::onGetAllTypes, Qt::ConnectionType::QueuedConnection), "not connect onGetAllTypes");
 
     qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<GetAllStatesCallback>("GetAllStatesCallback");
     qRegisterMetaType<ReadyCallback>("ReadyCallback");
     qRegisterMetaType<InitState>("InitState");
+    qRegisterMetaType<GetTypesCallback>("GetTypesCallback");
 }
 
 Initializer::~Initializer() = default;
@@ -150,6 +152,18 @@ BEGIN_SLOT_WRAPPER
             init->complete();
         }
         result = ReadyType::Finish;
+    });
+    runCallback(std::bind(callback, result, exception));
+END_SLOT_WRAPPER
+}
+
+void Initializer::onGetAllTypes(const GetTypesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<QString> result;
+    const TypedException exception = apiVrapper2([&, this] {
+        for (const auto &init: initializiers) {
+            result.emplace_back(init->getType());
+        }
     });
     runCallback(std::bind(callback, result, exception));
 END_SLOT_WRAPPER

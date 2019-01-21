@@ -30,6 +30,8 @@ public slots:
 
     Q_INVOKABLE void ready(bool force);
 
+    Q_INVOKABLE void getAllTypes();
+
 signals:
 
     void jsRunSig(QString jsString);

@@ -1,5 +1,10 @@
 #include "InitializerJavascript.h"
 
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonObject>
+
 #include "check.h"
 #include "SlotWrapper.h"
 #include "makeJsFunc.h"
@@ -7,6 +12,15 @@
 #include "Initializer.h"
 
 namespace initializer {
+
+static QJsonDocument typesToJson(const std::vector<QString> &types) {
+    QJsonArray messagesJson;
+    for (const QString &type: types) {
+        messagesJson.push_back(type);
+    }
+
+    return QJsonDocument(messagesJson);
+}
 
 InitializerJavascript::InitializerJavascript(QObject *parent)
     : QObject(parent)
@@ -85,6 +99,29 @@ BEGIN_SLOT_WRAPPER
 
     if (exception.isSet()) {
         makeFunc(exception, "error");
+    }
+END_SLOT_WRAPPER
+}
+
+void InitializerJavascript::getAllTypes() {
+BEGIN_SLOT_WRAPPER
+    CHECK(m_initializer != nullptr, "initializer not set");
+
+    const QString JS_NAME_RESULT = "initGetAllTypesResultJs";
+    LOG << "getAllTypes";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        emit m_initializer->getAllTypes([makeFunc](const std::vector<QString> &result, const TypedException &exception) {
+            makeFunc(exception, typesToJson(result));
+        });
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, QJsonDocument());
     }
 END_SLOT_WRAPPER
 }

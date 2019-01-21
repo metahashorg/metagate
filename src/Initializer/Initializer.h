@@ -42,6 +42,8 @@ public:
 
     using ReadyCallback = std::function<void(const ReadyType &result, const TypedException &exception)>;
 
+    using GetTypesCallback = std::function<void(const std::vector<QString> &result, const TypedException &exception)>;
+
     using Callback = std::function<void()>;
 
 public:
@@ -100,11 +102,15 @@ signals:
 
     void javascriptReadySig(bool force, const ReadyCallback &callback);
 
+    void getAllTypes(const GetTypesCallback &callback);
+
 private slots:
 
     void onResendAllStates(const GetAllStatesCallback &callback);
 
     void onJavascriptReady(bool force, const ReadyCallback &callback);
+
+    void onGetAllTypes(const GetTypesCallback &callback);
 
 private:
 

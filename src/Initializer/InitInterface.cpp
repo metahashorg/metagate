@@ -92,6 +92,10 @@ void InitInterface::complete() {
     isCompleted = true;
 }
 
+QString InitInterface::getType() const {
+    return type;
+}
+
 void InitInterface::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     const time_point now = ::now();
