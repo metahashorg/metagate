@@ -29,7 +29,7 @@ Q_INVOKABLE void getAllSubTypes();
 Результат вернется в функцию
 initGetAllSubTypesResultJs(result, errorNum, errorMessage)
 result - json массив вида
-[{\"subType\":\"init\",\"type\":\"window\"},{\"subType\":\"checked\",\"type\":\"auth\"}]
+[{\"isCritical\":true,\"message\":\"window initialized\",\"subType\":\"init\",\"type\":\"window\"},{\"isCritical\":false,\"message\":\"auth checked\",\"subType\":\"checked\",\"type\":\"auth\"}]
 
 
 initStateChangedJs(number, totalNumber, numberCritical, totalNumberCritical, type, subType, message, isCritical, isScipped, errorNum, errorMessage)

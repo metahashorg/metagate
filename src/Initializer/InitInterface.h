@@ -49,7 +49,7 @@ public:
 
     QString getType() const;
 
-    std::vector<QString> getSubtypes() const;
+    std::vector<std::tuple<QString, QString, bool>> getSubtypes() const;
 
 protected:
 

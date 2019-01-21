@@ -173,13 +173,13 @@ END_SLOT_WRAPPER
 
 void Initializer::onGetAllSubTypes(const GetSubTypesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<std::pair<QString, QString>> result;
+    std::vector<StateType> result;
     const TypedException exception = apiVrapper2([&, this] {
         for (const auto &init: initializiers) {
             const QString type = init->getType();
-            const std::vector<QString> subTypes = init->getSubtypes();
-            for (const QString &subType: subTypes) {
-                result.emplace_back(type, subType);
+            const auto subTypes = init->getSubtypes();
+            for (const auto &subType: subTypes) {
+                result.emplace_back(type, std::get<0>(subType), std::get<1>(subType), std::get<2>(subType));
             }
         }
     });

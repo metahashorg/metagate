@@ -38,13 +38,29 @@ public:
         Error, CriticalAdvance, Advance, Finish, NotSuccess
     };
 
+    struct StateType {
+        QString type;
+        QString subtype;
+        QString message;
+        bool isCritical;
+
+        StateType(const QString &type, const QString &subtype, const QString &message, bool isCritical)
+            : type(type)
+            , subtype(subtype)
+            , message(message)
+            , isCritical(isCritical)
+        {}
+    };
+
+public:
+
     using GetAllStatesCallback = std::function<void(const TypedException &exception)>;
 
     using ReadyCallback = std::function<void(const ReadyType &result, const TypedException &exception)>;
 
     using GetTypesCallback = std::function<void(const std::vector<QString> &result, const TypedException &exception)>;
 
-    using GetSubTypesCallback = std::function<void(const std::vector<std::pair<QString, QString>> &result, const TypedException &exception)>;
+    using GetSubTypesCallback = std::function<void(const std::vector<StateType> &result, const TypedException &exception)>;
 
     using Callback = std::function<void()>;
 

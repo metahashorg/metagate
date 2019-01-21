@@ -22,12 +22,14 @@ static QJsonDocument typesToJson(const std::vector<QString> &types) {
     return QJsonDocument(messagesJson);
 }
 
-static QJsonDocument subTypesToJson(const std::vector<std::pair<QString, QString>> &types) {
+static QJsonDocument subTypesToJson(const std::vector<Initializer::StateType> &types) {
     QJsonArray messagesJson;
-    for (const auto &pair: types) {
+    for (const Initializer::StateType &type: types) {
         QJsonObject messageJson;
-        messageJson.insert("type", pair.first);
-        messageJson.insert("subType", pair.second);
+        messageJson.insert("type", type.type);
+        messageJson.insert("subType", type.subtype);
+        messageJson.insert("message", type.message);
+        messageJson.insert("isCritical", type.isCritical);
         messagesJson.push_back(messageJson);
     }
 
@@ -150,7 +152,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit m_initializer->getAllSubTypes([makeFunc](const std::vector<std::pair<QString, QString>> &result, const TypedException &exception) {
+        emit m_initializer->getAllSubTypes([makeFunc](const std::vector<Initializer::StateType> &result, const TypedException &exception) {
             makeFunc(exception, subTypesToJson(result));
         });
     });

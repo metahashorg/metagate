@@ -96,10 +96,10 @@ QString InitInterface::getType() const {
     return type;
 }
 
-std::vector<QString> InitInterface::getSubtypes() const {
-    std::vector<QString> result;
+std::vector<std::tuple<QString, QString, bool>> InitInterface::getSubtypes() const {
+    std::vector<std::tuple<QString, QString, bool>> result;
     std::transform(states.begin(), states.end(), std::back_inserter(result), [](const auto &pair) {
-        return pair.first;
+        return std::make_tuple(pair.first, pair.second.message, pair.second.isCritical);
     });
     return result;
 }
