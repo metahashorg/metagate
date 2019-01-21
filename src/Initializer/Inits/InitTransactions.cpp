@@ -44,7 +44,7 @@ void InitTransactions::complete() {
 }
 
 void InitTransactions::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "transactions initialized", true, exception));
+    sendState(InitState(stateName(), "init", "transactions initialized", true, false, exception));
     isInitSuccess = !exception.isSet();
 }
 

@@ -11,11 +11,12 @@
 
 namespace initializer {
 
-InitState::InitState(const QString &type, const QString &subType, const QString &message, bool isCritical, const TypedException &exception)
+InitState::InitState(const QString &type, const QString &subType, const QString &message, bool isCritical, bool isScipped, const TypedException &exception)
     : type(type)
     , subType(subType)
     , message(message)
     , isCritical(isCritical)
+    , isScipped(isScipped)
     , exception(exception)
 {}
 

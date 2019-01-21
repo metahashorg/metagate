@@ -31,13 +31,13 @@ void InitNsLookup::complete() {
 }
 
 void InitNsLookup::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "nslookup initialized", true, exception));
+    sendState(InitState(stateName(), "init", "nslookup initialized", true, false, exception));
 }
 
 void InitNsLookup::onServersFlushed(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     if (!isFlushed) {
-        sendState(InitState(stateName(), "flushed", "nslookup flushed", false, exception));
+        sendState(InitState(stateName(), "flushed", "nslookup flushed", false, false, exception));
         isFlushed = true;
     }
 END_SLOT_WRAPPER

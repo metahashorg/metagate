@@ -22,11 +22,12 @@ struct InitState {
     QString subType;
     QString message;
     bool isCritical;
+    bool isScipped;
     TypedException exception;
 
     InitState() = default;
 
-    InitState(const QString &type, const QString &subType, const QString &message, bool isCritical, const TypedException &exception);
+    InitState(const QString &type, const QString &subType, const QString &message, bool isCritical, bool isScipped, const TypedException &exception);
 };
 
 class Initializer: public QObject {

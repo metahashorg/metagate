@@ -40,7 +40,7 @@ void InitJavascriptWrapper::complete() {
 }
 
 void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "jsWrapper initialized", true, exception));
+    sendState(InitState(stateName(), "init", "jsWrapper initialized", true, false, exception));
     isInitSuccess = !exception.isSet();
 }
 

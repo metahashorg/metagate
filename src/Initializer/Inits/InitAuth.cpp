@@ -47,12 +47,12 @@ void InitAuth::complete() {
 }
 
 void InitAuth::sendInitSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "init", "auth initialized", true, exception));
+    sendState(InitState(stateName(), "init", "auth initialized", true, false, exception));
     isInitSuccess = !exception.isSet();
 }
 
 void InitAuth::sendLoginCheckedSuccess(const TypedException &exception) {
-    sendState(InitState(stateName(), "checked", "auth checked", false, exception));
+    sendState(InitState(stateName(), "checked", "auth checked", false, false, exception));
 }
 
 void InitAuth::onCheckTokenFinished(const TypedException &exception) {

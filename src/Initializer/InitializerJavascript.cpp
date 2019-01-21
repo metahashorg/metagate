@@ -94,7 +94,7 @@ BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initStateChangedJs";
-    makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, number, totalStates, numberCritical, totalCritical, state.type, state.subType, state.message, state.isCritical);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, number, totalStates, numberCritical, totalCritical, state.type, state.subType, state.message, state.isCritical, state.isScipped);
 END_SLOT_WRAPPER
 }
 
