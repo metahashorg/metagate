@@ -34,7 +34,7 @@ signals:
 
     void jsRunSig(QString jsString);
 
-    void callbackCall(const Callback &callback);
+    void callbackCall(const TransactionsJavascript::Callback &callback);
 
 signals:
 
@@ -48,7 +48,7 @@ signals:
 
 public slots:
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const TransactionsJavascript::Callback &callback);
 
 private slots:
 

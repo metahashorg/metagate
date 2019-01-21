@@ -5,6 +5,8 @@
 #include "Log.h"
 #include "makeJsFunc.h"
 #include "Paths.h"
+#include "utils.h"
+#include "QRegister.h"
 
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
@@ -92,12 +94,19 @@ static QString getWssServer() {
     return settings.value("web_socket/messenger").toString();
 };
 
-Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, QObject *parent)
+Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent)
     : TimerClass(1s, parent)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
+    , cryptManager(cryptManager)
     , wssClient(getWssServer())
 {
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("messenger/saveDecryptedMessage"), "timeout not found");
+    isDecryptDataSave = settings.value("messenger/saveDecryptedMessage").toBool();
+
+    CHECK(connect(this, &Messenger::callbackCall, this, &Messenger::onCallbackCall), "not connect onCallbackCall");
+
     CHECK(connect(this, SIGNAL(timerEvent()), this, SLOT(onTimerEvent())), "not connect onTimerEvent");
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived), "not connect wssClient");
     CHECK(connect(this, SIGNAL(startedEvent()), this, SLOT(onRun())), "not connect run");
@@ -119,29 +128,42 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::addWriterToChannel, this, &Messenger::onAddWriterToChannel), "not connect onAddWriterToChannel");
     CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
+    CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
 
-    qRegisterMetaType<uint64_t>("uint64_t");
-    qRegisterMetaType<Message::Counter>("Message::Counter");
-    qRegisterMetaType<GetMessagesCallback>("GetMessagesCallback");
-    qRegisterMetaType<SavePosCallback>("SavePosCallback");
-    qRegisterMetaType<GetSavedPosCallback>("GetSavedPosCallback");
-    qRegisterMetaType<GetSavedsPosCallback>("GetSavedsPosCallback");
-    qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
-    qRegisterMetaType<SignedStringsCallback>("SignedStringsCallback");
-    qRegisterMetaType<SavePubkeyCallback>("SavePubkeyCallback");
-    qRegisterMetaType<GetPubkeyAddressCallback>("GetPubkeyAddressCallback");
-    qRegisterMetaType<SendMessageCallback>("SendMessageCallback");
-    qRegisterMetaType<GetCountMessagesCallback>("GetCountMessagesCallback");
-    qRegisterMetaType<CreateChannelCallback>("CreateChannelCallback");
-    qRegisterMetaType<AddWriterToChannelCallback>("AddWriterToChannelCallback");
-    qRegisterMetaType<DelWriterToChannelCallback>("DelWriterToChannelCallback");
-    qRegisterMetaType<GetChannelListCallback>("GetChannelListCallback");
+    Q_REG2(uint64_t, "uint64_t", false);
+    Q_REG(Messenger::Callback, "Messenger::Callback");
+    Q_REG(Message::Counter, "Message::Counter");
+    Q_REG(GetMessagesCallback, "GetMessagesCallback");
+    Q_REG(SavePosCallback, "SavePosCallback");
+    Q_REG(GetSavedPosCallback, "GetSavedPosCallback");
+    Q_REG(GetSavedsPosCallback, "GetSavedsPosCallback");
+    Q_REG(Messenger::RegisterAddressCallback, "Messenger::RegisterAddressCallback");
+    Q_REG(SignedStringsCallback, "SignedStringsCallback");
+    Q_REG(SavePubkeyCallback, "SavePubkeyCallback");
+    Q_REG(GetPubkeyAddressCallback, "GetPubkeyAddressCallback");
+    Q_REG(SendMessageCallback, "SendMessageCallback");
+    Q_REG(GetCountMessagesCallback, "GetCountMessagesCallback");
+    Q_REG(CreateChannelCallback, "CreateChannelCallback");
+    Q_REG(AddWriterToChannelCallback, "AddWriterToChannelCallback");
+    Q_REG(DelWriterToChannelCallback, "DelWriterToChannelCallback");
+    Q_REG(GetChannelListCallback, "GetChannelListCallback");
+    Q_REG(DecryptUserMessagesCallback, "DecryptUserMessagesCallback");
 
-    qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
+    Q_REG2(std::vector<QString>, "std::vector<QString>", false);
+
+    if (!isDecryptDataSave) {
+        db.removeDecryptedData();
+    }
 
     moveToThread(&thread1);
 
     wssClient.start();
+}
+
+void Messenger::onCallbackCall(const std::function<void()> &callback) {
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
 void Messenger::invokeCallback(size_t requestId, const TypedException &exception) {
@@ -293,78 +315,113 @@ END_SLOT_WRAPPER
 
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel) {
     CHECK(!messages.empty(), "Empty messages");
-    const Message::Counter currConfirmedCounter = db.getMessageMaxConfirmedCounter(address);
-    CHECK(std::is_sorted(messages.begin(), messages.end()), "Messages not sorted");
-    const Message::Counter minCounterInServer = messages.front().counter;
-    const Message::Counter maxCounterInServer = messages.back().counter;
 
-    const QString channel = isChannel ? messages.front().channelName : "";
-    bool deffer = false;
-    for (const NewMessageResponse &m: messages) {
-        if (!isChannel) {
-            CHECK(!m.isChannel, "Message is channel");
-        } else {
-            CHECK(m.isChannel, "Message not channel");
-            CHECK(m.channelName == channel, "Mixed channels messagae");
-        }
-
-        const bool isInput = isChannel ? (m.collocutor == address) : m.isInput;
+    std::vector<Message> msgs;
+    msgs.reserve(messages.size());
+    std::transform(messages.begin(), messages.end(), std::back_inserter(msgs), [address, isChannel](const NewMessageResponse &m) {
+        Message message;
+        message.channel = m.channelName;
+        message.isChannel = m.isChannel;
+        message.collocutor = m.collocutor;
+        message.counter = m.counter;
+        message.dataHex = m.data;
+        message.isDecrypted = false;
+        message.fee = m.fee;
         const QString hashMessage = createHashMessage(m.data); // TODO брать хэш еще и по timestamp
-        if (isInput) {
-            LOG << "Add message " << address << " " << channel << " " << m.collocutor << " " << m.counter;
-            db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, true, true, hashMessage, m.fee, channel);
-            const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
-            const Message::Counter savedPos = db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
-            if (savedPos == -1) {
-                db.setLastReadCounterForUserContact(address, collocutorOrChannel, -1, isChannel); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
-            }
-        } else {
-            const auto idPair = db.findFirstNotConfirmedMessageWithHash(address, hashMessage, channel);
-            const auto idDb = idPair.first;
-            const Message::Counter counter = idPair.second;
-            if (idDb != -1) {
-                LOG << "Update message " << address << " " << channel << " " << m.counter;
-                db.updateMessage(idDb, m.counter, true);
-                if (counter != m.counter && !db.hasMessageWithCounter(address, counter, channel)) {
-                    if (!isChannel) {
-                        getMessagesFromAddressFromWss(address, counter, counter);
-                    } else {
-                        getMessagesFromChannelFromWss(address, channel, counter, counter);
-                    }
-                    deffer = true;
-                }
-            } else {
-                const auto idPair2 = db.findFirstMessageWithHash(address, hashMessage, channel);
-                if (idPair2.first == -1) {
-                    LOG << "Insert new output message " << address << " " << channel << " " << m.counter;
-                    db.addMessage(address, m.collocutor, m.data, m.timestamp, m.counter, isInput, false, true, hashMessage, m.fee, channel);
-                }
-            }
-        }
-    }
+        message.hash = hashMessage;
+        message.isConfirmed = true;
+        const bool isInput = isChannel ? (m.collocutor == address) : m.isInput;
+        message.isCanDecrypted = isInput;
+        message.isInput = isInput;
+        message.timestamp = m.timestamp;
+        message.username = address;
 
-    const auto deferrPair = std::make_pair(address, channel);
-    if (deffer) {
-        LOG << "Deffer message0 " << address << " " << channel;
-        deferredMessages[deferrPair].setDeferred(2s);
-    } else if (minCounterInServer > currConfirmedCounter + 1) {
-        LOG << "Deffer message " << address << " " << channel << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
-        deferredMessages[deferrPair].setDeferred(2s);
-        if (!isChannel) {
-            getMessagesFromAddressFromWss(address, currConfirmedCounter + 1, minCounterInServer);
-        } else {
-            getMessagesFromChannelFromWss(address, channel, currConfirmedCounter + 1, minCounterInServer);
-        }
-    } else {
-        if (!deferredMessages[deferrPair].isDeferred()) {
+        return message;
+    });
+
+    const auto nextProcess = [this, isChannel, address](const std::vector<Message> &messages) {
+        CHECK(!messages.empty(), "Empty messages");
+        const QString channel = isChannel ? messages.front().channel : "";
+
+        const Message::Counter currConfirmedCounter = db.getMessageMaxConfirmedCounter(address);
+        CHECK(std::is_sorted(messages.begin(), messages.end()), "Messages not sorted");
+        const Message::Counter minCounterInServer = messages.front().counter;
+        const Message::Counter maxCounterInServer = messages.back().counter;
+
+        bool deffer = false;
+        for (const Message &m: messages) {
             if (!isChannel) {
-                emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
+                CHECK(!m.isChannel, "Message is channel");
             } else {
-                emit javascriptWrapper.newMessegesChannelSig(address, channel, maxCounterInServer);
+                CHECK(m.isChannel, "Message not channel");
+                CHECK(m.channel == channel, "Mixed channels messagae");
+            }
+            CHECK(address == m.username, "Incorrect message");
+
+            if (m.isInput) {
+                LOG << "Add message " << m.username << " " << channel << " " << m.collocutor << " " << m.counter;
+                db.addMessage(m);
+                const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
+                const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
+                if (savedPos == -1) {
+                    db.setLastReadCounterForUserContact(m.username, collocutorOrChannel, -1, isChannel); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
+                }
+            } else {
+                const auto idPair = db.findFirstNotConfirmedMessageWithHash(m.username, m.hash, channel);
+                const auto idDb = idPair.first;
+                const Message::Counter counter = idPair.second;
+                if (idDb != -1) {
+                    LOG << "Update message " << m.username << " " << channel << " " << m.counter;
+                    db.updateMessage(idDb, m.counter, true);
+                    if (counter != m.counter && !db.hasMessageWithCounter(m.username, counter, channel)) {
+                        if (!isChannel) {
+                            getMessagesFromAddressFromWss(m.username, counter, counter);
+                        } else {
+                            getMessagesFromChannelFromWss(m.username, channel, counter, counter);
+                        }
+                        deffer = true;
+                    }
+                } else {
+                    const auto idPair2 = db.findFirstMessageWithHash(m.username, m.hash, channel);
+                    if (idPair2.first == -1) {
+                        LOG << "Insert new output message " << m.username << " " << channel << " " << m.counter;
+                        db.addMessage(m);
+                    }
+                }
+            }
+        }
+
+        const auto deferrPair = std::make_pair(address, channel);
+        if (deffer) {
+            LOG << "Deffer message0 " << address << " " << channel;
+            deferredMessages[deferrPair].setDeferred(2s);
+        } else if (minCounterInServer > currConfirmedCounter + 1) {
+            LOG << "Deffer message " << address << " " << channel << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
+            deferredMessages[deferrPair].setDeferred(2s);
+            if (!isChannel) {
+                getMessagesFromAddressFromWss(address, currConfirmedCounter + 1, minCounterInServer);
+            } else {
+                getMessagesFromChannelFromWss(address, channel, currConfirmedCounter + 1, minCounterInServer);
             }
         } else {
-            LOG << "Deffer message2 " << address << " " << channel << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
+            if (!deferredMessages[deferrPair].isDeferred()) {
+                if (!isChannel) {
+                    emit javascriptWrapper.newMessegesSig(address, maxCounterInServer);
+                } else {
+                    emit javascriptWrapper.newMessegesChannelSig(address, channel, maxCounterInServer);
+                }
+            } else {
+                LOG << "Deffer message2 " << address << " " << channel << " " << minCounterInServer << " " << currConfirmedCounter << " " << maxCounterInServer;
+            }
         }
+    };
+
+    if (!isDecryptDataSave) {
+        nextProcess(msgs);
+    } else {
+        emit cryptManager.tryDecryptMessages(msgs, address, CryptographicManager::DecryptMessagesCallback(nextProcess, [](const TypedException &exception) {
+            LOG << "Error " << exception.numError << " " << exception.description;
+        }, std::bind(&Messenger::callbackCall, this, _1), false));
     }
 }
 
@@ -537,7 +594,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
+void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
     if (!isChannel) {
         channel = "";
@@ -547,7 +604,13 @@ BEGIN_SLOT_WRAPPER
     if (lastCnt < 0) {
         lastCnt = -1;
     }
-    db.addMessage(thisAddress, toAddress, encryptedDataHex, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
+    QString dData;
+    if (isDecryptDataSave) {
+        dData = decryptedDataHex;
+    } else {
+        dData = "";
+    }
+    db.addMessage(thisAddress, toAddress, encryptedDataHex, dData, isDecryptDataSave, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
     const size_t idRequest = id.get();
     QString message;
     if (!isChannel) {
@@ -688,6 +751,38 @@ BEGIN_SLOT_WRAPPER
         channels = db.getChannelsWithLastReadCounters(address);
     });
     callback.emitFunc(exception, channels);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onDecryptMessages(const QString &address, const DecryptUserMessagesCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    if (!isDecryptDataSave) {
+        callback.emitCallback();
+        return;
+    }
+    const TypedException exception = apiVrapper2([&, this] {
+        const auto notDecryptedMessagesPair = db.getNotDecryptedMessage(address);
+        CHECK(notDecryptedMessagesPair.first.size() == notDecryptedMessagesPair.second.size(), "Incorrect db.getNotDecryptedMessage");
+        const std::vector<Message> &notDecryptedMessages = notDecryptedMessagesPair.second;
+        cryptManager.tryDecryptMessages(notDecryptedMessages, address, CryptographicManager::DecryptMessagesCallback([this, ids=notDecryptedMessagesPair.first, callback](const std::vector<Message> &answer) {
+            CHECK(ids.size() == answer.size(), "Incorrect db.getNotDecryptedMessage");
+            std::vector<std::tuple<MessengerDBStorage::DbId, bool, QString>> result;
+            result.reserve(ids.size());
+            for (size_t i = 0; i < ids.size(); i++) {
+                result.emplace_back(ids[i], answer[i].isDecrypted, answer[i].decryptedDataHex);
+            }
+            db.updateDecryptedMessage(result);
+
+            LOG << "Decrypted " << result.size() << " messages";
+
+            callback.emitCallback();
+        }, [callback](const TypedException &exception) {
+            callback.emitException(exception);
+        }, std::bind(&Messenger::callbackCall, this, _1), true));
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 

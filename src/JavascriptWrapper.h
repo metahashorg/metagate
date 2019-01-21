@@ -39,7 +39,7 @@ public:
 
 signals:
 
-    void callbackCall(ReturnCallback callback);
+    void callbackCall(JavascriptWrapper::ReturnCallback callback);
 
     void jsRunSig(QString jsString);
 

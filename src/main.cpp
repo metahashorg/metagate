@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
         /*messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();
-        messenger::Messenger messenger(messengerJavascript, dbMessenger);
+        messenger::Messenger messenger(messengerJavascript, dbMessenger, messengerCryptManager);
         messenger.start();
         messengerJavascript.setMessenger(messenger);*/
 

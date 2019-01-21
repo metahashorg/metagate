@@ -23,10 +23,15 @@ struct NewMessageResponse;
 class MessengerJavascript;
 class MessengerDBStorage;
 struct ChannelInfo;
+class CryptographicManager;
 
 class Messenger : public TimerClass
 {
     Q_OBJECT
+public:
+
+    using Callback = std::function<void()>;
+
 private:
 
     class DeferredMessage {
@@ -91,9 +96,19 @@ public:
 
     using GetChannelListCallback = CallbackWrapper<std::function<void(const std::vector<ChannelInfo> &channels)>>;
 
+    using DecryptUserMessagesCallback = CallbackWrapper<std::function<void()>>;
+
 public:
 
-    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, QObject *parent = nullptr);
+    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
+
+signals:
+
+    void callbackCall(const Messenger::Callback &callback);
+
+public slots:
+
+    void onCallbackCall(const Messenger::Callback &callback);
 
 public:
 
@@ -120,13 +135,13 @@ public:
 
 signals:
 
-    void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
+    void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
 
     void savePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
     void getPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback);
 
-    void sendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
+    void sendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
     void signedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
@@ -155,15 +170,18 @@ signals:
 
     void getChannelList(const QString &address, const GetChannelListCallback &callback);
 
+
+    void decryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
+
 private slots:
 
-    void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback);
+    void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
 
     void onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
     void onGetPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback);
 
-    void onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
+    void onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
     void onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback);
 
@@ -191,6 +209,9 @@ private slots:
     void onDelWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback);
 
     void onGetChannelList(const QString &address, const GetChannelListCallback &callback);
+
+
+    void onDecryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
 
 private slots:
 
@@ -224,9 +245,13 @@ private:
 
 private:
 
+    bool isDecryptDataSave = false;
+
     MessengerDBStorage &db;
 
     MessengerJavascript &javascriptWrapper;
+
+    CryptographicManager &cryptManager;
 
     WebSocketClient wssClient;
 

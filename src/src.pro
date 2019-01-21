@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = MetaGate
 
 DEFINES += VERSION_STRING=\\\"1.18.0\\\"
-DEFINES += VERSION_SETTINGS=\\\"5\\\"
+DEFINES += VERSION_SETTINGS=\\\"6\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -72,7 +72,8 @@ SOURCES += main.cpp mainwindow.cpp \
     machine_uid.cpp \
     Module.cpp \
     Messenger/CryptographicManager.cpp \
-    proxy/WebSocketSender.cpp
+    proxy/WebSocketSender.cpp \
+    QRegister.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -152,7 +153,8 @@ HEADERS += mainwindow.h \
     Module.h \
     Messenger/CryptographicManager.h \
     CallbackWrapper.h \
-    proxy/WebSocketSender.h
+    proxy/WebSocketSender.h \
+    QRegister.h
 
 FORMS += mainwindow.ui
 
@@ -164,6 +166,7 @@ CONFIG += c++14
 DEFINES += CRYPTOPP_IMPORTS
 DEFINES += QUAZIP_STATIC
 
+unix: QMAKE_CXXFLAGS += -Wno-unused-parameter -Wall -Wextra
 #QMAKE_CXXFLAGS += -fsanitize=address
 #QMAKE_LFLAGS += -fsanitize=address
 QMAKE_LFLAGS += -rdynamic

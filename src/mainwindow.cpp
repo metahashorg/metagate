@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "mhurlschemehandler.h"
 
@@ -90,7 +91,15 @@ MainWindow::MainWindow(
     if (isExistFile(routesFile)) {
         const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
         LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
-        pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        try {
+            pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        } catch (const Exception &e) {
+            LOG << "Error " << e;
+        } catch (const TypedException &e) {
+            LOG << "Error " << e.description;
+        } catch (...) {
+            LOG << "Error mappings";
+        }
     } else {
         LOG << "Warning: routes file not found";
     }
@@ -108,7 +117,7 @@ MainWindow::MainWindow(
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
-    qRegisterMetaType<WindowEvent>("WindowEvent");
+    Q_REG(WindowEvent, "WindowEvent");
 
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");

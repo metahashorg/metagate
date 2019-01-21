@@ -6,6 +6,7 @@
 #include "SlotWrapper.h"
 #include "utils.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "Messenger.h"
 
@@ -35,7 +36,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, const Javascri
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
 
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(MessengerJavascript::Callback, "MessengerJavascript::Callback");
 
     defaultWalletPath = jManager.walletDefaultPath;
     defaultUserName = jManager.defaultUsername;
@@ -65,7 +66,7 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
         messageJson.insert("collocutor", message.collocutor);
         messageJson.insert("isInput", message.isInput);
         messageJson.insert("timestamp", QString::fromStdString(std::to_string(message.timestamp)));
-        messageJson.insert("data", message.decryptedData);
+        messageJson.insert("data", message.decryptedDataHex);
         messageJson.insert("isDecrypter", message.isDecrypted);
         messageJson.insert("counter", QString::fromStdString(std::to_string(message.counter)));
         messageJson.insert("fee", QString::fromStdString(std::to_string(message.fee)));
@@ -234,23 +235,31 @@ BEGIN_SLOT_WRAPPER
     LOG << "registerAddress " << address;
 
     const TypedException exception = apiVrapper2([&, this](){
+        const auto processFunc = [this, address, isForcibly, makeFunc, errorFunc](bool isNew) {
+            if (isNew || isForcibly) {
+                const std::vector<QString> messagesForSign = Messenger::stringsForSign();
+                emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
+                    emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([address, makeFunc](){
+                        LOG << "Address registered " << address;
+                        makeFunc(TypedException(), QString("Ok"));
+                    }, errorFunc, signalFunc));
+                }, errorFunc, signalFunc));
+            }
+        };
+
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field incorrect");
-        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc](const QString &pubkeyRsa){
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
             const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
-            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
-                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback([this, address, isForcibly, makeFunc, errorFunc](bool isNew) mutable {
-                    if (isNew || isForcibly) {
-                        const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-                        emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
-                            emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([this, address, makeFunc](){
-                                LOG << "Address registered " << address;
-                                makeFunc(TypedException(), QString("Ok"));
-                            }, errorFunc, signalFunc));
-                        }, errorFunc, signalFunc));
+            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
+                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, [isForcibly, processFunc, errorFunc](const TypedException &exception) {
+                    if (isForcibly) {
+                        processFunc(true);
+                    } else {
+                        errorFunc(exception);
                     }
-                }, errorFunc, signalFunc));
+                }, signalFunc));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
     });
@@ -310,6 +319,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "sendMessage " << " " << address << " " << collocutor << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
+        CHECK(!dataHex.isEmpty(), "Empty message");
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "fee field incorrect");
@@ -319,8 +329,8 @@ BEGIN_SLOT_WRAPPER
             emit cryptoManager.encryptDataRsa(dataHex, pubkey, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex](const QString &encryptedDataToWss) {
                 const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, fee, timestamp);
                 emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &pubkey, const QString &sign) {
-                    emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, encryptedDataToWss, pubkey, sign](const QString &encryptedDataToBd) {
-                        emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([this, makeFunc, address, collocutor]() {
+                    emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss, pubkey, sign](const QString &encryptedDataToBd) {
+                        emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, dataHex, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([this, makeFunc, address, collocutor]() {
                             LOG << "Message sended " << address << " " << collocutor;
                             makeFunc(TypedException(), address, collocutor);
                         }, errorFunc, signalFunc));
@@ -607,6 +617,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "sendMessageToChannel " << " " << address << " " << titleSha << " " << timestampStr << " " << feeStr;
 
     const TypedException exception = apiVrapper2([&, this](){
+        CHECK(!dataHex.isEmpty(), "Empty message");
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field invalid");
@@ -615,7 +626,7 @@ BEGIN_SLOT_WRAPPER
 
         const QString messageToSign = Messenger::makeTextForSendToChannelRequest(titleSha, dataHex, fee, timestamp);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, dataHex, titleSha, fee, timestamp, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
-            emit messenger->sendMessage(address, address, true, titleSha, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
+            emit messenger->sendMessage(address, address, true, titleSha, dataHex, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
                 LOG << "Message sended " << address << " " << titleSha;
                 makeFunc(TypedException(), address, titleSha);
             }, errorFunc, signalFunc));
@@ -878,8 +889,10 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Unlock wallet " << address << " Wallet path " << walletPath;
     const TypedException exception = apiVrapper2([&, this](){
-        emit cryptoManager.unlockWallet(walletPath, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, JS_NAME_RESULT]() {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
+        emit cryptoManager.unlockWallet(walletPath, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, JS_NAME_RESULT, errorFunc]() {
+            emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([this, address, JS_NAME_RESULT]() {
+                makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
+            }, errorFunc, signalFunc));
          }, errorFunc, signalFunc));
     });
 

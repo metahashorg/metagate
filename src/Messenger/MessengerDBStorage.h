@@ -18,9 +18,11 @@ public:
     virtual int currentVersion() const final;
 
     void addMessage(const QString &user, const QString &duser,
-                    const QString &text, uint64_t timestamp, Message::Counter counter,
+                    const QString &text, const QString &decryptedText, bool isDecrypted, uint64_t timestamp, Message::Counter counter,
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
                     const QString &hash, qint64 fee, const QString &channelSha = QString());
+
+    void addMessage(const Message &message);
 
     void addMessages(const std::vector<Message> &messages);
 
@@ -69,11 +71,17 @@ public:
     ChannelInfo getChannelInfoForUserShaName(const QString &user, const QString &shaName);
     void setChannelIsWriterForUserShaName(const QString &user, const QString &shaName, bool isWriter);
 
+    void removeDecryptedData();
+
+    std::pair<std::vector<DbId>, std::vector<Message>> getNotDecryptedMessage(const QString &user);
+
+    void updateDecryptedMessage(const std::vector<std::tuple<DbId, bool, QString>> &messages);
+
 protected:
     virtual void createDatabase() final;
 
 private:
-    void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, bool isChannel, bool reverse = false);
+    void createMessagesList(QSqlQuery &query, std::vector<Message> &messages, std::vector<DbId> &ids, bool isIDs, bool isChannel, bool reverse);
     void addLastReadRecord(DbId userid, DbId contactid, DBStorage::DbId channelid);
 };
 

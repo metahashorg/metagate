@@ -47,6 +47,8 @@ static const QString createMsgMessagesTable = "CREATE TABLE messages ( "
                                            "morder INT8, "
                                            "dt INT8, "
                                            "text TEXT, "
+                                           "decryptedText TEXT, "
+                                           "isDecrypted BOOLEAN, "
                                            "isIncoming BOOLEAN, "
                                            "canDecrypted BOOLEAN, "
                                            "isConfirmed BOOLEAN, "
@@ -59,7 +61,7 @@ static const QString createMsgMessagesTable = "CREATE TABLE messages ( "
                                            ")";
 
 static const QString createMsgMessageUniqueIndex = "CREATE UNIQUE INDEX messagesUniqueIdx ON messages ( "
-                                                    "userid, contactid, morder, dt, text, isIncoming, canDecrypted, "
+                                                    "userid, contactid, morder, dt, text, decryptedText, isDecrypted, isIncoming, canDecrypted, "
                                                     "isConfirmed, hash, fee)";
 
 static const QString createMsgMessageCounterIndex = "CREATE INDEX messagesCounterIdx ON messages(morder)";
@@ -88,8 +90,8 @@ static const QString selectMsgContactsForName = "SELECT id FROM contacts WHERE u
 static const QString insertMsgContacts = "INSERT INTO contacts (username) VALUES (:username)";
 
 static const QString insertMsgMessages = "INSERT OR IGNORE INTO messages "
-                                            "(userid, contactid, morder, dt, text, isIncoming, canDecrypted, isConfirmed, hash, fee, channelid) VALUES "
-                                            "(:userid, :contactid, :order, :dt, :text, :isIncoming, :canDecrypted, :isConfirmed, :hash, :fee, :channelid)";
+                                            "(userid, contactid, morder, dt, text, decryptedText, isDecrypted, isIncoming, canDecrypted, isConfirmed, hash, fee, channelid) VALUES "
+                                            "(:userid, :contactid, :order, :dt, :text, :decryptedText, :isDecrypted, :isIncoming, :canDecrypted, :isConfirmed, :hash, :fee, :channelid)";
 
 static const QString selectMsgMaxCounter = "SELECT IFNULL(MAX(m.morder), -1) AS max "
                                            "FROM messages m "
@@ -102,7 +104,7 @@ static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder)
                                                     "WHERE m.isConfirmed = 1 "
                                                     "AND u.username = :user";
 
-static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS dest, m.isIncoming, m.text, "
+static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
                                                 "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                 "FROM messages m "
                                                 "INNER JOIN users u ON u.id = m.userid "
@@ -111,7 +113,7 @@ static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.usernam
                                                 "AND u.username = :user "
                                                 "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, "
+static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
                                                        "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                        "FROM messages m "
                                                        "INNER JOIN users u ON u.id = m.userid "
@@ -120,7 +122,7 @@ static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS use
                                                        "AND u.username = :user AND c.username = :duser "
                                                        "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndChannel = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, "
+static const QString selectMsgMessagesForUserAndChannel = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
                                                              "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                              "FROM messages m "
                                                              "INNER JOIN users u ON u.id = m.userid "
@@ -129,7 +131,7 @@ static const QString selectMsgMessagesForUserAndChannel = "SELECT u.username AS 
                                                              "AND u.username = :user AND c.shaName = :shaName "
                                                              "ORDER BY m.morder";
 
-static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, "
+static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
                                                           "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                           "FROM messages m "
                                                           "INNER JOIN users u ON u.id = m.userid "
@@ -139,7 +141,7 @@ static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS 
                                                           "ORDER BY m.morder DESC "
                                                           "LIMIT :num";
 
-static const QString selectMsgMessagesForUserAndChannelNum = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, "
+static const QString selectMsgMessagesForUserAndChannelNum = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
                                                           "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
                                                           "FROM messages m "
                                                           "INNER JOIN users u ON u.id = m.userid "
@@ -300,6 +302,33 @@ static const QString updateChannelIsWriterForUserShaName = "UPDATE channels "
 //static const QString selectWhereIsChannel = "AND m.channelid IS NOT NULL";
 static const QString selectWhereIsNotChannel = "AND m.channelid IS NULL";
 static const QString selectJoinChannel = "INNER JOIN channels c ON c.id = m.channelid AND c.shaName = :channelSha";
+
+static const QString removeDecryptedDataQuery = "UPDATE messages "
+                                        "SET isDecrypted = 0, decryptedText = \'\' "
+                                        "WHERE isDecrypted = 1";
+
+static const QString selectNotDecryptedMessagesContactsQuery = "SELECT m.id, u.username AS user, c.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
+                                                  "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                        "FROM messages m "
+                                                        "INNER JOIN users u ON u.id = m.userid "
+                                                        "INNER JOIN contacts c ON c.id = m.contactid "
+                                                        "WHERE m.isDecrypted = 0 "
+                                                        "AND u.username = :user "
+                                                        "ORDER BY m.morder ASC";
+
+static const QString selectNotDecryptedMessagesChannelsQuery = "SELECT m.id, u.username AS user, c.shaName AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
+                                                  "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                        "FROM messages m "
+                                                        "INNER JOIN users u ON u.id = m.userid "
+                                                        "INNER JOIN channels c ON c.id = m.channelid "
+                                                        "WHERE m.isDecrypted = 0 "
+                                                        "AND u.username = :user "
+                                                        "ORDER BY m.morder ASC";
+
+static const QString updateDecryptedMessageQuery = "UPDATE messages "
+                                        "SET isDecrypted = :isDecrypted, decryptedText = :decryptedText "
+                                        "WHERE id = :id";
+
 
 }
 

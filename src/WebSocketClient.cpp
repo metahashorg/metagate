@@ -6,6 +6,7 @@
 #include "SlotWrapper.h"
 #include "Paths.h"
 #include "duration.h"
+#include "QRegister.h"
 
 #include <QTimer>
 
@@ -14,8 +15,8 @@
 WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     : TimerClass(1min, parent)
 {
-    qRegisterMetaType<QAbstractSocket::SocketState>();
-    qRegisterMetaType<std::vector<QString>>();
+    Q_REG2(QAbstractSocket::SocketState, "QAbstractSocket::SocketState", false);
+    Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
     m_url = url;
     if (!QSslSocket::supportsSsl()) {
@@ -38,7 +39,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
     CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
         BEGIN_SLOT_WRAPPER
-        LOG << "Wss client disconnected";
+        LOG << "Wss client disconnected. Url " << m_url.toString();
         m_webSocket.close();
         if (!isStopped) {
             QTimer::singleShot(milliseconds(10s).count(), this, SLOT(onStarted()));

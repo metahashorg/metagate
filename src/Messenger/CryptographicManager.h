@@ -45,6 +45,8 @@ signals:
 
     void decryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
 
+    void tryDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
+
     void signMessage(const QString &address, const QString &message, const SignMessageCallback &callback);
 
     void signMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback);
@@ -62,6 +64,8 @@ signals:
 private slots:
 
     void onDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
+
+    void onTryDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
 
     void onSignMessage(const QString &address, const QString &message, const SignMessageCallback &callback);
 
@@ -86,6 +90,8 @@ private:
     Wallet& getWallet(const std::string &address) const;
 
     WalletRsa& getWalletRsa(const std::string &address) const;
+
+    WalletRsa* getWalletRsaWithoutCheck(const std::string &address) const;
 
     void unlockWalletImpl(const QString &folder, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_);
 

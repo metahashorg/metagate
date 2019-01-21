@@ -6,13 +6,14 @@ using namespace std::placeholders;
 #include "check.h"
 #include "Log.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 #include <QThread>
 
 QT_USE_NAMESPACE
 
 HttpSimpleClient::HttpSimpleClient() {
-    qRegisterMetaType<ReturnCallback>("ReturnCallback");
+    Q_REG(HttpSimpleClient::ReturnCallback, "HttpSimpleClient::ReturnCallback");
 }
 
 void HttpSimpleClient::moveToThread(QThread *thread)

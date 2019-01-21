@@ -37,14 +37,14 @@ signals:
 
     void jsRunSig(QString jsString);
 
-    void callbackCall(const Callback &callback);
+    void callbackCall(const MessengerJavascript::Callback &callback);
 
 public slots:
     void onLogined(bool isInit, const QString login);
 
 public slots:
 
-    void onCallbackCall(const Callback &callback);
+    void onCallbackCall(const MessengerJavascript::Callback &callback);
 
 signals:
 

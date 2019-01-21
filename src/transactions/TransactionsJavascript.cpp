@@ -9,6 +9,7 @@
 
 #include "makeJsFunc.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 #include "Transactions.h"
 
@@ -23,11 +24,10 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
     CHECK(connect(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged), "not connect onTransactionStatusChanged");
 
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(TransactionsJavascript::Callback, "TransactionsJavascript::Callback");
 
-    qRegisterMetaType<BalanceInfo>("BalanceInfo");
-    qRegisterMetaType<BalanceInfo>("BalanceInfo");
-    qRegisterMetaType<Transaction>("Transaction");
+    Q_REG(BalanceInfo, "BalanceInfo");
+    Q_REG(Transaction, "Transaction");
 }
 
 void TransactionsJavascript::onCallbackCall(const Callback &callback) {
