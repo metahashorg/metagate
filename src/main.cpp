@@ -66,6 +66,14 @@ QString getUrlToWss() {
     return settings.value("web_socket/meta_online").toString();
 }
 
+bool getMGProxyAutoStart()
+{
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("mgproxy/autostart"), "mgproxy/autostart not found setting");
+    return settings.value("mgproxy/autostart").toBool();
+}
+
+
 #include "Wallet.h"
 
 int main(int argc, char *argv[]) {
@@ -152,7 +160,8 @@ int main(int argc, char *argv[]) {
         QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
             qDebug() << "PROXY res " << port;
         });
-        QMetaObject::invokeMethod(&proxyManager, "startAutoProxy");
+        if (getMGProxyAutoStart())
+            QMetaObject::invokeMethod(&proxyManager, "startAutoProxy");
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 

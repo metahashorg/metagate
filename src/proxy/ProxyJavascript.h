@@ -38,6 +38,8 @@ public slots:
     Q_INVOKABLE void addPortMapping(const QString &udn);
     Q_INVOKABLE void deletePortMapping();
 
+    Q_INVOKABLE void proxyAutoStart();
+    Q_INVOKABLE void proxyAutoStop();
     Q_INVOKABLE void proxyAutoStartResend();
 
 signals:

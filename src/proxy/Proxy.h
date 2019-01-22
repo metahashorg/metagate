@@ -24,7 +24,8 @@ class Proxy : public QObject
         AutoExecuted,
         AutoProxyStarted,
         AutoUPNPDone,
-        AutoComplete
+        AutoComplete,
+        AutoError
     };
 
 public:
@@ -127,6 +128,11 @@ signals:
 
     void deletePortMapping(const PortMappingCallback &callback);
 
+    void autoStart();
+
+    void autoStop();
+
+
     void autoStartResend();
 
 
@@ -150,6 +156,10 @@ public slots:
 
     void onDeletePortMapping(const PortMappingCallback &callback);
 
+    void onAutoStart();
+
+    void onAutoStop();
+
     void onAutoStartResend();
 
 private slots:
@@ -163,6 +173,7 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
     int findRouter(const QString &udn) const;
+    void delPortMapping();
 
     QThread thread;
 
@@ -180,6 +191,7 @@ private:
     bool autoTestRes;
     bool autoActive;
     int m_peers;
+    bool portMapped;
 };
 
 }
