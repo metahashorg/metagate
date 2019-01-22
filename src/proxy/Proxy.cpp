@@ -1,6 +1,7 @@
 #include "Proxy.h"
 
 #include <QTimer>
+#include <QSettings>
 
 #include "ProxyJavascript.h"
 #include "ProxyServer.h"
@@ -9,7 +10,7 @@
 
 #include "check.h"
 #include "SlotWrapper.h"
-#include "QRegister.h"
+#include "Paths.h"
 
 namespace proxy
 {
@@ -17,6 +18,7 @@ namespace proxy
 Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     : QObject(parent)
     , thread(parent)
+    , m_isAutoStart(false)
     , javascriptWrapper(javascriptWrapper)
     , state(No)
     , proxyServer(new ProxyServer(this))
@@ -24,13 +26,18 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     , mappedRouterIdx(-1)
     , autoActive(false)
     , m_peers(0)
+    , portMapped(false)
 {
-    Q_REG(std::vector<Proxy::Router>, "std::vector<Proxy::Router>");
-    Q_REG(Proxy::ProxyResult, "Proxy::ProxyResult");
+    qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
+    qRegisterMetaType<Proxy::ProxyResult>("Proxy::ProxyResult");
 
-    Q_REG(ProxyCallback, "ProxyCallback");
-    Q_REG(DiscoverCallback, "DiscoverCallback");
-    Q_REG(PortMappingCallback, "PortMappingCallback");
+    qRegisterMetaType<ProxyCallback>("ProxyCallback");
+    qRegisterMetaType<DiscoverCallback>("DiscoverCallback");
+    qRegisterMetaType<PortMappingCallback>("PortMappingCallback");
+
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("mgproxy/port"), "mgproxy/port not found setting");
+    proxyServer->setPort(settings.value("mgproxy/port").toUInt());
 
     CHECK(connect(this, &Proxy::proxyStart, this, &Proxy::onProxyStart), "not connect onProxyStart");
     CHECK(connect(this, &Proxy::proxyStop, this, &Proxy::onProxyStop), "not connect onProxyStop");
@@ -41,6 +48,8 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Proxy::discoverRouters, this, &Proxy::onDiscoverRouters), "not connect onDiscoverRouters");
     CHECK(connect(this, &Proxy::addPortMapping, this, &Proxy::onAddPortMapping), "not connect onAddPortMapping");
     CHECK(connect(this, &Proxy::deletePortMapping, this, &Proxy::onDeletePortMapping), "not connect onDeletePortMapping");
+    CHECK(connect(this, &Proxy::autoStart, this, &Proxy::onAutoStart), "not connect onAutoStart");
+    CHECK(connect(this, &Proxy::autoStop, this, &Proxy::onAutoStop), "not connect onAutoStop");
     CHECK(connect(this, &Proxy::autoStartResend, this, &Proxy::onAutoStartResend), "not connect onAutoStartResend");
 
     CHECK(connect(upnp, &UPnPDevices::discovered, this, &Proxy::onRouterDiscovered), "not connect onRouterDiscovered");
@@ -51,11 +60,16 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     thread.start();
     moveToThread(&thread);
 
+    CHECK(settings.contains("mgproxy/autostart"), "mgproxy/autostart not found setting");
+    m_isAutoStart = settings.value("mgproxy/autostart").toBool();
+    if (m_isAutoStart)
+        QMetaObject::invokeMethod(this, "startAutoProxy");
     upnp->discover();
 }
 
 Proxy::~Proxy()
 {
+    delPortMapping();
     thread.quit();
     if (!thread.wait(3000)) {
         thread.terminate();
@@ -63,9 +77,15 @@ Proxy::~Proxy()
     }
 }
 
+bool Proxy::isAutoStart() const
+{
+    return m_isAutoStart;
+}
+
 void Proxy::startAutoProxy()
 {
-BEGIN_SLOT_WRAPPER
+    if (state != No && state != AutoError)
+        return;
     // Start proxy
     LOG << "Proxy auto start: executed";
     autoActive = true;
@@ -90,12 +110,10 @@ BEGIN_SLOT_WRAPPER
     state = AutoProxyStarted;
     // Wait 10 sec to find routers
     QTimer::singleShot(10 * 1000, this, &Proxy::onAutoDiscoveryTimeout);
-END_SLOT_WRAPPER
 }
 
 void Proxy::proxyTested(bool res, const QString &error)
 {
-BEGIN_SLOT_WRAPPER
     //qDebug() << res;
     // LOG ??
     emit javascriptWrapper.sendAutoStartTestResponseSig(ProxyResult(res, error), TypedException());
@@ -105,7 +123,6 @@ BEGIN_SLOT_WRAPPER
     autoActive = false;
     state = AutoComplete;
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
-END_SLOT_WRAPPER
 }
 
 void Proxy::onProxyStart(const ProxyCallback &callback)
@@ -148,6 +165,7 @@ BEGIN_SLOT_WRAPPER
     ProxyStatus status(proxyStarted);
     emit javascriptWrapper.sendServerStatusResponseSig(status, TypedException());
 END_SLOT_WRAPPER
+
 }
 
 void Proxy::onGetPort()
@@ -245,9 +263,25 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Proxy::onAutoStartResend()
+void Proxy::onAutoStart()
+{
+
+}
+
+void Proxy::onAutoStop()
 {
 BEGIN_SLOT_WRAPPER
+    if (state != AutoComplete)
+        return;
+//    const TypedException exception = apiVrapper2([&, this] {
+    proxyServer->stop();
+    delPortMapping();
+
+END_SLOT_WRAPPER
+}
+
+void Proxy::onAutoStartResend()
+{
     emit  javascriptWrapper.sendAutoStartIsActiveResponseSig(autoActive, TypedException());
     switch (state) {
     case AutoExecuted:
@@ -272,12 +306,10 @@ BEGIN_SLOT_WRAPPER
         break;
     }
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
-END_SLOT_WRAPPER
 }
 
 void Proxy::onRouterDiscovered(UPnPRouter *router)
 {
-BEGIN_SLOT_WRAPPER
     LOG << "Router discovered " << router->friendlyName();
     Router r;
     r.router = router;
@@ -292,12 +324,10 @@ BEGIN_SLOT_WRAPPER
     routers.push_back(r);
 
     emit javascriptWrapper.sendGetRoutersResponseSig(routers, TypedException());
-END_SLOT_WRAPPER
 }
 
 void Proxy::onAutoDiscoveryTimeout()
 {
-BEGIN_SLOT_WRAPPER
     if (routers.empty()) {
         LOG << "Proxy auto start: no routers found";
         emit startAutoUPnPResult(TypedException(PROXY_UPNP_ROUTER_NOT_FOUND, "Routers not found"));
@@ -312,6 +342,7 @@ BEGIN_SLOT_WRAPPER
     // Add port mapping to 1st router
     routers.at(0).router->addPortMapping(proxyServer->port(), proxyServer->port(), proxy::TCP, [this](bool r, const QString &error) {
         qDebug() << "Added port " << r;
+        portMapped = r;
         if (r) {
             LOG << "Proxy auto start: add port mapping ok";
             emit startAutoUPnPResult(TypedException(NOT_ERROR, "Port mapping ok"));
@@ -327,15 +358,12 @@ BEGIN_SLOT_WRAPPER
         LOG << "Proxy auto start: complete";
         emit startAutoComplete(proxyServer->port());
     });
-END_SLOT_WRAPPER
 }
 
 void Proxy::onConnedtedPeersChanged(int peers)
 {
-BEGIN_SLOT_WRAPPER
     m_peers = peers;
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
-END_SLOT_WRAPPER
 }
 
 int Proxy::findRouter(const QString &udn) const
@@ -345,6 +373,24 @@ int Proxy::findRouter(const QString &udn) const
             return i;
     }
     return -1;
+}
+
+void Proxy::delPortMapping()
+{
+    if (!portMapped)
+        return;
+    quint16 port = proxyServer->port();
+    if (routers.empty())
+        return;
+    routers.at(0).router->deletePortMapping(port, TCP, [this, port](bool r, const QString &error) {
+//        qDebug() << "Deleted port";
+//        QString udn = routers[mappedRouterIdx].udn;
+//        routers[mappedRouterIdx].mapped = false;
+//        if (r)
+//            mappedRouterIdx = -1;
+//        PortMappingResult res(r, port, udn, error);
+    });
+    portMapped = false;
 }
 
 template<typename Func>

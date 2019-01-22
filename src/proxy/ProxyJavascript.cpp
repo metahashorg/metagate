@@ -265,6 +265,24 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         //makeFunc(exception, false);
     }
+    END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::proxyAutoStart()
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(m_proxyManager, "proxyManager not set");
+    LOG << "Proxy auto start";
+    emit m_proxyManager->autoStart();
+END_SLOT_WRAPPER
+}
+
+void ProxyJavascript::proxyAutoStop()
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(m_proxyManager, "proxyManager not set");
+    LOG << "Proxy auto stop";
+    emit m_proxyManager->autoStop();
 END_SLOT_WRAPPER
 }
 

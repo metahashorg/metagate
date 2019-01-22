@@ -24,7 +24,8 @@ class Proxy : public QObject
         AutoExecuted,
         AutoProxyStarted,
         AutoUPNPDone,
-        AutoComplete
+        AutoComplete,
+        AutoError
     };
 
 public:
@@ -94,6 +95,8 @@ public:
     explicit Proxy(ProxyJavascript &javascriptWrapper, QObject *parent = nullptr);
     ~Proxy();
 
+    bool isAutoStart() const;
+
 public slots:
     void startAutoProxy();
 
@@ -107,6 +110,8 @@ signals:
     void startAutoUPnPResult(const TypedException &r);
 
     void startAutoComplete(quint16 port);
+
+    void stopProxyExecuted();
 
 signals:
     void proxyStart(const ProxyCallback &callback);
@@ -126,6 +131,11 @@ signals:
     void addPortMapping(const QString &udn, const PortMappingCallback &callback);
 
     void deletePortMapping(const PortMappingCallback &callback);
+
+    void autoStart();
+
+    void autoStop();
+
 
     void autoStartResend();
 
@@ -150,6 +160,10 @@ public slots:
 
     void onDeletePortMapping(const PortMappingCallback &callback);
 
+    void onAutoStart();
+
+    void onAutoStop();
+
     void onAutoStartResend();
 
 private slots:
@@ -163,8 +177,10 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
     int findRouter(const QString &udn) const;
+    void delPortMapping();
 
     QThread thread;
+    bool m_isAutoStart;
 
     ProxyJavascript &javascriptWrapper;
 
@@ -180,6 +196,7 @@ private:
     bool autoTestRes;
     bool autoActive;
     int m_peers;
+    bool portMapped;
 };
 
 }

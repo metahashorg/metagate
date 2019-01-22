@@ -30,6 +30,22 @@ static QString makeProxyModuleFound() {
     return json.toJson(QJsonDocument::Compact);
 };
 
+static QString makeProxyBeginStart() {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyBeginStart");
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
+static QString makeStopProxy() {
+    QJsonObject allJson;
+    allJson.insert("app", "ProxyStopped");
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+};
+
 static QString makeProxyStarted(const TypedException &exception) {
     QJsonObject allJson;
     allJson.insert("app", "ProxyStarted");
@@ -100,10 +116,11 @@ WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, Q
 
     CHECK(connect(this, &WebSocketSender::tryStartTest, this, &WebSocketSender::onTryStartTest), "not connect onStartTest");
 
-    CHECK(connect(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onModuleFound), "not connect onModuleFound");
+    CHECK(connect(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onBeginStart), "not connect onModuleFound");
     CHECK(connect(&proxyManager, &Proxy::startAutoProxyResult, this, &WebSocketSender::onStartAutoProxyResult), "not connect onStartAutoProxyResult");
     CHECK(connect(&proxyManager, &Proxy::startAutoUPnPResult, this, &WebSocketSender::onStartAutoUPnPResult), "not connect onStartAutoUPnPResult");
     CHECK(connect(&proxyManager, &Proxy::startAutoComplete, this, &WebSocketSender::onStartAutoComplete), "not connect onStartAutoComplete");
+    CHECK(connect(&proxyManager, &Proxy::stopProxyExecuted, this, &WebSocketSender::onStopProxy), "not connect onStopProxy");
     CHECK(connect(this, &WebSocketSender::testResult, this, &WebSocketSender::onTestResult), "not connect onTestResult");
     CHECK(connect(this, &WebSocketSender::proxyTested, &proxyManager, &Proxy::proxyTested), "not connect proxyTested");
 
@@ -112,6 +129,10 @@ WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, Q
     const QString getMyIpMessage = makeGetMyIpMessage();
     emit client.addHelloString(getMyIpMessage, PROXY_TAG);
     emit client.sendMessage(getMyIpMessage);
+
+    const QString getProxyModuleFound = makeProxyModuleFound();
+    emit client.addHelloString(getProxyModuleFound, PROXY_TAG);
+    emit client.sendMessage(getProxyModuleFound);
 }
 
 void WebSocketSender::onTryStartTest() {
@@ -124,9 +145,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WebSocketSender::onModuleFound() {
+void WebSocketSender::onBeginStart() {
 BEGIN_SLOT_WRAPPER
-    const QString message = makeProxyModuleFound();
+    const QString message = makeProxyBeginStart();
     emit client.addHelloString(message, PROXY_TAG);
     emit client.sendMessage(message);
 END_SLOT_WRAPPER
@@ -157,6 +178,14 @@ BEGIN_SLOT_WRAPPER
     startComplete = true;
 
     emit tryStartTest();
+END_SLOT_WRAPPER
+}
+
+void WebSocketSender::onStopProxy() {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeStopProxy();
+    emit client.addHelloString(message, PROXY_TAG);
+    emit client.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
