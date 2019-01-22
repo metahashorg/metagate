@@ -32,7 +32,7 @@ private slots:
 
     void onTryStartTest();
 
-    void onModuleFound();
+    void onBeginStart();
 
     void onStartAutoProxyResult(const TypedException &r);
 
@@ -41,6 +41,8 @@ private slots:
     void onStartAutoComplete(quint16 port);
 
     void onTestResult(int code, QString result);
+
+    void onStopProxy();
 
 private:
 

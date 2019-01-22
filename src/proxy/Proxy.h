@@ -109,6 +109,8 @@ signals:
 
     void startAutoComplete(quint16 port);
 
+    void stopProxyExecuted();
+
 signals:
     void proxyStart(const ProxyCallback &callback);
 

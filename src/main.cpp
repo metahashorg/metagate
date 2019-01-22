@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
         webSocketClient.start();
 
         proxy::ProxyJavascript proxyJavascript;
-        /*addModule(proxy::Proxy::moduleName());
+        addModule(proxy::Proxy::moduleName());
         proxy::Proxy proxyManager(proxyJavascript);
         proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
             qDebug() << "PROXY res " << port;
         });
         if (getMGProxyAutoStart())
-            QMetaObject::invokeMethod(&proxyManager, "startAutoProxy");*/
+            QMetaObject::invokeMethod(&proxyManager, "startAutoProxy");
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
