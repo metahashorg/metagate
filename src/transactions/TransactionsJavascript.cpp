@@ -283,7 +283,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxsJs";
 
-    LOG << "get txs address " << address << " " << currency << " " << fromTx;
+    LOG << "get txs address " << address << " " << currency << " " << fromTx << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
@@ -308,7 +308,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxsAllJs";
 
-    LOG << "get txs address " << currency << " " << fromTx;
+    LOG << "get txs address " << currency << " " << fromTx << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
@@ -333,7 +333,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxs2Js";
 
-    LOG << "get txs2 address " << address << " " << currency << " " << from;
+    LOG << "get txs2 address " << address << " " << currency << " " << from << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
@@ -358,7 +358,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxsAll2Js";
 
-    LOG << "get txs address " << currency << " " << from;
+    LOG << "get txs address " << currency << " " << from << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
@@ -384,7 +384,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetForgingTxsJs";
 
-    LOG << "get forging txs address " << address << " " << currency << " " << from;
+    LOG << "get forging txs address " << address << " " << currency << " " << from << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
@@ -512,7 +512,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetStatusDelegationResultJs";
 
-    LOG << "getStatusDelegation " << address << " " << currency << " " << to;
+    LOG << "getStatusDelegation " << address << " " << currency << " " << from << " " << to;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QString &from, const QString &to, const QString &status, const QJsonDocument &txDelegate, const QJsonDocument &txUndelegate) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, from, to, status, txDelegate, txUndelegate);
