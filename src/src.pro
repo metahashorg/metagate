@@ -83,7 +83,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitUploader.cpp \
     Module.cpp \
     proxy/WebSocketSender.cpp \
-    QRegister.cpp
+    QRegister.cpp \
+    Initializer/Inits/InitProxy.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -174,7 +175,8 @@ HEADERS += mainwindow.h \
     Messenger/CryptographicManager.h \
     CallbackWrapper.h \
     proxy/WebSocketSender.h \
-    QRegister.h
+    QRegister.h \
+    Initializer/Inits/InitProxy.h
 
 FORMS += mainwindow.ui
 

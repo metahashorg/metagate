@@ -75,6 +75,8 @@ public:
 
     using SetTransactionsJavascriptCallback = CallbackWrapper<std::function<void()>>;
 
+    using SetProxyJavascriptCallback = CallbackWrapper<std::function<void()>>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
@@ -95,6 +97,8 @@ signals:
 
     void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
 
+    void setProxyJavascript(proxy::ProxyJavascript *transactionsJavascript, const SetProxyJavascriptCallback &callback);
+
     void initFinished();
 
 private slots:
@@ -106,6 +110,8 @@ private slots:
     void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SetMessengerJavascriptCallback &callback);
 
     void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
+
+    void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
 
     void onInitFinished();
 

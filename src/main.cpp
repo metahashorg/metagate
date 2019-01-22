@@ -34,15 +34,12 @@
 #include "Initializer/Inits/InitWebSocket.h"
 #include "Initializer/Inits/InitJavascriptWrapper.h"
 #include "Initializer/Inits/InitUploader.h"
+#include "Initializer/Inits/InitProxy.h"
 
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/MessengerDBStorage.h"
 #include "Messenger/CryptographicManager.h"
-
-#include "proxy/Proxy.h"
-#include "proxy/ProxyJavascript.h"
-#include "proxy/WebSocketSender.h"
 
 #include "Module.h"
 
@@ -130,28 +127,9 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow);
 
-        initManager.complete();
+        const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(webSocketClient, mainWindow);
 
-        /*
-        addModule(proxy::Proxy::moduleName());
-        proxy::ProxyJavascript proxyJavascript;
-        addModule(proxy::Proxy::moduleName());
-        proxy::Proxy proxyManager(proxyJavascript);
-        proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
-        changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
-            qDebug() << "PROXY S ";
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
-            qDebug() << "PROXY 1 " << r.numError;
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
-            qDebug() << "PROXY 2 " << r.numError;
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
-            qDebug() << "PROXY res " << port;
-        });
-        */
+        initManager.complete();
        
         /*
         messenger::CryptographicManager messengerCryptManager;
