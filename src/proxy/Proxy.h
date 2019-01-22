@@ -95,6 +95,8 @@ public:
     explicit Proxy(ProxyJavascript &javascriptWrapper, QObject *parent = nullptr);
     ~Proxy();
 
+    bool isAutoStart() const;
+
 public slots:
     void startAutoProxy();
 
@@ -178,6 +180,7 @@ private:
     void delPortMapping();
 
     QThread thread;
+    bool m_isAutoStart;
 
     ProxyJavascript &javascriptWrapper;
 

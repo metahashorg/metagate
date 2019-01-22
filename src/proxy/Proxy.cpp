@@ -18,6 +18,7 @@ namespace proxy
 Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     : QObject(parent)
     , thread(parent)
+    , m_isAutoStart(false)
     , javascriptWrapper(javascriptWrapper)
     , state(No)
     , proxyServer(new ProxyServer(this))
@@ -59,6 +60,10 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     thread.start();
     moveToThread(&thread);
 
+    CHECK(settings.contains("mgproxy/autostart"), "mgproxy/autostart not found setting");
+    m_isAutoStart = settings.value("mgproxy/autostart").toBool();
+    if (m_isAutoStart)
+        QMetaObject::invokeMethod(this, "startAutoProxy");
     upnp->discover();
 }
 
@@ -70,6 +75,11 @@ Proxy::~Proxy()
         thread.terminate();
         thread.wait();
     }
+}
+
+bool Proxy::isAutoStart() const
+{
+    return m_isAutoStart;
 }
 
 void Proxy::startAutoProxy()
