@@ -26,6 +26,7 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     , mappedRouterIdx(-1)
     , autoActive(false)
     , m_peers(0)
+    , proxyStarted(false)
     , portMapped(false)
 {
     qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
@@ -69,7 +70,8 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
 
 Proxy::~Proxy()
 {
-    delPortMapping();
+    QMetaObject::invokeMethod(this, "onAutoStop");
+    //delPortMapping();
     thread.quit();
     if (!thread.wait(3000)) {
         thread.terminate();
@@ -121,6 +123,7 @@ void Proxy::proxyTested(bool res, const QString &error)
     if (res)
         emit javascriptWrapper.sendAutoStartCompleteResponseSig(TypedException());
     autoActive = false;
+    proxyStarted = res;
     state = AutoComplete;
     emit javascriptWrapper.sendConnectedPeersResponseSig(m_peers, TypedException());
 }
@@ -162,10 +165,9 @@ END_SLOT_WRAPPER
 void Proxy::onGeProxyStatus()
 {
 BEGIN_SLOT_WRAPPER
-    ProxyStatus status(proxyStarted);
+    ProxyStatus status(proxyStarted, autoActive, portMapped);
     emit javascriptWrapper.sendServerStatusResponseSig(status, TypedException());
 END_SLOT_WRAPPER
-
 }
 
 void Proxy::onGetPort()
@@ -263,20 +265,42 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Proxy::onAutoStart()
-{
-
-}
-
-void Proxy::onAutoStop()
+void Proxy::onAutoStart(const ProxyCallback &callback)
 {
 BEGIN_SLOT_WRAPPER
-    if (state != AutoComplete)
-        return;
-//    const TypedException exception = apiVrapper2([&, this] {
-    proxyServer->stop();
-    delPortMapping();
+    const TypedException exception = apiVrapper2([&, this] {
+        startAutoProxy();
+        ProxyResult res(true, QStringLiteral("OK"));
+        runCallback(std::bind(callback, res, TypedException()));
+    });
 
+    if (exception.isSet()) {
+        ProxyResult res(false, QStringLiteral("Exception"));
+        runCallback(std::bind(callback, res, exception));
+    }
+END_SLOT_WRAPPER
+}
+
+void Proxy::onAutoStop(const ProxyCallback &callback)
+{
+BEGIN_SLOT_WRAPPER
+    if (state != AutoComplete) {
+        ProxyResult res(false, QStringLiteral("State is not Complete"));
+        runCallback(std::bind(callback, res, TypedException()));
+        return;
+    }
+    const TypedException exception = apiVrapper2([&, this] {
+        qDebug() << "!!!!!!! stop";
+        proxyStarted = false;
+        state = No;
+        proxyServer->stop();
+        delPortMapping();
+
+    });
+    if (exception.isSet()) {
+        ProxyResult res(false, QStringLiteral("Exception"));
+        runCallback(std::bind(callback, res, exception));
+    }
 END_SLOT_WRAPPER
 }
 
@@ -383,7 +407,7 @@ void Proxy::delPortMapping()
     if (routers.empty())
         return;
     routers.at(0).router->deletePortMapping(port, TCP, [this, port](bool r, const QString &error) {
-//        qDebug() << "Deleted port";
+        qDebug() << "Deleted port " << r;
 //        QString udn = routers[mappedRouterIdx].udn;
 //        routers[mappedRouterIdx].mapped = false;
 //        if (r)

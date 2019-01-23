@@ -150,17 +150,7 @@
         document.createWalletForm.proxyport.value = res;
     }
     
-    function getProxyStatus() {
-        new QWebChannel(qt.webChannelTransport, function (channel) {
-        var mainWindow = channel.objects.proxy;
-        mainWindow.getProxyStatus();
-        });
-    }
-    
-    function proxyServerStatusInfoJs(res) {
-        document.createWalletForm.proxyport.value = res;
-    }
-    
+       
     function getPort() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
@@ -226,7 +216,42 @@
     
 //////////////////////////////////////
 // AUTO
-
+    
+    function startAutoProxy() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.proxyAutoStart() ;
+        });
+    }
+    
+    function stopAutoProxy() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.proxyAutoStop() ;
+        });
+    }
+    
+    function proxyAutoStartResultJs(res) {
+       
+        document.createWalletForm.proxyport.value = res;
+    }
+    
+    function proxyAutoStopResultJs(res) {
+       
+        document.createWalletForm.proxyport.value = res;
+    }
+    
+    function getProxyStatus() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.getProxyStatus();
+        });
+    }
+    
+    function proxyServerStatusInfoJs(res) {
+        document.createWalletForm.proxyport.value = res;
+    }
+    
     function proxyAutoStartResend() {
         document.createWalletForm.proxyport.value = "";
         new QWebChannel(qt.webChannelTransport, function (channel) {

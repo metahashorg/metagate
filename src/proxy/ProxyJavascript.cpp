@@ -37,6 +37,8 @@ static QJsonDocument proxyStatusToJson(const Proxy::ProxyStatus &status)
 {
     QJsonObject resJson;
     resJson.insert("started", status.started);
+    resJson.insert("autoActive", status.autoActive);
+    resJson.insert("portMapped", status.portMapped);
     return QJsonDocument(resJson);
 }
 
@@ -142,7 +144,7 @@ BEGIN_SLOT_WRAPPER
     });
 
     if (exception.isSet()) {
-        emit sendServerStatusResponseSig(Proxy::ProxyStatus(false), exception);
+        emit sendServerStatusResponseSig(Proxy::ProxyStatus(false, false, false), exception);
     }
 END_SLOT_WRAPPER
 }
@@ -273,7 +275,17 @@ void ProxyJavascript::proxyAutoStart()
 BEGIN_SLOT_WRAPPER
     CHECK(m_proxyManager, "proxyManager not set");
     LOG << "Proxy auto start";
-    emit m_proxyManager->autoStart();
+
+    const QString JS_NAME_RESULT = "proxyAutoStartResultJs";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    emit m_proxyManager->autoStart([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
+        LOG << "Proxy auto exec started " << res.ok << res.error;
+        makeFunc(exception, proxyResultToJson(res));
+    });
 END_SLOT_WRAPPER
 }
 
@@ -282,7 +294,17 @@ void ProxyJavascript::proxyAutoStop()
 BEGIN_SLOT_WRAPPER
     CHECK(m_proxyManager, "proxyManager not set");
     LOG << "Proxy auto stop";
-    emit m_proxyManager->autoStop();
+
+    const QString JS_NAME_RESULT = "proxyAutoStopResultJs";
+
+    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    emit m_proxyManager->autoStop([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
+        LOG << "Proxy stoped " << res.ok << res.error;
+        makeFunc(exception, proxyResultToJson(res));
+    });
 END_SLOT_WRAPPER
 }
 
