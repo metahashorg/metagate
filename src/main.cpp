@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
         webSocketClient.start();
 
         proxy::ProxyJavascript proxyJavascript;
-        addModule(proxy::Proxy::moduleName());
+        /*addModule(proxy::Proxy::moduleName());
         proxy::Proxy proxyManager(proxyJavascript);
         proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
         });
         QObject::connect(&proxyManager, &proxy::Proxy::startAutoReadyToTest, [](quint16 port){
             qDebug() << "PROXY res " << port;
-        });
+        });*/
 
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
