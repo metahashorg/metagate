@@ -34,11 +34,13 @@ InitProxy::InitProxy(QThread *mainThread, Initializer &manager)
     CHECK(connect(this, &InitProxy::callbackCall, this, &InitProxy::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &InitProxy::upnpStarted, this, &InitProxy::onUpnpStarted), "not connect onUpnpStarted");
     CHECK(connect(this, &InitProxy::proxyStarted, this, &InitProxy::onProxyStarted), "not connect onProxyStarted");
+    CHECK(connect(this, &InitProxy::proxyCompleted, this, &InitProxy::onProxyCompleted), "not connect onProxyCompleted");
     Q_REG(InitProxy::Callback, "InitProxy::Callback");
 
     registerStateType("init", "proxy initialized", true, true);
     registerStateType("upnp_started", "upnp started", false, false, 10s, "upnp started timeout");
     registerStateType("proxy_started", "proxy started", false, false, 12s, "proxy started timeout");
+    registerStateType("proxy_completed", "proxy complete", false, false, 15s, "proxy complete timeout");
 }
 
 InitProxy::~InitProxy() = default;
@@ -67,9 +69,19 @@ void InitProxy::sendProxyStarted(bool isScipped, const TypedException &exception
     sendState("proxy_started", isScipped, exception);
 }
 
+void InitProxy::sendProxyCompleted(bool isScipped, const TypedException &exception) {
+    sendState("proxy_completed", isScipped, exception);
+}
+
 void InitProxy::onUpnpStarted(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
     sendUpnpStarted(false, exception);
+END_SLOT_WRAPPER
+}
+
+void InitProxy::onProxyCompleted(bool res) {
+BEGIN_SLOT_WRAPPER
+    sendProxyCompleted(false, TypedException());
 END_SLOT_WRAPPER
 }
 
@@ -84,8 +96,9 @@ InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wss
         proxyJavascript = std::make_unique<proxy::ProxyJavascript>();
         proxyJavascript->moveToThread(mainThread);
         proxyManager = std::make_unique<proxy::Proxy>(*proxyJavascript);
-        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoProxyResult, this, &InitProxy::onProxyStarted), "not connect onProxyStarted");
-        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoUPnPResult, this, &InitProxy::onUpnpStarted), "not connect onUpnpStarted");
+        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoProxyResult, this, &InitProxy::proxyStarted), "not connect onProxyStarted");
+        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoUPnPResult, this, &InitProxy::upnpStarted), "not connect onUpnpStarted");
+        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoComplete1, this, &InitProxy::proxyCompleted), "not connect proxyCompleted");
         proxyWebsocket = std::make_unique<proxy::WebSocketSender>(*(wssClient.get()), *proxyManager);
         proxyWebsocket->moveToThread(mainThread);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
@@ -110,6 +123,7 @@ InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wss
     if (proxyManager != nullptr && !proxyManager->isAutoStart()) {
         sendUpnpStarted(true, TypedException());
         sendProxyStarted(true, TypedException());
+        sendProxyCompleted(true, TypedException());
     }
     if (exception.isSet()) {
         sendInitSuccess(exception);

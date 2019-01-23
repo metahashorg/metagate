@@ -57,6 +57,10 @@ websocket connected. Некритичный. Модуль websocket прикон
 jsWrapper init. Критичный. Закончена загрузка модуля mainWindow. Можно совершать к нему запросы по javascript
 uploader init. Критичный. Закончена загрузка модуля uploader.
 uploader check_updates_htmls. Некритичный. Модуль updater проверил и загрузил новые html страницы
+proxy init. Критичный. Закончена загрузка модуля proxy. Можно совершать к нему запросы по javascript
+proxy upnp_started
+proxy proxy_started
+proxy proxy_completed. Полностью закончена инициализация и тестирование proxy
 
 Таким образом, для успешного вызова некоторых методов, нужно дожидаться группы событий, например
 nslookup init, nslookup flushed, jsWrapper init
