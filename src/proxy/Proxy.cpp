@@ -122,6 +122,7 @@ void Proxy::proxyTested(bool res, const QString &error)
     autoTestRes = res;
     if (res)
         emit javascriptWrapper.sendAutoStartCompleteResponseSig(TypedException());
+    emit startAutoComplete1(res);
     autoActive = false;
     proxyStarted = res;
     state = AutoComplete;
@@ -359,7 +360,7 @@ void Proxy::onAutoDiscoveryTimeout()
         autoRouterRes = false;
         state = AutoUPNPDone;
         LOG << "Proxy auto start: complete";
-        emit startAutoComplete(proxyServer->port());
+        emit startAutoReadyToTest(proxyServer->port());
         return;
     }
 
@@ -380,7 +381,7 @@ void Proxy::onAutoDiscoveryTimeout()
         }
         state = AutoUPNPDone;
         LOG << "Proxy auto start: complete";
-        emit startAutoComplete(proxyServer->port());
+        emit startAutoReadyToTest(proxyServer->port());
     });
 }
 

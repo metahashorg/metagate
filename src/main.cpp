@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
         QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
             qDebug() << "PROXY 2 " << r.numError;
         });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoReadyToTest, [](quint16 port){
             qDebug() << "PROXY res " << port;
         });
 

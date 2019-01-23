@@ -113,7 +113,9 @@ signals:
 
     void startAutoUPnPResult(const TypedException &r);
 
-    void startAutoComplete(quint16 port);
+    void startAutoReadyToTest(quint16 port);
+
+    void startAutoComplete1(bool res);
 
     void stopProxyExecuted();
 
