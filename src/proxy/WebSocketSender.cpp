@@ -119,7 +119,7 @@ WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, Q
     CHECK(connect(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onBeginStart), "not connect onModuleFound");
     CHECK(connect(&proxyManager, &Proxy::startAutoProxyResult, this, &WebSocketSender::onStartAutoProxyResult), "not connect onStartAutoProxyResult");
     CHECK(connect(&proxyManager, &Proxy::startAutoUPnPResult, this, &WebSocketSender::onStartAutoUPnPResult), "not connect onStartAutoUPnPResult");
-    CHECK(connect(&proxyManager, &Proxy::startAutoReadyToTest, this, &WebSocketSender::onStartAutoComplete), "not connect onStartAutoComplete");
+    CHECK(connect(&proxyManager, &Proxy::startAutoReadyToTest, this, &WebSocketSender::onReadyToTest), "not connect onStartAutoComplete");
     CHECK(connect(&proxyManager, &Proxy::stopProxyExecuted, this, &WebSocketSender::onStopProxy), "not connect onStopProxy");
     CHECK(connect(this, &WebSocketSender::testResult, this, &WebSocketSender::onTestResult), "not connect onTestResult");
     CHECK(connect(this, &WebSocketSender::proxyTested, &proxyManager, &Proxy::proxyTested), "not connect proxyTested");
@@ -169,7 +169,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WebSocketSender::onStartAutoComplete(quint16 port) {
+void WebSocketSender::onReadyToTest(quint16 port) {
 BEGIN_SLOT_WRAPPER
     this->port = port;
     const QString message = makeProxyStartCompleted(port);
