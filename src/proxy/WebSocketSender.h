@@ -38,7 +38,7 @@ private slots:
 
     void onStartAutoUPnPResult(const TypedException &r);
 
-    void onStartAutoComplete(quint16 port);
+    void onReadyToTest(quint16 port);
 
     void onTestResult(int code, QString result);
 

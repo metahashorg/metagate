@@ -44,8 +44,12 @@ public:
 
     struct ProxyStatus {
         bool started;
-        ProxyStatus(bool started)
+        bool autoActive;
+        bool portMapped;
+        ProxyStatus(bool started, bool autoActive, bool portMapped)
             : started(started)
+            , autoActive(autoActive)
+            , portMapped(portMapped)
         {
 
         }
@@ -109,7 +113,9 @@ signals:
 
     void startAutoUPnPResult(const TypedException &r);
 
-    void startAutoComplete(quint16 port);
+    void startAutoReadyToTest(quint16 port);
+
+    void startAutoComplete1(bool res);
 
     void stopProxyExecuted();
 
@@ -132,9 +138,9 @@ signals:
 
     void deletePortMapping(const PortMappingCallback &callback);
 
-    void autoStart();
+    void autoStart(const ProxyCallback &callback);
 
-    void autoStop();
+    void autoStop(const ProxyCallback &callback);
 
 
     void autoStartResend();
@@ -160,9 +166,9 @@ public slots:
 
     void onDeletePortMapping(const PortMappingCallback &callback);
 
-    void onAutoStart();
+    void onAutoStart(const ProxyCallback &callback);
 
-    void onAutoStop();
+    void onAutoStop(const ProxyCallback &callback);
 
     void onAutoStartResend();
 
