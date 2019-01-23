@@ -23,6 +23,7 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
     CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
     CHECK(connect(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged), "not connect onTransactionStatusChanged");
+    CHECK(connect(this, &TransactionsJavascript::transactionStatusChanged2Sig, this, &TransactionsJavascript::onTransactionStatusChanged2), "not connect onTransactionStatusChanged2");
 
     Q_REG(TransactionsJavascript::Callback, "TransactionsJavascript::Callback");
 
@@ -587,6 +588,13 @@ void TransactionsJavascript::onTransactionStatusChanged(const QString &address, 
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txStatusChangedJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, currency, txHash, txInfoToJson(tx));
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::onTransactionStatusChanged2(const QString &txHash, const Transaction &tx) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "txStatusChanged2Js";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), txHash, txInfoToJson(tx));
 END_SLOT_WRAPPER
 }
 
