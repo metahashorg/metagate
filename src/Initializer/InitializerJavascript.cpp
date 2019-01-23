@@ -95,7 +95,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "initsReadyResultJs";
 
-    LOG << "Javascript ready";
+    LOG << "Javascript ready " << force;
 
     const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
