@@ -84,6 +84,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetAuthCallback, "SetAuthCallback");
     Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
     Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
+    Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -194,7 +195,7 @@ END_SLOT_WRAPPER
 void MainWindow::onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        CHECK(proxyJavascript != nullptr, "Incorrect transactionsJavascript");
+        CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
         CHECK(connect(proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
         channel->registerObject(QString("proxy"), proxyJavascript);
     });

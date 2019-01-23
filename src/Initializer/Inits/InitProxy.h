@@ -43,7 +43,7 @@ public:
     Return initialize(std::shared_future<WebSocketClient*> wssClient, std::shared_future<MainWindow*> mainWindow);
 
     static int countEvents() {
-        return 2;
+        return 3;
     }
 
     static int countCriticalEvents() {
@@ -56,19 +56,25 @@ private:
 
     void sendInitSuccess(const TypedException &exception);
 
-    void sendLoginCheckedSuccess(const TypedException &exception);
+    void sendUpnpStarted(bool isScipped, const TypedException &exception);
+
+    void sendProxyStarted(bool isScipped, const TypedException &exception);
 
 signals:
 
     void callbackCall(const InitProxy::Callback &callback);
 
-    void upnpStarted(bool isScipped, const TypedException &exception);
+    void upnpStarted(const TypedException &exception);
+
+    void proxyStarted(const TypedException &exception);
 
 private slots:
 
     void onCallbackCall(const InitProxy::Callback &callback);
 
-    void onUpnpStarted(bool isScipped, const TypedException &exception);
+    void onUpnpStarted(const TypedException &exception);
+
+    void onProxyStarted(const TypedException &exception);
 
 private:
 

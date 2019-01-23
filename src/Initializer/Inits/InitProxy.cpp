@@ -14,6 +14,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "TypedException.h"
 #include "SlotWrapper.h"
+#include "Log.h"
 #include "QRegister.h"
 
 #include "proxy/Proxy.h"
@@ -32,10 +33,12 @@ InitProxy::InitProxy(QThread *mainThread, Initializer &manager)
 {
     CHECK(connect(this, &InitProxy::callbackCall, this, &InitProxy::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &InitProxy::upnpStarted, this, &InitProxy::onUpnpStarted), "not connect onUpnpStarted");
+    CHECK(connect(this, &InitProxy::proxyStarted, this, &InitProxy::onProxyStarted), "not connect onProxyStarted");
     Q_REG(InitProxy::Callback, "InitProxy::Callback");
 
-    registerStateType("init", "auth initialized", true, true);
-    registerStateType("checked", "auth checked", false, false, 10s, "auth checked timeout");
+    registerStateType("init", "proxy initialized", true, true);
+    registerStateType("upnp_started", "upnp started", false, false, 10s, "upnp started timeout");
+    registerStateType("proxy_started", "proxy started", false, false, 12s, "proxy started timeout");
 }
 
 InitProxy::~InitProxy() = default;
@@ -56,22 +59,33 @@ void InitProxy::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-void InitProxy::sendLoginCheckedSuccess(const TypedException &exception) {
-    sendState("checked", false, exception);
+void InitProxy::sendUpnpStarted(bool isScipped, const TypedException &exception) {
+    sendState("upnp_started", isScipped, exception);
 }
 
-void InitProxy::onUpnpStarted(bool isScipped, const TypedException &exception) {
+void InitProxy::sendProxyStarted(bool isScipped, const TypedException &exception) {
+    sendState("proxy_started", isScipped, exception);
+}
+
+void InitProxy::onUpnpStarted(const TypedException &exception) {
 BEGIN_SLOT_WRAPPER
-    sendLoginCheckedSuccess(exception);
+    sendUpnpStarted(false, exception);
+END_SLOT_WRAPPER
+}
+
+void InitProxy::onProxyStarted(const TypedException &exception) {
+BEGIN_SLOT_WRAPPER
+    sendProxyStarted(false, exception);
 END_SLOT_WRAPPER
 }
 
 InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wssClient, std::shared_future<MainWindow*> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
-        addModule(proxy::Proxy::moduleName());
         proxyJavascript = std::make_unique<proxy::ProxyJavascript>();
         proxyJavascript->moveToThread(mainThread);
         proxyManager = std::make_unique<proxy::Proxy>(*proxyJavascript);
+        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoProxyResult, this, &InitProxy::onProxyStarted), "not connect onProxyStarted");
+        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoUPnPResult, this, &InitProxy::onUpnpStarted), "not connect onUpnpStarted");
         proxyWebsocket = std::make_unique<proxy::WebSocketSender>(*(wssClient.get()), *proxyManager);
         proxyWebsocket->moveToThread(mainThread);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
@@ -93,6 +107,10 @@ InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wss
             qDebug() << "PROXY res " << port;
         });*/
     });
+    if (proxyManager != nullptr && !proxyManager->isAutoStart()) {
+        sendUpnpStarted(true, TypedException());
+        sendProxyStarted(true, TypedException());
+    }
     if (exception.isSet()) {
         sendInitSuccess(exception);
         throw exception;

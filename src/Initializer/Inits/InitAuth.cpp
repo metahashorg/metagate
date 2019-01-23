@@ -70,7 +70,7 @@ InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow
         MainWindow &mw = *mainWindow.get();
         emit mw.setAuth(authJavascript.get(), authManager.get(), MainWindow::SetAuthCallback([this]() {
             sendInitSuccess(TypedException());
-        }, std::bind(&InitAuth::sendInitSuccess, this, _1), std::bind(&InitAuth::callbackCall, this, _1)));
+        }, std::bind(&InitAuth::sendInitSuccess, this, _1), std::bind(&InitAuth::callbackCall, this, _1)));       
     });
 
     if (exception.isSet()) {
