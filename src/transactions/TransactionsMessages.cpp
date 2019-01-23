@@ -90,7 +90,9 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
         res.data = txJson.value("data").toString();
     }
     res.timestamp = getIntOrString(txJson, "timestamp").toULongLong();
-    if (txJson.contains("fee")) {
+    if (txJson.contains("realFee")) {
+        res.fee = getIntOrString(txJson, "realFee");
+    } else if (txJson.contains("fee")) {
         res.fee = getIntOrString(txJson, "fee");
     }
     if (res.fee.isEmpty() || res.fee.isNull()) {
