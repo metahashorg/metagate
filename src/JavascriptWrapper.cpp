@@ -112,7 +112,7 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
     CHECK(connect(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
 
-    CHECK(connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(onDirChanged(const QString&))), "not connect fileSystemWatcher");
+    CHECK(connect(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged), "not connect fileSystemWatcher");
 
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect wssClient");
 

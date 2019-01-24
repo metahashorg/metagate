@@ -60,8 +60,8 @@ NsLookup::NsLookup(QObject *parent)
         passedTime = UPDATE_PERIOD;
     }
 
-    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect started");
-    CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect finished");
+    CHECK(connect(&thread1, &QThread::started, this, &NsLookup::run), "not connect started");
+    CHECK(connect(this, &NsLookup::finished, &thread1, &QThread::terminate), "not connect finished");
 
     milliseconds msTimer = 1ms;
     if (passedTime >= UPDATE_PERIOD) {
@@ -73,9 +73,9 @@ NsLookup::NsLookup(QObject *parent)
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
     qtimer.setSingleShot(true);
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(uploadEvent())), "not connect");
-    CHECK(qtimer.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
-    CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
+    CHECK(connect(&qtimer, &QTimer::timeout, this, &NsLookup::uploadEvent), "not connect uploadEvent");
+    CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
+    CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");

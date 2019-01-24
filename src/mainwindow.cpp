@@ -135,7 +135,7 @@ MainWindow::MainWindow(
     channel->registerObject(QString("proxy"), &proxyJavascript);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
-    CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");
+    CHECK(connect(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu), "not connect customContextMenuRequested");
 
     //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
@@ -143,7 +143,7 @@ MainWindow::MainWindow(
 
     qtimer.setInterval(milliseconds(hours(1)).count());
     qtimer.setSingleShot(false);
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(onUpdateMhsReferences())), "not connect timeout");
+    CHECK(connect(&qtimer, &QTimer::timeout, this, &MainWindow::onUpdateMhsReferences), "not connect timeout");
     qtimer.start();
 
     emit authManager.reEmit();
@@ -248,7 +248,7 @@ void MainWindow::configureMenu() {
     }), "not connect forwardButton::pressed");
     ui->forwardButton->setEnabled(false);
 
-    CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect refreshButton::pressed");
+    CHECK(connect(ui->refreshButton, &QToolButton::pressed, ui->webView, &QWebEngineView::reload), "not connect refreshButton::pressed");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
         BEGIN_SLOT_WRAPPER
@@ -305,11 +305,11 @@ void MainWindow::configureMenu() {
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect currentIndexChanged");
+    CHECK(connect(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate), "not connect currentIndexChanged");
 }
 
 void MainWindow::unregisterCommandLine() {
-    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not disconnect currentIndexChanged");
+    CHECK(disconnect(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate), "not disconnect currentIndexChanged");
 }
 
 void MainWindow::onEnterCommandAndAddToHistory(const QString &text) {

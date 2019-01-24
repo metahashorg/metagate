@@ -83,8 +83,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
 
     timerSendTx.moveToThread(&thread1);
     timerSendTx.setInterval(milliseconds(100).count());
-    CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
-    CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
+    CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onSendTxEvent), "not connect onSendTxEvent");
+    CHECK(connect(&thread1, &QThread::finished, &timerSendTx, &QTimer::stop), "not connect stop");
 
     javascriptWrapper.setTransactions(*this);
 
