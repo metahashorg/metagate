@@ -128,7 +128,7 @@ private slots:
 
     void onEnterCommandAndAddToHistoryNoDuplicate(const QString &text);
 
-    void onBrowserLoadFinished(const QUrl &url2);
+    void onUrlChanged(const QUrl &url2);
 
     void onLogined(bool isInit, const QString &login);
 

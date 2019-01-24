@@ -139,7 +139,7 @@ MainWindow::MainWindow(
 
     //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged), "not connect loadFinished");
 
     qtimer.setInterval(milliseconds(hours(1)).count());
     qtimer.setSingleShot(false);
@@ -512,7 +512,7 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
     registerCommandLine();
 }
 
-void MainWindow::onBrowserLoadFinished(const QUrl &url2) {
+void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
     const QString url = url2.toString();
     const auto found = pagesMappings.findName(url);
