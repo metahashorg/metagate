@@ -1,43 +1,23 @@
 <RCC>
     <qresource prefix="/">
-        <file>resources/Roboto-Light.ttf</file>
         <file>resources/svg/back.svg</file>
-        <file>resources/svg/Bahasa Melayu.svg</file>
-        <file>resources/svg/English.svg</file>
         <file>resources/svg/forward.svg</file>
         <file>resources/svg/Login.svg</file>
-        <file>resources/svg/menu.svg</file>
         <file>resources/svg/MetaApps.svg</file>
         <file>resources/svg/MetaWallet.svg</file>
-        <file>resources/svg/russian.svg</file>
-        <file>resources/svg/settigs.svg</file>
         <file>resources/svg/update.svg</file>
         <file>resources/svg/user.svg</file>
         <file>resources/svg/Buy_MHC.svg</file>
-        <file>resources/Roboto-Bold.ttf</file>
-        <file>resources/Roboto-BoldItalic.ttf</file>
-        <file>resources/Roboto-Italic.ttf</file>
-        <file>resources/Roboto-LightItalic.ttf</file>
-        <file>resources/Roboto-Medium.ttf</file>
-        <file>resources/Roboto-MediumItalic.ttf</file>
         <file>resources/Roboto-Regular.ttf</file>
-        <file>resources/Roboto-Thin.ttf</file>
-        <file>resources/Roboto-ThinItalic.ttf</file>
-        <file>resources/svg/Espanol.svg</file>
         <file>resources/svg/Buy_MHC_white.svg</file>
         <file>resources/svg/Login_white.svg</file>
         <file>resources/svg/MetaApps_white.svg</file>
         <file>resources/svg/MetaWallet_white.svg</file>
-        <file>resources/svg/settigs_white.svg</file>
         <file>resources/svg/menu_white.svg</file>
         <file>resources/svg/user_white.svg</file>
-        <file>resources/svg/1.svg</file>
-        <file>resources/svg/2.svg</file>
-        <file>resources/svg/3.svg</file>
-        <file>resources/svg/4.svg</file>
-        <file>resources/svg/Portugales.svg</file>
-        <file>resources/svg/Turce.svg</file>
         <file>resources/svg/arrow.svg</file>
         <file>WalletMetahash.icns</file>
+        <file>resources/svg/settings.svg</file>
+        <file>resources/svg/settings_white.svg</file>
     </qresource>
 </RCC>
