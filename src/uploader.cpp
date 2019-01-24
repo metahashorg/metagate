@@ -266,6 +266,7 @@ BEGIN_SLOT_WRAPPER
             LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();
 
             emit generateUpdateApp(version, reference, "");
+            versionForUpdate = version;
         };
 
         LOG << "New app version download";
