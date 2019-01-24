@@ -65,6 +65,13 @@ struct NodeInfo {
 class NsLookup : public QObject
 {
     Q_OBJECT
+private:
+
+    struct CacheDns {
+        std::map<QString, std::vector<QString>> cache;
+        time_point lastUpdate;
+    };
+
 public:
     explicit NsLookup(QObject *parent = nullptr);
 
@@ -141,6 +148,8 @@ private:
     milliseconds passedTime;
 
     std::atomic<bool> isStopped{false};
+
+    CacheDns cacheDns;
 
 };
 

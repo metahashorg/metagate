@@ -178,6 +178,9 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
     udp.writeDatagram(requestPacket.toByteArray(), QHostAddress("8.8.8.8"), 53);
 
     udp.waitForReadyRead(); // Не ставить timeout, так как это вызывает странное поведение
+    if (isStopped) {
+        return {};
+    }
     std::vector<char> data(512 * 1000, 0);
     const qint64 size = udp.readDatagram(data.data(), data.size());
     CHECK(size > 0, "Incorrect response dns " + node.type.toStdString());
@@ -207,7 +210,16 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         return;
     }
 
-    ipsTemp = requestDns(node->second);
+    const time_point now = ::now();
+    if (now - cacheDns.lastUpdate >= 1h) {
+        cacheDns.cache.clear();
+    }
+    ipsTemp = cacheDns.cache[node->second.node.str()];
+    if (ipsTemp.empty()) {
+        ipsTemp = requestDns(node->second);
+        cacheDns.cache[node->second.node.str()] = ipsTemp;
+        cacheDns.lastUpdate = now;
+    }
     posInIpsTemp = 0;
 
     continuePing(node);
