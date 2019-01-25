@@ -118,6 +118,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     Q_REG(WindowEvent, "WindowEvent");
 
+    CHECK(connect(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
     channel->registerObject(QString("initializer"), &initializerJs);
