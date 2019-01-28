@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "mhurlschemehandler.h"
 
@@ -37,6 +38,7 @@
 #include "auth/Auth.h"
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
+#include "proxy/ProxyJavascript.h"
 
 #include "machine_uid.h"
 
@@ -66,6 +68,7 @@ MainWindow::MainWindow(
     auth::AuthJavascript &authJavascript,
     messenger::MessengerJavascript &messengerJavascript,
     transactions::TransactionsJavascript &transactionsJavascript,
+    proxy::ProxyJavascript &proxyJavascript,
     auth::Auth &authManager,
     QWidget *parent
 )
@@ -88,6 +91,22 @@ MainWindow::MainWindow(
     urlDns = settings.value("dns/metahash").toString();
 
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
+    const QString routesFile = makePath(lastHtmls.fullPath, "core/routes.json");
+    if (isExistFile(routesFile)) {
+        const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
+        LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
+        try {
+            pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        } catch (const Exception &e) {
+            LOG << "Error " << e;
+        } catch (const TypedException &e) {
+            LOG << "Error " << e.description;
+        } catch (...) {
+            LOG << "Error mappings";
+        }
+    } else {
+        LOG << "Warning: routes file not found";
+    }
 
     loadFile("core/loader/index.html");
 
@@ -100,8 +119,9 @@ MainWindow::MainWindow(
     CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
     CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+    CHECK(connect(&proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
 
-    qRegisterMetaType<WindowEvent>("WindowEvent");
+    Q_REG(WindowEvent, "WindowEvent");
 
     CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
     CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
@@ -116,13 +136,14 @@ MainWindow::MainWindow(
     channel->registerObject(QString("auth"), &authJavascript);
     channel->registerObject(QString("messenger"), &messengerJavascript);
     channel->registerObject(QString("transactions"), &transactionsJavascript);
+    channel->registerObject(QString("proxy"), &proxyJavascript);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
-    CHECK(connect(ui->webView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onShowContextMenu(const QPoint &))), "not connect customContextMenuRequested");
+    CHECK(connect(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu), "not connect customContextMenuRequested");
 
     //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
+    CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged), "not connect loadFinished");
 
     emit authManager.reEmit();
 }
@@ -189,25 +210,31 @@ void MainWindow::configureMenu() {
     registerCommandLine();
 
     CHECK(connect(ui->backButton, &QToolButton::pressed, [this] {
+        BEGIN_SLOT_WRAPPER
         historyPos--;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
+        END_SLOT_WRAPPER;
     }), "not connect backButton::pressed");
     ui->backButton->setEnabled(false);
 
     CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         historyPos++;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
+        END_SLOT_WRAPPER
     }), "not connect forwardButton::pressed");
     ui->forwardButton->setEnabled(false);
 
-    CHECK(connect(ui->refreshButton, SIGNAL(pressed()), ui->webView, SLOT(reload())), "not connect refreshButton::pressed");
+    CHECK(connect(ui->refreshButton, &QToolButton::pressed, ui->webView, &QWebEngineView::reload), "not connect refreshButton::pressed");
 
     CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Settings");
+        END_SLOT_WRAPPER
     }), "not connect userButton::pressed");
 
     /*CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
@@ -215,41 +242,55 @@ void MainWindow::configureMenu() {
     }), "not connect buyButton::pressed");*/
 
     CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Wallet");
+        END_SLOT_WRAPPER
     }), "not connect metaWalletButton::pressed");
 
     CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
+        BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("MetaApps");
+        END_SLOT_WRAPPER
     }), "not connect metaAppsButton::pressed");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
+        BEGIN_SLOT_WRAPPER
         countFocusLineEditChanged++;
+        END_SLOT_WRAPPER
     }), "Not connect editingFinished");
 
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        BEGIN_SLOT_WRAPPER
         lineEditUserChanged = true;
         emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
+        END_SLOT_WRAPPER
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
+        BEGIN_SLOT_WRAPPER
         if (!lineEditUserChanged) {
             emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
         }
+        END_SLOT_WRAPPER
     }), "Not connect textChanged");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+        BEGIN_SLOT_WRAPPER
         emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
+        END_SLOT_WRAPPER
     }), "Not connect returnPressed");
     CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
+        BEGIN_SLOT_WRAPPER
         lineEditUserChanged = false;
+        END_SLOT_WRAPPER
     }), "Not connect textChanged");
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not connect currentIndexChanged");
+    CHECK(connect(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate), "not connect currentIndexChanged");
 }
 
 void MainWindow::unregisterCommandLine() {
-    CHECK(disconnect(ui->commandLine, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(onEnterCommandAndAddToHistoryNoDuplicate(const QString&))), "not disconnect currentIndexChanged");
+    CHECK(disconnect(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate), "not disconnect currentIndexChanged");
 }
 
 void MainWindow::onEnterCommandAndAddToHistory(const QString &text) {
@@ -472,7 +513,7 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
     registerCommandLine();
 }
 
-void MainWindow::onBrowserLoadFinished(const QUrl &url2) {
+void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
     const QString url = url2.toString();
     const auto found = pagesMappings.findName(url);
@@ -558,10 +599,14 @@ BEGIN_SLOT_WRAPPER
                 addElementToHistoryAndCommandLine("app://Login", true, true);
             }
             setUserName(DEFAULT_USERNAME);
+            isSwitched = true;
         } else {
-            if (!currentFileIsEqual("apps.html")) {
-                loadFile("apps.html");
-                addElementToHistoryAndCommandLine("app://apps", true, true);
+            if (!isSwitched) {
+                if (!currentFileIsEqual("apps.html")) {
+                    loadFile("apps.html");
+                    addElementToHistoryAndCommandLine("app://MetaApps", true, true);
+                }
+                isSwitched = true;
             }
             setUserName(login);
         }

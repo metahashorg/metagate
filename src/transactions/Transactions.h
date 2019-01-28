@@ -151,6 +151,10 @@ public:
 
 signals:
 
+    void callbackCall(Transactions::Callback callback);
+
+signals:
+
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
     void getAddresses(const QString &group, const GetAddressesCallback &callback);
@@ -219,7 +223,7 @@ public slots:
 
 private slots:
 
-    void onCallbackCall(Callback callback);
+    void onCallbackCall(Transactions::Callback callback);
 
     void onRun();
 
@@ -230,6 +234,8 @@ private slots:
 private:
 
     void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs);
+
+    void processPendingsMth(const std::vector<QString> &servers);
 
     void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
@@ -270,6 +276,8 @@ private:
     std::map<TransactionHash, SendedTransactionWatcher> sendTxWathcers;
 
     std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
+
+    std::vector<QString> pendingTxsAfterSend;
 
     seconds timeout;
 };

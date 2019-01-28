@@ -39,7 +39,7 @@ public:
 
 signals:
 
-    void callbackCall(ReturnCallback callback);
+    void callbackCall(JavascriptWrapper::ReturnCallback callback);
 
     void jsRunSig(QString jsString);
 
@@ -211,6 +211,8 @@ public slots:
     Q_INVOKABLE void qrDecode(QString requestId, QString pngBase64);
 
     Q_INVOKABLE void metaOnline();
+
+    Q_INVOKABLE void getAppModules(const QString requestId);
 
     Q_INVOKABLE void clearNsLookup();
 

@@ -91,7 +91,7 @@ public:
 
 Q_SIGNALS:
 
-    void callbackCall(ReturnCallback callback);
+    void callbackCall(HttpSimpleClient::ReturnCallback callback);
 
 Q_SIGNALS:
     void closed();

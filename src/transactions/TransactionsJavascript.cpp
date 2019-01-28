@@ -9,6 +9,7 @@
 
 #include "makeJsFunc.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 #include "Transactions.h"
 
@@ -22,12 +23,12 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
     CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
     CHECK(connect(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged), "not connect onTransactionStatusChanged");
+    CHECK(connect(this, &TransactionsJavascript::transactionStatusChanged2Sig, this, &TransactionsJavascript::onTransactionStatusChanged2), "not connect onTransactionStatusChanged2");
 
-    qRegisterMetaType<Callback>("Callback");
+    Q_REG(TransactionsJavascript::Callback, "TransactionsJavascript::Callback");
 
-    qRegisterMetaType<BalanceInfo>("BalanceInfo");
-    qRegisterMetaType<BalanceInfo>("BalanceInfo");
-    qRegisterMetaType<Transaction>("Transaction");
+    Q_REG(BalanceInfo, "BalanceInfo");
+    Q_REG(Transaction, "Transaction");
 }
 
 void TransactionsJavascript::onCallbackCall(const Callback &callback) {
@@ -43,7 +44,7 @@ void TransactionsJavascript::makeAndRunJsFuncParams(const QString &function, con
 }
 
 void TransactionsJavascript::runJs(const QString &script) {
-    LOG << "Javascript " << script;
+    //LOG << "Javascript " << script;
     emit jsRunSig(script);
 }
 
@@ -283,7 +284,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxsJs";
 
-    LOG << "get txs address " << address << " " << currency << " " << fromTx;
+    LOG << "get txs address " << address << " " << currency << " " << fromTx << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
@@ -308,7 +309,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxsAllJs";
 
-    LOG << "get txs address " << currency << " " << fromTx;
+    LOG << "get txs address " << currency << " " << fromTx << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
@@ -333,7 +334,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxs2Js";
 
-    LOG << "get txs2 address " << address << " " << currency << " " << from;
+    LOG << "get txs2 address " << address << " " << currency << " " << from << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
@@ -358,7 +359,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetTxsAll2Js";
 
-    LOG << "get txs address " << currency << " " << from;
+    LOG << "get txs address " << currency << " " << from << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
@@ -384,7 +385,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetForgingTxsJs";
 
-    LOG << "get forging txs address " << address << " " << currency << " " << from;
+    LOG << "get forging txs address " << address << " " << currency << " " << from << " " << count << " " << asc;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
@@ -512,7 +513,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetStatusDelegationResultJs";
 
-    LOG << "getStatusDelegation " << address << " " << currency << " " << to;
+    LOG << "getStatusDelegation " << address << " " << currency << " " << from << " " << to;
 
     auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QString &from, const QString &to, const QString &status, const QJsonDocument &txDelegate, const QJsonDocument &txUndelegate) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, from, to, status, txDelegate, txUndelegate);
@@ -587,6 +588,13 @@ void TransactionsJavascript::onTransactionStatusChanged(const QString &address, 
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txStatusChangedJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, currency, txHash, txInfoToJson(tx));
+END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::onTransactionStatusChanged2(const QString &txHash, const Transaction &tx) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "txStatusChanged2Js";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), txHash, txInfoToJson(tx));
 END_SLOT_WRAPPER
 }
 

@@ -162,6 +162,11 @@ static void initializeSettingsPath() {
         replaceSettings();
     }
 
+#ifdef VERSION_SETTINGS
+    QSettings qsettings(settings, QSettings::IniFormat);
+    CHECK(qsettings.value("version") == VERSION_SETTINGS, "Incorrect version settings");
+#endif
+
     isInitializeSettingsPath = true;
 }
 

@@ -36,10 +36,17 @@
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/MessengerDBStorage.h"
+#include "Messenger/CryptographicManager.h"
 
 #include "transactions/Transactions.h"
 #include "transactions/TransactionsJavascript.h"
 #include "transactions/TransactionsDBStorage.h"
+
+#include "proxy/Proxy.h"
+#include "proxy/ProxyJavascript.h"
+#include "proxy/WebSocketSender.h"
+
+#include "Module.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -58,6 +65,9 @@ QString getUrlToWss() {
     CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
     return settings.value("web_socket/meta_online").toString();
 }
+
+
+#include "Wallet.h"
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -91,6 +101,7 @@ int main(int argc, char *argv[]) {
         InitOpenSSL();
         initializeAllPaths();
         initializeMachineUid();
+        initModules();
 
         /*tests2();
         return 0;*/
@@ -109,9 +120,6 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
-        dbMessenger.init();*/
-
         auth::AuthJavascript authJavascript;
         auth::Auth authManager(authJavascript);
         authManager.start();
@@ -128,14 +136,36 @@ int main(int argc, char *argv[]) {
         WebSocketClient webSocketClient(getUrlToWss());
         webSocketClient.start();
 
+        proxy::ProxyJavascript proxyJavascript;
+        /*addModule(proxy::Proxy::moduleName());
+        proxy::Proxy proxyManager(proxyJavascript);
+        proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
+        changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
+            qDebug() << "PROXY S ";
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
+            qDebug() << "PROXY 1 " << r.numError;
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
+            qDebug() << "PROXY 2 " << r.numError;
+        });
+        QObject::connect(&proxyManager, &proxy::Proxy::startAutoReadyToTest, [](quint16 port){
+            qDebug() << "PROXY res " << port;
+        });*/
+
         JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
 
-        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper);
-        /*messenger::Messenger messenger(messengerJavascript, dbMessenger);
+        messenger::CryptographicManager messengerCryptManager;
+        //messengerCryptManager.start();
+        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
+        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
+        dbMessenger.init();
+        messenger::Messenger messenger(messengerJavascript, dbMessenger, messengerCryptManager);
         messenger.start();
         messengerJavascript.setMessenger(messenger);*/
 
-        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, authManager);
+        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, proxyJavascript, authManager);
         mainWindow.showExpanded();
 
         mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));

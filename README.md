@@ -402,10 +402,17 @@ Q_INVOKABLE void metaOnline();
 # Result returns to the function:
 onlineResultJs(jsonResult, errorNum, errorMessage);
 
+Q_INVOKABLE void getAppModules(const QString requestId);
+# Возвращает список модулей
+# Result returns to the function:
+getAppModulesResultJs(requestId, jsonResult, errorNum, errorMessage);
+# result в виде
+# [{"module":"proxy","state":"found"}]
+# state == wait, not_found, found
+
 Q_INVOKABLE void clearNsLookup();
 # Очистить файл с сохраненными нодами nsLookup. Требует перезагрузки
 # Result returns to the function:
 clearNsLookupResultJs("Ok", errorNum, errorMessage);
-
 ```
 

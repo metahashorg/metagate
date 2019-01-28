@@ -8,6 +8,7 @@ using namespace std::placeholders;
 #include "check.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "NsLookup.h"
 #include "JavascriptWrapper.h"
@@ -28,6 +29,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     , javascriptWrapper(javascriptWrapper)
     , db(db)
 {
+    CHECK(connect(this, &Transactions::callbackCall, this, &Transactions::onCallbackCall), "not connect onCallbackCall");
+
     CHECK(connect(this, &Transactions::timerEvent, this, &Transactions::onTimerEvent), "not connect onTimerEvent");
     CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
 
@@ -48,41 +51,40 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
     CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
 
-    qRegisterMetaType<Callback>("Callback");
-    qRegisterMetaType<RegisterAddressCallback>("RegisterAddressCallback");
-    qRegisterMetaType<GetTxsCallback>("GetTxsCallback");
-    qRegisterMetaType<CalcBalanceCallback>("CalcBalanceCallback");
-    qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
-    qRegisterMetaType<SetCurrentGroupCallback>("SetCurrentGroupCallback");
-    qRegisterMetaType<GetAddressesCallback>("GetAddressesCallback");
-    qRegisterMetaType<GetTxCallback>("GetTxCallback");
-    qRegisterMetaType<GetLastUpdateCallback>("GetLastUpdateCallback");
-    qRegisterMetaType<GetNonceCallback>("GetNonceCallback");
-    qRegisterMetaType<GetStatusDelegateCallback>("GetStatusDelegateCallback");
-    qRegisterMetaType<ClearDbCallback>("ClearDbCallback");
+    Q_REG(Transactions::Callback, "Transactions::Callback");
+    Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
+    Q_REG(GetTxsCallback, "GetTxsCallback");
+    Q_REG(CalcBalanceCallback, "CalcBalanceCallback");
+    Q_REG(SetCurrentGroupCallback, "SetCurrentGroupCallback");
+    Q_REG(GetAddressesCallback, "GetAddressesCallback");
+    Q_REG(GetTxCallback, "GetTxCallback");
+    Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
+    Q_REG(GetNonceCallback, "GetNonceCallback");
+    Q_REG(GetStatusDelegateCallback, "GetStatusDelegateCallback");
+    Q_REG(ClearDbCallback, "ClearDbCallback");
 
-    qRegisterMetaType<size_t>("size_t");
-    qRegisterMetaType<seconds>("seconds");
-    qRegisterMetaType<DelegateStatus>("DelegateStatus");
-    qRegisterMetaType<SendParameters>("SendParameters");
+    Q_REG2(size_t, "size_t", false);
+    Q_REG2(seconds, "seconds", false);
+    Q_REG(DelegateStatus, "DelegateStatus");
+    Q_REG(SendParameters, "SendParameters");
 
-    qRegisterMetaType<std::vector<AddressInfo>>("std::vector<AddressInfo>");
+    Q_REG(std::vector<AddressInfo>, "std::vector<AddressInfo>");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/transactions"), "timeout not found");
     timeout = seconds(settings.value("timeouts_sec/transactions").toInt());
 
     client.setParent(this);
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect");
     client.moveToThread(&thread1);
 
-    CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::onCallbackCall), "not connect");
+    CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect");
     tcpClient.moveToThread(&thread1);
 
     timerSendTx.moveToThread(&thread1);
     timerSendTx.setInterval(milliseconds(100).count());
-    CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
-    CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
+    CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onSendTxEvent), "not connect onSendTxEvent");
+    CHECK(connect(&thread1, &QThread::finished, &timerSendTx, &QTimer::stop), "not connect stop");
 
     javascriptWrapper.setTransactions(*this);
 
@@ -132,6 +134,33 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
+void Transactions::processPendingsMth(const std::vector<QString> &servers) {
+    if (servers.empty()) {
+        return;
+    }
+
+    const auto processPendingTx = [this](const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+        if (tx.status != Transaction::PENDING) {
+            if (std::find(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx) != pendingTxsAfterSend.end()) {
+                pendingTxsAfterSend.erase(std::remove(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx), pendingTxsAfterSend.end());
+                emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
+            }
+        }
+    };
+
+    LOG << "Pending after send: " << pendingTxsAfterSend.size();
+
+    const auto copyPending = pendingTxsAfterSend;
+    for (const QString &txHash: copyPending) {
+        const QString message = makeGetTxRequest(txHash);
+        for (const QString &server: servers) {
+            client.sendMessagePost(server, message, processPendingTx, timeout);
+        }
+    }
+}
+
 void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs) {
     if (servers.empty()) {
         return;
@@ -155,6 +184,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         if (tx.status != Transaction::PENDING) {
             db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
+            emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
         }
     };
 
@@ -280,6 +310,7 @@ BEGIN_SLOT_WRAPPER
         std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});
         processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxsStrs);
     }
+    processPendingsMth(servers);
 END_SLOT_WRAPPER
 }
 
@@ -425,11 +456,14 @@ BEGIN_SLOT_WRAPPER
                 if (!exception.isSet()) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+                        emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
+                        if (tx.status == Transaction::Status::PENDING) {
+                            pendingTxsAfterSend.emplace_back(tx.tx);
+                        }
                         if (*isFirst) {
                             *isFirst = false;
                             emit timerEvent();
                         }
-                        emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
                         found->second.okServer(server);
                         return;
                     } catch (const Exception &e) {
@@ -486,7 +520,7 @@ BEGIN_SLOT_WRAPPER
             tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, sendParams](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
-                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description);
+                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                     addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, sendParams.typeGet, sendParams.timeout);
                     servResp->isSended = true;

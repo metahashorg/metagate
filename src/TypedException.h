@@ -36,6 +36,11 @@ enum TypeErrors {
     TRANSACTIONS_SERVER_SEND_ERROR = 200,
     TRANSACTIONS_SENDED_NOT_FOUND = 201,
 
+    PROXY_UPNP_ROUTER_NOT_FOUND = 300,
+    PROXY_UPNP_ADD_PORT_MAPPING_ERROR = 301,
+    PROXY_PROXY_START_ERROR = 302,
+
+
     OTHER_ERROR = 1000
 };
 
@@ -72,5 +77,7 @@ if (!(v)) { \
 }
 
 TypedException apiVrapper2(const std::function<void()> &func);
+
+TypedException apiVrapper2(const TypedException &exception, const std::function<void()> &func);
 
 #endif // TYPEDEXCEPTION_H

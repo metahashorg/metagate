@@ -27,6 +27,9 @@ class Auth;
 namespace messenger {
 class MessengerJavascript;
 }
+namespace proxy {
+class ProxyJavascript;
+}
 
 namespace Ui {
     class MainWindow;
@@ -62,6 +65,7 @@ public:
         auth::AuthJavascript &authJavascript,
         messenger::MessengerJavascript &messengerJavascript,
         transactions::TransactionsJavascript &transactionsJavascript,
+        proxy::ProxyJavascript &proxyJavascript,
         auth::Auth &authManager,
         QWidget *parent = 0
     );
@@ -122,7 +126,7 @@ private slots:
 
     void onEnterCommandAndAddToHistoryNoDuplicate(const QString &text);
 
-    void onBrowserLoadFinished(const QUrl &url2);
+    void onUrlChanged(const QUrl &url2);
 
     void onLogined(bool isInit, const QString &login);
 
@@ -158,6 +162,8 @@ private:
     QString urlDns;
 
     bool lineEditUserChanged = false;
+
+    bool isSwitched = false;
 };
 
 #endif // MAINWINDOW_H

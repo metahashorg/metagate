@@ -117,3 +117,7 @@ result - json с транзакцией (см выше)
 txStatusChangedJs(address, currency, txHash, txJson, errorNum, errorMessage)
 Возвращается при изменении статуса транзакции
 txJson - json с транзакцией (см выше)
+
+txStatusChanged2Js(txHash, txJson, errorNum, errorMessage)
+Возвращается при изменении статуса транзакции в том числе после метода send
+txJson - json с транзакцией (см выше)

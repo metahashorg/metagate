@@ -18,6 +18,7 @@ private slots:
     void testMessengerDB2();
     void testMessengerDBChannels();
     void testMessengerDBSpeed();
+    void testMessengerDecryptedText();
 };
 
 #endif // TST_MESSENGERDBSTORAGE_H
