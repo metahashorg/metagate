@@ -161,6 +161,8 @@ private:
 
     QString urlDns;
 
+    QString netDns;
+
     bool lineEditUserChanged = false;
 
     bool isSwitched = false;

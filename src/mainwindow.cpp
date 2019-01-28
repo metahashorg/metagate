@@ -89,6 +89,8 @@ MainWindow::MainWindow(
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("dns/metahash"), "dns/metahash server not found");
     urlDns = settings.value("dns/metahash").toString();
+    CHECK(settings.contains("dns/net"), "dns/net server not found");
+    netDns = settings.value("dns/net").toString();
 
     pagesMappings.setFullPagesPath(lastHtmls.fullPath);
     const QString routesFile = makePath(lastHtmls.fullPath, "core/routes.json");
@@ -380,7 +382,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         return;
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
-        const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\"}}";
+        const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\", \"net\": \"" + netDns + "\"}}";
         client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const std::string &result, const SimpleClient::ServerException &exception) {
             if (exception.isSet()) {
                 LOG << "Dns error " << exception.description;
