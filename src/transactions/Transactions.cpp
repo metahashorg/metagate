@@ -62,6 +62,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_REG(GetNonceCallback, "GetNonceCallback");
     Q_REG(GetStatusDelegateCallback, "GetStatusDelegateCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
+    Q_REG(SignalFunc, "SignalFunc");
 
     Q_REG2(size_t, "size_t", false);
     Q_REG2(seconds, "seconds", false);
