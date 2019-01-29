@@ -52,6 +52,7 @@ SOURCES += main.cpp mainwindow.cpp \
     TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
     Messenger/MessengerJavascript.cpp \
+    Messenger/CryptographicManager.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
     TypedException.cpp \
@@ -70,10 +71,20 @@ SOURCES += main.cpp mainwindow.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
     machine_uid.cpp \
+    Initializer/Initializer.cpp \
+    Initializer/InitializerJavascript.cpp \
+    Initializer/InitInterface.cpp \
+    Initializer/Inits/InitMainwindow.cpp \
+    Initializer/Inits/InitAuth.cpp \
+    Initializer/Inits/InitNsLookup.cpp \
+    Initializer/Inits/InitTransactions.cpp \
+    Initializer/Inits/InitWebSocket.cpp \
+    Initializer/Inits/InitJavascriptWrapper.cpp \
+    Initializer/Inits/InitUploader.cpp \
     Module.cpp \
-    Messenger/CryptographicManager.cpp \
     proxy/WebSocketSender.cpp \
-    QRegister.cpp
+    QRegister.cpp \
+    Initializer/Inits/InitProxy.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -150,11 +161,22 @@ HEADERS += mainwindow.h \
     proxy/ProxyJavascript.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
+    Initializer/Initializer.h \
+    Initializer/InitializerJavascript.h \
+    Initializer/InitInterface.h \
+    Initializer/Inits/InitMainwindow.h \
+    Initializer/Inits/InitAuth.h \
+    Initializer/Inits/InitNsLookup.h \
+    Initializer/Inits/InitTransactions.h \
+    Initializer/Inits/InitWebSocket.h \
+    Initializer/Inits/InitJavascriptWrapper.h \
+    Initializer/Inits/InitUploader.h \
     Module.h \
     Messenger/CryptographicManager.h \
     CallbackWrapper.h \
     proxy/WebSocketSender.h \
-    QRegister.h
+    QRegister.h \
+    Initializer/Inits/InitProxy.h
 
 FORMS += mainwindow.ui
 

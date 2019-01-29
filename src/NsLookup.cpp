@@ -126,6 +126,7 @@ void NsLookup::finalizeLookup() {
     LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
 
     milliseconds msTimer;
+    bool isSuccessFl = false;
     if (isSafeCheck) {
         bool isSuccess = true;
         for (const auto &elem: allNodesForTypes) {
@@ -143,12 +144,17 @@ void NsLookup::finalizeLookup() {
         if (isSuccess) {
             LOG << "Dns safe check success";
             msTimer = UPDATE_PERIOD - passedTime;
+            isSuccessFl = true;
         } else {
             LOG << "Dns safe check not success. Start full scan";
             msTimer = 1ms;
         }
     } else {
         msTimer = UPDATE_PERIOD;
+        isSuccessFl = true;
+    }
+    if (isSuccessFl) {
+        emit serversFlushed(TypedException());
     }
     isSafeCheck = false;
     qtimer.setInterval(msTimer.count());

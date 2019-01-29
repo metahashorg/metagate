@@ -1,0 +1,67 @@
+Initializer регестрируется в javascript по имени initializer
+
+Q_INVOKABLE void resendEvents();
+Переотправляет все накопленные event-ы, если есть (stateChanged, initialized)
+Результат вернется в функцию
+initsResendEventsJs(errorNum, errorMessage)
+
+Q_INVOKABLE void ready(bool force);
+Говорит о готовности javascript-а начать запуск программы. Вызывать после прихода события initInitializedJs
+force - принудительно продолжить загрузку, если result этой функции not_success. (В текущей версии не даст результата)
+Результат вернется в функцию
+initsReadyResultJs(result, errorNum, errorMessage)
+result = "error" | "finish" | "advance" | "not_success"
+error - при выполнении этого запроса произошла ошибка.
+finish - переход в нормальный режим работы произошел успешно.
+critical_advance - преждевременный вызов функции. Не все критические инициализации завершены.
+advance - преждевременный вызов функции. Можно попробовать продолжить инициализацию.
+not_success - один из state-ов завершился с ошибкой. Можно попробовать продолжить инициализацию.
+
+Q_INVOKABLE void getAllTypes();
+Вернуть список всех types;
+Результат вернется в функцию
+initGetAllTypesResultJs(result, errorNum, errorMessage)
+result - json массив вида
+[\"window\",\"auth\",\"nslookup\",\"transactions\",\"websocket\",\"jsWrapper\",\"uploader\"]
+
+Q_INVOKABLE void getAllSubTypes();
+Вернуть список всех subtypes;
+Результат вернется в функцию
+initGetAllSubTypesResultJs(result, errorNum, errorMessage)
+result - json массив вида
+[{\"isCritical\":true,\"message\":\"window initialized\",\"subType\":\"init\",\"type\":\"window\"},{\"isCritical\":false,\"message\":\"auth checked\",\"subType\":\"checked\",\"type\":\"auth\"}]
+
+
+initStateChangedJs(number, totalNumber, numberCritical, totalNumberCritical, type, subType, message, isCritical, isScipped, errorNum, errorMessage)
+number и type не связаны
+Возвращается при изменении статуса инициализации компонента
+
+initInitializedJs(resultBool, errorNum, errorMessage)
+Возвращается при окончании инициализации всех компонентов
+result == false, если хотябы один из states ошибочный
+
+initInitializedCriticalJs(resultBool, errorNum, errorMessage)
+Возвращается при окончании инициализации всех критичных компонентов
+result == false, если хотябы один из критичных states ошибочный
+
+
+Список states:
+window init. Критичный. Закончена загрузка окна приложения. Не относится к модулю mainWindow в javascript (см jsWrapper)
+auth init. Критичный. Закончена загрузка модуля auth. Можно совершать к нему запросы по javascript
+auth checked. Некритичный. Модуль авторизации проверил и установил токен юзера
+nslookup init. Критичный. Закончена загрузка модуля nslookup. Можно совершать к нему запросы через mainWindow по javascript, но не факт, что к этому времени он успел актуализировать список dns
+nslookup flushed. Некритичный. Модуль nslookup обновил список серверов.
+transactions init. Критичный. Закончена загрузка модуля transactions. Можно совершать к нему запросы по javascript
+websocket init. Критичный. Закончена загрузка модуля websocket. Можно совершать к нему запросы через mainWindow по javascript (metaonline, etc). Но не факт, что к этому  времени он приконнектился к серверу
+websocket connected. Некритичный. Модуль websocket приконнектился к серверу.
+jsWrapper init. Критичный. Закончена загрузка модуля mainWindow. Можно совершать к нему запросы по javascript
+uploader init. Критичный. Закончена загрузка модуля uploader.
+uploader check_updates_htmls. Некритичный. Модуль updater проверил и загрузил новые html страницы
+proxy init. Критичный. Закончена загрузка модуля proxy. Можно совершать к нему запросы по javascript
+proxy upnp_started
+proxy proxy_started
+proxy proxy_completed. Полностью закончена инициализация и тестирование proxy
+
+Таким образом, для успешного вызова некоторых методов, нужно дожидаться группы событий, например
+nslookup init, nslookup flushed, jsWrapper init
+для того, чтобы успешно получать список серверов

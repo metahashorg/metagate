@@ -119,6 +119,8 @@ private:
 
 public:
 
+    using SignalFunc = std::function<void(const std::function<void()> &callback)>;
+
     using RegisterAddressCallback = std::function<void(const TypedException &exception)>;
 
     using GetTxsCallback = std::function<void(const std::vector<Transaction> &txs, const TypedException &exception)>;
@@ -144,10 +146,6 @@ public:
 public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
-
-    void setJavascriptWrapper(JavascriptWrapper &wrapper) {
-        javascriptWrapperCannonical = &wrapper;
-    }
 
 signals:
 
@@ -175,7 +173,7 @@ signals:
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback);
 
     void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
 
@@ -209,7 +207,7 @@ public slots:
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback);
 
     void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
 
@@ -244,9 +242,6 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
 
-    template<typename Func>
-    void runCallbackJsWrap(const Func &callback);
-
     std::vector<AddressInfo> getAddressesInfos(const QString &group);
 
     BalanceInfo getBalance(const QString &address, const QString &currency);
@@ -260,8 +255,6 @@ private:
     NsLookup &nsLookup;
 
     TransactionsJavascript &javascriptWrapper;
-
-    JavascriptWrapper *javascriptWrapperCannonical = nullptr;
 
     TransactionsDBStorage &db;
 

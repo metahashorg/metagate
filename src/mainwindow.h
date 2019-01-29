@@ -14,6 +14,7 @@
 #include "ui_mainwindow.h"
 
 #include "PagesMappings.h"
+#include "CallbackWrapper.h"
 
 #include "WindowEvents.h"
 
@@ -35,6 +36,10 @@ namespace Ui {
     class MainWindow;
 }
 
+namespace initializer {
+class InitializerJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -51,6 +56,8 @@ public:
     QIcon icoHover;
 };
 
+struct TypedException;
+
 namespace transactions {
 class TransactionsJavascript;
 }
@@ -60,21 +67,53 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    explicit MainWindow(
-        JavascriptWrapper &jsWrapper,
-        auth::AuthJavascript &authJavascript,
-        messenger::MessengerJavascript &messengerJavascript,
-        transactions::TransactionsJavascript &transactionsJavascript,
-        proxy::ProxyJavascript &proxyJavascript,
-        auth::Auth &authManager,
-        QWidget *parent = 0
-    );
+    using SetJavascriptWrapperCallback = CallbackWrapper<std::function<void()>>;
+
+    using SetAuthCallback = CallbackWrapper<std::function<void()>>;
+
+    using SetMessengerJavascriptCallback = CallbackWrapper<std::function<void()>>;
+
+    using SetTransactionsJavascriptCallback = CallbackWrapper<std::function<void()>>;
+
+    using SetProxyJavascriptCallback = CallbackWrapper<std::function<void()>>;
+
+public:
+
+    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
 
     void showExpanded();
 
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
     LastHtmlVersion getCurrentHtmls() const;
+
+signals:
+
+    void setJavascriptWrapper(JavascriptWrapper *jsWrapper, const SetJavascriptWrapperCallback &callback);
+
+    void setAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SetAuthCallback &callback);
+
+    void setMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SetMessengerJavascriptCallback &callback);
+
+    void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
+
+    void setProxyJavascript(proxy::ProxyJavascript *transactionsJavascript, const SetProxyJavascriptCallback &callback);
+
+    void initFinished();
+
+private slots:
+
+    void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SetJavascriptWrapperCallback &callback);
+
+    void onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SetAuthCallback &callback);
+
+    void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SetMessengerJavascriptCallback &callback);
+
+    void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
+
+    void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
+
+    void onInitFinished();
 
 private:
 
@@ -89,6 +128,8 @@ private:
     bool currentFileIsEqual(const QString &pageName);
 
     void configureMenu();
+
+    void doConfigureMenu();
 
     void registerCommandLine();
 
@@ -138,9 +179,10 @@ private:
 
     std::unique_ptr<QWebChannel> channel;
 
-    JavascriptWrapper &jsWrapper;
+    JavascriptWrapper *jsWrapper = nullptr;
 
-    const LastHtmlVersion lastHtmls;
+    LastHtmlVersion last_htmls;
+    mutable std::mutex mutLastHtmls;
 
     QString currentTextCommandLine;
 
@@ -159,13 +201,15 @@ private:
 
     QString prevTextCommandLine;
 
+    QString currentUserName;
+
     QString urlDns;
 
     QString netDns;
 
     bool lineEditUserChanged = false;
 
-    bool isSwitched = false;
+    bool isInitFinished = false;
 };
 
 #endif // MAINWINDOW_H

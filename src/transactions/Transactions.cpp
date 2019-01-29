@@ -107,12 +107,6 @@ void Transactions::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
-template<typename Func>
-void Transactions::runCallbackJsWrap(const Func &callback) {
-    CHECK(javascriptWrapperCannonical != nullptr, "javascriptWrapperCannonical not setted");
-    emit javascriptWrapperCannonical->callbackCall(callback);
-}
-
 void Transactions::newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
     auto transactionGuard = db.beginTransaction();
     for (const Transaction &tx: txs) {
@@ -532,7 +526,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback) {
+void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet);
     CHECK(servers.size() == sendParams.countServersGet, "Not enough servers");
@@ -551,7 +545,7 @@ BEGIN_SLOT_WRAPPER
 
     std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
 
-    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback, signal](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
         nonceStruct->count--;
 
         if (!exception.isSet()) {
@@ -565,9 +559,9 @@ BEGIN_SLOT_WRAPPER
 
         if (nonceStruct->count == 0) {
             if (!nonceStruct->isSet) {
-                runCallbackJsWrap(std::bind(callback, 0, nonceStruct->serverError, nonceStruct->exception));
+                emit signal(std::bind(callback, 0, nonceStruct->serverError, nonceStruct->exception));
             } else {
-                runCallbackJsWrap(std::bind(callback, nonceStruct->nonce + 1, "", TypedException()));
+                emit signal(std::bind(callback, nonceStruct->nonce + 1, "", TypedException()));
             }
         }
     };

@@ -8,6 +8,8 @@
 
 #include "TimerClass.h"
 
+struct TypedException;
+
 class WebSocketClient : public TimerClass
 {
     Q_OBJECT
@@ -31,6 +33,8 @@ signals:
     void setHelloString(const std::vector<QString> &messages, QString tag);
 
     void addHelloString(QString message, QString tag);
+
+    void connectedSock(const TypedException &exception);
 
 signals:
 
@@ -70,7 +74,7 @@ private:
 
     bool isStopped = false;
 
-    bool isConnected = false;
+    std::atomic<bool> isConnected{false};
 
     std::vector<QString> messageQueue;
 

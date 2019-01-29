@@ -16,6 +16,7 @@
 #include "VersionWrapper.h"
 
 class MainWindow;
+struct TypedException;
 
 struct LastHtmlVersion {
     QString htmlsRootPath;
@@ -39,9 +40,13 @@ private:
 
 public:
 
-    explicit Uploader(MainWindow *mainWindow);
+    explicit Uploader(MainWindow &mainWindow);
 
     ~Uploader() override;
+
+signals:
+
+    void checkedUpdatesHtmls(const TypedException &exception);
 
 public:
 
@@ -77,7 +82,7 @@ signals:
 
 private:
 
-    MainWindow *mainWindow;
+    MainWindow &mainWindow;
 
     QString serverName;
 

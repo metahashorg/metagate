@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include <map>
+#include <mutex>
 
 #include <QWebEnginePage>
 
@@ -38,6 +39,7 @@
 #include "auth/Auth.h"
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
+#include "Initializer/InitializerJavascript.h"
 #include "proxy/ProxyJavascript.h"
 
 #include "machine_uid.h"
@@ -63,21 +65,26 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(
-    JavascriptWrapper &jsWrapper,
-    auth::AuthJavascript &authJavascript,
-    messenger::MessengerJavascript &messengerJavascript,
-    transactions::TransactionsJavascript &transactionsJavascript,
-    proxy::ProxyJavascript &proxyJavascript,
-    auth::Auth &authManager,
-    QWidget *parent
-)
+MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , jsWrapper(jsWrapper)
-    , lastHtmls(Uploader::getLastHtmlVersion())
+    , last_htmls(Uploader::getLastHtmlVersion())
+    , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
+
+    CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
+    CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
+    CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
+    CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
+    CHECK(connect(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript), "not connect onSetProxyJavascript");
+    CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
+
+    Q_REG(SetJavascriptWrapperCallback, "SetJavascriptWrapperCallback");
+    Q_REG(SetAuthCallback, "SetAuthCallback");
+    Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
+    Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
+    Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -92,10 +99,10 @@ MainWindow::MainWindow(
     CHECK(settings.contains("dns/net"), "dns/net server not found");
     netDns = settings.value("dns/net").toString();
 
-    pagesMappings.setFullPagesPath(lastHtmls.fullPath);
-    const QString routesFile = makePath(lastHtmls.fullPath, "core/routes.json");
+    pagesMappings.setFullPagesPath(last_htmls.fullPath);
+    const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
     if (isExistFile(routesFile)) {
-        const std::string contentMappings = readFile(makePath(lastHtmls.fullPath, "core/routes.json"));
+        const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
         LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
         try {
             pagesMappings.setMappings(QString::fromStdString(contentMappings));
@@ -112,33 +119,16 @@ MainWindow::MainWindow(
 
     loadFile("core/loader/index.html");
 
-    jsWrapper.setWidget(this);
-
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
-    CHECK(connect(&jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-    CHECK(connect(&proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
-
     Q_REG(WindowEvent, "WindowEvent");
 
-    CHECK(connect(&jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
-    CHECK(connect(&jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
-    CHECK(connect(&jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
-    CHECK(connect(&jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
-
-    CHECK(connect(&authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
+    CHECK(connect(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
-    channel->registerObject(QString("mainWindow"), &jsWrapper);
-    channel->registerObject(QString("auth"), &authJavascript);
-    channel->registerObject(QString("messenger"), &messengerJavascript);
-    channel->registerObject(QString("transactions"), &transactionsJavascript);
-    channel->registerObject(QString("proxy"), &proxyJavascript);
+    channel->registerObject(QString("initializer"), &initializerJs);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu), "not connect customContextMenuRequested");
@@ -146,8 +136,84 @@ MainWindow::MainWindow(
     //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged), "not connect loadFinished");
+}
 
-    emit authManager.reEmit();
+void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SetJavascriptWrapperCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(jsWrapper1 != nullptr, "Incorrect jsWrapper1");
+        jsWrapper = jsWrapper1;
+        jsWrapper->setWidget(this);
+        CHECK(connect(jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        channel->registerObject(QString("mainWindow"), jsWrapper);
+        CHECK(connect(jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
+        CHECK(connect(jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
+        CHECK(connect(jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
+        CHECK(connect(jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
+        doConfigureMenu();
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *authManager, const SetAuthCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(authJavascript != nullptr, "Incorrect authJavascript");
+        CHECK(connect(authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        channel->registerObject(QString("auth"), authJavascript);
+
+        CHECK(authManager != nullptr, "Incorrect authManager");
+        CHECK(connect(authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
+        emit authManager->reEmit();
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SetMessengerJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(messengerJavascript != nullptr, "Incorrect messengerJavascript");
+        CHECK(connect(messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        channel->registerObject(QString("messenger"), messengerJavascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
+        CHECK(connect(transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        channel->registerObject(QString("transactions"), transactionsJavascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
+        CHECK(connect(proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        channel->registerObject(QString("proxy"), proxyJavascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onInitFinished() {
+BEGIN_SLOT_WRAPPER
+    isInitFinished = true;
+    if (currentUserName == DEFAULT_USERNAME) {
+        enterCommandAndAddToHistory("app://Login", true, true);
+    } else {
+        enterCommandAndAddToHistory("app://MetaApps", true, true);
+    }
+    ui->grid_layout->show();
+END_SLOT_WRAPPER
 }
 
 void MainWindow::onCallbackCall(SimpleClient::ReturnCallback callback) {
@@ -156,7 +222,32 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MainWindow::doConfigureMenu() {
+    CHECK(jsWrapper != nullptr, "jsWrapper not set");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
+        countFocusLineEditChanged++;
+    }), "Not connect editingFinished");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        lineEditUserChanged = true;
+        emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
+    }), "Not connect textChanged");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
+        if (!lineEditUserChanged) {
+            emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
+        }
+    }), "Not connect textChanged");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+        emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
+        ui->commandLine->lineEdit()->setText(currentTextCommandLine);
+    }), "Not connect returnPressed");
+    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
+        lineEditUserChanged = false;
+    }), "Not connect textChanged");
+}
+
 void MainWindow::configureMenu() {
+    ui->grid_layout->hide();
+
     this->setStyleSheet("QMainWindow {background: rgb(242,242,242);}");
 
     QFontDatabase::addApplicationFont(":/resources/Roboto-Regular.ttf");
@@ -254,37 +345,6 @@ void MainWindow::configureMenu() {
         onEnterCommandAndAddToHistory("MetaApps");
         END_SLOT_WRAPPER
     }), "not connect metaAppsButton::pressed");
-
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
-        BEGIN_SLOT_WRAPPER
-        countFocusLineEditChanged++;
-        END_SLOT_WRAPPER
-    }), "Not connect editingFinished");
-
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
-        BEGIN_SLOT_WRAPPER
-        lineEditUserChanged = true;
-        emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
-        END_SLOT_WRAPPER
-    }), "Not connect textChanged");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
-        BEGIN_SLOT_WRAPPER
-        if (!lineEditUserChanged) {
-            emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
-        }
-        END_SLOT_WRAPPER
-    }), "Not connect textChanged");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
-        BEGIN_SLOT_WRAPPER
-        emit jsWrapper.sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
-        ui->commandLine->lineEdit()->setText(currentTextCommandLine);
-        END_SLOT_WRAPPER
-    }), "Not connect returnPressed");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
-        BEGIN_SLOT_WRAPPER
-        lineEditUserChanged = false;
-        END_SLOT_WRAPPER
-    }), "Not connect textChanged");
 }
 
 void MainWindow::registerCommandLine() {
@@ -451,7 +511,15 @@ END_SLOT_WRAPPER
 
 void MainWindow::softReloadPage() {
     LOG << "updateReady()";
-    ui->webView->page()->runJavaScript("updateReady();");
+    if (!isInitFinished) {
+        std::unique_lock<std::mutex> lock(mutLastHtmls);
+        last_htmls = Uploader::getLastHtmlVersion();
+        pagesMappings.setFullPagesPath(last_htmls.fullPath);
+        lock.unlock();
+        loadFile("core/loader/index.html");
+    } else {
+        ui->webView->page()->runJavaScript("updateReady();");
+    }
 }
 
 void MainWindow::softReloadApp() {
@@ -470,11 +538,11 @@ void MainWindow::loadUrl(const QString &page) {
 }
 
 void MainWindow::loadFile(const QString &pageName) {
-    loadUrl("file:///" + makePath(lastHtmls.fullPath, pageName));
+    loadUrl("file:///" + makePath(last_htmls.fullPath, pageName));
 }
 
 bool MainWindow::currentFileIsEqual(const QString &pageName) {
-    return ui->webView->url().toString().endsWith(makePath(lastHtmls.fullPath, pageName));
+    return ui->webView->url().toString().endsWith(makePath(last_htmls.fullPath, pageName));
 }
 
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
@@ -550,6 +618,7 @@ END_SLOT_WRAPPER
 }
 
 void MainWindow::setUserName(QString userName) {
+    currentUserName = userName;
     LOG << "Set user name " << userName;
     ui->userButton->setText(userName);
     ui->userButton->adjustSize();
@@ -593,31 +662,24 @@ QString MainWindow::getServerIp(const QString &text, const std::set<QString> &ex
 }
 
 LastHtmlVersion MainWindow::getCurrentHtmls() const {
-    return lastHtmls;
+    std::lock_guard<std::mutex> lock(mutLastHtmls);
+    return last_htmls;
 }
 
 void MainWindow::onLogined(bool isInit, const QString &login) {
 BEGIN_SLOT_WRAPPER
-    if (isInit) {
-        if (login.isEmpty()) {
+    if (login.isEmpty()) {
+        if (isInitFinished) {
             LOG << "Try Swith to login";
             if (!currentFileIsEqual("login.html")) {
                 LOG << "Swith to login";
                 loadFile("login.html");
                 addElementToHistoryAndCommandLine("app://Login", true, true);
             }
-            setUserName(DEFAULT_USERNAME);
-            isSwitched = true;
-        } else {
-            if (!isSwitched) {
-                if (!currentFileIsEqual("apps.html")) {
-                    loadFile("apps.html");
-                    addElementToHistoryAndCommandLine("app://MetaApps", true, true);
-                }
-                isSwitched = true;
-            }
-            setUserName(login);
         }
+        setUserName(DEFAULT_USERNAME);
+    } else {
+        setUserName(login);
     }
 END_SLOT_WRAPPER
 }

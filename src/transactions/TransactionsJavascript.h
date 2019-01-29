@@ -5,6 +5,8 @@
 
 #include <functional>
 
+class QThread;
+
 struct TypedException;
 
 namespace transactions {

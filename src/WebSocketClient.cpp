@@ -116,11 +116,12 @@ BEGIN_SLOT_WRAPPER
     }
 
     sendMessagesInternal();
+    emit connectedSock(TypedException());
 END_SLOT_WRAPPER
 }
 
 void WebSocketClient::sendMessagesInternal() {
-    if (isConnected) {
+    if (isConnected.load()) {
         LOG << "Wss client send message " << (!messageQueue.empty() ? messageQueue.back() : "") << ". Count " << messageQueue.size();
         for (const QString &m: messageQueue) {
             m_webSocket.sendTextMessage(m);

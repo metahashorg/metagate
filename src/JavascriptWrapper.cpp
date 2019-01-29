@@ -1,6 +1,8 @@
 ﻿#include "JavascriptWrapper.h"
 
 #include <map>
+#include <functional>
+using namespace std::placeholders;
 
 #include <QApplication>
 
@@ -20,6 +22,8 @@
 #include "WalletRsa.h"
 #include "EthWallet.h"
 #include "BtcWallet.h"
+
+#include "mainwindow.h"
 
 #include "NsLookup.h"
 #include "WebSocketClient.h"
@@ -96,16 +100,15 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
-    : walletDefaultPath(getWalletPath())
+JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
+    : mainWindow(mainWindow)
+    , walletDefaultPath(getWalletPath())
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
-
-    lastHtmls = Uploader::getLastHtmlVersion();
 
     LOG << "Wallets default path " << walletDefaultPath;
 
@@ -122,8 +125,6 @@ JavascriptWrapper::JavascriptWrapper(WebSocketClient &wssClient, NsLookup &nsLoo
 
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
-
-    transactionsManager.setJavascriptWrapper(*this);
 
     emit authManager.reEmit();
 
@@ -172,7 +173,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
-        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, lastHtmls.lastVersion, keysTmh, keysMth);
+        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
@@ -469,7 +470,7 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
         const bool isNonce = !nonce.isEmpty();
         if (!isNonce) {
             Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
-            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, [this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server, const TypedException &exception) {
+            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, std::bind(&JavascriptWrapper::callbackCall, this, _1), [this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server, const TypedException &exception) {
                 Opt<QString> result(QString("Not ok"));
                 const TypedException &exception2 = apiVrapper2([&] {
                     CHECK_TYPED(!exception.isSet(), exception.numError, exception.description);

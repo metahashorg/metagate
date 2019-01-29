@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include <QSurfaceFormat>
-#include <QSettings>
 
 #include "RunGuard.h"
 
@@ -23,31 +22,28 @@
 #include "machine_uid.h"
 #include "openssl_wrapper/openssl_wrapper.h"
 
-#include "uploader.h"
-#include "NsLookup.h"
 #include "StopApplication.h"
-#include "WebSocketClient.h"
-#include "JavascriptWrapper.h"
 #include "TypedException.h"
 #include "Paths.h"
 
-#include "auth/Auth.h"
-#include "auth/AuthJavascript.h"
+#include "Initializer/Initializer.h"
+#include "Initializer/InitializerJavascript.h"
+#include "Initializer/Inits/InitMainwindow.h"
+#include "Initializer/Inits/InitAuth.h"
+#include "Initializer/Inits/InitNsLookup.h"
+#include "Initializer/Inits/InitTransactions.h"
+#include "Initializer/Inits/InitWebSocket.h"
+#include "Initializer/Inits/InitJavascriptWrapper.h"
+#include "Initializer/Inits/InitUploader.h"
+#include "Initializer/Inits/InitProxy.h"
 
 #include "Messenger/Messenger.h"
 #include "Messenger/MessengerJavascript.h"
 #include "Messenger/MessengerDBStorage.h"
 #include "Messenger/CryptographicManager.h"
 
-#include "transactions/Transactions.h"
-#include "transactions/TransactionsJavascript.h"
-#include "transactions/TransactionsDBStorage.h"
-
-#include "proxy/Proxy.h"
-#include "proxy/ProxyJavascript.h"
-#include "proxy/WebSocketSender.h"
-
 #include "Module.h"
+#include "proxy/Proxy.h"
 
 #ifndef _WIN32
 static void crash_handler(int sig) {
@@ -60,15 +56,6 @@ static void crash_handler(int sig) {
     exit(1);
 }
 #endif
-
-QString getUrlToWss() {
-    QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
-    return settings.value("web_socket/meta_online").toString();
-}
-
-
-#include "Wallet.h"
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -121,58 +108,42 @@ int main(int argc, char *argv[]) {
 
         LOG << "Machine uid " << getMachineUid();
 
-        auth::AuthJavascript authJavascript;
-        auth::Auth authManager(authJavascript);
-        authManager.start();
+        initializer::InitializerJavascript initJavascript;
+        initializer::Initializer initManager(initJavascript);
+        initJavascript.setInitializerManager(initManager);
 
-        NsLookup nsLookup;
-        nsLookup.start();
+        using namespace initializer;
 
-        transactions::TransactionsDBStorage dbTransactions(getDbPath());
-        dbTransactions.init();
-        transactions::TransactionsJavascript transactionsJavascript;
-        transactions::Transactions transactionsManager(nsLookup, transactionsJavascript, dbTransactions);
-        transactionsManager.start();
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1);
+        mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
-        WebSocketClient webSocketClient(getUrlToWss());
-        webSocketClient.start();
+        const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
 
-        proxy::ProxyJavascript proxyJavascript;
-        /*addModule(proxy::Proxy::moduleName());
-        proxy::Proxy proxyManager(proxyJavascript);
-        proxy::WebSocketSender proxyWssSender(webSocketClient, proxyManager);
-        changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
-            qDebug() << "PROXY S ";
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
-            qDebug() << "PROXY 1 " << r.numError;
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
-            qDebug() << "PROXY 2 " << r.numError;
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoReadyToTest, [](quint16 port){
-            qDebug() << "PROXY res " << port;
-        });*/
+        const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup>();
 
-        JavascriptWrapper jsWrapper(webSocketClient, nsLookup, transactionsManager, authManager, QString::fromStdString(versionString));
+        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup);
 
+        const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
+
+        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, QString::fromStdString(versionString));
+
+        const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow);
+
+        addModule(proxy::Proxy::moduleName());
+        const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(webSocketClient, mainWindow);
+
+        initManager.complete();
+       
+        /*
         messenger::CryptographicManager messengerCryptManager;
-        //messengerCryptManager.start();
         messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
-        /*messenger::MessengerDBStorage dbMessenger(getDbPath());
+        emit mainWindow.setMessengerJavascript(messengerJavascript);
+        messenger::MessengerDBStorage dbMessenger(getDbPath());
         dbMessenger.init();
-        messenger::Messenger messenger(messengerJavascript, dbMessenger, messengerCryptManager);
+        messenger::Messenger messenger(messengerJavascript, dbMessenger);
         messenger.start();
-        messengerJavascript.setMessenger(messenger);*/
-
-        MainWindow mainWindow(jsWrapper, authJavascript, messengerJavascript, transactionsJavascript, proxyJavascript, authManager);
-        mainWindow.showExpanded();
-
-        mainWindow.setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + GIT_CURRENT_SHA1));
-
-        Uploader uploader(&mainWindow);
-        uploader.start();
+        messengerJavascript.setMessenger(messenger);
+        */
 
         const int returnCode = app.exec();
         LOG << "Return code " << returnCode;
