@@ -250,6 +250,9 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
 
         std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(countSteps);
 
+        if (countSteps == 0) {
+            continuePing(node);
+        }
         for (size_t i = 0; i < countSteps; i++) {
             const QString &ip = ipsTemp[posInIpsTemp];
             posInIpsTemp++;
@@ -311,6 +314,9 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
             }
         }
         std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(processVectPos.size());
+        if (processVectPos.empty()) {
+            continueResolve(std::next(node));
+        }
         for (size_t i = 0; i < processVectPos.size(); i++) {
             const size_t posInIpsTempSave = processVectPos[i];
             const QString &address = allNodesForTypes[node->second.node][posInIpsTempSave].address;
