@@ -39,7 +39,9 @@ struct Opt {
 };
 
 inline QString toJsString(const QString &arg) {
-    return "\"" + arg + "\"";
+    QString copy = arg;
+    copy.replace("\\", "\\\\");
+    return "\"" + copy + "\"";
 }
 
 inline QString toJsString(const QJsonDocument &arg) {
