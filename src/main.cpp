@@ -129,8 +129,8 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow);
 
-        addModule(proxy::Proxy::moduleName());
-        const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(webSocketClient, mainWindow);
+        //addModule(proxy::Proxy::moduleName());
+        //const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(webSocketClient, mainWindow);
 
         initManager.complete();
        
