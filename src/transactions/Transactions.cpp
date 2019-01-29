@@ -150,7 +150,7 @@ void Transactions::processPendingsMth(const std::vector<QString> &servers) {
         }
     };
 
-    LOG << "Pending after send: " << pendingTxsAfterSend.size();
+    LOG << PeriodicLog::make("pas") << "Pending after send: " << pendingTxsAfterSend.size();
 
     const auto copyPending = pendingTxsAfterSend;
     for (const QString &txHash: copyPending) {

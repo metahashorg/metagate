@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "algorithms.h"
 
+#include <QUrl>
+
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
@@ -86,7 +88,6 @@ void PagesMappings::addMappingsMh(QString mapping) {
                 urlToName[ipHttp] = page->printedName;
             }
         }
-        page->changeDefaultIp();
         QString urlName = page->printedName;
         if (url.endsWith('/')) {
             if (!urlName.endsWith('/')) {
@@ -97,7 +98,9 @@ void PagesMappings::addMappingsMh(QString mapping) {
 
         auto addToMap = [](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
             const Name name(key);
-            map[name] = page;
+            if (map.find(name) == map.end() || *map[name] != *page) {
+                map[name] = page;
+            }
         };
 
         addToMap(mappingsPages, name, page);
@@ -296,6 +299,12 @@ Optional<PageInfo> PagesMappings::findInternal(const QString &url) const {
     }
 }
 
+void PagesMappings::setDefaultIpPage(const QString &name, const QString &ip) {
+    const auto found = mappingsPages.find(Name(name));
+    CHECK(found != mappingsPages.end(), "Not found page");
+    found->second->changeDefaultIp(ip);
+}
+
 const std::vector<QString>& PagesMappings::getDefaultIps() const {
     return defaultMhIps;
 }
@@ -353,10 +362,10 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
     return Optional<QString>();
 }
 
-QString PagesMappings::getIp(const QString &text) const
-{
+QString PagesMappings::getIp(const QString &text, const std::set<QString> &excludes) {
     const PageInfo pageInfo = find(text);
-    QString ip = pageInfo.getIp();
+    const QString ip = pageInfo.getIp(excludes);
+    setDefaultIpPage(pageInfo.printedName, ip);
     if (ip.isNull()) {
         return defaultMhIp;
     }
@@ -394,6 +403,11 @@ PageInfo PagesMappings::find(const QString &text) const {
     return pageInfo;
 }
 
+void PageInfo::changeDefaultIp(const QString &ip) {
+    CHECK(std::find(ips.begin(), ips.end(), ip) != ips.end(), "Incorrect ip");
+    defaultIp = ip;
+}
+
 PagesMappings::UrlName::UrlName(const QString &name)
     : name(name.toLower())
 {}
@@ -402,16 +416,14 @@ bool PagesMappings::UrlName::operator<(const PagesMappings::UrlName &second) con
     return this->name < second.name;
 }
 
-QString PageInfo::getIp() const
-{
-    return defaultIp;
-}
-
-void PageInfo::changeDefaultIp()
-{
-    if (!ips.empty()) {
-        defaultIp = ::getRandom(ips);
-    } else {
-        defaultIp = QString();
+QString PageInfo::getIp(const std::set<QString> &excludes) const {
+    if (!defaultIp.isEmpty() && excludes.find(QUrl(defaultIp).host()) == excludes.end()) {
+        return defaultIp;
     }
+    std::vector<QString> copyIps = ips;
+    copyIps.erase(std::remove_if(copyIps.begin(), copyIps.end(), [&excludes](const QString &element) {
+        return excludes.find(QUrl(element).host()) != excludes.end();
+    }), copyIps.end());
+
+    return  ::getRandom(copyIps);;
 }

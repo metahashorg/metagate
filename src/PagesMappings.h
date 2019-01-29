@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <set>
 
 #include <QString>
 
@@ -51,8 +52,9 @@ struct PageInfo {
     QString defaultIp;
 
     std::vector<QString> ips;
-    QString getIp() const;
-    void changeDefaultIp();
+    QString getIp(const std::set<QString> &excludes) const;
+
+    void changeDefaultIp(const QString &ip);
 
     PageInfo() = default;
 
@@ -62,6 +64,14 @@ struct PageInfo {
         , isDefault(isDefault)
         , isLocalFile(isLocalFile)
     {}
+
+    bool operator==(const PageInfo &second) const {
+        return std::make_tuple(isApp, page, printedName, isExternal, isDefault, isLocalFile, ips) == std::make_tuple(second.isApp, second.page, second.printedName, second.isExternal, second.isDefault, second.isLocalFile, second.ips);
+    }
+
+    bool operator!=(const PageInfo &second) const {
+        return !this->operator==(second);
+    }
 };
 
 class PagesMappings {
@@ -106,13 +116,15 @@ public:
 
     Optional<QString> findName(const QString &url) const;
 
-    QString getIp(const QString &text) const;
+    QString getIp(const QString &text, const std::set<QString> &excludes={});
 
     static QString getHost(const QString &url);
 
 private:
 
     Optional<PageInfo> findInternal(const QString &url) const;
+
+    void setDefaultIpPage(const QString &name, const QString &ip);
 
     static int findSlashInternal(const QString &url);
 

@@ -461,6 +461,7 @@ void MainWindow::softReloadApp() {
 void MainWindow::loadUrl(const QString &page) {
     LOG << "Reload. " << page << ".";
     shemeHandler->setLog();
+    shemeHandler->setFirstRun();
     QUrl url(page);
     if (url.path().isEmpty())
         url.setPath("/");
@@ -580,10 +581,15 @@ void MainWindow::showExpanded() {
     show();
 }
 
-QString MainWindow::getServerIp(const QString &text) const {
-    QString ip = pagesMappings.getIp(text);
-    QUrl url(ip);
-    return url.host();
+QString MainWindow::getServerIp(const QString &text, const std::set<QString> &excludesIps) {
+    try {
+        QString ip = pagesMappings.getIp(text, excludesIps);
+        QUrl url(ip);
+        return url.host();
+    } catch (const Exception &e) {
+        LOG << "Error " << e;
+        return "";
+    }
 }
 
 LastHtmlVersion MainWindow::getCurrentHtmls() const {

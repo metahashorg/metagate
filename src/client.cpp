@@ -50,11 +50,11 @@ static void addRequestId(QNetworkRequest &request, const std::string &id) {
     request.setAttribute(REQUEST_ID_FIELD, QString::fromStdString(id));
 }
 
-static bool isRequestId(QNetworkReply &reply) {
+static bool isRequestId(const QNetworkReply &reply) {
     return reply.request().attribute(REQUEST_ID_FIELD).userType() == QMetaType::QString;
 }
 
-static std::string getRequestId(QNetworkReply &reply) {
+static std::string getRequestId(const QNetworkReply &reply) {
     CHECK(isRequestId(reply), "Request id field not set");
     return reply.request().attribute(REQUEST_ID_FIELD).toString().toStdString();
 }
@@ -63,11 +63,11 @@ static void addBeginTime(QNetworkRequest &request, time_point tp) {
     request.setAttribute(TIME_BEGIN_FIELD, QString::fromStdString(std::to_string(timePointToInt(tp))));
 }
 
-static bool isBeginTime(QNetworkReply &reply) {
+static bool isBeginTime(const QNetworkReply &reply) {
     return reply.request().attribute(TIME_BEGIN_FIELD).userType() == QMetaType::QString;
 }
 
-static time_point getBeginTime(QNetworkReply &reply) {
+static time_point getBeginTime(const QNetworkReply &reply) {
     CHECK(isBeginTime(reply), "begin time field not set");
     const size_t timeBegin = std::stoull(reply.request().attribute(TIME_BEGIN_FIELD).toString().toStdString());
     const time_point timeBeginTp = intToTimePoint(timeBegin);
@@ -78,11 +78,11 @@ static void addTimeout(QNetworkRequest &request, milliseconds timeout) {
     request.setAttribute(TIMOUT_FIELD, QString::fromStdString(std::to_string(timeout.count())));
 }
 
-static bool isTimeout(QNetworkReply &reply) {
+static bool isTimeout(const QNetworkReply &reply) {
     return reply.request().attribute(TIMOUT_FIELD).userType() == QMetaType::QString;
 }
 
-static milliseconds getTimeout(QNetworkReply &reply) {
+static milliseconds getTimeout(const QNetworkReply &reply) {
     CHECK(isTimeout(reply), "Timeout field not set");
     return milliseconds(std::stol(reply.request().attribute(TIMOUT_FIELD).toString().toStdString()));
 }

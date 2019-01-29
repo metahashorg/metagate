@@ -72,7 +72,7 @@ public:
 
     void showExpanded();
 
-    QString getServerIp(const QString &text) const;
+    QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
     LastHtmlVersion getCurrentHtmls() const;
 
