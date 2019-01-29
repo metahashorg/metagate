@@ -27,7 +27,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, CryptographicManager &cryptoManager, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m) {
         messenger = &m;

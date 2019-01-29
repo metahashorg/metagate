@@ -24,7 +24,7 @@ using namespace std::placeholders;
 
 namespace messenger {
 
-MessengerJavascript::MessengerJavascript(auth::Auth &authManager, const JavascriptWrapper &jManager, CryptographicManager &cryptoManager, QObject *parent)
+MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, QObject *parent)
     : QObject(parent)
     , cryptoManager(cryptoManager)
 {
@@ -38,8 +38,8 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, const Javascri
 
     Q_REG(MessengerJavascript::Callback, "MessengerJavascript::Callback");
 
-    defaultWalletPath = jManager.walletDefaultPath;
-    defaultUserName = jManager.defaultUsername;
+    defaultWalletPath = getWalletPath();
+    defaultUserName = JavascriptWrapper::defaultUsername;
 
     signalFunc = std::bind(&MessengerJavascript::callbackCall, this, _1);
 

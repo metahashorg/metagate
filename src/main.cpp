@@ -36,11 +36,7 @@
 #include "Initializer/Inits/InitJavascriptWrapper.h"
 #include "Initializer/Inits/InitUploader.h"
 #include "Initializer/Inits/InitProxy.h"
-
-#include "Messenger/Messenger.h"
-#include "Messenger/MessengerJavascript.h"
-#include "Messenger/MessengerDBStorage.h"
-#include "Messenger/CryptographicManager.h"
+#include "Initializer/Inits/InitMessenger.h"
 
 #include "Module.h"
 #include "proxy/Proxy.h"
@@ -132,19 +128,10 @@ int main(int argc, char *argv[]) {
         //addModule(proxy::Proxy::moduleName());
         //const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(webSocketClient, mainWindow);
 
+        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth);
+
         initManager.complete();
        
-        /*
-        messenger::CryptographicManager messengerCryptManager;
-        messenger::MessengerJavascript messengerJavascript(authManager, jsWrapper, messengerCryptManager);
-        emit mainWindow.setMessengerJavascript(messengerJavascript);
-        messenger::MessengerDBStorage dbMessenger(getDbPath());
-        dbMessenger.init();
-        messenger::Messenger messenger(messengerJavascript, dbMessenger);
-        messenger.start();
-        messengerJavascript.setMessenger(messenger);
-        */
-
         const int returnCode = app.exec();
         LOG << "Return code " << returnCode;
         return 0;
