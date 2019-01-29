@@ -48,6 +48,8 @@ signals:
 
     void transactionStatusChangedSig(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx);
 
+    void transactionStatusChanged2Sig(const QString &txHash, const Transaction &tx);
+
 public slots:
 
     void onCallbackCall(const TransactionsJavascript::Callback &callback);
@@ -61,6 +63,8 @@ private slots:
     void onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error);
 
     void onTransactionStatusChanged(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx);
+
+    void onTransactionStatusChanged2(const QString &txHash, const Transaction &tx);
 
 public slots:
 

@@ -17,6 +17,7 @@
 #include "platform.h"
 #include "tests.h"
 #include "utils.h"
+#include "algorithms.h"
 
 #include "machine_uid.h"
 #include "openssl_wrapper/openssl_wrapper.h"

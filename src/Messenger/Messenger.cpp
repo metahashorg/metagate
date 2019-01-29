@@ -107,9 +107,9 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
 
     CHECK(connect(this, &Messenger::callbackCall, this, &Messenger::onCallbackCall), "not connect onCallbackCall");
 
-    CHECK(connect(this, SIGNAL(timerEvent()), this, SLOT(onTimerEvent())), "not connect onTimerEvent");
+    CHECK(connect(this, &TimerClass::timerEvent, this, &Messenger::onTimerEvent), "not connect onTimerEvent");
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived), "not connect wssClient");
-    CHECK(connect(this, SIGNAL(startedEvent()), this, SLOT(onRun())), "not connect run");
+    CHECK(connect(this, &TimerClass::startedEvent, this, &Messenger::onRun), "not connect run");
 
     CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
     CHECK(connect(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress), "not connect onGetPubkeyAddress");

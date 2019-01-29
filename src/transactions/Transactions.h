@@ -233,6 +233,8 @@ private:
 
     void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs);
 
+    void processPendingsMth(const std::vector<QString> &servers);
+
     void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
     void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
@@ -267,6 +269,8 @@ private:
     std::map<TransactionHash, SendedTransactionWatcher> sendTxWathcers;
 
     std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
+
+    std::vector<QString> pendingTxsAfterSend;
 
     seconds timeout;
 };

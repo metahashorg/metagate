@@ -37,9 +37,9 @@ void SimpleClient::moveToThread(QThread *thread) {
 void SimpleClient::startTimer1() {
     if (timer == nullptr) {
         timer = new QTimer();
-        CHECK(connect(timer, SIGNAL(timeout()), this, SLOT(onTimerEvent())), "not connect timeout");
+        CHECK(connect(timer, &QTimer::timeout, this, &SimpleClient::onTimerEvent), "not connect timeout");
         if (thread1 != nullptr) {
-            CHECK(timer->connect(thread1, SIGNAL(finished()), SLOT(stop())), "not connect finished");
+            CHECK(connect(thread1, &QThread::finished, timer, &QTimer::stop), "not connect finished");
         }
         timer->setInterval(milliseconds(1s).count());
         timer->start();
@@ -50,11 +50,11 @@ static void addRequestId(QNetworkRequest &request, const std::string &id) {
     request.setAttribute(REQUEST_ID_FIELD, QString::fromStdString(id));
 }
 
-static bool isRequestId(QNetworkReply &reply) {
+static bool isRequestId(const QNetworkReply &reply) {
     return reply.request().attribute(REQUEST_ID_FIELD).userType() == QMetaType::QString;
 }
 
-static std::string getRequestId(QNetworkReply &reply) {
+static std::string getRequestId(const QNetworkReply &reply) {
     CHECK(isRequestId(reply), "Request id field not set");
     return reply.request().attribute(REQUEST_ID_FIELD).toString().toStdString();
 }
@@ -63,11 +63,11 @@ static void addBeginTime(QNetworkRequest &request, time_point tp) {
     request.setAttribute(TIME_BEGIN_FIELD, QString::fromStdString(std::to_string(timePointToInt(tp))));
 }
 
-static bool isBeginTime(QNetworkReply &reply) {
+static bool isBeginTime(const QNetworkReply &reply) {
     return reply.request().attribute(TIME_BEGIN_FIELD).userType() == QMetaType::QString;
 }
 
-static time_point getBeginTime(QNetworkReply &reply) {
+static time_point getBeginTime(const QNetworkReply &reply) {
     CHECK(isBeginTime(reply), "begin time field not set");
     const size_t timeBegin = std::stoull(reply.request().attribute(TIME_BEGIN_FIELD).toString().toStdString());
     const time_point timeBeginTp = intToTimePoint(timeBegin);
@@ -78,11 +78,11 @@ static void addTimeout(QNetworkRequest &request, milliseconds timeout) {
     request.setAttribute(TIMOUT_FIELD, QString::fromStdString(std::to_string(timeout.count())));
 }
 
-static bool isTimeout(QNetworkReply &reply) {
+static bool isTimeout(const QNetworkReply &reply) {
     return reply.request().attribute(TIMOUT_FIELD).userType() == QMetaType::QString;
 }
 
-static milliseconds getTimeout(QNetworkReply &reply) {
+static milliseconds getTimeout(const QNetworkReply &reply) {
     CHECK(isTimeout(reply), "Timeout field not set");
     return milliseconds(std::stol(reply.request().attribute(TIMOUT_FIELD).toString().toStdString()));
 }
@@ -130,7 +130,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
         manager->clearConnectionCache();
     }
     QNetworkReply* reply = manager->post(request, message.toUtf8());
-    CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
+    CHECK(connect(reply, &QNetworkReply::finished, this, &SimpleClient::onTextMessageReceived), "not connect onTextMessageReceived");
     requests[requestId] = reply;
     //LOG << "post message sended";
 }
@@ -158,7 +158,7 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
         addTimeout(request, timeout);
     }
     QNetworkReply* reply = manager->get(request);
-    CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onTextMessageReceived())), "not connect");
+    CHECK(connect(reply, &QNetworkReply::finished, this, &SimpleClient::onTextMessageReceived), "not connect onTextMessageReceived");
     requests[requestId] = reply;
     //LOG << "get message sended";
 }
@@ -184,7 +184,7 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
     addBeginTime(request, time);
     addTimeout(request, timeout);
     QNetworkReply* reply = manager->get(request);
-    CHECK(connect(reply, SIGNAL(finished()), this, SLOT(onPingReceived()), Qt::QueuedConnection), "not connect");
+    CHECK(connect(reply, &QNetworkReply::finished, this, &SimpleClient::onPingReceived, Qt::QueuedConnection), "not connect onTextMessageReceived");
 
     requests[requestId] = reply;
     //LOG << "ping message sended ";

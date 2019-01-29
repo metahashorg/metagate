@@ -83,7 +83,7 @@ public:
 
     void showExpanded();
 
-    QString getServerIp(const QString &text) const;
+    QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
     LastHtmlVersion getCurrentHtmls() const;
 
@@ -153,8 +153,6 @@ private slots:
 
     void onCallbackCall(SimpleClient::ReturnCallback callback);
 
-    void onUpdateMhsReferences();
-
     void onShowContextMenu(const QPoint &point);
 
     void onJsRun(QString jsString);
@@ -169,7 +167,7 @@ private slots:
 
     void onEnterCommandAndAddToHistoryNoDuplicate(const QString &text);
 
-    void onBrowserLoadFinished(const QUrl &url2);
+    void onUrlChanged(const QUrl &url2);
 
     void onLogined(bool isInit, const QString &login);
 
@@ -199,13 +197,15 @@ private:
 
     SimpleClient client;
 
-    QTimer qtimer;
-
     QString prevUrl;
 
     QString prevTextCommandLine;
 
     QString currentUserName;
+
+    QString urlDns;
+
+    QString netDns;
 
     bool lineEditUserChanged = false;
 

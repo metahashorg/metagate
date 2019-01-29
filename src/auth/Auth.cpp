@@ -58,7 +58,6 @@ BEGIN_SLOT_WRAPPER
     tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const SimpleClient::ServerException &error) {
        if (error.isSet()) {
            QString content = QString::fromStdString(error.content);
-           content.replace('\"', "\\\"");
            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
        } else {
            const TypedException exception = apiVrapper2([&] {
@@ -196,7 +195,6 @@ void Auth::forceRefreshInternal() {
             LOG << "Refresh token failed";
             logoutImpl();
             QString content = QString::fromStdString(error.content);
-            content.replace('\"', "\\\"");
             const TypedException except(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description);
             emit javascriptWrapper.sendLoginInfoResponseSig(info, except);
             emit checkTokenFinished(except);

@@ -475,12 +475,6 @@
     </property>
     <item>
      <widget class="QWidget" name="grid_layout" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
@@ -502,9 +496,6 @@
        </property>
        <property name="bottomMargin">
         <number>0</number>
-       </property>
-       <property name="horizontalSpacing">
-        <number>6</number>
        </property>
        <property name="verticalSpacing">
         <number>0</number>
@@ -656,8 +647,8 @@
          </property>
          <property name="iconSize">
           <size>
-           <width>18</width>
-           <height>18</height>
+           <width>20</width>
+           <height>20</height>
           </size>
          </property>
          <property name="toolButtonStyle">

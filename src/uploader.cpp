@@ -87,8 +87,8 @@ Uploader::Uploader(MainWindow &mainWindow)
         serverName = QString::fromStdString(servers.dev);
     }
 
-    CHECK(connect(this, SIGNAL(generateEvent(WindowEvent)), &mainWindow, SLOT(processEvent(WindowEvent))), "not connect");
-    CHECK(connect(this, SIGNAL(generateUpdateApp(QString,QString,QString)), &mainWindow, SLOT(updateAppEvent(QString,QString,QString))), "not connect");
+    CHECK(connect(this, &Uploader::generateEvent, &mainWindow, &MainWindow::processEvent), "not connect processEvent");
+    CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");
 
     client.setParent(this);
 
@@ -101,8 +101,8 @@ Uploader::Uploader(MainWindow &mainWindow)
 
     currentAppVersion = Version(VERSION_STRING);
 
-    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(run())), "not connect");
-    CHECK(QObject::connect(this,SIGNAL(finished()),&thread1,SLOT(terminate())), "not connect");
+    CHECK(connect(&thread1, &QThread::started, this, &Uploader::run), "not connect run");
+    CHECK(connect(this, &Uploader::finished, &thread1, &QThread::terminate), "not connect terminate");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/uploader"), "timeouts not found");
@@ -111,9 +111,9 @@ Uploader::Uploader(MainWindow &mainWindow)
     const milliseconds msTimer = 10s;
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
-    CHECK(connect(&qtimer, SIGNAL(timeout()), this, SLOT(uploadEvent())), "not connect");
-    CHECK(qtimer.connect(&thread1, SIGNAL(started()), SLOT(start())), "not connect");
-    CHECK(qtimer.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
+    CHECK(connect(&qtimer, &QTimer::timeout, this, &Uploader::uploadEvent), "not connect uploadEvent");
+    CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
+    CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
 
     client.moveToThread(&thread1);
 
@@ -270,6 +270,7 @@ BEGIN_SLOT_WRAPPER
             LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();
 
             emit generateUpdateApp(version, reference, "");
+            versionForUpdate = version;
         };
 
         LOG << "New app version download";

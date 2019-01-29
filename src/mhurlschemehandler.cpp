@@ -9,25 +9,114 @@
 #include "SlotWrapper.h"
 #include "check.h"
 
+const static QNetworkRequest::Attribute REQUEST_ID_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 0);
+const static QNetworkRequest::Attribute TIME_BEGIN_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 1);
+const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 2);
+const static QNetworkRequest::Attribute IGNORE_ERRORS_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 3);
+
+static void addRequestId(QNetworkRequest &request, const std::string &id) {
+    request.setAttribute(REQUEST_ID_FIELD, QString::fromStdString(id));
+}
+
+static bool isRequestId(const QNetworkReply &reply) {
+    return reply.request().attribute(REQUEST_ID_FIELD).userType() == QMetaType::QString;
+}
+
+static std::string getRequestId(const QNetworkReply &reply) {
+    CHECK(isRequestId(reply), "Request id field not set");
+    return reply.request().attribute(REQUEST_ID_FIELD).toString().toStdString();
+}
+
+static void addBeginTime(QNetworkRequest &request, time_point tp) {
+    request.setAttribute(TIME_BEGIN_FIELD, QString::fromStdString(std::to_string(timePointToInt(tp))));
+}
+
+static bool isBeginTime(const QNetworkReply &reply) {
+    return reply.request().attribute(TIME_BEGIN_FIELD).userType() == QMetaType::QString;
+}
+
+static time_point getBeginTime(const QNetworkReply &reply) {
+    CHECK(isBeginTime(reply), "begin time field not set");
+    const size_t timeBegin = std::stoull(reply.request().attribute(TIME_BEGIN_FIELD).toString().toStdString());
+    const time_point timeBeginTp = intToTimePoint(timeBegin);
+    return timeBeginTp;
+}
+
+static void addTimeout(QNetworkRequest &request, milliseconds timeout) {
+    request.setAttribute(TIMOUT_FIELD, QString::fromStdString(std::to_string(timeout.count())));
+}
+
+static bool isTimeout(const QNetworkReply &reply) {
+    return reply.request().attribute(TIMOUT_FIELD).userType() == QMetaType::QString;
+}
+
+static milliseconds getTimeout(const QNetworkReply &reply) {
+    CHECK(isTimeout(reply), "Timeout field not set");
+    return milliseconds(std::stol(reply.request().attribute(TIMOUT_FIELD).toString().toStdString()));
+}
+
+static void addIgnoreError(QNetworkRequest &request) {
+    request.setAttribute(IGNORE_ERRORS_FIELD, true);
+}
+
+static bool isIgnoreError(const QNetworkReply &reply) {
+    return reply.request().attribute(IGNORE_ERRORS_FIELD).userType() == QMetaType::Bool;
+}
+
+static bool getIgnoreError(const QNetworkReply &reply) {
+    CHECK(isIgnoreError(reply), "Ignore error field not set");
+    return reply.request().attribute(IGNORE_ERRORS_FIELD).toBool();
+}
+
 MHUrlSchemeHandler::MHUrlSchemeHandler(QObject *parent)
     : QWebEngineUrlSchemeHandler(parent)
 {
     m_manager = new QNetworkAccessManager(this);
+
+    CHECK(connect(&timer, &QTimer::timeout, this, &MHUrlSchemeHandler::onTimerEvent), "not connect timeout");
+    timer.setInterval(milliseconds(1s).count());
+    timer.start();
 }
 
 void MHUrlSchemeHandler::setLog() {
     isLog = true;
 }
 
-void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
-{
-    const QUrl url = job->requestUrl();
-    const QString host = url.host();
+void MHUrlSchemeHandler::setFirstRun() {
+    isFirstRun = true;
+}
 
-    QString ip;
-    MainWindow *win = qobject_cast<MainWindow *>(parent());
+void MHUrlSchemeHandler::onTimerEvent() {
+BEGIN_SLOT_WRAPPER
+    const time_point timeEnd = ::now();
+    const auto it = std::stable_partition(requests.begin(), requests.end(), [timeEnd](const QNetworkReply* reply) {
+        if (isTimeout(*reply)) {
+            const milliseconds timeout = getTimeout(*reply);
+            const time_point timeBegin = getBeginTime(*reply);
+            const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
+            if (duration >= timeout) {
+                LOG << "Timeout request";
+                return false;
+            }
+        }
+        return true;
+    });
+    std::vector<QNetworkReply*> toDelete(it, requests.end());
+    requests.erase(it, requests.end());
+
+    for (QNetworkReply* reply: toDelete) {
+        reply->abort();
+    }
+END_SLOT_WRAPPER
+}
+
+void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, bool isFirstRun, const std::set<QString> &excludesIps) {
     CHECK(win, "mainwin cast");
-    ip = win->getServerIp(url.toString());
+    const QString ip = win->getServerIp(url.toString(), excludesIps);
+    if (ip.isEmpty()) {
+        job->fail(QWebEngineUrlRequestJob::UrlNotFound);
+        return;
+    }
     QUrl newurl(url);
     newurl.setScheme(QStringLiteral("http"));
     newurl.setHost(ip);
@@ -36,24 +125,66 @@ void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
         isLog = false;
     }
     QNetworkRequest req(newurl);
+    if (isFirstRun) {
+        addRequestId(req, std::to_string(requestId++));
+        addIgnoreError(req);
+        const time_point time = ::now();
+        addBeginTime(req, time);
+        addTimeout(req, 5s);
+    }
     req.setRawHeader(QByteArray("Host"), host.toUtf8());
     QNetworkReply *reply = m_manager->get(req);
     reply->setParent(job);
-    CHECK(connect(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished), "connect fail");
+    CHECK(connect(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished), "connect finished fail");
+    if (isFirstRun) {
+        CHECK(connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), [this, job, win, url, host, ip, isFirstRun, excludesIps](QNetworkReply::NetworkError err) {
+        BEGIN_SLOT_WRAPPER
+            LOG << "Error request MHUrlSchemeHandler " << ip;
+            std::set<QString> copyExcludes = excludesIps;
+            copyExcludes.insert(ip);
+            processRequest(job, win, url, host, isFirstRun, copyExcludes);
+        END_SLOT_WRAPPER
+        }), "connect error fail");
+
+        requests.emplace_back(reply);
+    }
+    isFirstRun = false;
 }
 
-void MHUrlSchemeHandler::onRequestFinished()
-{
+void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job) {
+    const QUrl url = job->requestUrl();
+    const QString host = url.host();
+
+    MainWindow *win = qobject_cast<MainWindow *>(parent());
+    processRequest(job, win, url, host, isFirstRun, {});
+}
+
+void MHUrlSchemeHandler::onRequestFinished() {
 BEGIN_SLOT_WRAPPER
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if (!reply) {
         return;
     }
+
+    if (isRequestId(*reply)) {
+        const auto requestId = getRequestId(*reply);
+        requests.erase(std::remove_if(requests.begin(), requests.end(), [requestId](const QNetworkReply* reply) {
+            if (isRequestId(*reply)) {
+                const auto reqId = getRequestId(*reply);
+                return reqId == requestId;
+            }
+            return false;
+        }), requests.end());
+    }
+
     QWebEngineUrlRequestJob *job = qobject_cast<QWebEngineUrlRequestJob *>(reply->parent());
     if (!job) {
         return;
     }
     if (reply->error()) {
+        if (isIgnoreError(*reply) && getIgnoreError(*reply)) {
+            return;
+        }
         job->fail(QWebEngineUrlRequestJob::UrlNotFound);
         return;
     }

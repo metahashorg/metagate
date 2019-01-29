@@ -83,8 +83,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
 
     timerSendTx.moveToThread(&thread1);
     timerSendTx.setInterval(milliseconds(100).count());
-    CHECK(connect(&timerSendTx, SIGNAL(timeout()), this, SLOT(onSendTxEvent())), "not connect");
-    CHECK(timerSendTx.connect(&thread1, SIGNAL(finished()), SLOT(stop())), "not connect");
+    CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onSendTxEvent), "not connect onSendTxEvent");
+    CHECK(connect(&thread1, &QThread::finished, &timerSendTx, &QTimer::stop), "not connect stop");
 
     javascriptWrapper.setTransactions(*this);
 
@@ -128,6 +128,33 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
+void Transactions::processPendingsMth(const std::vector<QString> &servers) {
+    if (servers.empty()) {
+        return;
+    }
+
+    const auto processPendingTx = [this](const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+        if (tx.status != Transaction::PENDING) {
+            if (std::find(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx) != pendingTxsAfterSend.end()) {
+                pendingTxsAfterSend.erase(std::remove(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx), pendingTxsAfterSend.end());
+                emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
+            }
+        }
+    };
+
+    LOG << PeriodicLog::make("pas") << "Pending after send: " << pendingTxsAfterSend.size();
+
+    const auto copyPending = pendingTxsAfterSend;
+    for (const QString &txHash: copyPending) {
+        const QString message = makeGetTxRequest(txHash);
+        for (const QString &server: servers) {
+            client.sendMessagePost(server, message, processPendingTx, timeout);
+        }
+    }
+}
+
 void Transactions::processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs) {
     if (servers.empty()) {
         return;
@@ -151,6 +178,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         if (tx.status != Transaction::PENDING) {
             db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
+            emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
         }
     };
 
@@ -276,6 +304,7 @@ BEGIN_SLOT_WRAPPER
         std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});
         processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxsStrs);
     }
+    processPendingsMth(servers);
 END_SLOT_WRAPPER
 }
 
@@ -421,11 +450,14 @@ BEGIN_SLOT_WRAPPER
                 if (!exception.isSet()) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+                        emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
+                        if (tx.status == Transaction::Status::PENDING) {
+                            pendingTxsAfterSend.emplace_back(tx.tx);
+                        }
                         if (*isFirst) {
                             *isFirst = false;
                             emit timerEvent();
                         }
-                        emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
                         found->second.okServer(server);
                         return;
                     } catch (const Exception &e) {

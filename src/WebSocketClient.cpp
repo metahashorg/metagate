@@ -23,7 +23,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         m_url.setScheme("ws");
     }
 
-    CHECK(QObject::connect(&thread1,SIGNAL(started()),this,SLOT(onStarted())), "not connect started");
+    CHECK(connect(&thread1, &QThread::started, this, &WebSocketClient::onStarted), "not connect started");
 
     CHECK(connect(this, &WebSocketClient::sendMessage, this, &WebSocketClient::onSendMessage), "not connect sendMessage");
     CHECK(connect(this, &WebSocketClient::sendMessages, this, &WebSocketClient::onSendMessages), "not connect sendMessage");
