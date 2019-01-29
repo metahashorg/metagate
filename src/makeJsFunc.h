@@ -41,12 +41,14 @@ struct Opt {
 inline QString toJsString(const QString &arg) {
     QString copy = arg;
     copy.replace("\\", "\\\\");
+    copy.replace('\"', "\\\"");
+    copy.replace("\n", "\\n");
+    copy.replace("\r", "");
     return "\"" + copy + "\"";
 }
 
 inline QString toJsString(const QJsonDocument &arg) {
     QString json = arg.toJson(QJsonDocument::Compact);
-    json.replace('\"', "\\\"");
     return toJsString(json);
 }
 

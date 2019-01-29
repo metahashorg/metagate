@@ -557,10 +557,7 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
 
         const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact, isTmh);
 
-        QString res = QString::fromStdString(privKey);
-        res.replace("\n", "\\n");
-        res.replace("\r", "");
-        result = res;
+        result = QString::fromStdString(privKey);
 
         LOG << "Getted private key " << keyName;
     });
@@ -875,10 +872,7 @@ BEGIN_SLOT_WRAPPER
 
         const std::string privKey = EthWallet::getOneKey(walletPathEth, keyName.toStdString());
 
-        QString r = QString::fromStdString(privKey);
-        r.replace("\"", "\\\"");
-        r.replace("\n", "\\n");
-        result = r;
+        result = QString::fromStdString(privKey);
     });
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
@@ -1119,9 +1113,7 @@ BEGIN_SLOT_WRAPPER
 
         const std::string privKey = BtcWallet::getOneKey(walletPathBtc, keyName.toStdString());
 
-        QString r = QString::fromStdString(privKey);
-        r.replace("\n", "\\n");
-        result = r;
+        result = QString::fromStdString(privKey);
     });
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
@@ -1394,7 +1386,7 @@ BEGIN_SLOT_WRAPPER
                 resultStr += ", ";
             }
             isFirst = false;
-            resultStr += "\\\"" + r + "\\\"";
+            resultStr += "\"" + r + "\"";
         }
         resultStr += "]";
 
