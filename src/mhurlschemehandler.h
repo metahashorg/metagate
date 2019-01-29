@@ -3,6 +3,7 @@
 
 #include <set>
 #include <unordered_map>
+#include <atomic>
 
 #include <QTimer>
 #include <QWebEngineUrlSchemeHandler>
