@@ -131,8 +131,6 @@ private:
 
     std::vector<QString> requestDns(const NodeType &node) const;
 
-    static QString makeAddress(const QString &ip, const QString &port);
-
 private:
 
     QString savedNodesPath;
@@ -170,6 +168,10 @@ private:
     std::atomic<bool> isStopped{false};
 
     CacheDns cacheDns;
+
+    int countSuccessTestsForP2PNodes = 0;
+
+    seconds timeoutRequestNodes;
 
 };
 

@@ -35,6 +35,14 @@ const static milliseconds UPDATE_PERIOD = days(1);
 
 const static size_t ACCEPTABLE_COUNT_ADDRESSES = 3;
 
+static QString makeAddress(const QString &ipAndPort) {
+    return "http://" + ipAndPort;
+}
+
+static QString makeAddress(const QString &ip, const QString &port) {
+    return makeAddress(ip + ":" + port);
+}
+
 NsLookup::NsLookup(QObject *parent)
     : QObject(parent)
 {
@@ -63,6 +71,11 @@ NsLookup::NsLookup(QObject *parent)
         nodes[info.type] = info;
     }
     settings.endArray();
+
+    CHECK(settings.contains("ns_lookup/countSuccessTests"), "ns_lookup/countSuccessTests field not found");
+    countSuccessTestsForP2PNodes = settings.value("ns_lookup/countSuccessTests").toInt();
+    CHECK(settings.contains("ns_lookup/timeoutRequestNodesSeconds"), "ns_lookup/timeoutRequestNodesSeconds field not found");
+    timeoutRequestNodes = seconds(settings.value("ns_lookup/timeoutRequestNodesSeconds").toInt());
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
@@ -160,7 +173,7 @@ std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
 
     std::vector<QString> result;
     for (const auto &record : packet.answers()) {
-        result.emplace_back(makeAddress(record.toString(), node.port));
+        result.emplace_back(::makeAddress(record.toString(), node.port));
     }
     return result;
 }
@@ -209,6 +222,8 @@ void NsLookup::finalizeLookup() {
     }
     if (isSuccessFl) {
         emit serversFlushed(TypedException());
+
+        startScanTime = ::now();
         continueResolveP2P(std::begin(nodes));
     }
     isSafeCheck = false;
@@ -245,8 +260,25 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
     continuePing(node);
 }
 
-QString NsLookup::makeAddress(const QString &ip, const QString &port) {
-    return "http://" + ip + ":" + port;
+static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message) {
+    NodeInfo info;
+    info.address = address;
+    info.ping = time.count();
+    info.isChecked = true;
+
+    if (message.empty()) {
+        info.ping = MAX_PING.count();
+        info.isTimeout = true;
+    } else {
+        QJsonParseError parseError;
+        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
+        if (parseError.error != QJsonParseError::NoError) {
+            info.ping = MAX_PING.count();
+            info.isTimeout = true;
+        }
+    }
+
+    return info;
 }
 
 void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
@@ -272,24 +304,7 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
             posInIpsTemp++;
             client.ping(ip, [this, node, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
                 try {
-                    NodeInfo info;
-                    info.address = address;
-                    info.ping = time.count();
-                    info.isChecked = true;
-
-                    if (message.empty()) {
-                        info.ping = MAX_PING.count();
-                        info.isTimeout = true;
-                    } else {
-                        QJsonParseError parseError;
-                        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
-                        if (parseError.error != QJsonParseError::NoError) {
-                            info.ping = MAX_PING.count();
-                            info.isTimeout = true;
-                        }
-                    }
-
-                    allNodesForTypesNew[node->second.node].emplace_back(info);
+                    allNodesForTypesNew[node->second.node].emplace_back(parseNodeInfo(address, time, message));
                 } catch (const Exception &e) {
                     LOG << "Error " << e;
                 } catch (const std::exception &e) {
@@ -337,20 +352,14 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
             client.ping(address, [this, node, posInIpsTempSave, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
                 try {
                     NodeInfo &info = allNodesForTypes[node->second.node][posInIpsTempSave];
-                    CHECK(info.address == address, "Incorrect address");
-                    info.isChecked = true;
-
-                    if (message.empty()) {
-                        info.ping = MAX_PING.count();
-                        info.isTimeout = true;
-                    } else {
-                        QJsonParseError parseError;
-                        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
-                        if (parseError.error != QJsonParseError::NoError) {
-                            info.ping = MAX_PING.count();
-                            info.isTimeout = true;
-                        }
+                    NodeInfo newInfo = parseNodeInfo(address, time, message);
+                    CHECK(info.address == newInfo.address, "Incorrect address");
+                    newInfo.isChecked = true;
+                    if (!newInfo.isTimeout) {
+                        newInfo.ping = info.ping;
                     }
+
+                    info = newInfo;
                 } catch (const Exception &e) {
                     LOG << "Error " << e;
                 } catch (const std::exception &e) {
@@ -409,7 +418,7 @@ static std::vector<P2PNodeResult> parseNodesP2P(const std::string &resp) {
         CHECK(node.contains("count") && node.value("count").isDouble(), "count field not found");
         res.count = node.value("count").toInt();
         CHECK(node.contains("ip") && node.value("ip").isString(), "ip field not found");
-        res.ip = node.value("ip").toString();
+        res.ip = makeAddress(node.value("ip").toString());
         CHECK(node.contains("type") && node.value("type").isString(), "type field not found");
         const QString type = node.value("type").toString();
         if (type == "proxy") {
@@ -462,7 +471,7 @@ void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator no
         continueResolveP2P(std::next(node));
         return;
     }
-    const QString postRequest = "{\"id\":1,\"params\":{\"count_tests\": 5},\"method\":\"get-all-last-nodes-count\", \"pretty\": false}"; // TODO Заменить константу на значение из конфига
+    const QString postRequest = QString::fromStdString("{\"id\":1,\"params\":{\"count_tests\": " + std::to_string(countSuccessTestsForP2PNodes) + "},\"method\":\"get-all-last-nodes-count\", \"pretty\": false}");
     client.sendMessagePost(allNodesForTypes[node->second.node][0].address, postRequest, [this, node, nodeNetworkProxy, nodeNetworkTorrent](const std::string &response, const SimpleClient::ServerException &exception){
         if (exception.isSet()) {
             LOG << "P2P get nodes exception: " << exception.description << " " << exception.content;
@@ -478,7 +487,7 @@ void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator no
         posInIpsTemp = 0;
 
         continuePingP2P(node, nodeNetworkTorrent, nodeNetworkProxy);
-    }, 3s); // TODO вынести в конфиг
+    }, timeoutRequestNodes);
 }
 
 void NsLookup::continuePingP2P(std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy) {
@@ -503,22 +512,7 @@ void NsLookup::continuePingP2P(std::map<QString, NodeType>::const_iterator node,
         posInIpsTemp++;
         client.ping(ipPair.second, [this, type=ipPair.first, node, nodeTorrent, nodeProxy, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
             try {
-                NodeInfo info;
-                info.address = address;
-                info.ping = time.count();
-                info.isChecked = true;
-
-                if (message.empty()) {
-                    info.ping = MAX_PING.count();
-                    info.isTimeout = true;
-                } else {
-                    QJsonParseError parseError;
-                    QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
-                    if (parseError.error != QJsonParseError::NoError) {
-                        info.ping = MAX_PING.count();
-                        info.isTimeout = true;
-                    }
-                }
+                const NodeInfo info = parseNodeInfo(address, time, message);
 
                 std::unique_lock<std::mutex> lock(nodeMutex);
                 if (type == NodeType::SubType::torrent) {
