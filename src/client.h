@@ -87,6 +87,22 @@ private Q_SLOTS:
 
 private:
 
+    using TextMessageReceived = void (SimpleClient::*)();
+
+    template<typename Callback>
+    void sendMessageInternal(
+        bool isPost,
+        std::unordered_map<std::string, Callback> &callbacks,
+        const QUrl &url,
+        const QString &message,
+        const Callback &callback,
+        bool isTimeout,
+        milliseconds timeout,
+        bool isClearCache,
+        TextMessageReceived onTextMessageReceived,
+        bool isQueuedConnection
+    );
+
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 

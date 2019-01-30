@@ -111,12 +111,24 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache) {
+template<typename Callback>
+void SimpleClient::sendMessageInternal(
+    bool isPost,
+    std::unordered_map<std::string, Callback> &callbacks,
+    const QUrl &url,
+    const QString &message,
+    const Callback &callback,
+    bool isTimeout,
+    milliseconds timeout,
+    bool isClearCache,
+    TextMessageReceived onTextMessageReceived,
+    bool isQueuedConnection
+) {
     const std::string requestId = std::to_string(id++);
 
     startTimer1();
 
-    callbacks_[requestId] = callback;
+    callbacks[requestId] = callback;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     addRequestId(request, requestId);
@@ -129,10 +141,22 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
         manager->clearAccessCache();
         manager->clearConnectionCache();
     }
-    QNetworkReply* reply = manager->post(request, message.toUtf8());
-    CHECK(connect(reply, &QNetworkReply::finished, this, &SimpleClient::onTextMessageReceived), "not connect onTextMessageReceived");
+    QNetworkReply* reply;
+    if (isPost) {
+        reply = manager->post(request, message.toUtf8());
+    } else {
+        reply = manager->get(request);
+    }
+    Qt::ConnectionType connType = Qt::AutoConnection;
+    if (isQueuedConnection) {
+        connType = Qt::QueuedConnection;
+    }
+    CHECK(connect(reply, &QNetworkReply::finished, this, onTextMessageReceived, connType), "not connect onTextMessageReceived");
     requests[requestId] = reply;
-    //LOG << "post message sended";
+}
+
+void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache) {
+    sendMessageInternal(true, callbacks_, url, message, callback, isTimeout, timeout, isClearCache, &SimpleClient::onTextMessageReceived, false);
 }
 
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
@@ -144,23 +168,7 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
 }
 
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
-    const std::string requestId = std::to_string(id++);
-
-    startTimer1();
-
-    callbacks_[requestId] = callback;
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    addRequestId(request, requestId);
-    if (isTimeout) {
-        const time_point time = ::now();
-        addBeginTime(request, time);
-        addTimeout(request, timeout);
-    }
-    QNetworkReply* reply = manager->get(request);
-    CHECK(connect(reply, &QNetworkReply::finished, this, &SimpleClient::onTextMessageReceived), "not connect onTextMessageReceived");
-    requests[requestId] = reply;
-    //LOG << "get message sended";
+    sendMessageInternal(false, callbacks_, url, "", callback, isTimeout, timeout, false, &SimpleClient::onTextMessageReceived, false);
 }
 
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
@@ -172,22 +180,7 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
 }
 
 void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {
-    const std::string requestId = std::to_string(id++);
-
-    startTimer1();
-
-    pingCallbacks_[requestId] = std::bind(callback, address, _1, _2);
-    QNetworkRequest request(address);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    const time_point time = ::now();
-    addRequestId(request, requestId);
-    addBeginTime(request, time);
-    addTimeout(request, timeout);
-    QNetworkReply* reply = manager->get(request);
-    CHECK(connect(reply, &QNetworkReply::finished, this, &SimpleClient::onPingReceived, Qt::QueuedConnection), "not connect onTextMessageReceived");
-
-    requests[requestId] = reply;
-    //LOG << "ping message sended ";
+    sendMessageInternal(false, pingCallbacks_, address, "", PingCallbackInternal(std::bind(callback, address, _1, _2)), true, timeout, false, &SimpleClient::onPingReceived, true);
 }
 
 template<class Callbacks, typename... Message>
