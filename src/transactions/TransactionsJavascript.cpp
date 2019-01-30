@@ -172,6 +172,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         AddressInfo info(currency, address, type, group, name);
         emit transactionsManager->registerAddresses({info}, [address, currency, makeFunc](const TypedException &exception) {
+            LOG << "Register address ok " << address << " " << currency;
             makeFunc(exception, address, currency);
         });
     });
@@ -218,6 +219,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit transactionsManager->registerAddresses(infos, [makeFunc](const TypedException &exception) {
+            LOG << "Register addresses ok";
             makeFunc(exception);
         });
     });
@@ -267,7 +269,8 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit transactionsManager->setCurrentGroup(group, [makeFunc](const TypedException &exception) {
+        emit transactionsManager->setCurrentGroup(group, [makeFunc, group](const TypedException &exception) {
+            LOG << "Set group ok " << group;
             makeFunc(exception);
         });
     });
@@ -444,7 +447,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit transactionsManager->calcBalance(address, currency, [currency, address, makeFunc](const BalanceInfo &balance, const TypedException &exception) {
-            LOG << "Get balance ok " << currency << " " << address;
+            LOG << "calc balance ok " << currency << " " << address << " " << QString(balance.calcBalance().getDecimal()) << " " << balance.countReceived << " " << balance.countSpent;
             makeFunc(exception, address, currency, balanceToJson(balance));
         });
     });
