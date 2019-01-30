@@ -244,6 +244,8 @@ BEGIN_SLOT_WRAPPER
                         makeFunc(TypedException(), QString("Ok"));
                     }, errorFunc, signalFunc));
                 }, errorFunc, signalFunc));
+            } else {
+                makeFunc(TypedException(), QString("Ok"));
             }
         };
 
