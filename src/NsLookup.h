@@ -18,6 +18,10 @@
 struct TypedException;
 
 struct NodeType {
+    enum class SubType {
+        none, torrent, proxy
+    };
+
     struct Node {
         QString node;
 
@@ -39,6 +43,8 @@ struct NodeType {
     QString type;
     Node node;
     QString port;
+    QString network;
+    SubType subtype = SubType::none;
 };
 
 struct NodeInfo {
@@ -115,6 +121,12 @@ private:
 
     void finalizeLookup();
 
+    void continueResolveP2P(std::map<QString, NodeType>::const_iterator node);
+
+    void continuePingP2P(std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy);
+
+    void finalizeLookupP2P();
+
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
     std::vector<QString> requestDns(const NodeType &node) const;
@@ -129,11 +141,15 @@ private:
 
     std::vector<QString> ipsTemp;
 
+    std::vector<std::pair<NodeType::SubType, QString>> ipsTempP2P;
+
     size_t posInIpsTemp;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
+
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesP2P;
 
     mutable std::mutex nodeMutex;
 

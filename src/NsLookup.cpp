@@ -46,7 +46,20 @@ NsLookup::NsLookup(QObject *parent)
         info.type = settings.value("type").toString();
         info.node = NodeType::Node(settings.value("node").toString());
         info.port = settings.value("port").toString();
-        LOG << "node " << info.type << ". " << info.node.str() << ". " << info.port << ".";
+        if (settings.contains("network")) {
+            info.network = settings.value("network").toString();
+        }
+        if (settings.contains("subtype")) {
+            const QString subtype = settings.value("subtype").toString();
+            if (subtype == "torrent") {
+                info.subtype = NodeType::SubType::torrent;
+            } else if (subtype == "proxy") {
+                info.subtype = NodeType::SubType::proxy;
+            } else {
+                throwErr("Incorrect subtype: " + subtype.toStdString());
+            }
+        }
+        LOG << "node " << info.type << ". " << info.node.str() << ". " << info.port << ". " << info.network;
         nodes[info.type] = info;
     }
     settings.endArray();
@@ -87,7 +100,7 @@ NsLookup::NsLookup(QObject *parent)
 NsLookup::~NsLookup() {
     isStopped = true;
     thread1.quit();
-    if (!thread1.wait(3000)) {
+    if (!thread1.wait(8000)) {
         thread1.terminate();
         thread1.wait();
     }
@@ -109,6 +122,47 @@ void NsLookup::start() {
 
 void NsLookup::run() {
     // empty
+}
+
+void NsLookup::uploadEvent() {
+BEGIN_SLOT_WRAPPER
+    qtimer.setSingleShot(true);
+    qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
+
+    startScanTime = ::now();
+
+    allNodesForTypesNew.clear();
+
+    LOG << "Dns scan start";
+    continueResolve(nodes.begin());
+END_SLOT_WRAPPER
+}
+
+std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
+    QUdpSocket udp;
+
+    DnsPacket requestPacket;
+    requestPacket.addQuestion(DnsQuestion::getIp(node.node.str()));
+    requestPacket.setFlags(DnsFlag::MyFlag);
+    udp.writeDatagram(requestPacket.toByteArray(), QHostAddress("8.8.8.8"), 53);
+
+    udp.waitForReadyRead(); // Не ставить timeout, так как это вызывает странное поведение
+    if (isStopped) {
+        return {};
+    }
+    std::vector<char> data(512 * 1000, 0);
+    const qint64 size = udp.readDatagram(data.data(), data.size());
+    CHECK(size > 0, "Incorrect response dns " + node.type.toStdString());
+    const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
+
+    LOG << "dns ok " << node.type << ". " << packet.answers().size();
+    CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(data.begin(), data.begin() + size)));
+
+    std::vector<QString> result;
+    for (const auto &record : packet.answers()) {
+        result.emplace_back(makeAddress(record.toString(), node.port));
+    }
+    return result;
 }
 
 void NsLookup::finalizeLookup() {
@@ -155,51 +209,11 @@ void NsLookup::finalizeLookup() {
     }
     if (isSuccessFl) {
         emit serversFlushed(TypedException());
+        continueResolveP2P(std::begin(nodes));
     }
     isSafeCheck = false;
     qtimer.setInterval(msTimer.count());
     qtimer.setSingleShot(true);
-}
-
-void NsLookup::uploadEvent() {
-BEGIN_SLOT_WRAPPER
-    qtimer.setSingleShot(true);
-    qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
-
-    startScanTime = ::now();
-
-    allNodesForTypesNew.clear();
-
-    LOG << "Dns scan start";
-    continueResolve(nodes.begin());
-END_SLOT_WRAPPER
-}
-
-std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
-    QUdpSocket udp;
-
-    DnsPacket requestPacket;
-    requestPacket.addQuestion(DnsQuestion::getIp(node.node.str()));
-    requestPacket.setFlags(DnsFlag::MyFlag);
-    udp.writeDatagram(requestPacket.toByteArray(), QHostAddress("8.8.8.8"), 53);
-
-    udp.waitForReadyRead(); // Не ставить timeout, так как это вызывает странное поведение
-    if (isStopped) {
-        return {};
-    }
-    std::vector<char> data(512 * 1000, 0);
-    const qint64 size = udp.readDatagram(data.data(), data.size());
-    CHECK(size > 0, "Incorrect response dns " + node.type.toStdString());
-    const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
-
-    LOG << "dns ok " << node.type << ". " << packet.answers().size();
-    CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(data.begin(), data.begin() + size)));
-
-    std::vector<QString> result;
-    for (const auto &record : packet.answers()) {
-        result.emplace_back(makeAddress(record.toString(), node.port));
-    }
-    return result;
 }
 
 void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node) {
@@ -356,6 +370,180 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
     }
 }
 
+void NsLookup::finalizeLookupP2P() {
+    size_t countAll = 0;
+    std::unique_lock<std::mutex> lock(nodeMutex);
+    for (auto &element: allNodesForTypesP2P) {
+        std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
+        countAll += element.second.size();
+    }
+    lock.unlock();
+
+    const time_point stopScan = ::now();
+    LOG << "Dns scan p2p time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds. Count new nodes " << countAll;
+}
+
+struct P2PNodeResult {
+    QString node;
+    NodeType::SubType type = NodeType::SubType::none;
+    int count;
+    QString ip;
+};
+
+static std::vector<P2PNodeResult> parseNodesP2P(const std::string &resp) {
+    const QJsonDocument response = QJsonDocument::fromJson(QString::fromStdString(resp).toUtf8());
+    const QJsonObject root = response.object();
+    CHECK(root.contains("result") && root.value("result").isObject(), "result field not found");
+    const QJsonObject data = root.value("result").toObject();
+    CHECK(data.contains("nodes") && data.value("nodes").isArray(), "nodes field not found");
+    const QJsonArray nodes = data.value("nodes").toArray();
+
+    std::vector<P2PNodeResult> result;
+    for (const QJsonValue &node1: nodes) {
+        CHECK(node1.isObject(), "node field not found");
+        const QJsonObject node = node1.toObject();
+
+        P2PNodeResult res;
+        CHECK(node.contains("node") && node.value("node").isString(), "node field not found");
+        res.node = node.value("node").toString();
+        CHECK(node.contains("count") && node.value("count").isDouble(), "count field not found");
+        res.count = node.value("count").toInt();
+        CHECK(node.contains("ip") && node.value("ip").isString(), "ip field not found");
+        res.ip = node.value("ip").toString();
+        CHECK(node.contains("type") && node.value("type").isString(), "type field not found");
+        const QString type = node.value("type").toString();
+        if (type == "proxy") {
+            res.type = NodeType::SubType::proxy;
+        } else if (type == "torrent") {
+            res.type = NodeType::SubType::torrent;
+        }
+        result.emplace_back(res);
+    }
+    return result;
+};
+
+void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator node) {
+    if (isStopped.load()) {
+        return;
+    }
+    if (node == nodes.end()) {
+        finalizeLookupP2P();
+        return;
+    }
+
+    if (node->second.subtype != NodeType::SubType::torrent) {
+        continueResolveP2P(std::next(node));
+        return;
+    }
+
+    const QString network = node->second.network;
+    NodeType nodeNetworkTorrent;
+    NodeType nodeNetworkProxy;
+    for (const auto &pair: nodes) {
+        if (pair.second.network == network) {
+            if (pair.second.subtype == NodeType::SubType::proxy) {
+                nodeNetworkProxy = pair.second;
+            } else if (pair.second.subtype == NodeType::SubType::torrent) {
+                nodeNetworkTorrent = pair.second;
+            }
+        }
+    }
+
+    if (
+        (nodeNetworkTorrent.subtype != NodeType::SubType::none && allNodesForTypesP2P.find(nodeNetworkTorrent.node) != allNodesForTypesP2P.end()) ||
+        (nodeNetworkProxy.subtype != NodeType::SubType::none && allNodesForTypesP2P.find(nodeNetworkProxy.node) != allNodesForTypesP2P.end())
+    ) {
+        // Эту структуру мы уже заполняли, пропускаем
+        continueResolveP2P(std::next(node));
+        return;
+    }
+
+    if (allNodesForTypes[node->second.node].empty()) {
+        continueResolveP2P(std::next(node));
+        return;
+    }
+    const QString postRequest = "{\"id\":1,\"params\":{\"count_tests\": 5},\"method\":\"get-all-last-nodes-count\", \"pretty\": false}"; // TODO Заменить константу на значение из конфига
+    client.sendMessagePost(allNodesForTypes[node->second.node][0].address, postRequest, [this, node, nodeNetworkProxy, nodeNetworkTorrent](const std::string &response, const SimpleClient::ServerException &exception){
+        if (exception.isSet()) {
+            LOG << "P2P get nodes exception: " << exception.description << " " << exception.content;
+            continueResolveP2P(std::next(node));
+            return;
+        }
+        const std::vector<P2PNodeResult> nodes = parseNodesP2P(response);
+
+        ipsTempP2P.clear();
+        std::transform(nodes.begin(), nodes.end(), std::back_inserter(ipsTempP2P), [](const P2PNodeResult &node) {
+            return std::make_pair(node.type, node.ip);
+        });
+        posInIpsTemp = 0;
+
+        continuePingP2P(node, nodeNetworkTorrent, nodeNetworkProxy);
+    }, 3s); // TODO вынести в конфиг
+}
+
+void NsLookup::continuePingP2P(std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy) {
+    if (isStopped.load()) {
+        return;
+    }
+
+    if (posInIpsTemp >= ipsTempP2P.size()) {
+        continueResolveP2P(std::next(node));
+        return;
+    }
+
+    const size_t countSteps = std::min(size_t(10), ipsTempP2P.size() - posInIpsTemp);
+
+    std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(countSteps);
+
+    if (countSteps == 0) {
+        continuePing(node);
+    }
+    for (size_t i = 0; i < countSteps; i++) {
+        const auto &ipPair = ipsTempP2P[posInIpsTemp];
+        posInIpsTemp++;
+        client.ping(ipPair.second, [this, type=ipPair.first, node, nodeTorrent, nodeProxy, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
+            try {
+                NodeInfo info;
+                info.address = address;
+                info.ping = time.count();
+                info.isChecked = true;
+
+                if (message.empty()) {
+                    info.ping = MAX_PING.count();
+                    info.isTimeout = true;
+                } else {
+                    QJsonParseError parseError;
+                    QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
+                    if (parseError.error != QJsonParseError::NoError) {
+                        info.ping = MAX_PING.count();
+                        info.isTimeout = true;
+                    }
+                }
+
+                std::unique_lock<std::mutex> lock(nodeMutex);
+                if (type == NodeType::SubType::torrent) {
+                    allNodesForTypesP2P[nodeTorrent.node].emplace_back(info); // TODO добавлять сразу к сортированному массиву
+                } else if (type == NodeType::SubType::proxy) {
+                    allNodesForTypesP2P[nodeProxy.node].emplace_back(info);
+                }
+            } catch (const Exception &e) {
+                LOG << "Error " << e;
+            } catch (const std::exception &e) {
+                LOG << "Error " << e.what();
+            } catch (const TypedException &e) {
+                LOG << "Error typed " << e.description;
+            } catch (...) {
+                LOG << "Unknown error";
+            }
+
+            (*requestsInProcess)--;
+            if ((*requestsInProcess) == 0) {
+                continuePingP2P(node, nodeTorrent, nodeProxy);
+            }
+        }, 2s);
+    }
+}
+
 void NsLookup::sortAll() {
     for (auto &element: allNodesForTypes) {
         std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
@@ -455,16 +643,24 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
 std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const {
     CHECK(count <= limit, "Incorrect count value");
 
-    std::lock_guard<std::mutex> lock(nodeMutex);
-    auto foundType = nodes.find(type);
+    std::unique_lock<std::mutex> lock(nodeMutex);
+    const auto foundType = nodes.find(type);
     if (foundType == nodes.end()) {
         return {};
     }
-    auto found = allNodesForTypes.find(foundType->second.node);
+    const auto found = allNodesForTypes.find(foundType->second.node);
     if (found == allNodesForTypes.end()) {
         return {};
     }
-    const std::vector<NodeInfo> &nodes = found->second;
+    std::vector<NodeInfo> nodes = found->second;
+
+    const auto foundP2P = allNodesForTypesP2P.find(foundType->second.node);
+    if (foundP2P != allNodesForTypesP2P.end()) {
+        nodes.insert(nodes.end(), foundP2P->second.begin(), foundP2P->second.end());
+    }
+    lock.unlock();
+
+    std::sort(nodes.begin(), nodes.end(), std::less<NodeInfo>{});
 
     std::vector<NodeInfo> filterNodes;
     std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filterNodes), [](const NodeInfo &node) {
