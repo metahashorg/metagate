@@ -89,7 +89,7 @@ Uploader::Uploader(MainWindow &mainWindow)
         serverName = QString::fromStdString(servers.dev);
     }
 
-    CHECK(connect(this, &Uploader::generateEvent, &mainWindow, &MainWindow::processEvent), "not connect processEvent");
+    CHECK(connect(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent), "not connect processEvent");
     CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");
 
     client.setParent(this);
@@ -219,7 +219,7 @@ BEGIN_SLOT_WRAPPER
             lastVersion = version;
             currFolder = folderServer;
 
-            emit generateEvent(WindowEvent::RELOAD_PAGE);
+            emit generateUpdateHtmlsEvent();
 
             emit checkedUpdatesHtmls(TypedException());
         };

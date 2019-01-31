@@ -108,8 +108,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
-    Q_REG(WindowEvent, "WindowEvent");
-
     CHECK(connect(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
@@ -501,11 +499,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MainWindow::processEvent(WindowEvent event) {
+void MainWindow::updateHtmlsEvent() {
 BEGIN_SLOT_WRAPPER
-    if (event == WindowEvent::RELOAD_PAGE) {
-        softReloadPage();
-    }
+    softReloadPage();
 END_SLOT_WRAPPER
 }
 

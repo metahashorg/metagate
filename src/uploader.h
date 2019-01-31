@@ -11,8 +11,6 @@
 
 #include "client.h"
 
-#include "WindowEvents.h"
-
 #include "VersionWrapper.h"
 
 class MainWindow;
@@ -76,7 +74,7 @@ signals:
 
     void finished();
 
-    void generateEvent(WindowEvent event);
+    void generateUpdateHtmlsEvent();
 
     void generateUpdateApp(const QString version, const QString reference, const QString message);
 

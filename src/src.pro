@@ -95,7 +95,6 @@ HEADERS += mainwindow.h \
     check.h \
     machine_uid.h \
     client.h \
-    WindowEvents.h \
     unzip.h \
     uploader.h \
     EthWallet.h \

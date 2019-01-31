@@ -13,8 +13,6 @@
 #include "PagesMappings.h"
 #include "CallbackWrapper.h"
 
-#include "WindowEvents.h"
-
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
@@ -146,7 +144,7 @@ private:
 
 public slots:
 
-    void processEvent(WindowEvent event);
+    void updateHtmlsEvent();
 
     void updateAppEvent(const QString appVersion, const QString reference, const QString message);
 
