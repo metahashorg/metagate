@@ -1,7 +1,5 @@
 #include "InitWebSocket.h"
 
-#include "../Initializer.h"
-
 #include "WebSocketClient.h"
 
 #include "check.h"

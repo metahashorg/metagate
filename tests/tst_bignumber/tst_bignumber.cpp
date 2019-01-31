@@ -1,5 +1,7 @@
 #include "tst_bignumber.h"
 
+#include <QTest>
+
 #include "BigNumber.h"
 
 tst_BigNumber::tst_BigNumber(QObject *parent)

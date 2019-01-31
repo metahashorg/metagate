@@ -1,5 +1,7 @@
 #include "tst_Bitcoin.h"
 
+#include <QTest>
+
 #include "BtcWallet.h"
 #include "btctx/wif.h"
 

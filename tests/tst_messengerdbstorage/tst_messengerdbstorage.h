@@ -2,8 +2,6 @@
 #define TST_MESSENGERDBSTORAGE_H
 
 #include <QObject>
-#include <QTest>
-
 
 class tst_MessengerDBStorage : public QObject
 {

@@ -2,7 +2,6 @@
 #define PROXYCLIENT_H
 
 #include <QTcpSocket>
-#include <QNetworkAccessManager>
 #include <memory>
 
 namespace proxy

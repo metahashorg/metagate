@@ -2,8 +2,6 @@
 #define TST_RSA_H
 
 #include <QObject>
-#include <QTest>
-
 
 class tst_rsa : public QObject
 {

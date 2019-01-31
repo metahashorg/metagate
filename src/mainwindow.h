@@ -6,12 +6,9 @@
 
 #include <QMainWindow>
 #include <QWebChannel>
-#include <QTimer>
 
 #include "client.h"
 #include "uploader.h"
-
-#include "ui_mainwindow.h"
 
 #include "PagesMappings.h"
 #include "CallbackWrapper.h"
@@ -33,7 +30,7 @@ class ProxyJavascript;
 }
 
 namespace Ui {
-    class MainWindow;
+class MainWindow;
 }
 
 namespace initializer {
@@ -80,6 +77,8 @@ public:
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
+
+    ~MainWindow();
 
     void showExpanded();
 

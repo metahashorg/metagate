@@ -1,7 +1,6 @@
 #include "ProxyClient.h"
 
 #include <QNetworkReply>
-#include <QEvent>
 #include <QThread>
 #include <QHostAddress>
 #include <QDebug>

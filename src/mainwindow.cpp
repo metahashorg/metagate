@@ -20,6 +20,8 @@
 #include <QDesktopServices>
 #include <QSettings>
 
+#include "ui_mainwindow.h"
+
 #include "WebSocketClient.h"
 #include "JavascriptWrapper.h"
 
@@ -121,6 +123,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged), "not connect loadFinished");
 }
+
+MainWindow::~MainWindow() = default;
 
 void MainWindow::loadPagesMappings() {
     pagesMappings.clearMappings();

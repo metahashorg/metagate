@@ -1,5 +1,6 @@
 #include "MessengerMessages.h"
 
+#include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>

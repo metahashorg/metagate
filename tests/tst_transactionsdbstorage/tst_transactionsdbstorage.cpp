@@ -1,6 +1,8 @@
 #include "tst_transactionsdbstorage.h"
 
-#include "SlotWrapper.h"
+#include <QTest>
+
+#include "TransactionsDBStorage.h"
 
 const QString dbName = "payments.db";
 

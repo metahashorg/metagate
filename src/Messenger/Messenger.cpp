@@ -10,6 +10,8 @@
 
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
+#include "CryptographicManager.h"
+#include "MessengerDBStorage.h"
 
 #include <functional>
 using namespace std::placeholders;
@@ -22,8 +24,6 @@ using namespace std::placeholders;
 #include <QSettings>
 
 #include <QCryptographicHash>
-
-#include "MessengerDBStorage.h"
 
 namespace messenger {
 

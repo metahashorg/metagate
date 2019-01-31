@@ -4,8 +4,8 @@
 #include <QObject>
 
 #include "Proxy.h"
-struct TypedException;
 
+struct TypedException;
 
 namespace proxy
 {

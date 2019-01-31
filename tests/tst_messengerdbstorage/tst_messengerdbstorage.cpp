@@ -1,9 +1,11 @@
 #include "tst_messengerdbstorage.h"
 
+#include <QTest>
+
 #include <iostream>
 
 #include "MessengerDBStorage.h"
-#include "SlotWrapper.h"
+
 const QString dbName = "messenger.db";
 
 tst_MessengerDBStorage::tst_MessengerDBStorage(QObject *parent)

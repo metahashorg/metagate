@@ -1,5 +1,7 @@
 #include "tst_Metahash.h"
 
+#include <QTest>
+
 #include "Wallet.h"
 
 #include "utils.h"

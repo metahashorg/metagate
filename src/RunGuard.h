@@ -5,7 +5,6 @@
 #include <QSharedMemory>
 #include <QSystemSemaphore>
 
-
 class RunGuard
 {
 

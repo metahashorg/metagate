@@ -2,9 +2,6 @@
 #define TST_MESSENGERDBSTORAGE_H
 
 #include <QObject>
-#include <QTest>
-
-#include "TransactionsDBStorage.h"
 
 class tst_TransactionsDBStorage : public QObject
 {

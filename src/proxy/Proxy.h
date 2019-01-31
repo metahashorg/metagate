@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QThread>
 
-
 struct TypedException;
 
 namespace proxy

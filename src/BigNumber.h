@@ -1,14 +1,15 @@
 #ifndef BIGNUMBER_H
 #define BIGNUMBER_H
 
-#include <QByteArray>
 #include <QString>
-#include <openssl/bn.h>
 #include <memory>
 #include <functional>
 
-class BigNumber
-{
+class QByteArray;
+
+typedef struct bignum_st BIGNUM;
+
+class BigNumber {
 public:
     BigNumber();
     BigNumber(const QByteArray &dec);

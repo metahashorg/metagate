@@ -1,9 +1,5 @@
 #include "InitAuth.h"
 
-#include "../Initializer.h"
-
-#include <QTimer>
-
 #include <functional>
 using namespace std::placeholders;
 

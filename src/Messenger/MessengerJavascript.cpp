@@ -8,14 +8,14 @@
 #include "Paths.h"
 #include "QRegister.h"
 
+#include "CryptographicManager.h"
 #include "Messenger.h"
-
-#include "Wallet.h"
-#include "WalletRsa.h"
 
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+
+#include "Wallet.h"
 
 #include "auth/Auth.h"
 #include "JavascriptWrapper.h"

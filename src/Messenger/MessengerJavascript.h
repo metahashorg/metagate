@@ -6,7 +6,6 @@
 #include <functional>
 
 #include "Message.h"
-#include "CryptographicManager.h"
 
 struct TypedException;
 
@@ -17,6 +16,8 @@ class Auth;
 class JavascriptWrapper;
 
 namespace messenger {
+
+class CryptographicManager;
 
 class Messenger;
 

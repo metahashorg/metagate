@@ -1,5 +1,7 @@
 #include "tst_qrcoder.h"
 
+#include <QTest>
+
 #include "qrcoder.h"
 
 tst_QRCoder::tst_QRCoder(QObject *parent)

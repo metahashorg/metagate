@@ -1,7 +1,5 @@
 #include "InitMainwindow.h"
 
-#include "../Initializer.h"
-
 #include "mainwindow.h"
 
 #include "check.h"

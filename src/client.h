@@ -2,8 +2,7 @@
 #define CLIENT_H
 
 #include <QObject>
-#include <QNetworkAccessManager>
-#include <QTimer>
+#include <QUrl>
 
 #include <memory>
 #include <functional>
@@ -12,11 +11,14 @@
 
 #include "duration.h"
 
+class QNetworkAccessManager;
+class QTimer;
+class QNetworkReply;
+
 /*
    На каждый поток должен быть один экземпляр класса.
    */
-class SimpleClient : public QObject
-{
+class SimpleClient : public QObject {
     Q_OBJECT
 
 public:
@@ -61,6 +63,8 @@ private:
 public:
 
     explicit SimpleClient();
+
+    ~SimpleClient();
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache=false);

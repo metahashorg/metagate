@@ -5,6 +5,7 @@
 
 #include <QUdpSocket>
 #include <QApplication>
+#include <QCryptographicHash>
 
 #include <QJsonDocument>
 #include <QJsonArray>

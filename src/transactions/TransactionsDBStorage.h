@@ -6,7 +6,6 @@
 #include "BigNumber.h"
 #include <vector>
 
-#include <QSqlQuery>
 namespace transactions {
 
 class TransactionsDBStorage : public DBStorage

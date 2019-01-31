@@ -1,7 +1,5 @@
 #include "InitMessenger.h"
 
-#include "../Initializer.h"
-
 #include <functional>
 using namespace std::placeholders;
 

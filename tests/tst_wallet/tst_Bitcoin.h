@@ -2,7 +2,6 @@
 #define TST_BITCOIN_H
 
 #include <QObject>
-#include <QTest>
 
 class tst_Bitcoin : public QObject
 {

@@ -1,7 +1,5 @@
 #include "InitProxy.h"
 
-#include "../Initializer.h"
-
 #include <QTimer>
 
 #include <functional>

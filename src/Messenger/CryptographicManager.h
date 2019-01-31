@@ -8,10 +8,10 @@
 
 #include "Message.h"
 
-#include "Wallet.h"
-#include "WalletRsa.h"
+class Wallet;
+class WalletRsa;
 
-class TypedException;
+struct TypedException;
 
 namespace messenger {
 
@@ -20,6 +20,8 @@ class CryptographicManager : public TimerClass {
 public:
 
     explicit CryptographicManager(QObject *parent = nullptr);
+
+    ~CryptographicManager();
 
     bool isSaveDecrypted() const {
         return isSaveDecrypted_;

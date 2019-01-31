@@ -1,5 +1,7 @@
 #include "tst_Ethereum.h"
 
+#include <QTest>
+
 #include "EthWallet.h"
 #include "btctx/wif.h"
 

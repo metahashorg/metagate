@@ -1,5 +1,7 @@
 #include "UPnPDevices.h"
 
+#include "UPnPRouter.h"
+
 #include <QNetworkDatagram>
 #include "check.h"
 #include "Log.h"

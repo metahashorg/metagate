@@ -1,7 +1,5 @@
 ﻿#include "InitNsLookup.h"
 
-#include "../Initializer.h"
-
 #include "NsLookup.h"
 
 #include "check.h"

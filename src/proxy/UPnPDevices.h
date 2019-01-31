@@ -2,7 +2,6 @@
 #define UPNPDEVICES_H
 
 #include <QUdpSocket>
-#include "UPnPRouter.h"
 
 namespace proxy
 {

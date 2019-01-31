@@ -11,7 +11,6 @@ using namespace std::placeholders;
 #include "QRegister.h"
 
 #include "NsLookup.h"
-#include "JavascriptWrapper.h"
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"

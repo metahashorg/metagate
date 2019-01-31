@@ -1,7 +1,5 @@
 ﻿#include "InitUploader.h"
 
-#include "../Initializer.h"
-
 #include "uploader.h"
 
 #include "check.h"

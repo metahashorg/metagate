@@ -2,8 +2,6 @@
 #define TST_BIGNUMBER_H
 
 #include <QObject>
-#include <QTest>
-
 
 class tst_BigNumber : public QObject
 {

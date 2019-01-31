@@ -12,6 +12,8 @@
 
 #include <QCryptographicHash>
 #include <QSettings>
+#include <QTextStream>
+#include <QUrl>
 
 #include "mainwindow.h"
 

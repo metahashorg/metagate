@@ -1,5 +1,9 @@
 #include "BigNumber.h"
 
+#include <QByteArray>
+
+#include <openssl/bn.h>
+
 #include "check.h"
 
 BigNumber::BigNumber()

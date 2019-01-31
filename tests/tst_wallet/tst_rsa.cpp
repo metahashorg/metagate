@@ -1,6 +1,6 @@
 #include "tst_rsa.h"
 
-#include <QDebug>
+#include <QTest>
 
 #include <iostream>
 

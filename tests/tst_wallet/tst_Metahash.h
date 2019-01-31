@@ -2,7 +2,6 @@
 #define TST_METAHASH_H
 
 #include <QObject>
-#include <QTest>
 
 class tst_Metahash : public QObject
 {

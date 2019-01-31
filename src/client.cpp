@@ -9,6 +9,8 @@ using namespace std::placeholders;
 #include "SlotWrapper.h"
 #include "QRegister.h"
 
+#include <QNetworkAccessManager>
+#include <QTimer>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QThread>
@@ -96,6 +98,8 @@ SimpleClient::SimpleClient() {
     manager = std::make_unique<QNetworkAccessManager>(this);
     Q_REG(SimpleClient::ReturnCallback, "SimpleClient::ReturnCallback");
 }
+
+SimpleClient::~SimpleClient() = default;
 
 void SimpleClient::setParent(QObject *obj) {
     manager->setParent(obj);

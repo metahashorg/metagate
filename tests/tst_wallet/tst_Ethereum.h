@@ -2,7 +2,6 @@
 #define TST_ETHEREUM_H
 
 #include <QObject>
-#include <QTest>
 
 class tst_Ethereum : public QObject {
     Q_OBJECT

@@ -2,8 +2,6 @@
 #define TST_QRCODER_H
 
 #include <QObject>
-#include <QTest>
-
 
 class tst_QRCoder : public QObject
 {

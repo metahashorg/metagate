@@ -1,8 +1,5 @@
 ﻿#include "UPnPRouter.h"
 
-#include <QPair>
-#include <QDomElement>
-#include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QBuffer>
 #include <QXmlStreamReader>

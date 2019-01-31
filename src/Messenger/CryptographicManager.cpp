@@ -1,5 +1,8 @@
 #include "CryptographicManager.h"
 
+#include "Wallet.h"
+#include "WalletRsa.h"
+
 #include "check.h"
 #include "SlotWrapper.h"
 #include "TypedException.h"
@@ -38,6 +41,8 @@ CryptographicManager::CryptographicManager(QObject *parent)
 
     moveToThread(&thread1);
 }
+
+CryptographicManager::~CryptographicManager() = default;
 
 Wallet& CryptographicManager::getWallet(const std::string &address) const {
     CHECK_TYPED(wallet != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet not unlock");

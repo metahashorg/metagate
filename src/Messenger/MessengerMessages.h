@@ -1,11 +1,11 @@
 #ifndef MESSENGERMESSAGES_H
 #define MESSENGERMESSAGES_H
 
-#include <QJsonDocument>
-
 #include <vector>
 
 #include "Message.h"
+
+class QJsonDocument;
 
 namespace messenger {
 

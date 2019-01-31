@@ -25,7 +25,6 @@ SOURCES += \
     ../../src/btctx/btctx.cpp \
     ../../src/btctx/wif.cpp \
     ../../src/BtcWallet.cpp \
-    ../../src/VersionWrapper.cpp \
     ../../src/openssl_wrapper/openssl_wrapper.cpp \
     ../../src/utils.cpp \
     ../../src/ethtx/utils2.cpp \
