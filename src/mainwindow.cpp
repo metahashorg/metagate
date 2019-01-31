@@ -99,23 +99,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     CHECK(settings.contains("dns/net"), "dns/net server not found");
     netDns = settings.value("dns/net").toString();
 
-    pagesMappings.setFullPagesPath(last_htmls.fullPath);
-    const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
-    if (isExistFile(routesFile)) {
-        const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
-        LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
-        try {
-            pagesMappings.setMappings(QString::fromStdString(contentMappings));
-        } catch (const Exception &e) {
-            LOG << "Error " << e;
-        } catch (const TypedException &e) {
-            LOG << "Error " << e.description;
-        } catch (...) {
-            LOG << "Error mappings";
-        }
-    } else {
-        LOG << "Warning: routes file not found";
-    }
+    loadPagesMappings();
 
     loadFile("core/loader/index.html");
 
@@ -136,6 +120,27 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
 
     CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged), "not connect loadFinished");
+}
+
+void MainWindow::loadPagesMappings() {
+    pagesMappings.clearMappings();
+    pagesMappings.setFullPagesPath(last_htmls.fullPath);
+    const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
+    if (isExistFile(routesFile)) {
+        const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
+        LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
+        try {
+            pagesMappings.setMappings(QString::fromStdString(contentMappings));
+        } catch (const Exception &e) {
+            LOG << "Error " << e;
+        } catch (const TypedException &e) {
+            LOG << "Error " << e.description;
+        } catch (...) {
+            LOG << "Error mappings";
+        }
+    } else {
+        LOG << "Warning: routes file not found";
+    }
 }
 
 void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SetJavascriptWrapperCallback &callback) {
@@ -514,7 +519,7 @@ void MainWindow::softReloadPage() {
     if (!isInitFinished) {
         std::unique_lock<std::mutex> lock(mutLastHtmls);
         last_htmls = Uploader::getLastHtmlVersion();
-        pagesMappings.setFullPagesPath(last_htmls.fullPath);
+        loadPagesMappings();
         lock.unlock();
         loadFile("core/loader/index.html");
     } else {

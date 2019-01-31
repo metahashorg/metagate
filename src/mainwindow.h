@@ -117,6 +117,8 @@ private slots:
 
 private:
 
+    void loadPagesMappings();
+
     void softReloadPage();
 
     void softReloadApp();

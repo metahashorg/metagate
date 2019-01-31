@@ -129,7 +129,14 @@ void PagesMappings::addMappingsMh(QString mapping) {
     }
 }
 
+void PagesMappings::clearMappings() {
+    mappingsPages.clear();
+    urlToName.clear();
+}
+
 void PagesMappings::setMappings(QString mapping) {
+    clearMappings();
+
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(mapping.toUtf8(), &parseError);
     CHECK(parseError.error == QJsonParseError::NoError, "Json parse error: " + parseError.errorString().toStdString());

@@ -100,6 +100,8 @@ public:
 
     void addMappingsMh(QString mapping);
 
+    void clearMappings();
+
     void setMappings(QString mapping);
 
     void setFullPagesPath(QString pagesPath) {
