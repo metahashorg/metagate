@@ -569,7 +569,7 @@ END_SLOT_WRAPPER
 
 void Messenger::onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString currSign = db.getUserSignatures(address);
+    const QString currSign = db.getContactPublicKey(address);
     const bool isNew = currSign.isEmpty();
     if (!isNew && !isForcibly) {
         callback.emitFunc(TypedException(), isNew);
