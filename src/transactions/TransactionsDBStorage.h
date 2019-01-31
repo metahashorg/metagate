@@ -11,7 +11,7 @@ namespace transactions {
 class TransactionsDBStorage : public DBStorage
 {
 public:
-    TransactionsDBStorage(const QString &path = QString(), QObject *parent = nullptr);
+    TransactionsDBStorage(const QString &path = QString());
 
     virtual int currentVersion() const final;
 

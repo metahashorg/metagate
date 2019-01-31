@@ -1,12 +1,10 @@
 #ifndef DBSTORAGE_H
 #define DBSTORAGE_H
 
-#include <QObject>
 #include <QSqlDatabase>
+#include <QVariant>
 
-class DBStorage : public QObject
-{
-    Q_OBJECT
+class DBStorage {
 public:
 
     class TransactionGuard {
@@ -34,7 +32,7 @@ public:
 public:
     using DbId = qint64;
 
-    explicit DBStorage(const QString &dbpath, const QString &dbname, QObject *parent = nullptr);
+    explicit DBStorage(const QString &dbpath, const QString &dbname);
     virtual ~DBStorage();
 
     QString dbName() const;

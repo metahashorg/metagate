@@ -13,7 +13,7 @@ public:
     using IdCounterPair = std::pair<DbId, Message::Counter>;
     using NameCounterPair = std::pair<QString, Message::Counter>;
 
-    MessengerDBStorage(const QString &path = QString(), QObject *parent = nullptr);
+    MessengerDBStorage(const QString &path = QString());
 
     virtual int currentVersion() const final;
 

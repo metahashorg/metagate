@@ -9,8 +9,8 @@
 namespace messenger {
 
 
-MessengerDBStorage::MessengerDBStorage(const QString &path, QObject *parent)
-    : DBStorage(path, databaseName, parent)
+MessengerDBStorage::MessengerDBStorage(const QString &path)
+    : DBStorage(path, databaseName)
 {
 
 }

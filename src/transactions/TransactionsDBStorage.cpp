@@ -8,8 +8,8 @@
 
 namespace transactions {
 
-TransactionsDBStorage::TransactionsDBStorage(const QString &path, QObject *parent)
-    : DBStorage(path, databaseName, parent)
+TransactionsDBStorage::TransactionsDBStorage(const QString &path)
+    : DBStorage(path, databaseName)
 {
 
 }
