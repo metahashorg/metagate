@@ -151,12 +151,12 @@ BEGIN_SLOT_WRAPPER
         CHECK(jsWrapper1 != nullptr, "Incorrect jsWrapper1");
         jsWrapper = jsWrapper1;
         jsWrapper->setWidget(this);
-        CHECK(connect(jsWrapper, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        CHECK(connect(jsWrapper, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
         channel->registerObject(QString("mainWindow"), jsWrapper);
-        CHECK(connect(jsWrapper, SIGNAL(setHasNativeToolbarVariableSig()), this, SLOT(onSetHasNativeToolbarVariable())), "not connect setHasNativeToolbarVariableSig");
-        CHECK(connect(jsWrapper, SIGNAL(setCommandLineTextSig(QString)), this, SLOT(onSetCommandLineText(QString))), "not connect setCommandLineTextSig");
-        CHECK(connect(jsWrapper, SIGNAL(setMappingsSig(QString)), this, SLOT(onSetMappings(QString))), "not connect setMappingsSig");
-        CHECK(connect(jsWrapper, SIGNAL(lineEditReturnPressedSig(QString)), this, SLOT(onEnterCommandAndAddToHistory(QString))), "not connect lineEditReturnPressedSig");
+        CHECK(connect(jsWrapper, &JavascriptWrapper::setHasNativeToolbarVariableSig, this, &MainWindow::onSetHasNativeToolbarVariable), "not connect setHasNativeToolbarVariableSig");
+        CHECK(connect(jsWrapper, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText), "not connect setCommandLineTextSig");
+        CHECK(connect(jsWrapper, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings), "not connect setMappingsSig");
+        CHECK(connect(jsWrapper, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory), "not connect lineEditReturnPressedSig");
         doConfigureMenu();
     });
     callback.emitFunc(exception);
@@ -167,7 +167,7 @@ void MainWindow::onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *aut
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(authJavascript != nullptr, "Incorrect authJavascript");
-        CHECK(connect(authJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        CHECK(connect(authJavascript, &auth::AuthJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
         channel->registerObject(QString("auth"), authJavascript);
 
         CHECK(authManager != nullptr, "Incorrect authManager");
@@ -182,7 +182,7 @@ void MainWindow::onSetMessengerJavascript(messenger::MessengerJavascript *messen
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(messengerJavascript != nullptr, "Incorrect messengerJavascript");
-        CHECK(connect(messengerJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        CHECK(connect(messengerJavascript, &messenger::MessengerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
         channel->registerObject(QString("messenger"), messengerJavascript);
     });
     callback.emitFunc(exception);
@@ -193,7 +193,7 @@ void MainWindow::onSetTransactionsJavascript(transactions::TransactionsJavascrip
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
-        CHECK(connect(transactionsJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        CHECK(connect(transactionsJavascript, &transactions::TransactionsJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
         channel->registerObject(QString("transactions"), transactionsJavascript);
     });
     callback.emitFunc(exception);
@@ -204,7 +204,7 @@ void MainWindow::onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, c
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
-        CHECK(connect(proxyJavascript, SIGNAL(jsRunSig(QString)), this, SLOT(onJsRun(QString))), "not connect jsRunSig");
+        CHECK(connect(proxyJavascript, &proxy::ProxyJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
         channel->registerObject(QString("proxy"), proxyJavascript);
     });
     callback.emitFunc(exception);

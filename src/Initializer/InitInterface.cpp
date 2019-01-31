@@ -26,7 +26,7 @@ InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializ
     , isTimerEnabled(isTimerEnabled)
 {
     if (isTimerEnabled) {
-        CHECK(connect(&timer, SIGNAL(timeout()), this, SLOT(onTimerEvent())), "not connect timeout");
+        CHECK(connect(&timer, &QTimer::timeout, this, &InitInterface::onTimerEvent), "not connect timeout");
         timer.setInterval(milliseconds(1s).count());
         timer.moveToThread(mainThread);
         timer.start();
