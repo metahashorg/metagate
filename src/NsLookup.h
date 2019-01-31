@@ -117,13 +117,13 @@ private:
 
     void continueResolve(std::map<QString, NodeType>::const_iterator node);
 
-    void continuePing(std::map<QString, NodeType>::const_iterator node);
+    void continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node);
 
     void finalizeLookup();
 
     void continueResolveP2P(std::map<QString, NodeType>::const_iterator node);
 
-    void continuePingP2P(std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy);
+    void continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy);
 
     void finalizeLookupP2P();
 
@@ -140,8 +140,6 @@ private:
     std::vector<QString> ipsTemp;
 
     std::vector<std::pair<NodeType::SubType, QString>> ipsTempP2P;
-
-    size_t posInIpsTemp;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 

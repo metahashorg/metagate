@@ -255,9 +255,8 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         cacheDns.cache[node->second.node.str()] = ipsTemp;
         cacheDns.lastUpdate = now;
     }
-    posInIpsTemp = 0;
 
-    continuePing(node);
+    continuePing(std::begin(ipsTemp), node);
 }
 
 static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message) {
@@ -281,46 +280,38 @@ static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, 
     return info;
 }
 
-void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
+void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node) {
     if (isStopped.load()) {
         return;
     }
 
     if (!isSafeCheck) {
-        if (posInIpsTemp >= ipsTemp.size()) {
+        if (ipsIter == ipsTemp.end()) {
             continueResolve(std::next(node));
             return;
         }
 
-        const size_t countSteps = std::min(size_t(10), ipsTemp.size() - posInIpsTemp);
+        const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
 
-        std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(countSteps);
+        CHECK(countSteps != 0, "Incorrect countSteps");
+        std::vector<QString> requests;
+        std::transform(ipsIter, ipsIter + countSteps, std::back_inserter(requests), [](const auto &r) {
+            return r;
+        });
 
-        if (countSteps == 0) {
-            continuePing(node);
-        }
-        for (size_t i = 0; i < countSteps; i++) {
-            const QString &ip = ipsTemp[posInIpsTemp];
-            posInIpsTemp++;
-            client.ping(ip, [this, node, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
-                try {
-                    allNodesForTypesNew[node->second.node].emplace_back(parseNodeInfo(address, time, message));
-                } catch (const Exception &e) {
-                    LOG << "Error " << e;
-                } catch (const std::exception &e) {
-                    LOG << "Error " << e.what();
-                } catch (const TypedException &e) {
-                    LOG << "Error typed " << e.description;
-                } catch (...) {
-                    LOG << "Unknown error";
+        client.pings(requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+            const TypedException exception = apiVrapper2([&]{
+                CHECK(requestsSize == results.size(), "Incorrect results");
+                for (const auto &result: results) {
+                    allNodesForTypesNew[node->second.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result)));
                 }
+            });
 
-                (*requestsInProcess)--;
-                if ((*requestsInProcess) == 0) {
-                    continuePing(node);
-                }
-            }, 2s);
-        }
+            if (exception.isSet()) {
+                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+            }
+            continuePing(std::next(ipsIter, countSteps), node);
+        }, 2s);
     } else {
         if (allNodesForTypes[node->second.node].empty()) {
             continueResolve(std::next(node));
@@ -342,17 +333,22 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
                 break;
             }
         }
-        std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(processVectPos.size());
+        std::vector<QString> requests;
+        for (const size_t posInIpsTemp: processVectPos) {
+            const QString &address = allNodesForTypes[node->second.node][posInIpsTemp].address;
+            requests.emplace_back(address);
+        }
         if (processVectPos.empty()) {
             continueResolve(std::next(node));
         }
-        for (size_t i = 0; i < processVectPos.size(); i++) {
-            const size_t posInIpsTempSave = processVectPos[i];
-            const QString &address = allNodesForTypes[node->second.node][posInIpsTempSave].address;
-            client.ping(address, [this, node, posInIpsTempSave, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
-                try {
-                    NodeInfo &info = allNodesForTypes[node->second.node][posInIpsTempSave];
-                    NodeInfo newInfo = parseNodeInfo(address, time, message);
+        client.pings(requests, [this, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+            const TypedException exception = apiVrapper2([&]{
+                CHECK(processVectPos.size() == results.size(), "Incorrect result");
+                for (size_t i = 0; i < results.size(); i++) {
+                    const auto &result = results[i];
+                    const size_t index = processVectPos[i];
+                    NodeInfo &info = allNodesForTypes[node->second.node][index];
+                    NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result));
                     CHECK(info.address == newInfo.address, "Incorrect address");
                     newInfo.isChecked = true;
                     if (!newInfo.isTimeout) {
@@ -360,22 +356,14 @@ void NsLookup::continuePing(std::map<QString, NodeType>::const_iterator node) {
                     }
 
                     info = newInfo;
-                } catch (const Exception &e) {
-                    LOG << "Error " << e;
-                } catch (const std::exception &e) {
-                    LOG << "Error " << e.what();
-                } catch (const TypedException &e) {
-                    LOG << "Error typed " << e.description;
-                } catch (...) {
-                    LOG << "Unknown error";
                 }
+            });
 
-                (*requestsInProcess)--;
-                if ((*requestsInProcess) == 0) {
-                    continueResolve(std::next(node));
-                }
-            }, 2s);
-        }
+            if (exception.isSet()) {
+                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+            }
+            continueResolve(std::next(node));
+        }, 2s);
     }
 }
 
@@ -484,35 +472,40 @@ void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator no
         std::transform(nodes.begin(), nodes.end(), std::back_inserter(ipsTempP2P), [](const P2PNodeResult &node) {
             return std::make_pair(node.type, node.ip);
         });
-        posInIpsTemp = 0;
 
-        continuePingP2P(node, nodeNetworkTorrent, nodeNetworkProxy);
+        continuePingP2P(std::begin(ipsTempP2P), node, nodeNetworkTorrent, nodeNetworkProxy);
     }, timeoutRequestNodes);
 }
 
-void NsLookup::continuePingP2P(std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy) {
+void NsLookup::continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy) {
     if (isStopped.load()) {
         return;
     }
 
-    if (posInIpsTemp >= ipsTempP2P.size()) {
+    if (ipsIter == ipsTempP2P.end()) {
         continueResolveP2P(std::next(node));
         return;
     }
 
-    const size_t countSteps = std::min(size_t(10), ipsTempP2P.size() - posInIpsTemp);
+    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTempP2P.cend())));
 
-    std::shared_ptr<size_t> requestsInProcess = std::make_shared<size_t>(countSteps);
+    CHECK(countSteps != 0, "Incorrect count steps");
+    std::vector<QString> requests;
+    std::transform(ipsIter, ipsIter + countSteps, std::back_inserter(requests), [](const auto &pair) {
+        return pair.second;
+    });
+    std::vector<NodeType::SubType> types;
+    std::transform(ipsIter, ipsIter + countSteps, std::back_inserter(types), [](const auto &pair) {
+        return pair.first;
+    });
 
-    if (countSteps == 0) {
-        continuePing(node);
-    }
-    for (size_t i = 0; i < countSteps; i++) {
-        const auto &ipPair = ipsTempP2P[posInIpsTemp];
-        posInIpsTemp++;
-        client.ping(ipPair.second, [this, type=ipPair.first, node, nodeTorrent, nodeProxy, requestsInProcess](const QString &address, const milliseconds &time, const std::string &message) {
-            try {
-                const NodeInfo info = parseNodeInfo(address, time, message);
+    client.pings(requests, [this, types, ipsIter, countSteps, node, nodeTorrent, nodeProxy](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        const TypedException exception = apiVrapper2([&]{
+            CHECK(types.size() == results.size(), "Incorrect results");
+            for (size_t i = 0; i < results.size(); i++) {
+                const auto &result = results[i];
+                const NodeType::SubType &type = types[i];
+                const NodeInfo info = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result));
 
                 std::unique_lock<std::mutex> lock(nodeMutex);
                 if (type == NodeType::SubType::torrent) {
@@ -520,22 +513,14 @@ void NsLookup::continuePingP2P(std::map<QString, NodeType>::const_iterator node,
                 } else if (type == NodeType::SubType::proxy) {
                     allNodesForTypesP2P[nodeProxy.node].emplace_back(info);
                 }
-            } catch (const Exception &e) {
-                LOG << "Error " << e;
-            } catch (const std::exception &e) {
-                LOG << "Error " << e.what();
-            } catch (const TypedException &e) {
-                LOG << "Error typed " << e.description;
-            } catch (...) {
-                LOG << "Unknown error";
             }
+        });
 
-            (*requestsInProcess)--;
-            if ((*requestsInProcess) == 0) {
-                continuePingP2P(node, nodeTorrent, nodeProxy);
-            }
-        }, 2s);
-    }
+        if (exception.isSet()) {
+            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+        }
+        continuePingP2P(std::next(ipsIter, countSteps), node, nodeTorrent, nodeProxy);
+    }, 2s);
 }
 
 void NsLookup::sortAll() {
