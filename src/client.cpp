@@ -1,6 +1,7 @@
 #include "client.h"
 
 #include <iostream>
+#include <memory>
 using namespace std::placeholders;
 
 #include "check.h"
@@ -19,6 +20,77 @@ const static QNetworkRequest::Attribute TIME_BEGIN_FIELD = QNetworkRequest::Attr
 const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 2);
 
 const int SimpleClient::ServerException::BAD_REQUEST_ERROR = QNetworkReply::ProtocolInvalidOperationError;
+
+template<class Callback, typename ...Args>
+class CallbackWrapImpl {
+public:
+
+    using CallbackCall = std::function<void(SimpleClient::ReturnCallback callback)>;
+
+public:
+
+    CallbackWrapImpl(const CallbackCall &callbackCall, const Callback &callback, size_t countArgs)
+        : callbackCall(callbackCall)
+        , callback(callback)
+        , args(countArgs)
+        , filled(countArgs)
+    {
+        std::fill(filled.begin(), filled.end(), false);
+    }
+
+    void process(size_t index, const Args& ...args) {
+        CHECK(!emitted, "Already emitted");
+        CHECK(!filled[index], "callback already called " + std::to_string(index));
+        this->args[index] = std::tuple<Args...>(args...);
+        filled[index] = true;
+
+        const size_t count = std::accumulate(filled.begin(), filled.end(), 0, [](size_t old, bool fill) {
+            return old + (fill ? 1 : 0);
+        });
+        if (count == filled.size()) {
+            emit callbackCall(std::bind(callback, this->args));
+            emitted = true;
+        }
+    }
+
+    ~CallbackWrapImpl() {
+        if (!emitted) {
+            LOG << "Warn. Callback not emitted";
+        }
+    }
+
+private:
+
+    CallbackCall callbackCall;
+
+    Callback callback;
+
+    std::vector<std::tuple<Args...>> args;
+
+    std::vector<bool> filled;
+
+    bool emitted = false;
+};
+
+template<class CallbackWrap>
+class CallbackWrapPtr {
+public:
+
+    CallbackWrapPtr(const std::shared_ptr<CallbackWrap> &callback, size_t index)
+        : callback(callback)
+        , index(index)
+    {}
+
+    template<typename ...Args>
+    void operator()(const Args& ...args) const {
+        callback->process(index, args...);
+    }
+
+private:
+
+    std::shared_ptr<CallbackWrap> callback;
+    const size_t index;
+};
 
 SimpleClient::SimpleClient() {
     manager = std::make_unique<QNetworkAccessManager>(this);
@@ -181,6 +253,16 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
 
 void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {
     sendMessageInternal(false, pingCallbacks_, address, "", PingCallbackInternal(std::bind(callback, address, _1, _2)), true, timeout, false, &SimpleClient::onPingReceived, true);
+}
+
+void SimpleClient::pings(const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout) {
+    const auto callbackImpl = std::make_shared<CallbackWrapImpl<PingsCallback, QString, milliseconds, std::string>>(std::bind(&SimpleClient::callbackCall, this, _1), callback, addresses.size());
+    size_t index = 0;
+    for (const QString &address: addresses) {
+        const auto callbackNew = CallbackWrapPtr<std::decay_t<decltype(*callbackImpl)>>(callbackImpl, index);
+        ping(address, PingCallback(callbackNew), timeout);
+        index++;
+    }
 }
 
 template<class Callbacks, typename... Message>

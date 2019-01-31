@@ -50,6 +50,8 @@ public:
 
     using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
 
+    using PingsCallback = std::function<void(const std::vector<std::tuple<QString, milliseconds, std::string>> &response)>;
+
     using ReturnCallback = std::function<void()>;
 
 private:
@@ -66,6 +68,8 @@ public:
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
     void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
+
+    void pings(const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout);
 
     void setParent(QObject *obj);
 
