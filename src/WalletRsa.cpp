@@ -42,6 +42,8 @@ void WalletRsa::unlock(const std::string &password) {
 
     const std::string privateKey = readFile(fileName);
     privateKeyRsa = getPrivateRsa(privateKey, password);
+
+    CHECK(validatePublicKey(privateKeyRsa, publicKeyRsa), "Public key damaged");
 }
 
 void WalletRsa::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {

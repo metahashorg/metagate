@@ -292,3 +292,7 @@ RsaKey getPublicRsa(const PublikKey &pKey) {
 RsaKey getPrivateRsa(const std::string &privkey, const std::string &password) {
     return getRsa(privkey, password);
 }
+
+bool validatePublicKey(const RsaKey &privateKey, const RsaKey &publicKey) {
+    return BN_cmp(publicKey->n, privateKey->n) == 0;
+}

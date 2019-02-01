@@ -61,6 +61,8 @@ void tst_rsa::testSsl() {
     const RsaKey privateKeyRsa = getPrivateRsa(privateKey, password);
     const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMsg);
 
+    QCOMPARE(validatePublicKey(privateKeyRsa, publicKeyRsa), true);
+
     QCOMPARE(decryptMsg, message);
 }
 
@@ -139,6 +141,8 @@ void tst_rsa::testSslWalletError() {
     QVERIFY_EXCEPTION_THROWN(decrypt(privateKeyRsa, encryptedMsg), Exception);
 
     QVERIFY_EXCEPTION_THROWN(getPrivateRsa(privateKeyError, password), Exception);
+
+    QCOMPARE(validatePublicKey(privateKeyRsa, publicKeyRsa), false);
 }
 
 void tst_rsa::testSslIncorrectPassword_data() {

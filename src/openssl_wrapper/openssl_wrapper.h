@@ -27,4 +27,6 @@ RsaKey getPublicRsa(const PublikKey &pKey);
 
 RsaKey getPrivateRsa(const std::string &privkey, const std::string &password);
 
+bool validatePublicKey(const RsaKey &privateKey, const RsaKey &publicKey);
+
 #endif // OPENSSL_WRAPPER_H
