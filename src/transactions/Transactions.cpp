@@ -299,6 +299,9 @@ BEGIN_SLOT_WRAPPER
         }
         servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
         const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(addr.address, addr.currency, true);
+        if (!pendingTxs.empty()) {
+            LOG << PeriodicLog::make("pt_" + addr.address.right(4).toStdString()) << "Pending txs: " << pendingTxs.size();
+        }
         std::vector<QString> pendingTxsStrs;
         pendingTxsStrs.reserve(pendingTxs.size());
         std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});

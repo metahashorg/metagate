@@ -175,7 +175,7 @@ BEGIN_SLOT_WRAPPER
             const time_point timeBegin = getBeginTime(reply);
             const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
             if (duration >= timeout) {
-                LOG << "Timeout request";
+                LOG << PeriodicLog::make("cl_tm") << "Timeout request";
                 toDelete.emplace_back(reply);
             }
         }
