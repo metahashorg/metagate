@@ -173,6 +173,10 @@ private:
 
     seconds timeoutRequestNodes;
 
+    QString dnsServerName;
+
+    int dnsServerPort;
+
 };
 
 #endif // NSLOOKUP_H

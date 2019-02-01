@@ -1,9 +1,5 @@
 #include "NsLookup.h"
 
-#include <set>
-#include <sstream>
-
-#include <QUdpSocket>
 #include <QApplication>
 #include <QCryptographicHash>
 
@@ -23,8 +19,6 @@
 #include "Paths.h"
 
 #include "algorithms.h"
-
-const static QString NODES_FILE = "nodes.txt";
 
 const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
@@ -77,6 +71,10 @@ NsLookup::NsLookup(QObject *parent)
     countSuccessTestsForP2PNodes = settings.value("ns_lookup/countSuccessTests").toInt();
     CHECK(settings.contains("ns_lookup/timeoutRequestNodesSeconds"), "ns_lookup/timeoutRequestNodesSeconds field not found");
     timeoutRequestNodes = seconds(settings.value("ns_lookup/timeoutRequestNodesSeconds").toInt());
+    CHECK(settings.contains("ns_lookup/dns_server"), "ns_lookup/dns_server field not found");
+    dnsServerName = settings.value("ns_lookup/dns_server").toString();
+    CHECK(settings.contains("ns_lookup/dns_server_port"), "ns_lookup/dns_server_port field not found");
+    dnsServerPort = settings.value("ns_lookup/dns_server_port").toInt();
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
@@ -117,7 +115,7 @@ NsLookup::NsLookup(QObject *parent)
 NsLookup::~NsLookup() {
     isStopped = true;
     thread1.quit();
-    if (!thread1.wait(8000)) {
+    if (!thread1.wait(3000)) {
         thread1.terminate();
         thread1.wait();
     }
@@ -233,7 +231,7 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         requestPacket.setFlags(DnsFlag::MyFlag);
         const auto byteArray = requestPacket.toByteArray();
         LOG << "dns " << node->second.type << ". ";
-        udpClient.sendRequest(QHostAddress("8.8.8.8"), 53, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response) {
+        udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response) {
             CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
             const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
 
