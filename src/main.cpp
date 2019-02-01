@@ -41,6 +41,8 @@
 #include "Module.h"
 #include "proxy/Proxy.h"
 
+#include "WalletRsa.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];

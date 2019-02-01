@@ -10,11 +10,22 @@
 #include <openssl/pem.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 #include "check.h"
 #include "utils.h"
 
 static bool isInitialized = false;
+
+#define CHECK_SSL(v, message) { \
+    if (!(v)) { \
+        std::vector<char> buffer(270); \
+        const auto error = ERR_get_error(); \
+        const std::string errorStr = ERR_error_string(error, buffer.data()); \
+        const std::string newMessage = std::string(message) + ". " + errorStr; \
+        throwErr(newMessage); \
+    } \
+}
 
 void InitOpenSSL() {
     CHECK(!isInitialized, "Already initialized");
@@ -32,17 +43,20 @@ static RsaKey getRsa(const std::string &privKey, const std::string &password) {
     CHECK(isInitialized, "Not initialized");
 
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new_mem_buf((void*)privKey.data(), (int)privKey.size()), BIO_free);
-    CHECK(bio != nullptr, "Incorrect BIO_new_mem_buf");
+    CHECK_SSL(bio != nullptr, "Incorrect BIO_new_mem_buf");
 
     const char *pswd = nullptr;
     if (!password.empty()) {
        pswd = password.data();
     }
     const std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> evp(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, (void*)pswd), EVP_PKEY_free);
-    CHECK(evp != nullptr, "Incorrect password");
+    CHECK_SSL(evp != nullptr, "Incorrect password");
 
     RsaKey rsa(EVP_PKEY_get1_RSA(evp.get()), RSA_free);
-    CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
+    CHECK_SSL(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
+
+    const int validateResult = RSA_check_key(rsa.get());
+    CHECK_SSL(validateResult == 1, "Rsa key not validate");
 
     return rsa;
 }
@@ -54,13 +68,13 @@ PublikKey getPublic(const std::string &privKey, const std::string &password) {
     CHECK(rsa != nullptr, "Incorrect EVP_PKEY_get1_RSA");
 
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bioPub(BIO_new(BIO_s_mem()), BIO_free);
-    const bool res5 = i2d_RSA_PUBKEY_bio(bioPub.get(), rsa.get());
-    CHECK(res5, "Incorrect i2d_RSA_PUBKEY_bio");
+    const int res5 = i2d_RSA_PUBKEY_bio(bioPub.get(), rsa.get());
+    CHECK_SSL(res5 != 0, "Incorrect i2d_RSA_PUBKEY_bio");
 
     const int keylenPub = BIO_pending(bioPub.get());
     std::vector<unsigned char> pem_key_pub(keylenPub);
-    const bool res6 = BIO_read(bioPub.get(), pem_key_pub.data(), keylenPub);
-    CHECK(res6, "Incorrect BIO_read");
+    const int res6 = BIO_read(bioPub.get(), pem_key_pub.data(), keylenPub);
+    CHECK_SSL(res6 > 0, "Incorrect BIO_read");
 
     return toHex(std::string(pem_key_pub.begin(), pem_key_pub.end()));
 }
@@ -73,38 +87,40 @@ PrivateKey createRsaKey(const std::string &password) {
     const int kBits = 2048;
 
     const std::unique_ptr<BIGNUM, std::function<void(BIGNUM*)>> bne(BN_new(), BN_free);
-    const bool res1 = BN_set_word(bne.get(), 17);
-    CHECK(res1, "Incorrect BN_set_word");
+    const int res1 = BN_set_word(bne.get(), 17);
+    CHECK_SSL(res1 != 0, "Incorrect BN_set_word");
 
     const RsaKey rsa(RSA_new(), RSA_free);
-    const bool res2 = RSA_generate_key_ex(rsa.get(), kBits, bne.get(), nullptr); // TODO random generator ?
-    CHECK(res2, "Incorrect RSA_generate_key_ex");
+    const int res2 = RSA_generate_key_ex(rsa.get(), kBits, bne.get(), nullptr); // TODO random generator ?
+    CHECK_SSL(res2 != 0, "Incorrect RSA_generate_key_ex");
 
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new(BIO_s_mem()), BIO_free);
     if (!password.empty()) {
-        const bool res3 = PEM_write_bio_RSAPrivateKey(bio.get(), rsa.get(), EVP_aes_128_cbc(), (unsigned char*)password.data(), password.size(), nullptr, nullptr);
-        CHECK(res3, "Incorrect PEM_write_bio_RSAPrivateKey");
+        const int res3 = PEM_write_bio_RSAPrivateKey(bio.get(), rsa.get(), EVP_aes_128_cbc(), (unsigned char*)password.data(), password.size(), nullptr, nullptr);
+        CHECK_SSL(res3 != 0, "Incorrect PEM_write_bio_RSAPrivateKey");
     } else {
-        const bool res3 = PEM_write_bio_RSAPrivateKey(bio.get(), rsa.get(), nullptr, nullptr, 0, nullptr, nullptr);
-        CHECK(res3, "Incorrect PEM_write_bio_RSAPrivateKey");
+        const int res3 = PEM_write_bio_RSAPrivateKey(bio.get(), rsa.get(), nullptr, nullptr, 0, nullptr, nullptr);
+        CHECK_SSL(res3 != 0, "Incorrect PEM_write_bio_RSAPrivateKey");
     }
 
     const int keylen = BIO_pending(bio.get());
     std::vector<unsigned char> pem_key(keylen);
-    const bool res4 = BIO_read(bio.get(), pem_key.data(), keylen);
-    CHECK(res4, "Incorrect BIO_read");
+    const int res4 = BIO_read(bio.get(), pem_key.data(), keylen);
+    CHECK_SSL(res4 > 0, "Incorrect BIO_read");
 
     return std::string(pem_key.begin(), pem_key.end());
 }
 
 static void loadAesKey(const std::array<unsigned char, 32> &ckey, AES_KEY &keyEn) {
-    AES_set_encrypt_key(ckey.data(), 256, &keyEn);
+    const int res = AES_set_encrypt_key(ckey.data(), 256, &keyEn);
+    CHECK_SSL(res == 0, "Incorrect AES_set_encrypt_key");
 }
 
 static std::vector<unsigned char> genAesKey(AES_KEY &keyEn) {
     CHECK(RAND_status(), "Rand not seed");
     std::array<unsigned char, 32> key;
-    RAND_bytes(key.data(), key.size());
+    const int res1 = RAND_bytes(key.data(), key.size());
+    CHECK_SSL(res1 != 0, "Incorrect RAND_bytes");
     loadAesKey(key, keyEn);
     return std::vector<unsigned char>(key.begin(), key.end());
 }
@@ -119,7 +135,8 @@ static EncryptAes encryptAes(const std::string &message, const AES_KEY &keyEn) {
 
     CHECK(RAND_status(), "Rand not seed");
     std::array<unsigned char, 32> iv;
-    RAND_bytes(iv.data(), iv.size());
+    const int res1 = RAND_bytes(iv.data(), iv.size());
+    CHECK_SSL(res1 != 0, "Incorrect RAND_bytes");
     result.iv.assign(iv.begin(), iv.end()); // iv должен сохраняться тут, так как дальше он будет перезаписываться
     result.message.resize(message.size(), 0);
 
@@ -141,7 +158,7 @@ static RsaKey getRsaPublikKey(const std::string &pubkey) {
 
     const std::string normPubKey = fromHex(pubkey);
     const std::unique_ptr<BIO, std::function<void(BIO*)>> bio(BIO_new_mem_buf((void*)normPubKey.data(), (int)normPubKey.size()), BIO_free);
-    CHECK(bio != nullptr, "Incorrect BIO_new_mem_buf");
+    CHECK_SSL(bio != nullptr, "Incorrect BIO_new_mem_buf");
 
     RsaKey rsa(d2i_RSA_PUBKEY_bio(bio.get(), nullptr), RSA_free);
     CHECK(rsa != nullptr, "Incorrect d2i_RSA_PUBKEY_bio");
@@ -155,7 +172,7 @@ static std::string encryptRSA(const RsaKey &pubkey, const std::vector<unsigned c
 
     std::vector<unsigned char> encrypt(RSA_size(pubkey.get()));
     const int encrypt_len = RSA_public_encrypt(message.size(), (unsigned char*)message.data(), encrypt.data(), pubkey.get(), RSA_PKCS1_OAEP_PADDING);
-    CHECK(encrypt_len != -1, "Incorrect RSA_public_encrypt");
+    CHECK_SSL(encrypt_len != -1, "Incorrect RSA_public_encrypt");
     encrypt.resize(encrypt_len);
 
     return std::string(encrypt.begin(), encrypt.end());
@@ -168,7 +185,7 @@ static std::string decryptRsa(const RsaKey &rsa, const std::string &message) {
 
     std::vector<unsigned char> decrypt(RSA_size(rsa.get()));
     const int decrypt_len = RSA_private_decrypt(message.size(), (unsigned char*)message.data(), decrypt.data(), rsa.get(), RSA_PKCS1_OAEP_PADDING);
-    CHECK(decrypt_len != -1, "Incorrect RSA_public_encrypt");
+    CHECK_SSL(decrypt_len != -1, "Incorrect RSA_private_decrypt");
     decrypt.resize(decrypt_len);
 
     return std::string(decrypt.begin(), decrypt.end());

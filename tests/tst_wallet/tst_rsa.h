@@ -14,6 +14,15 @@ private slots:
     void testSsl_data();
     void testSsl();
 
+    void testSslMessageError_data();
+    void testSslMessageError();
+
+    void testSslWalletError_data();
+    void testSslWalletError();
+
+    void testSslIncorrectPassword_data();
+    void testSslIncorrectPassword();
+
 };
 
 #endif // TST_RSA_H
