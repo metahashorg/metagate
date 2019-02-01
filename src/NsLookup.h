@@ -15,6 +15,8 @@
 
 #include "client.h"
 
+#include "UdpSocketClient.h"
+
 struct TypedException;
 
 struct NodeType {
@@ -129,9 +131,9 @@ private:
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
-    std::vector<QString> requestDns(const NodeType &node) const;
-
 private:
+
+    UdpSocketClient udpClient;
 
     QString savedNodesPath;
 

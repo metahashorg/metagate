@@ -40,7 +40,8 @@ BEGIN_SLOT_WRAPPER
     std::vector<char> response;
     while (socket.hasPendingDatagrams()) {
         const QNetworkDatagram datagram = socket.receiveDatagram();
-        response.insert(response.end(), datagram.data().begin(), datagram.data().end());
+        const auto data = datagram.data();
+        response.insert(response.end(), data.begin(), data.end());
     }
 
     emit callbackCall(std::bind(copyCallback, response));

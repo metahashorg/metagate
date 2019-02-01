@@ -104,9 +104,12 @@ NsLookup::NsLookup(QObject *parent)
     CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
     CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
 
+    CHECK(connect(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
+
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
 
+    udpClient.mvToThread(&thread1);
     client.moveToThread(&thread1);
     moveToThread(&thread1);
 }
@@ -150,33 +153,6 @@ BEGIN_SLOT_WRAPPER
     LOG << "Dns scan start";
     continueResolve(nodes.begin());
 END_SLOT_WRAPPER
-}
-
-std::vector<QString> NsLookup::requestDns(const NodeType &node) const {
-    QUdpSocket udp;
-
-    DnsPacket requestPacket;
-    requestPacket.addQuestion(DnsQuestion::getIp(node.node.str()));
-    requestPacket.setFlags(DnsFlag::MyFlag);
-    udp.writeDatagram(requestPacket.toByteArray(), QHostAddress("8.8.8.8"), 53);
-
-    udp.waitForReadyRead(); // Не ставить timeout, так как это вызывает странное поведение
-    if (isStopped) {
-        return {};
-    }
-    std::vector<char> data(512 * 1000, 0);
-    const qint64 size = udp.readDatagram(data.data(), data.size());
-    CHECK(size > 0, "Incorrect response dns " + node.type.toStdString());
-    const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(data.data(), size));
-
-    LOG << "dns ok " << node.type << ". " << packet.answers().size();
-    CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(data.begin(), data.begin() + size)));
-
-    std::vector<QString> result;
-    for (const auto &record : packet.answers()) {
-        result.emplace_back(::makeAddress(record.toString(), node.port));
-    }
-    return result;
 }
 
 void NsLookup::finalizeLookup() {
@@ -252,12 +228,31 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
     }
     ipsTemp = cacheDns.cache[node->second.node.str()];
     if (ipsTemp.empty()) {
-        ipsTemp = requestDns(node->second);
-        cacheDns.cache[node->second.node.str()] = ipsTemp;
-        cacheDns.lastUpdate = now;
-    }
+        DnsPacket requestPacket;
+        requestPacket.addQuestion(DnsQuestion::getIp(node->second.node.str()));
+        requestPacket.setFlags(DnsFlag::MyFlag);
+        const auto byteArray = requestPacket.toByteArray();
+        LOG << "dns " << node->second.type << ". ";
+        udpClient.sendRequest(QHostAddress("8.8.8.8"), 53, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response) {
+            CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
+            const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
 
-    continuePing(std::begin(ipsTemp), node);
+            LOG << "dns ok " << node->second.type << ". " << packet.answers().size();
+            CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(response.begin(), response.end())));
+
+            ipsTemp.clear();
+            for (const auto &record : packet.answers()) {
+                ipsTemp.emplace_back(::makeAddress(record.toString(), node->second.port));
+            }
+
+            cacheDns.cache[node->second.node.str()] = ipsTemp;
+            cacheDns.lastUpdate = now;
+
+            continuePing(std::begin(ipsTemp), node);
+        });
+    } else {
+        continuePing(std::begin(ipsTemp), node);
+    }
 }
 
 static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message) {
