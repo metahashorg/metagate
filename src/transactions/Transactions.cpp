@@ -173,7 +173,10 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     std::shared_ptr<BalanceStruct> balanceStruct = std::make_shared<BalanceStruct>(servers.size());
 
     const auto processPendingTx = [this, address, currency](const std::string &response, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        if (exception.isSet()) {
+            LOG << PeriodicLog::make("p_er") << "Server error: " + exception.description + ". " + exception.content;
+            return;
+        }
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
             db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
