@@ -618,6 +618,7 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
 {
     while (query.next()) {
         Message msg;
+        msg.username = query.value("user").toString();
         msg.isChannel = isChannel;
         if (msg.isChannel) {
             msg.channel = query.value("dest").toString();
