@@ -765,7 +765,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(notDecryptedMessagesPair.first.size() == notDecryptedMessagesPair.second.size(), "Incorrect db.getNotDecryptedMessage");
         const std::vector<Message> &notDecryptedMessages = notDecryptedMessagesPair.second;
         cryptManager.tryDecryptMessages(notDecryptedMessages, address, CryptographicManager::DecryptMessagesCallback([this, ids=notDecryptedMessagesPair.first, callback](const std::vector<Message> &answer) {
-            CHECK(ids.size() == answer.size(), "Incorrect db.getNotDecryptedMessage");
+            CHECK(ids.size() == answer.size(), "Incorrect tryDecryptMessages");
             std::vector<std::tuple<MessengerDBStorage::DbId, bool, QString>> result;
             result.reserve(ids.size());
             for (size_t i = 0; i < ids.size(); i++) {
