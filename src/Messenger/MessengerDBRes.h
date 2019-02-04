@@ -11,17 +11,17 @@ static const int databaseVersion = 1;
 
 static const QString createMsgUsersTable = "CREATE TABLE users ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
-                                           "username VARCHAR(100) UNIQUE, "
-                                           "publickey VARCHAR(200), "
-                                           "signatures VARCHAR(200) "
+                                           "username VARCHAR(100) UNIQUE NOT NULL DEFAULT '', "
+                                           "publickey VARCHAR(200) NOT NULL DEFAULT '', "
+                                           "signatures VARCHAR(200) NOT NULL DEFAULT '' "
                                            ")";
 
 static const QString createUsersSortingIndex = "CREATE INDEX usersSortingIdx ON users(username)";
 
 static const QString createMsgContactsTable = "CREATE TABLE contacts ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
-                                                "username VARCHAR(100) UNIQUE, "
-                                                "publickey VARCHAR(200) "
+                                                "username VARCHAR(100) UNIQUE NOT NULL DEFAULT '', "
+                                                "publickey VARCHAR(200) NOT NULL DEFAULT '' "
                                                 ")";
 
 static const QString createContactsSortingIndex = "CREATE INDEX contactsSortingIdx ON contacts(username)";
@@ -29,10 +29,10 @@ static const QString createContactsSortingIndex = "CREATE INDEX contactsSortingI
 static const QString createMsgChannelsTable = "CREATE TABLE channels ( "
                                                         "id INTEGER PRIMARY KEY NOT NULL, "
                                                         "userid  INTEGER NOT NULL, "
-                                                        "channel TEXT, "
-                                                        "shaName TEXT, "
+                                                        "channel TEXT NOT NULL DEFAULT '', "
+                                                        "shaName TEXT NOT NULL DEFAULT '', "
                                                         "isAdmin BOOLEAN, "
-                                                        "adminName VARCHAR(200), "
+                                                        "adminName VARCHAR(200) NOT NULL DEFAULT '', "
                                                         "isBanned BOOLEAN, "
                                                         "isWriter BOOLEAN, "
                                                         "isVisited BOOLEAN, "
@@ -46,13 +46,13 @@ static const QString createMsgMessagesTable = "CREATE TABLE messages ( "
                                            "contactid  INTEGER, "
                                            "morder INT8, "
                                            "dt INT8, "
-                                           "text TEXT, "
-                                           "decryptedText TEXT, "
+                                           "text TEXT NOT NULL DEFAULT '', "
+                                           "decryptedText TEXT NOT NULL DEFAULT '', "
                                            "isDecrypted BOOLEAN, "
                                            "isIncoming BOOLEAN, "
                                            "canDecrypted BOOLEAN, "
                                            "isConfirmed BOOLEAN, "
-                                           "hash VARCHAR(100), "
+                                           "hash VARCHAR(100) NOT NULL DEFAULT '', "
                                            "fee INT8, "
                                            "channelid  INTEGER, "
                                            "FOREIGN KEY (userid) REFERENCES users(id), "
