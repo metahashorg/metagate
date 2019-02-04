@@ -225,6 +225,8 @@ BEGIN_SLOT_WRAPPER
         };
 
         LOG << "download html";
+        countDownloads["html_" + version]++;
+        CHECK(countDownloads["html_" + version] < 5, "Maximum download");
         versionHtmlForUpdate = version;
         client.sendMessageGet(url, interfaceGetCallback); // Без таймаута, так как загрузка большого бинарника
         id++;
@@ -276,6 +278,8 @@ BEGIN_SLOT_WRAPPER
         };
 
         LOG << "New app version download";
+        countDownloads["p_" + version]++;
+        CHECK(countDownloads["p_" + version] < 5, "Maximum download");
         client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback); // Без таймаута, так как загрузка большого бинарника
 
         versionForUpdate = version;
