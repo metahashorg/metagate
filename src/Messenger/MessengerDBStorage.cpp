@@ -636,6 +636,7 @@ void MessengerDBStorage::createMessagesList(QSqlQuery &query, std::vector<Messag
         msg.fee = query.value("fee").toLongLong();
         msg.isCanDecrypted = query.value("canDecrypted").toBool();
         msg.isConfirmed = query.value("isConfirmed").toBool();
+        msg.hash = query.value("hash").toString();
         messages.push_back(msg);
 
         if (isIds) {

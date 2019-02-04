@@ -105,7 +105,7 @@ static const QString selectMsgMaxConfirmedCounter = "SELECT IFNULL(MAX(m.morder)
                                                     "AND u.username = :user";
 
 static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
-                                                "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed, m.hash "
                                                 "FROM messages m "
                                                 "INNER JOIN users u ON u.id = m.userid "
                                                 "INNER JOIN contacts du ON du.id = m.contactid "
@@ -114,7 +114,7 @@ static QString selectMsgMessagesForUser = "SELECT u.username AS user, du.usernam
                                                 "ORDER BY m.morder";
 
 static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
-                                                       "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                       "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed, m.hash "
                                                        "FROM messages m "
                                                        "INNER JOIN users u ON u.id = m.userid "
                                                        "INNER JOIN contacts c ON c.id = m.contactid "
@@ -123,7 +123,7 @@ static const QString selectMsgMessagesForUserAndDest = "SELECT u.username AS use
                                                        "ORDER BY m.morder";
 
 static const QString selectMsgMessagesForUserAndChannel = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
-                                                             "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                             "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed, m.hash "
                                                              "FROM messages m "
                                                              "INNER JOIN users u ON u.id = m.userid "
                                                              "INNER JOIN channels c ON c.id = m.channelid "
@@ -132,7 +132,7 @@ static const QString selectMsgMessagesForUserAndChannel = "SELECT u.username AS 
                                                              "ORDER BY m.morder";
 
 static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS user, c.username AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
-                                                          "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                          "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed, m.hash "
                                                           "FROM messages m "
                                                           "INNER JOIN users u ON u.id = m.userid "
                                                           "INNER JOIN contacts c ON c.id = m.contactid "
@@ -142,7 +142,7 @@ static const QString selectMsgMessagesForUserAndDestNum = "SELECT u.username AS 
                                                           "LIMIT :num";
 
 static const QString selectMsgMessagesForUserAndChannelNum = "SELECT u.username AS user, c.shaName AS dest, m.isIncoming, m.text, m.decryptedText, m.isDecrypted, "
-                                                          "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed "
+                                                          "m.morder, m.dt, m.fee, m.canDecrypted, m.isConfirmed, m.hash "
                                                           "FROM messages m "
                                                           "INNER JOIN users u ON u.id = m.userid "
                                                           "INNER JOIN channels c ON c.id = m.channelid "
