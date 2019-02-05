@@ -111,7 +111,7 @@ Q_INVOKABLE void getRawPrivKey(QString requestId, QString address, QString passw
 getRawPrivkeyResultJs(requestId, result, errorNum, errorMessage)
 
 Q_INVOKABLE void createV8Address(QString requestId, QString address, int nonce);
-# Создает адрес контракта v8 на основе address и nonce
+# Creates v8 contract address based on address and nonce
 # javascript is called after completion of this function 
 createV8AddressResultJs(requestId, result, errorNum, errorMessage)
 ```
@@ -186,7 +186,7 @@ Q_INVOKABLE void getRawPrivKeyMHC(QString requestId, QString address, QString pa
 getRawPrivkeyMHCResultJs(requestId, result, errorNum, errorMessage)
 
 Q_INVOKABLE void createV8AddressMHC(QString requestId, QString address, int nonce);
-# Создает адрес контракта v8 на основе address и nonce
+# Creates v8 contract address based on address and nonce
 # javascript is called after completion of this function 
 createV8AddressMHCResultJs(requestId, result, errorNum, errorMessage)
 ```
@@ -403,15 +403,15 @@ Q_INVOKABLE void metaOnline();
 onlineResultJs(jsonResult, errorNum, errorMessage);
 
 Q_INVOKABLE void getAppModules(const QString requestId);
-# Возвращает список модулей
+# Returns list of modules
 # Result returns to the function:
 getAppModulesResultJs(requestId, jsonResult, errorNum, errorMessage);
-# result в виде
+# result in the form of
 # [{"module":"proxy","state":"found"}]
 # state == wait, not_found, found
 
 Q_INVOKABLE void clearNsLookup();
-# Очистить файл с сохраненными нодами nsLookup. Требует перезагрузки
+# Clean the file with the saved nsLoolup nodes. Reboot is required.
 # Result returns to the function:
 clearNsLookupResultJs("Ok", errorNum, errorMessage);
 ```
