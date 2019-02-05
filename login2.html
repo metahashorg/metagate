@@ -77,14 +77,25 @@
     function sendTx() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", document.createWalletForm.nonce.value, document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", document.createWalletForm.nonce.value, document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
+        });
+    }
+    
+    function createV8AddressMHCResultJs(requestId, result, errorCode, errorMessage) {
+        document.createWalletForm.to.value = result;
+    }
+    
+    function createV8() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.createV8AddressMHC("1", document.createWalletForm.address.value, document.createWalletForm.nonce.value) ;
         });
     }
     
     function sendTx2() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", "", document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", "", document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
         });
     }
         
@@ -97,7 +108,7 @@
             result += hex;
         }
         alert(result);
-        mainWindow.signMessageV3("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, document.createWalletForm.value.value, "" + (document.createWalletForm.data.value.length + 0), "", result, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_delegate", "typeGet": "torrent_delegate", "timeout_sec": 5}') ;
+        mainWindow.signMessageV3("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, document.createWalletForm.value.value, "" + (document.createWalletForm.data.value.length + 0), "", result, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
         });
     }
         
@@ -141,7 +152,7 @@
             <input name="address" type="text" value="0x0034d209107371745c6f5634d6ed87199bac872c310091ca56" size="60"><label for="address">address</label><br>
             <input name="name" type="text" value="name1" size="60"><label for="address">name</label><br>
             <input name="currency" type="text" value="mth" size="60"><label for="currency">currency</label><br>
-            <input name="type" type="text" value="torrent_delegate" size="60"><label for="type">type</label><br>
+            <input name="type" type="text" value="torrent_test" size="60"><label for="type">type</label><br>
             <input name="group" type="text" value="g1" size="60"><label for="group">group</label><br>
             <input name="fromTx" type="text" value="0" size="60"><label for="fromTx">fromTx/from</label><br>
             <input name="count" type="text" value="10" size="60"><label for="count">count</label><br>
@@ -161,6 +172,7 @@
             <input type="button" value="calcBalance" onclick="calcBalance()"><br>
             <input type="button" value="getTxFromServer" onclick="getTxFromServer()"><br>
             <input type="button" value="getLastUpdate" onclick="getLastUpdate()"><br>
+            <input type="button" value="createV8" onclick="createV8()"><br>
             <input type="button" value="sendTx" onclick="sendTx()"><br>
             <input type="button" value="sendTxAutoCalcNonce" onclick="sendTx2()"><br>
             <input type="button" value="sendTxData" onclick="sendTxData()"><br>
