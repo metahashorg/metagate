@@ -66,7 +66,7 @@ QString makeWantToTalkRequest(const QString &toAddress, const QString &pubkey, c
 enum METHOD: int {
     APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5,
     CHANNEL_CREATE = 6, CHANNEL_ADD_WRITER = 7, CHANNEL_DEL_WRITER = 8, SEND_TO_CHANNEL = 9, GET_CHANNEL = 10, GET_CHANNELS = 11, GET_MY_CHANNELS = 12, ADD_TO_CHANNEL = 13, DEL_FROM_CHANNEL = 14,
-    ALL_KEYS_ADDED = 15, WANT_TO_TALK = 16,
+    ALL_KEYS_ADDED = 15, WANT_TO_TALK = 16, REQUIRES_PUBKEY = 17, COLLOCUTOR_ADDED_PUBKEY = 18,
     NOT_SET = 1000
 };
 
@@ -105,6 +105,17 @@ struct KeyMessageResponse {
     uint64_t fee;
 };
 
+struct RequiresPubkeyResponse {
+    QString address;
+    QString collocutor;
+};
+
+struct CollocutorAddedPubkeyResponse {
+    QString address;
+    QString pubkey;
+    QString collocutor;
+};
+
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response);
 
 NewMessageResponse parseNewMessageResponse(const QJsonDocument &response);
@@ -124,6 +135,10 @@ ChannelInfo parseDelToChannelResponse(const QJsonDocument &response);
 Message::Counter parseCountMessagesResponse(const QJsonDocument &response);
 
 KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response);
+
+RequiresPubkeyResponse parseRequiresPubkeyResponse(const QJsonDocument &response);
+
+CollocutorAddedPubkeyResponse parseCollocutorAddedPubkeyResponse(const QJsonDocument &response);
 
 }
 

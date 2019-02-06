@@ -88,6 +88,10 @@ QString Messenger::makeTextForSendToChannelRequest(const QString &titleSha, cons
     return messenger::makeTextForSendToChannelRequest(titleSha, text, fee, timestamp);
 }
 
+QString Messenger::makeTextForWantToTalkRequest(const QString &address) {
+    return messenger::makeTextForWantTalkRequest(address);
+}
+
 static QString getWssServer() {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("web_socket/messenger"), "web_socket/messenger setting not found");
@@ -130,6 +134,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
     CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
     CHECK(connect(this, &Messenger::addAllAddressesInFolder, this, &Messenger::onAddAllAddressesInFolder), "not connect onAddAllAddressesInFolder");
+    CHECK(connect(this, &Messenger::wantToTalk, this, &Messenger::onWantToTalk), "not connect onWantToTalk");
 
     Q_REG2(uint64_t, "uint64_t", false);
     Q_REG(Messenger::Callback, "Messenger::Callback");
@@ -150,6 +155,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     Q_REG(GetChannelListCallback, "GetChannelListCallback");
     Q_REG(DecryptUserMessagesCallback, "DecryptUserMessagesCallback");
     Q_REG(AddAllWalletsInFolderCallback, "AddAllWalletsInFolderCallback");
+    Q_REG(WantToTalkCallback, "WantToTalkCallback");
 
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
@@ -518,6 +524,27 @@ BEGIN_SLOT_WRAPPER
         processAddOrDeleteInChannel(responseType.address, channelInfo, false);
     } else if (responseType.method == METHOD::ALL_KEYS_ADDED) {
         LOG << "Keys in folder added ok";
+    } else if (responseType.method == METHOD::WANT_TO_TALK) {
+        LOG << "Want to talk response";
+        invokeCallback(responseType.id, TypedException());
+    } else if (responseType.method == METHOD::REQUIRES_PUBKEY) {
+        LOG << "Requires pubkey";
+        const RequiresPubkeyResponse response = parseRequiresPubkeyResponse(messageJson);
+        const auto walFolders = walletFolders[response.address];
+        if (walFolders.find(currentWalletFolder) != walFolders.end()) {
+            emit javascriptWrapper.requiresPubkeySig(response.address, response.collocutor);
+        } else {
+            LOG << "User change wallet folder. Ignore " << response.address << " " << response.collocutor;
+        }
+    } else if (responseType.method == METHOD::COLLOCUTOR_ADDED_PUBKEY) {
+        LOG << "Collocutor added pubkey";
+        const CollocutorAddedPubkeyResponse response = parseCollocutorAddedPubkeyResponse(messageJson);
+        const auto walFolders = walletFolders[response.address];
+        if (walFolders.find(currentWalletFolder) != walFolders.end()) {
+            emit javascriptWrapper.collocutorAddedPubkeySig(response.address, response.collocutor);
+        } else {
+            LOG << "User change wallet folder. Ignore " << response.address << " " << response.collocutor;
+        }
     } else {
         throwErr("Incorrect response type");
     }
@@ -835,6 +862,20 @@ BEGIN_SLOT_WRAPPER
         emit wssClient.sendMessage(messageGetMyChannels);
     });
     callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onWantToTalk(const QString &address, const QString &pubkey, const QString &sign, const WantToTalkCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        const size_t idRequest = id.get();
+        const QString message = makeGetPubkeyRequest(address, pubkey, sign, idRequest);
+        callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 

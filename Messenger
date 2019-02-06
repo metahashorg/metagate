@@ -156,3 +156,9 @@ msgDeletedFromChannelJs(address, title, titleSha, admin, errorNum, errorMessage)
 
 msgNewMessegesChannelJs(address, titleSha, lastMessageCounter, errorNum, errorMessage)
 Это сообщение будет приходить при поступлении новых сообщений в канал
+
+msgRequiresPubkeyJs(address, collocutor, errorNum, errorMessage)
+Это сообщение будет приходить, если collocutor хочет пообщаться с адресом address (а address не предоставил свой публичный ключ)
+
+msgCollocutorAddedPubkeyJs(address, collocutor, errorNum, errorMessage)
+Это сообщение будет приходить, если collocutor добавил свой публичный ключ в базу данных. Можно пробовать заново вызывать сообщение savePublicKeyCollocutor

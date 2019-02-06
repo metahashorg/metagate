@@ -33,6 +33,8 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     CHECK(connect(this, &MessengerJavascript::addedToChannelSig, this, &MessengerJavascript::onAddedToChannel), "not connect onAddedToChannel");
     CHECK(connect(this, &MessengerJavascript::deletedFromChannelSig, this, &MessengerJavascript::onDeletedFromChannel), "not connect onDeletedFromChannel");
     CHECK(connect(this, &MessengerJavascript::newMessegesChannelSig, this, &MessengerJavascript::onNewMessegesChannel), "not connect onNewMessegesChannel");
+    CHECK(connect(this, &MessengerJavascript::requiresPubkeySig, this, &MessengerJavascript::onRequiresPubkey), "not connect onRequiresPubkey");
+    CHECK(connect(this, &MessengerJavascript::collocutorAddedPubkeySig, this, &MessengerJavascript::onCollocutorAddedPubkey), "not connect onCollocutorAddedPubkey");
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
 
@@ -294,12 +296,24 @@ BEGIN_SLOT_WRAPPER
             emit messenger->savePubkeyAddress(isForcibly, collocutor, pubkey, sign, Messenger::SavePubkeyCallback([this, address, collocutor, makeFunc](bool /*isNew*/) {
                 LOG << "Pubkey saved " << collocutor;
                 makeFunc(TypedException(), address, collocutor);
-            }, errorFunc, signalFunc));
+            }, [this, address, collocutor, makeFunc, errorFunc](const TypedException &exception) {
+                if (exception.numError != TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND) {
+                    errorFunc(exception);
+                    return;
+                }
+                const QString messageToSign = Messenger::makeTextForWantToTalkRequest(collocutor);
+                emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc](const QString &pubkey, const QString &sign){
+                    emit messenger->wantToTalk(address, pubkey, sign, Messenger::WantToTalkCallback([this, address, collocutor, makeFunc](){
+                        LOG << "Want to talk " << address << " " << collocutor;
+                        makeFunc(TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND, "Not found"), address, collocutor);
+                    }, errorFunc, signalFunc));
+                }, errorFunc, signalFunc));
+            }, signalFunc));
         }, errorFunc, signalFunc));
     });
 
     if (exception.isSet()) {
-        makeFunc(exception, address, collocutor);
+        errorFunc(exception);
     }
 END_SLOT_WRAPPER
 }
@@ -954,6 +968,26 @@ BEGIN_SLOT_WRAPPER
     } else {
         setPathsImpl(makePath(defaultWalletPath, defaultUserName), defaultUserName);
     }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::onRequiresPubkey(QString address, QString collocutor) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgRequiresPubkeyJs";
+
+    LOG << "Requires pubkey " << address << " " << collocutor;
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, collocutor);
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::onCollocutorAddedPubkey(QString address, QString collocutor) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgCollocutorAddedPubkeyJs";
+
+    LOG << "Requires pubkey " << address << " " << collocutor;
+
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, collocutor);
 END_SLOT_WRAPPER
 }
 

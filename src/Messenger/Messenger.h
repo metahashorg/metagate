@@ -101,6 +101,8 @@ public:
 
     using AddAllWalletsInFolderCallback = CallbackWrapper<std::function<void()>>;
 
+    using WantToTalkCallback = CallbackWrapper<std::function<void()>>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
@@ -130,6 +132,8 @@ public:
     static QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QString &address);
 
     static QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp);
+
+    static QString makeTextForWantToTalkRequest(const QString &address);
 
 
     static void checkChannelTitle(const QString &title);
@@ -179,6 +183,8 @@ signals:
 
     void addAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
 
+    void wantToTalk(const QString &address, const QString &pubkey, const QString &sign, const WantToTalkCallback &callback);
+
 private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
@@ -221,6 +227,8 @@ private slots:
 
 
     void onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
+
+    void onWantToTalk(const QString &address, const QString &pubkey, const QString &sign, const WantToTalkCallback &callback);
 
 private slots:
 

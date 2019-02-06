@@ -37,6 +37,8 @@ const static QString ADD_ALL_WALLETS_REQUEST = "msg_append_key_online_list";
 const static QString ADD_ALL_WALLETS_RESPONSE = "msg_append_key_online_list";
 const static QString WANT_TO_TALK_REQUEST = "msg_send_request";
 const static QString WANT_TO_TALK_RESPONSE = "msg_send_request";
+const static QString REQUIRES_PUBKEY_RESPONSE = "msg_request_pubkey";
+const static QString COLLOCUTOR_ADDED_PUBKEY_RESPONSE = "msg_new_pubkey";
 
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
     return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
@@ -366,6 +368,10 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
         result.method = METHOD::ALL_KEYS_ADDED;
     } else if (type == WANT_TO_TALK_RESPONSE) {
         result.method = METHOD::WANT_TO_TALK;
+    } else if (type == REQUIRES_PUBKEY_RESPONSE) {
+        result.method = METHOD::REQUIRES_PUBKEY;
+    } else if (type == COLLOCUTOR_ADDED_PUBKEY_RESPONSE) {
+        result.method = METHOD::COLLOCUTOR_ADDED_PUBKEY;
     } else if (type.isEmpty()) {
         // ignore
     } else {
@@ -535,6 +541,36 @@ KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response) {
     result.addr = data.value("addr").toString();
     CHECK(data.contains("fee") && data.value("fee").isString(), "fee field not found");
     result.fee = std::stoull(data.value("fee").toString().toStdString());
+
+    return result;
+}
+
+RequiresPubkeyResponse parseRequiresPubkeyResponse(const QJsonDocument &response) {
+    RequiresPubkeyResponse result;
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("params") && root.value("params").isObject(), "params field not found");
+    const QJsonObject data = root.value("params").toObject();
+    CHECK(data.contains("from") && data.value("from").isString(), "from field not found");
+    result.collocutor = data.value("from").toString();
+    CHECK(data.contains("to") && data.value("to").isString(), "to field not found");
+    result.address = data.value("to").toString();
+
+    return result;
+}
+
+CollocutorAddedPubkeyResponse parseCollocutorAddedPubkeyResponse(const QJsonDocument &response) {
+    CollocutorAddedPubkeyResponse result;
+    CHECK(response.isObject(), "Response field not found");
+    const QJsonObject root = response.object();
+    CHECK(root.contains("params") && root.value("params").isObject(), "params field not found");
+    const QJsonObject data = root.value("params").toObject();
+    CHECK(data.contains("addr_req") && data.value("addr_req").isString(), "addr_req field not found");
+    result.collocutor = data.value("addr_req").toString();
+    CHECK(data.contains("addr") && data.value("addr").isString(), "addr field not found");
+    result.address = data.value("addr").toString();
+    CHECK(data.contains("rsa_pub_key") && data.value("rsa_pub_key").isString(), "rsa_pub_key field not found");
+    result.pubkey = data.value("rsa_pub_key").toString();
 
     return result;
 }

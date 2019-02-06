@@ -57,6 +57,10 @@ signals:
 
     void newMessegesChannelSig(QString address, QString titleSha, Message::Counter lastMessage);
 
+    void requiresPubkeySig(QString address, QString collocutor);
+
+    void collocutorAddedPubkeySig(QString address, QString collocutor);
+
 private slots:
 
     void onNewMesseges(QString address, Message::Counter lastMessage);
@@ -66,6 +70,10 @@ private slots:
     void onDeletedFromChannel(QString address, QString title, QString titleSha, QString admin);
 
     void onNewMessegesChannel(QString address, QString titleSha, Message::Counter lastMessage);
+
+    void onRequiresPubkey(QString address, QString collocutor);
+
+    void onCollocutorAddedPubkey(QString address, QString collocutor);
 
 public slots:
 
