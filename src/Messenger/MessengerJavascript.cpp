@@ -26,6 +26,7 @@ namespace messenger {
 
 MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, QObject *parent)
     : QObject(parent)
+    , authManager(authManager)
     , cryptoManager(cryptoManager)
 {
     CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
@@ -45,6 +46,11 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
 
     signalFunc = std::bind(&MessengerJavascript::callbackCall, this, _1);
 
+    emit authManager.reEmit();
+}
+
+void MessengerJavascript::setMessenger(Messenger &m) {
+    messenger = &m;
     emit authManager.reEmit();
 }
 
@@ -303,7 +309,7 @@ BEGIN_SLOT_WRAPPER
                 }
                 const QString messageToSign = Messenger::makeTextForWantToTalkRequest(collocutor);
                 emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc](const QString &pubkey, const QString &sign){
-                    emit messenger->wantToTalk(address, pubkey, sign, Messenger::WantToTalkCallback([this, address, collocutor, makeFunc](){
+                    emit messenger->wantToTalk(collocutor, pubkey, sign, Messenger::WantToTalkCallback([this, address, collocutor, makeFunc](){
                         LOG << "Want to talk " << address << " " << collocutor;
                         makeFunc(TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND, "Not found"), address, collocutor);
                     }, errorFunc, signalFunc));
@@ -985,7 +991,7 @@ void MessengerJavascript::onCollocutorAddedPubkey(QString address, QString collo
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgCollocutorAddedPubkeyJs";
 
-    LOG << "Requires pubkey " << address << " " << collocutor;
+    LOG << "Collocutor added pubkey " << address << " " << collocutor;
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, collocutor);
 END_SLOT_WRAPPER

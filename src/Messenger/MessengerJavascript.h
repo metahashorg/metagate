@@ -30,9 +30,7 @@ public:
 public:
     explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, QObject *parent = nullptr);
 
-    void setMessenger(Messenger &m) {
-        messenger = &m;
-    }
+    void setMessenger(Messenger &m);
 
 signals:
 
@@ -137,6 +135,8 @@ private:
     void runJs(const QString &script);
 
 private:
+
+    auth::Auth &authManager;
 
     Messenger *messenger = nullptr;
 

@@ -18,7 +18,8 @@ isForcibly - перерегестрировать принудидельно (ж
 msgAddressAppendToMessengerJs("Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
-Получить публичный ключ собеседника и сохранить его в bd. Если адрес уже существует (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг isForcibly
+Получить публичный ключ собеседника и сохранить его в bd. Если адрес уже существует (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг isForcibly.
+Если публичный ключ по данному collocutor отсутствует на сервере, то при появлении этого ключа адресу address будут приходить сообщения msgCollocutorAddedPubkeyJs, а адресу collocutor сообщения msgRequiresPubkeyJs
 isForcibly - Получить принудидельно (желательно выставлять в false)
 Результат вернется в функцию
 msgPublicKeyCollocutorGettedJs(address, collocutor, errorNum, errorMessage)
@@ -158,7 +159,7 @@ msgNewMessegesChannelJs(address, titleSha, lastMessageCounter, errorNum, errorMe
 Это сообщение будет приходить при поступлении новых сообщений в канал
 
 msgRequiresPubkeyJs(address, collocutor, errorNum, errorMessage)
-Это сообщение будет приходить, если collocutor хочет пообщаться с адресом address (а address не предоставил свой публичный ключ)
+Это сообщение будет приходить, если collocutor хочет пообщаться с адресом address (а address не предоставил свой публичный ключ). Сообщения срабатывают один раз, в бд не сохраняются
 
 msgCollocutorAddedPubkeyJs(address, collocutor, errorNum, errorMessage)
-Это сообщение будет приходить, если collocutor добавил свой публичный ключ в базу данных. Можно пробовать заново вызывать сообщение savePublicKeyCollocutor
+Это сообщение будет приходить, если collocutor добавил свой публичный ключ в базу данных. Можно пробовать заново вызывать сообщение savePublicKeyCollocutor. Сообщения срабатывают один раз, в бд не сохраняются

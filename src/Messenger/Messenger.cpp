@@ -852,6 +852,7 @@ END_SLOT_WRAPPER
 void Messenger::onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
+        LOG << "Add address in folder " << folder << " " << addresses.size();
         currentWalletFolder = folder;
         for (const QString &address: addresses) {
             walletFolders[address].insert(folder);
@@ -869,7 +870,7 @@ void Messenger::onWantToTalk(const QString &address, const QString &pubkey, cons
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const size_t idRequest = id.get();
-        const QString message = makeGetPubkeyRequest(address, pubkey, sign, idRequest);
+        const QString message = makeWantToTalkRequest(address, pubkey, sign, idRequest);
         callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
         emit wssClient.sendMessage(message);
     });
