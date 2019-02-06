@@ -526,23 +526,28 @@ END_SLOT_WRAPPER
 
 void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString currPubkey = db.getUserPublicKey(address);
-    const bool isNew = currPubkey.isEmpty();
-    if (!isNew && !isForcibly) {
-        callback.emitFunc(TypedException(), isNew);
-        return;
-    }
-    const size_t idRequest = id.get();
-    const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
-    const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex, isForcibly](const TypedException &exception) {
-        if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
-            LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
-            db.setUserPublicKey(address, pubkeyAddressHex);
+    const TypedException exception = apiVrapper2([&, this] {
+        const QString currPubkey = db.getUserPublicKey(address);
+        const bool isNew = currPubkey.isEmpty();
+        if (!isNew && !isForcibly) {
+            callback.emitFunc(TypedException(), isNew);
+            return;
         }
-        callback.emitFunc(exception, isNew);
-    };
-    callbacks[idRequest] = std::make_pair(callbackWrap, true);
-    emit wssClient.sendMessage(message);
+        const size_t idRequest = id.get();
+        const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
+        const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex, isForcibly](const TypedException &exception) {
+            if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
+                LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
+                db.setUserPublicKey(address, pubkeyAddressHex);
+            }
+            callback.emitFunc(exception, isNew);
+        };
+        callbacks[idRequest] = std::make_pair(callbackWrap, true);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 
@@ -575,16 +580,21 @@ END_SLOT_WRAPPER
 
 void Messenger::onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString currSign = db.getContactPublicKey(address);
-    const bool isNew = currSign.isEmpty();
-    if (!isNew && !isForcibly) {
-        callback.emitFunc(TypedException(), isNew);
-        return;
+    const TypedException exception = apiVrapper2([&, this] {
+        const QString currSign = db.getContactPublicKey(address);
+        const bool isNew = currSign.isEmpty();
+        if (!isNew && !isForcibly) {
+            callback.emitFunc(TypedException(), isNew);
+            return;
+        }
+        const size_t idRequest = id.get();
+        const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
+        callbacks[idRequest] = std::make_pair(std::bind(callback, _1, isNew), false);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
     }
-    const size_t idRequest = id.get();
-    const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::make_pair(std::bind(callback, _1, isNew), false);
-    emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
@@ -602,30 +612,35 @@ END_SLOT_WRAPPER
 
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    if (!isChannel) {
-        channel = "";
+    const TypedException exception = apiVrapper2([&, this] {
+        if (!isChannel) {
+            channel = "";
+        }
+        const QString hashMessage = createHashMessage(dataHex);
+        Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress, channel);
+        if (lastCnt < 0) {
+            lastCnt = -1;
+        }
+        QString dData;
+        if (isDecryptDataSave) {
+            dData = decryptedDataHex;
+        } else {
+            dData = "";
+        }
+        db.addMessage(thisAddress, toAddress, encryptedDataHex, dData, isDecryptDataSave, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
+        const size_t idRequest = id.get();
+        QString message;
+        if (!isChannel) {
+            message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
+        } else {
+            message = makeSendToChannelRequest(channel, dataHex, fee, timestamp, pubkeyHex, signHex, idRequest);
+        }
+        callbacks[idRequest] = std::make_pair(callback, false);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
     }
-    const QString hashMessage = createHashMessage(dataHex);
-    Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress, channel);
-    if (lastCnt < 0) {
-        lastCnt = -1;
-    }
-    QString dData;
-    if (isDecryptDataSave) {
-        dData = decryptedDataHex;
-    } else {
-        dData = "";
-    }
-    db.addMessage(thisAddress, toAddress, encryptedDataHex, dData, isDecryptDataSave, timestamp, lastCnt + 1, false, true, false, hashMessage, fee, channel);
-    const size_t idRequest = id.get();
-    QString message;
-    if (!isChannel) {
-        message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
-    } else {
-        message = makeSendToChannelRequest(channel, dataHex, fee, timestamp, pubkeyHex, signHex, idRequest);
-    }
-    callbacks[idRequest] = std::make_pair(callback, false);
-    emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
 
@@ -717,36 +732,51 @@ END_SLOT_WRAPPER
 
 void Messenger::onCreateChannel(const QString &address, const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const size_t idRequest = id.get();
-    const QString message = makeCreateChannelRequest(title, titleSha, fee, pubkeyHex, signHex, idRequest);
-    const auto callbackWrap = [this, callback, address, title, titleSha](const TypedException &exception) {
-        if (!exception.isSet()) {
-            const DBStorage::DbId userId = db.getUserId(address);
-            db.addChannel(userId, title, titleSha, true, address, false, true, true);
-            db.setLastReadCounterForUserContact(address, titleSha, -1, true);
-        }
-        emit javascriptWrapper.callbackCall(std::bind(callback, exception));
-    };
-    callbacks[idRequest] = std::make_pair(callbackWrap, true);
-    emit wssClient.sendMessage(message);
+    const TypedException exception = apiVrapper2([&, this] {
+        const size_t idRequest = id.get();
+        const QString message = makeCreateChannelRequest(title, titleSha, fee, pubkeyHex, signHex, idRequest);
+        const auto callbackWrap = [this, callback, address, title, titleSha](const TypedException &exception) {
+            if (!exception.isSet()) {
+                const DBStorage::DbId userId = db.getUserId(address);
+                db.addChannel(userId, title, titleSha, true, address, false, true, true);
+                db.setLastReadCounterForUserContact(address, titleSha, -1, true);
+            }
+            emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+        };
+        callbacks[idRequest] = std::make_pair(callbackWrap, true);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 
 void Messenger::onAddWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const size_t idRequest = id.get();
-    const QString message = makeChannelAddWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
-    emit wssClient.sendMessage(message);
+    const TypedException exception = apiVrapper2([&, this] {
+        const size_t idRequest = id.get();
+        const QString message = makeChannelAddWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
+        callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 
 void Messenger::onDelWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const size_t idRequest = id.get();
-    const QString message = makeChannelDelWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
-    callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
-    emit wssClient.sendMessage(message);
+    const TypedException exception = apiVrapper2([&, this] {
+        const size_t idRequest = id.get();
+        const QString message = makeChannelDelWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
+        callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
 END_SLOT_WRAPPER
 }
 
