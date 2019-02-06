@@ -12,6 +12,7 @@
 #include "CallbackWrapper.h"
 
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <functional>
 
@@ -98,6 +99,8 @@ public:
 
     using DecryptUserMessagesCallback = CallbackWrapper<std::function<void()>>;
 
+    using AddAllWalletsInFolderCallback = CallbackWrapper<std::function<void()>>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
@@ -173,6 +176,9 @@ signals:
 
     void decryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
 
+
+    void addAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
+
 private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
@@ -212,6 +218,9 @@ private slots:
 
 
     void onDecryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
+
+
+    void onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
 
 private slots:
 
@@ -262,6 +271,10 @@ private:
     using ResponseCallbacks = std::function<void(const TypedException &exception)>;
 
     std::unordered_map<size_t, std::pair<ResponseCallbacks, bool>> callbacks;
+
+    QString currentWalletFolder;
+
+    std::map<QString, std::set<QString>> walletFolders;
 
 };
 

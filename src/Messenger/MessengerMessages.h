@@ -33,6 +33,8 @@ QString makeTextForGetMyChannelsRequest();
 
 QString makeTextForMsgAppendKeyOnlineRequest();
 
+QString makeTextForWantTalkRequest(const QString &address);
+
 QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, size_t id);
 
 QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
@@ -57,9 +59,14 @@ QString makeGetMyChannelsRequest(const QString &pubkeyHex, const QString &signHe
 
 QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &signHex, size_t id);
 
+QString makeAddAllKeysRequest(const std::vector<QString> &wallets, size_t id);
+
+QString makeWantToTalkRequest(const QString &toAddress, const QString &pubkey, const QString &sign, size_t id);
+
 enum METHOD: int {
     APPEND_KEY_TO_ADDR = 0, GET_KEY_BY_ADDR = 1, SEND_TO_ADDR = 2, NEW_MSGS = 3, NEW_MSG = 4, COUNT_MESSAGES = 5,
     CHANNEL_CREATE = 6, CHANNEL_ADD_WRITER = 7, CHANNEL_DEL_WRITER = 8, SEND_TO_CHANNEL = 9, GET_CHANNEL = 10, GET_CHANNELS = 11, GET_MY_CHANNELS = 12, ADD_TO_CHANNEL = 13, DEL_FROM_CHANNEL = 14,
+    ALL_KEYS_ADDED = 15, WANT_TO_TALK = 16,
     NOT_SET = 1000
 };
 
@@ -67,7 +74,7 @@ struct ResponseType {
     METHOD method = METHOD::NOT_SET;
 
     enum class ERROR_TYPE {
-        NO_ERROR, ADDRESS_EXIST, SIGN_OR_ADDRESS_INVALID, INCORRECT_JSON, ADDRESS_NOT_FOUND, CHANNEL_EXIST, CHANNEL_NOT_PERMISSION, CHANNEL_NOT_FOUND, OTHER
+        NO_ERROR, ADDRESS_EXIST, SIGN_OR_ADDRESS_INVALID, INCORRECT_JSON, ADDRESS_NOT_FOUND, CHANNEL_EXIST, CHANNEL_NOT_PERMISSION, CHANNEL_NOT_FOUND, INVALID_ADDRESS, OTHER
     };
 
     QString address;

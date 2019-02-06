@@ -129,6 +129,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
     CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
+    CHECK(connect(this, &Messenger::addAllAddressesInFolder, this, &Messenger::onAddAllAddressesInFolder), "not connect onAddAllAddressesInFolder");
 
     Q_REG2(uint64_t, "uint64_t", false);
     Q_REG(Messenger::Callback, "Messenger::Callback");
@@ -148,6 +149,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     Q_REG(DelWriterToChannelCallback, "DelWriterToChannelCallback");
     Q_REG(GetChannelListCallback, "GetChannelListCallback");
     Q_REG(DecryptUserMessagesCallback, "DecryptUserMessagesCallback");
+    Q_REG(AddAllWalletsInFolderCallback, "AddAllWalletsInFolderCallback");
 
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
@@ -448,6 +450,8 @@ BEGIN_SLOT_WRAPPER
                 exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_CHANNEL_NOT_PERMISSION, responseType.error.toStdString());
             } else if (responseType.errorType == ResponseType::ERROR_TYPE::CHANNEL_NOT_FOUND) {
                 exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_CHANNEL_NOT_FOUND, responseType.error.toStdString());
+            } else if (responseType.errorType == ResponseType::ERROR_TYPE::INVALID_ADDRESS) {
+                exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_SIGN_OR_ADDRESS_INVALID, responseType.error.toStdString());
             } else {
                 exception = TypedException(TypeErrors::MESSENGER_SERVER_ERROR_OTHER, responseType.error.toStdString());
             }
@@ -512,6 +516,8 @@ BEGIN_SLOT_WRAPPER
         const ChannelInfo channelInfo = parseDelToChannelResponse(messageJson);
         LOG << "Del to channel ok " << responseType.address << " " << channelInfo.titleSha;
         processAddOrDeleteInChannel(responseType.address, channelInfo, false);
+    } else if (responseType.method == METHOD::ALL_KEYS_ADDED) {
+        LOG << "Keys in folder added ok";
     } else {
         throwErr("Incorrect response type");
     }
@@ -783,6 +789,22 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         callback.emitException(exception);
     }
+END_SLOT_WRAPPER
+}
+
+void Messenger::onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        currentWalletFolder = folder;
+        for (const QString &address: addresses) {
+            walletFolders[address].insert(folder);
+        }
+
+        const QString messageGetMyChannels = makeAddAllKeysRequest(addresses, size_t(-1));
+        emit wssClient.addHelloString(messageGetMyChannels, "Messenger");
+        emit wssClient.sendMessage(messageGetMyChannels);
+    });
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 

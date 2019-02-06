@@ -33,6 +33,11 @@ const static QString GET_MY_CHANNELS_RESPONSE = "msg_get_my_channels";
 const static QString ADD_TO_CHANNEL_RESPONSE = "add_to_channel";
 const static QString DEL_FROM_CHANNEL_RESPONSE = "del_from_channel";
 
+const static QString ADD_ALL_WALLETS_REQUEST = "msg_append_key_online_list";
+const static QString ADD_ALL_WALLETS_RESPONSE = "msg_append_key_online_list";
+const static QString WANT_TO_TALK_REQUEST = "msg_send_request";
+const static QString WANT_TO_TALK_RESPONSE = "msg_send_request";
+
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
     return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
 }
@@ -79,6 +84,10 @@ QString makeTextForGetMyChannelsRequest() {
 
 QString makeTextForMsgAppendKeyOnlineRequest() {
     return MSG_APPEND_KEY_ONLINE_REQUEST;
+}
+
+QString makeTextForWantTalkRequest(const QString &address) {
+    return WANT_TO_TALK_REQUEST + address;
 }
 
 QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, size_t id) {
@@ -248,6 +257,34 @@ QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &sign
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
+QString makeAddAllKeysRequest(const std::vector<QString> &wallets, size_t id) {
+    QJsonObject json;
+    json.insert("jsonrpc", "2.0");
+    json.insert("method", ADD_ALL_WALLETS_REQUEST);
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    QJsonArray addresses;
+    for (const QString &wallet: wallets) {
+        addresses.push_back(wallet);
+    }
+    QJsonObject params;
+    params.insert("address", addresses);
+    json.insert("params", params);
+    return QJsonDocument(json).toJson(QJsonDocument::Compact);
+}
+
+QString makeWantToTalkRequest(const QString &toAddress, const QString &pubkey, const QString &sign, size_t id) {
+    QJsonObject json;
+    json.insert("jsonrpc", "2.0");
+    json.insert("method", WANT_TO_TALK_REQUEST);
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    QJsonObject params;
+    params.insert("addr", toAddress);
+    params.insert("pubkey", pubkey);
+    params.insert("sign", sign);
+    json.insert("params", params);
+    return QJsonDocument(json).toJson(QJsonDocument::Compact);
+}
+
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     ResponseType result;
     QString type;
@@ -266,7 +303,7 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     if (root.contains("error") && root.value("error").isString()) {
         result.error = root.value("error").toString();
         result.isError = true;
-        if (result.error == "KEY_EXIST") {
+        if (result.error == "KEY_EXIST" || result.error == "RSA_PUB_KEY_EXIST") {
             result.errorType = ResponseType::ERROR_TYPE::ADDRESS_EXIST;
         } else if (result.error == "INVALID_SIGN" || result.error == "INVALID_ADDR_OR_PUBKEY") {
             result.errorType = ResponseType::ERROR_TYPE::SIGN_OR_ADDRESS_INVALID;
@@ -280,8 +317,15 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
             result.errorType = ResponseType::ERROR_TYPE::CHANNEL_NOT_PERMISSION;
         } else if (result.error == "CHANNEL_NOT_FOUND") {
             result.errorType = ResponseType::ERROR_TYPE::CHANNEL_NOT_FOUND;
+        } else if (result.error == "INVALID_ADDR") {
+            result.errorType = ResponseType::ERROR_TYPE::INVALID_ADDRESS;
         } else {
             result.errorType = ResponseType::ERROR_TYPE::OTHER;
+        }
+        if (root.contains("data")) {
+            QJsonObject obj;
+            obj.insert("data", root.value("data"));
+            result.error += ". " + QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
         }
     }
     if (root.contains("request_id") && root.value("request_id").isString()) {
@@ -318,6 +362,10 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
         result.method = METHOD::ADD_TO_CHANNEL;
     } else if (type == DEL_FROM_CHANNEL_RESPONSE) {
         result.method = METHOD::DEL_FROM_CHANNEL;
+    } else if (type == ADD_ALL_WALLETS_RESPONSE) {
+        result.method = METHOD::ALL_KEYS_ADDED;
+    } else if (type == WANT_TO_TALK_RESPONSE) {
+        result.method = METHOD::WANT_TO_TALK;
     } else if (type.isEmpty()) {
         // ignore
     } else {

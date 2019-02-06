@@ -875,14 +875,31 @@ END_SLOT_WRAPPER
 }
 
 void MessengerJavascript::setPathsImpl(QString newPatch, QString /*newUserName*/) {
+    CHECK(messenger != nullptr, "Messenger not set");
+
     LOG << "Set messenger javascript path " << newPatch;
 
     walletPath = makePath(newPatch, Wallet::WALLET_PATH_MTH);
     CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+    const std::vector<std::pair<QString, QString>> vectors = Wallet::getAllWalletsInFolder(walletPath);
+    std::vector<QString> addresses;
+    addresses.reserve(vectors.size());
+    std::transform(vectors.begin(), vectors.end(), std::back_inserter(addresses), [](const auto &pair) {
+        return pair.first;
+    });
+
+    emit messenger->addAllAddressesInFolder(walletPath, addresses, Messenger::AddAllWalletsInFolderCallback([](){
+        LOG << "addresses added";
+    }, [](const TypedException &exception) {
+        LOG << "addresses added exception " << exception.numError << " " << exception.description;
+    }, signalFunc));
 }
 
 void MessengerJavascript::unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds) {
 BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
     const QString JS_NAME_RESULT = "msgUnlockWalletResultJs";
 
     const auto errorFunc = [this, JS_NAME_RESULT, address](const TypedException &exception) {
