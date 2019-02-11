@@ -181,27 +181,48 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         }
     };
 
-    const auto getAllHistoryCallback = [this, address, currency, servStruct](const BalanceInfo &balance, uint64_t savedCountTxs, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBlockHeaderCallback = [this, address, currency, servStruct](const BalanceInfo &balance, uint64_t savedCountTxs, std::vector<Transaction> txs, const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response));
+        for (Transaction &tx: txs) {
+            if (tx.blockNumber == bi.number) {
+                tx.blockHash = bi.hash;
+            }
+        }
+        newBalance(address, currency, savedCountTxs, balance, txs, servStruct);
+    };
+
+    const auto processNewTransactions = [this, address, currency, servStruct, getBlockHeaderCallback](const BalanceInfo &balance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server) {
+        const auto minElement = std::min_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
+            return first.blockNumber < second.blockNumber;
+        });
+        CHECK(minElement != txs.end(), "Incorrect min element");
+        const int64_t blockNumber = minElement->blockNumber;
+        const QString request = makeGetBlockInfoRequest(blockNumber);
+        client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, balance, savedCountTxs, txs, _1, _2), timeout);
+    };
+
+    const auto getAllHistoryCallback = [address, currency, servStruct, processNewTransactions](const BalanceInfo &balance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
         LOG << "Txs geted2 " << address << " " << txs.size();
-        newBalance(address, currency, savedCountTxs, balance, txs, servStruct);
+        processNewTransactions(balance, savedCountTxs, txs, server);
     };
 
-    const auto getBalanceConfirmeCallback = [this, address, currency, getAllHistoryCallback, servStruct](const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceConfirmeCallback = [this, address, currency, getAllHistoryCallback, processNewTransactions, servStruct](const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countReceived + balance.countSpent;
         const uint64_t countSave = serverBalance.countReceived + serverBalance.countSpent;
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
             LOG << "Balance " << address << " confirmed";
-            newBalance(address, currency, savedCountTxs, serverBalance, txs, servStruct);
+            processNewTransactions(serverBalance, savedCountTxs, txs, server);
         } else {
             LOG << "Balance " << address << " not confirmed";
             const QString requestForTxs = makeGetHistoryRequest(address, false, 0);
 
-            client.sendMessagePost(server, requestForTxs, std::bind(getAllHistoryCallback, balance, savedCountTxs, _1, _2), timeout);
+            client.sendMessagePost(server, requestForTxs, std::bind(getAllHistoryCallback, balance, savedCountTxs, server, _1, _2), timeout);
         }
     };
 

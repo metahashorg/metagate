@@ -161,7 +161,7 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
     return result;
 }
 
-QString makeSendTransactionRequest(QString to, QString value, size_t nonce, QString data, QString fee, QString pubkey, QString sign) {
+QString makeSendTransactionRequest(const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign) {
     QJsonObject request;
     request.insert("jsonrpc", "2.0");
     request.insert("method", "mhc_send");
@@ -198,6 +198,34 @@ Transaction parseGetTxResponse(const QString &response, const QString &address, 
     CHECK(obj.contains("transaction") && obj.value("transaction").isObject(), "Incorrect json: transaction field not found");
     const QJsonObject &transaction = obj.value("transaction").toObject();
     return parseTransaction(transaction, address, currency);
+}
+
+QString makeGetBlockInfoRequest(int64_t blockNumber) {
+    QJsonObject request;
+    request.insert("jsonrpc", "2.0");
+    request.insert("method", "get-block-by-number");
+    QJsonObject params;
+    params.insert("number", (int)blockNumber);
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
+BlockInfo parseGetBlockInfoResponse(const QString &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(!json1.contains("error") || !json1.value("error").isObject(), json1.value("error").toObject().value("message").toString().toStdString());
+
+    CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
+    const QJsonObject &obj = json1.value("result").toObject();
+
+    BlockInfo result;
+    CHECK(obj.contains("hash") && obj.value("hash").isString(), "Incorrect json: hash field not found");
+    result.hash = obj.value("hash").toString();
+    CHECK(obj.contains("number") && obj.value("number").isDouble(), "Incorrect json: number field not found");
+    result.number = obj.value("number").toInt();
+
+    return result;
 }
 
 }

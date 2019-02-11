@@ -34,6 +34,7 @@ struct Transaction {
     int64_t nonce = 0;
     bool isInput;
     int64_t blockNumber = 0;
+    QString blockHash = "";
 
     bool isSetDelegate = false; // TODO после введения type стало избыточным полем. Удалить
     bool isDelegate;
@@ -84,6 +85,11 @@ struct AddressInfo {
     {}
 
     AddressInfo() = default;
+};
+
+struct BlockInfo {
+    QString hash;
+    int64_t number;
 };
 
 }

@@ -9,6 +9,7 @@ namespace transactions {
 
 struct BalanceInfo;
 struct Transaction;
+struct BlockInfo;
 
 QString makeGetBalanceRequest(const QString &address);
 
@@ -20,11 +21,15 @@ QString makeGetTxRequest(const QString &hash);
 
 std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &currency, const QString &response);
 
-QString makeSendTransactionRequest(QString to, QString value, size_t nonce, QString data, QString fee, QString pubkey, QString sign);
+QString makeSendTransactionRequest(const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign);
 
 QString parseSendTransactionResponse(const QString &response);
 
 Transaction parseGetTxResponse(const QString &response, const QString &address, const QString &currency);
+
+QString makeGetBlockInfoRequest(int64_t blockNumber);
+
+BlockInfo parseGetBlockInfoResponse(const QString &response);
 
 }
 
