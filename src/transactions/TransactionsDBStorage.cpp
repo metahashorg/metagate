@@ -23,7 +23,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                                        bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                                       Transaction::Status status, Transaction::Type type, qint64 blockNumber)
+                                       Transaction::Status status, Transaction::Type type, qint64 blockNumber, const QString &blockHash)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
@@ -45,11 +45,12 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":status", status);
     query.bindValue(":type", type);
     query.bindValue(":blockNumber", blockNumber);
+    query.bindValue(":blockHash", blockHash);
     CHECK(query.exec(), query.lastError().text().toStdString());
 
 }
 
-void TransactionsDBStorage::addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput, const QString &ufrom, const QString &uto, const QString &value, quint64 ts, const QString &data, const QString &fee, qint64 nonce, bool isSetDelegate, bool isDelegate, QString delegateValue)
+void TransactionsDBStorage::addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput, const QString &ufrom, const QString &uto, const QString &value, quint64 ts, const QString &data, const QString &fee, qint64 nonce, bool isSetDelegate, bool isDelegate, QString delegateValue, const QString &blockHash)
 {
     static QSqlQuery m_iquery(database());
     bool prepared = false;
@@ -71,6 +72,7 @@ void TransactionsDBStorage::addPaymentV2(const QString &currency, const QString 
     m_iquery.bindValue(":isSetDelegate", isSetDelegate);
     m_iquery.bindValue(":isDelegate", isDelegate);
     m_iquery.bindValue(":delegateValue", delegateValue);
+    m_iquery.bindValue(":blockHash", blockHash);
     CHECK(m_iquery.exec(), m_iquery.lastError().text().toStdString());
 }
 
@@ -80,7 +82,7 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
-               trans.status, trans.type, trans.blockNumber);
+               trans.status, trans.type, trans.blockNumber, trans.blockHash);
 }
 
 void TransactionsDBStorage::addPayments(const std::vector<Transaction> &transactions)
@@ -107,6 +109,7 @@ void TransactionsDBStorage::addPayments(const std::vector<Transaction> &transact
         query.bindValue(":status", transaction.status);
         query.bindValue(":type", transaction.type);
         query.bindValue(":blockNumber", static_cast<qint64>(transaction.blockNumber));
+        query.bindValue(":blockHash", transaction.blockHash);
         CHECK(query.exec(), query.lastError().text().toStdString());
     }
     transactionGuard.commit();
@@ -473,6 +476,7 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
     trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
     trans.blockNumber = query.value("blockNumber").toLongLong();
+    trans.blockHash = query.value("blockHash").toString();
 }
 
 void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const

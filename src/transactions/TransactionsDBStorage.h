@@ -19,11 +19,11 @@ public:
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                     bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                    Transaction::Status status, Transaction::Type type, qint64 blockNumber);
+                    Transaction::Status status, Transaction::Type type, qint64 blockNumber, const QString &blockHash);
     void addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
-                    bool isSetDelegate, bool isDelegate, QString delegateValue);
+                    bool isSetDelegate, bool isDelegate, QString delegateValue, const QString &blockHash);
 
     void addPayment(const Transaction &trans);
     void addPayments(const std::vector<Transaction> &transactions);
