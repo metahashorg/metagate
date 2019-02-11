@@ -235,7 +235,9 @@ private:
 
     void processPendingsMth(const std::vector<QString> &servers);
 
-    void newBalance(const QString &address, const QString &currency, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
+    uint64_t calcCountTxs(const QString &address, const QString &currency) const;
+
+    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
     void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
 

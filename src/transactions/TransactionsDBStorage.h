@@ -30,6 +30,7 @@ public:
 
     std::vector<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
                                               qint64 offset, qint64 count, bool asc);
+
     std::vector<Transaction> getPaymentsForCurrency(const QString &currency,
                                                   qint64 offset, qint64 count, bool asc) const;
 
