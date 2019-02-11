@@ -262,6 +262,8 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         const uint64_t countInServer = serverBalance.countReceived + serverBalance.countSpent;
         LOG << PeriodicLog::make("t_" + address.right(4).toStdString()) << "Automatic get txs " << address << " " << countAll << " " << countInServer;
         if (countAll < countInServer) {
+            processCheckTxsOneServer(address, currency, bestServer);
+
             const uint64_t countMissingTxs = countInServer - countAll;
             const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
             const QString requestForTxs = makeGetHistoryRequest(address, true, requestCountTxs);
@@ -278,7 +280,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     };
 
     const QString requestBalance = makeGetBalanceRequest(address);
-    std::vector<QUrl> urls(servers.begin(), servers.end());
+    const std::vector<QUrl> urls(servers.begin(), servers.end());
     client.sendMessagesPost(urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
 }
 
@@ -293,8 +295,84 @@ BalanceInfo Transactions::getBalance(const QString &address, const QString &curr
     balance.received += balance.undelegate;
     balance.spent += balance.delegate;
 
-    // Заполнить forged
     return balance;
+}
+
+void Transactions::processCheckTxsOneServer(const QString &address, const QString &currency, const QUrl &server) {
+    const Transaction lastTx = db.getLastTransaction(address, currency);
+    if (lastTx.blockHash.isEmpty()) {
+        return;
+    }
+
+    const auto countBlocksCallback = [this, address, currency, lastTx](const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server exceptoin " + server.toString().toStdString() + " " + std::to_string(exception.code) + " " + exception.content);
+
+        const int64_t blockNumber = parseGetCountBlocksResponse(QString::fromStdString(response));
+
+        processCheckTxsInternal(address, currency, server, lastTx, blockNumber);
+    };
+
+    const QString countBlocksRequest = makeGetCountBlocksRequest();
+    client.sendMessagePost(server, countBlocksRequest, std::bind(countBlocksCallback, server, _1, _2), timeout);
+}
+
+void Transactions::processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber) {
+    const auto removeAllTxs = [this](const QString &address, const QString &currency) {
+        LOG << "Remove txs " << address << " " << currency;
+        db.removePaymentsForDest(address, currency);
+    };
+
+    const auto getBlockInfoCallback = [address, currency, removeAllTxs] (const QString &hash, const std::string &response, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response));
+        if (bi.hash != hash) {
+            removeAllTxs(address, currency);
+        }
+    };
+
+    if (tx.blockNumber > serverBlockNumber) {
+        removeAllTxs(address, currency);
+        return;
+    }
+
+    const QString blockInfoRequest = makeGetBlockInfoRequest(tx.blockNumber);
+    client.sendMessagePost(server, blockInfoRequest, std::bind(getBlockInfoCallback, tx.blockHash, _1, _2));
+}
+
+void Transactions::processCheckTxs(const QString &address, const QString &currency, const std::vector<QString> &servers) {
+    if (servers.empty()) {
+        return;
+    }
+    const Transaction lastTx = db.getLastTransaction(address, currency);
+    if (lastTx.blockHash.isEmpty()) {
+        return;
+    }
+
+    const auto countBlocksCallback = [this, address, currency, lastTx](const std::vector<QUrl> &urls, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
+        CHECK(!urls.empty(), "Incorrect response size");
+        CHECK(urls.size() == responses.size(), "Incorrect responses size");
+
+        int64_t maxBlockNumber = 0;
+        QUrl maxServer;
+        for (size_t i = 0; i < responses.size(); i++) {
+            const SimpleClient::ServerException &exception = std::get<SimpleClient::ServerException>(responses[i]);
+            if (!exception.isSet()) {
+                const QUrl &server = urls[i];
+                const std::string &response = std::get<std::string>(responses[i]);
+                const int64_t blockNumber = parseGetCountBlocksResponse(QString::fromStdString(response));
+                if (blockNumber > maxBlockNumber) {
+                    maxBlockNumber = blockNumber;
+                    maxServer = server;
+                }
+            }
+        }
+        CHECK(!maxServer.isEmpty(), "Best server with txs not found. Error: " + urls[0].toString().toStdString() + ". " + std::get<SimpleClient::ServerException>(responses[0]).description + ". " + std::get<SimpleClient::ServerException>(responses[0]).content);
+        processCheckTxsInternal(address, currency, maxServer, lastTx, maxBlockNumber);
+    };
+
+    const QString countBlocksRequest = makeGetCountBlocksRequest();
+    const std::vector<QUrl> urls(servers.begin(), servers.end());
+    client.sendMessagesPost(urls, countBlocksRequest, std::bind(countBlocksCallback, urls, _1), timeout);
 }
 
 void Transactions::onTimerEvent() {
@@ -307,6 +385,8 @@ BEGIN_SLOT_WRAPPER
     std::vector<QString> servers;
     QString currentType;
     std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
+    const time_point now = ::now();
+    const auto checkTxsPeriod = 1min;
     for (const AddressInfo &addr: addressesInfos) {
         if (addr.type != currentType) {
             servers = nsLookup.getRandom(addr.type, 3, 3);
@@ -320,6 +400,9 @@ BEGIN_SLOT_WRAPPER
             servStructs.emplace(std::piecewise_construct, std::forward_as_tuple(addr.currency), std::forward_as_tuple(std::make_shared<ServersStruct>(addr.currency)));
         }
         servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
+        if (now - lastCheckTxsTime >= checkTxsPeriod) {
+            processCheckTxs(addr.address, addr.currency, servers);
+        }
         const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(addr.address, addr.currency, true);
         if (!pendingTxs.empty()) {
             LOG << PeriodicLog::make("pt_" + addr.address.right(4).toStdString()) << "Pending txs: " << pendingTxs.size();
@@ -328,6 +411,10 @@ BEGIN_SLOT_WRAPPER
         pendingTxsStrs.reserve(pendingTxs.size());
         std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});
         processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxsStrs);
+    }
+    if (now - lastCheckTxsTime >= checkTxsPeriod) {
+        LOG << "All txs checked";
+        lastCheckTxsTime = now;
     }
     processPendingsMth(servers);
 END_SLOT_WRAPPER

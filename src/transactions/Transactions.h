@@ -231,6 +231,12 @@ private slots:
 
 private:
 
+    void processCheckTxs(const QString &address, const QString &currency, const std::vector<QString> &servers);
+
+    void processCheckTxsOneServer(const QString &address, const QString &currency, const QUrl &server);
+
+    void processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber);
+
     void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs);
 
     void processPendingsMth(const std::vector<QString> &servers);
@@ -275,6 +281,8 @@ private:
     std::vector<QString> pendingTxsAfterSend;
 
     seconds timeout;
+
+    time_point lastCheckTxsTime;
 };
 
 }

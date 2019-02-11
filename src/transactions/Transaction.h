@@ -72,7 +72,7 @@ struct AddressInfo {
     QString address;
     QString type;
     QString group;
-    QString name;
+    QString name = "";
 
     BalanceInfo balance;
 

@@ -206,6 +206,7 @@ QString makeGetBlockInfoRequest(int64_t blockNumber) {
     request.insert("method", "get-block-by-number");
     QJsonObject params;
     params.insert("number", (int)blockNumber);
+    params.insert("type", 0); // TODO заменить на small
     request.insert("params", params);
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
@@ -226,6 +227,28 @@ BlockInfo parseGetBlockInfoResponse(const QString &response) {
     result.number = obj.value("number").toInt();
 
     return result;
+}
+
+QString makeGetCountBlocksRequest() {
+    QJsonObject request;
+    request.insert("jsonrpc", "2.0");
+    request.insert("method", "get-count-blocks");
+    QJsonObject params;
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
+int64_t parseGetCountBlocksResponse(const QString &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(!json1.contains("error") || !json1.value("error").isObject(), json1.value("error").toObject().value("message").toString().toStdString());
+
+    CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
+    const QJsonObject &obj = json1.value("result").toObject();
+
+    CHECK(obj.contains("count_blocks") && obj.value("count_blocks").isDouble(), "Incorrect json: count_blocks field not found");
+    return obj.value("count_blocks").toInt();
 }
 
 }

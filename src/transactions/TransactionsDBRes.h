@@ -3,8 +3,6 @@
 
 #include <QString>
 
-#define TRANS_V2
-
 namespace transactions {
 
 static const QString databaseName = "payments";
@@ -51,7 +49,7 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 ")";
 
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
-                                                    "tgroup, address, currency, name, type ) ";
+                                                    "tgroup, address, currency) ";
 
 static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash) "
                                         "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash)";

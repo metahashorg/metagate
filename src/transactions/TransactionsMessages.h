@@ -31,6 +31,10 @@ QString makeGetBlockInfoRequest(int64_t blockNumber);
 
 BlockInfo parseGetBlockInfoResponse(const QString &response);
 
+QString makeGetCountBlocksRequest();
+
+int64_t parseGetCountBlocksResponse(const QString &response);
+
 }
 
 #endif // TRANSACTIONSMESSAGES_H
