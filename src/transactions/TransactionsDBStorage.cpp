@@ -192,6 +192,19 @@ Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &ad
     return trans;
 }
 
+Transaction TransactionsDBStorage::getLastTransaction(const QString &address, const QString &currency) {
+    Transaction trans;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectLastTransaction), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    if (query.next()) {
+        setTransactionFromQuery(query, trans);
+    }
+    return trans;
+}
+
 Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &address, const QString &currency)
 {
     Transaction trans;

@@ -9,7 +9,7 @@ namespace transactions {
 
 static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
-static const int databaseVersion = 2;
+static const int databaseVersion = 3;
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -82,6 +82,11 @@ static const QString selectLastPaymentIsSetDelegate = "SELECT * FROM payments "
                                                             "AND ufrom = :ufrom AND uto = :uto AND isInput = :isInput AND isDelegate = :isDelegate "
                                                             "AND isSetDelegate = 1 "
                                                             "ORDER BY ts DESC "
+                                                            "LIMIT 1";
+
+static const QString selectLastTransaction = "SELECT * FROM payments "
+                                                            "WHERE address = :address AND  currency = :currency "
+                                                            "ORDER BY blockNumber DESC "
                                                             "LIMIT 1";
 
 static const QString selectLastForgingTransaction = "SELECT * FROM payments "

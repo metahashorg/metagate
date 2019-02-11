@@ -39,6 +39,13 @@ void tst_TransactionsDBStorage::testDB1()
     db.addPayment("mh", "wuklklkltrkjtrtritrdf215", "address100", false, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11232, "");
     db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", false, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11455, "");
 
+    {
+        const transactions::Transaction tx1 = db.getLastTransaction("address100", "mh");
+        QCOMPARE(tx1.blockNumber, 1111222);
+        QCOMPARE(tx1.blockHash, "2345324");
+        const transactions::Transaction tx3 = db.getLastTransaction("address10", "mh");
+        QCOMPARE(tx3.blockNumber, 0);
+    }
 
     BigNumber ires = db.calcInValueForAddress("address100", "mh");
     BigNumber ores = db.calcOutValueForAddress("address100", "mh");
@@ -158,6 +165,15 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(res.size(), 0);
     count = db.getPaymentsCountForAddress("address100", "mh", true);
     QCOMPARE(count, 0);
+
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address101", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "");
+    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address101", true, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "3242");
+    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address101", true, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11114, "");
+    qint64 count2 = db.getPaymentsCountForAddress("address101", "mh", true);
+    QCOMPARE(count2, 3);
+    db.removePaymentsForDest("address101", "mh");
+    qint64 count3 = db.getPaymentsCountForAddress("address101", "mh", true);
+    QCOMPARE(count3, 0);
 }
 
 void tst_TransactionsDBStorage::testBigNumSum()
