@@ -193,11 +193,11 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
     };
 
     const auto processNewTransactions = [this, address, currency, servStruct, getBlockHeaderCallback](const BalanceInfo &balance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server) {
-        const auto minElement = std::min_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
+        const auto maxElement = std::max_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
             return first.blockNumber < second.blockNumber;
         });
-        CHECK(minElement != txs.end(), "Incorrect min element");
-        const int64_t blockNumber = minElement->blockNumber;
+        CHECK(maxElement != txs.end(), "Incorrect min element");
+        const int64_t blockNumber = maxElement->blockNumber;
         const QString request = makeGetBlockInfoRequest(blockNumber);
         client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, balance, savedCountTxs, txs, _1, _2), timeout);
     };
