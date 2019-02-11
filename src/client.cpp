@@ -243,6 +243,16 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     sendMessagePost(url, message, callback, true, timeout, isClearCache);
 }
 
+void SimpleClient::sendMessagesPost(const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout) {
+    const auto callbackImpl = std::make_shared<CallbackWrapImpl<ClientCallbacks, std::string, ServerException>>(std::bind(&SimpleClient::callbackCall, this, _1), callback, urls.size());
+    size_t index = 0;
+    for (const QUrl &address: urls) {
+        const auto callbackNew = CallbackWrapPtr<std::decay_t<decltype(*callbackImpl)>>(callbackImpl, index);
+        sendMessagePost(address, message, ClientCallback(callbackNew), timeout);
+        index++;
+    }
+}
+
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
     sendMessageInternal(false, callbacks_, url, "", callback, isTimeout, timeout, false, &SimpleClient::onTextMessageReceived, false);
 }

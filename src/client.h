@@ -50,6 +50,8 @@ public:
 
     using ClientCallback = std::function<void(const std::string &response, const ServerException &exception)>;
 
+    using ClientCallbacks = std::function<void(const std::vector<std::tuple<std::string, ServerException>> &response)>;
+
     using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
 
     using PingsCallback = std::function<void(const std::vector<std::tuple<QString, milliseconds, std::string>> &response)>;
@@ -68,6 +70,7 @@ public:
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache=false);
+    void sendMessagesPost(const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
