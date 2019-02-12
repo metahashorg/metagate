@@ -2,6 +2,7 @@
 #define MESSENGER_H
 
 #include <QObject>
+#include <QVariant>
 
 #include "TimerClass.h"
 #include "WebSocketClient.h"
@@ -17,6 +18,73 @@
 #include <functional>
 
 struct TypedException;
+
+struct MessengerDeleteFromChannelVariant {
+    QString address;
+    QString channelTitle;
+    QString channelTitleSha;
+    QString channelAdmin;
+
+    MessengerDeleteFromChannelVariant() = default;
+
+    MessengerDeleteFromChannelVariant(const QString &address, const QString &channelTitle, const QString &channelTitleSha, const QString &channelAdmin)
+        : address(address)
+        , channelTitle(channelTitle)
+        , channelTitleSha(channelTitleSha)
+        , channelAdmin(channelAdmin)
+    {}
+};
+
+Q_DECLARE_METATYPE(MessengerDeleteFromChannelVariant);
+
+struct MessengerAddedFromChannelVariant {
+    QString address;
+    QString channelTitle;
+    QString channelTitleSha;
+    QString channelAdmin;
+    messenger::Message::Counter counter;
+
+    MessengerAddedFromChannelVariant() = default;
+
+    MessengerAddedFromChannelVariant(const QString &address, const QString &channelTitle, const QString &channelTitleSha, const QString &channelAdmin, messenger::Message::Counter counter)
+        : address(address)
+        , channelTitle(channelTitle)
+        , channelTitleSha(channelTitleSha)
+        , channelAdmin(channelAdmin)
+        , counter(counter)
+    {}
+};
+
+Q_DECLARE_METATYPE(MessengerAddedFromChannelVariant);
+
+struct MessengerRequiresPubkeyVariant {
+    QString address;
+    QString collocutor;
+
+    MessengerRequiresPubkeyVariant() = default;
+
+    MessengerRequiresPubkeyVariant(const QString &address, const QString &collocutor)
+        : address(address)
+        , collocutor(collocutor)
+    {}
+};
+
+Q_DECLARE_METATYPE(MessengerRequiresPubkeyVariant);
+
+struct MessengerCollocutorAddedPubkeyVariant {
+    QString address;
+    QString collocutor;
+
+    MessengerCollocutorAddedPubkeyVariant() = default;
+
+    MessengerCollocutorAddedPubkeyVariant(const QString &address, const QString &collocutor)
+        : address(address)
+        , collocutor(collocutor)
+    {}
+};
+
+Q_DECLARE_METATYPE(MessengerCollocutorAddedPubkeyVariant);
+// TODO переписать на обычный variant
 
 namespace messenger {
 
@@ -185,6 +253,9 @@ signals:
 
     void wantToTalk(const QString &address, const QString &pubkey, const QString &sign, const WantToTalkCallback &callback);
 
+
+    void reEmit();
+
 private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
@@ -229,6 +300,9 @@ private slots:
     void onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
 
     void onWantToTalk(const QString &address, const QString &pubkey, const QString &sign, const WantToTalkCallback &callback);
+
+
+    void onReEmit();
 
 private slots:
 
@@ -283,6 +357,8 @@ private:
     QString currentWalletFolder;
 
     std::map<QString, std::set<QString>> walletFolders;
+
+    std::vector<QVariant> events;
 
 };
 

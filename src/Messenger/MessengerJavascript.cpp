@@ -962,6 +962,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MessengerJavascript::reEmit() {
+BEGIN_SLOT_WRAPPER
+    LOG << "Messenger Reemit";
+    CHECK(messenger != nullptr, "Messenger not set");
+    emit messenger->reEmit();
+END_SLOT_WRAPPER
+}
+
 void MessengerJavascript::runJs(const QString &script) {
     LOG << "Javascript " << script;
     emit jsRunSig(script);

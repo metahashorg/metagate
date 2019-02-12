@@ -148,6 +148,10 @@ Q_INVOKABLE void getHistoryAddressChannelCount(QString address, QString titleSha
 msgGetHistoryAddressChannelCountJs(address, titleSha, result, errorNum, errorMessage)
 
 
+Q_INVOKABLE void reEmit();
+Переотправить все сообщения от мессенджера (msgAddedToChannelJs, msgDeletedFromChannelJs, msgRequiresPubkeyJs, msgCollocutorAddedPubkeyJs)
+
+
 msgAddedToChannelJs(address, title, titleSha, admin, lastMessageCounter, errorNum, errorMessage)
 Это сообщение будет приходить при добавлении отслеживаемого адреса в новый канал.
 В том числе оно придет, если адрес сам создал этот канал

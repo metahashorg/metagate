@@ -123,6 +123,9 @@ public slots:
 
     Q_INVOKABLE void lockWallet();
 
+
+    Q_INVOKABLE void reEmit();
+
 private:
 
     void setPathsImpl(QString newPatch, QString newUserName);

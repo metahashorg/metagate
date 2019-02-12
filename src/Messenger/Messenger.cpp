@@ -135,6 +135,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
     CHECK(connect(this, &Messenger::addAllAddressesInFolder, this, &Messenger::onAddAllAddressesInFolder), "not connect onAddAllAddressesInFolder");
     CHECK(connect(this, &Messenger::wantToTalk, this, &Messenger::onWantToTalk), "not connect onWantToTalk");
+    CHECK(connect(this, &Messenger::reEmit, this, &Messenger::onReEmit), "not connect onReEmit");
 
     Q_REG2(uint64_t, "uint64_t", false);
     Q_REG(Messenger::Callback, "Messenger::Callback");
@@ -259,6 +260,8 @@ void Messenger::processAddOrDeleteInChannel(const QString &address, const Channe
     if (!isAdd) {
         db.setChannelIsWriterForUserShaName(address, channel.titleSha, false);
         emit javascriptWrapper.deletedFromChannelSig(address, channel.title, channel.titleSha, channel.admin);
+        MessengerDeleteFromChannelVariant event(address, channel.title, channel.titleSha, channel.admin);
+        events.emplace_back(QVariant::fromValue(event));
     } else {
         const DBStorage::DbId userId = db.getUserId(address);
         db.addChannel(userId, channel.title, channel.titleSha, channel.admin == address, channel.admin, false, true, false);
@@ -267,6 +270,8 @@ void Messenger::processAddOrDeleteInChannel(const QString &address, const Channe
             getMessagesFromChannelFromWss(address, channel.titleSha, 0, cnt);
         }
         emit javascriptWrapper.addedToChannelSig(address, channel.title, channel.titleSha, channel.admin, channel.counter);
+        MessengerAddedFromChannelVariant event(address, channel.title, channel.titleSha, channel.admin, channel.counter);
+        events.emplace_back(QVariant::fromValue(event));
     }
 }
 
@@ -533,6 +538,8 @@ BEGIN_SLOT_WRAPPER
         const auto walFolders = walletFolders[response.address];
         if (walFolders.find(currentWalletFolder) != walFolders.end()) {
             emit javascriptWrapper.requiresPubkeySig(response.address, response.collocutor);
+            MessengerRequiresPubkeyVariant event(response.address, response.collocutor);
+            events.emplace_back(QVariant::fromValue(event));
         } else {
             LOG << "User change wallet folder. Ignore " << response.address << " " << response.collocutor;
         }
@@ -542,6 +549,8 @@ BEGIN_SLOT_WRAPPER
         const auto walFolders = walletFolders[response.address];
         if (walFolders.find(currentWalletFolder) != walFolders.end()) {
             emit javascriptWrapper.collocutorAddedPubkeySig(response.address, response.collocutor);
+            MessengerCollocutorAddedPubkeyVariant event(response.address, response.collocutor);
+            events.emplace_back(QVariant::fromValue(event));
         } else {
             LOG << "User change wallet folder. Ignore " << response.address << " " << response.collocutor;
         }
@@ -876,6 +885,28 @@ BEGIN_SLOT_WRAPPER
     });
     if (exception.isSet()) {
         callback.emitException(exception);
+    }
+END_SLOT_WRAPPER
+}
+
+void Messenger::onReEmit() {
+BEGIN_SLOT_WRAPPER
+    for (const QVariant &event: events) {
+        if (event.canConvert<MessengerDeleteFromChannelVariant>()) {
+            const MessengerDeleteFromChannelVariant value = event.value<MessengerDeleteFromChannelVariant>();
+            emit javascriptWrapper.deletedFromChannelSig(value.address, value.channelTitle, value.channelTitleSha, value.channelAdmin);
+        } else if (event.canConvert<MessengerAddedFromChannelVariant>()) {
+            const MessengerAddedFromChannelVariant value = event.value<MessengerAddedFromChannelVariant>();
+            emit javascriptWrapper.addedToChannelSig(value.address, value.channelTitle, value.channelTitleSha, value.channelAdmin, value.counter);
+        } else if (event.canConvert<MessengerRequiresPubkeyVariant>()) {
+            const MessengerRequiresPubkeyVariant value = event.value<MessengerRequiresPubkeyVariant>();
+            emit javascriptWrapper.requiresPubkeySig(value.address, value.collocutor);
+        } else if (event.canConvert<MessengerCollocutorAddedPubkeyVariant>()) {
+            const MessengerCollocutorAddedPubkeyVariant value = event.value<MessengerCollocutorAddedPubkeyVariant>();
+            emit javascriptWrapper.collocutorAddedPubkeySig(value.address, value.collocutor);
+        } else {
+            throwErr("Incorrect type variant");
+        }
     }
 END_SLOT_WRAPPER
 }
