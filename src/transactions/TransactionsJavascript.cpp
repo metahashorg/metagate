@@ -44,7 +44,7 @@ void TransactionsJavascript::makeAndRunJsFuncParams(const QString &function, con
 }
 
 void TransactionsJavascript::runJs(const QString &script) {
-    LOG << "Javascript " << script;
+    //LOG << "Javascript " << script;
     emit jsRunSig(script);
 }
 
