@@ -61,6 +61,13 @@
         });
     }
       
+    function reEmit() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.reEmit() ;
+        });
+    }
+      
     function getMessages3() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.messenger;
@@ -208,7 +215,9 @@
             <input type="button" value="genKey" onclick="genKey()">
             <input type="button" value="unlock" onclick="unlock()">
             <input type="button" value="register" onclick="registerAddress()">
-            <input type="button" value="getAndSavePubkeyTo" onclick="savePubkeyTo()"><br>
+            <input type="button" value="getAndSavePubkeyTo" onclick="savePubkeyTo()">
+            <input type="button" value="reEmit" onclick="reEmit()">
+            <br>
             <input type="button" value="sendMsg" onclick="sendMsg()"><br>
             <input type="button" value="getMessagesFromTo" onclick="getMessages1()"><br>
             <input type="button" value="getMessagesCollFromTo" onclick="getMessages2()"><br>

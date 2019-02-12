@@ -352,7 +352,7 @@ private:
 
     using ResponseCallbacks = std::function<void(const TypedException &exception)>;
 
-    std::unordered_map<size_t, std::pair<ResponseCallbacks, bool>> callbacks;
+    std::unordered_map<size_t, ResponseCallbacks> callbacks;
 
     QString currentWalletFolder;
 

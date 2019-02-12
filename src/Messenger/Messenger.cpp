@@ -179,15 +179,9 @@ void Messenger::invokeCallback(size_t requestId, const TypedException &exception
     CHECK(requestId != size_t(-1), "Incorrect request id");
     const auto found = callbacks.find(requestId);
     CHECK(found != callbacks.end(), "Not found callback for request " + std::to_string(requestId));
-    const auto &callbackPair = found->second;
-    const ResponseCallbacks callback = callbackPair.first; // копируем
-    const bool isNativeCallback = callbackPair.second;
+    const ResponseCallbacks callback = found->second; // копируем
     callbacks.erase(found);
-    if (isNativeCallback) {
-        callback(exception);
-    } else {
-        emit javascriptWrapper.callbackCall(std::bind(callback, exception));
-    }
+    callback(exception);
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {
@@ -578,7 +572,7 @@ BEGIN_SLOT_WRAPPER
             }
             callback.emitFunc(exception, isNew);
         };
-        callbacks[idRequest] = std::make_pair(callbackWrap, true);
+        callbacks[idRequest] = callbackWrap;
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
@@ -625,7 +619,7 @@ BEGIN_SLOT_WRAPPER
         }
         const size_t idRequest = id.get();
         const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
-        callbacks[idRequest] = std::make_pair(std::bind(callback, _1, isNew), false);
+        callbacks[idRequest] = std::bind(callback, _1, isNew);
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
@@ -671,7 +665,7 @@ BEGIN_SLOT_WRAPPER
         } else {
             message = makeSendToChannelRequest(channel, dataHex, fee, timestamp, pubkeyHex, signHex, idRequest);
         }
-        callbacks[idRequest] = std::make_pair(callback, false);
+        callbacks[idRequest] = callback;
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
@@ -779,7 +773,7 @@ BEGIN_SLOT_WRAPPER
             }
             callback.emitFunc(exception);
         };
-        callbacks[idRequest] = std::make_pair(callbackWrap, true);
+        callbacks[idRequest] = callbackWrap;
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
@@ -793,7 +787,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeChannelAddWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
-        callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+        callbacks[idRequest] = std::bind(callback, _1);
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
@@ -807,7 +801,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeChannelDelWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
-        callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+        callbacks[idRequest] = std::bind(callback, _1);
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
@@ -880,7 +874,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeWantToTalkRequest(address, pubkey, sign, idRequest);
-        callbacks[idRequest] = std::make_pair(std::bind(callback, _1), false);
+        callbacks[idRequest] = std::bind(callback, _1);
         emit wssClient.sendMessage(message);
     });
     if (exception.isSet()) {
