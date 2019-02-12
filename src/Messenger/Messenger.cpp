@@ -601,7 +601,7 @@ BEGIN_SLOT_WRAPPER
         addAddressToMonitored(address);
     });
 
-    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
@@ -700,7 +700,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         db.setLastReadCounterForUserContact(address, collocutorOrChannel, pos, isChannel);
     });
-    emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
@@ -768,7 +768,7 @@ BEGIN_SLOT_WRAPPER
                 db.addChannel(userId, title, titleSha, true, address, false, true, true);
                 db.setLastReadCounterForUserContact(address, titleSha, -1, true);
             }
-            emit javascriptWrapper.callbackCall(std::bind(callback, exception));
+            callback.emitFunc(exception);
         };
         callbacks[idRequest] = std::make_pair(callbackWrap, true);
         emit wssClient.sendMessage(message);
