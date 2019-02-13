@@ -97,6 +97,8 @@ static QJsonObject txToJson(const Transaction &tx) {
         statusStr = "pending";
     } else if (tx.status == Transaction::ERROR) {
         statusStr = "error";
+    } else if (tx.status == Transaction::MODULE_NOT_SET) {
+        statusStr = "module_not_set";
     } else {
         throwErr("Incorrect transaction status " + std::to_string(tx.status));
     }

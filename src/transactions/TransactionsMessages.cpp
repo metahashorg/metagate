@@ -118,6 +118,8 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
             res.status = Transaction::ERROR;
         } else if (status == "pending") {
             res.status = Transaction::PENDING;
+        } else if (status == "module_not_set") {
+            res.status = Transaction::MODULE_NOT_SET;
         }
     }
 

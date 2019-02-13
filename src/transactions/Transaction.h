@@ -14,7 +14,7 @@ enum class DelegateStatus {
 
 struct Transaction {
     enum Status {
-        OK = 0, PENDING = 1, ERROR = 2
+        OK = 0, PENDING = 1, ERROR = 2, MODULE_NOT_SET = 3
     };
 
     enum Type {
