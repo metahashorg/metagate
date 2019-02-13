@@ -451,13 +451,10 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
         const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\", \"net\": \"" + netDns + "\"}}";
         client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const std::string &result, const SimpleClient::ServerException &exception) {
-            if (exception.isSet()) {
-                LOG << "Dns error " << exception.description;
-            } else {
-                pagesMappings.addMappingsMh(QString::fromStdString(result));
-                const PageInfo pageInfo = pagesMappings.find(text);
-                doProcessCommand(pageInfo);
-            }
+            CHECK(!exception.isSet(), "Dns error " + exception.toString());
+            pagesMappings.addMappingsMh(QString::fromStdString(result));
+            const PageInfo pageInfo = pagesMappings.find(text);
+            doProcessCommand(pageInfo);
         }, 2s);
     }
 }
@@ -536,8 +533,9 @@ void MainWindow::loadUrl(const QString &page) {
     shemeHandler->setLog();
     shemeHandler->setFirstRun();
     QUrl url(page);
-    if (url.path().isEmpty())
+    if (url.path().isEmpty()) {
         url.setPath("/");
+    }
     ui->webView->load(url);
     LOG << "Reload ok";
 }

@@ -115,9 +115,9 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
     CHECK(connect(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
 
-    CHECK(connect(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged), "not connect fileSystemWatcher");
+    CHECK(connect(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged), "not connect directoryChanged");
 
-    CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect wssClient");
+    CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect onWssMessageReceived");
 
     CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
 
@@ -191,7 +191,7 @@ END_SLOT_WRAPPER
 ////////////////
 
 void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult) {
-    LOG << "Create wallet " << requestId;
+    LOG << "Create wallet mths " << requestId;
 
     Opt<QString> walletFullPath;
     Opt<std::string> publicKey;
@@ -485,6 +485,7 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
             const size_t nonceInt = nonce.toULongLong(&isParseNonce);
             CHECK_TYPED(isParseNonce, TypeErrors::INCORRECT_USER_DATA, "Nonce incorrect " + nonce.toStdString());
             signTransaction(nonceInt);
+            makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Ok"));
         }
     });
 
@@ -520,7 +521,7 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 }
 
 void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
+    LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate;
 
     const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
 
@@ -1374,7 +1375,7 @@ void JavascriptWrapper::getIpsServers(QString requestId, QString type, int lengt
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getIpsServersJs";
 
-    LOG << "get ips servers " << requestId;
+    LOG << "get ips servers " << type << " " << length << " " << count;
 
     Opt<QString> res;
     const TypedException exception = apiVrapper2([&, this]() {
@@ -1394,7 +1395,7 @@ BEGIN_SLOT_WRAPPER
         res = resultStr;
     });
 
-    LOG << "get ips servers ok " << requestId << " " << res.get();
+    LOG << "get ips servers ok " << type << " " << res.get();
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), res);
 END_SLOT_WRAPPER

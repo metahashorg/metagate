@@ -34,7 +34,7 @@ void UdpSocketClient::sendRequest(const QHostAddress &address, int port, const s
 void UdpSocketClient::onReadyRead() {
 BEGIN_SLOT_WRAPPER
     CHECK(isCurrentRequest, "callback not set");
-    const UdpSocketCallback copyCallback = currentCallback;
+    const UdpSocketCallback copyCallback = currentCallback; // Копируем
     isCurrentRequest = false;
 
     std::vector<char> response;

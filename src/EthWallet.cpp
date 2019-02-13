@@ -27,7 +27,7 @@ EthWallet::EthWallet(const std::string &fileData, const std::string &address, co
     rawprivkey.resize(EC_KEY_LENGTH);
     DecodeCert(certcontent.c_str(), password, rawprivkey.data());
     const std::string calcAddress = "0x" + MixedCaseEncoding(AddressFromPrivateKey(std::string(rawprivkey.begin(), rawprivkey.end())));
-    CHECK_TYPED(toLower(calcAddress) == toLower(address), TypeErrors::PRIVATE_KEY_ERROR, "private key error: address calc error");
+    CHECK_TYPED(toLower(calcAddress) == toLower(address), TypeErrors::PRIVATE_KEY_ERROR, "private key error: address " + address + " incorrect. Correct: " + calcAddress);
 }
 
 EthWallet::EthWallet(
@@ -126,8 +126,8 @@ void EthWallet::savePrivateKey(const QString &folder, const std::string &data, c
 }
 
 void EthWallet::baseCheckAddress(const std::string &address) {
-    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address size");
-    CHECK_TYPED(address.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address. 0x missed");
+    CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address size " + address);
+    CHECK_TYPED(address.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address. 0x missed " + address);
 }
 
 void EthWallet::checkAddress(const std::string &address) {
@@ -136,5 +136,5 @@ void EthWallet::checkAddress(const std::string &address) {
     const std::string addressPart = address.substr(2);
 
     const std::string addressMixed = "0x" + MixedCaseEncoding(HexStringToDump(addressPart));
-    CHECK_TYPED(addressMixed == address, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect Address");
+    CHECK_TYPED(addressMixed == address, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
 }

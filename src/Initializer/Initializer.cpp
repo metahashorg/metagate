@@ -42,27 +42,24 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
 Initializer::~Initializer() = default;
 
 void Initializer::complete() {
-    isComplete = true;
+    isCompleteSets = true;
 }
 
 void Initializer::sendStateToJs(const InitState &state, int number, int numberCritical) {
-    LOG << "State sended " << number << " " << totalStates << " " << numberCritical << " " << totalCriticalStates << " " << state.type << " " << state.subType << " " << state.exception.numError << " " << state.exception.description;
     emit javascriptWrapper.stateChangedSig(number, totalStates, numberCritical, totalCriticalStates, state);
 }
 
 void Initializer::sendInitializedToJs(bool isErrorExist) {
-    LOG << "Initialized sended " << !isErrorExist;
     emit javascriptWrapper.initializedSig(!isErrorExist, TypedException());
 }
 
 void Initializer::sendCriticalInitializedToJs(bool isErrorExist) {
-    LOG << "Critical initialized sended " << !isErrorExist;
     emit javascriptWrapper.initializedCriticalSig(!isErrorExist, TypedException());
 }
 
 void Initializer::onSendState(const InitState &state) {
 BEGIN_SLOT_WRAPPER
-    CHECK(isComplete, "Not complete"); // Запросы приходят в QueuedConnection, поэтому флаг isComplete в этот момент уже должен быть установлен
+    CHECK(isCompleteSets, "Not complete initializer"); // Запросы приходят в QueuedConnection, поэтому флаг isComplete в этот момент уже должен быть установлен
     CHECK(existStates.size() == states.size(), "Incorrect existStates struct");
 
     CHECK(existStates.find(std::make_pair(state.type, state.subType)) == existStates.end(), "State already setted");
@@ -110,7 +107,7 @@ END_SLOT_WRAPPER
 void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
-        if (isComplete) {
+        if (isCompleteSets) {
             int cCritical = 0;
             for (size_t i = 0; i < states.size(); i++) {
                 if (states[i].isCritical) {

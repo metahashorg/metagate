@@ -67,13 +67,13 @@ NsLookup::NsLookup(QObject *parent)
     }
     settings.endArray();
 
-    CHECK(settings.contains("ns_lookup/countSuccessTests"), "ns_lookup/countSuccessTests field not found");
+    CHECK(settings.contains("ns_lookup/countSuccessTests"), "settings ns_lookup/countSuccessTests field not found");
     countSuccessTestsForP2PNodes = settings.value("ns_lookup/countSuccessTests").toInt();
-    CHECK(settings.contains("ns_lookup/timeoutRequestNodesSeconds"), "ns_lookup/timeoutRequestNodesSeconds field not found");
+    CHECK(settings.contains("ns_lookup/timeoutRequestNodesSeconds"), "settings ns_lookup/timeoutRequestNodesSeconds field not found");
     timeoutRequestNodes = seconds(settings.value("ns_lookup/timeoutRequestNodesSeconds").toInt());
-    CHECK(settings.contains("ns_lookup/dns_server"), "ns_lookup/dns_server field not found");
+    CHECK(settings.contains("ns_lookup/dns_server"), "settings ns_lookup/dns_server field not found");
     dnsServerName = settings.value("ns_lookup/dns_server").toString();
-    CHECK(settings.contains("ns_lookup/dns_server_port"), "ns_lookup/dns_server_port field not found");
+    CHECK(settings.contains("ns_lookup/dns_server_port"), "settings ns_lookup/dns_server_port field not found");
     dnsServerPort = settings.value("ns_lookup/dns_server_port").toInt();
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
@@ -94,7 +94,7 @@ NsLookup::NsLookup(QObject *parent)
     } else {
         isSafeCheck = true;
     }
-    LOG << "Start ns resolve after " << msTimer.count() << " ms";
+    LOG << "Start ns resolve after " << msTimer.count() << " ms " << isSafeCheck;
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(msTimer.count());
     qtimer.setSingleShot(true);
@@ -230,7 +230,7 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         requestPacket.addQuestion(DnsQuestion::getIp(node->second.node.str()));
         requestPacket.setFlags(DnsFlag::MyFlag);
         const auto byteArray = requestPacket.toByteArray();
-        LOG << "dns " << node->second.type << ". ";
+        LOG << "dns " << node->second.type << ".";
         udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response) {
             CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
             const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
@@ -384,24 +384,24 @@ struct P2PNodeResult {
 static std::vector<P2PNodeResult> parseNodesP2P(const std::string &resp) {
     const QJsonDocument response = QJsonDocument::fromJson(QString::fromStdString(resp).toUtf8());
     const QJsonObject root = response.object();
-    CHECK(root.contains("result") && root.value("result").isObject(), "result field not found");
+    CHECK(root.contains("result") && root.value("result").isObject(), "p2p result field not found");
     const QJsonObject data = root.value("result").toObject();
-    CHECK(data.contains("nodes") && data.value("nodes").isArray(), "nodes field not found");
+    CHECK(data.contains("nodes") && data.value("nodes").isArray(), "p2p nodes field not found");
     const QJsonArray nodes = data.value("nodes").toArray();
 
     std::vector<P2PNodeResult> result;
     for (const QJsonValue &node1: nodes) {
-        CHECK(node1.isObject(), "node field not found");
+        CHECK(node1.isObject(), "p2p node field not found");
         const QJsonObject node = node1.toObject();
 
         P2PNodeResult res;
-        CHECK(node.contains("node") && node.value("node").isString(), "node field not found");
+        CHECK(node.contains("node") && node.value("node").isString(), "p2p node field not found");
         res.node = node.value("node").toString();
-        CHECK(node.contains("count") && node.value("count").isDouble(), "count field not found");
+        CHECK(node.contains("count") && node.value("count").isDouble(), "p2p count field not found");
         res.count = node.value("count").toInt();
-        CHECK(node.contains("ip") && node.value("ip").isString(), "ip field not found");
+        CHECK(node.contains("ip") && node.value("ip").isString(), "p2p ip field not found");
         res.ip = makeAddress(node.value("ip").toString());
-        CHECK(node.contains("type") && node.value("type").isString(), "type field not found");
+        CHECK(node.contains("type") && node.value("type").isString(), "p2p type field not found");
         const QString type = node.value("type").toString();
         if (type == "proxy") {
             res.type = NodeType::SubType::proxy;
@@ -456,7 +456,7 @@ void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator no
     const QString postRequest = QString::fromStdString("{\"id\":1,\"params\":{\"count_tests\": " + std::to_string(countSuccessTestsForP2PNodes) + "},\"method\":\"get-all-last-nodes-count\", \"pretty\": false}");
     client.sendMessagePost(allNodesForTypes[node->second.node][0].address, postRequest, [this, node, nodeNetworkProxy, nodeNetworkTorrent](const std::string &response, const SimpleClient::ServerException &exception){
         if (exception.isSet()) {
-            LOG << "P2P get nodes exception: " << exception.description << " " << exception.content;
+            LOG << "P2P get nodes exception: " << exception.toString();
             continueResolveP2P(std::next(node));
             return;
         }

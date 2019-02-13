@@ -94,7 +94,7 @@ QString Messenger::makeTextForWantToTalkRequest(const QString &address) {
 
 static QString getWssServer() {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("web_socket/messenger"), "web_socket/messenger setting not found");
+    CHECK(settings.contains("web_socket/messenger"), "settings web_socket/messenger not found");
     return settings.value("web_socket/messenger").toString();
 };
 
@@ -106,7 +106,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     , wssClient(getWssServer())
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("messenger/saveDecryptedMessage"), "timeout not found");
+    CHECK(settings.contains("messenger/saveDecryptedMessage"), "settings timeout not found");
     isDecryptDataSave = settings.value("messenger/saveDecryptedMessage").toBool();
 
     CHECK(connect(this, &Messenger::callbackCall, this, &Messenger::onCallbackCall), "not connect onCallbackCall");
@@ -527,7 +527,6 @@ BEGIN_SLOT_WRAPPER
         LOG << "Want to talk response";
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::REQUIRES_PUBKEY) {
-        LOG << "Requires pubkey";
         const RequiresPubkeyResponse response = parseRequiresPubkeyResponse(messageJson);
         const auto walFolders = walletFolders[response.address];
         if (walFolders.find(currentWalletFolder) != walFolders.end()) {
@@ -538,7 +537,6 @@ BEGIN_SLOT_WRAPPER
             LOG << "User change wallet folder. Ignore " << response.address << " " << response.collocutor;
         }
     } else if (responseType.method == METHOD::COLLOCUTOR_ADDED_PUBKEY) {
-        LOG << "Collocutor added pubkey";
         const CollocutorAddedPubkeyResponse response = parseCollocutorAddedPubkeyResponse(messageJson);
         const auto walFolders = walletFolders[response.address];
         if (walFolders.find(currentWalletFolder) != walFolders.end()) {

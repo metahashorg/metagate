@@ -105,7 +105,6 @@ void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, 
     }
     connect(socket.get(), &HttpSocket::finished, this, &HttpSimpleClient::onSocketFinished);
     socket.release()->start();
-    LOG << "post message sended";
 }
 
 void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback)

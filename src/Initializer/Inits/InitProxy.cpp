@@ -104,19 +104,6 @@ InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wss
         emit mw.setProxyJavascript(proxyJavascript.get(), MainWindow::SetProxyJavascriptCallback([this]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitProxy::sendInitSuccess, this, _1), std::bind(&InitProxy::callbackCall, this, _1)));
-
-        /*QObject::connect(&proxyManager, &proxy::Proxy::startAutoExecued, [](){
-            qDebug() << "PROXY S ";
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoProxyResult, [](const TypedException &r){
-            qDebug() << "PROXY 1 " << r.numError;
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoUPnPResult, [](const TypedException &r){
-            qDebug() << "PROXY 2 " << r.numError;
-        });
-        QObject::connect(&proxyManager, &proxy::Proxy::startAutoComplete, [](quint16 port){
-            qDebug() << "PROXY res " << port;
-        });*/
     });
     if (proxyManager != nullptr && !proxyManager->isAutoStart()) {
         sendUpnpStarted(true, TypedException());

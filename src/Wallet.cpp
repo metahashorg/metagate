@@ -177,8 +177,8 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
 
 void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
     std::string addr = address;
-    CHECK_TYPED(addr.size() == 52, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
-    CHECK_TYPED(addr.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+    CHECK_TYPED(addr.size() == 52, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
+    CHECK_TYPED(addr.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     addr = addr.substr(2);
 
     const std::string binAddress = fromHex(addr);
@@ -187,7 +187,7 @@ void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
 
     if (isCheckHash) {
         const std::string doubleHash = doubleSha(payload);
-        CHECK_TYPED(doubleHash.substr(0, hash.size()) == hash, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address");
+        CHECK_TYPED(doubleHash.substr(0, hash.size()) == hash, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     }
 }
 

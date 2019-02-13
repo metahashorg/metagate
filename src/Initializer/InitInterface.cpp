@@ -132,8 +132,8 @@ END_SLOT_WRAPPER
 }
 
 void InitInterface::setTimerEvent(const milliseconds &timer, const std::string &errorDesc, const std::function<void(const TypedException &e)> &func) {
-    CHECK(isTimerEnabled, "Timer not started");
-    CHECK(this->timer.isActive(), "Timer already stopped");
+    CHECK(isTimerEnabled, "Init Timer not started");
+    CHECK(this->timer.isActive(), "Init Timer already stopped");
     std::lock_guard<std::mutex> lock(eventsMut);
     events.emplace_back(::now(), timer, errorDesc, func);
 }

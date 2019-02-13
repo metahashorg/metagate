@@ -67,7 +67,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "initsResendEventsJs";
 
-    LOG << "Resend events";
+    LOG << "Init Resend events";
 
     const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
@@ -95,7 +95,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "initsReadyResultJs";
 
-    LOG << "Javascript ready " << force;
+    LOG << "Init js ready " << force;
 
     const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
@@ -121,6 +121,7 @@ BEGIN_SLOT_WRAPPER
             } else {
                 throwErr("Unknown type");
             }
+            LOG << "Init js ready type " << r;
             makeFunc(TypedException(), r);
         }, errorFunc, signalFunc));
     });
@@ -136,7 +137,7 @@ BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initGetAllTypesResultJs";
-    LOG << "getAllTypes";
+    LOG << "Init getAllTypes";
 
     const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
@@ -148,6 +149,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit m_initializer->getAllTypes(Initializer::GetTypesCallback([makeFunc](const std::vector<QString> &result) {
+            LOG << "Init getAllTypes size " << result.size();
             makeFunc(TypedException(), typesToJson(result));
         }, errorFunc, signalFunc));
     });
@@ -163,7 +165,7 @@ BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
     const QString JS_NAME_RESULT = "initGetAllSubTypesResultJs";
-    LOG << "getAllSubTypes";
+    LOG << "Init getAllSubTypes";
 
     const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
@@ -175,6 +177,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit m_initializer->getAllSubTypes(Initializer::GetSubTypesCallback([makeFunc](const std::vector<Initializer::StateType> &result) {
+            LOG << "Init getAllSubTypes size " << result.size();
             makeFunc(TypedException(), subTypesToJson(result));
         }, errorFunc, signalFunc));
     });
@@ -189,6 +192,7 @@ void InitializerJavascript::onStateChanged(int number, int totalStates, int numb
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
+    LOG << "State sended " << number << " " << totalStates << " " << numberCritical << " " << totalCritical << " " << state.type << " " << state.subType << " " << state.exception.numError << " " << state.exception.description;
     const QString JS_NAME_RESULT = "initStateChangedJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, state.exception, number, totalStates, numberCritical, totalCritical, state.type, state.subType, state.message, state.isCritical, state.isScipped);
 END_SLOT_WRAPPER
@@ -198,6 +202,7 @@ void InitializerJavascript::onInitialized(bool isSuccess, const TypedException &
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
+    LOG << "Initialized sended " << isSuccess;
     const QString JS_NAME_RESULT = "initInitializedJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isSuccess);
 END_SLOT_WRAPPER
@@ -207,6 +212,7 @@ void InitializerJavascript::onInitializedCritical(bool isSuccess, const TypedExc
 BEGIN_SLOT_WRAPPER
     CHECK(m_initializer != nullptr, "initializer not set");
 
+    LOG << "Critical initialized sended " << isSuccess;
     const QString JS_NAME_RESULT = "initInitializedCriticalJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isSuccess);
 END_SLOT_WRAPPER

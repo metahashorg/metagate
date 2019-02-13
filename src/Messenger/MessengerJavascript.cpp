@@ -139,8 +139,8 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field incorrect");
 
         emit messenger->getHistoryAddress(address, fromC, toC, Messenger::GetMessagesCallback([this, address, makeFunc, errorFunc](const std::vector<Message> &messages) {
-            LOG << "Count messages " << address << " " << messages.size();
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, makeFunc](const std::vector<Message> &messages){
+                LOG << "get messages ok " << address << " " << messages.size();
                 makeFunc(TypedException(), address, messagesToJson(messages));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -176,8 +176,8 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field incorrect");
 
         emit messenger->getHistoryAddressAddress(address, false, collocutor, fromC, toC, Messenger::GetMessagesCallback([this, address, collocutor, makeFunc, errorFunc](const std::vector<Message> &messages) {
-            LOG << "Count messages " << address << " " << collocutor << " " << messages.size();
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, collocutor, makeFunc](const std::vector<Message> &messages){
+                LOG << "get messages ok " << address << " " << collocutor << " " << messages.size();
                 makeFunc(TypedException(), address, collocutor, messagesToJson(messages));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -213,8 +213,8 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field incorrect");
 
         emit messenger->getHistoryAddressAddressCount(address, false, collocutor, countC, toC, Messenger::GetMessagesCallback([this, address, collocutor, makeFunc, errorFunc](const std::vector<Message> &messages) {
-            LOG << "Count messagesC " << address << " " << collocutor << " " << messages.size();
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, collocutor, makeFunc](const std::vector<Message> &messages){
+                LOG << "get messagesC ok " << address << " " << collocutor << " " << messages.size();
                 makeFunc(TypedException(), address, collocutor, messagesToJson(messages));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -386,7 +386,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getLastMessage(address, false, "", Messenger::GetSavedPosCallback([this, makeFunc, address](const Message::Counter &pos) {
-            LOG << "Last message number " << address << " " << pos;
+            LOG << "getLastMessageNumber ok " << address << " " << pos;
             makeFunc(TypedException(), address, pos);
         }, errorFunc, signalFunc));
     });
@@ -415,7 +415,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getSavedPos(address, false, collocutor, Messenger::GetSavedPosCallback([this, makeFunc, address, collocutor](const Message::Counter &pos) {
-            LOG << "Saved pos " << address << " " << collocutor << " " << pos;
+            LOG << "getSavedPos ok " << address << " " << collocutor << " " << pos;
             makeFunc(TypedException(), address, collocutor, pos);
         }, errorFunc, signalFunc));
     });
@@ -446,7 +446,7 @@ BEGIN_SLOT_WRAPPER
         emit messenger->getSavedsPos(address, false, Messenger::GetSavedsPosCallback([this, makeFunc, address](const std::vector<std::pair<QString, Message::Counter>> &pos) {
             const QJsonDocument result(allPosToJson(pos));
 
-            LOG << "Get saveds pos " << pos.size();
+            LOG << "getSavedsPos ok " << address << " " << pos.size();
             makeFunc(TypedException(), address, result);
         }, errorFunc, signalFunc));
     });
@@ -478,7 +478,7 @@ BEGIN_SLOT_WRAPPER
         const Message::Counter counter = counterStr.toLongLong(&isValid);
         CHECK(isValid, "counter field invalid");
         emit messenger->savePos(address, false, collocutor, counter, Messenger::SavePosCallback([this, makeFunc, address, collocutor](){
-            LOG << "Save pos ok " << address << " " << collocutor;
+            LOG << "savePos ok " << address << " " << collocutor;
             makeFunc(TypedException(), address, collocutor, "Ok");
         }, errorFunc, signalFunc));
     });
@@ -509,8 +509,8 @@ BEGIN_SLOT_WRAPPER
         bool isValid;
         const Message::Counter fromI = from.toLongLong(&isValid);
         CHECK(isValid, "from field invalid");
-        emit messenger->getCountMessages(address, collocutor, fromI, Messenger::GetCountMessagesCallback([this, makeFunc, address, collocutor, fromI](const Message::Counter &count) {
-            LOG << "Count messages " << address << " " << collocutor << " " << fromI << " " << count;
+        emit messenger->getCountMessages(address, collocutor, fromI, Messenger::GetCountMessagesCallback([this, makeFunc, address, collocutor](const Message::Counter &count) {
+            LOG << "getCountMessages ok " << address << " " << collocutor << " " << count;
             makeFunc(TypedException(), address, collocutor, count);
         }, errorFunc, signalFunc));
     });
@@ -578,7 +578,7 @@ BEGIN_SLOT_WRAPPER
         const QString messageToSign = Messenger::makeTextForChannelAddWriterRequest(titleSha, writer);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
             emit messenger->addWriterToChannel(titleSha, writer, pubkey, sign, Messenger::AddWriterToChannelCallback([this, makeFunc, address, titleSha, writer]() {
-                LOG << "writer added " << address << " " << titleSha << " " << writer;
+                LOG << "add writer ok " << address << " " << titleSha << " " << writer;
                 makeFunc(TypedException(), address, titleSha, writer);
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -610,7 +610,7 @@ BEGIN_SLOT_WRAPPER
         const QString messageToSign = Messenger::makeTextForChannelDelWriterRequest(titleSha, writer);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
             emit messenger->delWriterFromChannel(titleSha, writer, pubkey, sign, Messenger::DelWriterToChannelCallback([this, makeFunc, address, titleSha, writer]() {
-                LOG << "writer deleted " << address << " " << titleSha << " " << writer;
+                LOG << "del writer ok " << address << " " << titleSha << " " << writer;
                 makeFunc(TypedException(), address, titleSha, writer);
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -649,7 +649,7 @@ BEGIN_SLOT_WRAPPER
         const QString messageToSign = Messenger::makeTextForSendToChannelRequest(titleSha, dataHex, fee, timestamp);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, dataHex, titleSha, fee, timestamp, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
             emit messenger->sendMessage(address, address, true, titleSha, dataHex, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
-                LOG << "Message sended " << address << " " << titleSha;
+                LOG << "sendMessageToChannel ok " << address << " " << titleSha;
                 makeFunc(TypedException(), address, titleSha);
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -679,7 +679,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getChannelList(address, Messenger::GetChannelListCallback([this, makeFunc, address](const std::vector<ChannelInfo> &channels) {
-            LOG << "channel list " << address << " " << channels.size();
+            LOG << "getChannelList ok " << address << " " << channels.size();
             const QJsonDocument channelsJson = channelListToJson(channels);
             makeFunc(TypedException(), address, channelsJson);
         }, errorFunc, signalFunc));
@@ -709,7 +709,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getLastMessage(address, true, titleSha, Messenger::GetSavedPosCallback([this, makeFunc, address, titleSha](const Message::Counter &pos) {
-            LOG << "Last message number " << address << " " << pos;
+            LOG << "get last message channel ok " << address << " " << pos;
             makeFunc(TypedException(), address, titleSha, pos);
         }, errorFunc, signalFunc));
     });
@@ -738,7 +738,7 @@ BEGIN_SLOT_WRAPPER
 
     const TypedException exception = apiVrapper2([&, this](){
         emit messenger->getSavedPos(address, true, titleSha, Messenger::GetSavedPosCallback([this, makeFunc, address, titleSha](const Message::Counter &pos) {
-            LOG << "Saved pos " << address << " " << titleSha << " " << pos;
+            LOG << "getSavedPosChannel ok " << address << " " << titleSha << " " << pos;
             makeFunc(TypedException(), address, titleSha, pos);
         }, errorFunc, signalFunc));
     });
@@ -770,7 +770,7 @@ BEGIN_SLOT_WRAPPER
         const Message::Counter counter = counterStr.toLongLong(&isValid);
         CHECK(isValid, "counter field invalid");
         emit messenger->savePos(address, true, titleSha, counter, Messenger::SavePosCallback([this, makeFunc, address, titleSha](){
-            LOG << "Save pos ok " << address << " " << titleSha;
+            LOG << "savePosToChannel ok " << address << " " << titleSha;
             makeFunc(TypedException(), address, titleSha, "Ok");
         }, errorFunc, signalFunc));
     });
@@ -804,8 +804,8 @@ BEGIN_SLOT_WRAPPER
         const Message::Counter toC = to.toLongLong(&isValid);
         CHECK(isValid, "to field invalid");
         emit messenger->getHistoryAddressAddress(address, true, titleSha, fromC, toC, Messenger::GetMessagesCallback([this, makeFunc, address, titleSha, errorFunc](const std::vector<Message> &messages) {
-            LOG << "Count messages " << address << " " << titleSha << " " << messages.size();
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, titleSha, makeFunc](const std::vector<Message> &messages){
+                LOG << "get messages channel ok " << address << " " << titleSha << " " << messages.size();
                 makeFunc(TypedException(), address, titleSha, messagesToJson(messages));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -841,8 +841,8 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "to field invalid");
 
         emit messenger->getHistoryAddressAddressCount(address, true, titleSha, countC, toC, Messenger::GetMessagesCallback([this, makeFunc, errorFunc, address, titleSha](const std::vector<Message> &messages) {
-            LOG << "Count messagesC " << address << " " << titleSha << " " << messages.size();
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, titleSha, makeFunc](const std::vector<Message> &messages){
+                LOG << "get messagesCC ok " << address << " " << titleSha << " " << messages.size();
                 makeFunc(TypedException(), address, titleSha, messagesToJson(messages));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
@@ -857,9 +857,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::onNewMesseges(QString address, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgNewMessegesJs";
-
-    LOG << "New messages " << lastMessage;
-
+    LOG << "New messages " << address << " " << lastMessage;
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, lastMessage);
 END_SLOT_WRAPPER
 }
@@ -867,9 +865,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::onAddedToChannel(QString address, QString title, QString titleSha, QString admin, Message::Counter counter) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgAddedToChannelJs";
-
-    LOG << "added to channel " << address << " " << titleSha;
-
+    LOG << "added to channel " << address << " " << titleSha << " " << counter;
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, title, titleSha, admin, counter);
 END_SLOT_WRAPPER
 }
@@ -877,9 +873,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::onDeletedFromChannel(QString address, QString title, QString titleSha, QString admin) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgDeletedFromChannelJs";
-
     LOG << "Deleted from channel " << address << " " << titleSha;
-
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, title, titleSha, admin);
 END_SLOT_WRAPPER
 }
@@ -887,9 +881,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::onNewMessegesChannel(QString address, QString titleSha, Message::Counter lastMessage) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgNewMessegesChannelJs";
-
-    LOG << "New messages channel " << titleSha << " " << lastMessage;
-
+    LOG << "New messages channel " << address << " " << titleSha << " " << lastMessage;
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, titleSha, lastMessage);
 END_SLOT_WRAPPER
 }
@@ -926,10 +918,11 @@ BEGIN_SLOT_WRAPPER
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
     };
 
-    LOG << "Unlock wallet " << address << " Wallet path " << walletPath;
+    LOG << "Unlock wallet " << address << " Wallet path " << walletPath << " timeout " << timeSeconds;
     const TypedException exception = apiVrapper2([&, this](){
         emit cryptoManager.unlockWallet(walletPath, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, JS_NAME_RESULT, errorFunc]() {
             emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([this, address, JS_NAME_RESULT]() {
+                LOG << "Unlock wallet ok " << address;
                 makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
             }, errorFunc, signalFunc));
          }, errorFunc, signalFunc));
@@ -988,9 +981,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::onRequiresPubkey(QString address, QString collocutor) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgRequiresPubkeyJs";
-
     LOG << "Requires pubkey " << address << " " << collocutor;
-
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, collocutor);
 END_SLOT_WRAPPER
 }
@@ -998,9 +989,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::onCollocutorAddedPubkey(QString address, QString collocutor) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgCollocutorAddedPubkeyJs";
-
     LOG << "Collocutor added pubkey " << address << " " << collocutor;
-
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, collocutor);
 END_SLOT_WRAPPER
 }

@@ -67,9 +67,9 @@ LastHtmlVersion Uploader::getLastHtmlVersion() {
 Uploader::Servers Uploader::getServers() {
     Servers servers;
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("servers/production"), "production server not found");
+    CHECK(settings.contains("servers/production"), "settings production server not found");
     servers.prod = settings.value("servers/production").toString().toStdString();
-    CHECK(settings.contains("servers/development"), "development server not found");
+    CHECK(settings.contains("servers/development"), "settings development server not found");
     servers.dev = settings.value("servers/development").toString().toStdString();
 
     return servers;
@@ -94,7 +94,7 @@ Uploader::Uploader(MainWindow &mainWindow)
 
     client.setParent(this);
 
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall), "not connect");
+    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall), "not connect callbackCall");
 
     currentBeginPath = getPagesPath();
     const auto &lastVersionPair = Uploader::getLastVersion(currentBeginPath);
@@ -107,7 +107,7 @@ Uploader::Uploader(MainWindow &mainWindow)
     CHECK(connect(this, &Uploader::finished, &thread1, &QThread::terminate), "not connect terminate");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("timeouts_sec/uploader"), "timeouts not found");
+    CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
     const milliseconds msTimer = 10s;
@@ -164,7 +164,7 @@ BEGIN_SLOT_WRAPPER
     }
 
     auto callbackGetHtmls = [this, UPDATE_API](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
@@ -193,7 +193,7 @@ BEGIN_SLOT_WRAPPER
 
         auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result, const SimpleClient::ServerException &exception) {
             versionHtmlForUpdate = "";
-            CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+            CHECK(!exception.isSet(), "Server error: " + exception.toString());
 
             if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
                 return;
@@ -236,7 +236,7 @@ BEGIN_SLOT_WRAPPER
     id++;
 
     auto callbackAppVersion = [this, UPDATE_API](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+        CHECK(!exception.isSet(), "Server error: " + exception.toString());
 
         const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
         const QJsonObject root = document.object();
@@ -263,7 +263,7 @@ BEGIN_SLOT_WRAPPER
         auto autoupdateGetCallback = [this, version, reference](const std::string &result, const SimpleClient::ServerException &exception) {
             versionForUpdate.clear();
             LOG << "autoupdater callback";
-            CHECK(!exception.isSet(), "Server error: " + exception.description + ". " + exception.content);
+            CHECK(!exception.isSet(), "Server error: " + exception.toString());
 
             clearAutoupdatersPath();
             const QString autoupdaterPath = getAutoupdaterPath();

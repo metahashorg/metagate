@@ -13,8 +13,7 @@
 namespace auth
 {
 
-static QJsonDocument loginInfoToJson(const LoginInfo &info)
-{
+static QJsonDocument loginInfoToJson(const LoginInfo &info) {
     QJsonObject obj;
     obj["login"] = info.login;
     obj["token"] = info.token;
@@ -30,8 +29,7 @@ AuthJavascript::AuthJavascript(QObject *parent)
     CHECK(connect(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig), "not connect onSendLoginInfoResponseSig");
 }
 
-void AuthJavascript::login(const QString &login, const QString &password)
-{
+void AuthJavascript::login(const QString &login, const QString &password) {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
     LOG << "Login " << login;
@@ -44,8 +42,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void AuthJavascript::logout()
-{
+void AuthJavascript::logout() {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
 
@@ -60,12 +57,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void AuthJavascript::check()
-{
+void AuthJavascript::check() {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
 
-    LOG << "check";
+    LOG << "get token";
 
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_authManager->check();
@@ -91,8 +87,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void AuthJavascript::onSendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error)
-{
+void AuthJavascript::onSendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "authLoginInfoJs";
 
@@ -100,8 +95,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void AuthJavascript::onCallbackCall(const Callback &callback)
-{
+void AuthJavascript::onCallbackCall(const Callback &callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
@@ -113,8 +107,7 @@ void AuthJavascript::makeAndRunJsFuncParams(const QString &function, const Typed
     runJs(res);
 }
 
-void AuthJavascript::runJs(const QString &script)
-{
+void AuthJavascript::runJs(const QString &script) {
     LOG << "Js " << script;
     emit jsRunSig(script);
 }

@@ -49,7 +49,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     }), "not connect disconnected");
     CHECK(connect(&thread1, &QThread::finished, [this]{
         BEGIN_SLOT_WRAPPER
-        LOG << "Wss client finished";
+        LOG << "Wss client finished " << m_url.toString();
         m_webSocket.close();
         END_SLOT_WRAPPER
     }), "not connect finished");
@@ -74,10 +74,10 @@ END_SLOT_WRAPPER
 
 void WebSocketClient::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
-    LOG << "Wss check ping";
+    LOG << "Wss check ping " << m_url.toString();
     const time_point now = ::now();
     if (std::chrono::duration_cast<seconds>(now - prevPongTime) >= 3min) {
-        LOG << "Wss close";
+        LOG << "Wss close " << m_url.toString();
         m_webSocket.close();
     } else {
         emit m_webSocket.ping();
@@ -86,7 +86,7 @@ END_SLOT_WRAPPER
 }
 
 void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {
-    LOG << "Wss check pong";
+    LOG << "Wss check pong " << m_url.toString();
     prevPongTime = ::now();
 }
 
@@ -105,12 +105,12 @@ void WebSocketClient::start() {
 
 void WebSocketClient::onConnected() {
 BEGIN_SLOT_WRAPPER
-    LOG << "Wss client connected";
+    LOG << "Wss client connected " << m_url.toString();
     isConnected = true;
     prevPongTime = ::now();
     for (const auto &pair: helloStrings) {
         for (const QString &helloString: pair.second) {
-            LOG << "Wss Set hello message " << helloString;
+            LOG << "Wss send hello message " << helloString;
             m_webSocket.sendTextMessage(helloString);
         }
     }
@@ -169,7 +169,7 @@ END_SLOT_WRAPPER
 
 void WebSocketClient::onTextMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
-    LOG << "Wss received " << message;
+    LOG << "Wss received part: " << message.left(2000);
     emit messageReceived(message);
 END_SLOT_WRAPPER
 }

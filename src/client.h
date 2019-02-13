@@ -27,11 +27,14 @@ public:
 
         ServerException() = default;
 
-        ServerException(int code, const std::string &description, const std::string &content)
-            : description(description)
+        ServerException(const std::string &server, int code, const std::string &description, const std::string &content)
+            : server(server)
+            , description(description)
             , content(content)
             , code(code)
         {}
+
+        std::string server;
 
         std::string description;
 
@@ -39,6 +42,10 @@ public:
 
         bool isSet() const {
             return code != 0;
+        }
+
+        std::string toString() const {
+            return server + ". " + description + ". " + content + ".";
         }
 
         const static int BAD_REQUEST_ERROR;

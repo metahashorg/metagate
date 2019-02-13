@@ -77,7 +77,7 @@ public:
 
     template<class Init, bool isDefferred=false, typename... Args>
     std::shared_future<typename Init::Return> addInit(Args&& ...args) {
-        CHECK(!isComplete, "Already complete");
+        CHECK(!isCompleteSets, "Already complete initializer");
 
         totalStates += Init::countEvents();
         totalCriticalStates += Init::countCriticalEvents();
@@ -150,7 +150,7 @@ private:
 
     bool isCriticalInitFinished = false;
 
-    bool isComplete = false;
+    bool isCompleteSets = false;
 
     std::vector<std::unique_ptr<InitInterface>> initializiers;
 

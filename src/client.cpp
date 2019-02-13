@@ -327,9 +327,8 @@ BEGIN_SLOT_WRAPPER
         if (reply->isReadable()) {
             errorStr = QString(reply->readAll()).toStdString();
         }
-        //LOG << error;
 
-        runCallback(callbacks_, requestId, "", ServerException(reply->error(), reply->errorString().toStdString(), errorStr));
+        runCallback(callbacks_, requestId, "", ServerException(reply->url().toString().toStdString(), reply->error(), reply->errorString().toStdString(), errorStr));
     }
 
     reply->deleteLater();

@@ -96,7 +96,7 @@ BtcWallet::BtcWallet(const std::string &fileData, const QString &password) {
     } else {
         bool tmp;
         const std::string calcAddress = ::getAddress(wif, tmp, false);
-        CHECK_TYPED(calcAddress == address, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif: address calc incorrect");
+        CHECK_TYPED(calcAddress == address, TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif: address " + address + " incorrect. Correct: " + calcAddress);
     }
 }
 
@@ -107,7 +107,7 @@ BtcWallet::BtcWallet(const QString &folder, const std::string &address_, const Q
 BtcWallet::BtcWallet(const std::string &decryptedWif)
     : wif(decryptedWif)
 {
-    CHECK_TYPED(decryptedWif.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + decryptedWif);
+    CHECK_TYPED(decryptedWif.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif");
 }
 
 const std::string& BtcWallet::getAddress() const {
@@ -223,7 +223,7 @@ std::pair<std::string, std::set<std::string>> BtcWallet::buildTransaction(
         allMoney = true;
         value = 0;
     } else {
-        CHECK_TYPED(isDecimal(valueStr), TypeErrors::INCORRECT_USER_DATA, "Not hex number value");
+        CHECK_TYPED(isDecimal(valueStr), TypeErrors::INCORRECT_USER_DATA, "Not dec number value");
         allMoney = false;
         value = std::stoll(valueStr);
     }
@@ -231,7 +231,7 @@ std::pair<std::string, std::set<std::string>> BtcWallet::buildTransaction(
     int64_t feesEstimate = 0;
     int64_t fees = 0;
     if (feesStr != "auto") {
-        CHECK_TYPED(isDecimal(feesStr), TypeErrors::INCORRECT_USER_DATA, "Not hex number fees");
+        CHECK_TYPED(isDecimal(feesStr), TypeErrors::INCORRECT_USER_DATA, "Not dec number fees");
         fees = std::stoll(feesStr);
     } else {
         CHECK_TYPED(estimateComissionInSatoshi > 0, TypeErrors::INCORRECT_USER_DATA, "Uncnown estimate comission " + std::to_string(estimateComissionInSatoshi));

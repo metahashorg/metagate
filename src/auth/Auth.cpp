@@ -23,10 +23,10 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     , javascriptWrapper(javascriptWrapper)
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("servers/auth"), "server not found");
+    CHECK(settings.contains("servers/auth"), "settings server not found");
     authUrl = settings.value("servers/auth").toString();
     hardwareId = QString::fromStdString(::getMachineUid());
-    CHECK(settings.contains("timeouts_sec/auth"), "timeout not found");
+    CHECK(settings.contains("timeouts_sec/auth"), "settings timeout not found");
     timeout = seconds(settings.value("timeouts_sec/auth").toInt());
 
     readLoginInfo();
@@ -44,7 +44,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     Q_REG2(LoginInfo, "LoginInfo", true);
 
     tcpClient.setParent(this);
-    CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect");
+    CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect onCallbackCall");
     tcpClient.moveToThread(&thread1);
 
     javascriptWrapper.setAuthManager(*this);
@@ -237,7 +237,7 @@ bool Auth::checkToken() {
         return true;
     }
 
-    LOG << "Check token1";
+    LOG << "Check token";
     info.prevCheck = now;
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;

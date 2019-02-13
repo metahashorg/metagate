@@ -103,7 +103,6 @@ int main(int argc, char *argv[]) {
 
         LOG << "Version " << versionString << " " << typeString << " " << GIT_CURRENT_SHA1;
         LOG << "Platform " << osName;
-
         LOG << "Machine uid " << getMachineUid();
 
         initializer::InitializerJavascript initJavascript;
