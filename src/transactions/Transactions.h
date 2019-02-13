@@ -13,6 +13,8 @@
 #include "HttpClient.h"
 #include "TimerClass.h"
 
+#include "Transaction.h"
+
 class NsLookup;
 struct TypedException;
 
@@ -22,9 +24,6 @@ namespace transactions {
 
 class TransactionsJavascript;
 class TransactionsDBStorage;
-struct BalanceInfo;
-struct Transaction;
-struct AddressInfo;
 enum class DelegateStatus;
 
 class Transactions : public TimerClass {
@@ -283,6 +282,10 @@ private:
     seconds timeout;
 
     time_point lastCheckTxsTime;
+
+    std::vector<AddressInfo> addressesInfos;
+
+    size_t posInAddressInfos;
 };
 
 }

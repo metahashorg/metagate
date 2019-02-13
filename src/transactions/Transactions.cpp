@@ -377,17 +377,27 @@ void Transactions::processCheckTxs(const QString &address, const QString &curren
 
 void Transactions::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
-    std::vector<AddressInfo> addressesInfos = getAddressesInfos(currentGroup);
-    std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
-        return first.type < second.type;
-    });
+    static const size_t MAXIMUM_ADDRESSES = 20;
+
+    if (posInAddressInfos >= addressesInfos.size()) {
+        addressesInfos.clear();
+    }
+
+    if (addressesInfos.empty()) {
+        addressesInfos = getAddressesInfos(currentGroup);
+        std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
+            return first.type < second.type;
+        });
+        posInAddressInfos = 0;
+    }
     LOG << PeriodicLog::make("f_bln") << "Try fetch balance " << addressesInfos.size();
     std::vector<QString> servers;
     QString currentType;
     std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
     const time_point now = ::now();
     const auto checkTxsPeriod = 1min;
-    for (const AddressInfo &addr: addressesInfos) {
+    for (size_t i = posInAddressInfos; i < std::min(addressesInfos.size(), posInAddressInfos + MAXIMUM_ADDRESSES); i++) {
+        const AddressInfo &addr = addressesInfos[i];
         if (addr.type != currentType) {
             servers = nsLookup.getRandom(addr.type, 3, 3);
             if (servers.empty()) {
@@ -412,10 +422,11 @@ BEGIN_SLOT_WRAPPER
         std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), [](const Transaction &tx) { return tx.tx;});
         processAddressMth(addr.address, addr.currency, servers, servStructs.at(addr.currency), pendingTxsStrs);
     }
+    posInAddressInfos += MAXIMUM_ADDRESSES;
     if (now - lastCheckTxsTime >= checkTxsPeriod) {
         LOG << "All txs checked";
         lastCheckTxsTime = now;
-    }
+    }    
     processPendingsMth(servers);
 END_SLOT_WRAPPER
 }
