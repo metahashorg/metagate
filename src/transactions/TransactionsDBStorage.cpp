@@ -50,32 +50,6 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
 
 }
 
-void TransactionsDBStorage::addPaymentV2(const QString &currency, const QString &txid, const QString &address, bool isInput, const QString &ufrom, const QString &uto, const QString &value, quint64 ts, const QString &data, const QString &fee, qint64 nonce, bool isSetDelegate, bool isDelegate, QString delegateValue, const QString &blockHash)
-{
-    static QSqlQuery m_iquery(database());
-    bool prepared = false;
-    if (!prepared) {
-        CHECK(m_iquery.prepare(insertPayment), m_iquery.lastError().text().toStdString());
-        prepared = true;
-    }
-    m_iquery.bindValue(":currency", currency);
-    m_iquery.bindValue(":txid", txid);
-    m_iquery.bindValue(":address", address);
-    m_iquery.bindValue(":isInput", isInput);
-    m_iquery.bindValue(":ufrom", ufrom);
-    m_iquery.bindValue(":uto", uto);
-    m_iquery.bindValue(":value", value);
-    m_iquery.bindValue(":ts", ts);
-    m_iquery.bindValue(":data", data);
-    m_iquery.bindValue(":fee", fee);
-    m_iquery.bindValue(":nonce", nonce);
-    m_iquery.bindValue(":isSetDelegate", isSetDelegate);
-    m_iquery.bindValue(":isDelegate", isDelegate);
-    m_iquery.bindValue(":delegateValue", delegateValue);
-    m_iquery.bindValue(":blockHash", blockHash);
-    CHECK(m_iquery.exec(), m_iquery.lastError().text().toStdString());
-}
-
 void TransactionsDBStorage::addPayment(const Transaction &trans)
 {
     addPayment(trans.currency, trans.tx, trans.address, trans.isInput,
@@ -88,29 +62,8 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
 void TransactionsDBStorage::addPayments(const std::vector<Transaction> &transactions)
 {
     auto transactionGuard = beginTransaction();
-    QSqlQuery query(database());
-    CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
     for (const Transaction &transaction: transactions) {
-        query.bindValue(":currency", transaction.currency);
-        query.bindValue(":txid", transaction.tx);
-        query.bindValue(":address", transaction.address);
-        query.bindValue(":isInput", transaction.isInput);
-        query.bindValue(":ufrom", transaction.from);
-        query.bindValue(":uto", transaction.to);
-        query.bindValue(":value", transaction.value);
-        query.bindValue(":ts", static_cast<qint64>(transaction.timestamp));
-        query.bindValue(":data", transaction.data);
-        query.bindValue(":fee", transaction.fee);
-        query.bindValue(":nonce", static_cast<qint64>(transaction.nonce));
-        query.bindValue(":isSetDelegate", transaction.isSetDelegate);
-        query.bindValue(":isDelegate", transaction.isDelegate);
-        query.bindValue(":delegateValue", transaction.delegateValue);
-        query.bindValue(":delegateHash", transaction.delegateHash);
-        query.bindValue(":status", transaction.status);
-        query.bindValue(":type", transaction.type);
-        query.bindValue(":blockNumber", static_cast<qint64>(transaction.blockNumber));
-        query.bindValue(":blockHash", transaction.blockHash);
-        CHECK(query.exec(), query.lastError().text().toStdString());
+        addPayment(transaction);
     }
     transactionGuard.commit();
 }
