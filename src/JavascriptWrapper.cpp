@@ -478,14 +478,15 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
                     signTransaction(nonce);
                     result = "Ok";
                 });
-                makeAndRunJsFuncParams(jsNameResult, exception2, Opt<QString>(requestId), result);
+                if (exception.isSet()) {
+                    makeAndRunJsFuncParams(jsNameResult, exception2, Opt<QString>(requestId), result);
+                }
             });
         } else {
             bool isParseNonce = false;
             const size_t nonceInt = nonce.toULongLong(&isParseNonce);
             CHECK_TYPED(isParseNonce, TypeErrors::INCORRECT_USER_DATA, "Nonce incorrect " + nonce.toStdString());
             signTransaction(nonceInt);
-            makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Ok"));
         }
     });
 
@@ -503,7 +504,7 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
         fee = "0";
     }
 
-    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams](size_t nonce) {
+    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams, jsNameResult](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
         std::string tx;
@@ -515,7 +516,11 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
         CHECK(tmp, "Fee not valid");
         wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex.toStdString(), tx, signature, publicKey);
 
-        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([this, jsNameResult, requestId](){
+            makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
+        }, [this, jsNameResult, requestId](const TypedException &exception) {
+            makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
+        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
     };
     signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }
@@ -529,7 +534,7 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         fee = "0";
     }
 
-    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams](size_t nonce) {
+    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams, jsNameResult](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
 
         bool isValid;
@@ -547,7 +552,11 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         CHECK(tmp, "Fee not valid");
         wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex, tx, signature, publicKey, false);
 
-        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams);
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([this, jsNameResult, requestId](){
+            makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
+        }, [this, jsNameResult, requestId](const TypedException &exception) {
+            makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
+        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
     };
     signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }

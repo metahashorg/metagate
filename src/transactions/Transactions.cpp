@@ -60,6 +60,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
     Q_REG(GetNonceCallback, "GetNonceCallback");
     Q_REG(GetStatusDelegateCallback, "GetStatusDelegateCallback");
+    Q_REG(SendTransactionCallback, "SendTransactionCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
     Q_REG(SignalFunc, "SignalFunc");
 
@@ -606,44 +607,49 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group, const seconds &timeout) {
+void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const std::vector<QString> &servers, const seconds &timeout) {
     if (sendTxWathcers.find(hash) != sendTxWathcers.end()) {
         return;
     }
 
+    const size_t remainServersGet = countServers - servers.size();
+    for (size_t i = 0; i < remainServersGet; i++) {
+        emit javascriptWrapper.transactionInTorrentSig("", QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "dns return less laid"));
+    }
     const time_point now = ::now();
-    const std::vector<QString> servers = nsLookup.getRandom(group, countServers, countServers);
-    CHECK(!servers.empty(), "Not enough servers");
     sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, servers, timeout));
     LOG << "SendTxWatchers timer send start";
     timerSendTx.start();
 }
 
-void Transactions::onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams) {
+void Transactions::onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, sendParams.countServersSend, sendParams.countServersSend);
-        CHECK(!servers.empty(), "Not enough servers");
+        const size_t countServersSend = sendParams.countServersSend;
+        const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, countServersSend, countServersSend);
+        CHECK_TYPED(!servers.empty(), TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "Not enough servers send");
+        const size_t remainServersSend = countServersSend - servers.size();
+        for (size_t i = 0; i < remainServersSend; i++) {
+            emit javascriptWrapper.sendedTransactionsResponseSig(requestId, "", "", TypedException(TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "dns return less laid"));
+        }
 
-        struct ServerResponse {
-            bool isSended = false;
-        };
+        const std::vector<QString> serversGet = nsLookup.getRandom(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet); // Получаем список серверов здесь, чтобы здесь же обработать ошибки
+        CHECK_TYPED(!serversGet.empty(), TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "Not enough servers get");
 
-        std::shared_ptr<ServerResponse> servResp = std::make_shared<ServerResponse>();
         for (const QString &server: servers) {
-            tcpClient.sendMessagePost(server, request, [this, servResp, server, requestId, sendParams](const std::string &response, const TypedException &error) {
+            tcpClient.sendMessagePost(server, request, [this, server, requestId, sendParams, serversGet](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
-                    addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, sendParams.typeGet, sendParams.timeout);
-                    servResp->isSended = true;
+                    addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);
                 });
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             }, timeout);
         }
     });
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 

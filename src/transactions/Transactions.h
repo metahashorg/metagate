@@ -13,6 +13,8 @@
 #include "HttpClient.h"
 #include "TimerClass.h"
 
+#include "CallbackWrapper.h"
+
 #include "Transaction.h"
 
 class NsLookup;
@@ -138,6 +140,8 @@ public:
 
     using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate)>;
 
+    using SendTransactionCallback = CallbackWrapper<std::function<void()>>;
+
     using ClearDbCallback = std::function<void(const TypedException &exception)>;
 
     using Callback = std::function<void()>;
@@ -174,7 +178,7 @@ signals:
 
     void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback);
 
-    void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
+    void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -208,7 +212,7 @@ public slots:
 
     void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback);
 
-    void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams);
+    void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
@@ -253,7 +257,7 @@ private:
 
     BalanceInfo getBalance(const QString &address, const QString &currency);
 
-    void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const QString &group, const seconds &timeout);
+    void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const std::vector<QString> &servers, const seconds &timeout);
 
     void sendErrorGetTx(const TransactionHash &hash, const QString &server);
 
