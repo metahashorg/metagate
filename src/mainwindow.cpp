@@ -130,7 +130,7 @@ void MainWindow::loadPagesMappings() {
     const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
     if (isExistFile(routesFile)) {
         const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
-        LOG << "Set mappings2 " << QString::fromStdString(contentMappings).simplified();
+        LOG << "Set mappings from file " << QString::fromStdString(contentMappings).simplified();
         try {
             pagesMappings.setMappings(QString::fromStdString(contentMappings));
         } catch (const Exception &e) {
@@ -638,7 +638,7 @@ void MainWindow::setUserName(QString userName) {
 
 void MainWindow::onSetMappings(QString mapping) {
 BEGIN_SLOT_WRAPPER
-    LOG << PeriodicLog::make("s_mp") << "Set mappings " << mapping;
+    LOG << PeriodicLog::make("s_mp") << "Set mappings from site " << mapping;
     pagesMappings.setMappings(mapping);
 END_SLOT_WRAPPER
 }
