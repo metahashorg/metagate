@@ -110,6 +110,8 @@ NsLookup::NsLookup(QObject *parent)
     udpClient.mvToThread(&thread1);
     client.moveToThread(&thread1);
     moveToThread(&thread1);
+
+    udpClient.startTm();
 }
 
 NsLookup::~NsLookup() {
@@ -231,7 +233,8 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         requestPacket.setFlags(DnsFlag::MyFlag);
         const auto byteArray = requestPacket.toByteArray();
         LOG << "dns " << node->second.type << ".";
-        udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response) {
+        udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response, const UdpSocketClient::SocketException &exception) {
+            CHECK(!exception.isSet(), "Dns exception: " + exception.toString());
             CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
             const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
 
@@ -247,7 +250,7 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
             cacheDns.lastUpdate = now;
 
             continuePing(std::begin(ipsTemp), node);
-        });
+        }, timeoutRequestNodes);
     } else {
         continuePing(std::begin(ipsTemp), node);
     }
