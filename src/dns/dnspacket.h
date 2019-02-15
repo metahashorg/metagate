@@ -29,6 +29,9 @@ public:
     DnsPacket();
     DnsPacket( const DnsPacket & other ) = default;
     DnsPacket(       DnsPacket &&other ) = default;
+
+    DnsPacket& operator=(const DnsPacket &) = default;
+
     void clear();
 
     void        setFlags( DnsFlags flags );

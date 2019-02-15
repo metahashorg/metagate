@@ -131,6 +131,15 @@ private:
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
+    bool repeatResolveDns(
+        const QString &dnsServerName,
+        int dnsServerPort,
+        const QByteArray &byteArray,
+        std::map<QString, NodeType>::const_iterator node,
+        time_point now,
+        size_t countRepeat
+    );
+
 private:
 
     UdpSocketClient udpClient;

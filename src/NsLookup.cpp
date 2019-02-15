@@ -208,6 +208,52 @@ void NsLookup::finalizeLookup() {
     qtimer.setSingleShot(true);
 }
 
+bool NsLookup::repeatResolveDns(
+    const QString &dnsServerName,
+    int dnsServerPort,
+    const QByteArray &byteArray,
+    std::map<QString, NodeType>::const_iterator node,
+    time_point now,
+    size_t countRepeat
+) {
+    if (countRepeat == 0) {
+        return false;
+    }
+    udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now, dnsServerName, dnsServerPort, byteArray, countRepeat](const std::vector<char> &response, const UdpSocketClient::SocketException &exception) {
+        DnsPacket packet;
+        const TypedException except = apiVrapper2([&](){
+            CHECK(!exception.isSet(), "Dns exception: " + exception.toString());
+            CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
+            packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
+
+            LOG << "dns ok " << node->second.type << ". " << packet.answers().size();
+            CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(response.begin(), response.end())));
+        });
+
+        if (except.isSet()) {
+            LOG << "Dns repeat number " << countRepeat - 1;
+            const bool res = repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, countRepeat - 1);
+            if (!res) {
+                throw except;
+            } else {
+                return;
+            }
+        }
+
+        ipsTemp.clear();
+        for (const auto &record : packet.answers()) {
+            ipsTemp.emplace_back(::makeAddress(record.toString(), node->second.port));
+        }
+
+        cacheDns.cache[node->second.node.str()] = ipsTemp;
+        cacheDns.lastUpdate = now;
+
+        continuePing(std::begin(ipsTemp), node);
+    }, timeoutRequestNodes);
+
+    return true;
+}
+
 void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node) {
     if (isStopped.load()) {
         return;
@@ -233,24 +279,7 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         requestPacket.setFlags(DnsFlag::MyFlag);
         const auto byteArray = requestPacket.toByteArray();
         LOG << "dns " << node->second.type << ".";
-        udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now](const std::vector<char> &response, const UdpSocketClient::SocketException &exception) {
-            CHECK(!exception.isSet(), "Dns exception: " + exception.toString());
-            CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
-            const DnsPacket packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
-
-            LOG << "dns ok " << node->second.type << ". " << packet.answers().size();
-            CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(response.begin(), response.end())));
-
-            ipsTemp.clear();
-            for (const auto &record : packet.answers()) {
-                ipsTemp.emplace_back(::makeAddress(record.toString(), node->second.port));
-            }
-
-            cacheDns.cache[node->second.node.str()] = ipsTemp;
-            cacheDns.lastUpdate = now;
-
-            continuePing(std::begin(ipsTemp), node);
-        }, timeoutRequestNodes);
+        repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, 3);
     } else {
         continuePing(std::begin(ipsTemp), node);
     }
