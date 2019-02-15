@@ -538,7 +538,7 @@ END_SLOT_WRAPPER
 
 Transactions::SendedTransactionWatcher::~SendedTransactionWatcher() {
     for (const QString &server: allServers) {
-        txManager.sendErrorGetTx(hash, server);
+        txManager.sendErrorGetTx(requestId, hash, server);
         const auto found = errors.find(server);
         if (found != errors.end()) {
             LOG << "Get tx not parse " << server << " " << hash << " " << found->second;
@@ -546,8 +546,8 @@ Transactions::SendedTransactionWatcher::~SendedTransactionWatcher() {
     }
 }
 
-void Transactions::sendErrorGetTx(const TransactionHash &hash, const QString &server) {
-    emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SENDED_NOT_FOUND, "Transaction not found"));
+void Transactions::sendErrorGetTx(const QString &requestId, const TransactionHash &hash, const QString &server) {
+    emit javascriptWrapper.transactionInTorrentSig(requestId, server, QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SENDED_NOT_FOUND, "Transaction not found"));
 }
 
 void Transactions::onFindTxOnTorrentEvent() {
@@ -564,7 +564,7 @@ BEGIN_SLOT_WRAPPER
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash, isFirst](const std::string &response, const SimpleClient::ServerException &exception) {
+            client.sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId](const std::string &response, const SimpleClient::ServerException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
@@ -572,7 +572,7 @@ BEGIN_SLOT_WRAPPER
                 if (!exception.isSet()) {
                     try {
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
-                        emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), tx, TypedException());
+                        emit javascriptWrapper.transactionInTorrentSig(requestId, server, QString::fromStdString(hash), tx, TypedException());
                         if (tx.status == Transaction::Status::PENDING) {
                             pendingTxsAfterSend.emplace_back(tx.tx);
                         }
@@ -607,17 +607,17 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const std::vector<QString> &servers, const seconds &timeout) {
+void Transactions::addToSendTxWatcher(const QString &requestId, const TransactionHash &hash, size_t countServers, const std::vector<QString> &servers, const seconds &timeout) {
     if (sendTxWathcers.find(hash) != sendTxWathcers.end()) {
         return;
     }
 
     const size_t remainServersGet = countServers - servers.size();
     for (size_t i = 0; i < remainServersGet; i++) {
-        emit javascriptWrapper.transactionInTorrentSig("", QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "dns return less laid"));
+        emit javascriptWrapper.transactionInTorrentSig(requestId, "", QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "dns return less laid"));
     }
     const time_point now = ::now();
-    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, hash, now, servers, timeout));
+    sendTxWathcers.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(*this, requestId, hash, now, servers, timeout));
     LOG << "SendTxWatchers timer send start";
     timerSendTx.start();
 }
@@ -643,7 +643,7 @@ BEGIN_SLOT_WRAPPER
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
-                    addToSendTxWatcher(result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);
+                    addToSendTxWatcher(requestId, result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);
                 });
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             }, timeout);

@@ -581,7 +581,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::onTransactionInTorrent(const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error) {
+void TransactionsJavascript::onTransactionInTorrent(const QString &requestId, const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txOnTorrentJs";
     LOG << "Transaction on torrent " << server << " " << txHash << " " << error.description;

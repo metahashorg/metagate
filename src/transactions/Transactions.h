@@ -52,10 +52,11 @@ private:
         SendedTransactionWatcher& operator=(const SendedTransactionWatcher &) = delete;
         SendedTransactionWatcher& operator=(SendedTransactionWatcher &&) = delete;
 
-        SendedTransactionWatcher(Transactions &txManager, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers, const seconds &timeout)
+        SendedTransactionWatcher(Transactions &txManager, const QString &requestId, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers, const seconds &timeout)
             : startTime(startTime)
             , timeout(timeout)
             , txManager(txManager)
+            , requestId(requestId)
             , hash(hash)
             , servers(servers.begin(), servers.end())
             , allServers(servers.begin(), servers.end())
@@ -95,6 +96,10 @@ private:
         void setError(const QString &server, const QString &error) {
             errors[server] = error;
         }
+
+    public:
+
+        const QString requestId;
 
     private:
         const time_point startTime;
@@ -257,9 +262,9 @@ private:
 
     BalanceInfo getBalance(const QString &address, const QString &currency);
 
-    void addToSendTxWatcher(const TransactionHash &hash, size_t countServers, const std::vector<QString> &servers, const seconds &timeout);
+    void addToSendTxWatcher(const QString &requestId, const TransactionHash &hash, size_t countServers, const std::vector<QString> &servers, const seconds &timeout);
 
-    void sendErrorGetTx(const TransactionHash &hash, const QString &server);
+    void sendErrorGetTx(const QString &requestId, const TransactionHash &hash, const QString &server);
 
 private:
 
