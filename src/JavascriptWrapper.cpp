@@ -549,7 +549,8 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
         CHECK(tmp, "Fee not valid");
         wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex.toStdString(), tx, signature, publicKey);
 
-        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([this, jsNameResult, requestId](){
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, dataHex, fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([this, jsNameResult, requestId, keyName](){
+            LOG << "Sign messagev3 ok " << keyName;
             makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
         }, [this, jsNameResult, requestId](const TypedException &exception) {
             makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
@@ -567,7 +568,7 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         fee = "0";
     }
 
-    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams, jsNameResult](size_t nonce) {
+    const auto signTransaction = [this, requestId, walletPath, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams, jsNameResult, keyName](size_t nonce) {
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
 
         bool isValid;
@@ -585,7 +586,8 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         CHECK(tmp, "Fee not valid");
         wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex, tx, signature, publicKey, false);
 
-        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([this, jsNameResult, requestId](){
+        emit transactionsManager.sendTransaction(requestId, toAddress, value, nonce, QString::fromStdString(dataHex), fee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([this, jsNameResult, requestId, keyName](){
+            LOG << "Sign message delegate ok " << keyName;
             makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
         }, [this, jsNameResult, requestId](const TypedException &exception) {
             makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
