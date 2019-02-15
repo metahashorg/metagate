@@ -230,7 +230,7 @@ private slots:
 
     void onTimerEvent();
 
-    void onSendTxEvent();
+    void onFindTxOnTorrentEvent();
 
 private:
 

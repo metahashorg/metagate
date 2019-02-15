@@ -84,7 +84,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
 
     timerSendTx.moveToThread(&thread1);
     timerSendTx.setInterval(milliseconds(100).count());
-    CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onSendTxEvent), "not connect onSendTxEvent");
+    CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent), "not connect onFindTxOnTorrentEvent");
     CHECK(connect(&thread1, &QThread::finished, &timerSendTx, &QTimer::stop), "not connect stop");
 
     javascriptWrapper.setTransactions(*this);
@@ -550,7 +550,7 @@ void Transactions::sendErrorGetTx(const TransactionHash &hash, const QString &se
     emit javascriptWrapper.transactionInTorrentSig(server, QString::fromStdString(hash), Transaction(), TypedException(TypeErrors::TRANSACTIONS_SENDED_NOT_FOUND, "Transaction not found"));
 }
 
-void Transactions::onSendTxEvent() {
+void Transactions::onFindTxOnTorrentEvent() {
 BEGIN_SLOT_WRAPPER
     const time_point now = ::now();
 
