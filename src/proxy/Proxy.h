@@ -84,6 +84,7 @@ public:
     };
 
 public:
+    using Callback = std::function<void()>;
     using ProxyCallback = std::function<void(const ProxyResult &res, const TypedException &exception)>;
     using DiscoverCallback = std::function<void(bool res, const TypedException &exception)>;
     using PortMappingCallback = std::function<void(const PortMappingResult &res, const TypedException &exception)>;
@@ -178,11 +179,13 @@ private slots:
 
     void onConnedtedPeersChanged(int peers);
 
+    void delPortMapping(const Callback &callback);
+
 private:
     template<typename Func>
     void runCallback(const Func &callback);
     int findRouter(const QString &udn) const;
-    void delPortMapping();
+    //void delPortMapping();
 
     QThread thread;
     bool m_isAutoStart;

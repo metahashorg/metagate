@@ -32,6 +32,7 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     qRegisterMetaType<std::vector<Proxy::Router>>("std::vector<Proxy::Router>");
     qRegisterMetaType<Proxy::ProxyResult>("Proxy::ProxyResult");
 
+    qRegisterMetaType<Callback>("Callback");
     qRegisterMetaType<ProxyCallback>("ProxyCallback");
     qRegisterMetaType<DiscoverCallback>("DiscoverCallback");
     qRegisterMetaType<PortMappingCallback>("PortMappingCallback");
@@ -70,8 +71,9 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
 
 Proxy::~Proxy()
 {
-    QMetaObject::invokeMethod(this, "onAutoStop");
-    //delPortMapping();
+    QMetaObject::invokeMethod(this, "delPortMapping", Qt::QueuedConnection, Q_ARG(Callback, [this](){
+        thread.quit();
+    }));
     thread.quit();
     if (!thread.wait(3000)) {
         thread.terminate();
@@ -295,7 +297,8 @@ BEGIN_SLOT_WRAPPER
         proxyStarted = false;
         state = No;
         proxyServer->stop();
-        delPortMapping();
+        //delPortMapping();
+        delPortMapping([](){});
 
     });
     if (exception.isSet()) {
@@ -400,20 +403,17 @@ int Proxy::findRouter(const QString &udn) const
     return -1;
 }
 
-void Proxy::delPortMapping()
+void Proxy::delPortMapping(const Callback &callback)
 {
     if (!portMapped)
         return;
     quint16 port = proxyServer->port();
     if (routers.empty())
         return;
-    routers.at(0).router->deletePortMapping(port, TCP, [this, port](bool r, const QString &error) {
+    //routers.at(0).router->deletePortMapping(port, TCP, [this, port](bool r, const QString &error) {
+    routers.at(0).router->deletePortMapping(port, TCP, [this, port, callback](bool r, const QString &error) {
         qDebug() << "Deleted port " << r;
-//        QString udn = routers[mappedRouterIdx].udn;
-//        routers[mappedRouterIdx].mapped = false;
-//        if (r)
-//            mappedRouterIdx = -1;
-//        PortMappingResult res(r, port, udn, error);
+        callback();
     });
     portMapped = false;
 }
