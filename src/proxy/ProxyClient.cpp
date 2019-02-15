@@ -33,7 +33,7 @@ class ProxyClientPrivate
 {
 public:
     //enum Method {Get, Post, Connect};
-    enum Result {No, GetPostQuery, ConnectQuery, NotConnected};
+    enum Result {No, GetPostQuery, ConnectQuery, NotConnected, ParseError};
 
     ProxyClientPrivate(ProxyClient *parent);
 
@@ -115,7 +115,8 @@ void ProxyClientPrivate::parseRequestData(const QByteArray &data)
 {
     size_t parsed;
     parsed = http_parser_execute(&reqParser, &reqSettings, data.constData(), data.size());
-    CHECK(parsed == data.size(), "!!!!!!!!!"); // dont assert
+    if(parsed != data.size())
+        result = ParseError;
 }
 
 //void ProxyClientPrivate::parseRespData(const QByteArray &data)
@@ -403,6 +404,11 @@ BEGIN_SLOT_WRAPPER
     } else if (d->result == ProxyClientPrivate::NotConnected) {
         // error
         d->sendErrorPage();
+        return;
+    } else if(d->result == ProxyClientPrivate::ParseError) {
+        // parse error
+        d->sendErrorPage();
+        close();
         return;
     }
 END_SLOT_WRAPPER
