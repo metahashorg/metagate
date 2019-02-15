@@ -57,9 +57,9 @@ void tst_rsa::testSsl() {
     const std::string publicKey = getPublic(privateKey, password);
 
     const RsaKey publicKeyRsa = getPublicRsa(publicKey);
-    const std::string encryptedMsg = encrypt(publicKeyRsa, message);
+    const std::string encryptedMsg = encrypt(publicKeyRsa, message, publicKey);
     const RsaKey privateKeyRsa = getPrivateRsa(privateKey, password);
-    const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMsg);
+    const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMsg, publicKey);
 
     QCOMPARE(validatePublicKey(privateKeyRsa, publicKeyRsa), true);
 
@@ -111,10 +111,10 @@ void tst_rsa::testSslMessageError() {
     const std::string publicKey = getPublic(privateKey, password);
 
     const RsaKey publicKeyRsa = getPublicRsa(publicKey);
-    std::string encryptedMsg = encrypt(publicKeyRsa, message);
+    std::string encryptedMsg = encrypt(publicKeyRsa, message, publicKey);
     encryptedMsg = spoilString(encryptedMsg);
     const RsaKey privateKeyRsa = getPrivateRsa(privateKey, password);
-    QVERIFY_EXCEPTION_THROWN(decrypt(privateKeyRsa, encryptedMsg), Exception);
+    QVERIFY_EXCEPTION_THROWN(decrypt(privateKeyRsa, encryptedMsg, publicKey), Exception);
 }
 
 void tst_rsa::testSslWalletError_data() {
@@ -136,9 +136,9 @@ void tst_rsa::testSslWalletError() {
     const std::string pubkeyError = spoilString(publicKey);
 
     const RsaKey publicKeyRsa = getPublicRsa(pubkeyError);
-    const std::string encryptedMsg = encrypt(publicKeyRsa, message);
+    const std::string encryptedMsg = encrypt(publicKeyRsa, message, publicKey);
     const RsaKey privateKeyRsa = getPrivateRsa(privateKey, password);
-    QVERIFY_EXCEPTION_THROWN(decrypt(privateKeyRsa, encryptedMsg), Exception);
+    QVERIFY_EXCEPTION_THROWN(decrypt(privateKeyRsa, encryptedMsg, publicKey), Exception);
 
     QVERIFY_EXCEPTION_THROWN(getPrivateRsa(privateKeyError, password), Exception);
 
@@ -162,4 +162,28 @@ void tst_rsa::testSslIncorrectPassword() {
     const std::string errorPswd = spoilStringSmall(password);
 
     QVERIFY_EXCEPTION_THROWN(getPrivateRsa(privateKey, errorPswd), Exception);
+}
+
+void tst_rsa::testSslIncorrectPubkey_data() {
+    QTest::addColumn<std::string>("password");
+    QTest::addColumn<std::string>("message");
+
+    QTest::newRow("SslError 1")
+        << std::string("Password 1")
+        << std::string("Message 4");
+}
+
+void tst_rsa::testSslIncorrectPubkey() {
+    QFETCH(std::string, password);
+    QFETCH(std::string, message);
+
+    const std::string privateKey = createRsaKey(password);
+    const std::string publicKey = getPublic(privateKey, password);
+    const std::string privateKey2 = createRsaKey(password);
+    const std::string publicKey2 = getPublic(privateKey2, password);
+
+    const RsaKey publicKeyRsa = getPublicRsa(publicKey2);
+    const std::string encryptedMsg = encrypt(publicKeyRsa, message, publicKey2);
+    const RsaKey privateKeyRsa = getPrivateRsa(privateKey, password);
+    QVERIFY_EXCEPTION_THROWN(decrypt(privateKeyRsa, encryptedMsg, publicKey), Exception);
 }

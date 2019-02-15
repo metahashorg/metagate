@@ -39,6 +39,23 @@ bool isInitOpenSSL() {
     return isInitialized;
 }
 
+static std::array<unsigned char, SHA256_DIGEST_LENGTH> doubleSha(const char * data, size_t size) {
+    CHECK(isInitialized, "Not initialized");
+
+    std::array<unsigned char, SHA256_DIGEST_LENGTH> hash1;
+    std::array<unsigned char, SHA256_DIGEST_LENGTH> hash2;
+
+    // First pass
+    const auto *res1 = SHA256((const unsigned char*)data, size, hash1.data());
+    CHECK_SSL(res1 != nullptr, "Incorrect sha256");
+
+    // Second pass
+    const auto *res2 = SHA256(hash1.data(), SHA256_DIGEST_LENGTH, hash2.data());
+    CHECK_SSL(res2 != nullptr, "Incorrect sha256");
+
+    return hash2;
+}
+
 static RsaKey getRsa(const std::string &privKey, const std::string &password) {
     CHECK(isInitialized, "Not initialized");
 
@@ -191,7 +208,7 @@ static std::string decryptRsa(const RsaKey &rsa, const std::string &message) {
     return std::string(decrypt.begin(), decrypt.end());
 }
 
-static std::string makeMessageHex(const std::string &aes, const std::vector<unsigned char> &iv, const std::vector<unsigned char> &message) {
+static std::string makeMessageHex(const std::string &aes, const std::vector<unsigned char> &iv, const std::vector<unsigned char> &message, const std::vector<unsigned char> &pubkeyPart) {
     const auto writeInt = [](size_t value) {
         std::string res;
         const int len = sizeof(value);
@@ -212,10 +229,13 @@ static std::string makeMessageHex(const std::string &aes, const std::vector<unsi
     result += writeInt(message.size());
     result += std::string(message.begin(), message.end());
 
+    result += writeInt(pubkeyPart.size());
+    result += std::string(pubkeyPart.begin(), pubkeyPart.end());
+
     return toHex(result);
 }
 
-static void parseMessageHex(const std::string &message, std::string &aes, std::vector<unsigned char> &iv, std::vector<unsigned char> &result) {
+static void parseMessageHex(const std::string &message, std::string &aes, std::vector<unsigned char> &iv, std::vector<unsigned char> &result, std::vector<unsigned char> &pubkeyPart) {
     const std::string normMessage = fromHex(message);
 
     const auto readInt = [](auto &currIter, auto endIter) {
@@ -247,9 +267,20 @@ static void parseMessageHex(const std::string &message, std::string &aes, std::v
     CHECK((size_t)std::distance(curIter, endIter) >= messageSize, "Incorrect message");
     result.assign(curIter, curIter + messageSize);
     curIter += messageSize;
+
+    const size_t pubkeySize = readInt(curIter, endIter);
+    CHECK((size_t)std::distance(curIter, endIter) >= pubkeySize, "Incorrect message");
+    pubkeyPart.assign(curIter, curIter + pubkeySize);
+    curIter += pubkeySize;
 }
 
-std::string encrypt(const RsaKey &publicKey, const std::string &message) {
+const static std::vector<unsigned char> calcPubkeyPart(const std::string &pubkeyString) {
+    const auto doubleShaPubkey = doubleSha(pubkeyString.data(), pubkeyString.size());
+    const std::vector<unsigned char> pubkeyPart(doubleShaPubkey.begin(), doubleShaPubkey.begin() + 8);
+    return pubkeyPart;
+}
+
+std::string encrypt(const RsaKey &publicKey, const std::string &message, const std::string &pubkeyString) {
     CHECK(isInitialized, "Not initialized");
 
     AES_KEY aesKey;
@@ -258,16 +289,22 @@ std::string encrypt(const RsaKey &publicKey, const std::string &message) {
 
     const std::string aes = encryptRSA(publicKey, aesVect);
 
-    return makeMessageHex(aes, encryptAesResult.iv, encryptAesResult.message);
+    const std::vector<unsigned char> pubkeyPart = calcPubkeyPart(pubkeyString);
+
+    return makeMessageHex(aes, encryptAesResult.iv, encryptAesResult.message, pubkeyPart);
 }
 
-std::string decrypt(const RsaKey &privkey, const std::string &message) {
+std::string decrypt(const RsaKey &privkey, const std::string &message, const std::string &pubkeyString) {
     CHECK(isInitialized, "Not initialized");
 
     std::string aesEncrypted;
     std::vector<unsigned char> iv;
     std::vector<unsigned char> msg;
-    parseMessageHex(message, aesEncrypted, iv, msg);
+    std::vector<unsigned char> pubkeyPartMessage;
+    parseMessageHex(message, aesEncrypted, iv, msg, pubkeyPartMessage);
+
+    const std::vector<unsigned char> pubkeyPart = calcPubkeyPart(pubkeyString);
+    CHECK(pubkeyPart == pubkeyPartMessage, "Pubkey encrypted message and current pubkey not equals");
 
     const std::string aes = decryptRsa(privkey, aesEncrypted);
 

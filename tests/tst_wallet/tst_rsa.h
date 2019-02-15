@@ -23,6 +23,9 @@ private slots:
     void testSslIncorrectPassword_data();
     void testSslIncorrectPassword();
 
+    void testSslIncorrectPubkey_data();
+    void testSslIncorrectPubkey();
+
 };
 
 #endif // TST_RSA_H

@@ -30,7 +30,7 @@ const std::string& WalletRsa::getPublikKey() const {
 
 std::string WalletRsa::encrypt(const std::string &message) const {
     CHECK(publicKeyRsa != nullptr, "Publik key not set");
-    return ::encrypt(publicKeyRsa, message);
+    return ::encrypt(publicKeyRsa, message, publicKey);
 }
 
 void WalletRsa::unlock(const std::string &password) {
@@ -72,6 +72,6 @@ std::string WalletRsa::getPublicRsaKey(const QString &folder, const std::string 
 
 std::string WalletRsa::decryptMessage(const std::string &encryptedMessageHex) const {
     CHECK(privateKeyRsa != nullptr, "Wallet not unlock");
-    const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMessageHex);
+    const std::string decryptMsg = decrypt(privateKeyRsa, encryptedMessageHex, publicKey);
     return decryptMsg;
 }

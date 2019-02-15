@@ -19,9 +19,9 @@ PublikKey getPublic(const std::string &privKey, const std::string &password);
 
 PrivateKey createRsaKey(const std::string &password);
 
-std::string encrypt(const RsaKey &publicKey, const std::string &message);
+std::string encrypt(const RsaKey &publicKey, const std::string &message, const std::string &pubkeyString);
 
-std::string decrypt(const RsaKey &privkey, const std::string &message);
+std::string decrypt(const RsaKey &privkey, const std::string &message, const std::string &pubkeyString);
 
 RsaKey getPublicRsa(const PublikKey &pKey);
 
