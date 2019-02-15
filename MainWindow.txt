@@ -8,6 +8,11 @@ Q_INVOKABLE void createWallet(QString requestId, QString password);`
 # javascript is called after completion of this function
 createWalletResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
 
+Q_INVOKABLE void checkWalletPassword(QString requestId, QString keyName, QString password);
+# Проверяет правильность пароля от данного кошелька
+# javascript is called after completion of this function
+checkWalletPasswordResultJs(requestid, "Ok"/"Not ok", errorNum, errorMessage)
+
 Q_INVOKABLE QString getAllWalletsJson();
 # Gets the list of all metahash accounts. 
 # Result returns as a json array
@@ -101,6 +106,11 @@ Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
 # Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address
 # javascript is called after completion of this function 
 createWalletMHCResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
+
+Q_INVOKABLE void checkWalletPasswordMHC(QString requestId, QString keyName, QString password);
+# Проверяет правильность пароля от данного кошелька
+# javascript is called after completion of this function
+checkWalletPasswordMHCResultJs(requestid, "Ok"/"Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE QString getAllMHCWalletsJson();
 # Gets the list of all metahash accounts. 

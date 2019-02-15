@@ -61,6 +61,8 @@ public slots:
 
     Q_INVOKABLE void createWallet(QString requestId, QString password);
 
+    Q_INVOKABLE void checkWalletPassword(QString requestId, QString keyName, QString password);
+
     Q_INVOKABLE QString getAllWalletsJson();
 
     Q_INVOKABLE QString getAllWalletsAndPathsJson();
@@ -88,6 +90,8 @@ public slots:
 public slots:
 
     Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
+
+    Q_INVOKABLE void checkWalletPasswordMHC(QString requestId, QString keyName, QString password);
 
     Q_INVOKABLE QString getAllMHCWalletsJson();
 
@@ -244,6 +248,8 @@ private:
     void getRawPrivKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult);
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
+
+    void checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult);
 
     void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh);
 

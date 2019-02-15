@@ -223,15 +223,48 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
 }
 
+void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult) {
+    LOG << "Check wallet password " << requestId << " " << keyName;
+
+    Opt<QString> result("Not ok");
+    const TypedException exception = apiVrapper2([&](){
+        const std::string exampleMessage = "Example message " + std::to_string(rand());
+
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        std::string tmp;
+        const std::string signature = wallet.sign(exampleMessage, tmp);
+
+        LOG << "Check wallet password ok " << requestId << " " << keyName;
+
+        result = "Ok";
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+}
+
 void JavascriptWrapper::createWallet(QString requestId, QString password) {
 BEGIN_SLOT_WRAPPER
     createWalletMTHS(requestId, password, walletPathTmh, "createWalletResultJs");
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::checkWalletPassword(QString requestId, QString keyName, QString password) {
+BEGIN_SLOT_WRAPPER
+    checkWalletPasswordMTHS(requestId, keyName, password, walletPathTmh, "checkWalletPasswordResultJs");
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::createWalletMHC(QString requestId, QString password) {
 BEGIN_SLOT_WRAPPER
     createWalletMTHS(requestId, password, walletPathMth, "createWalletMHCResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::checkWalletPasswordMHC(QString requestId, QString keyName, QString password) {
+BEGIN_SLOT_WRAPPER
+    checkWalletPasswordMTHS(requestId, keyName, password, walletPathMth, "checkWalletPasswordMHCResultJs");
 END_SLOT_WRAPPER
 }
 
