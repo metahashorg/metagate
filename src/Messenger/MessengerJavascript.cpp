@@ -92,6 +92,14 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
     return QJsonDocument(messagesArrJson);
 }
 
+static QJsonDocument contactInfoToJson(const ContactInfo &info) {
+    QJsonObject result;
+    result.insert("pubkey", info.pubkeyRsa);
+    result.insert("txHash", info.txRsaHash);
+    result.insert("blockchain_name", info.blockchainName);
+    return QJsonDocument(result);
+}
+
 static QJsonDocument channelListToJson(const std::vector<ChannelInfo> &channels) {
     QJsonArray messagesArrJson;
     for (const ChannelInfo &channel: channels) {
@@ -365,13 +373,57 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MessengerJavascript::getUserInfo(QString address) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
+    const QString JS_NAME_RESULT = "getUserInfoResultJs";
+
+    LOG << "getUserInfo " << " " << address;
+
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
+    };
+
+    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
+        makeFunc(exception, address, QJsonDocument());
+    };
+
+    emit messenger->getUserInfo(address, Messenger::UserInfoCallback([address, makeFunc](const ContactInfo &info) {
+        makeFunc(TypedException(), address, contactInfoToJson(info));
+    }, errorFunc, signalFunc));
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::getCollocutorInfo(QString address) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
+    const QString JS_NAME_RESULT = "getCollocutorInfoResultJs";
+
+    LOG << "getContactInfo " << " " << address;
+
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
+    };
+
+    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
+        makeFunc(exception, address, QJsonDocument());
+    };
+
+    emit messenger->getCollocutorInfo(address, Messenger::UserInfoCallback([address, makeFunc](const ContactInfo &info) {
+        makeFunc(TypedException(), address, contactInfoToJson(info));
+    }, errorFunc, signalFunc));
+END_SLOT_WRAPPER
+}
+
 void MessengerJavascript::sendMessage(QString address, QString collocutor, QString dataHex, QString timestampStr, QString feeStr) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
 
     const QString JS_NAME_RESULT = "msgMessageSendedJs";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor) {
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor);
     };
 

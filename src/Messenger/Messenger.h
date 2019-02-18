@@ -171,6 +171,8 @@ public:
 
     using WantToTalkCallback = CallbackWrapper<std::function<void()>>;
 
+    using UserInfoCallback = CallbackWrapper<std::function<void(const ContactInfo &info)>>;
+
 public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
@@ -215,6 +217,11 @@ signals:
     void savePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
     void getPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback);
+
+    void getUserInfo(const QString &address, const UserInfoCallback &callback);
+
+    void getCollocutorInfo(const QString &address, const UserInfoCallback &callback);
+
 
     void sendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 
@@ -263,6 +270,11 @@ private slots:
     void onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
     void onGetPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback);
+
+    void onGetUserInfo(const QString &address, const UserInfoCallback &callback);
+
+    void onGetCollocutorInfo(const QString &address, const UserInfoCallback &callback);
+
 
     void onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback);
 

@@ -96,10 +96,20 @@ void tst_MessengerDBStorage::testMessengerDB2()
     //qDebug() << db.getUsersList();
 
 
-    db.setUserPublicKey("user7", "dfkgflgfkltrioidfkldfklgfgf");
+    db.setUserPublicKey("user7", "dfkgflgfkltrioidfkldfklgfgf", "dsafdasf", "1234", "5678");
     QCOMPARE(db.getUserPublicKey("user7"), QStringLiteral("dfkgflgfkltrioidfkldfklgfgf"));
     QCOMPARE(db.getUserPublicKey("user1"), QStringLiteral(""));
     QCOMPARE(db.getUserPublicKey("userrrrr"), QStringLiteral(""));
+    const auto userInfo = db.getUserInfo("user7");
+    QCOMPARE(userInfo.pubkeyRsa, QStringLiteral("dsafdasf"));
+    QCOMPARE(userInfo.txRsaHash, QStringLiteral("1234"));
+    QCOMPARE(userInfo.blockchainName, QStringLiteral("5678"));
+
+    db.setContactPublicKey("user27", "pubkey1", "tx1", "bl1");
+    const auto userInfo2 = db.getContactInfo("user27");
+    QCOMPARE(userInfo2.pubkeyRsa, QStringLiteral("pubkey1"));
+    QCOMPARE(userInfo2.txRsaHash, QStringLiteral("tx1"));
+    QCOMPARE(userInfo2.blockchainName, QStringLiteral("bl1"));
 
     qint64 id = db.findFirstNotConfirmedMessage("user7");
     db.updateMessage(id, 4445, true);

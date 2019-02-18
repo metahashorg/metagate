@@ -32,13 +32,15 @@ public:
     DbId getContactId(const QString &username);
 
     QString getUserPublicKey(const QString &username);
-    void setUserPublicKey(const QString &username, const QString &publickey);
+    ContactInfo getUserInfo(const QString &username);
+    void setUserPublicKey(const QString &username, const QString &publickey, const QString &publicKeyRsa, const QString &txHash, const QString &blockchainName);
 
     QString getUserSignatures(const QString &username);
     void setUserSignatures(const QString &username, const QString &signatures);
 
     QString getContactPublicKey(const QString &username);
-    void setContactPublicKey(const QString &username, const QString &publickey);
+    ContactInfo getContactInfo(const QString &username);
+    void setContactPublicKey(const QString &username, const QString &publickey, const QString &txHash, const QString &blockchainName);
 
     Message::Counter getMessageMaxCounter(const QString &user, const QString &channelSha = QString());
     Message::Counter getMessageMaxConfirmedCounter(const QString &user);

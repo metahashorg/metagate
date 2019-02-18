@@ -28,12 +28,18 @@ struct Message {
 };
 
 struct ChannelInfo {
-    QString title;
-    QString titleSha;
-    QString admin;
+    QString title = QString("");
+    QString titleSha = QString("");
+    QString admin = QString("");
     uint64_t fee;
     Message::Counter counter = -1;
     bool isWriter;
+};
+
+struct ContactInfo {
+    QString pubkeyRsa = QString("");
+    QString txRsaHash = QString("");
+    QString blockchainName = QString("");
 };
 
 }

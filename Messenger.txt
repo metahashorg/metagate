@@ -34,6 +34,18 @@ isForcibly - Получить принудидельно (желательно �
 Результат вернется в функцию
 msgPublicKeyCollocutorGettedJs(address, collocutor, errorNum, errorMessage)
 
+Q_INVOKABLE void getUserInfo(QString address);
+Получить информацию о юзере
+Результат вернется в функцию
+getUserInfoResultJs(address, result, errorNum, errorMessage)
+где result json вида {\"pubkey\":\"pubkey\",\"txHash\":\"txHash\",\"blockchain_name\":\"blockchain_name\"}
+
+Q_INVOKABLE void getCollocutorInfo(QString address);
+Получить информацию о собеседнике
+Результат вернется в функцию
+getCollocutorInfoResultJs(address, result, errorNum, errorMessage)
+
+
 Q_INVOKABLE void sendMessage(QString address, QString collocutor, QString dataHex, QString timestampStr, QString feeStr);
 Отправить сообщение
 Результат вернется в функцию

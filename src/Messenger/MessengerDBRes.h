@@ -13,7 +13,10 @@ static const QString createMsgUsersTable = "CREATE TABLE users ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
                                            "username VARCHAR(100) UNIQUE NOT NULL DEFAULT '', "
                                            "publickey VARCHAR(200) NOT NULL DEFAULT '', "
-                                           "signatures VARCHAR(200) NOT NULL DEFAULT '' "
+                                           "signatures VARCHAR(200) NOT NULL DEFAULT '', "
+                                           "publicKeyRsa VARCHAR(200) NOT NULL DEFAULT '', "
+                                           "txHash VARCHAR(200) NOT NULL DEFAULT '', "
+                                           "blockchainName VARCHAR(200) NOT NULL DEFAULT '' "
                                            ")";
 
 static const QString createUsersSortingIndex = "CREATE INDEX usersSortingIdx ON users(username)";
@@ -21,7 +24,9 @@ static const QString createUsersSortingIndex = "CREATE INDEX usersSortingIdx ON 
 static const QString createMsgContactsTable = "CREATE TABLE contacts ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
                                                 "username VARCHAR(100) UNIQUE NOT NULL DEFAULT '', "
-                                                "publickey VARCHAR(200) NOT NULL DEFAULT '' "
+                                                "publickey VARCHAR(200) NOT NULL DEFAULT '', "
+                                                "txHash VARCHAR(200) NOT NULL DEFAULT '', "
+                                                "blockchainName VARCHAR(200) NOT NULL DEFAULT '' "
                                                 ")";
 
 static const QString createContactsSortingIndex = "CREATE INDEX contactsSortingIdx ON contacts(username)";
@@ -154,13 +159,15 @@ static const QString selectMsgMessagesForUserAndChannelNum = "SELECT u.username 
 static const QString selectMsgUsersList = "SELECT username FROM users ORDER BY id";
 
 static const QString selectMsgUserPublicKey = "SELECT publickey FROM users WHERE username = :user";
-static const QString updateMsgUserPublicKey = "UPDATE users SET publickey = :publickey WHERE username = :user";
+static const QString selectMsgUserInfo = "SELECT publicKeyRsa, txHash, blockchainName FROM users WHERE username = :user";
+static const QString updateMsgUserPublicKey = "UPDATE users SET publickey = :publickey, publicKeyRsa = :publicKeyRsa, txHash = :txHash, blockchainName = :blockchainName WHERE username = :user";
 
 static const QString selectMsgUserSignatures = "SELECT signatures FROM users WHERE username = :user";
 static const QString updateMsgUserSignatures = "UPDATE users SET signatures = :signatures WHERE username = :user";
 
 static const QString selectMsgContactsPublicKey = "SELECT publickey FROM contacts WHERE username = :user";
-static const QString updateMsgContactsPublicKey = "UPDATE contacts SET publickey = :publickey WHERE username = :user";
+static const QString selectMsgContactsInfoKey = "SELECT publickey, txHash, blockchainName FROM contacts WHERE username = :user";
+static const QString updateMsgContactsPublicKey = "UPDATE contacts SET publickey = :publickey, txHash = :txHash, blockchainName = :blockchainName WHERE username = :user";
 
 static const QString selectMsgCountMessagesForUserAndDest = "SELECT COUNT(*) AS count "
                                                        "FROM messages m "

@@ -118,6 +118,8 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
     CHECK(connect(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress), "not connect onGetPubkeyAddress");
     CHECK(connect(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress), "not connect onGetPubkeyAddress");
+    CHECK(connect(this, &Messenger::getUserInfo, this, &Messenger::onGetUserInfo), "not connect onGetUserInfo");
+    CHECK(connect(this, &Messenger::getCollocutorInfo, this, &Messenger::onGetCollocutorInfo), "not connect onGetCollocutorInfo");
     CHECK(connect(this, &Messenger::sendMessage, this, &Messenger::onSendMessage), "not connect onSendMessage");
     CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
     CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onGetLastMessage");
@@ -157,6 +159,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     Q_REG(DecryptUserMessagesCallback, "DecryptUserMessagesCallback");
     Q_REG(AddAllWalletsInFolderCallback, "AddAllWalletsInFolderCallback");
     Q_REG(WantToTalkCallback, "WantToTalkCallback");
+    Q_REG(WantToTalkCallback, "UserInfoCallback");
 
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
@@ -480,7 +483,7 @@ BEGIN_SLOT_WRAPPER
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
         const KeyMessageResponse publicKeyResult = parseKeyMessageResponse(messageJson);
         LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey;
-        db.setContactPublicKey(publicKeyResult.addr, publicKeyResult.publicKey);
+        db.setContactPublicKey(publicKeyResult.addr, publicKeyResult.publicKey, "", ""); // TODO дополнить
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
@@ -563,10 +566,10 @@ BEGIN_SLOT_WRAPPER
         }
         const size_t idRequest = id.get();
         const QString message = makeRegisterRequest(rsaPubkeyHex, pubkeyAddressHex, signHex, fee, idRequest);
-        const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex, isForcibly](const TypedException &exception) {
+        const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex, rsaPubkeyHex, isForcibly](const TypedException &exception) {
             if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
                 LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
-                db.setUserPublicKey(address, pubkeyAddressHex);
+                db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, "", "");
             }
             callback.emitFunc(exception, isNew);
         };
@@ -635,6 +638,26 @@ BEGIN_SLOT_WRAPPER
         LOG << "Publickey found " << address << " " << pubkey;
     });
     callback.emitFunc(exception, pubkey);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetUserInfo(const QString &address, const UserInfoCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    ContactInfo info;
+    const TypedException exception = apiVrapper2([&, this] {
+        info = db.getUserInfo(address);
+    });
+    callback.emitFunc(exception, info);
+END_SLOT_WRAPPER
+}
+
+void Messenger::onGetCollocutorInfo(const QString &address, const UserInfoCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    ContactInfo info;
+    const TypedException exception = apiVrapper2([&, this] {
+        info = db.getContactInfo(address);
+    });
+    callback.emitFunc(exception, info);
 END_SLOT_WRAPPER
 }
 

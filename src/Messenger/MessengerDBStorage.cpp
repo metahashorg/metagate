@@ -120,8 +120,7 @@ DBStorage::DbId MessengerDBStorage::getContactId(const QString &username)
     return query.lastInsertId().toLongLong();
 }
 
-QString MessengerDBStorage::getUserPublicKey(const QString &username)
-{
+QString MessengerDBStorage::getUserPublicKey(const QString &username) {
     QSqlQuery query(database());
     CHECK(query.prepare(selectMsgUserPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
@@ -132,18 +131,33 @@ QString MessengerDBStorage::getUserPublicKey(const QString &username)
     return QString();
 }
 
-void MessengerDBStorage::setUserPublicKey(const QString &username, const QString &publickey)
-{
+ContactInfo MessengerDBStorage::getUserInfo(const QString &username) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectMsgUserInfo), query.lastError().text().toStdString());
+    query.bindValue(":user", username);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    ContactInfo result;
+    if (query.next()) {
+        result.pubkeyRsa = query.value("publicKeyRsa").toString();
+        result.txRsaHash = query.value("txHash").toString();
+        result.blockchainName = query.value("blockchainName").toString();
+    }
+    return result;
+}
+
+void MessengerDBStorage::setUserPublicKey(const QString &username, const QString &publickey, const QString &publicKeyRsa, const QString &txHash, const QString &blockchainName) {
     getUserId(username);
     QSqlQuery query(database());
     CHECK(query.prepare(updateMsgUserPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":publickey", publickey);
+    query.bindValue(":publicKeyRsa", publicKeyRsa);
+    query.bindValue(":txHash", txHash);
+    query.bindValue(":blockchainName", blockchainName);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-QString MessengerDBStorage::getUserSignatures(const QString &username)
-{
+QString MessengerDBStorage::getUserSignatures(const QString &username) {
     QSqlQuery query(database());
     CHECK(query.prepare(selectMsgUserSignatures), query.lastError().text().toStdString());
     query.bindValue(":user", username);
@@ -154,8 +168,7 @@ QString MessengerDBStorage::getUserSignatures(const QString &username)
     return QString();
 }
 
-void MessengerDBStorage::setUserSignatures(const QString &username, const QString &signatures)
-{
+void MessengerDBStorage::setUserSignatures(const QString &username, const QString &signatures) {
     getUserId(username);
     QSqlQuery query(database());
     CHECK(query.prepare(updateMsgUserSignatures), query.lastError().text().toStdString());
@@ -164,8 +177,7 @@ void MessengerDBStorage::setUserSignatures(const QString &username, const QStrin
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-QString MessengerDBStorage::getContactPublicKey(const QString &username)
-{
+QString MessengerDBStorage::getContactPublicKey(const QString &username) {
     QSqlQuery query(database());
     CHECK(query.prepare(selectMsgContactsPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
@@ -176,18 +188,32 @@ QString MessengerDBStorage::getContactPublicKey(const QString &username)
     return QString();
 }
 
-void MessengerDBStorage::setContactPublicKey(const QString &username, const QString &publickey)
-{
+ContactInfo MessengerDBStorage::getContactInfo(const QString &username) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectMsgContactsInfoKey), query.lastError().text().toStdString());
+    query.bindValue(":user", username);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    ContactInfo result;
+    if (query.next()) {
+        result.pubkeyRsa = query.value("publickey").toString();
+        result.txRsaHash = query.value("txHash").toString();
+        result.blockchainName = query.value("blockchainName").toString();
+    }
+    return result;
+}
+
+void MessengerDBStorage::setContactPublicKey(const QString &username, const QString &publickey, const QString &txHash, const QString &blockchainName) {
     getContactId(username);
     QSqlQuery query(database());
     CHECK(query.prepare(updateMsgContactsPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
     query.bindValue(":publickey", publickey);
+    query.bindValue(":txHash", txHash);
+    query.bindValue(":blockchainName", blockchainName);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-Message::Counter MessengerDBStorage::getMessageMaxCounter(const QString &user, const QString &channelSha)
-{
+Message::Counter MessengerDBStorage::getMessageMaxCounter(const QString &user, const QString &channelSha) {
     QSqlQuery query(database());
     const QString sql = selectMsgMaxCounter
             .arg(channelSha.isEmpty() ? QStringLiteral("") : selectJoinChannel)
