@@ -18,6 +18,7 @@ msgLockWalletResultJs(errorNum, errorMessage)
 
 Q_INVOKABLE void sendPubkeyAddressToBlockchain(QString address, QString feeStr, QString paramsJson);
 Отправляет публичный ключ адреса в блокчейн
+paramsJson как в signMessagesV3
 Результат вернется в функцию
 msgPubkeyAddressToBlockchainResultJs("Ok"/"Not ok", errorNum, errorMessage)
 
@@ -26,6 +27,15 @@ Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeSt
 isForcibly - перерегестрировать принудидельно (желательно выставлять в false)
 Результат вернется в функцию
 msgAddressAppendToMessengerJs("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void registerAddressBlockchain(bool isForcibly, QString address, QString feeStr, QString txHash, QString blockchainName, QString blockchainServ);
+Зарегестрировать адрес в сервисе сообщений. Если адрес уже зарегестрирован (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг
+Сервис сообщений возьмет публичный rsa ключ адреса из блокчейна
+blockchainServ - имя блокчейна в сервисе сообщений
+blockchainName - имя блокчейна для показа пользователю
+txHash - хэш транзакции
+Результат вернется в функцию
+msgAddressAppendToMessengerBlockchainJs("Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
 Получить публичный ключ собеседника и сохранить его в bd. Если адрес уже существует (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг isForcibly.

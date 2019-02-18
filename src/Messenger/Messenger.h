@@ -147,6 +147,8 @@ public:
 
     using RegisterAddressCallback = CallbackWrapper<std::function<void(bool isNew)>>;
 
+    using RegisterAddressBlockchainCallback = CallbackWrapper<std::function<void(bool isNew)>>;
+
     using SignedStringsCallback = CallbackWrapper<std::function<void()>>;
 
     using SavePubkeyCallback = CallbackWrapper<std::function<void(bool isNew)>>;
@@ -191,6 +193,8 @@ public:
 
     static QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);
 
+    static QString makeTextForSignRegisterBlockchainRequest(const QString &address, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName);
+
     static QString makeTextForGetPubkeyRequest(const QString &address);
 
     static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp);
@@ -213,6 +217,8 @@ public:
 signals:
 
     void registerAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
+
+    void registerAddressFromBlockchain(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName, const Messenger::RegisterAddressBlockchainCallback &callback);
 
     void savePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 
@@ -266,6 +272,8 @@ signals:
 private slots:
 
     void onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const Messenger::RegisterAddressCallback &callback);
+
+    void onRegisterAddressFromBlockchain(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName, const Messenger::RegisterAddressBlockchainCallback &callback);
 
     void onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback);
 

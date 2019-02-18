@@ -64,6 +64,10 @@ QString Messenger::makeTextForSignRegisterRequest(const QString &address, const 
     return messenger::makeTextForSignRegisterRequest(address, rsaPubkeyHex, fee);
 }
 
+QString Messenger::makeTextForSignRegisterBlockchainRequest(const QString &address, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName) {
+    return messenger::makeTextForSignRegisterBlockchainRequest(address, fee, txHash, blockchain, blockchainName);
+}
+
 QString Messenger::makeTextForGetPubkeyRequest(const QString &address) {
     return messenger::makeTextForGetPubkeyRequest(address);
 }
@@ -116,6 +120,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &TimerClass::startedEvent, this, &Messenger::onRun), "not connect run");
 
     CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
+    CHECK(connect(this, &Messenger::registerAddressFromBlockchain, this, &Messenger::onRegisterAddressFromBlockchain), "not connect onRegisterAddressFromBlockchain");
     CHECK(connect(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress), "not connect onGetPubkeyAddress");
     CHECK(connect(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress), "not connect onGetPubkeyAddress");
     CHECK(connect(this, &Messenger::getUserInfo, this, &Messenger::onGetUserInfo), "not connect onGetUserInfo");
@@ -147,6 +152,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     Q_REG(GetSavedPosCallback, "GetSavedPosCallback");
     Q_REG(GetSavedsPosCallback, "GetSavedsPosCallback");
     Q_REG(Messenger::RegisterAddressCallback, "Messenger::RegisterAddressCallback");
+    Q_REG(Messenger::RegisterAddressBlockchainCallback, "Messenger::RegisterAddressBlockchainCallback");
     Q_REG(SignedStringsCallback, "SignedStringsCallback");
     Q_REG(SavePubkeyCallback, "SavePubkeyCallback");
     Q_REG(GetPubkeyAddressCallback, "GetPubkeyAddressCallback");
@@ -481,9 +487,9 @@ BEGIN_SLOT_WRAPPER
             LOG << "Count messages " << responseType.address << " " << currCounter << " " << messagesInServer;
         }
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
-        const KeyMessageResponse publicKeyResult = parseKeyMessageResponse(messageJson);
-        LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey;
-        db.setContactPublicKey(publicKeyResult.addr, publicKeyResult.publicKey, "", ""); // TODO дополнить
+        const KeyMessageResponse publicKeyResult = parsePublicKeyMessageResponse(messageJson);
+        LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey << " " << publicKeyResult.txHash << " " << publicKeyResult.blockchain_name;
+        db.setContactPublicKey(publicKeyResult.addr, publicKeyResult.publicKey, publicKeyResult.txHash, publicKeyResult.blockchain_name);
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
@@ -570,6 +576,33 @@ BEGIN_SLOT_WRAPPER
             if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
                 LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
                 db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, "", "");
+            }
+            callback.emitFunc(exception, isNew);
+        };
+        callbacks[idRequest] = callbackWrap;
+        emit wssClient.sendMessage(message);
+    });
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
+END_SLOT_WRAPPER
+}
+
+void Messenger::onRegisterAddressFromBlockchain(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName, const Messenger::RegisterAddressBlockchainCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        const QString currPubkey = db.getUserPublicKey(address);
+        const bool isNew = currPubkey.isEmpty();
+        if (!isNew && !isForcibly) {
+            callback.emitFunc(TypedException(), isNew);
+            return;
+        }
+        const size_t idRequest = id.get();
+        const QString message = makeRegisterBlockchainRequest(pubkeyAddressHex, signHex, fee, txHash, blockchain, blockchainName, idRequest);
+        const auto callbackWrap = [this, callback, isNew, address, pubkeyAddressHex, rsaPubkeyHex, isForcibly, txHash, blockchainName](const TypedException &exception) {
+            if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
+                LOG << "Set user pubkey2 " << address << " " << pubkeyAddressHex << " " << txHash << " " << blockchainName;
+                db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, txHash, blockchainName);
             }
             callback.emitFunc(exception, isNew);
         };

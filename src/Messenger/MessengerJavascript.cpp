@@ -275,6 +275,20 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MessengerJavascript::doRegisterAddress(const QString &address, bool isNew, bool isForcibly, const std::function<void(const TypedException &exception, const QString &result)> &makeFunc, const std::function<void(const TypedException &exception)> &errorFunc) {
+    if (isNew || isForcibly) {
+        const std::vector<QString> messagesForSign = Messenger::stringsForSign();
+        emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
+            emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([address, makeFunc](){
+                LOG << "Address registered " << address;
+                makeFunc(TypedException(), QString("Ok"));
+            }, errorFunc, signalFunc));
+        }, errorFunc, signalFunc));
+    } else {
+        makeFunc(TypedException(), QString("Ok"));
+    }
+}
+
 void MessengerJavascript::registerAddress(bool isForcibly, QString address, QString feeStr) {
 BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
@@ -289,22 +303,10 @@ BEGIN_SLOT_WRAPPER
         makeFunc(exception, QString("Not ok"));
     };
 
-    LOG << "registerAddress " << address;
+    LOG << "registerAddress " << address << " " << isForcibly;
 
     const TypedException exception = apiVrapper2([&, this](){
-        const auto processFunc = [this, address, isForcibly, makeFunc, errorFunc](bool isNew) {
-            if (isNew || isForcibly) {
-                const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-                emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
-                    emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([address, makeFunc](){
-                        LOG << "Address registered " << address;
-                        makeFunc(TypedException(), QString("Ok"));
-                    }, errorFunc, signalFunc));
-                }, errorFunc, signalFunc));
-            } else {
-                makeFunc(TypedException(), QString("Ok"));
-            }
-        };
+        const auto processFunc = std::bind(&MessengerJavascript::doRegisterAddress, this, address, _1, isForcibly, makeFunc, errorFunc);
 
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
@@ -313,6 +315,48 @@ BEGIN_SLOT_WRAPPER
             const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
             emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
                 emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, [isForcibly, processFunc, errorFunc](const TypedException &exception) {
+                    if (isForcibly) {
+                        processFunc(true);
+                    } else {
+                        errorFunc(exception);
+                    }
+                }, signalFunc));
+            }, errorFunc, signalFunc));
+        }, errorFunc, signalFunc));
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, QString("Not ok"));
+    }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::registerAddressBlockchain(bool isForcibly, QString address, QString feeStr, QString txHash, QString blockchainName, QString blockchainServ) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+
+    const QString JS_NAME_RESULT = "msgAddressAppendToMessengerBlockchainJs";
+
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    const auto errorFunc = [makeFunc](const TypedException &exception) {
+        makeFunc(exception, QString("Not ok"));
+    };
+
+    LOG << "registerAddressBlockchain " << address << " " << isForcibly << " " << txHash << " " << blockchainName << " " << blockchainServ;
+
+    const TypedException exception = apiVrapper2([&, this](){
+        const auto processFunc = std::bind(&MessengerJavascript::doRegisterAddress, this, address, _1, isForcibly, makeFunc, errorFunc);
+
+        bool isValid;
+        const uint64_t fee = feeStr.toULongLong(&isValid);
+        CHECK(isValid, "Fee field incorrect");
+        const QString messageToSign = Messenger::makeTextForSignRegisterBlockchainRequest(address, fee, txHash, blockchainServ, blockchainName);
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, messageToSign, isForcibly, fee, txHash, blockchainServ, blockchainName, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
+            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, pubkeyRsa, txHash, blockchainServ, blockchainName, makeFunc, errorFunc, processFunc](const QString &pubkey, const QString &sign){
+                emit messenger->registerAddressFromBlockchain(isForcibly, address, pubkeyRsa, pubkey, sign, fee, txHash, blockchainServ, blockchainName, Messenger::RegisterAddressBlockchainCallback(processFunc, [isForcibly, processFunc, errorFunc](const TypedException &exception) {
                     if (isForcibly) {
                         processFunc(true);
                     } else {

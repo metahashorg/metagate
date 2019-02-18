@@ -89,6 +89,8 @@ public slots:
 
     Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);
 
+    Q_INVOKABLE void registerAddressBlockchain(bool isForcibly, QString address, QString feeStr, QString txHash, QString blockchainName, QString blockchainServ);
+
     Q_INVOKABLE void savePublicKeyCollocutor(bool isForcibly, QString address, QString collocutor);
 
     Q_INVOKABLE void getUserInfo(QString address);
@@ -141,6 +143,8 @@ public slots:
 private:
 
     void setPathsImpl();
+
+    void doRegisterAddress(const QString &address, bool isNew, bool isForcibly, const std::function<void(const TypedException &exception, const QString &result)> &makeFunc, const std::function<void(const TypedException &exception)> &errorFunc);
 
 private:
 

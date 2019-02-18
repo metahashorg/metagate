@@ -44,6 +44,10 @@ QString makeTextForSignRegisterRequest(const QString &address, const QString &rs
     return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
 }
 
+QString makeTextForSignRegisterBlockchainRequest(const QString &address, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName) {
+    return address + QString::fromStdString(std::to_string(fee)) + txHash + blockchain + blockchainName;
+}
+
 QString makeTextForGetPubkeyRequest(const QString &address) {
     return address;
 }
@@ -102,6 +106,22 @@ QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAd
     params.insert("rsa_pub_key", rsaPubkeyHex);
     params.insert("pubkey", pubkeyAddressHex);
     params.insert("sign", signHex);
+    json.insert("params", params);
+    return QJsonDocument(json).toJson(QJsonDocument::Compact);
+}
+
+QString makeRegisterBlockchainRequest(const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName, size_t id) {
+    QJsonObject json;
+    json.insert("jsonrpc", "2.0");
+    json.insert("method", "msg_append_key_to_addr_blockchain");
+    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    QJsonObject params;
+    params.insert("fee", QString::fromStdString(std::to_string(fee)));
+    params.insert("pubkey", pubkeyAddressHex);
+    params.insert("sign", signHex);
+    params.insert("tx_hash", txHash);
+    params.insert("blockchain", signHex);
+    params.insert("blockchainName", blockchainName);
     json.insert("params", params);
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
@@ -529,7 +549,7 @@ Message::Counter parseCountMessagesResponse(const QJsonDocument &response) {
     return std::stoll(data.value("cnt_last").toString().toStdString());
 }
 
-KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response) {
+KeyMessageResponse parsePublicKeyMessageResponse(const QJsonDocument &response) {
     KeyMessageResponse result;
     CHECK(response.isObject(), "Response field not found");
     const QJsonObject root = response.object();
@@ -541,6 +561,10 @@ KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response) {
     result.addr = data.value("addr").toString();
     CHECK(data.contains("fee") && data.value("fee").isString(), "fee field not found");
     result.fee = std::stoull(data.value("fee").toString().toStdString());
+    CHECK(data.contains("tx_hash") && data.value("tx_hash").isString(), "tx_hash field not found");
+    result.txHash = data.value("tx_hash").toString();
+    CHECK(data.contains("blockchain_name") && data.value("blockchain_name").isString(), "blockchain_name field not found");
+    result.blockchain_name = data.value("blockchain_name").toString();
 
     return result;
 }

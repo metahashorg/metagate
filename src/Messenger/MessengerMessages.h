@@ -11,6 +11,8 @@ namespace messenger {
 
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee);
 
+QString makeTextForSignRegisterBlockchainRequest(const QString &address, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName);
+
 QString makeTextForGetPubkeyRequest(const QString &address);
 
 QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp);
@@ -36,6 +38,8 @@ QString makeTextForMsgAppendKeyOnlineRequest();
 QString makeTextForWantTalkRequest(const QString &address);
 
 QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, size_t id);
+
+QString makeRegisterBlockchainRequest(const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName, size_t id);
 
 QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
 
@@ -103,6 +107,8 @@ struct KeyMessageResponse {
     QString publicKey;
     QString addr;
     uint64_t fee;
+    QString txHash;
+    QString blockchain_name;
 };
 
 struct RequiresPubkeyResponse {
@@ -134,7 +140,7 @@ ChannelInfo parseDelToChannelResponse(const QJsonDocument &response);
 
 Message::Counter parseCountMessagesResponse(const QJsonDocument &response);
 
-KeyMessageResponse parseKeyMessageResponse(const QJsonDocument &response);
+KeyMessageResponse parsePublicKeyMessageResponse(const QJsonDocument &response);
 
 RequiresPubkeyResponse parseRequiresPubkeyResponse(const QJsonDocument &response);
 
