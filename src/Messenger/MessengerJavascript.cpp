@@ -18,16 +18,18 @@
 #include "Wallet.h"
 
 #include "auth/Auth.h"
+#include "transactions/Transactions.h"
 #include "JavascriptWrapper.h"
 
 using namespace std::placeholders;
 
 namespace messenger {
 
-MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, QObject *parent)
+MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, QObject *parent)
     : QObject(parent)
     , authManager(authManager)
     , cryptoManager(cryptoManager)
+    , txManager(txManager)
 {
     CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges), "not connect onNewMesseges");
@@ -224,6 +226,43 @@ BEGIN_SLOT_WRAPPER
 
     if (exception.isSet()) {
         makeFunc(exception, address, collocutor, QJsonDocument());
+    }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::sendPubkeyAddressToBlockchain(QString address, QString feeStr, QString paramsJson) {
+BEGIN_SLOT_WRAPPER
+    CHECK(messenger != nullptr, "Messenger not set");
+    const QString JS_NAME_RESULT = "msgPubkeyAddressToBlockchainResultJs";
+
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    const auto errorFunc = [makeFunc](const TypedException &exception) {
+        makeFunc(exception, QString("Not ok"));
+    };
+
+    const TypedException exception = apiVrapper2([&, this]{
+        bool isValid;
+        const uint64_t fee = feeStr.toULongLong(&isValid);
+        CHECK(isValid, "Fee field incorrect");
+
+        const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, fee, sendParams, makeFunc, errorFunc](const QString &pubkeyRsa){
+            emit txManager.getNonce("1", address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc, errorFunc](size_t nonce, const QString &server) {
+                emit cryptoManager.signTransaction(address, address, 0, fee, nonce, pubkeyRsa, CryptographicManager::SignTransactionCallback([this, address, nonce, fee, sendParams, makeFunc, errorFunc](const QString &transaction, const QString &pubkey, const QString &sign){
+                    const QString feeStr = QString::fromStdString(std::to_string(fee));
+                    emit txManager.sendTransaction("1", address, "0", nonce, transaction, feeStr, pubkey, sign, sendParams, transactions::Transactions::SendTransactionCallback([makeFunc](){
+                        makeFunc(TypedException(), "Ok");
+                    }, errorFunc, signalFunc));
+                }, errorFunc, signalFunc));
+            }, errorFunc, signalFunc));
+        }, errorFunc, signalFunc));
+    });
+
+    if (exception.isSet()) {
+        makeFunc(exception, QString("Not ok"));
     }
 END_SLOT_WRAPPER
 }
@@ -913,7 +952,7 @@ void MessengerJavascript::setPathsImpl() {
 void MessengerJavascript::setMhcType(bool isMhc) {
 BEGIN_SLOT_WRAPPER
     LOG << "Set mhc type: " << (isMhc ? "Mhc" : "Tmh");
-    const QString JS_NAME_RESULT = "msgUnlockWalletResultJs";
+    const QString JS_NAME_RESULT = "msgSetWalletTypeResultJs";
     mthWalletType = isMhc ? Wallet::WALLET_PATH_MTH : Wallet::WALLET_PATH_TMH;
     const TypedException &exception = apiVrapper2([&, this]{
         setPathsImpl();

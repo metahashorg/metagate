@@ -35,6 +35,8 @@ public:
 
     using SignMessagesCallback = CallbackWrapper<std::function<void(const QString &pubkey, const std::vector<QString> &sign)>>;
 
+    using SignTransactionCallback = CallbackWrapper<std::function<void(const QString &transaction, const QString &pubkey, const QString &sign)>>;
+
     using GetPubkeyRsaCallback = CallbackWrapper<std::function<void(const QString &pubkeyRsa)>>;
 
     using EncryptMessageCallback = CallbackWrapper<std::function<void(const QString &encryptedData)>>;
@@ -52,6 +54,8 @@ signals:
     void signMessage(const QString &address, const QString &message, const SignMessageCallback &callback);
 
     void signMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback);
+
+    void signTransaction(const QString &address, const QString &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const QString &data, const SignTransactionCallback &callback);
 
     void getPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback);
 
@@ -72,6 +76,8 @@ private slots:
     void onSignMessage(const QString &address, const QString &message, const SignMessageCallback &callback);
 
     void onSignMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback);
+
+    void onSignTransaction(const QString &address, const QString &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const QString &data, const SignTransactionCallback &callback);
 
     void onGetPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback);
 

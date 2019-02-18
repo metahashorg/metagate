@@ -3,7 +3,7 @@ Messenger регестрируется в javascript по имени messenger
 Q_INVOKABLE void setMhcType(bool isMhc);
 Установить тип валюты, с которой идет работа (по умолчанию mhc)
 Результат вернется в функцию
-msgUnlockWalletResultJs(isMhc, errorNum, errorMessage)
+msgSetWalletTypeResultJs(isMhc, errorNum, errorMessage)
 
 Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
 Разблокировать кошелек на заданное время. При новой разблокировке старый кошелек блокируется
@@ -15,6 +15,11 @@ Q_INVOKABLE void lockWallet();
 Результат вернется в функцию
 msgLockWalletResultJs(errorNum, errorMessage)
 
+
+Q_INVOKABLE void sendPubkeyAddressToBlockchain(QString address, QString feeStr, QString paramsJson);
+Отправляет публичный ключ адреса в блокчейн
+Результат вернется в функцию
+msgPubkeyAddressToBlockchainResultJs("Ok"/"Not ok", errorNum, errorMessage)
 
 Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);
 Зарегестрировать адрес в сервисе сообщений. Если адрес уже зарегестрирован (есть сохраненная инфа в bd), то не будет регестрироваться, если не выстовлен флаг isForcibly

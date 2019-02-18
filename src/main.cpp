@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
         //addModule(proxy::Proxy::moduleName());
         //const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(webSocketClient, mainWindow);
 
-        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth);
+        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions);
 
         initManager.complete();
        

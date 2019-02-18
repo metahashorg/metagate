@@ -653,7 +653,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback) {
+void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet);
     CHECK(!servers.empty(), "Not enough servers");
@@ -672,7 +672,7 @@ BEGIN_SLOT_WRAPPER
 
     std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
 
-    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback, signal](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
         nonceStruct->count--;
 
         if (!exception.isSet()) {
@@ -686,9 +686,9 @@ BEGIN_SLOT_WRAPPER
 
         if (nonceStruct->count == 0) {
             if (!nonceStruct->isSet) {
-                emit signal(std::bind(callback, 0, nonceStruct->serverError, nonceStruct->exception));
+                callback.emitFunc(nonceStruct->exception, 0, nonceStruct->serverError);
             } else {
-                emit signal(std::bind(callback, nonceStruct->nonce + 1, "", TypedException()));
+                callback.emitFunc(TypedException(), nonceStruct->nonce + 1, "");
             }
         }
     };
@@ -769,6 +769,10 @@ BEGIN_SLOT_WRAPPER
     });
     runCallback(std::bind(callback, exception));
 END_SLOT_WRAPPER
+}
+
+SendParameters parseSendParams(const QString &paramsJson) {
+    return parseSendParamsInternal(paramsJson);
 }
 
 }

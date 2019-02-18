@@ -5,6 +5,7 @@
 
 #include "BigNumber.h"
 #include "dbstorage.h"
+#include "duration.h"
 
 namespace transactions {
 
@@ -90,6 +91,14 @@ struct AddressInfo {
 struct BlockInfo {
     QString hash;
     int64_t number;
+};
+
+struct SendParameters {
+    size_t countServersSend;
+    size_t countServersGet;
+    QString typeSend;
+    QString typeGet;
+    seconds timeout;
 };
 
 }

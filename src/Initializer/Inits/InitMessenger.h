@@ -23,6 +23,11 @@ class Auth;
 class AuthJavascript;
 }
 
+namespace transactions {
+class Transactions;
+class TransactionsJavascript;
+}
+
 class MainWindow;
 
 namespace initializer {
@@ -45,7 +50,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions);
 
     static int countEvents() {
         return 1;

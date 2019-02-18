@@ -13,6 +13,10 @@ namespace auth {
 class Auth;
 }
 
+namespace transactions {
+class Transactions;
+}
+
 class JavascriptWrapper;
 
 namespace messenger {
@@ -28,7 +32,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m);
 
@@ -80,6 +84,8 @@ public slots:
     Q_INVOKABLE void getHistoryAddressAddress(QString address, QString collocutor, QString from, QString to);
 
     Q_INVOKABLE void getHistoryAddressAddressCount(QString address, QString collocutor, QString count, QString to);
+
+    Q_INVOKABLE void sendPubkeyAddressToBlockchain(QString address, QString feeStr, QString paramsJson);
 
     Q_INVOKABLE void registerAddress(bool isForcibly, QString address, QString feeStr);
 
@@ -146,6 +152,8 @@ private:
     Messenger *messenger = nullptr;
 
     CryptographicManager &cryptoManager;
+
+    transactions::Transactions &txManager;
 
     QString walletPath;
 

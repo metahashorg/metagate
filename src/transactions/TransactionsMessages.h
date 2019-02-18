@@ -10,6 +10,7 @@ namespace transactions {
 struct BalanceInfo;
 struct Transaction;
 struct BlockInfo;
+struct SendParameters;
 
 QString makeGetBalanceRequest(const QString &address);
 
@@ -34,6 +35,8 @@ BlockInfo parseGetBlockInfoResponse(const QString &response);
 QString makeGetCountBlocksRequest();
 
 int64_t parseGetCountBlocksResponse(const QString &response);
+
+SendParameters parseSendParamsInternal(const QString &paramsJson);
 
 }
 

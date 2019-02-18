@@ -468,24 +468,6 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);
 }
 
-static transactions::Transactions::SendParameters parseSendParams(const QString &paramsJson) {
-    transactions::Transactions::SendParameters result;
-    const QJsonDocument doc = QJsonDocument::fromJson(paramsJson.toUtf8());
-    CHECK_TYPED(doc.isObject(), TypeErrors::INCORRECT_USER_DATA, "params json incorrect");
-    const QJsonObject docParams = doc.object();
-    CHECK_TYPED(docParams.contains("countServersSend") && docParams.value("countServersSend").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersSend not found in params");
-    result.countServersSend = docParams.value("countServersSend").toInt();
-    CHECK_TYPED(docParams.contains("countServersGet") && docParams.value("countServersGet").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersGet not found in params");
-    result.countServersGet = docParams.value("countServersSend").toInt();
-    CHECK_TYPED(docParams.contains("typeSend") && docParams.value("typeSend").isString(), TypeErrors::INCORRECT_USER_DATA, "typeSend not found in params");
-    result.typeSend = docParams.value("typeSend").toString();
-    CHECK_TYPED(docParams.contains("typeGet") && docParams.value("typeGet").isString(), TypeErrors::INCORRECT_USER_DATA, "typeGet not found in params");
-    result.typeGet = docParams.value("typeGet").toString();
-    CHECK_TYPED(docParams.contains("timeout_sec") && docParams.value("timeout_sec").isDouble(), TypeErrors::INCORRECT_USER_DATA, "timeout_sec not found in params");
-    result.timeout = seconds(docParams.value("timeout_sec").toInt());
-    return result;
-}
-
 void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce) {
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
@@ -496,25 +478,22 @@ void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsN
 
 void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction) {
     const TypedException exception = apiVrapper2([&, this]() {
-        const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+        const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        const auto errorFunc = [this, jsNameResult, requestId](const TypedException &exception) {
+            makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
+        };
 
         const bool isNonce = !nonce.isEmpty();
         if (!isNonce) {
             Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
-            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, std::bind(&JavascriptWrapper::callbackCall, this, _1), [this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server, const TypedException &exception) {
-                Opt<QString> result(QString("Not ok"));
-                const TypedException &exception2 = apiVrapper2([&] {
-                    CHECK_TYPED(!exception.isSet(), exception.numError, exception.description);
-                    LOG << "Nonce getted " << keyName << " " << nonce;
-                    signTransaction(nonce);
-                    result = "Ok";
-                });
-                if (exception.isSet()) {
-                    makeAndRunJsFuncParams(jsNameResult, exception2, Opt<QString>(requestId), result);
-                }
-            });
+            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, transactions::Transactions::GetNonceCallback([this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server) {
+                LOG << "Nonce getted " << keyName << " " << nonce;
+                signTransaction(nonce);
+                makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
+            }, errorFunc, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
         } else {
             bool isParseNonce = false;
             const size_t nonceInt = nonce.toULongLong(&isParseNonce);
@@ -531,7 +510,7 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
 void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, QString walletPath, QString jsNameResult) {
     LOG << "Sign messagev3 " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
-    const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+    const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
     if (fee.isEmpty()) {
         fee = "0";
@@ -562,7 +541,7 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult) {
     LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate;
 
-    const transactions::Transactions::SendParameters sendParams = parseSendParams(paramsJson);
+    const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
     if (fee.isEmpty()) {
         fee = "0";

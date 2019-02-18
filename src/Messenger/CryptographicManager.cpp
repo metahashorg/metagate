@@ -21,6 +21,7 @@ CryptographicManager::CryptographicManager(QObject *parent)
     CHECK(connect(this, &CryptographicManager::tryDecryptMessages, this, &CryptographicManager::onTryDecryptMessages), "not connect onTryDecryptMessages");
     CHECK(connect(this, &CryptographicManager::signMessage, this, &CryptographicManager::onSignMessage), "not connect onSignMessage");
     CHECK(connect(this, &CryptographicManager::signMessages, this, &CryptographicManager::onSignMessages), "not connect onSignMessages");
+    CHECK(connect(this, &CryptographicManager::signTransaction, this, &CryptographicManager::onSignTransaction), "not connect onSignTransaction");
     CHECK(connect(this, &CryptographicManager::getPubkeyRsa, this, &CryptographicManager::onGetPubkeyRsa), "not connect onGetPubkeyRsa");
     CHECK(connect(this, &CryptographicManager::encryptDataRsa, this, &CryptographicManager::onEncryptDataRsa), "not connect onEncryptDataRsa");
     CHECK(connect(this, &CryptographicManager::encryptDataPrivateKey, this, &CryptographicManager::onEncryptDataPrivateKey), "not connect onSignAndEncryptDataRsa");
@@ -32,12 +33,14 @@ CryptographicManager::CryptographicManager(QObject *parent)
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
     Q_REG(SignMessageCallback, "SignMessageCallback");
     Q_REG(SignMessagesCallback, "SignMessagesCallback");
+    Q_REG(SignTransactionCallback, "SignTransactionCallback");
     Q_REG(GetPubkeyRsaCallback, "GetPubkeyRsaCallback");
     Q_REG(EncryptMessageCallback, "EncryptMessageCallback");
     Q_REG(UnlockWalletCallback, "UnlockWalletCallback");
     Q_REG(LockWalletCallback, "LockWalletCallback");
     Q_REG2(std::string, "std::string", false);
     Q_REG2(seconds, "seconds", false);
+    Q_REG2(uint64_t, "uint64_t", false);
 
     moveToThread(&thread1);
 }
@@ -162,6 +165,25 @@ BEGIN_SLOT_WRAPPER
     });
 
     callback.emitFunc(exception, pub, sign);
+END_SLOT_WRAPPER
+}
+
+void CryptographicManager::onSignTransaction(const QString &address, const QString &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const QString &data, const SignTransactionCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    QString sign;
+    QString pub;
+    QString tx;
+    const TypedException exception = apiVrapper2([&, this] {
+        std::string pubkey;
+        std::string transaction;
+        std::string signature;
+        getWallet(address.toStdString()).sign(toAddress.toStdString(), value, fee, nonce, data.toStdString(), transaction, signature, pubkey, true);
+        sign = QString::fromStdString(signature);
+        pub = QString::fromStdString(pubkey);
+        tx = QString::fromStdString(transaction);
+    });
+
+    callback.emitFunc(exception, tx, pub, sign);
 END_SLOT_WRAPPER
 }
 

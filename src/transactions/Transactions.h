@@ -30,16 +30,6 @@ enum class DelegateStatus;
 
 class Transactions : public TimerClass {
     Q_OBJECT
-public:
-
-    struct SendParameters {
-        size_t countServersSend;
-        size_t countServersGet;
-        QString typeSend;
-        QString typeGet;
-        seconds timeout;
-    };
-
 private:
 
     using TransactionHash = std::string;
@@ -141,7 +131,7 @@ public:
 
     using GetLastUpdateCallback = std::function<void(const system_time_point &lastUpdate, const system_time_point &now)>;
 
-    using GetNonceCallback = std::function<void(size_t nonce, const QString &server, const TypedException &exception)>;
+    using GetNonceCallback = CallbackWrapper<std::function<void(size_t nonce, const QString &server)>>;
 
     using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate)>;
 
@@ -181,7 +171,7 @@ signals:
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback);
+    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
 
     void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
@@ -215,7 +205,7 @@ public slots:
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const SignalFunc &signal, const GetNonceCallback &callback);
+    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
 
     void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
@@ -296,6 +286,8 @@ private:
 
     size_t posInAddressInfos;
 };
+
+SendParameters parseSendParams(const QString &paramsJson);
 
 }
 
