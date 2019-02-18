@@ -16,6 +16,8 @@ public:
 
     const static QString WALLET_PATH_MTH;
 
+    const static QString WALLET_PATH_TMH;
+
 public:
 
     static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);

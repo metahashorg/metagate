@@ -1,5 +1,10 @@
 Messenger регестрируется в javascript по имени messenger
 
+Q_INVOKABLE void setMhcType(bool isMhc);
+Установить тип валюты, с которой идет работа (по умолчанию mhc)
+Результат вернется в функцию
+msgUnlockWalletResultJs(isMhc, errorNum, errorMessage)
+
 Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
 Разблокировать кошелек на заданное время. При новой разблокировке старый кошелек блокируется
 Результат вернется в функцию

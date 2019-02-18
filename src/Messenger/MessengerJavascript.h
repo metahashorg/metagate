@@ -119,6 +119,8 @@ public slots:
     Q_INVOKABLE void getHistoryAddressChannelCount(QString address, QString titleSha, QString count, QString to);
 
 
+    Q_INVOKABLE void setMhcType(bool isMhc);
+
     Q_INVOKABLE void unlockWallet(QString address, QString password, QString passwordRsa, int timeSeconds);
 
     Q_INVOKABLE void lockWallet();
@@ -128,7 +130,7 @@ public slots:
 
 private:
 
-    void setPathsImpl(QString newPatch, QString newUserName);
+    void setPathsImpl();
 
 private:
 
@@ -147,7 +149,7 @@ private:
 
     QString walletPath;
 
-    QString defaultWalletPath;
+    QString mthWalletType;
 
     QString defaultUserName;
 
