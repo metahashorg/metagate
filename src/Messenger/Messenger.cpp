@@ -223,9 +223,12 @@ void Messenger::clearAddressesToMonitored() {
 }
 
 void Messenger::addAddressToMonitored(const QString &address) {
-    LOG << "Add address to monitored " << address;
     const QString pubkeyHex = db.getUserPublicKey(address);
-    CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + address.toStdString());
+    const bool pubkeyFound = !pubkeyHex.isEmpty();
+    LOG << "Add address to monitored " << address << " " << pubkeyFound;
+    if (!pubkeyFound) {
+        return;
+    }
 
     const QString signHexChannels = getSignFromMethod(address, makeTextForGetMyChannelsRequest());
     const QString messageGetMyChannels = makeGetMyChannelsRequest(pubkeyHex, signHexChannels, id.get());
