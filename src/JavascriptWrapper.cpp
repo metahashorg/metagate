@@ -697,36 +697,61 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
-BEGIN_SLOT_WRAPPER
-    LOG << "Create rsa key " << address;
-
-    const QString JS_NAME_RESULT = "createRsaKeyResultJs";
+void JavascriptWrapper::createRsaKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult) {
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa::createRsaKey(walletPathMth, address.toStdString(), password.toStdString());
-        WalletRsa wallet(walletPathMth, address.toStdString());
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        WalletRsa::createRsaKey(walletPath, address.toStdString(), password.toStdString());
+        WalletRsa wallet(walletPath, address.toStdString());
+        publicKey = wallet.getPublikKey();
+    });
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), publicKey);
+}
+
+void JavascriptWrapper::getRsaPublicKeyMTHS(QString requestId, QString address, QString walletPath, QString jsNameResult) {
+    Opt<std::string> publicKey;
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        WalletRsa wallet(walletPath, address.toStdString());
         publicKey = wallet.getPublikKey();
     });
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), publicKey);
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), publicKey);
+}
+
+void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Create rsa key tmh " << address;
+
+    const QString JS_NAME_RESULT = "createRsaKeyResultJs";
+    createRsaKeyMTHS(requestId, address, password, walletPathTmh, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::getRsaPublicKey(QString requestId, QString address) {
 BEGIN_SLOT_WRAPPER
-    LOG << "Get rsa key " << address;
+    LOG << "Get rsa key tmh " << address;
 
     const QString JS_NAME_RESULT = "getRsaPublicKeyResultJs";
-    Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa wallet(walletPathMth, address.toStdString());
-        publicKey = wallet.getPublikKey();
-    });
+    getRsaPublicKeyMTHS(requestId, address, walletPathTmh, JS_NAME_RESULT);
+END_SLOT_WRAPPER
+}
 
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), publicKey);
+void JavascriptWrapper::createRsaKeyMHC(QString requestId, QString address, QString password) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Create rsa key mhc " << address;
+
+    const QString JS_NAME_RESULT = "createRsaKeyMHCResultJs";
+    createRsaKeyMTHS(requestId, address, password, walletPathTmh, JS_NAME_RESULT);
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::getRsaPublicKeyMHC(QString requestId, QString address) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Get rsa key mhc " << address;
+
+    const QString JS_NAME_RESULT = "getRsaPublicKeyMHCResultJs";
+    getRsaPublicKeyMTHS(requestId, address, walletPathMth, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 

@@ -121,6 +121,10 @@ public slots:
 
     Q_INVOKABLE void getRsaPublicKey(QString requestId, QString address);
 
+    Q_INVOKABLE void createRsaKeyMHC(QString requestId, QString address, QString password);
+
+    Q_INVOKABLE void getRsaPublicKeyMHC(QString requestId, QString address);
+
     Q_INVOKABLE void encryptMessage(QString requestId, QString publicKey, QString message);
 
     Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex);
@@ -230,6 +234,12 @@ private slots:
     void onWssMessageReceived(QString message);
 
     void onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
+
+private:
+
+    void createRsaKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult);
+
+    void getRsaPublicKeyMTHS(QString requestId, QString address, QString walletPath, QString jsNameResult);
 
 private:
 

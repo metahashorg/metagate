@@ -162,6 +162,15 @@ Q_INVOKABLE void getOnePrivateKeyMHC(QString requestId, QString keyName, bool is
 getOnePrivateKeyMHCResultJs(requestId, key, errorNum, errorMessage)
 # The isCompact parameter is used if you need a more compact format.
 
+Q_INVOKABLE void createRsaKeyMHC(QString requestId, QString address, QString password);
+# Generates rsa key for specified address.
+# javascript is called after completion of this function 
+createRsaKeyMHCResultJs(requestId, publicKeyHex, errorNum, errorMessage)
+
+Q_INVOKABLE void getRsaPublicKeyMHC(QString requestId, QString address);
+# Returns public key from rsa key
+getRsaPublicKeyMHCResultJs(requestId, publicKeyHex, errorNum, errorMessage)
+
 Q_INVOKABLE void saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password);
 # Saves private key
 # rawPrivKey - unencrypted private key
