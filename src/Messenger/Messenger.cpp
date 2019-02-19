@@ -72,8 +72,8 @@ QString Messenger::makeTextForGetPubkeyRequest(const QString &address) {
     return messenger::makeTextForGetPubkeyRequest(address);
 }
 
-QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp) {
-    return messenger::makeTextForSendMessageRequest(address, dataHex, fee, timestamp);
+QString Messenger::makeTextForSendMessageRequest(const QString &address, const QString &dataHex, const QString &encryptedSelfDataHex, uint64_t fee, uint64_t timestamp) {
+    return messenger::makeTextForSendMessageRequest(address, dataHex, encryptedSelfDataHex, fee, timestamp);
 }
 
 QString Messenger::makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee) {
@@ -350,7 +350,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         message.hash = hashMessage;
         message.isConfirmed = true;
         const bool isInput = isChannel ? (m.collocutor == address) : m.isInput;
-        message.isCanDecrypted = isInput;
+        message.isCanDecrypted = true;
         message.isInput = isInput;
         message.timestamp = m.timestamp;
         message.username = address;
@@ -718,7 +718,7 @@ BEGIN_SLOT_WRAPPER
         const size_t idRequest = id.get();
         QString message;
         if (!isChannel) {
-            message = makeSendMessageRequest(toAddress, dataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
+            message = makeSendMessageRequest(toAddress, dataHex, encryptedDataHex, pubkeyHex, signHex, fee, timestamp, idRequest);
         } else {
             message = makeSendToChannelRequest(channel, dataHex, fee, timestamp, pubkeyHex, signHex, idRequest);
         }

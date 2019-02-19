@@ -15,7 +15,7 @@ QString makeTextForSignRegisterBlockchainRequest(const QString &address, uint64_
 
 QString makeTextForGetPubkeyRequest(const QString &address);
 
-QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp);
+QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, const QString &encryptedSelfDataHex, uint64_t fee, uint64_t timestamp);
 
 QString makeTextForGetMyMessagesRequest();
 
@@ -43,7 +43,7 @@ QString makeRegisterBlockchainRequest(const QString &pubkeyAddressHex, const QSt
 
 QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, const QString &signHex, size_t id);
 
-QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, size_t id);
+QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex, const QString &encryptedSelfDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, size_t id);
 
 QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHex, Message::Counter from, Message::Counter to, size_t id);
 

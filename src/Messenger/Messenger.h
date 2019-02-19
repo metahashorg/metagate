@@ -197,7 +197,7 @@ public:
 
     static QString makeTextForGetPubkeyRequest(const QString &address);
 
-    static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, uint64_t fee, uint64_t timestamp);
+    static QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, const QString &encryptedSelfDataHex, uint64_t fee, uint64_t timestamp);
 
     static QString makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee);
 
