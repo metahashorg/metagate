@@ -243,6 +243,8 @@ BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
     const QString JS_NAME_RESULT = "msgPubkeyAddressToBlockchainResultJs";
 
+    LOG << "Send pubkey to blockchain " << address << " " << feeStr << " " << paramsJson;
+
     const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
     };
@@ -260,8 +262,10 @@ BEGIN_SLOT_WRAPPER
         emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, fee, sendParams, makeFunc, errorFunc](const QString &pubkeyRsa){
             emit txManager.getNonce("1", address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc, errorFunc](size_t nonce, const QString &server) {
                 emit cryptoManager.signTransaction(address, address, 0, fee, nonce, pubkeyRsa, CryptographicManager::SignTransactionCallback([this, address, nonce, fee, sendParams, makeFunc, errorFunc](const QString &transaction, const QString &pubkey, const QString &sign){
+                    LOG << "Sign Transaction size " << transaction.size();
                     const QString feeStr = QString::fromStdString(std::to_string(fee));
-                    emit txManager.sendTransaction("1", address, "0", nonce, transaction, feeStr, pubkey, sign, sendParams, transactions::Transactions::SendTransactionCallback([makeFunc](){
+                    emit txManager.sendTransaction("1", address, "0", nonce, transaction, feeStr, pubkey, sign, sendParams, transactions::Transactions::SendTransactionCallback([address, makeFunc](){
+                        LOG << "Send pubkey to blockchain ok " << address;
                         makeFunc(TypedException(), "Ok");
                     }, errorFunc, signalFunc));
                 }, errorFunc, signalFunc));

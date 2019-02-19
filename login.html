@@ -180,6 +180,24 @@
         });
     }
     
+    function sendPubkeyToBlockchain() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.sendPubkeyAddressToBlockchain( document.createWalletForm.from1.value, '1000', '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
+        });
+    }
+    
+    function registerFromBlockchain() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.messenger;
+        mainWindow.registerAddressBlockchain( true, document.createWalletForm.from1.value, '1', document.createWalletForm.txHash.value, 'blockchain1', document.createWalletForm.blockchainServ.value) ;
+        });
+    }
+    
+    function txOnTorrentJs(server, txHash, tx, errorNum, errorMessage) {
+        document.createWalletForm.txHash.value = txHash;
+    }
+    
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -211,6 +229,8 @@
             <input name="channelSha" type="text" value="8f06fb09c4a8f44b419e19b5422fba3980af99a1e1dbae94629896458b3a1240" size="60"><label for="channelSha">channelSha</label><br>
             <input name="count" type="text" value="10" size="60"><label for="count">count/savePos/from</label><br>
             <input name="toCnt" type="text" value="1000" size="60"><label for="toCnt">toCnt</label><br>
+            <input name="blockchainServ" type="text" value="1000" size="60"><label for="blockchainServ">blockchainServ</label><br>
+            <input name="txHash" type="text" value="1000" size="60"><label for="txHash">txHash</label><br>
             
             <input type="button" value="genKey" onclick="genKey()">
             <input type="button" value="unlock" onclick="unlock()">
@@ -237,6 +257,9 @@
             <input type="button" value="getLastMessageChannel" onclick="getLastMessageChannel()"><br>
             <input type="button" value="getMessagesChannelCollFromTo" onclick="getMessagesChannel2()"><br>
             <input type="button" value="getMessagesChannelCollCountTo" onclick="getMessagesChannel3()"><br>
+            <br>
+            <input type="button" value="sendPubkeyToBlockchain" onclick="sendPubkeyToBlockchain()"><br>
+            <input type="button" value="registerFromBlockchain" onclick="registerFromBlockchain()"><br>
             </FORM>
         </left>
     </p>
