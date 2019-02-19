@@ -17,6 +17,7 @@ const static QString MSG_GET_MY_CHANNELS_REQUEST = "msg_get_my_channels";
 const static QString MSG_APPEND_KEY_ONLINE_REQUEST = "msg_append_key_online";
 
 const static QString APPEND_KEY_TO_ADDR_RESPONSE = "msg_append_key_to_addr";
+const static QString APPEND_KEY_TO_ADDR_BLOCKCHAIN_RESPONSE = "msg_append_key_to_addr_blockchain";
 const static QString GET_KEY_BY_ADDR_RESPONSE = "msg_get_key_by_addr";
 const static QString SEND_TO_ADDR_RESPONSE = "msg_send_to_addr";
 const static QString NEW_MSGS_RESPONSE = "msg_get_my";
@@ -120,8 +121,8 @@ QString makeRegisterBlockchainRequest(const QString &pubkeyAddressHex, const QSt
     params.insert("pubkey", pubkeyAddressHex);
     params.insert("sign", signHex);
     params.insert("tx_hash", txHash);
-    params.insert("blockchain", signHex);
-    params.insert("blockchainName", blockchainName);
+    params.insert("blockchain", blockchain);
+    params.insert("blockchain_name", blockchainName);
     json.insert("params", params);
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
@@ -354,7 +355,7 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
         result.id = std::stoull(root.value("request_id").toString().toStdString());
     }
 
-    if (type == APPEND_KEY_TO_ADDR_RESPONSE) {
+    if (type == APPEND_KEY_TO_ADDR_RESPONSE || type == APPEND_KEY_TO_ADDR_BLOCKCHAIN_RESPONSE) {
         result.method = METHOD::APPEND_KEY_TO_ADDR;
     } else if (type == GET_KEY_BY_ADDR_RESPONSE) {
         result.method = METHOD::GET_KEY_BY_ADDR;
