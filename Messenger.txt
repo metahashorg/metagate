@@ -19,6 +19,7 @@ msgLockWalletResultJs(errorNum, errorMessage)
 Q_INVOKABLE void sendPubkeyAddressToBlockchain(QString address, QString feeStr, QString paramsJson);
 Отправляет публичный ключ адреса в блокчейн
 paramsJson как в signMessagesV3
+feeStr - размер транзакции равен примерно 325
 Результат вернется в функцию
 msgPubkeyAddressToBlockchainResultJs("Ok"/"Not ok", errorNum, errorMessage)
 
