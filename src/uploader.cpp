@@ -149,7 +149,9 @@ static void removeOlderFolders(const QString &folderHtmls, const QString &curren
     const auto mask = QDir::Dirs | QDir::NoDotAndDotDot;
     for (const QString &dirName: sourceDir.entryList(mask)) {
         if (!isPathEquals(dirName, currentVersion)) {
-            QDir d(makePath(folderHtmls, dirName));
+            const QString pathRemove = makePath(folderHtmls, dirName);
+            LOG << "Remove older folder " << pathRemove;
+            QDir d(pathRemove);
             d.removeRecursively();
         }
     }
