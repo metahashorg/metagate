@@ -224,7 +224,7 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
 }
 
 void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult) {
-    LOG << "Check wallet password " << requestId << " " << keyName;
+    LOG << "Check wallet password " << requestId << " " << keyName << " " << walletPath;
 
     Opt<QString> result("Not ok");
     const TypedException exception = apiVrapper2([&](){
