@@ -405,7 +405,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 } else {
                     const auto idPair2 = db.findFirstMessageWithHash(m.username, m.hash, channel);
                     if (idPair2.first == -1) {
-                        LOG << "Insert new output message " << m.username << " " << channel << " " << m.counter;
+                        LOG << "Insert new output message " << m.username << " " << channel << " " << m.counter << " " << m.hash;
                         db.addMessage(m);
                     }
                 }
@@ -705,7 +705,7 @@ BEGIN_SLOT_WRAPPER
         if (!isChannel) {
             channel = "";
         }
-        const QString hashMessage = createHashMessage(dataHex);
+        const QString hashMessage = createHashMessage(encryptedDataHex);
         Message::Counter lastCnt = db.getMessageMaxCounter(thisAddress, channel);
         if (lastCnt < 0) {
             lastCnt = -1;

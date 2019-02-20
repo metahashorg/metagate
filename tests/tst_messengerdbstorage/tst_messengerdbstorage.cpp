@@ -158,6 +158,9 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     QCOMPARE(db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf", "jkgfjkgfgfitrrtoioriojk").second, -1);
     QCOMPARE(db.findFirstMessageWithHash("1234", "asdfdf", "jkgfjkgfgfitrrtoioriojk").second, 4000);
 
+    db.addMessage("1234", "3454", "abcd", "", false, 1, 1501, true, true, false, "asdfdf", 1);
+    QCOMPARE(db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf").second, 1501);
+
     QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 0);
     db.setLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", 4567, true);
     QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 4567);
