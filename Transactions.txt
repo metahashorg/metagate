@@ -110,7 +110,7 @@ balanceJson вида как в txsCalcBalanceResultJs
 txsSendedTxJs(requestId, server, result, errorNum, errorMessage)
 Возвращается при ответе сервера на запрос отправки транзакции
 
-txOnTorrentJs(requestId, server, hash, result, errorNum, errorMessage)
+txOnTorrentJs(server, hash, result, errorNum, errorMessage)
 Возвращается при появлении на сервере торрента отправленной транзакции
 result - json с транзакцией (см выше)
 
