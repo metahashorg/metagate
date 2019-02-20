@@ -26,6 +26,7 @@ void MessengerDBStorage::addMessage(const QString &user, const QString &duser, c
                                     qint64 fee, const QString &channelSha)
 {
     DbId userid = getUserId(user);
+    CHECK(userid != not_found, "User not created: " + user.toStdString());
     DbId contactid = -1;
     DbId channelid = -1;
     // ignore duser if channelSha is not null (channel message)
@@ -76,20 +77,31 @@ void MessengerDBStorage::addMessages(const std::vector<Message> &messages) {
     transactionGuard.commit();
 }
 
-DBStorage::DbId MessengerDBStorage::getUserId(const QString &username)
-{
+DBStorage::DbId MessengerDBStorage::getUserId(const QString &username) {
     QSqlQuery query(database());
     CHECK(query.prepare(selectMsgUsersForName), query.lastError().text().toStdString());
     query.bindValue(":username", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
     if (query.next()) {
         return query.value("id").toLongLong();
+    } else {
+        return not_found;
     }
+}
 
-    CHECK(query.prepare(insertMsgUsers), query.lastError().text().toStdString());
+DBStorage::DbId MessengerDBStorage::getUserIdOrCreate(const QString &username) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectMsgUsersForName), query.lastError().text().toStdString());
     query.bindValue(":username", username);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    return query.lastInsertId().toLongLong();
+    if (query.next()) {
+        return query.value("id").toLongLong();
+    } else {
+        CHECK(query.prepare(insertMsgUsers), query.lastError().text().toStdString());
+        query.bindValue(":username", username);
+        CHECK(query.exec(), query.lastError().text().toStdString());
+        return query.lastInsertId().toLongLong();
+    }
 }
 
 QStringList MessengerDBStorage::getUsersList()
@@ -146,7 +158,7 @@ ContactInfo MessengerDBStorage::getUserInfo(const QString &username) {
 }
 
 void MessengerDBStorage::setUserPublicKey(const QString &username, const QString &publickey, const QString &publicKeyRsa, const QString &txHash, const QString &blockchainName) {
-    getUserId(username);
+    getUserIdOrCreate(username);
     QSqlQuery query(database());
     CHECK(query.prepare(updateMsgUserPublicKey), query.lastError().text().toStdString());
     query.bindValue(":user", username);
@@ -169,7 +181,7 @@ QString MessengerDBStorage::getUserSignatures(const QString &username) {
 }
 
 void MessengerDBStorage::setUserSignatures(const QString &username, const QString &signatures) {
-    getUserId(username);
+    getUserIdOrCreate(username);
     QSqlQuery query(database());
     CHECK(query.prepare(updateMsgUserSignatures), query.lastError().text().toStdString());
     query.bindValue(":user", username);

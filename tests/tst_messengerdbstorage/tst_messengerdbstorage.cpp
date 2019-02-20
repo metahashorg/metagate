@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include "check.h"
+
 #include "MessengerDBStorage.h"
 
 const QString dbName = "messenger.db";
@@ -31,6 +33,8 @@ void tst_MessengerDBStorage::testMessengerDB2()
     messenger::MessengerDBStorage db;
     db.init();
 
+    db.setUserPublicKey("1234", "23424", "2345342", "", "");
+
     db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1);
@@ -45,8 +49,9 @@ void tst_MessengerDBStorage::testMessengerDB2()
     QCOMPARE(r.size(), 2);
     QCOMPARE(r.front().dataHex, QStringLiteral("abcd123"));
 
+    db.setUserPublicKey("user6", "23424", "2345342", "", "");
+    db.setUserPublicKey("user7", "23424", "2345342", "", "");
     DBStorage::DbId id7 = db.getUserId("user7");
-
     db.addMessage("user6", "user7", "Hello!", "", false, 8458864, 1, true, true, true, "jkfjkjttrjkgfjkgfjk", 445);
     db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 1, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
     db.addMessage("user7", "user1", "Hello1!", "", false, 84583864, 2, true, true, true, "dfjkjkgfjkgfjkgfjkjk", 445);
@@ -95,7 +100,6 @@ void tst_MessengerDBStorage::testMessengerDB2()
     QCOMPARE(db.getMessageMaxConfirmedCounter("userururut"), -1);
     //qDebug() << db.getUsersList();
 
-
     db.setUserPublicKey("user7", "dfkgflgfkltrioidfkldfklgfgf", "dsafdasf", "1234", "5678");
     QCOMPARE(db.getUserPublicKey("user7"), QStringLiteral("dfkgflgfkltrioidfkldfklgfgf"));
     QCOMPARE(db.getUserPublicKey("user1"), QStringLiteral(""));
@@ -104,6 +108,11 @@ void tst_MessengerDBStorage::testMessengerDB2()
     QCOMPARE(userInfo.pubkeyRsa, QStringLiteral("dsafdasf"));
     QCOMPARE(userInfo.txRsaHash, QStringLiteral("1234"));
     QCOMPARE(userInfo.blockchainName, QStringLiteral("5678"));
+
+    const auto userInfo3 = db.getUserInfo("user77");
+    QCOMPARE(userInfo3.pubkeyRsa, QStringLiteral(""));
+    QCOMPARE(userInfo3.txRsaHash, QStringLiteral(""));
+    QCOMPARE(userInfo3.blockchainName, QStringLiteral(""));
 
     db.setContactPublicKey("user27", "pubkey1", "tx1", "bl1");
     const auto userInfo2 = db.getContactInfo("user27");
@@ -114,7 +123,6 @@ void tst_MessengerDBStorage::testMessengerDB2()
     qint64 id = db.findFirstNotConfirmedMessage("user7");
     db.updateMessage(id, 4445, true);
     QVERIFY(id != db.findFirstNotConfirmedMessage("user7"));
-
 
     QCOMPARE(db.getLastReadCounterForUserContact("userrgjkg", "fjkgfjk"), -1);
     QCOMPARE(db.getLastReadCounterForUserContact("user7", "user1"), 0);
@@ -130,6 +138,7 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
         QFile::remove(dbName);
     messenger::MessengerDBStorage db;
     db.init();
+    db.setUserPublicKey("1234", "23424", "2345342", "", "");
     DBStorage::DbId id1 = db.getUserId("1234");
     db.addChannel(id1, "channel", "jkgfjkgfgfitrrtoioriojk", true, "ktkt", false, true, true);
     db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1, "jkgfjkgfgfitrrtoioriojk");
@@ -194,6 +203,7 @@ void tst_MessengerDBStorage::testMessengerDBSpeed()
         QFile::remove(dbName);
     messenger::MessengerDBStorage db;
     db.init();
+    db.setUserPublicKey("1234", "23424", "2345342", "", "");
     auto transactionGuard = db.beginTransaction();
     for (int n = 0; n < 1000; n++) {
         db.addMessage("1234", "3454", "abcd", "", false, 1000000 + n, 4001 + n, true, true, true, "asdfdf", 1);
@@ -209,6 +219,7 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
     messenger::MessengerDBStorage db;
     db.init();
 
+    db.setUserPublicKey("1234", "23424", "2345342", "", "");
     DBStorage::DbId id1 = db.getUserId("1234");
     db.addChannel(id1, "channel", "ch1", true, "ktkt", false, true, true);
     db.addChannel(id1, "channel", "ch2", true, "ktkt", false, true, true);

@@ -32,6 +32,8 @@ public:
 public:
     using DbId = qint64;
 
+    const static DbId not_found;
+
     explicit DBStorage(const QString &dbpath, const QString &dbname);
     virtual ~DBStorage();
 

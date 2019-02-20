@@ -27,6 +27,7 @@ public:
     void addMessages(const std::vector<Message> &messages);
 
     DbId getUserId(const QString &username);
+    DbId getUserIdOrCreate(const QString &username);
     QStringList getUsersList();
 
     DbId getContactId(const QString &username);

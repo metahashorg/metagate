@@ -25,6 +25,8 @@ static const QString selectSettingsKeyValue = "SELECT value from SETTINGS WHERE 
 static const QString settingsDBVersion = "dbversion";
 static const QString updatesLocationPrefix = ":/";
 
+const DBStorage::DbId DBStorage::not_found = -1;
+
 DBStorage::DBStorage(const QString &dbpath, const QString &dbname)
     : m_dbExist(false)
     , m_dbPath(dbpath)

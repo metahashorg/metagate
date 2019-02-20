@@ -244,6 +244,7 @@ void Messenger::addAddressToMonitored(const QString &address) {
 void Messenger::processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels) {
     db.setChannelsNotVisited(address);
     const DBStorage::DbId userId = db.getUserId(address);
+    CHECK(userId != DBStorage::not_found, "User not create: " + address.toStdString());
     for (const ChannelInfo &channel: channels) {
         const DBStorage::DbId dbId = db.getChannelForUserShaName(address, channel.titleSha);
         if (dbId != -1) {
@@ -270,6 +271,7 @@ void Messenger::processAddOrDeleteInChannel(const QString &address, const Channe
         events.emplace_back(QVariant::fromValue(event));
     } else {
         const DBStorage::DbId userId = db.getUserId(address);
+        CHECK(userId != DBStorage::not_found, "User not created: " + address.toStdString());
         db.addChannel(userId, channel.title, channel.titleSha, channel.admin == address, channel.admin, false, true, false);
         const Message::Counter cnt = channel.counter;
         if (cnt != -1) {
@@ -825,6 +827,7 @@ BEGIN_SLOT_WRAPPER
         const auto callbackWrap = [this, callback, address, title, titleSha](const TypedException &exception) {
             if (!exception.isSet()) {
                 const DBStorage::DbId userId = db.getUserId(address);
+                CHECK(userId != DBStorage::not_found, "User not created: " + address.toStdString());
                 db.addChannel(userId, title, titleSha, true, address, false, true, true);
                 db.setLastReadCounterForUserContact(address, titleSha, -1, true);
             }
