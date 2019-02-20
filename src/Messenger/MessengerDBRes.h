@@ -71,11 +71,11 @@ static const QString createMsgMessagesTable = "CREATE TABLE messages ( "
                                            ")";
 
 static const QString createMsgMessageUniqueIndex1 = "CREATE UNIQUE INDEX messagesUniqueIdx1 ON messages ( "
-                                                    "userid, contactid, morder, dt, text, isIncoming, "
+                                                    "userid, contactid, morder, dt, isIncoming, "
                                                     "isConfirmed, hash, fee)";
 
 static const QString createMsgMessageUniqueIndex2 = "CREATE UNIQUE INDEX messagesUniqueIdx2 ON messages ( "
-                                                    "userid, channelid, morder, dt, text, isIncoming, "
+                                                    "userid, channelid, morder, dt, isIncoming, "
                                                     "isConfirmed, hash, fee)";
 
 static const QString createMsgMessageCounterIndex = "CREATE INDEX messagesCounterIdx ON messages(morder)";
