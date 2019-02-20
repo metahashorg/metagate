@@ -195,7 +195,9 @@
     }
     
     function txOnTorrentJs(server, txHash, tx, errorNum, errorMessage) {
-        document.createWalletForm.txHash.value = txHash;
+        if (errorNum == 0) {
+            document.createWalletForm.txHash.value = txHash;
+        }
     }
     
 </script>
