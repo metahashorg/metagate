@@ -319,13 +319,7 @@ BEGIN_SLOT_WRAPPER
         emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
             const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
             emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
-                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, [isForcibly, processFunc, errorFunc](const TypedException &exception) {
-                    if (isForcibly) {
-                        processFunc(true);
-                    } else {
-                        errorFunc(exception);
-                    }
-                }, signalFunc));
+                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, errorFunc, signalFunc));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
     });
@@ -361,13 +355,7 @@ BEGIN_SLOT_WRAPPER
         const QString messageToSign = Messenger::makeTextForSignRegisterBlockchainRequest(address, fee, txHash, blockchainServ, blockchainName);
         emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, messageToSign, isForcibly, fee, txHash, blockchainServ, blockchainName, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
             emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, pubkeyRsa, txHash, blockchainServ, blockchainName, makeFunc, errorFunc, processFunc](const QString &pubkey, const QString &sign){
-                emit messenger->registerAddressFromBlockchain(isForcibly, address, pubkeyRsa, pubkey, sign, fee, txHash, blockchainServ, blockchainName, Messenger::RegisterAddressBlockchainCallback(processFunc, [isForcibly, processFunc, errorFunc](const TypedException &exception) {
-                    if (isForcibly) {
-                        processFunc(true);
-                    } else {
-                        errorFunc(exception);
-                    }
-                }, signalFunc));
+                emit messenger->registerAddressFromBlockchain(isForcibly, address, pubkeyRsa, pubkey, sign, fee, txHash, blockchainServ, blockchainName, Messenger::RegisterAddressBlockchainCallback(processFunc, errorFunc, signalFunc));
             }, errorFunc, signalFunc));
         }, errorFunc, signalFunc));
     });
