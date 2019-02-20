@@ -221,8 +221,8 @@ void tst_MessengerDBStorage::testMessengerDecryptedText()
 
     db.setUserPublicKey("1234", "23424", "2345342", "", "");
     DBStorage::DbId id1 = db.getUserId("1234");
-    db.addChannel(id1, "channel", "ch1", true, "ktkt", false, true, true);
-    db.addChannel(id1, "channel", "ch2", true, "ktkt", false, true, true);
+    db.addChannel(id1, "channel1", "ch1", true, "ktkt", false, true, true);
+    db.addChannel(id1, "channel2", "ch2", true, "ktkt", false, true, true);
     db.addMessage("1234", "3454", "abcd", "", false, 1, 4000, true, true, true, "asdfdf", 1, "ch1");
     db.addMessage("1234", "3454", "abcd2", "", false, 1, 4001, true, true, true, "asdfdf", 1);
     db.addMessage("1234", "34546", "abcd", "sadfads", true, 1, 4002, true, true, true, "asdfdf", 1, "ch2");

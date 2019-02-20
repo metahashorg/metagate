@@ -20,7 +20,7 @@ public:
     void addMessage(const QString &user, const QString &duser,
                     const QString &text, const QString &decryptedText, bool isDecrypted, uint64_t timestamp, Message::Counter counter,
                     bool isIncoming, bool canDecrypted, bool isConfirmed,
-                    const QString &hash, qint64 fee, const QString &channelSha = QString());
+                    const QString &hash, qint64 fee, const QString &channelSha = QString(""));
 
     void addMessage(const Message &message);
 
@@ -30,7 +30,7 @@ public:
     DbId getUserIdOrCreate(const QString &username);
     QStringList getUsersList();
 
-    DbId getContactId(const QString &username);
+    DbId getContactIdOrCreate(const QString &username);
 
     QString getUserPublicKey(const QString &username);
     ContactInfo getUserInfo(const QString &username);

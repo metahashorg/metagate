@@ -21,6 +21,8 @@ static const QString createMsgUsersTable = "CREATE TABLE users ( "
 
 static const QString createUsersSortingIndex = "CREATE INDEX usersSortingIdx ON users(username)";
 
+static const QString createUsersUniqueIndex = "CREATE UNIQUE INDEX usersUniqueIdx ON users(username)";
+
 static const QString createMsgContactsTable = "CREATE TABLE contacts ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
                                                 "username VARCHAR(100) UNIQUE NOT NULL DEFAULT '', "
@@ -31,12 +33,14 @@ static const QString createMsgContactsTable = "CREATE TABLE contacts ( "
 
 static const QString createContactsSortingIndex = "CREATE INDEX contactsSortingIdx ON contacts(username)";
 
+static const QString createContactsUniqueIndex = "CREATE UNIQUE INDEX contactsUniqueIdx ON contacts(username)";
+
 static const QString createMsgChannelsTable = "CREATE TABLE channels ( "
                                                         "id INTEGER PRIMARY KEY NOT NULL, "
                                                         "userid  INTEGER NOT NULL, "
                                                         "channel TEXT NOT NULL DEFAULT '', "
                                                         "shaName TEXT NOT NULL DEFAULT '', "
-                                                        "isAdmin BOOLEAN, "
+                                                        "isAdmin BOOLEAN NOT NULL, "
                                                         "adminName VARCHAR(200) NOT NULL DEFAULT '', "
                                                         "isBanned BOOLEAN, "
                                                         "isWriter BOOLEAN, "
@@ -44,29 +48,34 @@ static const QString createMsgChannelsTable = "CREATE TABLE channels ( "
                                                         "FOREIGN KEY (userid) REFERENCES users(id) "
                                                         ")";
 
+static const QString createChannelsUniqueIndex = "CREATE UNIQUE INDEX channelsUniqueIdx ON channels(userid, channel, isAdmin)";
 
 static const QString createMsgMessagesTable = "CREATE TABLE messages ( "
                                            "id INTEGER PRIMARY KEY NOT NULL, "
-                                           "userid  INTEGER NOT NULL, "
-                                           "contactid  INTEGER, "
-                                           "morder INT8, "
-                                           "dt INT8, "
+                                           "userid  INTEGER , "
+                                           "contactid  INTEGER , "
+                                           "morder INT8 NOT NULL, "
+                                           "dt INT8 NOT NULL, "
                                            "text TEXT NOT NULL DEFAULT '', "
                                            "decryptedText TEXT NOT NULL DEFAULT '', "
                                            "isDecrypted BOOLEAN, "
-                                           "isIncoming BOOLEAN, "
-                                           "canDecrypted BOOLEAN, "
-                                           "isConfirmed BOOLEAN, "
+                                           "isIncoming BOOLEAN NOT NULL, "
+                                           "canDecrypted BOOLEAN NOT NULL, "
+                                           "isConfirmed BOOLEAN NOT NULL, "
                                            "hash VARCHAR(100) NOT NULL DEFAULT '', "
-                                           "fee INT8, "
-                                           "channelid  INTEGER, "
+                                           "fee INT8 NOT NULL, "
+                                           "channelid  INTEGER , "
                                            "FOREIGN KEY (userid) REFERENCES users(id), "
                                            "FOREIGN KEY (contactid) REFERENCES contacts(id), "
                                            "FOREIGN KEY (channelid) REFERENCES channels(id) "
                                            ")";
 
-static const QString createMsgMessageUniqueIndex = "CREATE UNIQUE INDEX messagesUniqueIdx ON messages ( "
-                                                    "userid, contactid, morder, dt, text, isIncoming, canDecrypted, "
+static const QString createMsgMessageUniqueIndex1 = "CREATE UNIQUE INDEX messagesUniqueIdx1 ON messages ( "
+                                                    "userid, contactid, morder, dt, text, isIncoming, "
+                                                    "isConfirmed, hash, fee)";
+
+static const QString createMsgMessageUniqueIndex2 = "CREATE UNIQUE INDEX messagesUniqueIdx2 ON messages ( "
+                                                    "userid, channelid, morder, dt, text, isIncoming, "
                                                     "isConfirmed, hash, fee)";
 
 static const QString createMsgMessageCounterIndex = "CREATE INDEX messagesCounterIdx ON messages(morder)";
