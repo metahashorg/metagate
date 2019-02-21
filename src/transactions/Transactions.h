@@ -131,7 +131,7 @@ public:
 
     using GetLastUpdateCallback = std::function<void(const system_time_point &lastUpdate, const system_time_point &now)>;
 
-    using GetNonceCallback = CallbackWrapper<std::function<void(size_t nonce, const QString &server)>>;
+    using GetNonceCallback = CallbackWrapper<std::function<void(size_t nonce, const QString &serverError)>>;
 
     using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate)>;
 

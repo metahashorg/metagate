@@ -489,10 +489,9 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
         const bool isNonce = !nonce.isEmpty();
         if (!isNonce) {
             Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
-            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, transactions::Transactions::GetNonceCallback([this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &server) {
-                LOG << "Nonce getted " << keyName << " " << nonce;
+            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, transactions::Transactions::GetNonceCallback([this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &serverError) {
+                LOG << "Nonce getted " << keyName << " " << nonce << " " << serverError;
                 signTransaction(nonce);
-                makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
             }, errorFunc, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
         } else {
             bool isParseNonce = false;
