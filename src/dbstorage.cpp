@@ -9,6 +9,8 @@
 static const QString dbFileNameSuffix = "db";
 
 static const QString sqliteSettings = "PRAGMA foreign_keys=on";
+static const QString sqliteSettings1 = "PRAGMA synchronous=NORMAL";
+static const QString sqliteSettings2 = "PRAGMA journal_mode=WAL";
 
 static const QString dropTable = "DROP TABLE IF EXISTS %1";
 
@@ -55,12 +57,15 @@ QString DBStorage::dbFileName() const
 bool DBStorage::init()
 {
     if (dbExist()) {
+        execPragma(sqliteSettings1);
+        execPragma(sqliteSettings2);
         return updateDB();
     }
     LOG << "Create DB " << dbName();
     // Create settings
-    QSqlQuery query(sqliteSettings, m_db);
-    CHECK(query.exec(), query.lastError().text().toStdString());
+    execPragma(sqliteSettings);
+    execPragma(sqliteSettings1);
+    execPragma(sqliteSettings2);
     createTable(QStringLiteral("settings"), createSettingsTable);
     setSettings(settingsDBVersion, currentVersion());
 
@@ -91,7 +96,9 @@ void DBStorage::setSettings(const QString &key, const QVariant &value)
 
 void DBStorage::execPragma(const QString &sql)
 {
-    database().exec(sql);
+    QSqlQuery query(m_db);
+    CHECK(query.prepare(sql), query.lastError().text().toStdString());
+    CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
 DBStorage::TransactionGuard DBStorage::beginTransaction() {
