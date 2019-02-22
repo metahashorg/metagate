@@ -75,6 +75,8 @@ NsLookup::NsLookup(QObject *parent)
     dnsServerName = settings.value("ns_lookup/dns_server").toString();
     CHECK(settings.contains("ns_lookup/dns_server_port"), "settings ns_lookup/dns_server_port field not found");
     dnsServerPort = settings.value("ns_lookup/dns_server_port").toInt();
+    CHECK(settings.contains("ns_lookup/use_users_servers"), "settings ns_lookup/use_users_servers field not found");
+    useUsersServers = settings.value("ns_lookup/use_users_servers").toBool();
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
@@ -200,8 +202,10 @@ void NsLookup::finalizeLookup() {
     if (isSuccessFl) {
         emit serversFlushed(TypedException());
 
-        startScanTime = ::now();
-        continueResolveP2P(std::begin(nodes));
+        if (useUsersServers) {
+            startScanTime = ::now();
+            continueResolveP2P(std::begin(nodes));
+        }
     }
     isSafeCheck = false;
     qtimer.setInterval(msTimer.count());
@@ -659,9 +663,11 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
     }
     std::vector<NodeInfo> nodes = found->second;
 
-    const auto foundP2P = allNodesForTypesP2P.find(foundType->second.node);
-    if (foundP2P != allNodesForTypesP2P.end()) {
-        nodes.insert(nodes.end(), foundP2P->second.begin(), foundP2P->second.end());
+    if (useUsersServers) {
+        const auto foundP2P = allNodesForTypesP2P.find(foundType->second.node);
+        if (foundP2P != allNodesForTypesP2P.end()) {
+            nodes.insert(nodes.end(), foundP2P->second.begin(), foundP2P->second.end());
+        }
     }
     lock.unlock();
 

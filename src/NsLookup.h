@@ -186,6 +186,8 @@ private:
 
     int dnsServerPort;
 
+    bool useUsersServers = false;
+
 };
 
 #endif // NSLOOKUP_H
