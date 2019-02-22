@@ -3,6 +3,7 @@
 #include <machine_uid.h>
 
 #include <vector>
+#include <set>
 #include <algorithm>
 
 #include <stdio.h>
@@ -28,6 +29,8 @@
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 #include <net/if_types.h>
+
+#include <QProcess>
 #else //!TARGET_OS_MAC
 // #include <linux/if.h>
 // #include <linux/sockios.h>
@@ -201,7 +204,23 @@ std::string getMachineUidInternal() {
     return result;
 }
 
+#include "Log.h"
+
 bool isVirtualInternal() {
+#ifdef TARGET_OS_MAC
+    QProcess process;
+    process.start("bash", QStringList() << "-c" << "ioreg -l | grep -e Manufacturer -e \'Vendor Name\'");
+    process.waitForFinished();
+    QString output(process.readAllStandardOutput());
+    output = output.toLower();
+    const std::set<QString> virtualNames = {"VirtualBox", "Oracle", "VMware", "Parallels"};
+    for (const QString &name: virtualNames) {
+        if (output.contains(name.toLower())) {
+            return true;
+        }
+    }
+    return false;
+#else
     for (size_t i = 0; i < 10; i++) {
         const std::string fileName = "/sys/class/thermal/thermal_zone" + std::to_string(i) + "/temp";
         if (isExistFile(QString::fromStdString(fileName))) {
@@ -209,6 +228,7 @@ bool isVirtualInternal() {
         }
     }
     return true;
+#endif
 }
 
 #endif // _WIN32
