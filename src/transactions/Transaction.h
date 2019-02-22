@@ -36,6 +36,7 @@ struct Transaction {
     bool isInput;
     int64_t blockNumber = 0;
     QString blockHash = "";
+    int intStatus = 0;
 
     bool isSetDelegate = false; // TODO после введения type стало избыточным полем. Удалить
     bool isDelegate;

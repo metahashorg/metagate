@@ -7,7 +7,7 @@ namespace transactions {
 
 static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
-static const int databaseVersion = 3;
+static const int databaseVersion = 4;
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -29,6 +29,7 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "blockNumber INTEGER DEFAULT 0, "
                                                 "blockHash TEXT NOT NULL DEFAULT '', "
                                                 "type INTEGER DEFAULT 0, "
+                                                "intStatus INTEGER DEFAULT 0, "
                                                 "status INT8 "
                                                 ")";
 
@@ -51,8 +52,8 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency) ";
 
-static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash) "
-                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash)";
+static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash, intStatus) "
+                                        "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash, :intStatus)";
 
 static const QString selectPaymentsForDest = "SELECT * FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "
@@ -98,7 +99,7 @@ static const QString updatePaymentForAddress = "UPDATE payments "
                                                     "    value = :value, ts = :ts, data = :data, fee = :fee, nonce = :nonce, "
                                                     "    isSetDelegate = :isSetDelegate, isDelegate = :isDelegate, "
                                                     "    delegateValue = :delegateValue, delegateHash = :delegateHash, "
-                                                    "    status = :status, type = :type, blockNumber = :blockNumber "
+                                                    "    status = :status, type = :type, blockNumber = :blockNumber, blockHash = :blockHash, intStatus = :intStatus "
                                                     "WHERE currency = :currency AND txid = :txid "
                                                     "    AND address = :address AND isInput = :isInput";
 

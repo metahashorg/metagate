@@ -23,7 +23,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                                        bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
-                                       Transaction::Status status, Transaction::Type type, qint64 blockNumber, const QString &blockHash)
+                                       Transaction::Status status, Transaction::Type type, qint64 blockNumber, const QString &blockHash, int intStatus)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertPayment), query.lastError().text().toStdString());
@@ -46,6 +46,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":type", type);
     query.bindValue(":blockNumber", blockNumber);
     query.bindValue(":blockHash", blockHash);
+    query.bindValue(":intStatus", intStatus);
     CHECK(query.exec(), query.lastError().text().toStdString());
 
 }
@@ -56,7 +57,7 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
-               trans.status, trans.type, trans.blockNumber, trans.blockHash);
+               trans.status, trans.type, trans.blockNumber, trans.blockHash, trans.intStatus);
 }
 
 void TransactionsDBStorage::addPayments(const std::vector<Transaction> &transactions)
@@ -195,6 +196,8 @@ void TransactionsDBStorage::updatePayment(const QString &address, const QString 
     query.bindValue(":status", trans.status);
     query.bindValue(":type", trans.type);
     query.bindValue(":blockNumber", static_cast<qint64>(trans.blockNumber));
+    query.bindValue(":blockHash", trans.blockHash);
+    query.bindValue(":intStatus", trans.intStatus);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
@@ -443,6 +446,7 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
     trans.blockNumber = query.value("blockNumber").toLongLong();
     trans.blockHash = query.value("blockHash").toString();
+    trans.intStatus = query.value("intStatus").toInt();
 }
 
 void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const
