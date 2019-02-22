@@ -402,6 +402,7 @@ BEGIN_SLOT_WRAPPER
         if (addr.type != currentType) {
             servers = nsLookup.getRandom(addr.type, 3, 3);
             if (servers.empty()) {
+                LOG << "Warn: servers empty: " << addr.type;
                 continue;
             }
             currentType = addr.type;

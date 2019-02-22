@@ -54,8 +54,8 @@ Wallet& CryptographicManager::getWallet(const std::string &address) const {
 }
 
 WalletRsa& CryptographicManager::getWalletRsa(const std::string &address) const {
-    CHECK_TYPED(walletRsa != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet rsa not unlock");
-    CHECK_TYPED(wallet != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet not unlock");
+    CHECK_TYPED(walletRsa != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet rsa not unlock: " + address);
+    CHECK_TYPED(wallet != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet not unlock " + address);
     CHECK_TYPED(wallet->getAddress() == address, TypeErrors::WALLET_OTHER, "Other wallet unlocked: " + wallet->getAddress() + ". " + address);
     return *walletRsa;
 }
