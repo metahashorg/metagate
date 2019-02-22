@@ -396,7 +396,7 @@ BEGIN_SLOT_WRAPPER
     QString currentType;
     std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
     const time_point now = ::now();
-    const auto checkTxsPeriod = 1min;
+    const auto checkTxsPeriod = 3min;
     for (size_t i = posInAddressInfos; i < std::min(addressesInfos.size(), posInAddressInfos + MAXIMUM_ADDRESSES); i++) {
         const AddressInfo &addr = addressesInfos[i];
         if (addr.type != currentType) {
@@ -422,7 +422,7 @@ BEGIN_SLOT_WRAPPER
     }
     posInAddressInfos += MAXIMUM_ADDRESSES;
 
-    if (now - lastCheckTxsTime >= checkTxsPeriod) {
+    if (now - lastCheckTxsTime >= checkTxsPeriod && posInAddressInfos >= addressesInfos.size()) {
         LOG << "All txs checked";
         lastCheckTxsTime = now;
     }
