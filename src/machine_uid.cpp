@@ -6,17 +6,26 @@
 
 std::string getMachineUidInternal();
 
+bool isVirtualInternal();
+
 static bool isInitialized = false;
 static std::string savedUid;
+static bool isVirtual = false;
 
 void initializeMachineUid() {
     savedUid = getMachineUidInternal();
+    isVirtual = isVirtualInternal();
     isInitialized = true;
 }
 
 std::string getMachineUid() {
     CHECK(isInitialized, "Not initialized");
     return savedUid;
+}
+
+bool isVirtualMachine() {
+    CHECK(isInitialized, "Not initialized");
+    return isVirtual;
 }
 
 std::pair<std::string, std::string> findMacAddressFile() {

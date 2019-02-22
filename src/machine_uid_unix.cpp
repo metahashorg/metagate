@@ -35,6 +35,8 @@
 
 #include <string>
 
+#include "utils.h"
+
 static const char* getMachineName()
 {
     static struct utsname u;
@@ -197,6 +199,16 @@ std::string getMachineUidInternal() {
     getMacHash(mac1, mac2);
     result += std::to_string(mac1) + std::to_string(mac2);
     return result;
+}
+
+bool isVirtualInternal() {
+    for (size_t i = 0; i < 10; i++) {
+        const std::string fileName = "/sys/class/thermal/thermal_zone" + std::to_string(i) + "/temp";
+        if (isExistFile(QString::fromStdString(fileName))) {
+            return false;
+        }
+    }
+    return true;
 }
 
 #endif // _WIN32
