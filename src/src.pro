@@ -206,6 +206,11 @@ unix:!macx: include(../libs-unix.pri)
 win32: include(../libs-win.pri)
 macx: include(../libs-macos.pri)
 
+win32: QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
+win32: QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
+win32: QMAKE_CFLAGS -= -Zc:strictStrings
+win32: QMAKE_CXXFLAGS -= -Zc:strictStrings
+
 DISTFILES +=
 
 RESOURCES += \

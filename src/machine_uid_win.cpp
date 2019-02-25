@@ -4,13 +4,21 @@
 
 #include <vector>
 #include <algorithm>
+#include <codecvt>
+#include <locale>
+#include <set>
+
+#include <QString>
 
 #define WIN32_LEAN_AND_MEAN
+#include <Wbemidl.h>
 #include <windows.h>
 #include <intrin.h>
 #include <iphlpapi.h>
 #include <lm.h>
+#include <comdef.h>
 #pragma comment(lib, "netapi32.lib")
+#pragma comment(lib, "wbemuuid.lib")
 
 static bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
 {
@@ -187,6 +195,95 @@ std::string getMachineUidInternal() {
     getMacHash(mac1, mac2);
     result += std::to_string(mac1) + std::to_string(mac2);
     return result;
+}
+
+static std::pair<std::string,std::string> getComputerManufacturerAndModel() {
+    // Obtain the initial locator to Windows Management on a particular host computer.
+    IWbemLocator *locator = nullptr;
+    IWbemServices *services = nullptr;
+    auto hResult = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID *)&locator);
+
+    auto hasFailed = [&hResult]() {
+        if (FAILED(hResult)) {
+            auto error = _com_error(hResult);
+            return true;
+        }
+        return false;
+    };
+
+    auto getValue = [&hResult, &hasFailed](IWbemClassObject *classObject, LPCWSTR property) {
+        std::string propertyValueText = "Not set";
+        VARIANT propertyValue;
+        hResult = classObject->Get(property, 0, &propertyValue, 0, 0);
+        if (!hasFailed()) {
+            if ((propertyValue.vt == VT_NULL) || (propertyValue.vt == VT_EMPTY)) {
+            } else if (propertyValue.vt & VT_ARRAY) {
+                propertyValueText = "Unknown"; //Array types not supported
+            } else {
+                const auto wstr = std::wstring(propertyValue.bstrVal, SysStringLen(propertyValue.bstrVal));
+                using convert_type = std::codecvt_utf8<wchar_t>;
+                std::wstring_convert<convert_type, wchar_t> converter;
+
+                //use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
+                propertyValueText = converter.to_bytes(wstr);
+            }
+        }
+        VariantClear(&propertyValue);
+        return propertyValueText;
+    };
+
+    std::string manufacturer = "Not set";
+    std::string model = "Not set";
+    if (!hasFailed()) {
+        // Connect to the root\cimv2 namespace with the current user and obtain pointer pSvc to make IWbemServices calls.
+        hResult = locator->ConnectServer(L"ROOT\\CIMV2", nullptr, nullptr, 0, NULL, 0, 0, &services);
+
+        if (!hasFailed()) {
+            // Set the IWbemServices proxy so that impersonation of the user (client) occurs.
+            hResult = CoSetProxyBlanket(services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr, RPC_C_AUTHN_LEVEL_CALL,
+                RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE);
+
+            if (!hasFailed()) {
+                IEnumWbemClassObject* classObjectEnumerator = nullptr;
+                hResult = services->ExecQuery(L"WQL", L"SELECT * FROM Win32_ComputerSystem", WBEM_FLAG_FORWARD_ONLY |
+                    WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &classObjectEnumerator);
+                if (!hasFailed()) {
+                    IWbemClassObject *classObject;
+                    ULONG uReturn = 0;
+                    hResult = classObjectEnumerator->Next(WBEM_INFINITE, 1, &classObject, &uReturn);
+                    if (uReturn != 0) {
+                        manufacturer = getValue(classObject, (LPCWSTR)L"Manufacturer");
+                        model = getValue(classObject, (LPCWSTR)L"Model");
+                    }
+                    classObject->Release();
+                }
+                classObjectEnumerator->Release();
+            }
+        }
+    }
+
+    if (locator) {
+        locator->Release();
+    }
+    if (services) {
+        services->Release();
+    }
+    CoUninitialize();
+    return { manufacturer, model };
+}
+
+bool isVirtualInternal() {
+    const auto result = getComputerManufacturerAndModel();
+    QString str = QString::fromStdString(result.second);
+    str = str.toLower();
+
+    const std::set<QString> virtualNames = {"VirtualBox", "Oracle", "VMware", "Parallels", "Virtual"};
+    for (const QString &name: virtualNames) {
+        if (str.contains(name.toLower())) {
+            return true;
+        }
+    }
+    return false;
 }
 
 #endif // _WIN32
