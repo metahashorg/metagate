@@ -45,6 +45,7 @@ using namespace std::placeholders;
 #include "Module.h"
 
 #include "machine_uid.h"
+#include "platform.h"
 
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
@@ -81,6 +82,8 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     data.insert("user_id", userId);
     data.insert("application_ver", applicationVersion);
     data.insert("interface_ver", interfaceVersion);
+    data.insert("is_virtual", isVirtualMachine());
+    data.insert("os_name", osName);
 
     QJsonArray keysTmhJson;
     for (const QString &key: keysTmh) {
