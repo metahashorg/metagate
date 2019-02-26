@@ -62,15 +62,15 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 public:
 
-    using SetJavascriptWrapperCallback = CallbackWrapper<std::function<void()>>;
+    using SetJavascriptWrapperCallback = CallbackWrapper<void()>;
 
-    using SetAuthCallback = CallbackWrapper<std::function<void()>>;
+    using SetAuthCallback = CallbackWrapper<void()>;
 
-    using SetMessengerJavascriptCallback = CallbackWrapper<std::function<void()>>;
+    using SetMessengerJavascriptCallback = CallbackWrapper<void()>;
 
-    using SetTransactionsJavascriptCallback = CallbackWrapper<std::function<void()>>;
+    using SetTransactionsJavascriptCallback = CallbackWrapper<void()>;
 
-    using SetProxyJavascriptCallback = CallbackWrapper<std::function<void()>>;
+    using SetProxyJavascriptCallback = CallbackWrapper<void()>;
 
 public:
 

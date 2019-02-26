@@ -29,21 +29,21 @@ public:
 
 public:
 
-    using DecryptMessagesCallback = CallbackWrapper<std::function<void(const std::vector<Message> &messages)>>;
+    using DecryptMessagesCallback = CallbackWrapper<void(const std::vector<Message> &messages)>;
 
-    using SignMessageCallback = CallbackWrapper<std::function<void(const QString &pubkey, const QString &sign)>>;
+    using SignMessageCallback = CallbackWrapper<void(const QString &pubkey, const QString &sign)>;
 
-    using SignMessagesCallback = CallbackWrapper<std::function<void(const QString &pubkey, const std::vector<QString> &sign)>>;
+    using SignMessagesCallback = CallbackWrapper<void(const QString &pubkey, const std::vector<QString> &sign)>;
 
-    using SignTransactionCallback = CallbackWrapper<std::function<void(const QString &transaction, const QString &pubkey, const QString &sign)>>;
+    using SignTransactionCallback = CallbackWrapper<void(const QString &transaction, const QString &pubkey, const QString &sign)>;
 
-    using GetPubkeyRsaCallback = CallbackWrapper<std::function<void(const QString &pubkeyRsa)>>;
+    using GetPubkeyRsaCallback = CallbackWrapper<void(const QString &pubkeyRsa)>;
 
-    using EncryptMessageCallback = CallbackWrapper<std::function<void(const QString &encryptedData)>>;
+    using EncryptMessageCallback = CallbackWrapper<void(const QString &encryptedData)>;
 
-    using UnlockWalletCallback = CallbackWrapper<std::function<void()>>;
+    using UnlockWalletCallback = CallbackWrapper<void()>;
 
-    using LockWalletCallback = CallbackWrapper<std::function<void()>>;
+    using LockWalletCallback = CallbackWrapper<void()>;
 
 signals:
 

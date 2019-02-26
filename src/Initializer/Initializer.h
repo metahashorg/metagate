@@ -55,13 +55,13 @@ public:
 
 public:
 
-    using GetAllStatesCallback = CallbackWrapper<std::function<void()>>;
+    using GetAllStatesCallback = CallbackWrapper<void()>;
 
-    using ReadyCallback = CallbackWrapper<std::function<void(const ReadyType &result)>>;
+    using ReadyCallback = CallbackWrapper<void(const ReadyType &result)>;
 
-    using GetTypesCallback = CallbackWrapper<std::function<void(const std::vector<QString> &result)>>;
+    using GetTypesCallback = CallbackWrapper<void(const std::vector<QString> &result)>;
 
-    using GetSubTypesCallback = CallbackWrapper<std::function<void(const std::vector<StateType> &result)>>;
+    using GetSubTypesCallback = CallbackWrapper<void(const std::vector<StateType> &result)>;
 
     using Callback = std::function<void()>;
 

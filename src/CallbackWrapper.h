@@ -17,7 +17,7 @@ public:
 
 private:
 
-    static Callback makeWrapCallback(bool isWrapError, const Callback &callback, const ErrorCallback &errorCallback) {
+    static std::function<Callback> makeWrapCallback(bool isWrapError, const std::function<Callback> &callback, const ErrorCallback &errorCallback) {
         if (isWrapError) {
             return [callback, errorCallback](auto ...args) {
                 const TypedException exception = apiVrapper2(std::bind(callback, args...));
@@ -34,7 +34,7 @@ public:
 
     CallbackWrapper() = default;
 
-    CallbackWrapper(const Callback &callback, const ErrorCallback &errorCallback, const SignalFunc &signal, bool isWrapError=true)
+    CallbackWrapper(const std::function<Callback> &callback, const ErrorCallback &errorCallback, const SignalFunc &signal, bool isWrapError=true)
         : callback(makeWrapCallback(isWrapError, callback, errorCallback))
         , errorCallback(errorCallback)
         , signal(signal)
@@ -65,7 +65,7 @@ public:
 
 private:
 
-    Callback callback;
+    std::function<Callback> callback;
 
     ErrorCallback errorCallback;
 

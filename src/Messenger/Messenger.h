@@ -137,43 +137,43 @@ private:
 
 public:
 
-    using GetMessagesCallback = CallbackWrapper<std::function<void(const std::vector<Message> &messages)>>;
+    using GetMessagesCallback = CallbackWrapper<void(const std::vector<Message> &messages)>;
 
-    using SavePosCallback = CallbackWrapper<std::function<void()>>;
+    using SavePosCallback = CallbackWrapper<void()>;
 
-    using GetSavedPosCallback = CallbackWrapper<std::function<void(const Message::Counter &pos)>>;
+    using GetSavedPosCallback = CallbackWrapper<void(const Message::Counter &pos)>;
 
-    using GetSavedsPosCallback = CallbackWrapper<std::function<void(const std::vector<std::pair<QString, Message::Counter>> &pos)>>;
+    using GetSavedsPosCallback = CallbackWrapper<void(const std::vector<std::pair<QString, Message::Counter>> &pos)>;
 
-    using RegisterAddressCallback = CallbackWrapper<std::function<void(bool isNew)>>;
+    using RegisterAddressCallback = CallbackWrapper<void(bool isNew)>;
 
-    using RegisterAddressBlockchainCallback = CallbackWrapper<std::function<void(bool isNew)>>;
+    using RegisterAddressBlockchainCallback = CallbackWrapper<void(bool isNew)>;
 
-    using SignedStringsCallback = CallbackWrapper<std::function<void()>>;
+    using SignedStringsCallback = CallbackWrapper<void()>;
 
-    using SavePubkeyCallback = CallbackWrapper<std::function<void(bool isNew)>>;
+    using SavePubkeyCallback = CallbackWrapper<void(bool isNew)>;
 
-    using GetPubkeyAddressCallback = CallbackWrapper<std::function<void(const QString &pubkey)>>;
+    using GetPubkeyAddressCallback = CallbackWrapper<void(const QString &pubkey)>;
 
-    using SendMessageCallback = CallbackWrapper<std::function<void()>>;
+    using SendMessageCallback = CallbackWrapper<void()>;
 
-    using GetCountMessagesCallback = CallbackWrapper<std::function<void(const Message::Counter &count)>>;
+    using GetCountMessagesCallback = CallbackWrapper<void(const Message::Counter &count)>;
 
-    using CreateChannelCallback = CallbackWrapper<std::function<void()>>;
+    using CreateChannelCallback = CallbackWrapper<void()>;
 
-    using AddWriterToChannelCallback = CallbackWrapper<std::function<void()>>;
+    using AddWriterToChannelCallback = CallbackWrapper<void()>;
 
-    using DelWriterToChannelCallback = CallbackWrapper<std::function<void()>>;
+    using DelWriterToChannelCallback = CallbackWrapper<void()>;
 
-    using GetChannelListCallback = CallbackWrapper<std::function<void(const std::vector<ChannelInfo> &channels)>>;
+    using GetChannelListCallback = CallbackWrapper<void(const std::vector<ChannelInfo> &channels)>;
 
-    using DecryptUserMessagesCallback = CallbackWrapper<std::function<void()>>;
+    using DecryptUserMessagesCallback = CallbackWrapper<void()>;
 
-    using AddAllWalletsInFolderCallback = CallbackWrapper<std::function<void()>>;
+    using AddAllWalletsInFolderCallback = CallbackWrapper<void()>;
 
-    using WantToTalkCallback = CallbackWrapper<std::function<void()>>;
+    using WantToTalkCallback = CallbackWrapper<void()>;
 
-    using UserInfoCallback = CallbackWrapper<std::function<void(const ContactInfo &info)>>;
+    using UserInfoCallback = CallbackWrapper<void(const ContactInfo &info)>;
 
 public:
 
