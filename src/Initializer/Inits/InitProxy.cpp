@@ -89,7 +89,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wssClient, std::shared_future<MainWindow*> mainWindow) {
+InitProxy::Return InitProxy::initialize(std::shared_future<MainWindow*> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
         proxyJavascript = std::make_unique<proxy::ProxyJavascript>();
         proxyJavascript->moveToThread(mainThread);
@@ -97,7 +97,7 @@ InitProxy::Return InitProxy::initialize(std::shared_future<WebSocketClient*> wss
         CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoProxyResult, this, &InitProxy::proxyStarted), "not connect onProxyStarted");
         CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoUPnPResult, this, &InitProxy::upnpStarted), "not connect onUpnpStarted");
         CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoComplete1, this, &InitProxy::proxyCompleted), "not connect proxyCompleted");
-        proxyWebsocket = std::make_unique<proxy::WebSocketSender>(*(wssClient.get()), *proxyManager);
+        proxyWebsocket = std::make_unique<proxy::WebSocketSender>(*proxyManager);
         proxyWebsocket->moveToThread(mainThread);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);
         MainWindow &mw = *mainWindow.get();

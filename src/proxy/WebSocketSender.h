@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class WebSocketClient;
+#include "WebSocketClient.h"
 
 struct TypedException;
 
@@ -16,7 +16,7 @@ class WebSocketSender : public QObject
     Q_OBJECT
 public:
 
-    explicit WebSocketSender(WebSocketClient &client, Proxy &proxyManager, QObject *parent = nullptr);
+    explicit WebSocketSender(Proxy &proxyManager, QObject *parent = nullptr);
 
 signals:
 
@@ -46,7 +46,7 @@ private slots:
 
 private:
 
-    WebSocketClient &client;
+    WebSocketClient client;
 
     Proxy &proxyManager;
 

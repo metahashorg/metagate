@@ -40,7 +40,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<WebSocketClient*> wssClient, std::shared_future<MainWindow*> mainWindow);
+    Return initialize(std::shared_future<MainWindow*> mainWindow);
 
     static int countEvents() {
         return 4;

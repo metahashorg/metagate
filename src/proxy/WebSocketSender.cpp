@@ -107,9 +107,9 @@ static QString makeAllCompleteMessage(const QString &ip, int port, int errorNum,
     return json.toJson(QJsonDocument::Compact);
 };
 
-WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, QObject *parent)
+WebSocketSender::WebSocketSender(Proxy &proxyManager, QObject *parent)
     : QObject(parent)
-    , client(client)
+    , client("wss://ws_proxy.metahash.io/")
     , proxyManager(proxyManager)
 {
     CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WebSocketSender::onWssReceived), "not connect onWssReceived");
@@ -123,6 +123,9 @@ WebSocketSender::WebSocketSender(WebSocketClient &client, Proxy &proxyManager, Q
     CHECK(connect(&proxyManager, &Proxy::stopProxyExecuted, this, &WebSocketSender::onStopProxy), "not connect onStopProxy");
     CHECK(connect(this, &WebSocketSender::testResult, this, &WebSocketSender::onTestResult), "not connect onTestResult");
     CHECK(connect(this, &WebSocketSender::proxyTested, &proxyManager, &Proxy::proxyTested), "not connect proxyTested");
+
+    client.start();
+    //client.moveToThread(thread);
 
     emit client.setHelloString(std::vector<QString>(), PROXY_TAG);
 
