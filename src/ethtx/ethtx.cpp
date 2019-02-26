@@ -87,9 +87,17 @@ std::string SignTransaction(std::string rawprivkey,
     settings.pop_back();
     settings.pop_back();
 
+    const auto trimZero = [](const std::string &s) {
+        if (!s.empty() && s[0] == 0) {
+            return s.substr(1);
+        } else {
+            return s;
+        }
+    };
+
     settings.push_back(vstr);
-    settings.push_back(std::string((char*)signature, EC_KEY_LENGTH));
-    settings.push_back(std::string((char*)signature + EC_KEY_LENGTH, EC_KEY_LENGTH));
+    settings.push_back(trimZero(std::string((char*)signature, EC_KEY_LENGTH)));
+    settings.push_back(trimZero(std::string((char*)signature + EC_KEY_LENGTH, EC_KEY_LENGTH)));
     std::string transaction =  SettingsToRLP(settings, false);
     transaction = "0x" + DumpToHexString((const uint8_t*)transaction.c_str(), transaction.size());
 
