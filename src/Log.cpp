@@ -6,6 +6,7 @@
 #include <mutex>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <map>
 
 #include <QDateTime>
@@ -64,6 +65,11 @@ static std::map<std::string, std::string>& getFileNamesN() {
     return getFileNamesImpl(false);
 }
 
+static size_t& getMaxAliasSize() {
+    static size_t aliasSize = 0;
+    return aliasSize;
+}
+
 PeriodicLog::PeriodicLog() = default;
 
 PeriodicLog::PeriodicLog(const std::string &str)
@@ -88,7 +94,7 @@ Log_ &Log_::operator <<(const PeriodicLog &p) {
     CHECK(periodic.notSet(), "Periodic already set");
     CHECK(!p.notSet(), "Periodic not set");
     periodic = p;
-    ssLog << " \'" << p.str << "\'";
+    ssLog << ": \'" << p.str << "\'";
     return *this;
 }
 
@@ -101,7 +107,9 @@ Log_::Log_(const std::string &fileName) {
     const auto found = getFileNamesC().find(fileName);
     if (found != getFileNamesC().end()) {
         const std::string &alias = found->second;
-        ssLog << " " << alias;
+        ssLog << " " << std::setfill(' ') << std::setw(getMaxAliasSize()) << alias;
+    } else {
+        ssLog << std::setfill(' ') << std::setw(getMaxAliasSize() + 1) << " ";
     }
 }
 
@@ -214,4 +222,7 @@ void initLog() {
 AddFileNameAlias_::AddFileNameAlias_(const std::string &fileName, const std::string &alias) {
     auto &aliases = getFileNamesN();
     aliases[fileName] = alias;
+
+    size_t &aliasSize = getMaxAliasSize();
+    aliasSize = std::max(aliasSize, alias.size());
 }
