@@ -8,6 +8,8 @@
 #include "check.h"
 #include "Log.h"
 
+SET_LOG_NAMESPACE("PRX");
+
 using SOAPArg = QPair<QString, QString>;
 
 static QString createSOAPCommand(const QString &action, const QString &service, const QList<SOAPArg> &args)

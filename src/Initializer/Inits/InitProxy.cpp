@@ -20,6 +20,8 @@ using namespace std::placeholders;
 #include "proxy/WebSocketSender.h"
 #include "Module.h"
 
+SET_LOG_NAMESPACE("INIT");
+
 namespace initializer {
 
 QString InitProxy::stateName() {

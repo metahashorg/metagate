@@ -16,6 +16,8 @@ using namespace std::placeholders;
 #include "SlotWrapper.h"
 #include "QRegister.h"
 
+SET_LOG_NAMESPACE("INIT");
+
 namespace initializer {
 
 QString InitMessenger::stateName() {

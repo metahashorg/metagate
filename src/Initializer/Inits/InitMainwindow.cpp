@@ -3,6 +3,9 @@
 #include "mainwindow.h"
 
 #include "check.h"
+#include "Log.h"
+
+SET_LOG_NAMESPACE("INIT");
 
 namespace initializer {
 

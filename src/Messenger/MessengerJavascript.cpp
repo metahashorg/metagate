@@ -23,6 +23,8 @@
 
 using namespace std::placeholders;
 
+SET_LOG_NAMESPACE("MSG");
+
 namespace messenger {
 
 MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent)

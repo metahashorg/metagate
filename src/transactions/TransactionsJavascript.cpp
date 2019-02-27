@@ -13,6 +13,8 @@
 
 #include "Transactions.h"
 
+SET_LOG_NAMESPACE("TXS");
+
 namespace transactions {
 
 TransactionsJavascript::TransactionsJavascript(QObject *parent)

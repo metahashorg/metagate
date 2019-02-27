@@ -25,6 +25,8 @@ using namespace std::placeholders;
 
 #include <QCryptographicHash>
 
+SET_LOG_NAMESPACE("MSG");
+
 namespace messenger {
 
 static QString createHashMessage(const QString &message) {

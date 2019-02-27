@@ -5,6 +5,9 @@
 
 #include "TransactionsDBRes.h"
 #include "check.h"
+#include "Log.h"
+
+SET_LOG_NAMESPACE("TXS");
 
 namespace transactions {
 

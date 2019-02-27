@@ -5,6 +5,8 @@
 #include "check.h"
 #include "SlotWrapper.h"
 
+SET_LOG_NAMESPACE("INIT");
+
 namespace initializer {
 
 QString InitNsLookup::stateName() {

@@ -4,7 +4,11 @@
 #include <QtSql>
 
 #include "check.h"
+#include "Log.h"
+
 #include <iostream>
+
+SET_LOG_NAMESPACE("MSG");
 
 namespace messenger {
 

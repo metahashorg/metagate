@@ -10,6 +10,8 @@
 #include "InitializerJavascript.h"
 #include "InitInterface.h"
 
+SET_LOG_NAMESPACE("INIT");
+
 namespace initializer {
 
 InitState::InitState(const QString &type, const QString &subType, const QString &message, bool isCritical, bool isScipped, const TypedException &exception)

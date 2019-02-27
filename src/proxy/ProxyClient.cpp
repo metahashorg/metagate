@@ -9,8 +9,9 @@
 #include "check.h"
 #include "SlotWrapper.h"
 
-namespace proxy
-{
+SET_LOG_NAMESPACE("PRX");
+
+namespace proxy {
 
 const QString error500("HTTP/1.0 500 Unable to connect\r\n"
                           "Content-Type: text/html\r\n"

@@ -50,6 +50,8 @@ using namespace std::placeholders;
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
 
+SET_LOG_NAMESPACE("JSW");
+
 const static QString WALLET_PREV_PATH = ".metahash_wallets/";
 const static QString WALLET_PATH_ETH = "eth/";
 const static QString WALLET_PATH_BTC = "btc/";

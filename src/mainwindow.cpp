@@ -46,6 +46,8 @@
 
 #include "machine_uid.h"
 
+SET_LOG_NAMESPACE("MW");
+
 const static QString DEFAULT_USERNAME = "_unregistered";
 
 bool EvFilter::eventFilter(QObject * watched, QEvent * event) {

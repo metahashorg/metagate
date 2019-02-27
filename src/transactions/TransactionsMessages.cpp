@@ -11,6 +11,8 @@
 
 #include "Transaction.h"
 
+SET_LOG_NAMESPACE("TXS");
+
 namespace transactions {
 
 QString makeGetBalanceRequest(const QString &address) {

@@ -20,6 +20,8 @@
 
 #include "algorithms.h"
 
+SET_LOG_NAMESPACE("NSL");
+
 const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
 const static std::string CURRENT_VERSION = "v3";

@@ -15,6 +15,8 @@ using namespace std::placeholders;
 
 #include "Initializer.h"
 
+SET_LOG_NAMESPACE("INIT");
+
 namespace initializer {
 
 static QJsonDocument typesToJson(const std::vector<QString> &types) {

@@ -37,6 +37,33 @@ struct PeriodicStruct {
 static std::map<std::string, PeriodicStruct> periodics;
 static std::mutex mutPeriodics;
 
+static std::map<std::string, std::string>& getFileNamesImpl(bool isRead) {
+    static const auto mainThreadId = std::this_thread::get_id();
+    const auto currentThread = std::this_thread::get_id();
+    static bool readAccessInAnotherThread = false;
+    readAccessInAnotherThread = readAccessInAnotherThread || (isRead && (currentThread != mainThreadId));
+    if (!isRead) {
+        if (currentThread != mainThreadId) {
+            std::cout << "Set log alias in another thread" << std::endl;
+            exit(1);
+        }
+        if (readAccessInAnotherThread) {
+            std::cout << "Logger already used" << std::endl;
+            exit(1);
+        }
+    }
+    static std::map<std::string, std::string> fileNames;
+    return fileNames;
+}
+
+static const std::map<std::string, std::string>& getFileNamesC() {
+    return getFileNamesImpl(true);
+}
+
+static std::map<std::string, std::string>& getFileNamesN() {
+    return getFileNamesImpl(false);
+}
+
 PeriodicLog::PeriodicLog() = default;
 
 PeriodicLog::PeriodicLog(const std::string &str)
@@ -65,11 +92,17 @@ Log_ &Log_::operator <<(const PeriodicLog &p) {
     return *this;
 }
 
-Log_::Log_() {
+Log_::Log_(const std::string &fileName) {
     const QDateTime now = QDateTime::currentDateTime();
     const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
     const auto tId = std::this_thread::get_id();
     ssLog << std::hex << std::noshowbase << tId << std::dec << " " << time;
+
+    const auto found = getFileNamesC().find(fileName);
+    if (found != getFileNamesC().end()) {
+        const std::string &alias = found->second;
+        ssLog << " " << alias;
+    }
 }
 
 bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
@@ -176,4 +209,9 @@ void initLog() {
 
     __log_file__.open(path, std::ios_base::trunc);
     __log_file2__.open(path2, std::ios_base::trunc);
+}
+
+AddFileNameAlias_::AddFileNameAlias_(const std::string &fileName, const std::string &alias) {
+    auto &aliases = getFileNamesN();
+    aliases[fileName] = alias;
 }

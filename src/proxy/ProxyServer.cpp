@@ -1,8 +1,13 @@
 #include "ProxyServer.h"
 
 #include "ProxyClient.h"
+
+#include "Log.h"
+
 #include <QThread>
 #include <QTimer>
+
+SET_LOG_NAMESPACE("PRX");
 
 namespace proxy
 {

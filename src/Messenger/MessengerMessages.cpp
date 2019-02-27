@@ -8,6 +8,8 @@
 #include "check.h"
 #include "Log.h"
 
+SET_LOG_NAMESPACE("MSG");
+
 namespace messenger {
 
 const static QString MSG_GET_MY_REQUEST = "msg_get_my";

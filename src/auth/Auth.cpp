@@ -15,8 +15,9 @@
 
 #include "machine_uid.h"
 
-namespace auth
-{
+SET_LOG_NAMESPACE("AUTH");
+
+namespace auth {
 
 Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     : TimerClass(1s, parent)

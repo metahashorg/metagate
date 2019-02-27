@@ -12,6 +12,8 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+SET_LOG_NAMESPACE("MW");
+
 const QString METAHASH_URL = "mh://";
 const QString APP_URL = "app://";
 

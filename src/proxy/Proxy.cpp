@@ -12,8 +12,9 @@
 #include "SlotWrapper.h"
 #include "Paths.h"
 
-namespace proxy
-{
+SET_LOG_NAMESPACE("PRX");
+
+namespace proxy {
 
 Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     : QObject(parent)

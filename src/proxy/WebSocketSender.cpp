@@ -10,6 +10,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+SET_LOG_NAMESPACE("PRX");
+
 namespace proxy {
 
 const static QString PROXY_TAG = "proxy";

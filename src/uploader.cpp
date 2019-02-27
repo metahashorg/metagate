@@ -27,6 +27,8 @@
 #include "SlotWrapper.h"
 #include "Paths.h"
 
+SET_LOG_NAMESPACE("UPL");
+
 std::mutex Uploader::lastVersionMut;
 
 static QString toHash(const QString &valueQ) {

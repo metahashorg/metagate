@@ -10,8 +10,9 @@
 
 #include "Auth.h"
 
-namespace auth
-{
+SET_LOG_NAMESPACE("AUTH");
+
+namespace auth {
 
 static QJsonDocument loginInfoToJson(const LoginInfo &info) {
     QJsonObject obj;

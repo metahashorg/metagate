@@ -10,6 +10,8 @@ using namespace std::placeholders;
 
 #include "Initializer.h"
 
+SET_LOG_NAMESPACE("INIT");
+
 namespace initializer {
 
 InitInterface::StateType::StateType(bool isCritical, const QString &message, bool isTimeout, bool isOneRun)

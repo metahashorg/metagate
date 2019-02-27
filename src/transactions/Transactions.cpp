@@ -18,6 +18,8 @@ using namespace std::placeholders;
 
 #include <memory>
 
+SET_LOG_NAMESPACE("TXS");
+
 namespace transactions {
 
 static const uint64_t ADD_TO_COUNT_TXS = 10;

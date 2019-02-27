@@ -27,7 +27,7 @@ private:
 
 struct Log_ {
 
-    Log_();
+    Log_(const std::string &fileName);
 
     template<typename T>
     Log_& operator <<(T t) {
@@ -63,6 +63,15 @@ private:
 
 void initLog();
 
-#define LOG Log_()
+struct AddFileNameAlias_ {
+
+    AddFileNameAlias_(const std::string &fileName, const std::string &alias);
+
+};
+
+#define LOG Log_(std::string(__FILE__))
+
+#define SET_LOG_NAMESPACE(name) \
+    static AddFileNameAlias_ log_alias_(std::string(__FILE__), name);
 
 #endif // LOG_H

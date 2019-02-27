@@ -7,6 +7,8 @@
 #include "Log.h"
 #include "SlotWrapper.h"
 
+SET_LOG_NAMESPACE("PRX");
+
 namespace proxy
 {
 

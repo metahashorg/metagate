@@ -11,6 +11,8 @@
 #include <QJsonObject>
 #include <QDebug>
 
+SET_LOG_NAMESPACE("PRX");
+
 namespace proxy
 {
 

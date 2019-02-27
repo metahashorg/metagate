@@ -9,6 +9,8 @@
 #include "utils.h"
 #include "QRegister.h"
 
+SET_LOG_NAMESPACE("MSG");
+
 namespace messenger {
 
 CryptographicManager::CryptographicManager(QObject *parent)

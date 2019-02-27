@@ -8,6 +8,8 @@
 
 #include <QSettings>
 
+SET_LOG_NAMESPACE("INIT");
+
 static QString getUrlToWss() {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("web_socket/meta_online"), "web_socket/meta_online not found setting");
