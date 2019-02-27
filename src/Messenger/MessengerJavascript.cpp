@@ -1042,9 +1042,12 @@ void MessengerJavascript::setMhcType(bool isMhc) {
 BEGIN_SLOT_WRAPPER
     LOG << "Set mhc type: " << (isMhc ? "Mhc" : "Tmh");
     const QString JS_NAME_RESULT = "msgSetWalletTypeResultJs";
-    mthWalletType = isMhc ? Wallet::WALLET_PATH_MTH : Wallet::WALLET_PATH_TMH;
+    const QString newMthWalletType = isMhc ? Wallet::WALLET_PATH_MTH : Wallet::WALLET_PATH_TMH;
     const TypedException &exception = apiVrapper2([&, this]{
-        setPathsImpl();
+        if (newMthWalletType != mthWalletType) {
+            mthWalletType = newMthWalletType;
+            setPathsImpl();
+        }
     });
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isMhc);
 END_SLOT_WRAPPER
@@ -1115,11 +1118,14 @@ void MessengerJavascript::runJs(const QString &script) {
 
 void MessengerJavascript::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
+    QString newWalletPath;
     if (!login.isEmpty()) {
-        walletPath = makePath(getWalletPath(), login);
-        setPathsImpl();
+        newWalletPath = makePath(getWalletPath(), login);
     } else {
-        walletPath = makePath(getWalletPath(), defaultUserName);
+        newWalletPath = makePath(getWalletPath(), defaultUserName);
+    }
+    if (newWalletPath != walletPath) {
+        walletPath = newWalletPath;
         setPathsImpl();
     }
 END_SLOT_WRAPPER
