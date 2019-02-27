@@ -77,13 +77,13 @@ public:
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache=false);
-    void sendMessagesPost(const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout);
+    void sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
     void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
 
-    void pings(const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout);
+    void pings(const std::string printedName, const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout);
 
     void setParent(QObject *obj);
 

@@ -329,7 +329,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
             return r;
         });
 
-        client.pings(requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        client.pings(node->second.node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
             const TypedException exception = apiVrapper2([&]{
                 CHECK(requestsSize == results.size(), "Incorrect results");
                 for (const auto &result: results) {
@@ -371,7 +371,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
         if (processVectPos.empty()) {
             continueResolve(std::next(node));
         }
-        client.pings(requests, [this, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        client.pings(node->second.node.str().toStdString(), requests, [this, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
             const TypedException exception = apiVrapper2([&]{
                 CHECK(processVectPos.size() == results.size(), "Incorrect result");
                 for (size_t i = 0; i < results.size(); i++) {
@@ -529,7 +529,7 @@ void NsLookup::continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>
         return pair.first;
     });
 
-    client.pings(requests, [this, types, ipsIter, countSteps, node, nodeTorrent, nodeProxy](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+    client.pings(node->second.node.str().toStdString(), requests, [this, types, ipsIter, countSteps, node, nodeTorrent, nodeProxy](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
         const TypedException exception = apiVrapper2([&]{
             CHECK(types.size() == results.size(), "Incorrect results");
             for (size_t i = 0; i < results.size(); i++) {

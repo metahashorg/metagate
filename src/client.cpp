@@ -31,8 +31,9 @@ public:
 
 public:
 
-    CallbackWrapImpl(const CallbackCall &callbackCall, const Callback &callback, size_t countArgs)
-        : callbackCall(callbackCall)
+    CallbackWrapImpl(const std::string printedName, const CallbackCall &callbackCall, const Callback &callback, size_t countArgs)
+        : printedName(printedName)
+        , callbackCall(callbackCall)
         , callback(callback)
         , args(countArgs)
         , filled(countArgs)
@@ -41,14 +42,12 @@ public:
     }
 
     void process(size_t index, const Args& ...args) {
-        CHECK(!emitted, "Already emitted");
-        CHECK(!filled[index], "callback already called " + std::to_string(index));
+        CHECK(!emitted, "Already emitted " + printedName);
+        CHECK(!filled[index], "callback already called " + std::to_string(index) + ". " + printedName);
         this->args[index] = std::tuple<Args...>(args...);
         filled[index] = true;
 
-        const size_t count = std::accumulate(filled.begin(), filled.end(), 0, [](size_t old, bool fill) {
-            return old + (fill ? 1 : 0);
-        });
+        const size_t count = calcSettedCount();
         if (count == filled.size()) {
             emit callbackCall(std::bind(callback, this->args));
             emitted = true;
@@ -57,11 +56,22 @@ public:
 
     ~CallbackWrapImpl() {
         if (!emitted) {
-            LOG << "Warn. Callback not emitted";
+            LOG << "Warn. Callback not emitted " << printedName << ". " << calcSettedCount() << "/" << filled.size();
         }
     }
 
 private:
+
+    size_t calcSettedCount() const {
+        const size_t count = std::accumulate(filled.begin(), filled.end(), 0, [](size_t old, bool fill) {
+            return old + (fill ? 1 : 0);
+        });
+        return count;
+    }
+
+private:
+
+    const std::string printedName;
 
     CallbackCall callbackCall;
 
@@ -243,8 +253,8 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
     sendMessagePost(url, message, callback, true, timeout, isClearCache);
 }
 
-void SimpleClient::sendMessagesPost(const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout) {
-    const auto callbackImpl = std::make_shared<CallbackWrapImpl<ClientCallbacks, std::string, ServerException>>(std::bind(&SimpleClient::callbackCall, this, _1), callback, urls.size());
+void SimpleClient::sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout) {
+    const auto callbackImpl = std::make_shared<CallbackWrapImpl<ClientCallbacks, std::string, ServerException>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, urls.size());
     size_t index = 0;
     for (const QUrl &address: urls) {
         const auto callbackNew = CallbackWrapPtr<std::decay_t<decltype(*callbackImpl)>>(callbackImpl, index);
@@ -269,8 +279,8 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
     sendMessageInternal(false, pingCallbacks_, address, "", PingCallbackInternal(std::bind(callback, address, _1, _2)), true, timeout, false, &SimpleClient::onPingReceived, true);
 }
 
-void SimpleClient::pings(const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout) {
-    const auto callbackImpl = std::make_shared<CallbackWrapImpl<PingsCallback, QString, milliseconds, std::string>>(std::bind(&SimpleClient::callbackCall, this, _1), callback, addresses.size());
+void SimpleClient::pings(const std::string printedName, const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout) {
+    const auto callbackImpl = std::make_shared<CallbackWrapImpl<PingsCallback, QString, milliseconds, std::string>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, addresses.size());
     size_t index = 0;
     for (const QString &address: addresses) {
         const auto callbackNew = CallbackWrapPtr<std::decay_t<decltype(*callbackImpl)>>(callbackImpl, index);

@@ -282,7 +282,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
 
     const QString requestBalance = makeGetBalanceRequest(address);
     const std::vector<QUrl> urls(servers.begin(), servers.end());
-    client.sendMessagesPost(urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
+    client.sendMessagesPost(address.toStdString(), urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
 }
 
 std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
@@ -373,7 +373,7 @@ void Transactions::processCheckTxs(const QString &address, const QString &curren
 
     const QString countBlocksRequest = makeGetCountBlocksRequest();
     const std::vector<QUrl> urls(servers.begin(), servers.end());
-    client.sendMessagesPost(urls, countBlocksRequest, std::bind(countBlocksCallback, urls, _1), timeout);
+    client.sendMessagesPost(address.toStdString(), urls, countBlocksRequest, std::bind(countBlocksCallback, urls, _1), timeout);
 }
 
 void Transactions::onTimerEvent() {
