@@ -50,11 +50,11 @@ void InitMessenger::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitMessenger::Return InitMessenger::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions) {
+InitMessenger::Return InitMessenger::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions, std::shared_future<JavascriptWrapper*> jsWrap) {
     const TypedException exception = apiVrapper2([&, this] {
         crypto = std::make_unique<messenger::CryptographicManager>();
         crypto->start();
-        javascript = std::make_unique<messenger::MessengerJavascript>(*(auth.get().first), *crypto, *(trancactions.get().second));
+        javascript = std::make_unique<messenger::MessengerJavascript>(*(auth.get().first), *crypto, *(trancactions.get().second), *(jsWrap.get()));
         javascript->moveToThread(mainThread);
         database = std::make_unique<messenger::MessengerDBStorage>(getDbPath());
         database->init();

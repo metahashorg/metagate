@@ -54,6 +54,8 @@ signals:
 
     void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
+    void mthWalletCreated(QString name);
+
 public slots:
     void onLogined(bool isInit, const QString login);
 

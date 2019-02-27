@@ -32,7 +32,7 @@ public:
     using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m);
 
@@ -44,6 +44,8 @@ signals:
 
 public slots:
     void onLogined(bool isInit, const QString login);
+
+    void onMthWalletCreated(QString name);
 
 public slots:
 

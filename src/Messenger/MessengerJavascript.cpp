@@ -25,7 +25,7 @@ using namespace std::placeholders;
 
 namespace messenger {
 
-MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, QObject *parent)
+MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent)
     : QObject(parent)
     , authManager(authManager)
     , cryptoManager(cryptoManager)
@@ -40,6 +40,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     CHECK(connect(this, &MessengerJavascript::collocutorAddedPubkeySig, this, &MessengerJavascript::onCollocutorAddedPubkey), "not connect onCollocutorAddedPubkey");
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
+    CHECK(connect(&jsWrapper, &JavascriptWrapper::mthWalletCreated, this, &MessengerJavascript::onMthWalletCreated), "not connect onMthWalletCreated");
 
     Q_REG(MessengerJavascript::Callback, "MessengerJavascript::Callback");
 
@@ -1128,6 +1129,12 @@ BEGIN_SLOT_WRAPPER
         walletPath = newWalletPath;
         setPathsImpl();
     }
+END_SLOT_WRAPPER
+}
+
+void MessengerJavascript::onMthWalletCreated(const QString wallet) {
+BEGIN_SLOT_WRAPPER
+    setPathsImpl();
 END_SLOT_WRAPPER
 }
 

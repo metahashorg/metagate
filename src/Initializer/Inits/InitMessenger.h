@@ -11,6 +11,8 @@
 
 struct TypedException;
 
+class JavascriptWrapper;
+
 namespace messenger {
 class CryptographicManager;
 class MessengerJavascript;
@@ -50,7 +52,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions, std::shared_future<JavascriptWrapper*> jsWrap);
 
     static int countEvents() {
         return 1;

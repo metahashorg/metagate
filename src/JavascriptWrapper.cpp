@@ -221,6 +221,8 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         walletFullPath = wallet.getFullPath();
 
         sendAppInfoToWss(userName, true);
+
+        emit mthWalletCreated(QString::fromStdString(addr));
     });
 
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
