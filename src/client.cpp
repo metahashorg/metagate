@@ -73,9 +73,9 @@ private:
 
     const std::string printedName;
 
-    CallbackCall callbackCall;
+    const CallbackCall callbackCall;
 
-    Callback callback;
+    const Callback callback;
 
     std::vector<std::tuple<Args...>> args;
 
@@ -100,7 +100,7 @@ public:
 
 private:
 
-    std::shared_ptr<CallbackWrap> callback;
+    const std::shared_ptr<CallbackWrap> callback;
     const size_t index;
 };
 
