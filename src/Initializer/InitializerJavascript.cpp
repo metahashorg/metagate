@@ -118,6 +118,8 @@ BEGIN_SLOT_WRAPPER
                 r = "critical_advance";
             } else if (result == Initializer::ReadyType::NotSuccess) {
                 r = "not_success";
+            } else if (result == Initializer::ReadyType::NotSuccessCritical) {
+                r = "not_success_critical";
             } else {
                 throwErr("Unknown type");
             }

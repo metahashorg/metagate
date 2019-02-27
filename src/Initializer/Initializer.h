@@ -36,7 +36,7 @@ class Initializer: public QObject {
 public:
 
     enum class ReadyType {
-        Error, CriticalAdvance, Advance, Finish, NotSuccess
+        Error, CriticalAdvance, Advance, Finish, NotSuccess, NotSuccessCritical
     };
 
     struct StateType {

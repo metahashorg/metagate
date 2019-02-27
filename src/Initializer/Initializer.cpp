@@ -135,6 +135,10 @@ BEGIN_SLOT_WRAPPER
             result = ReadyType::CriticalAdvance;
             return;
         }
+        if (isErrorCritical) {
+            result = ReadyType::NotSuccessCritical;
+            return;
+        }
         if (!isInitFinished && !force) {
             result = ReadyType::Advance;
             return;
