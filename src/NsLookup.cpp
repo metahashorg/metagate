@@ -230,7 +230,7 @@ bool NsLookup::repeatResolveDns(
             CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
             packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
 
-            LOG << "dns ok " << node->second.type << ". " << packet.answers().size();
+            LOG << "Dns ok " << node->second.type << ". " << packet.answers().size();
             CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(response.begin(), response.end())));
         });
 
@@ -282,7 +282,7 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         requestPacket.addQuestion(DnsQuestion::getIp(node->second.node.str()));
         requestPacket.setFlags(DnsFlag::MyFlag);
         const auto byteArray = requestPacket.toByteArray();
-        LOG << "dns " << node->second.type << ".";
+        LOG << "Dns " << node->second.type << ".";
         repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, 3);
     } else {
         continuePing(std::begin(ipsTemp), node);

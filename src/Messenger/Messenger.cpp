@@ -286,7 +286,7 @@ void Messenger::processAddOrDeleteInChannel(const QString &address, const Channe
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
     const QString jsonString = db.getUserSignatures(address);
     const QJsonDocument json = QJsonDocument::fromJson(jsonString.toUtf8());
-    CHECK(json.isArray(), "Incorrect json " + jsonString.toStdString());
+    CHECK(json.isArray(), "Incorrect json " + jsonString.toStdString() + ". Address: " + address.toStdString());
     const QJsonArray &array = json.array();
     for (const QJsonValue &val: array) {
         CHECK(val.isObject(), "Incorrect json");
