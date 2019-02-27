@@ -68,6 +68,11 @@ Q_INVOKABLE void createRsaKey(QString requestId, QString address, QString passwo
 # javascript is called after completion of this function 
 createRsaKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 
+Q_INVOKABLE void copyRsaKey(QString requestId, QString address, QString pathPub, QString pathPriv);
+# Копирует ключи по указанному пути в свой каталог.
+# javascript is called after completion of this function 
+copyRsaPublicKeyResultJs(requestId, "Ok", errorNum, errorMessage)
+
 Q_INVOKABLE void getRsaPublicKey(QString requestId, QString address);
 # Returns public key from rsa key
 getRsaPublicKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
@@ -166,6 +171,11 @@ Q_INVOKABLE void createRsaKeyMHC(QString requestId, QString address, QString pas
 # Generates rsa key for specified address.
 # javascript is called after completion of this function 
 createRsaKeyMHCResultJs(requestId, publicKeyHex, errorNum, errorMessage)
+
+Q_INVOKABLE void copyRsaKeyMHC(QString requestId, QString address, QString pathPub, QString pathPriv);
+# Копирует ключи по указанному пути в свой каталог.
+# javascript is called after completion of this function 
+getRsaPublicKeyMHCResultJs(requestId, "Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void getRsaPublicKeyMHC(QString requestId, QString address);
 # Returns public key from rsa key

@@ -36,6 +36,8 @@ bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, boo
 
 void copyFile(const QString &srcFilePath, const QString &tgtFilePath, bool isReplace);
 
+void copyToDirectoryFile(const QString &srcFilePath, const QString &tgtDirectory, bool isReplace);
+
 void createFolder(const QString &folder);
 
 bool isExistFile(const QString &file);

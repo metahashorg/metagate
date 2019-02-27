@@ -131,6 +131,10 @@ public slots:
 
     Q_INVOKABLE void decryptMessage(QString requestId, QString addr, QString password, QString encryptedMessageHex);
 
+    Q_INVOKABLE void copyRsaKey(QString requestId, QString address, QString pathPub, QString pathPriv);
+
+    Q_INVOKABLE void copyRsaKeyMHC(QString requestId, QString address, QString pathPub, QString pathPriv);
+
 public slots:
 
     Q_INVOKABLE void createWalletEth(QString requestId, QString password);
@@ -242,6 +246,8 @@ private:
     void createRsaKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult);
 
     void getRsaPublicKeyMTHS(QString requestId, QString address, QString walletPath, QString jsNameResult);
+
+    void copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, QString walletPath, QString jsNameResult);
 
 private:
 

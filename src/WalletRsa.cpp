@@ -17,6 +17,10 @@ WalletRsa::WalletRsa(const QString &folder, const std::string &addr)
     publicKeyRsa = ::getPublicRsa(publicKey);
 }
 
+QString WalletRsa::genFolderRsa(const QString &folder) {
+    return makePath(folder, FOLDER_RSA_KEYS);
+}
+
 WalletRsa WalletRsa::fromPublicKey(const std::string &publicKey) {
     WalletRsa wallet;
     wallet.publicKey = publicKey;
@@ -28,6 +32,20 @@ const std::string& WalletRsa::getPublikKey() const {
     return publicKey;
 }
 
+bool WalletRsa::validateKeyName(const QString &privKey, const QString &pubkey, const QString &address) {
+    CHECK(!address.isEmpty(), "Address empty");
+    if (!privKey.endsWith(FILE_PRIV_KEY_SUFFIX) || !pubkey.endsWith(FILE_PUB_KEY_SUFFIX)) {
+        return false;
+    }
+    if (privKey.size() - privKey.lastIndexOf(address) != address.size() + FILE_PRIV_KEY_SUFFIX.size()) {
+        return false;
+    }
+    if (pubkey.size() - pubkey.lastIndexOf(address) != address.size() + FILE_PUB_KEY_SUFFIX.size()) {
+        return false;
+    }
+    return true;
+}
+
 std::string WalletRsa::encrypt(const std::string &message) const {
     CHECK(publicKeyRsa != nullptr, "Publik key not set");
     return ::encrypt(publicKeyRsa, message, publicKey);
@@ -36,7 +54,7 @@ std::string WalletRsa::encrypt(const std::string &message) const {
 void WalletRsa::unlock(const std::string &password) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
     CHECK(!address.empty(), "Address empty");
-    const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
+    const QString folderKey = genFolderRsa(folder);
 
     const QString fileName = makePath(folderKey, QString::fromStdString(address).toLower() + FILE_PRIV_KEY_SUFFIX);
 
@@ -48,7 +66,7 @@ void WalletRsa::unlock(const std::string &password) {
 
 void WalletRsa::createRsaKey(const QString &folder, const std::string &addr, const std::string &password) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
-    const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
+    const QString folderKey = genFolderRsa(folder);
     createFolder(folderKey);
     const std::string privateKey = ::createRsaKey(password);
 
@@ -62,7 +80,7 @@ void WalletRsa::createRsaKey(const QString &folder, const std::string &addr, con
 
 std::string WalletRsa::getPublicRsaKey(const QString &folder, const std::string &addr) {
     CHECK(!folder.isNull() && !folder.isEmpty(), "Incorrect path to wallet: empty");
-    const QString folderKey = makePath(folder, FOLDER_RSA_KEYS);
+    const QString folderKey = genFolderRsa(folder);
 
     const QString fileName = makePath(folderKey, QString::fromStdString(addr).toLower() + FILE_PUB_KEY_SUFFIX);
     const std::string publicKeyHex = readFile(fileName);

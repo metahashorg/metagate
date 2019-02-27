@@ -159,6 +159,13 @@ void copyFile(const QString &srcFilePath, const QString &tgtFilePath, bool isRep
     CHECK(QFile::copy(srcFilePath, tgtFilePath), "Dont copy file " + tgtFilePath.toStdString());
 }
 
+void copyToDirectoryFile(const QString &srcFilePath, const QString &tgtDirectory, bool isReplace) {
+    createFolder(tgtDirectory);
+    const QString fileName = QFileInfo(srcFilePath).fileName();
+    const QString newFile = makePath(tgtDirectory, fileName);
+    copyFile(srcFilePath, newFile, isReplace);
+}
+
 void createFolder(const QString &folder) {
     QDir dir(folder);
     const bool resultCreate = dir.mkpath(folder);

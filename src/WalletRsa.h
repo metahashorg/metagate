@@ -27,6 +27,10 @@ public:
 
     std::string decryptMessage(const std::string &encryptedMessageHex) const;
 
+    static QString genFolderRsa(const QString &folder);
+
+    static bool validateKeyName(const QString &privKey, const QString &pubkey, const QString &address);
+
 private:
 
     WalletRsa() = default;

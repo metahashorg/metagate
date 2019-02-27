@@ -58,6 +58,7 @@ InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
         jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get(), *transactions.get().second, *auth.get().first, versionString);
         jsWrapper->moveToThread(mainThread);
         emit mw.setJavascriptWrapper(jsWrapper.get(), MainWindow::SetJavascriptWrapperCallback([this]() {
+            jsWrapper->copyRsaKey("1", "0x0003e6cb24c72ace313ab30679fa9cc9043341386e16632f1d", "/home/user/delete/0x0003e6cb24c72ace313ab30679fa9cc9043341386e16632f1d.rsa.pub", "/home/user/delete/0x0003e6cb24c72ace313ab30679fa9cc9043341386e16632f1d.rsa.priv");
             sendInitSuccess(TypedException());
         }, std::bind(&InitJavascriptWrapper::sendInitSuccess, this, _1), std::bind(&InitJavascriptWrapper::callbackCall, this, _1)));
     });
