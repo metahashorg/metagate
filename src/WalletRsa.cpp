@@ -46,6 +46,12 @@ bool WalletRsa::validateKeyName(const QString &privKey, const QString &pubkey, c
     return true;
 }
 
+std::vector<QString> WalletRsa::getPathsKeys(const QString &folder, const QString &address) {
+    const QString path = genFolderRsa(folder);
+    const std::vector<QString> result = {path + address + FILE_PRIV_KEY_SUFFIX, path + address + FILE_PUB_KEY_SUFFIX};
+    return result;
+}
+
 std::string WalletRsa::encrypt(const std::string &message) const {
     CHECK(publicKeyRsa != nullptr, "Publik key not set");
     return ::encrypt(publicKeyRsa, message, publicKey);

@@ -71,7 +71,12 @@ createRsaKeyResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 Q_INVOKABLE void copyRsaKey(QString requestId, QString address, QString pathPub, QString pathPriv);
 # Копирует ключи по указанному пути в свой каталог.
 # javascript is called after completion of this function 
-copyRsaPublicKeyResultJs(requestId, "Ok", errorNum, errorMessage)
+copyRsaKeyResultJs(requestId, "Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void copyRsaKeyToFolder(QString requestId, QString address, QString path);
+# Копирует rsa ключи в указанный каталог.
+# javascript is called after completion of this function 
+copyRsaKeyToFolderResultJs(requestId, "Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void getRsaPublicKey(QString requestId, QString address);
 # Returns public key from rsa key
@@ -175,7 +180,12 @@ createRsaKeyMHCResultJs(requestId, publicKeyHex, errorNum, errorMessage)
 Q_INVOKABLE void copyRsaKeyMHC(QString requestId, QString address, QString pathPub, QString pathPriv);
 # Копирует ключи по указанному пути в свой каталог.
 # javascript is called after completion of this function 
-getRsaPublicKeyMHCResultJs(requestId, "Ok", errorNum, errorMessage)
+copyRsaKeyMHCResultJs(requestId, "Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void copyRsaKeyToFolderMHC(QString requestId, QString address, QString path);
+# Копирует rsa ключи в указанный каталог.
+# javascript is called after completion of this function 
+copyRsaKeyToFolderMHCResultJs(requestId, "Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void getRsaPublicKeyMHC(QString requestId, QString address);
 # Returns public key from rsa key

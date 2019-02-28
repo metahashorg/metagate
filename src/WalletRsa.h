@@ -2,6 +2,7 @@
 #define WALLETRSA_H
 
 #include <string>
+#include <vector>
 
 #include <QString>
 
@@ -30,6 +31,8 @@ public:
     static QString genFolderRsa(const QString &folder);
 
     static bool validateKeyName(const QString &privKey, const QString &pubkey, const QString &address);
+
+    static std::vector<QString> getPathsKeys(const QString &folder, const QString &address);
 
 private:
 

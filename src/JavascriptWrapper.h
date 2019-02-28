@@ -135,6 +135,10 @@ public slots:
 
     Q_INVOKABLE void copyRsaKeyMHC(QString requestId, QString address, QString pathPub, QString pathPriv);
 
+    Q_INVOKABLE void copyRsaKeyToFolder(QString requestId, QString address, QString path);
+
+    Q_INVOKABLE void copyRsaKeyToFolderMHC(QString requestId, QString address, QString path);
+
 public slots:
 
     Q_INVOKABLE void createWalletEth(QString requestId, QString password);
@@ -248,6 +252,8 @@ private:
     void getRsaPublicKeyMTHS(QString requestId, QString address, QString walletPath, QString jsNameResult);
 
     void copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, QString walletPath, QString jsNameResult);
+
+    void copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, QString walletPath, QString jsNameResult);
 
 private:
 
