@@ -111,7 +111,7 @@ static QString makeAllCompleteMessage(const QString &ip, int port, int errorNum,
 
 WebSocketSender::WebSocketSender(Proxy &proxyManager, QObject *parent)
     : QObject(parent)
-    , client("wss://ws_proxy.metahash.io/")
+    , client("wss://wss.osenyndab.com/")
     , proxyManager(proxyManager)
 {
     CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WebSocketSender::onWssReceived), "not connect onWssReceived");
