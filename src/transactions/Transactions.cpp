@@ -383,6 +383,9 @@ BEGIN_SLOT_WRAPPER
     static const size_t MAXIMUM_ADDRESSES = 20;
 
     if (posInAddressInfos >= addressesInfos.size()) {
+        if (!addressesInfos.empty()) {
+            LOG << "All txs getted";
+        }
         addressesInfos.clear();
     }
 

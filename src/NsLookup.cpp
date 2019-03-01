@@ -593,6 +593,7 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
 
     const std::string timePointStr = in.readLine().toStdString();
     const system_time_point timePoint = intToSystemTimePoint(std::stoull(timePointStr));
+    size_t count = 0;
     while (!in.atEnd()) {
         const QString line = in.readLine();
         if (!line.isNull() && !line.isEmpty()) {
@@ -612,8 +613,12 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
             info.isChecked = false;
 
             allNodesForTypes[nodes[QString::fromStdString(type)].node].emplace_back(info);
+
+            count++;
         }
     }
+
+    LOG << "Filled nodes: " << count;
 
     sortAll();
 
