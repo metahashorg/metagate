@@ -142,6 +142,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
     CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
     CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
+    CHECK(connect(this, &Messenger::isCompleteUser, this, &Messenger::onIsCompleteUser), "not connect onCompleteUser");
     CHECK(connect(this, &Messenger::addAllAddressesInFolder, this, &Messenger::onAddAllAddressesInFolder), "not connect onAddAllAddressesInFolder");
     CHECK(connect(this, &Messenger::wantToTalk, this, &Messenger::onWantToTalk), "not connect onWantToTalk");
     CHECK(connect(this, &Messenger::reEmit, this, &Messenger::onReEmit), "not connect onReEmit");
@@ -165,9 +166,10 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     Q_REG(DelWriterToChannelCallback, "DelWriterToChannelCallback");
     Q_REG(GetChannelListCallback, "GetChannelListCallback");
     Q_REG(DecryptUserMessagesCallback, "DecryptUserMessagesCallback");
+    Q_REG(CompleteUserCallback, "CompleteUserCallback");
     Q_REG(AddAllWalletsInFolderCallback, "AddAllWalletsInFolderCallback");
     Q_REG(WantToTalkCallback, "WantToTalkCallback");
-    Q_REG(WantToTalkCallback, "UserInfoCallback");
+    Q_REG(UserInfoCallback, "UserInfoCallback");
 
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
 
@@ -285,21 +287,50 @@ void Messenger::processAddOrDeleteInChannel(const QString &address, const Channe
     }
 }
 
+static std::pair<QString, QString> getKVOnJson(const QJsonValue &val) {
+    CHECK(val.isObject(), "Incorrect json");
+    const QJsonObject v = val.toObject();
+    CHECK(v.contains("key") && v.value("key").isString(), "Incorrect json: key field not found");
+    const QString key = v.value("key").toString();
+    CHECK(v.contains("value") && v.value("value").isString(), "Incorrect json: value field not found");
+    const QString value = v.value("value").toString();
+
+    return std::make_pair(key, value);
+}
+
+bool Messenger::checkSignsAddress(const QString &address) const {
+    const QString jsonString = db.getUserSignatures(address);
+    const QJsonDocument json = QJsonDocument::fromJson(jsonString.toUtf8());
+    if (!json.isArray()) {
+        return false;
+    }
+    const QJsonArray &array = json.array();
+    std::map<QString, QString> allFields;
+    for (const QJsonValue &val: array) {
+        const auto valPair = getKVOnJson(val);
+
+        allFields[valPair.first] = valPair.second;
+    }
+
+    const std::vector<QString> stringsForSigns = stringsForSign();
+    for (const QString &str: stringsForSigns) {
+        if (allFields.find(str) == allFields.end()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 QString Messenger::getSignFromMethod(const QString &address, const QString &method) const {
     const QString jsonString = db.getUserSignatures(address);
     const QJsonDocument json = QJsonDocument::fromJson(jsonString.toUtf8());
-    CHECK(json.isArray(), "Incorrect json " + jsonString.toStdString() + ". Address: " + address.toStdString());
+    CHECK_TYPED(json.isArray(), TypeErrors::INCOMPLETE_USER_INFO, "Incorrect json " + jsonString.toStdString() + ". Address: " + address.toStdString());
     const QJsonArray &array = json.array();
     for (const QJsonValue &val: array) {
-        CHECK(val.isObject(), "Incorrect json");
-        const QJsonObject v = val.toObject();
-        CHECK(v.contains("key") && v.value("key").isString(), "Incorrect json: key field not found");
-        const QString key = v.value("key").toString();
-        CHECK(v.contains("value") && v.value("value").isString(), "Incorrect json: value field not found");
-        const QString value = v.value("value").toString();
+        const auto valPair = getKVOnJson(val);
 
-        if (key == method) {
-            return value;
+        if (valPair.first == method) {
+            return valPair.second;
         }
     }
     throwErrTyped(TypeErrors::INCOMPLETE_USER_INFO, ("Not found signed method " + method + " in address " + address).toStdString());
@@ -684,10 +715,12 @@ END_SLOT_WRAPPER
 void Messenger::onGetUserInfo(const QString &address, const UserInfoCallback &callback) {
 BEGIN_SLOT_WRAPPER
     ContactInfo info;
+    bool complete = false;
     const TypedException exception = apiVrapper2([&, this] {
         info = db.getUserInfo(address);
+        complete = checkSignsAddress(address);
     });
-    callback.emitFunc(exception, info);
+    callback.emitFunc(exception, complete, info);
 END_SLOT_WRAPPER
 }
 
@@ -697,7 +730,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         info = db.getContactInfo(address);
     });
-    callback.emitFunc(exception, info);
+    callback.emitFunc(exception, true, info);
 END_SLOT_WRAPPER
 }
 
@@ -911,6 +944,19 @@ BEGIN_SLOT_WRAPPER
     if (exception.isSet()) {
         callback.emitException(exception);
     }
+END_SLOT_WRAPPER
+}
+
+void Messenger::onIsCompleteUser(const QString &address, const CompleteUserCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    bool isComplete;
+    const TypedException exception = apiVrapper2([&, this] {
+        isComplete = checkSignsAddress(address);
+        if (!isComplete) {
+            LOG << "Uncompleted signs";
+        }
+    });
+    callback.emitFunc(exception, isComplete);
 END_SLOT_WRAPPER
 }
 

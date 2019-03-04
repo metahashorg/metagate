@@ -95,11 +95,12 @@ static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
     return QJsonDocument(messagesArrJson);
 }
 
-static QJsonDocument contactInfoToJson(const ContactInfo &info) {
+static QJsonDocument contactInfoToJson(bool complete, const ContactInfo &info) {
     QJsonObject result;
     result.insert("pubkey", info.pubkeyRsa);
     result.insert("txHash", info.txRsaHash);
     result.insert("blockchain_name", info.blockchainName);
+    result.insert("is_complete", complete);
     return QJsonDocument(result);
 }
 
@@ -429,8 +430,8 @@ BEGIN_SLOT_WRAPPER
         makeFunc(exception, address, QJsonDocument());
     };
 
-    emit messenger->getUserInfo(address, Messenger::UserInfoCallback([address, makeFunc](const ContactInfo &info) {
-        makeFunc(TypedException(), address, contactInfoToJson(info));
+    emit messenger->getUserInfo(address, Messenger::UserInfoCallback([address, makeFunc](bool complete, const ContactInfo &info) {
+        makeFunc(TypedException(), address, contactInfoToJson(complete, info));
     }, errorFunc, signalFunc));
 END_SLOT_WRAPPER
 }
@@ -451,8 +452,8 @@ BEGIN_SLOT_WRAPPER
         makeFunc(exception, address, QJsonDocument());
     };
 
-    emit messenger->getCollocutorInfo(address, Messenger::UserInfoCallback([address, makeFunc](const ContactInfo &info) {
-        makeFunc(TypedException(), address, contactInfoToJson(info));
+    emit messenger->getCollocutorInfo(address, Messenger::UserInfoCallback([address, makeFunc](bool isComplete, const ContactInfo &info) {
+        makeFunc(TypedException(), address, contactInfoToJson(isComplete, info));
     }, errorFunc, signalFunc));
 END_SLOT_WRAPPER
 }
@@ -1077,6 +1078,15 @@ BEGIN_SLOT_WRAPPER
                 makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
             }, errorFunc, signalFunc));
          }, errorFunc, signalFunc));
+
+        emit messenger->isCompleteUser(address, Messenger::CompleteUserCallback([this, address, JS_NAME_RESULT, errorFunc](bool isComplete) {
+            if (!isComplete) {
+                const auto makeFunc = [this, JS_NAME_RESULT, address](const TypedException &exception, const QString &/*result*/) {
+                    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
+                };
+                doRegisterAddress(address, false, true, makeFunc, errorFunc);
+            }
+        }, errorFunc, signalFunc));
     });
 
     if (exception.isSet()) {

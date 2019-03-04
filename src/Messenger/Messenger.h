@@ -169,11 +169,13 @@ public:
 
     using DecryptUserMessagesCallback = CallbackWrapper<void()>;
 
+    using CompleteUserCallback = CallbackWrapper<void(bool isComplete)>;
+
     using AddAllWalletsInFolderCallback = CallbackWrapper<void()>;
 
     using WantToTalkCallback = CallbackWrapper<void()>;
 
-    using UserInfoCallback = CallbackWrapper<void(const ContactInfo &info)>;
+    using UserInfoCallback = CallbackWrapper<void(bool complete, const ContactInfo &info)>;
 
 public:
 
@@ -261,6 +263,8 @@ signals:
 
     void decryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
 
+    void isCompleteUser(const QString &address, const CompleteUserCallback &callback);
+
 
     void addAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
 
@@ -316,6 +320,8 @@ private slots:
 
     void onDecryptMessages(const QString &address, const DecryptUserMessagesCallback &callback);
 
+    void onIsCompleteUser(const QString &address, const CompleteUserCallback &callback);
+
 
     void onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback);
 
@@ -343,6 +349,8 @@ private:
     void addAddressToMonitored(const QString &address);
 
     void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel);
+
+    bool checkSignsAddress(const QString &address) const;
 
     QString getSignFromMethod(const QString &address, const QString &method) const;
 
