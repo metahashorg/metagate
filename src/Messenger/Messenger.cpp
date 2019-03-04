@@ -342,7 +342,12 @@ BEGIN_SLOT_WRAPPER
     LOG << "Monitored addresses: " << monitoredAddresses.size();
     clearAddressesToMonitored();
     for (const QString &address: monitoredAddresses) {
-        addAddressToMonitored(address);
+        const TypedException exception = apiVrapper2([&]{
+            addAddressToMonitored(address);
+        });
+        if (exception.isSet()) {
+            LOG << "Monitored address exception: " << address << " " << exception.description;
+        }
     }
 END_SLOT_WRAPPER
 }
