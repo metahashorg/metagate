@@ -6,22 +6,22 @@
 #include "TypedException.h"
 
 template<class Function>
-void slotWrapper(const Function &function) {
+void slotWrapper(const std::string &file, const Function &function) {
     try {
         function();
     } catch (const Exception &e) {
-        LOG << "Error " << e;
+        LOG2(file) << "Error " << e;
     } catch (const std::exception &e) {
-        LOG << "Error " << e.what();
+        LOG2(file) << "Error " << e.what();
     } catch (const TypedException &e) {
-        LOG << "Error typed " << e.description;
+        LOG2(file) << "Error typed " << e.description;
     } catch (...) {
-        LOG << "Unknown error";
+        LOG2(file) << "Unknown error";
     }
 }
 
 #define BEGIN_SLOT_WRAPPER \
-    slotWrapper([&]{
+    slotWrapper(__FILE__, [&]{
 #define END_SLOT_WRAPPER \
     });
 
