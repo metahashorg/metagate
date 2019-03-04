@@ -1,4 +1,4 @@
-#include "MessengerJavascript.h"
+﻿#include "MessengerJavascript.h"
 
 #include "check.h"
 #include "Log.h"
@@ -1125,7 +1125,7 @@ END_SLOT_WRAPPER
 }
 
 void MessengerJavascript::runJs(const QString &script) {
-    LOG << "Javascript " << script;
+    //LOG << "Javascript " << script;
     emit jsRunSig(script);
 }
 
