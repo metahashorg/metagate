@@ -1,0 +1,8 @@
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_libs/")
+include(lib_common)
+
+add_subdirectory(tst_bignumber)
+#add_subdirectory(tst_wallet)
+#add_subdirectory(tst_qrcoder)
+#add_subdirectory(tst_messengerdbstorage)
+#add_subdirectory(tst_transactionsdbstorage)
