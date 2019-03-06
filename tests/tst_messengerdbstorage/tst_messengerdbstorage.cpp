@@ -6,7 +6,7 @@
 
 #include "check.h"
 
-#include "MessengerDBStorage.h"
+#include "Messenger/MessengerDBStorage.h"
 
 const QString dbName = "messenger.db";
 

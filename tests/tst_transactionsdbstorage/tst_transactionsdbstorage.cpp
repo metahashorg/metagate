@@ -2,7 +2,7 @@
 
 #include <QTest>
 
-#include "TransactionsDBStorage.h"
+#include "transactions/TransactionsDBStorage.h"
 
 const QString dbName = "payments.db";
 
