@@ -31,5 +31,4 @@ function(add_common_options_internal TARGET)
     #ubuntu18 flags
     target_compile_definitions(${TARGET} PUBLIC _GLIBCXX_USE_CXX11_ABI=0)
     target_compile_options(${TARGET} PUBLIC -no-pie)
-    #target_link_libraries(${TARGET} INTERFACE -no-pie) # TODO заменить на target_link_options
 endfunction(add_common_options_internal)
