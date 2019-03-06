@@ -45,6 +45,7 @@ using namespace std::placeholders;
 #include "Module.h"
 
 #include "machine_uid.h"
+#include "cmake_libs/cmake_modules/GitSHA1.h"
 #include "platform.h"
 
 #include "transactions/Transactions.h"
@@ -1644,7 +1645,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "get app info";
 
     const std::string versionString = VERSION_STRING;
-    const std::string gitCommit = GIT_CURRENT_SHA1;
+    const std::string gitCommit = g_git_sha1();
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<bool>(isProductionSetup), Opt<std::string>(versionString), Opt<std::string>(gitCommit));
 END_SLOT_WRAPPER

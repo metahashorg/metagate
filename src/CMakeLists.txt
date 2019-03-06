@@ -8,8 +8,6 @@ add_definitions(-DVERSION_SETTINGS="10.1")
 add_definitions(-DPRODUCTION)
 add_definitions(-DAPPLICATION_NAME="MetaGate")
 
-add_definitions(-DGIT_CURRENT_SHA1="sha1")
-
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -111,6 +109,8 @@ set(${PROJECT_NAME}_SRCS
     Initializer/Inits/InitMessenger.cpp
     UdpSocketClient.cpp
     proxy/http_parser.c
+
+    ${COMMON_UTILS_GITSHA}
 )
 
 if (UNIX)

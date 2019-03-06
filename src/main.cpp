@@ -38,6 +38,8 @@
 #include "Initializer/Inits/InitProxy.h"
 #include "Initializer/Inits/InitMessenger.h"
 
+#include "cmake_libs/cmake_modules/GitSHA1.h"
+
 #include "Module.h"
 #include "proxy/Proxy.h"
 
@@ -101,7 +103,7 @@ int main(int argc, char *argv[]) {
             typeString = "dev";
         }
 
-        LOG << "Version " << versionString << " " << typeString << " " << GIT_CURRENT_SHA1;
+        LOG << "Version " << versionString << " " << typeString << " " << g_git_sha1();
         LOG << "Platform " << osName;
         LOG << "Machine uid " << getMachineUid();
         LOG << "Is virtual machine " << isVirtualMachine();
@@ -112,7 +114,7 @@ int main(int argc, char *argv[]) {
 
         using namespace initializer;
 
-        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1);
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, g_git_sha1());
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
