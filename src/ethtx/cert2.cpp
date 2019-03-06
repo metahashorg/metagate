@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include <secp256k1/include/secp256k1_recovery.h>
+#include <secp256k1_recovery.h>
 
 #include <cryptopp/oids.h>
 #include <cryptopp/osrng.h>

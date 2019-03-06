@@ -1,7 +1,6 @@
 include_directories(.)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_libs/")
-include(lib_common)
+include(../cmake_libs/lib_common.cmake)
 
 add_definitions(-DVERSION_STRING="1.19.0")
 add_definitions(-DVERSION_SETTINGS="10.1")

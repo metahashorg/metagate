@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <secp256k1/include/secp256k1.h>
+#include <secp256k1.h>
 
 secp256k1_context const* getCtx();
 

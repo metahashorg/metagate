@@ -10,7 +10,7 @@
 #include "cryptopp/ripemd.h"
 #include <cryptopp/ccm.h>
 
-#include "secp256k1/include/secp256k1_recovery.h"
+#include <secp256k1_recovery.h>
 
 #include "../ethtx/scrypt/libscrypt.h"
 

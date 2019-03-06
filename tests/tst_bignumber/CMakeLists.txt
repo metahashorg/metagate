@@ -2,6 +2,8 @@ include_directories(.)
 
 set(TARGET tst_bignumber)
 
+include(../../cmake_libs/lib_common.cmake)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Test REQUIRED)
 
