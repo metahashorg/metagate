@@ -12,7 +12,7 @@ set(COMMON_UTILS_GITSHA
 )
 
 set(SAVE_PATH ${CMAKE_CURRENT_LIST_DIR})
-if (UNIX)
+if (UNIX AND NOT APPLE)
     include(${CMAKE_CURRENT_LIST_DIR}/lib_unix.cmake)
 elseif (APPLE)
     include(${CMAKE_CURRENT_LIST_DIR}/lib_mac.cmake)
