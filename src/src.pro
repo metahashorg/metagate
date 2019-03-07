@@ -10,6 +10,8 @@ DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
 
 DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 
+QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
+
 SOURCES += main.cpp mainwindow.cpp \
     Wallet.cpp \
     client.cpp \
@@ -87,7 +89,9 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitProxy.cpp \
     Initializer/Inits/InitMessenger.cpp \
     UdpSocketClient.cpp \
-    mhpayurlschemehandler.cpp
+    mhpayurlschemehandler.cpp \
+    myeventfilter.cpp \
+    MhPayEventHandler.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -181,7 +185,9 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitProxy.h \
     Initializer/Inits/InitMessenger.h \
     UdpSocketClient.h \
-    mhpayurlschemehandler.h
+    mhpayurlschemehandler.h \
+    myeventfilter.h \
+    MhPayEventHandler.h
 
 FORMS += mainwindow.ui
 
