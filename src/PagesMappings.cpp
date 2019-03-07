@@ -169,7 +169,7 @@ void PagesMappings::setMappings(QString mapping) {
         }
 
         std::shared_ptr<PageInfo> pageInfo = std::make_shared<PageInfo>(url, isExternal, isDefault, isLocalFile);
-        if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL)) {
+        if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL) && !name.startsWith(METAHASH_PAY_URL)) {
             pageInfo->printedName = APP_URL + name;
         } else {
             pageInfo->printedName = name;
@@ -204,6 +204,9 @@ struct PathParsed {
         } else if (url.startsWith(APP_URL)) {
             type = Type::APP;
             path = url.mid(APP_URL.size());
+        } else if (url.startsWith(METAHASH_PAY_URL)) {
+            type = Type::APP;
+            path = url.mid(METAHASH_PAY_URL.size());
         } else {
             type = Type::NONE;
             path = url;
@@ -262,6 +265,8 @@ int PagesMappings::findSlashInternal(const QString &url) {
         foundSlash = findSymbols(url, METAHASH_URL);
     } else if (url.startsWith(APP_URL)) {
         foundSlash = findSymbols(url, APP_URL);
+    } else if (url.startsWith(METAHASH_PAY_URL)) {
+        foundSlash = findSymbols(url, METAHASH_PAY_URL);
     } else {
         foundSlash = findSymbols(url, "");
     }
@@ -278,6 +283,8 @@ QString PagesMappings::getHost(const QString &url) {
         result = result.mid(METAHASH_URL.size());
     } else if (result.startsWith(APP_URL)) {
         result = result.mid(APP_URL.size());
+    } else if (result.startsWith(METAHASH_PAY_URL)) {
+        result = result.mid(METAHASH_PAY_URL.size());
     }
     const Name name(result);
     const QString r = name.toString();
@@ -407,9 +414,6 @@ PageInfo PagesMappings::find(const QString &text) const {
         }
     } else if (text.startsWith(METAHASH_URL)){
         pageInfo.page = text;
-    } else if (text.startsWith(METAHASH_PAY_URL)) {
-        pageInfo.page = text;
-        pageInfo.isRedirectShemeHandler = true;
     } else {
         CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
     }

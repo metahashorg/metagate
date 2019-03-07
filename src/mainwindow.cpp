@@ -95,8 +95,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
-    shemeHandler2 = new MHPayUrlSchemeHandler(this);
-    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mhpay"), shemeHandler2);
+    //shemeHandler2 = new MHPayUrlSchemeHandler(this);
+    //QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mhpay"), shemeHandler2);
 
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -227,12 +227,19 @@ BEGIN_SLOT_WRAPPER
         enterCommandAndAddToHistory("app://MetaApps", true, true);
     }
     ui->grid_layout->show();
+    if (saveUrlToMove != QUrl()) {
+        enterCommandAndAddToHistory(saveUrlToMove.toString(), true, true);
+    }
 END_SLOT_WRAPPER
 }
 
 void MainWindow::onProcessExternalUrl(const QUrl &url) {
 BEGIN_SLOT_WRAPPER
-    enterCommandAndAddToHistory(url.toString(), true, true);
+    if (isInitFinished) {
+        enterCommandAndAddToHistory(url.toString(), true, true);
+    } else {
+        saveUrlToMove = url;
+    }
 END_SLOT_WRAPPER
 }
 
@@ -435,9 +442,6 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
                 clText = pageInfo.printedName + other;
             }
             addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
-            loadUrl(reference);
-        } else if (reference.startsWith(METAHASH_PAY_URL)) {
-            addElementToHistoryAndCommandLine(reference, isAddToHistory, true);
             loadUrl(reference);
         } else {
             QString clText;

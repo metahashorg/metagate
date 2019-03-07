@@ -216,6 +216,8 @@ private:
     bool lineEditUserChanged = false;
 
     bool isInitFinished = false;
+
+    QUrl saveUrlToMove;
 };
 
 #endif // MAINWINDOW_H
