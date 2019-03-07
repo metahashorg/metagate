@@ -84,12 +84,14 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
     CHECK(connect(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript), "not connect onSetProxyJavascript");
     CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
+    CHECK(connect(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl), "not connect onProcessExternalUrl");
 
     Q_REG(SetJavascriptWrapperCallback, "SetJavascriptWrapperCallback");
     Q_REG(SetAuthCallback, "SetAuthCallback");
     Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
     Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
     Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
+    Q_REG2(QUrl, "QUrl", false);
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -225,6 +227,12 @@ BEGIN_SLOT_WRAPPER
         enterCommandAndAddToHistory("app://MetaApps", true, true);
     }
     ui->grid_layout->show();
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onProcessExternalUrl(const QUrl &url) {
+BEGIN_SLOT_WRAPPER
+    enterCommandAndAddToHistory(url.toString(), true, true);
 END_SLOT_WRAPPER
 }
 

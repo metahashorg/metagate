@@ -2,24 +2,25 @@
 #define MHPAYEVENTHANDLER_H
 
 #include <QObject>
-#include <QWidget>
-#include <QFileOpenEvent>
-#include <Log.h>
+#include <QUrl>
+
+class MainWindow;
 
 class MhPayEventHandler: public QObject {
-  Q_OBJECT
+    Q_OBJECT
 public:
-  MhPayEventHandler() {}
-  ~MhPayEventHandler() {
-  }
+
+    void setMainWindow(MainWindow *mw);
+
 protected:
-  bool eventFilter(QObject* object, QEvent* event) {
-      if (event->type() == QEvent::FileOpen) {
-          auto *openEvent = static_cast<QFileOpenEvent *>(event);
-          LOG << "Open file" << openEvent->url().toString();
-      }
-      return false;
-  }
+    bool eventFilter(QObject* object, QEvent* event);
+
+private:
+
+    QUrl lastUrl;
+
+    MainWindow *mainWindow = nullptr;
+
 };
 
 #endif // MHPAYEVENTHANDLER_H

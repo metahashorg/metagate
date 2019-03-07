@@ -99,6 +99,8 @@ signals:
 
     void initFinished();
 
+    void processExternalUrl(const QUrl &url);
+
 private slots:
 
     void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SetJavascriptWrapperCallback &callback);
@@ -112,6 +114,8 @@ private slots:
     void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
 
     void onInitFinished();
+
+    void onProcessExternalUrl(const QUrl &url);
 
 private:
 
