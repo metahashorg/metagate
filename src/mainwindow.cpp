@@ -36,6 +36,7 @@
 #include "QRegister.h"
 
 #include "mhurlschemehandler.h"
+#include "mhpayurlschemehandler.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
@@ -92,6 +93,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
+    shemeHandler2 = new MHPayUrlSchemeHandler(this);
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mhpay"), shemeHandler2);
 
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -425,6 +428,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             }
             addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
             loadUrl(reference);
+        } else if (reference.startsWith(METAHASH_PAY_URL)) {
+            addElementToHistoryAndCommandLine(reference, isAddToHistory, true);
+            loadUrl(reference);
         } else {
             QString clText;
             if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
@@ -446,7 +452,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     };
 
     const PageInfo pageInfo = pagesMappings.find(text);
-    if (pageInfo.isApp) {
+    if (pageInfo.isApp || pageInfo.isRedirectShemeHandler) {
         doProcessCommand(pageInfo);
         return;
     } else {

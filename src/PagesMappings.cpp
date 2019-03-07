@@ -15,6 +15,7 @@
 SET_LOG_NAMESPACE("MW");
 
 const QString METAHASH_URL = "mh://";
+const QString METAHASH_PAY_URL = "mhpay://";
 const QString APP_URL = "app://";
 
 PagesMappings::PagesMappings(){
@@ -396,7 +397,7 @@ PageInfo PagesMappings::find(const QString &text) const {
     const auto found = findInternal(text);
     if (found.has_value()) {
         pageInfo = found.value();
-    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
+    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL) && !text.startsWith(METAHASH_PAY_URL)) {
         const QString appUrl = APP_URL + text;
         const auto found2 = findInternal(appUrl);
         if (found2.has_value()) {
@@ -406,6 +407,9 @@ PageInfo PagesMappings::find(const QString &text) const {
         }
     } else if (text.startsWith(METAHASH_URL)){
         pageInfo.page = text;
+    } else if (text.startsWith(METAHASH_PAY_URL)) {
+        pageInfo.page = text;
+        pageInfo.isRedirectShemeHandler = true;
     } else {
         CHECK(text.startsWith(APP_URL), "Incorrect text: " + text.toStdString());
     }

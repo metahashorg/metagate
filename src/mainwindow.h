@@ -16,6 +16,7 @@
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
+class MHPayUrlSchemeHandler;
 namespace auth {
 class AuthJavascript;
 class Auth;
@@ -173,6 +174,8 @@ private slots:
 private:
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
+
+    MHPayUrlSchemeHandler *shemeHandler2 = nullptr;
 
     std::unique_ptr<Ui::MainWindow> ui;
 
