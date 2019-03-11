@@ -65,6 +65,9 @@ int main(int argc, char *argv[]) {
     RunGuard guard("MetaGate");
     if (!guard.tryToRun()) {
         std::cout << "Programm already running" << std::endl;
+        if (argc > 1) {
+            guard.storeValue(argv[1]);
+        }
         return 0;
     }
 
@@ -85,13 +88,17 @@ int main(int argc, char *argv[]) {
         QSurfaceFormat::setDefaultFormat(format);
 
         QApplication app(argc, argv);
-        MhPayEventHandler mhPayEventHandler;
+        MhPayEventHandler mhPayEventHandler(guard);
         app.installEventFilter(&mhPayEventHandler);
         initLog();
         InitOpenSSL();
         initializeAllPaths();
         initializeMachineUid();
         initModules();
+
+        if (argc > 1) {
+            mhPayEventHandler.processCommandLine(argv[1]);
+        }
 
         /*tests2();
         return 0;*/
