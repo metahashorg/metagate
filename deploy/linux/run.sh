@@ -27,8 +27,4 @@ echo Qml2Imports = qml >> ./qt.conf
 
 chmod +x ./libexec/QtWebEngineProcess
 chmod +x ./MetaGate
-FIRST_COMMAND=""
-if [ "$#" -ge 1 ]; then
-    FIRST_COMMAND=$1
-fi
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/" QT_QPA_PLATFORM_PLUGIN_PATH="./plugins/" ./MetaGate ${FIRST_COMMAND} --remote-debugging-port=8081
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/" QT_QPA_PLATFORM_PLUGIN_PATH="./plugins/" ./MetaGate $1 --remote-debugging-port=8081

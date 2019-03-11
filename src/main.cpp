@@ -62,11 +62,16 @@ int main(int argc, char *argv[]) {
     signal(SIGSEGV, crash_handler);
 #endif
 
+    std::string supposedMhPayUrl;
+    if (argc > 1) {
+        supposedMhPayUrl = argv[1];
+    }
+
     RunGuard guard("MetaGate");
     if (!guard.tryToRun()) {
         std::cout << "Programm already running" << std::endl;
-        if (argc > 1) {
-            guard.storeValue(argv[1]);
+        if (!supposedMhPayUrl.empty()) {
+            guard.storeValue(supposedMhPayUrl);
         }
         return 0;
     }
@@ -96,8 +101,8 @@ int main(int argc, char *argv[]) {
         initializeMachineUid();
         initModules();
 
-        if (argc > 1) {
-            mhPayEventHandler.processCommandLine(argv[1]);
+        if (!supposedMhPayUrl.empty()) {
+            mhPayEventHandler.processCommandLine(QString::fromStdString(supposedMhPayUrl));
         }
 
         /*tests2();

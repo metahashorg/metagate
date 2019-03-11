@@ -69,6 +69,8 @@ BEGIN_SLOT_WRAPPER
     const bool success = processUrl(url);
     if (success) {
         if (mainWindow != nullptr) {
+            mainWindow->setWindowFlags(mainWindow->windowFlags() | Qt::WindowStaysOnTopHint);
+            mainWindow->show();
             mainWindow->activateWindow();
         }
     }
