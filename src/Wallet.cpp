@@ -229,9 +229,15 @@ void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoP
     auto fileNameCStr = filePath.toStdString();
 #endif
     std::ofstream file1(fileNameCStr);
-    CryptoPP::FileSink fs(file1);
+    std::string privateKeyStr;
+    privateKeyStr.reserve(1000); // Обязательно для windows
+    CryptoPP::StringSink ss(privateKeyStr);
     CryptoPP::AutoSeededRandomPool prng;
-    CryptoPP::PEM_Save(fs, prng, privKey, "AES-128-CBC", password.c_str(), password.size());
+    CryptoPP::PEM_Save(ss, prng, privKey, "AES-128-CBC", password.c_str(), password.size());
+    CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
+    CryptoPP::StringSource ss1(privateKeyStr, true);
+    CryptoPP::PEM_Load(ss1, privateKey, password.c_str(), password.size());
+    CryptoPP::StringSource(privateKeyStr, true, new CryptoPP::FileSink(file1));
 
     addr = hexAddr;
 }
