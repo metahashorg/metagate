@@ -36,7 +36,6 @@
 #include "QRegister.h"
 
 #include "mhurlschemehandler.h"
-#include "mhpayurlschemehandler.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
@@ -95,8 +94,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
-    //shemeHandler2 = new MHPayUrlSchemeHandler(this);
-    //QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mhpay"), shemeHandler2);
 
     hardwareId = QString::fromStdString(::getMachineUid());
 

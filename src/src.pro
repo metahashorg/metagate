@@ -89,7 +89,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitProxy.cpp \
     Initializer/Inits/InitMessenger.cpp \
     UdpSocketClient.cpp \
-    mhpayurlschemehandler.cpp \
     myeventfilter.cpp \
     MhPayEventHandler.cpp
 
@@ -185,7 +184,6 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitProxy.h \
     Initializer/Inits/InitMessenger.h \
     UdpSocketClient.h \
-    mhpayurlschemehandler.h \
     myeventfilter.h \
     MhPayEventHandler.h
 
