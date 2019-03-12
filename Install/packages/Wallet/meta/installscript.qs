@@ -29,6 +29,11 @@ Component.prototype.createOperations = function()
     }
 
     //component.addElevatedOperation("Execute", "@TargetDir@\\AutoUpdater.exe", "-install", "UNDOEXECUTE", "@TargetDir@\\AutoUpdater.exe", "-remove");
+    
+    component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "Default", "URL:Mh pay protocol");
+    component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "URL Protocol", "");
+    component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\shell\\open\\command", "Default", "\"@TargetDir@\\MetaGate.exe\" \"%1\"");
+    component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\DefaultIcon", "Default", "@TargetDir@\\MetaGate.exe,1");
 }
 
 Component.prototype.IntroductionPageCallback =function() {

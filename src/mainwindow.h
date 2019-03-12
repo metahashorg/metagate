@@ -16,6 +16,7 @@
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
+class MHPayUrlSchemeHandler;
 namespace auth {
 class AuthJavascript;
 class Auth;
@@ -98,6 +99,8 @@ signals:
 
     void initFinished();
 
+    void processExternalUrl(const QUrl &url);
+
 private slots:
 
     void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SetJavascriptWrapperCallback &callback);
@@ -111,6 +114,8 @@ private slots:
     void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
 
     void onInitFinished();
+
+    void onProcessExternalUrl(const QUrl &url);
 
 private:
 
@@ -174,6 +179,8 @@ private:
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
 
+    MHPayUrlSchemeHandler *shemeHandler2 = nullptr;
+
     std::unique_ptr<Ui::MainWindow> ui;
 
     std::unique_ptr<QWebChannel> channel;
@@ -209,6 +216,8 @@ private:
     bool lineEditUserChanged = false;
 
     bool isInitFinished = false;
+
+    QUrl saveUrlToMove;
 };
 
 #endif // MAINWINDOW_H

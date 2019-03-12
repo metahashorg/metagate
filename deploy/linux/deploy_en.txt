@@ -3,6 +3,7 @@ Building the application:
 Copy startSettings directory
 Copy and replace ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt directory in StartSettings
 Copy run.sh file
+Copy metagate_template.desktop file
 Copy files from libssl into application root folder
 Run ./run.sh
 

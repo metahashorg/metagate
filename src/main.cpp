@@ -45,6 +45,8 @@
 
 #include "WalletRsa.h"
 
+#include "MhPayEventHandler.h"
+
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -62,9 +64,17 @@ int main(int argc, char *argv[]) {
     signal(SIGSEGV, crash_handler);
 #endif
 
+    std::string supposedMhPayUrl;
+    if (argc > 1) {
+        supposedMhPayUrl = argv[1];
+    }
+
     RunGuard guard("MetaGate");
     if (!guard.tryToRun()) {
         std::cout << "Programm already running" << std::endl;
+        if (!supposedMhPayUrl.empty()) {
+            guard.storeValue(supposedMhPayUrl);
+        }
         return 0;
     }
 
@@ -85,11 +95,17 @@ int main(int argc, char *argv[]) {
         QSurfaceFormat::setDefaultFormat(format);
 
         QApplication app(argc, argv);
+        MhPayEventHandler mhPayEventHandler(guard);
+        app.installEventFilter(&mhPayEventHandler);
         initLog();
         InitOpenSSL();
         initializeAllPaths();
         initializeMachineUid();
         initModules();
+
+        if (!supposedMhPayUrl.empty()) {
+            mhPayEventHandler.processCommandLine(QString::fromStdString(supposedMhPayUrl));
+        }
 
         /*tests2();
         return 0;*/
@@ -114,7 +130,7 @@ int main(int argc, char *argv[]) {
 
         using namespace initializer;
 
-        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, g_git_sha1());
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, g_git_sha1(), std::ref(mhPayEventHandler));
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);

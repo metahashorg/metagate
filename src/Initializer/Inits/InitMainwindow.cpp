@@ -2,6 +2,8 @@
 
 #include "mainwindow.h"
 
+#include "MhPayEventHandler.h"
+
 #include "check.h"
 #include "Log.h"
 
@@ -30,11 +32,12 @@ void InitMainWindow::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString) {
+InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler) {
     const TypedException exception = apiVrapper2([&, this] {
         mainWindow = std::make_unique<MainWindow>(initializerJs);
         mainWindow->setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + gitString));
         mainWindow->showExpanded();
+        eventHandler.setMainWindow(mainWindow.get());
     });
     sendInitSuccess(exception);
     if (exception.isSet()) {

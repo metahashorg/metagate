@@ -5,6 +5,8 @@
 #include <QSharedMemory>
 #include <QSystemSemaphore>
 
+#include <string>
+
 class RunGuard
 {
 
@@ -15,6 +17,10 @@ public:
     bool isAnotherRunning();
     bool tryToRun();
     void release();
+
+    void storeValue(const std::string &value);
+
+    std::string getValueAndReset();
 
 private:
     const QString key;

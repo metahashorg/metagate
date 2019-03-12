@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=MetaGate
+Exec=sssssss %u
+Type=Application
+Terminal=false
+MimeType=x-scheme-handler/metapay;

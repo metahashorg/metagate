@@ -109,6 +109,7 @@ set(${PROJECT_NAME}_SRCS
     Initializer/Inits/InitMessenger.cpp
     UdpSocketClient.cpp
     proxy/http_parser.c
+    MhPayEventHandler.cpp
 
     ${COMMON_UTILS_GITSHA}
 )

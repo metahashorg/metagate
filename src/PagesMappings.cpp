@@ -15,6 +15,7 @@
 SET_LOG_NAMESPACE("MW");
 
 const QString METAHASH_URL = "mh://";
+const QString METAHASH_PAY_URL = "metapay://";
 const QString APP_URL = "app://";
 
 PagesMappings::PagesMappings(){
@@ -168,7 +169,7 @@ void PagesMappings::setMappings(QString mapping) {
         }
 
         std::shared_ptr<PageInfo> pageInfo = std::make_shared<PageInfo>(url, isExternal, isDefault, isLocalFile);
-        if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL)) {
+        if (!name.startsWith(APP_URL) && !name.startsWith(METAHASH_URL) && !name.startsWith(METAHASH_PAY_URL)) {
             pageInfo->printedName = APP_URL + name;
         } else {
             pageInfo->printedName = name;
@@ -203,6 +204,9 @@ struct PathParsed {
         } else if (url.startsWith(APP_URL)) {
             type = Type::APP;
             path = url.mid(APP_URL.size());
+        } else if (url.startsWith(METAHASH_PAY_URL)) {
+            type = Type::APP;
+            path = url.mid(METAHASH_PAY_URL.size());
         } else {
             type = Type::NONE;
             path = url;
@@ -261,6 +265,8 @@ int PagesMappings::findSlashInternal(const QString &url) {
         foundSlash = findSymbols(url, METAHASH_URL);
     } else if (url.startsWith(APP_URL)) {
         foundSlash = findSymbols(url, APP_URL);
+    } else if (url.startsWith(METAHASH_PAY_URL)) {
+        foundSlash = findSymbols(url, METAHASH_PAY_URL);
     } else {
         foundSlash = findSymbols(url, "");
     }
@@ -277,6 +283,8 @@ QString PagesMappings::getHost(const QString &url) {
         result = result.mid(METAHASH_URL.size());
     } else if (result.startsWith(APP_URL)) {
         result = result.mid(APP_URL.size());
+    } else if (result.startsWith(METAHASH_PAY_URL)) {
+        result = result.mid(METAHASH_PAY_URL.size());
     }
     const Name name(result);
     const QString r = name.toString();
@@ -396,7 +404,7 @@ PageInfo PagesMappings::find(const QString &text) const {
     const auto found = findInternal(text);
     if (found.has_value()) {
         pageInfo = found.value();
-    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL)) {
+    } else if (!text.startsWith(METAHASH_URL) && !text.startsWith(APP_URL) && !text.startsWith(METAHASH_PAY_URL)) {
         const QString appUrl = APP_URL + text;
         const auto found2 = findInternal(appUrl);
         if (found2.has_value()) {

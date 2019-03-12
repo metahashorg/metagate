@@ -7,6 +7,7 @@
 #include <string>
 
 class MainWindow;
+class MhPayEventHandler;
 
 struct TypedException;
 
@@ -27,7 +28,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString);
+    Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler);
 
     static int countEvents() {
         return 1;

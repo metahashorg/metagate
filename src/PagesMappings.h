@@ -9,6 +9,7 @@
 #include <QString>
 
 const extern QString METAHASH_URL;
+const extern QString METAHASH_PAY_URL;
 const extern QString APP_URL;
 
 template<typename T>
@@ -44,6 +45,7 @@ private:
 
 struct PageInfo {
     bool isApp = false;
+    bool isRedirectShemeHandler = false;
     QString page;
     QString printedName;
     bool isExternal;
