@@ -190,7 +190,9 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
 
 QByteArray JavascriptWrapper::getUtmData()
 {
-    QFile file(QStringLiteral("utmdata"));
+    QDir dir(qApp-> applicationDirPath());
+
+    QFile file(dir.filePath(QStringLiteral("utmdata")));
     if (!file.open(QIODevice::ReadOnly))
         return QByteArray();
     QByteArray data = file.read(1024);
