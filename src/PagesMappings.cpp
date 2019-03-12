@@ -15,7 +15,7 @@
 SET_LOG_NAMESPACE("MW");
 
 const QString METAHASH_URL = "mh://";
-const QString METAHASH_PAY_URL = "mhpay://";
+const QString METAHASH_PAY_URL = "metapay://";
 const QString APP_URL = "app://";
 
 PagesMappings::PagesMappings(){

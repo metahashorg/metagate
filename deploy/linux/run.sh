@@ -5,7 +5,7 @@ cd ${MY_PATH}
 sed "s?sssssss?${PWD}/run.sh?g" < ./metagate_template.desktop > metagate.desktop
 mv metagate.desktop ~/.local/share/applications/
 if type "xdg-mime" > /dev/null; then
-  xdg-mime default metagate.desktop x-scheme-handler/mhpay
+  xdg-mime default metagate.desktop x-scheme-handler/metapay
 fi
 
 echo > ./qt.conf
