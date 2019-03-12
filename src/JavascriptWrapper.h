@@ -307,6 +307,8 @@ private:
 
     void sendAppInfoToWss(QString userName, bool force);
 
+    QByteArray getUtmData();
+
 public:
 
     const QString walletDefaultPath;
@@ -328,6 +330,8 @@ private:
     QString sendedUserName;
 
     QString hardwareId;
+
+    QString utmData;
 
     QString walletPath;
 

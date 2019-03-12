@@ -17,6 +17,7 @@ using namespace std::placeholders;
 #include <QPrinter>
 #include <QPrintDialog>
 #include <QPainter>
+#include <QFile>
 
 #include "Wallet.h"
 #include "WalletRsa.h"
@@ -76,11 +77,12 @@ static QString makeCommandLineMessageForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &utmData, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
     QJsonObject allJson;
     allJson.insert("app", "MetaGate");
     QJsonObject data;
     data.insert("machine_uid", hardwareId);
+    data.insert("utm_data", utmData);
     data.insert("user_id", userId);
     data.insert("application_ver", applicationVersion);
     data.insert("interface_ver", interfaceVersion);
@@ -114,6 +116,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
+    utmData = QString::fromLatin1(getUtmData());
 
     LOG << "Wallets default path " << walletDefaultPath;
 
@@ -178,11 +181,21 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
-        const QString message = makeMessageApplicationForWss(hardwareId, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
+        const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
     }
+}
+
+QByteArray JavascriptWrapper::getUtmData()
+{
+    QFile file(QStringLiteral("utmdata"));
+    if (!file.open(QIODevice::ReadOnly))
+        return QByteArray();
+    QByteArray data = file.read(1024);
+    file.close();
+    return data;
 }
 
 void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
