@@ -35,7 +35,7 @@
     function createWalletMHCResultJs(reqid, pubkey, address, ex, sig, err, errNo, tmp) {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.mainWindow;
-        mainWindow.createRsaKey("1", address, "123") ;
+        mainWindow.createRsaKeyMHC("1", address, "123") ;
         document.createWalletForm.tmp.value = address;
         });
     }

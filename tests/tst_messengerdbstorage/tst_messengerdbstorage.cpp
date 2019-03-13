@@ -125,9 +125,12 @@ void tst_MessengerDBStorage::testMessengerDB2()
     QVERIFY(id != db.findFirstNotConfirmedMessage("user7"));
 
     QCOMPARE(db.getLastReadCounterForUserContact("userrgjkg", "fjkgfjk"), -1);
-    QCOMPARE(db.getLastReadCounterForUserContact("user7", "user1"), 0);
+    QCOMPARE(db.getLastReadCounterForUserContact("user7", "user1"), -1);
+    QCOMPARE(db.getLastReadCounterForUserContact("user7", "user11111", false), -1);
+    QCOMPARE(db.getLastReadCounterForUserContact("user7", "fjkgfjk11", false), -1);
     db.setLastReadCounterForUserContact("user7", "user1", 244);
     QCOMPARE(db.getLastReadCounterForUserContact("user7", "user1"), 244);
+    QCOMPARE(db.getLastReadCounterForUserContact("userrgjkg", "user1", false), -1);
 
     QCOMPARE(db.getLastReadCountersForContacts("user7").size(), 1);
 }
@@ -161,17 +164,17 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
     db.addMessage("1234", "3454", "abcd", "", false, 1, 1501, true, true, false, "asdfdf", 1);
     QCOMPARE(db.findFirstNotConfirmedMessageWithHash("1234", "asdfdf").second, 1501);
 
-    QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 0);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), -1);
     db.setLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", 4567, true);
     QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 4567);
     db.setLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", 17, true);
     QCOMPARE(db.getLastReadCounterForUserContact("1234", "jkgfjkgfgfitrrtoioriojk", true), 17);
 
 
-    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3454", false), 0);
-    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), 0);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3454", false), -1);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), -1);
     db.setLastReadCounterForUserContact("1234", "3454", 44322, false);
-    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), 0);
+    QCOMPARE(db.getLastReadCounterForUserContact("1234", "3457", false), -1);
     QCOMPARE(db.getLastReadCounterForUserContact("1234", "3454", false), 44322);
     db.setLastReadCounterForUserContact("1234", "3454", 42, false);
     db.setLastReadCounterForUserContact("1234", "3457", 452, false);

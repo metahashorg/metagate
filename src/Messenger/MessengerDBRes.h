@@ -258,7 +258,7 @@ static const QString selectLastReadMessageCount = "SELECT (COUNT(*) > 0) AS res 
 
 static const QString insertLastReadMessageRecord = "INSERT OR IGNORE INTO lastreadmessage "
                                                     "(lastcounter, userid, contactid, channelid) VALUES "
-                                                    "(0, :userid, :contactid, :channelid)";
+                                                    "(-1, :userid, :contactid, :channelid)";
 
 static const QString selectLastReadCountersForContacts = "SELECT c.username, l.lastcounter "
                                                             "FROM lastreadmessage l "

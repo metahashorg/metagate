@@ -792,7 +792,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Create rsa key mhc " << address;
 
     const QString JS_NAME_RESULT = "createRsaKeyMHCResultJs";
-    createRsaKeyMTHS(requestId, address, password, walletPathTmh, JS_NAME_RESULT);
+    createRsaKeyMTHS(requestId, address, password, walletPathMth, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
