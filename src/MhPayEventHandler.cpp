@@ -61,6 +61,9 @@ bool MhPayEventHandler::eventFilter(QObject *object, QEvent *event) {
 
 void MhPayEventHandler::timerEvent() {
 BEGIN_SLOT_WRAPPER
+    mainWindow->setWindowFlags(mainWindow->windowFlags() & ~Qt::WindowStaysOnTopHint);
+    mainWindow->show();
+
     const std::string commandLine = runGuard.getValueAndReset();
     if (commandLine.empty()) {
         return;
