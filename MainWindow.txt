@@ -408,7 +408,7 @@ Q_INVOKABLE void qrEncode(QString requestId, QString textHex);
 qrEncodeResultJs(requestId, result);
 # where result is a png image in base64
 
-Q_INVOKABLE void qrEncode(QString requestId, QString pngBase64);
+Q_INVOKABLE void qrDecode(QString requestId, QString pngBase64);
 # Decodes text from qr code
 # Result returns to the function:
 qrDecodeResultJs(requestId, result);
