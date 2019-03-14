@@ -1,6 +1,9 @@
+
+
 include_directories(.)
 
 include(../cmake_libs/lib_common.cmake)
+include(../cmake_libs/DeployQt5.cmake)
 
 add_definitions(-DVERSION_STRING="1.19.0")
 add_definitions(-DVERSION_SETTINGS="10.1")
@@ -141,3 +144,6 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Xml
 )
+
+fixup_qt5_executable(${PROJECT_NAME})
+install_qt5_executable(${PROJECT_NAME})
