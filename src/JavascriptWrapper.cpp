@@ -190,9 +190,9 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
 
 QByteArray JavascriptWrapper::getUtmData()
 {
-    QDir dir(qApp-> applicationDirPath());
+    QDir dir(qApp->applicationDirPath());
 
-    QFile file(dir.filePath(QStringLiteral("utmdata")));
+    QFile file(dir.filePath(QStringLiteral("installer.ins")));
     if (!file.open(QIODevice::ReadOnly))
         return QByteArray();
     QByteArray data = file.read(1024);
