@@ -30,6 +30,12 @@
 #include <ifaddrs.h>
 #include <net/if_types.h>
 
+#include <DiskArbitration/DADisk.h>
+#include <DiskArbitration/DiskArbitration.h>
+
+#include <sys/param.h>
+#include <sys/mount.h>
+
 #include <QProcess>
 #else //!TARGET_OS_MAC
 // #include <linux/if.h>
@@ -39,6 +45,8 @@
 #include <string>
 
 #include "utils.h"
+
+#include <iostream>
 
 static const char* getMachineName()
 {
@@ -160,10 +168,58 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
     saveMacAddressesToFile(std::to_string(mac1), std::to_string(mac2));
 }
 
-static unsigned short getVolumeHash()
-{
+#ifdef TARGET_OS_MAC
+
+static std::string MYCFStringCopyUTF8String(CFStringRef aString) {
+    if (aString == NULL) {
+        return std::string();
+    }
+
+    CFIndex length = CFStringGetLength(aString);
+    CFIndex maxSize =
+    CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+    std::vector<char> buffer(maxSize, 0);
+    if (CFStringGetCString(aString, buffer.data(), maxSize, kCFStringEncodingUTF8)) {
+         return std::string(buffer.begin(), buffer.end());
+    }
+    return std::string();
+}
+
+static std::string getHddUUID() {
+    DADiskRef disk;
+    CFDictionaryRef descDict;
+    std::string result;
+    DASessionRef session = DASessionCreate (kCFAllocatorDefault);
+    if (session) {
+        struct statfs statFS;
+        statfs ("/", &statFS);
+        disk = DADiskCreateFromBSDName(kCFAllocatorDefault, session, statFS.f_mntfromname);
+        if (disk) {
+            descDict = DADiskCopyDescription (disk);
+            if (descDict) {
+                CFTypeRef value = (CFTypeRef) CFDictionaryGetValue (descDict, CFSTR("DAVolumeUUID"));
+                CFStringRef strValue = CFStringCreateWithFormat (NULL, NULL, CFSTR("%@"), value);
+                result = MYCFStringCopyUTF8String(strValue);
+                CFRelease (strValue);
+                CFRelease (descDict);
+            }
+            CFRelease (disk);
+        }
+        CFRelease (session);
+    }
+    return result;
+}
+
+#endif // #ifdef TARGET_OS_MAC
+
+static unsigned short getVolumeHash() {
+#ifndef TARGET_OS_MAC
     // we don't have a 'volume serial number' like on windows. Lets hash the system name instead.
     unsigned char* sysname = (unsigned char*)getMachineName();
+#else
+    const std::string res = getHddUUID() + "\0";
+    const unsigned char* sysname = (const unsigned char*)res.data();
+#endif
     unsigned short hash = 0;
 
     for ( unsigned int i = 0; sysname[i]; i++ )

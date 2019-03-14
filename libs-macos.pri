@@ -10,3 +10,5 @@ DEPENDPATH += $$PWD/quazip-0.7.3/ /usr/local/opt/openssl/include
 #QR coder libs
 INCLUDEPATH += $$PWD/3rdparty/QrCode/include/ $$PWD/3rdparty/ZBar/include/
 LIBS += -L$$PWD/3rdparty/QrCode/macos/ -L$$PWD/3rdparty/ZBar/macos/ -lQrCode -lzbar -liconv
+QMAKE_LFLAGS += -F/System/Library/Frameworks -L/usr/lib
+LIBS += -framework DiskArbitration -framework CoreFoundation
