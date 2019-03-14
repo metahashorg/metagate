@@ -118,7 +118,7 @@ public:
 
     const std::vector<QString>& getDefaultIps() const;
 
-    Optional<QString> findName(const QString &url) const;
+    Optional<PageInfo> findName(const QString &url) const;
 
     QString getIp(const QString &text, const std::set<QString> &excludes={});
 
@@ -151,7 +151,7 @@ private:
     std::vector<QString> defaultMhIps;
     QString defaultMhIp;
 
-    std::map<UrlName, QString> urlToName;
+    std::map<UrlName, std::shared_ptr<PageInfo>> urlToName;
 
     PageInfo searchPage;
 

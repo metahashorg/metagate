@@ -81,6 +81,11 @@ void PagesMappings::addMappingsMh(QString mapping) {
         std::shared_ptr<PageInfo> page = std::make_shared<PageInfo>(url, isExternal, isDefault, false);
         page->isApp = false;
         page->printedName = METAHASH_URL + name;
+        if (url.endsWith('/')) {
+            if (!page->printedName.endsWith('/')) {
+                page->printedName += "/";
+            }
+        }
 
         if (element.contains("ip") && element.value("ip").isArray()) {
             for (const QJsonValue &ip: element.value("ip").toArray()) {
@@ -88,16 +93,10 @@ void PagesMappings::addMappingsMh(QString mapping) {
                 const QString ipHttp = ipToHttp(ip.toString());
                 page->ips.emplace_back(ipHttp);
 
-                urlToName[ipHttp] = page->printedName;
+                urlToName[ipHttp] = page;
             }
         }
-        QString urlName = page->printedName;
-        if (url.endsWith('/')) {
-            if (!urlName.endsWith('/')) {
-                urlName += "/";
-            }
-        }
-        urlToName[url] = urlName;
+        urlToName[url] = page;
 
         auto addToMap = [](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
             const Name name(key);
@@ -174,7 +173,7 @@ void PagesMappings::setMappings(QString mapping) {
         } else {
             pageInfo->printedName = name;
         }
-        pageInfo->isApp = true;
+        pageInfo->isApp = !name.startsWith(METAHASH_URL);
         mappingsPages[Name(name)] = pageInfo;
 
         if (isDefault) {
@@ -183,7 +182,7 @@ void PagesMappings::setMappings(QString mapping) {
 
         auto foundUrlToName = urlToName.find(url);
         if (foundUrlToName == urlToName.end() || isPreferred) {
-            urlToName[url] = pageInfo->printedName;
+            urlToName[url] = pageInfo;
         }
     }
 }
@@ -326,21 +325,23 @@ const std::vector<QString>& PagesMappings::getDefaultIps() const {
     return defaultMhIps;
 }
 
-Optional<QString> PagesMappings::findName(const QString &url) const {
+Optional<PageInfo> PagesMappings::findName(const QString &url) const {
     const static QString HTTP_1 = "http://";
     const static QString HTTP_2 = "https://";
 
     auto found = urlToName.find(url);
     if (found != urlToName.end()) {
-        return found->second;
+        return *found->second;
     }
 
-    auto findUrl = [this](const QString &findTxt, const QString &parameters) -> Optional<QString> {
+    auto findUrl = [this](const QString &findTxt, const QString &parameters) -> Optional<PageInfo> {
         auto found = urlToName.find(findTxt);
         if (found != urlToName.end()) {
-            return concatenateTwoPath(found->second, parameters);
+            PageInfo newPageInfo = *found->second;
+            newPageInfo.printedName = concatenateTwoPath(found->second->printedName, parameters);
+            return newPageInfo;
         } else {
-            return Optional<QString>();
+            return Optional<PageInfo>();
         }
     };
 
@@ -357,7 +358,7 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
         if (url3.at(find) == "/") {
             find++;
         }
-        Optional<QString> found = findUrl(url3.mid(find), url.mid(findSharp));
+        const Optional<PageInfo> found = findUrl(url3.mid(find), url.mid(findSharp));
         if (found.has_value()) {
             return found.value();
         }
@@ -369,14 +370,14 @@ Optional<QString> PagesMappings::findName(const QString &url) const {
             foundSlash = url.indexOf('/', HTTP_2.size() + 1);
         }
         if (foundSlash != -1) {
-            Optional<QString> found = findUrl(url.left(foundSlash), url.mid(foundSlash));
+            const Optional<PageInfo> found = findUrl(url.left(foundSlash), url.mid(foundSlash));
             if (found.has_value()) {
                 return found.value();
             }
         }
     }
 
-    return Optional<QString>();
+    return Optional<PageInfo>();
 }
 
 QString PagesMappings::getIp(const QString &text, const std::set<QString> &excludes) {

@@ -116,7 +116,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     channel = std::make_unique<QWebChannel>(ui->webView->page());
     ui->webView->page()->setWebChannel(channel.get());
-    channel->registerObject(QString("initializer"), &initializerJs);
+    registerWebChannel(QString("initializer"), &initializerJs);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu), "not connect customContextMenuRequested");
@@ -149,6 +149,33 @@ void MainWindow::loadPagesMappings() {
     }
 }
 
+void MainWindow::registerWebChannel(const QString &name, QObject *obj) {
+    channel->registerObject(name, obj);
+    registeredWebChannels.emplace_back(name, obj);
+}
+
+void MainWindow::unregisterAllWebChannels() {
+    if (!isRegisteredWebChannels) {
+        return;
+    }
+    LOG << "Unregister all channels";
+    for (const auto &pair: registeredWebChannels) {
+        channel->deregisterObject(pair.second);
+    }
+    isRegisteredWebChannels = false;
+}
+
+void MainWindow::registerAllWebChannels() {
+    if (isRegisteredWebChannels) {
+        return;
+    }
+    LOG << "Register all channels";
+    for (const auto &pair: registeredWebChannels) {
+        channel->registerObject(pair.first, pair.second);
+    }
+    isRegisteredWebChannels = true;
+}
+
 void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SetJavascriptWrapperCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
@@ -156,7 +183,7 @@ BEGIN_SLOT_WRAPPER
         jsWrapper = jsWrapper1;
         jsWrapper->setWidget(this);
         CHECK(connect(jsWrapper, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
-        channel->registerObject(QString("mainWindow"), jsWrapper);
+        registerWebChannel(QString("mainWindow"), jsWrapper);
         CHECK(connect(jsWrapper, &JavascriptWrapper::setHasNativeToolbarVariableSig, this, &MainWindow::onSetHasNativeToolbarVariable), "not connect setHasNativeToolbarVariableSig");
         CHECK(connect(jsWrapper, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText), "not connect setCommandLineTextSig");
         CHECK(connect(jsWrapper, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings), "not connect setMappingsSig");
@@ -172,7 +199,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(authJavascript != nullptr, "Incorrect authJavascript");
         CHECK(connect(authJavascript, &auth::AuthJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
-        channel->registerObject(QString("auth"), authJavascript);
+        registerWebChannel(QString("auth"), authJavascript);
 
         CHECK(authManager != nullptr, "Incorrect authManager");
         CHECK(connect(authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
@@ -187,7 +214,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(messengerJavascript != nullptr, "Incorrect messengerJavascript");
         CHECK(connect(messengerJavascript, &messenger::MessengerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
-        channel->registerObject(QString("messenger"), messengerJavascript);
+        registerWebChannel(QString("messenger"), messengerJavascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER
@@ -198,7 +225,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
         CHECK(connect(transactionsJavascript, &transactions::TransactionsJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
-        channel->registerObject(QString("transactions"), transactionsJavascript);
+        registerWebChannel(QString("transactions"), transactionsJavascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER
@@ -209,7 +236,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
         CHECK(connect(proxyJavascript, &proxy::ProxyJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
-        channel->registerObject(QString("proxy"), proxyJavascript);
+        registerWebChannel(QString("proxy"), proxyJavascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER
@@ -422,6 +449,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             link += plained;
             LOG << "Search page " << link;
             addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text2, isAddToHistory, true);
+            registerAllWebChannels();
             loadFile(link);
         } else if (reference.startsWith(METAHASH_URL)) {
             QString uri = reference.mid(METAHASH_URL.size());
@@ -439,6 +467,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
                 clText = pageInfo.printedName + other;
             }
             addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+            unregisterAllWebChannels();
             loadUrl(reference);
         } else {
             QString clText;
@@ -452,9 +481,11 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
                 qtOpenInBrowser(reference);
             } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
                 addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+                unregisterAllWebChannels();
                 loadUrl(reference);
             } else {
                 addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
+                registerAllWebChannels();
                 loadFile(reference);
             }
         }
@@ -607,14 +638,23 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
 void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
     const QString url = url2.toString();
-    const auto found = pagesMappings.findName(url);
+    const Optional<PageInfo> found = pagesMappings.findName(url);
     if (found.has_value()) {
-        LOG << "Set address after load " << found.value();
-        addElementToHistoryAndCommandLine(found.value(), true, false);
+        LOG << "Set address after load " << found.value().printedName;
+        if (!found.value().isApp) {
+            unregisterAllWebChannels();
+        } else {
+            registerAllWebChannels();
+        }
+        prevIsApp = found.value().isApp;
+        addElementToHistoryAndCommandLine(found.value().printedName, true, false);
     } else {
         if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
             const QString request = url.mid(prevUrl.size());
             LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
+            if (!prevIsApp) {
+                unregisterAllWebChannels();
+            }
             addElementToHistoryAndCommandLine(prevTextCommandLine + request, true, false);
         } else {
             LOG << "not set address after load " << url << " " << currentTextCommandLine;
@@ -662,7 +702,11 @@ END_SLOT_WRAPPER
 
 void MainWindow::onJsRun(QString jsString) {
 BEGIN_SLOT_WRAPPER
-    ui->webView->page()->runJavaScript(jsString);
+    if (isRegisteredWebChannels) {
+        ui->webView->page()->runJavaScript(jsString);
+    } else {
+        LOG << "Revert javascript";
+    }
 END_SLOT_WRAPPER
 }
 

@@ -147,6 +147,12 @@ private:
 
     void setUserName(QString userName);
 
+    void registerWebChannel(const QString &name, QObject *obj);
+
+    void unregisterAllWebChannels();
+
+    void registerAllWebChannels();
+
 public slots:
 
     void updateHtmlsEvent();
@@ -204,6 +210,7 @@ private:
     SimpleClient client;
 
     QString prevUrl;
+    bool prevIsApp = true;
 
     QString prevTextCommandLine;
 
@@ -218,6 +225,9 @@ private:
     bool isInitFinished = false;
 
     QUrl saveUrlToMove;
+
+    std::vector<std::pair<QString, QObject*>> registeredWebChannels;
+    bool isRegisteredWebChannels = true;
 };
 
 #endif // MAINWINDOW_H
