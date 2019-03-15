@@ -104,7 +104,7 @@ std::string RunGuard::getValueAndReset() {
                 const std::string sizeStr(data, found);
                 const size_t size = std::stoull(sizeStr);
                 if (size <= sharedMem.size() + 10) {
-                    result = std::string(found + 1, found + size);
+                    result = std::string(found + 1, found + 1 + size);
                 }
             }
         }
