@@ -260,7 +260,7 @@ END_SLOT_WRAPPER
 void MainWindow::onProcessExternalUrl(const QUrl &url) {
 BEGIN_SLOT_WRAPPER
     if (isInitFinished) {
-        enterCommandAndAddToHistory(url.toString(), true, true);
+        enterCommandAndAddToHistory(url.toString(), false, true);
     } else {
         saveUrlToMove = url;
     }
@@ -597,7 +597,7 @@ bool MainWindow::currentFileIsEqual(const QString &pageName) {
 }
 
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
-    LOG << "scl " << text;
+    LOG << "scl " << isAddToHistory << " " << text;
 
     unregisterCommandLine();
     const QString currText = ui->commandLine->currentText();
