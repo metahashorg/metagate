@@ -49,6 +49,7 @@ bool MhPayEventHandler::eventFilter(QObject *object, QEvent *event) {
         auto *openEvent = static_cast<QFileOpenEvent *>(event);
         const QUrl url = openEvent->url();
         if (processUrl(url)) {
+            mainWindow->showNormal();
             return true;
         } else {
             return QObject::eventFilter(object, event);
@@ -73,6 +74,7 @@ BEGIN_SLOT_WRAPPER
     if (success) {
         if (mainWindow != nullptr) {
             mainWindow->setWindowFlags(mainWindow->windowFlags() | Qt::WindowStaysOnTopHint);
+            mainWindow->showNormal();
             mainWindow->show();
             mainWindow->activateWindow();
         }
