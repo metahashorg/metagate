@@ -62,9 +62,11 @@ public:
         return name;
     }
 
-private:
+public:
 
     static std::string createAddress(const std::string &publicKeyBinary);
+
+private:
 
     static void savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr);
 

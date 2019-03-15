@@ -213,14 +213,19 @@ std::string Wallet::createV8Address(const std::string &addr, int nonce) {
     return "0x" + toHex(address);
 }
 
+static std::string createAddressFromPrivate(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey) {
+    const std::string pubKeyElements = getPublicKeyElements(privKey);
+    const std::string pubKeyBinary = fromHex(pubKeyElements);
+
+    const std::string hexAddr = Wallet::createAddress(pubKeyBinary);
+    return hexAddr;
+}
+
 void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr) {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
 
     publicKey = getPublicKey(privKey);
-    const std::string pubKeyElements = getPublicKeyElements(privKey);
-    const std::string pubKeyBinary = fromHex(pubKeyElements);
-
-    const std::string hexAddr = createAddress(pubKeyBinary);
+    const std::string hexAddr = createAddressFromPrivate(privKey);
 
     const QString filePath = makeFullWalletPath(folder, hexAddr);
 #ifdef TARGET_WINDOWS
@@ -234,9 +239,14 @@ void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoP
     CryptoPP::StringSink ss(privateKeyStr);
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::PEM_Save(ss, prng, privKey, "AES-128-CBC", password.c_str(), password.size());
+
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
     CryptoPP::StringSource ss1(privateKeyStr, true);
     CryptoPP::PEM_Load(ss1, privateKey, password.c_str(), password.size());
+
+    const std::string hexAddressCheck = createAddressFromPrivate(privateKey);
+    CHECK_TYPED(hexAddressCheck == hexAddr, TypeErrors::DONT_CREATE_KEY, "Error while create key");
+
     CryptoPP::StringSource(privateKeyStr, true, new CryptoPP::FileSink(file1));
 
     addr = hexAddr;
