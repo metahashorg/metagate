@@ -3,6 +3,7 @@ MY_PATH="`dirname \"$0\"`"
 cd ${MY_PATH}
 
 sed "s?sssssss?${PWD}/run.sh?g" < ./metagate_template.desktop > metagate.desktop
+mkdir -p ~/.local/share/applications/
 mv metagate.desktop ~/.local/share/applications/
 if type "xdg-mime" > /dev/null; then
   xdg-mime default metagate.desktop x-scheme-handler/metapay
