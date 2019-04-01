@@ -50,8 +50,9 @@ static void crash_handler(int sig) {
     void *array[50];
     const size_t size = backtrace(array, 50);
 
-    fprintf(stderr, "Error: signal %d:\n", sig);
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    fprintf(stdout, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDOUT_FILENO);
+    fflush(stdout);
     signal(SIGINT, nullptr);
     exit(1);
 }
@@ -60,6 +61,8 @@ static void crash_handler(int sig) {
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
     signal(SIGSEGV, crash_handler);
+    signal(SIGABRT, crash_handler);
+    signal(SIGFPE, crash_handler);
 #endif
 
     std::string supposedMhPayUrl;
