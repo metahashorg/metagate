@@ -423,7 +423,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
                 const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
                 if (savedPos == -1) {
-                    db.setLastReadCounterForUserContact(m.username, collocutorOrChannel, -1, isChannel); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
+                    db.setLastReadCounterForUserContact(m.username, collocutorOrChannel, -1, isChannel); // TODO подумать нужен ли этот вызов
                 }
             } else {
                 const auto idPair = db.findFirstNotConfirmedMessageWithHash(m.username, m.hash, channel);
