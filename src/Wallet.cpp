@@ -57,7 +57,38 @@ static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::S
     return publicKeyStr;
 }
 
-static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
+static std::string getPrivateKeyR1(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
+    std::string result = "0x3077";
+    {
+        std::string privateKeyStr;
+        privateKeyStr.reserve(1000); // Обязательно для windows
+        CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(privateKeyStr), true);
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey copy = privateKey;
+        copy.DEREncodePrivateKey(encoder);
+
+        result += privateKeyStr.substr(4);
+    }
+    result += "a00a";
+
+    {
+        std::string privateKeyStr;
+        privateKeyStr.reserve(1000); // Обязательно для windows
+        CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(privateKeyStr), true);
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey copy = privateKey;
+        copy.AccessGroupParameters().SetEncodeAsOID(true);
+        copy.DEREncodeAlgorithmParameters(encoder);
+
+        result += privateKeyStr;
+    }
+
+    result += "a144";
+
+    result += ::getPublicKey(privateKey).substr(46);
+
+    return toLower(result);
+}
+
+static std::string getPrivateKeyK1(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
     std::string result = "0x3074";
     {
         std::string privateKeyStr;
@@ -481,5 +512,11 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
 }
 
 std::string Wallet::getNotProtectedKeyHex() const {
-    return ::getPrivateKey(privateKey);
+    if (privateKey.GetGroupParameters() == CryptoPP::ASN1::secp256k1()) {
+        return ::getPrivateKeyK1(privateKey);
+    } else if (privateKey.GetGroupParameters() == CryptoPP::ASN1::secp256r1()) {
+        return ::getPrivateKeyR1(privateKey);
+    } else {
+        throwErrTyped(PRIVATE_KEY_ERROR, "Unknown private key type");
+    }
 }
