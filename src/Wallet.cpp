@@ -58,7 +58,7 @@ static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::S
 }
 
 static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
-    std::string result = "0x3077";
+    std::string result = "0x3074";
     {
         std::string privateKeyStr;
         privateKeyStr.reserve(1000); // Обязательно для windows
@@ -68,7 +68,7 @@ static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::
 
         result += privateKeyStr.substr(4);
     }
-    result += "a00a";
+    result += "a007";
 
     {
         std::string privateKeyStr;
@@ -83,7 +83,7 @@ static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::
 
     result += "a144";
 
-    result += ::getPublicKey(privateKey).substr(46);
+    result += ::getPublicKey(privateKey).substr(40);
 
     return toLower(result);
 }
@@ -256,7 +256,7 @@ void Wallet::createWallet(const QString &folder, const std::string &password, st
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
-    privateKey.Initialize(prng, CryptoPP::ASN1::secp256r1());
+    privateKey.Initialize(prng, CryptoPP::ASN1::secp256k1());
     const bool resultCreatePrivate = privateKey.Validate(prng, 3);
     CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create private key");
 
