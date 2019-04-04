@@ -256,6 +256,8 @@ private:
 
     void sendErrorGetTx(const QString &requestId, const TransactionHash &hash, const QString &server);
 
+    void fetchBalanceAddress(const QString &address);
+
 private:
 
     NsLookup &nsLookup;
