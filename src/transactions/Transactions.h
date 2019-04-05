@@ -133,8 +133,6 @@ public:
 
     using GetNonceCallback = CallbackWrapper<void(size_t nonce, const QString &serverError)>;
 
-    using GetStatusDelegateCallback = std::function<void(const TypedException &exception, const DelegateStatus &status, const Transaction &txDelegate, const Transaction &txUndelegate)>;
-
     using SendTransactionCallback = CallbackWrapper<void()>;
 
     using ClearDbCallback = std::function<void(const TypedException &exception)>;
@@ -179,8 +177,6 @@ signals:
 
     void getLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
 
-    void getDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
-
     void clearDb(const QString &currency, const ClearDbCallback &callback);
 
 public slots:
@@ -212,8 +208,6 @@ public slots:
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
     void onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
-
-    void onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback);
 
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 

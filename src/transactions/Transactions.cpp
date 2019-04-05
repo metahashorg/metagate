@@ -49,7 +49,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
     CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
     CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
-    CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
     CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
 
     Q_REG(Transactions::Callback, "Transactions::Callback");
@@ -61,7 +60,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_REG(GetTxCallback, "GetTxCallback");
     Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
     Q_REG(GetNonceCallback, "GetNonceCallback");
-    Q_REG(GetStatusDelegateCallback, "GetStatusDelegateCallback");
     Q_REG(SendTransactionCallback, "SendTransactionCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
     Q_REG(SignalFunc, "SignalFunc");
@@ -760,30 +758,6 @@ BEGIN_SLOT_WRAPPER
         result = found->second;
     }
     runCallback(std::bind(callback, result, now));
-END_SLOT_WRAPPER
-}
-
-void Transactions::onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    DelegateStatus status = DelegateStatus::NOT_FOUND;
-    Transaction txDelegate;
-    Transaction txUnDelegate;
-    const TypedException exception = apiVrapper2([&, this] {
-        txDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, true);
-        txUnDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, false);
-        if (txDelegate.id == -1) {
-            status = DelegateStatus::NOT_FOUND;
-        } else if (txDelegate.status == Transaction::PENDING) {
-            status = DelegateStatus::PENDING;
-        } else if (txDelegate.status == Transaction::ERROR) {
-            status = DelegateStatus::ERROR;
-        } else if (txUnDelegate.id != -1 && txUnDelegate.timestamp > txDelegate.timestamp) {
-            status = DelegateStatus::UNDELEGATE;
-        } else {
-            status = DelegateStatus::DELEGATE;
-        }
-    });
-    runCallback(std::bind(callback, exception, status, txDelegate, txUnDelegate));
 END_SLOT_WRAPPER
 }
 

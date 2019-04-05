@@ -94,8 +94,6 @@ public slots:
 
     Q_INVOKABLE void getLastUpdatedBalance(QString currency);
 
-    Q_INVOKABLE void getStatusDelegation(QString address, QString currency, QString from, QString to);
-
     Q_INVOKABLE void clearDb(QString currency);
 
 private:
