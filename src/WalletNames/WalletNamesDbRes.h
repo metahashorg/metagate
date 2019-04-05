@@ -43,6 +43,18 @@ static const QString insertWalletInfo = "INSERT OR IGNORE INTO info (wallet_id, 
                                                "SELECT id FROM wallets WHERE address = :address"
                                            "), :user, :device, :currency)";
 
+static const QString selectName = "SELECT name FROM wallets "
+                                 "WHERE address = :address ";
+
+static const QString selectInfo = "SELECT address, name, user, device, currency FROM wallets "
+                                 "LEFT JOIN info ON info.wallet_id == wallets.id "
+                                 "WHERE wallets.address == :address";
+
+static const QString selectForCurrencyAndUser = "SELECT address, name, user, device, currency FROM wallets "
+                                 "LEFT JOIN info ON info.wallet_id == wallets.id "
+                                 "WHERE wallets.id IN (SELECT wallet_id FROM info "
+                                 "WHERE user == :user AND currency == :currency)";
+
 } // namespace wallet_names
 
 #endif // WALLETNAMESDBRES_H

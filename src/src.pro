@@ -90,7 +90,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitMessenger.cpp \
     UdpSocketClient.cpp \
     MhPayEventHandler.cpp \
-    WalletNames/WalletNamesDbStorage.cpp
+    WalletNames/WalletNamesDbStorage.cpp \
+    WalletNames/WalletNames.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -187,7 +188,8 @@ HEADERS += mainwindow.h \
     MhPayEventHandler.h \
     WalletNames/WalletNamesDbStorage.h \
     WalletNames/WalletNamesDbRes.h \
-    WalletNames/WalletInfo.h
+    WalletNames/WalletInfo.h \
+    WalletNames/WalletNames.h
 
 FORMS += mainwindow.ui
 

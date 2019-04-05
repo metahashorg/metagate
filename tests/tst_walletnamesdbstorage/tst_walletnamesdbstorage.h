@@ -17,6 +17,8 @@ private slots:
 
     void testRenameWallet();
 
+    void testSelectForCurrency();
+
 private:
 };
 

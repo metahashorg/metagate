@@ -131,12 +131,43 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
 
     CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
 
+    CHECK(connect(this, &JavascriptWrapper::getListWallets, this, &JavascriptWrapper::onGetListWallets), "not connect onGetListWallets");
+
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
+    Q_REG(WalletsListCallback, "WalletsListCallback");
 
     emit authManager.reEmit();
 
     sendAppInfoToWss("", true);
+}
+
+void JavascriptWrapper::onGetListWallets(const WalletType &type, const WalletsListCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<QString> result;
+    const TypedException &exception = apiVrapper2([&]{
+        if (type == WalletType::Tmh) {
+            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathTmh);
+            result.reserve(res.size());
+            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
+        } else if (type == WalletType::Mth) {
+            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathMth);
+            result.reserve(res.size());
+            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
+        } else if (type == WalletType::Btc) {
+            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPathBtc);
+            result.reserve(res.size());
+            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
+        } else if (type == WalletType::Eth) {
+            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPathEth);
+            result.reserve(res.size());
+            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
+        } else {
+            throwErr("Incorrect type");
+        }
+    });
+    callback.emitFunc(exception, hardwareId, userName, result);
+END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {

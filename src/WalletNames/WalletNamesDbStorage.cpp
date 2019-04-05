@@ -69,7 +69,13 @@ std::vector<WalletInfo> WalletNamesDbStorage::createWalletsList(QSqlQuery &query
 
         info.address = address;
         info.name = query.value("name").toString();
-        info.infos.emplace_back(query.value("user").toString(), query.value("device").toString(), query.value("currency").toString());
+
+        const QString user = query.value("user").toString();
+        const QString device = query.value("device").toString();
+        const QString currency = query.value("currency").toString();
+        if (!user.isEmpty() || !device.isEmpty() || !currency.isEmpty()) {
+            info.infos.emplace_back(user, device, currency);
+        }
     }
     std::vector<WalletInfo> res;
     res.reserve(result.size());
@@ -78,9 +84,46 @@ std::vector<WalletInfo> WalletNamesDbStorage::createWalletsList(QSqlQuery &query
     return res;
 }
 
+std::vector<WalletInfo> WalletNamesDbStorage::getWalletsCurrency(const QString &currency, const QString &user) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectForCurrencyAndUser), query.lastError().text().toStdString());
+    query.bindValue(":currency", currency);
+    query.bindValue(":user", user);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+
+    return createWalletsList(query);
+}
+
 void WalletNamesDbStorage::addOrUpdateWallet(const WalletInfo &info) {
     giveNameWallet(info.address, info.name);
     updateWalletInfo(info.address, info.infos);
+}
+
+QString WalletNamesDbStorage::getNameWallet(const QString &address) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectName), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+
+    if (query.next()) {
+        return query.value("name").toString();
+    } else {
+        return "";
+    }
+}
+
+WalletInfo WalletNamesDbStorage::getWalletInfo(const QString &address) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectInfo), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+
+    const std::vector<WalletInfo> res = createWalletsList(query);
+    if (res.empty()) {
+        return WalletInfo();
+    } else {
+        return res[0];
+    }
 }
 
 } // namespace wallet_names

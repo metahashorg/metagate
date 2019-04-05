@@ -10,6 +10,8 @@
 
 #include "client.h"
 
+#include "CallbackWrapper.h"
+
 class NsLookup;
 class WebSocketClient;
 struct TypedException;
@@ -31,7 +33,15 @@ class JavascriptWrapper : public QObject
     Q_OBJECT
 public:
 
-using ReturnCallback = std::function<void()>;
+    using ReturnCallback = std::function<void()>;
+
+    using WalletsListCallback = CallbackWrapper<void(const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses)>;
+
+public:
+
+    enum class WalletType {
+        Mth, Tmh, Btc, Eth
+    };
 
 public:
     explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
@@ -58,6 +68,14 @@ signals:
 
 public slots:
     void onLogined(bool isInit, const QString login);
+
+signals:
+
+    void getListWallets(const WalletType &type, const WalletsListCallback &callback);
+
+private slots:
+
+    void onGetListWallets(const WalletType &type, const WalletsListCallback &callback);
 
 public slots:
 

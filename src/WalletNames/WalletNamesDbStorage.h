@@ -22,6 +22,12 @@ public:
 
     void addOrUpdateWallet(const WalletInfo &info);
 
+    QString getNameWallet(const QString &address);
+
+    WalletInfo getWalletInfo(const QString &address);
+
+    std::vector<WalletInfo> getWalletsCurrency(const QString &currency, const QString &user);
+
     std::vector<WalletInfo> getAllWallets();
 
 protected:
