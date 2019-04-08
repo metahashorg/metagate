@@ -206,7 +206,7 @@ BEGIN_SLOT_WRAPPER
             QCryptographicHash hashAlg(QCryptographicHash::Md5);
             hashAlg.addData(result.data(), result.size());
             const QString hashStr(hashAlg.result().toHex());
-            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
+            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash + ", response size " + QString::number(result.size())).toStdString());
 
             removeOlderFolders(makePath(currentBeginPath, mainWindow.getCurrentHtmls().folderName), mainWindow.getCurrentHtmls().lastVersion);
 
