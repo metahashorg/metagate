@@ -48,6 +48,8 @@ public:
 
     void setWidget(QWidget *widget);
 
+    void mvToThread(QThread *thread);
+
 signals:
 
     void callbackCall(JavascriptWrapper::ReturnCallback callback);
