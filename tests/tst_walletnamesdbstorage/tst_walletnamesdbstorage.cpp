@@ -18,16 +18,15 @@ tst_WalletNamesDBStorage::tst_WalletNamesDBStorage(QObject *parent)
 
 void tst_WalletNamesDBStorage::testGiveName() {
     if (QFile::exists(databaseFileName)) {
-        QFile::remove(databaseFileName);
-    }
+        QFile::remove(databaseFileName);    }
     WalletNamesDbStorage db;
     db.init();
 
-    db.giveNameWallet("123", "name1");
-    db.giveNameWallet("234", "name2");
-    db.giveNameWallet("345", "name1");
-    db.giveNameWallet("234", "name3");
-    db.giveNameWallet("345", "name1");
+    QCOMPARE(db.giveNameWallet("123", "name1"), false);
+    QCOMPARE(db.giveNameWallet("234", "name2"), false);
+    QCOMPARE(db.giveNameWallet("345", "name1"), false);
+    QCOMPARE(db.giveNameWallet("234", "name3"), true);
+    QCOMPARE(db.giveNameWallet("345", "name1"), false);
 
     std::vector<WalletInfo> wallets = db.getAllWallets();
     std::sort(wallets.begin(), wallets.end(), [](const WalletInfo &first, const WalletInfo &second) {

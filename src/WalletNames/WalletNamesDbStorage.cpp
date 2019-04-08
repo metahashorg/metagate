@@ -28,17 +28,30 @@ void WalletNamesDbStorage::createDatabase() {
     createIndex(createInfoUniqueIndex);
 }
 
-void WalletNamesDbStorage::giveNameWallet(const QString &address, const QString &name) {
+bool WalletNamesDbStorage::giveNameWallet(const QString &address, const QString &name) {
     QSqlQuery query(database());
-    CHECK(query.prepare(giveNameWalletPart1), query.lastError().text().toStdString());
+    CHECK(query.prepare(selectName), query.lastError().text().toStdString());
     query.bindValue(":address", address);
-    query.bindValue(":name", name);
     CHECK(query.exec(), query.lastError().text().toStdString());
-
-    CHECK(query.prepare(giveNameWalletPart2), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":name", name);
-    CHECK(query.exec(), query.lastError().text().toStdString());
+    const bool ifExist = query.next();
+    if (!ifExist) {
+        CHECK(query.prepare(giveNameWalletAdd), query.lastError().text().toStdString());
+        query.bindValue(":address", address);
+        query.bindValue(":name", name);
+        CHECK(query.exec(), query.lastError().text().toStdString());
+        return false;
+    } else {
+        const QString oldValue = query.value("name").toString();
+        if (oldValue != name) {
+            CHECK(query.prepare(giveNameWalletRename), query.lastError().text().toStdString());
+            query.bindValue(":address", address);
+            query.bindValue(":name", name);
+            CHECK(query.exec(), query.lastError().text().toStdString());
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 std::vector<WalletInfo> WalletNamesDbStorage::getAllWallets() {
@@ -94,9 +107,10 @@ std::vector<WalletInfo> WalletNamesDbStorage::getWalletsCurrency(const QString &
     return createWalletsList(query);
 }
 
-void WalletNamesDbStorage::addOrUpdateWallet(const WalletInfo &info) {
-    giveNameWallet(info.address, info.name);
+bool WalletNamesDbStorage::addOrUpdateWallet(const WalletInfo &info) {
+    const bool isUpdated = giveNameWallet(info.address, info.name);
     updateWalletInfo(info.address, info.infos);
+    return isUpdated;
 }
 
 QString WalletNamesDbStorage::getNameWallet(const QString &address) {
