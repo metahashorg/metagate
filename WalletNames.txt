@@ -1,0 +1,26 @@
+Messenger регестрируется в javascript по имени wallet_names
+
+Q_INVOKABLE void saveKeyName(QString address, QString name);
+Задать имя кошельку
+Результат вернется в функцию
+wnsSaveKeyNameResultJs(address, errorNum, errorMessage)
+
+Q_INVOKABLE void getKeyName(QString address);
+Получить имя кошелька
+Результат вернется в функцию
+wnsGetKeyNameResultJs(address, name, errorNum, errorMessage)
+
+Q_INVOKABLE void getAllWalletsInCurrency(QString currency);
+Получить инфу о всех кошельках.
+currency == tmh|mth|btc|eth|all
+Результат вернется в функцию
+wnsGetKeyNameResultJs(currency, result, errorNum, errorMessage)
+где result - json вида
+где this - кошельки на этом устройстве, other - кошельки на других устройствах
+
+
+wnsUpdatedWalletNameResultJs(address, name, errorNum, errorMessage)
+Вызывается, если имя кошелька было обновлено с другого устройства
+
+wnsWalletsFlushedResultJs(errorNum, errorMessage)
+Вызывается, если обновился список доступных кошельков со всех устройств. Возможно появилось что-нибудь интересное
