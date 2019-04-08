@@ -43,6 +43,7 @@
 #include "transactions/TransactionsJavascript.h"
 #include "Initializer/InitializerJavascript.h"
 #include "proxy/ProxyJavascript.h"
+#include "WalletNames/WalletNamesJavascript.h"
 
 #include "machine_uid.h"
 
@@ -82,6 +83,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
     CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
     CHECK(connect(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript), "not connect onSetProxyJavascript");
+    CHECK(connect(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript), "not connect onSetWalletNamesJavascript");
     CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
     CHECK(connect(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl), "not connect onProcessExternalUrl");
 
@@ -90,6 +92,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
     Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
     Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
+    Q_REG(SetWalletNamesJavascriptCallback, "SetWalletNamesJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
 
     shemeHandler = new MHUrlSchemeHandler(this);
@@ -237,6 +240,17 @@ BEGIN_SLOT_WRAPPER
         CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
         CHECK(connect(proxyJavascript, &proxy::ProxyJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
         registerWebChannel(QString("proxy"), proxyJavascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(walletNamesJavascript != nullptr, "Incorrect proxyJavascript");
+        CHECK(connect(walletNamesJavascript, &wallet_names::WalletNamesJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        registerWebChannel(QString("wallet_names"), walletNamesJavascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER

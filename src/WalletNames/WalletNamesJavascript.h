@@ -19,9 +19,7 @@ public:
 
 public:
 
-    explicit WalletNamesJavascript(QObject *parent = nullptr);
-
-    void setWalletNames(WalletNames& walletNames);
+    explicit WalletNamesJavascript(WalletNames& walletNames, QObject *parent = nullptr);
 
 signals:
 
@@ -56,7 +54,7 @@ private:
 
 private:
 
-    WalletNames *manager;
+    WalletNames &manager;
 
     std::function<void(const std::function<void()> &callback)> signalFunc;
 

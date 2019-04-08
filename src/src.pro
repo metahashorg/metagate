@@ -92,7 +92,8 @@ SOURCES += main.cpp mainwindow.cpp \
     MhPayEventHandler.cpp \
     WalletNames/WalletNamesDbStorage.cpp \
     WalletNames/WalletNames.cpp \
-    WalletNames/WalletNamesJavascript.cpp
+    WalletNames/WalletNamesJavascript.cpp \
+    Initializer/Inits/InitWalletsNames.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -191,7 +192,8 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNamesDbRes.h \
     WalletNames/WalletInfo.h \
     WalletNames/WalletNames.h \
-    WalletNames/WalletNamesJavascript.h
+    WalletNames/WalletNamesJavascript.h \
+    Initializer/Inits/InitWalletsNames.h
 
 FORMS += mainwindow.ui
 

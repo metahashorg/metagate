@@ -18,20 +18,17 @@ SET_LOG_NAMESPACE("WNS");
 
 namespace wallet_names {
 
-WalletNamesJavascript::WalletNamesJavascript(QObject *parent) : QObject(parent)
+WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames, QObject *parent)
+    : QObject(parent)
+    , manager(walletNames)
 {
     CHECK(connect(this, &WalletNamesJavascript::callbackCall, this, &WalletNamesJavascript::onCallbackCall), "not connect onCallbackCall");
+    CHECK(connect(&manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName), "not connect onUpdatedWalletName");
+    CHECK(connect(&manager, &WalletNames::walletsFlushed, this, &WalletNamesJavascript::onWalletsFlushed), "not connect onWalletsFlushed");
 
     Q_REG(WalletNamesJavascript::Callback, "WalletNamesJavascript::Callback");
 
     signalFunc = std::bind(&WalletNamesJavascript::callbackCall, this, _1);
-}
-
-void WalletNamesJavascript::setWalletNames(WalletNames &walletNames) {
-    manager = &walletNames;
-
-    CHECK(connect(manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName), "not connect onUpdatedWalletName");
-    CHECK(connect(manager, &WalletNames::walletsFlushed, this, &WalletNamesJavascript::onWalletsFlushed), "not connect onWalletsFlushed");
 }
 
 template<typename... Args>
@@ -87,8 +84,6 @@ static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, c
 
 void WalletNamesJavascript::saveKeyName(QString address, QString name) {
 BEGIN_SLOT_WRAPPER
-    CHECK(manager != nullptr, "WalletNames not set");
-
     const QString JS_NAME_RESULT = "wnsSaveKeyNameResultJs";
 
     LOG << "save key name " << address << " " << name;
@@ -102,7 +97,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit manager->saveWalletName(address, name, WalletNames::SaveWalletNameCallback([address, makeFunc, errorFunc] {
+        emit manager.saveWalletName(address, name, WalletNames::SaveWalletNameCallback([address, makeFunc, errorFunc] {
             makeFunc(TypedException(), address);
         }, errorFunc, signalFunc));
     });
@@ -115,8 +110,6 @@ END_SLOT_WRAPPER
 
 void WalletNamesJavascript::getKeyName(QString address) {
 BEGIN_SLOT_WRAPPER
-    CHECK(manager != nullptr, "WalletNames not set");
-
     const QString JS_NAME_RESULT = "wnsGetKeyNameResultJs";
 
     LOG << "get key name " << address;
@@ -130,7 +123,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit manager->getWalletName(address, WalletNames::GetWalletNameCallback([address, makeFunc, errorFunc] (const QString &name) {
+        emit manager.getWalletName(address, WalletNames::GetWalletNameCallback([address, makeFunc, errorFunc] (const QString &name) {
             makeFunc(TypedException(), address, name);
         }, errorFunc, signalFunc));
     });
@@ -143,8 +136,6 @@ END_SLOT_WRAPPER
 
 void WalletNamesJavascript::getAllWalletsInCurrency(QString currency) {
 BEGIN_SLOT_WRAPPER
-    CHECK(manager != nullptr, "WalletNames not set");
-
     const QString JS_NAME_RESULT = "wnsGetAllWalletsInCurrencyResultJs";
 
     LOG << "get wallets in currency " << currency;
@@ -158,7 +149,7 @@ BEGIN_SLOT_WRAPPER
     };
 
     const TypedException exception = apiVrapper2([&, this](){
-        emit manager->getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc, errorFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
+        emit manager.getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc, errorFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
             makeFunc(TypedException(), currency, walletsToJson(thisWallets, otherWallets));
         }, errorFunc, signalFunc));
     });
