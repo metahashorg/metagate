@@ -69,6 +69,7 @@ signals:
     void mthWalletCreated(QString name);
 
 public slots:
+
     void onLogined(bool isInit, const QString login);
 
 signals:
