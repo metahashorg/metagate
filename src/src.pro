@@ -91,7 +91,8 @@ SOURCES += main.cpp mainwindow.cpp \
     UdpSocketClient.cpp \
     MhPayEventHandler.cpp \
     WalletNames/WalletNamesDbStorage.cpp \
-    WalletNames/WalletNames.cpp
+    WalletNames/WalletNames.cpp \
+    NetwrokTesting.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -189,7 +190,8 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNamesDbStorage.h \
     WalletNames/WalletNamesDbRes.h \
     WalletNames/WalletInfo.h \
-    WalletNames/WalletNames.h
+    WalletNames/WalletNames.h \
+    NetwrokTesting.h
 
 FORMS += mainwindow.ui
 
