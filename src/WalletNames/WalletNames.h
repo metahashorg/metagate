@@ -54,6 +54,12 @@ private slots:
 
 signals:
 
+    void updatedWalletName(const QString &address, const QString &name);
+
+    void walletsFlushed();
+
+signals:
+
     void callbackCall(WalletNames::Callback callback);
 
 private slots:

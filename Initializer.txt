@@ -62,6 +62,7 @@ proxy init. Критичный. Закончена загрузка модуля
 proxy upnp_started
 proxy proxy_started
 proxy proxy_completed. Полностью закончена инициализация и тестирование proxy
+wallet_names init. Критичный. Закончена загрузка модуля wallet_names. Можно совершать к нему запросы по javascript
 
 Таким образом, для успешного вызова некоторых методов, нужно дожидаться группы событий, например
 nslookup init, nslookup flushed, jsWrapper init

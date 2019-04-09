@@ -48,6 +48,8 @@ public:
 
     void setWidget(QWidget *widget);
 
+    void mvToThread(QThread *thread);
+
 signals:
 
     void callbackCall(JavascriptWrapper::ReturnCallback callback);
@@ -67,6 +69,7 @@ signals:
     void mthWalletCreated(QString name);
 
 public slots:
+
     void onLogined(bool isInit, const QString login);
 
 signals:

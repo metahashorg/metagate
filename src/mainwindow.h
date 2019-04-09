@@ -36,6 +36,10 @@ namespace initializer {
 class InitializerJavascript;
 }
 
+namespace wallet_names {
+class WalletNamesJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -73,6 +77,8 @@ public:
 
     using SetProxyJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetWalletNamesJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
@@ -97,6 +103,8 @@ signals:
 
     void setProxyJavascript(proxy::ProxyJavascript *transactionsJavascript, const SetProxyJavascriptCallback &callback);
 
+    void setWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
+
     void initFinished();
 
     void processExternalUrl(const QUrl &url);
@@ -112,6 +120,8 @@ private slots:
     void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
 
     void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
+
+    void onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 
     void onInitFinished();
 

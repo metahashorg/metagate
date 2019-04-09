@@ -67,8 +67,13 @@ void WalletNames::onAddOrUpdateWallets(const std::vector<WalletInfo> &infos, con
 BEGIN_SLOT_WRAPPER
     const TypedException &exception = apiVrapper2([&]{
         for (const WalletInfo &info: infos) {
-            db.addOrUpdateWallet(info);
+            const bool isUpdated = db.addOrUpdateWallet(info);
+            if (isUpdated) {
+                emit updatedWalletName(info.address, info.name);
+            }
         }
+
+        emit walletsFlushed();
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER
@@ -124,27 +129,64 @@ static QString walletTypeToStr(const JavascriptWrapper::WalletType &type) {
 void WalletNames::onGetAllWalletsCurrency(const QString &currency, const GetAllWalletsCurrencyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException &exception = apiVrapper2([&]{
+        const auto processWallets = [this](const JavascriptWrapper::WalletType &type, const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) {
+            const QString typeStr = walletTypeToStr(type);
+
+            std::vector<WalletInfo> otherWallets = db.getWalletsCurrency(typeStr, userName);
+            const std::set<QString> walletAddressesSet(walletAddresses.begin(), walletAddresses.end());
+            otherWallets.erase(std::remove_if(otherWallets.begin(), otherWallets.end(), [&walletAddressesSet](const WalletInfo &info) {
+                return walletAddressesSet.find(info.address) != walletAddressesSet.end();
+            }), otherWallets.end());
+
+            std::vector<WalletInfo> thisWallets;
+            thisWallets.reserve(walletAddresses.size());
+            for (const QString &address: walletAddresses) {
+                WalletInfo info = db.getWalletInfo(address);
+                info.address = address; // На случай, если вернулся пустой результат
+                info.infos.emplace_back(userName, hwid, typeStr);
+                thisWallets.emplace_back(info);
+            }
+
+            return std::make_pair(thisWallets, otherWallets);
+        };
+
         if (currency != "all") {
             const JavascriptWrapper::WalletType type = strToWalletType(currency);
-            emit javascriptWrapper.getListWallets(type, JavascriptWrapper::WalletsListCallback([this, type, callback](const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) {
-                const QString typeStr = walletTypeToStr(type);
+            emit javascriptWrapper.getListWallets(type, JavascriptWrapper::WalletsListCallback([type, callback, processWallets](const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) {
+                const auto pair = processWallets(type, hwid, userName, walletAddresses);
 
-                std::vector<WalletInfo> otherWallets = db.getWalletsCurrency(typeStr, userName);
-                const std::set<QString> walletAddressesSet(walletAddresses.begin(), walletAddresses.end());
-                otherWallets.erase(std::remove_if(otherWallets.begin(), otherWallets.end(), [&walletAddressesSet](const WalletInfo &info) {
-                    return walletAddressesSet.find(info.address) != walletAddressesSet.end();
-                }), otherWallets.end());
+                callback.emitFunc(TypedException(), pair.first, pair.second);
+            }, callback, signalFunc));
+        } else {
+            const std::vector<JavascriptWrapper::WalletType> types = {JavascriptWrapper::WalletType::Tmh, JavascriptWrapper::WalletType::Mth, JavascriptWrapper::WalletType::Btc, JavascriptWrapper::WalletType::Eth};
+            std::vector<std::vector<QString>> result;
+            emit javascriptWrapper.getListWallets(types[0], JavascriptWrapper::WalletsListCallback([this, types, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) mutable {
+                result.emplace_back(walletAddresses);
+                emit javascriptWrapper.getListWallets(types[1], JavascriptWrapper::WalletsListCallback([this, types, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) mutable {
+                    result.emplace_back(walletAddresses);
+                    emit javascriptWrapper.getListWallets(types[2], JavascriptWrapper::WalletsListCallback([this, types, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) mutable {
+                        result.emplace_back(walletAddresses);
+                        emit javascriptWrapper.getListWallets(types[3], JavascriptWrapper::WalletsListCallback([this, types, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses) mutable {
+                            result.emplace_back(walletAddresses);
 
-                std::vector<WalletInfo> thisWallets;
-                thisWallets.reserve(walletAddresses.size());
-                for (const QString &address: walletAddresses) {
-                    WalletInfo info = db.getWalletInfo(address);
-                    info.address = address; // На случай, если вернулся пустой результат
-                    info.infos.emplace_back(userName, hwid, typeStr);
-                    thisWallets.emplace_back(info);
-                }
+                            std::vector<WalletInfo> allOtherWallets;
+                            std::vector<WalletInfo> allThisWallets;
 
-                callback.emitFunc(TypedException(), thisWallets, otherWallets);
+                            CHECK(result.size() == types.size(), "Incorrect result");
+                            for (size_t i = 0; i < types.size(); i++) {
+                                const JavascriptWrapper::WalletType type = types[i];
+                                const std::vector<QString> &wallets = result[i];
+
+                                const auto pair = processWallets(type, hwid, userName, wallets);
+
+                                allOtherWallets.insert(allOtherWallets.end(), pair.second.begin(), pair.second.end());
+                                allThisWallets.insert(allThisWallets.end(), pair.first.begin(), pair.first.end());
+                            }
+
+                            callback.emitFunc(TypedException(), allThisWallets, allOtherWallets);
+                        }, callback, signalFunc));
+                    }, callback, signalFunc));
+                }, callback, signalFunc));
             }, callback, signalFunc));
         }
     });

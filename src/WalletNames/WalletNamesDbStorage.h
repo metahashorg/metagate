@@ -16,11 +16,11 @@ public:
 
 public:
 
-    void giveNameWallet(const QString &address, const QString &name);
+    bool giveNameWallet(const QString &address, const QString &name);
 
     void updateWalletInfo(const QString &address, const std::vector<WalletInfo::Info> &infos);
 
-    void addOrUpdateWallet(const WalletInfo &info);
+    bool addOrUpdateWallet(const WalletInfo &info);
 
     QString getNameWallet(const QString &address);
 

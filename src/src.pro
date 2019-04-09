@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = MetaGate
 
 DEFINES += VERSION_STRING=\\\"1.19.0\\\"
-DEFINES += VERSION_SETTINGS=\\\"10.1\\\"
+DEFINES += VERSION_SETTINGS=\\\"10.2\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -92,6 +92,8 @@ SOURCES += main.cpp mainwindow.cpp \
     MhPayEventHandler.cpp \
     WalletNames/WalletNamesDbStorage.cpp \
     WalletNames/WalletNames.cpp \
+    WalletNames/WalletNamesJavascript.cpp \
+    Initializer/Inits/InitWalletsNames.cpp \
     NetwrokTesting.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
@@ -191,6 +193,8 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNamesDbRes.h \
     WalletNames/WalletInfo.h \
     WalletNames/WalletNames.h \
+    WalletNames/WalletNamesJavascript.h \
+    Initializer/Inits/InitWalletsNames.h \
     NetwrokTesting.h
 
 FORMS += mainwindow.ui

@@ -30,10 +30,10 @@ static const QString createWalletsUniqueIndex = "CREATE UNIQUE INDEX walletsUniq
 static const QString createInfoUniqueIndex = "CREATE UNIQUE INDEX usersUniqueIdx ON info ( "
                                                     "wallet_id ASC, user ASC, device ASC, currency ASC) ";
 
-static const QString giveNameWalletPart1 = "INSERT OR IGNORE INTO wallets (address, name) "
+static const QString giveNameWalletAdd = "INSERT OR IGNORE INTO wallets (address, name) "
                                            "VALUES (:address, :name)";
 
-static const QString giveNameWalletPart2 = "UPDATE wallets SET name = :name WHERE address = :address";
+static const QString giveNameWalletRename = "UPDATE wallets SET name = :name WHERE address = :address";
 
 static const QString selectAll = "SELECT address, name, user, device, currency FROM wallets "
                                  "LEFT JOIN info ON info.wallet_id == wallets.id ";

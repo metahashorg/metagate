@@ -41,8 +41,11 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     CHECK(connect(this, &Auth::forceRefresh, this, &Auth::onForceRefresh), "not connect onForceRefresh");
     CHECK(connect(this, &Auth::reEmit, this, &Auth::onReEmit), "not connect onReEmit");
 
+    CHECK(connect(this, &Auth::getLoginInfo, this, &Auth::onGetLoginInfo), "not connect onGetLoginInfo");
+
+    Q_REG(LoginInfoCallback, "LoginInfoCallback");
     Q_REG2(TypedException, "TypedException", false);
-    Q_REG2(LoginInfo, "LoginInfo", true);
+    Q_REG(LoginInfo, "LoginInfo");
 
     tcpClient.setParent(this);
     CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect onCallbackCall");
@@ -399,6 +402,12 @@ bool auth::Auth::parseCheckTokenResponse(const QString &response) const {
     CHECK(json.contains("result") && json.value("result").isString(), "Incorrect json: result field not found");
 
     return (json.value("result").toString() == QStringLiteral("OK"));
+}
+
+void Auth::onGetLoginInfo(const LoginInfoCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    callback.emitFunc(TypedException(), info);
+END_SLOT_WRAPPER
 }
 
 }

@@ -142,6 +142,11 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     sendAppInfoToWss("", true);
 }
 
+void JavascriptWrapper::mvToThread(QThread *thread) {
+    moveToThread(thread);
+    client.moveToThread(thread);
+}
+
 void JavascriptWrapper::onGetListWallets(const WalletType &type, const WalletsListCallback &callback) {
 BEGIN_SLOT_WRAPPER
     std::vector<QString> result;

@@ -6,15 +6,19 @@
 
 #include <QString>
 #include <QObject>
-#include <QThread>
-#include <QTimer>
 
 #include "client.h"
 
 #include "VersionWrapper.h"
 
+#include "TimerClass.h"
+
 class MainWindow;
 struct TypedException;
+
+namespace auth {
+class Auth;
+}
 
 struct LastHtmlVersion {
     QString htmlsRootPath;
@@ -26,9 +30,8 @@ struct LastHtmlVersion {
     QString fullPath;
 };
 
-class Uploader : public QObject {
+class Uploader : public TimerClass {
 Q_OBJECT
-
 private:
 
     struct Servers {
@@ -38,9 +41,11 @@ private:
 
 public:
 
-    explicit Uploader(MainWindow &mainWindow);
+    using Callback = std::function<void()>;
 
-    ~Uploader() override;
+public:
+
+    explicit Uploader(auth::Auth &auth, MainWindow &mainWindow);
 
 signals:
 
@@ -58,27 +63,29 @@ public:
 
     static LastHtmlVersion getLastHtmlVersion();
 
-public:
+signals:
 
-    void start();
+    void callbackCall(Uploader::Callback callback);
 
 public slots:
 
     void run();
 
-    void callbackCall(SimpleClient::ReturnCallback callback);
+    void onCallbackCall(Uploader::Callback callback);
 
     void uploadEvent();
 
-signals:
+    void onLogined(bool isInit, const QString login);
 
-    void finished();
+signals:
 
     void generateUpdateHtmlsEvent();
 
     void generateUpdateApp(const QString version, const QString reference, const QString message);
 
 private:
+
+    auth::Auth &auth;
 
     MainWindow &mainWindow;
 
@@ -100,13 +107,11 @@ private:
 
     QString versionHtmlForUpdate = "";
 
-    QThread thread1;
-
-    QTimer qtimer;
-
     seconds timeout;
 
     std::map<QString, int> countDownloads;
+
+    QString apiToken;
 
 private:
 
