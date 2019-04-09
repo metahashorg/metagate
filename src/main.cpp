@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1));
+        qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1)); // Эта установка дает warning QObject::startTimer: Timers cannot have negative intervals. Это нормально
 
         for (int i = 1; i < argc; i++) {
             if (argv[i] == std::string("--version")) {
