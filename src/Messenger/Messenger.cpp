@@ -619,6 +619,7 @@ BEGIN_SLOT_WRAPPER
             if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
                 LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
                 db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, "", "");
+                addAddressToMonitored(address);
             }
             callback.emitFunc(exception, isNew);
         };
@@ -646,6 +647,7 @@ BEGIN_SLOT_WRAPPER
             if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
                 LOG << "Set user pubkey2 " << address << " " << pubkeyAddressHex << " " << txHash << " " << blockchainName;
                 db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, txHash, blockchainName);
+                addAddressToMonitored(address);
             }
             callback.emitFunc(exception, isNew);
         };
