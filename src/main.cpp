@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1));
+        qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1)); // Эта установка дает warning QObject::startTimer: Timers cannot have negative intervals. Это нормально
 
         for (int i = 1; i < argc; i++) {
             if (argv[i] == std::string("--version")) {
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, jsWrapper);
 
-        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper);
+        //const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper);
 
         initManager.complete();
 
