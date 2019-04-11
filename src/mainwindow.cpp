@@ -19,6 +19,7 @@
 #include <QFontDatabase>
 #include <QDesktopServices>
 #include <QSettings>
+#include <QSystemTrayIcon>
 
 #include "ui_mainwindow.h"
 
@@ -73,10 +74,18 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
+    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/MetaApps.svg"), this))
     , last_htmls(Uploader::getLastHtmlVersion())
     , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
+    systemTray->setVisible(true);
+    connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
+        qDebug() << reason;
+        if (reason != QSystemTrayIcon::Trigger)
+            return;
+        this->setVisible(!this->isVisible());
+    });
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
     CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");

@@ -13,6 +13,7 @@
 #include "PagesMappings.h"
 #include "CallbackWrapper.h"
 
+class QSystemTrayIcon;
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
@@ -192,6 +193,7 @@ private slots:
     void onLogined(bool isInit, const QString &login);
 
 private:
+    QSystemTrayIcon *systemTray;
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
 
