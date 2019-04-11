@@ -47,7 +47,6 @@ void NetwrokTesting::testHostAndPort(const QString &host, quint16 port)
     if (socket.waitForConnected(10000)) {
         LOG << "NetworkTesting: " << host << ":" << port << " connected " << timer.elapsed() << " ms";
         socket.disconnectFromHost();
-        socket.waitForDisconnected();
     } else {
         LOG << "NetworkTesting: " << host << ":" << port << " not connected 10s timeout";
     }
