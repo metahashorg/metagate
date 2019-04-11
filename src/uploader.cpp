@@ -227,7 +227,7 @@ BEGIN_SLOT_WRAPPER
 
             const QString extractedPath = makePath(currentBeginPath, folderServer, version);
             extractDir(archiveFilePath, extractedPath);
-            LOG << "Extracted " << extractedPath << ".";
+            LOG << "Extracted " << extractedPath << "." << "Size: " << result.size();
             removeFile(archiveFilePath);
 
             Uploader::setLastVersion(currentBeginPath, folderServer, version);
