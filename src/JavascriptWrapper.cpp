@@ -1007,9 +1007,15 @@ QString JavascriptWrapper::getAllEthWalletsJson() {
         const QString jsonStr = makeJsonWallets(result);
         LOG << PeriodicLog::make("w_eth") << "get eth wallets json " << jsonStr;
         return jsonStr;
+    } catch (const TypedException &e) {
+        LOG << "Error: " + e.description;
+        return "Error: " + QString::fromStdString(e.description);
     } catch (const Exception &e) {
         LOG << "Error: " + e;
         return "Error: " + QString::fromStdString(e);
+    } catch (const std::exception &e) {
+        LOG << "Error: " << e.what();
+        return "Error: " + QString::fromStdString(e.what());
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
@@ -1023,9 +1029,15 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
         const QString jsonStr = makeJsonWalletsAndPaths(result);
         LOG << PeriodicLog::make("w2_eth") << "get eth wallets json " << jsonStr;
         return jsonStr;
+    } catch (const TypedException &e) {
+        LOG << "Error: " + e.description;
+        return "Error: " + QString::fromStdString(e.description);
     } catch (const Exception &e) {
         LOG << "Error: " + e;
         return "Error: " + QString::fromStdString(e);
+    } catch (const std::exception &e) {
+        LOG << "Error: " << e.what();
+        return "Error: " + QString::fromStdString(e.what());
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
