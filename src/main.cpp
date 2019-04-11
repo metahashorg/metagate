@@ -25,6 +25,7 @@
 #include "StopApplication.h"
 #include "TypedException.h"
 #include "Paths.h"
+#include "NetwrokTesting.h"
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"
@@ -126,6 +127,9 @@ int main(int argc, char *argv[]) {
         LOG << "Machine uid " << getMachineUid();
         LOG << "Is virtual machine " << isVirtualMachine();
 
+        NetwrokTesting nettesting;
+        nettesting.start();
+
         initializer::InitializerJavascript initJavascript;
         initializer::Initializer initManager(initJavascript);
         initJavascript.setInitializerManager(initManager);
@@ -155,7 +159,7 @@ int main(int argc, char *argv[]) {
         //const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper);
 
         initManager.complete();
-       
+
         const int returnCode = app.exec();
         LOG << "Return code " << returnCode;
         return 0;
