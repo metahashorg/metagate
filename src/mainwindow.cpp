@@ -82,7 +82,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     systemTray->setVisible(true);
     connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
         qDebug() << reason;
-        if (reason != QSystemTrayIcon::Trigger)
+        if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
             return;
         this->setVisible(!this->isVisible());
     });
@@ -734,6 +734,16 @@ END_SLOT_WRAPPER
 }
 
 void MainWindow::showExpanded() {
+    show();
+}
+
+void MainWindow::showOnTop()
+{
+    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    showNormal();
+    show();
+    activateWindow();
+    setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
     show();
 }
 

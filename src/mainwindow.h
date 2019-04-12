@@ -88,6 +88,8 @@ public:
 
     void showExpanded();
 
+    void showOnTop();
+
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
     LastHtmlVersion getCurrentHtmls() const;

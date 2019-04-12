@@ -11,6 +11,7 @@
 #include <QSurfaceFormat>
 #include <QGuiApplication>
 #include <QApplication>
+#include <QCommandLineParser>
 
 #include "RunGuard.h"
 
@@ -98,6 +99,19 @@ int main(int argc, char *argv[]) {
         QSurfaceFormat::setDefaultFormat(format);
 
         QApplication app(argc, argv);
+
+        QCommandLineParser parser;
+        parser.setApplicationDescription("Test helper");
+        //parser.addHelpOption();
+        //parser.addVersionOption();
+
+        QCommandLineOption hideOption(QStringList() << "t" << "tray",
+                QCoreApplication::translate("main", "Hide MetaGate window."));
+        parser.addOption(hideOption);
+
+        parser.process(app);
+        bool hide = parser.isSet(hideOption);
+
         MhPayEventHandler mhPayEventHandler(guard);
         app.installEventFilter(&mhPayEventHandler);
         initLog();
@@ -136,7 +150,7 @@ int main(int argc, char *argv[]) {
 
         using namespace initializer;
 
-        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler));
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
