@@ -184,6 +184,14 @@ void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
     }
 }
 
+void Log_::print(const std::string &t) {
+    if (t.empty()) {
+        ssCout << "<empty>";
+    } else {
+        ssCout << t;
+    }
+}
+
 void initLog() {
     const QString logPath = getLogPath();
 

@@ -48,9 +48,11 @@ struct Log_ {
 private:
 
     template<typename T>
-    void print(T t) {
+    void print(const T &t) {
         ssCout << t;
     }
+
+    void print(const std::string &t);
 
     bool processPeriodic(const std::string &s, std::string &addedStr);
 
