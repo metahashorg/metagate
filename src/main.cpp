@@ -47,7 +47,7 @@
 #include "WalletRsa.h"
 
 #include "MhPayEventHandler.h"
-
+#include <QDebug>
 #ifndef _WIN32
 static void crash_handler(int sig) {
     void *array[50];
@@ -68,9 +68,35 @@ int main(int argc, char *argv[]) {
     signal(SIGFPE, crash_handler);
 #endif
 
+    qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1)); // Эта установка дает warning QObject::startTimer: Timers cannot have negative intervals. Это нормально
+
+    QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QGuiApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QSurfaceFormat format;
+    format.setColorSpace(QSurfaceFormat::sRGBColorSpace);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    QApplication app(argc, argv);
+    QCoreApplication::setApplicationName("MetaGate");
+    QCoreApplication::setApplicationVersion(QStringLiteral(VERSION_STRING));
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription("MetaGate");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument("url", QCoreApplication::translate("main", "Open url."));
+
+    QCommandLineOption startintrayOption(QStringList() << "t" << "startintray",
+            QCoreApplication::translate("main", "Hide MetaGate window."));
+    parser.addOption(startintrayOption);
+
+    parser.process(app);
+    const QStringList args = parser.positionalArguments();
+    const bool hide = parser.isSet(startintrayOption);
+
     std::string supposedMhPayUrl;
-    if (argc > 1) {
-        supposedMhPayUrl = argv[1];
+    if (!args.isEmpty()) {
+        supposedMhPayUrl = args[0].toStdString();
     }
 
     RunGuard guard("MetaGate");
@@ -83,34 +109,12 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1)); // Эта установка дает warning QObject::startTimer: Timers cannot have negative intervals. Это нормально
-
-        for (int i = 1; i < argc; i++) {
+        /*for (int i = 1; i < argc; i++) {
             if (argv[i] == std::string("--version")) {
                 std::cout << VERSION_STRING << std::endl;
                 return 0;
             }
-        }
-
-        QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-        QGuiApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-        QSurfaceFormat format;
-        format.setColorSpace(QSurfaceFormat::sRGBColorSpace);
-        QSurfaceFormat::setDefaultFormat(format);
-
-        QApplication app(argc, argv);
-
-        QCommandLineParser parser;
-        parser.setApplicationDescription("Test helper");
-        //parser.addHelpOption();
-        //parser.addVersionOption();
-
-        QCommandLineOption hideOption(QStringList() << "t" << "tray",
-                QCoreApplication::translate("main", "Hide MetaGate window."));
-        parser.addOption(hideOption);
-
-        parser.process(app);
-        bool hide = parser.isSet(hideOption);
+        }*/
 
         MhPayEventHandler mhPayEventHandler(guard);
         app.installEventFilter(&mhPayEventHandler);
