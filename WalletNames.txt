@@ -1,5 +1,11 @@
 Messenger регестрируется в javascript по имени wallet_names
 
+Q_INVOKABLE void advanceFill(QString jsonNames);
+Предварительное заполнение имен кошельков. Должно вызываться 1 раз если таблица не была заполнена
+jsonNames вида [{address: address, name: name}]
+Результат вернется в функцию
+wnsAdvanceFillResultJs("Ok", errorNum, errorMessage)
+
 Q_INVOKABLE void saveKeyName(QString address, QString name);
 Задать имя кошельку
 Результат вернется в функцию

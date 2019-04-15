@@ -35,6 +35,8 @@ public slots:
 
     Q_INVOKABLE void getAllWalletsInCurrency(QString currency);
 
+    Q_INVOKABLE void advanceFill(QString jsonNames);
+
 private slots:
 
     void onCallbackCall(const WalletNamesJavascript::Callback &callback);
