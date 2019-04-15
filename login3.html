@@ -1,0 +1,62 @@
+<link rel="stylesheet" type="text/css" href="example3.css" media="screen" />
+
+<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+<script>
+    
+    function saveKeyName() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallet_names;
+        mainWindow.saveKeyName(document.createWalletForm.address.value, document.createWalletForm.name.value) ;
+        });
+    }
+        
+    function getKeyName() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallet_names;
+        mainWindow.getKeyName(document.createWalletForm.address.value) ;
+        });
+    }
+        
+    function getAllWalletsInCurrency() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallet_names;
+        mainWindow.getAllWalletsInCurrency(document.createWalletForm.currency.value) ;
+        });
+    }
+        
+</script>
+
+<body onload="generateAllWalletsJs();"></body>
+
+<div class="back">
+
+  <div id="two" class="abs block">
+    <a href="#one">создание счета</a>
+    <b><a href="#two">подпись данных</a></b>
+    <p class="abs">
+        <left>
+            <FORM name="sign">
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+  <div id="one" class="abs block">
+    <b><a href="#one">создание счета</a></b>
+    <a href="#two">подпись данных</a>
+    <p class="abs">
+        <left>
+            <FORM name="createWalletForm">
+            <input name="address" type="text" value="0x0034d209107371745c6f5634d6ed87199bac872c310091ca56" size="60"><label for="address">address</label><br>
+            <input name="name" type="text" value="name1" size="60"><label for="address">name</label><br>
+            <input name="currency" type="text" value="mth" size="60"><label for="currency">currency</label><br>
+            <input type="button" value="saveKeyName" onclick="saveKeyName()"><br>
+            <input type="button" value="getKeyName" onclick="getKeyName()"><br>
+            <input type="button" value="getAllWalletsInCurrency" onclick="getAllWalletsInCurrency()"><br>
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+</div>
