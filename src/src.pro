@@ -94,7 +94,8 @@ SOURCES += main.cpp mainwindow.cpp \
     WalletNames/WalletNames.cpp \
     WalletNames/WalletNamesJavascript.cpp \
     Initializer/Inits/InitWalletsNames.cpp \
-    NetwrokTesting.cpp
+    NetwrokTesting.cpp \
+    WalletNames/WalletNamesMessages.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -195,7 +196,8 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNames.h \
     WalletNames/WalletNamesJavascript.h \
     Initializer/Inits/InitWalletsNames.h \
-    NetwrokTesting.h
+    NetwrokTesting.h \
+    WalletNames/WalletNamesMessages.h
 
 FORMS += mainwindow.ui
 
