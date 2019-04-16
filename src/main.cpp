@@ -49,6 +49,7 @@
 #include "MhPayEventHandler.h"
 #include <QDebug>
 #ifndef _WIN32
+
 static void crash_handler(int sig) {
     void *array[50];
     const size_t size = backtrace(array, 50);
@@ -89,6 +90,12 @@ int main(int argc, char *argv[]) {
     QCommandLineOption startintrayOption(QStringList() << "t" << "startintray",
             QCoreApplication::translate("main", "Hide MetaGate window."));
     parser.addOption(startintrayOption);
+
+    QCommandLineOption debugPortOption(QStringList() <<
+                                          "remote-debugging-port",
+                                          "WebEngine debug port [default: 3002].",
+                                          "remote-debug-port", "3002");
+    parser.addOption(debugPortOption);
 
     parser.process(app);
     const QStringList args = parser.positionalArguments();

@@ -74,7 +74,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/MetaApps.svg"), this))
+    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.svg"), this))
     , last_htmls(Uploader::getLastHtmlVersion())
     , currentUserName(DEFAULT_USERNAME)
 {
