@@ -74,17 +74,18 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
-    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.svg"), this))
+    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.png"), this))
     , last_htmls(Uploader::getLastHtmlVersion())
     , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
     systemTray->setVisible(true);
     connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
-        qDebug() << reason;
+        BEGIN_SLOT_WRAPPER
         if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
             return;
         this->setVisible(!this->isVisible());
+        END_SLOT_WRAPPER
     });
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");

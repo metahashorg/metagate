@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=MetaGate
+Comment=MetaGate
+Exec=sssssss -t %u
+Type=Application
+Icon=metagate
+Terminal=false
+MimeType=x-scheme-handler/metapay;
+Categories=Network;Qt;

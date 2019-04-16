@@ -2,16 +2,18 @@
 MY_PATH="`dirname \"$0\"`"
 cd ${MY_PATH}
 
-sed "s?sssssss?${PWD}/run.sh?g" < ./metagate_template.desktop > metagate.desktop
+#create dirs if them are not exist
 mkdir -p ~/.local/share/applications/
 mkdir -p ~/.config/autostart/
-cp metagate.desktop ~/.local/share/applications/
+sed "s?sssssss?${PWD}/run.sh?g" < ./metagate_template.desktop > metagate.desktop
+mv metagate.desktop ~/.local/share/applications/
+sed "s?sssssss?${PWD}/run.sh?g" < ./metagate_atemplate.desktop > metagate.desktop
 mv metagate.desktop ~/.config/autostart/
 if type "xdg-mime" > /dev/null; then
   xdg-mime default metagate.desktop x-scheme-handler/metapay
 fi
 mkdir -p ~/.local/share/icons/
-cp metagate.svg ~/.local/share/icons/
+cp metagate.png ~/.local/share/icons/
 
 echo > ./qt.conf
 echo [Paths] >> ./qt.conf

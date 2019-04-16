@@ -195,13 +195,13 @@ private slots:
     void onLogined(bool isInit, const QString &login);
 
 private:
+    std::unique_ptr<Ui::MainWindow> ui;
+
     QSystemTrayIcon *systemTray;
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
 
     MHPayUrlSchemeHandler *shemeHandler2 = nullptr;
-
-    std::unique_ptr<Ui::MainWindow> ui;
 
     std::unique_ptr<QWebChannel> channel;
 
