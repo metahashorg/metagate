@@ -11,6 +11,7 @@
 #include <QSurfaceFormat>
 #include <QGuiApplication>
 #include <QApplication>
+#include <QCommandLineParser>
 
 #include "RunGuard.h"
 
@@ -46,8 +47,12 @@
 #include "WalletRsa.h"
 
 #include "MhPayEventHandler.h"
+#include <QDebug>
+#include <QProcess>
+#include <QDir>
 
 #ifndef _WIN32
+
 static void crash_handler(int sig) {
     void *array[50];
     const size_t size = backtrace(array, 50);
@@ -67,9 +72,41 @@ int main(int argc, char *argv[]) {
     signal(SIGFPE, crash_handler);
 #endif
 
+    qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1)); // Эта установка дает warning QObject::startTimer: Timers cannot have negative intervals. Это нормально
+
+    QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QGuiApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QSurfaceFormat format;
+    format.setColorSpace(QSurfaceFormat::sRGBColorSpace);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    QApplication app(argc, argv);
+    QCoreApplication::setApplicationName("MetaGate");
+    QCoreApplication::setApplicationVersion(QStringLiteral(VERSION_STRING));
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription("MetaGate");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument("url", QCoreApplication::translate("main", "Open url."));
+
+    QCommandLineOption startintrayOption(QStringList() << "t" << "startintray",
+            QCoreApplication::translate("main", "Hide MetaGate window."));
+    parser.addOption(startintrayOption);
+
+    QCommandLineOption debugPortOption(QStringList() <<
+                                          "remote-debugging-port",
+                                          "WebEngine debug port [default: 3002].",
+                                          "remote-debug-port", "3002");
+    parser.addOption(debugPortOption);
+
+    parser.process(app);
+    const QStringList args = parser.positionalArguments();
+    const bool hide = parser.isSet(startintrayOption);
+
     std::string supposedMhPayUrl;
-    if (argc > 1) {
-        supposedMhPayUrl = argv[1];
+    if (!args.isEmpty()) {
+        supposedMhPayUrl = args[0].toStdString();
     }
 
     RunGuard guard("MetaGate");
@@ -81,23 +118,20 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    try {
-        qputenv("QT_BEARER_POLL_TIMEOUT", QByteArray::number(-1)); // Эта установка дает warning QObject::startTimer: Timers cannot have negative intervals. Это нормально
+#ifdef Q_OS_MACX
+    QProcess proc;
+    QDir dir(qApp->applicationDirPath());
+    proc.start("/bin/sh", QStringList() << dir.filePath(QStringLiteral("install.sh")));
+#endif
 
-        for (int i = 1; i < argc; i++) {
+    try {
+        /*for (int i = 1; i < argc; i++) {
             if (argv[i] == std::string("--version")) {
                 std::cout << VERSION_STRING << std::endl;
                 return 0;
             }
-        }
+        }*/
 
-        QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-        QGuiApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-        QSurfaceFormat format;
-        format.setColorSpace(QSurfaceFormat::sRGBColorSpace);
-        QSurfaceFormat::setDefaultFormat(format);
-
-        QApplication app(argc, argv);
         MhPayEventHandler mhPayEventHandler(guard);
         app.installEventFilter(&mhPayEventHandler);
         initLog();
@@ -136,7 +170,7 @@ int main(int argc, char *argv[]) {
 
         using namespace initializer;
 
-        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler));
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);

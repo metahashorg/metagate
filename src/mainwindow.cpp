@@ -19,6 +19,7 @@
 #include <QFontDatabase>
 #include <QDesktopServices>
 #include <QSettings>
+#include <QSystemTrayIcon>
 
 #include "ui_mainwindow.h"
 
@@ -73,10 +74,19 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
+    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.png"), this))
     , last_htmls(Uploader::getLastHtmlVersion())
     , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
+    systemTray->setVisible(true);
+    connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
+        BEGIN_SLOT_WRAPPER
+        if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
+            return;
+        this->setVisible(!this->isVisible());
+        END_SLOT_WRAPPER
+    });
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
     CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
@@ -725,6 +735,16 @@ END_SLOT_WRAPPER
 }
 
 void MainWindow::showExpanded() {
+    show();
+}
+
+void MainWindow::showOnTop()
+{
+    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    showNormal();
+    show();
+    activateWindow();
+    setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
     show();
 }
 

@@ -13,6 +13,7 @@
 #include "PagesMappings.h"
 #include "CallbackWrapper.h"
 
+class QSystemTrayIcon;
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
@@ -86,6 +87,8 @@ public:
     ~MainWindow();
 
     void showExpanded();
+
+    void showOnTop();
 
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
@@ -192,12 +195,13 @@ private slots:
     void onLogined(bool isInit, const QString &login);
 
 private:
+    std::unique_ptr<Ui::MainWindow> ui;
+
+    QSystemTrayIcon *systemTray;
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
 
     MHPayUrlSchemeHandler *shemeHandler2 = nullptr;
-
-    std::unique_ptr<Ui::MainWindow> ui;
 
     std::unique_ptr<QWebChannel> channel;
 
