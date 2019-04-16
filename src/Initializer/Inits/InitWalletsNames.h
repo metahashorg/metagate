@@ -19,6 +19,11 @@ class WalletNames;
 class WalletNamesDbStorage;
 }
 
+namespace auth {
+class Auth;
+class AuthJavascript;
+}
+
 class MainWindow;
 
 namespace initializer {
@@ -41,7 +46,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth);
 
     static int countEvents() {
         return 1;

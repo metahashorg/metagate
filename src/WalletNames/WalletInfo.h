@@ -13,6 +13,8 @@ struct WalletInfo {
         QString device = "";
         QString currency = "";
 
+        Info() = default;
+
         Info(const QString &user, const QString &device, const QString &currency)
             : user(user)
             , device(device)

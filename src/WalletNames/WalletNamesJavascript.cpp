@@ -18,6 +18,28 @@ SET_LOG_NAMESPACE("WNS");
 
 namespace wallet_names {
 
+static std::vector<WalletInfo> parseWalletNames(const QString &walletsJson) {
+    std::vector<WalletInfo> result;
+
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(walletsJson.toUtf8());
+    CHECK(jsonResponse.isArray(), "Incorrect json ");
+    const QJsonArray &jsonArr = jsonResponse.array();
+    for (const QJsonValue &jsonVal: jsonArr) {
+        CHECK(jsonVal.isObject(), "Incorrect json");
+        const QJsonObject &walletJson = jsonVal.toObject();
+
+        WalletInfo wallet;
+        CHECK(walletJson.contains("address") && walletJson.value("address").isString(), "Incorrect json: address field not found");
+        wallet.address = walletJson.value("address").toString();
+        CHECK(walletJson.contains("name") && walletJson.value("name").isString(), "Incorrect json: name field not found");
+        wallet.name = walletJson.value("name").toString();
+
+        result.emplace_back(wallet);
+    }
+
+    return result;
+}
+
 WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames, QObject *parent)
     : QObject(parent)
     , manager(walletNames)
@@ -151,6 +173,34 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this](){
         emit manager.getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc, errorFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
             makeFunc(TypedException(), currency, walletsToJson(thisWallets, otherWallets));
+        }, errorFunc, signalFunc));
+    });
+
+    if (exception.isSet()) {
+        errorFunc(exception);
+    }
+END_SLOT_WRAPPER
+}
+
+void WalletNamesJavascript::advanceFill(QString jsonNames) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "wnsAdvanceFillResultJs";
+
+    LOG << "Advance fill " << jsonNames;
+
+    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    };
+
+    const auto errorFunc = [makeFunc](const TypedException &exception) {
+        makeFunc(exception, "Not ok");
+    };
+
+    const TypedException exception = apiVrapper2([&, this](){
+        const std::vector<WalletInfo> wallets = parseWalletNames(jsonNames);
+
+        emit manager.addOrUpdateWallets(wallets, WalletNames::AddWalletsNamesCallback([makeFunc] {
+            makeFunc(TypedException(), "Ok");
         }, errorFunc, signalFunc));
     });
 

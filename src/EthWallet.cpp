@@ -11,6 +11,7 @@
 
 #include "utils.h"
 #include "check.h"
+#include "Log.h"
 
 const std::string EthWallet::PREFIX_ONE_KEY = "eth:";
 
@@ -81,11 +82,19 @@ std::vector<std::pair<QString, QString>> EthWallet::getAllWalletsInFolder(const 
     const QDir dir(folder);
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
-        const std::string fileName = file.toStdString();
-        if (isHex(fileName)) {
-            const std::string addressPart = fileName.substr(2);
-            const std::string address = "0x" + MixedCaseEncoding(HexStringToDump(addressPart));
-            result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
+        try {
+            const std::string fileName = file.toStdString();
+            if (isHex(fileName)) {
+                const std::string addressPart = fileName.substr(2);
+                const std::string address = "0x" + MixedCaseEncoding(HexStringToDump(addressPart));
+                result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
+            }
+        } catch (const TypedException &error) {
+            LOG << "Error: " << file << " " << error.description;
+        } catch (const Exception &e) {
+            LOG << "Error: " << file << " " << e;
+        } catch (...) {
+            LOG << "Error: " << file << " " << " Unknown error";
         }
     }
 

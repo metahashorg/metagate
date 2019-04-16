@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = MetaGate
 
 DEFINES += VERSION_STRING=\\\"1.19.2\\\"
-DEFINES += VERSION_SETTINGS=\\\"10.2\\\"
+DEFINES += VERSION_SETTINGS=\\\"11.0\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -94,7 +94,8 @@ SOURCES += main.cpp mainwindow.cpp \
     WalletNames/WalletNames.cpp \
     WalletNames/WalletNamesJavascript.cpp \
     Initializer/Inits/InitWalletsNames.cpp \
-    NetwrokTesting.cpp
+    NetwrokTesting.cpp \
+    WalletNames/WalletNamesMessages.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -195,7 +196,8 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNames.h \
     WalletNames/WalletNamesJavascript.h \
     Initializer/Inits/InitWalletsNames.h \
-    NetwrokTesting.h
+    NetwrokTesting.h \
+    WalletNames/WalletNamesMessages.h
 
 FORMS += mainwindow.ui
 

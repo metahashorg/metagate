@@ -6,9 +6,17 @@
 #include "TimerClass.h"
 #include "CallbackWrapper.h"
 
+#include "RequestId.h"
+
 #include "WalletInfo.h"
 
+#include "WebSocketClient.h"
+
 class JavascriptWrapper;
+
+namespace auth {
+class Auth;
+}
 
 namespace wallet_names {
 
@@ -30,7 +38,7 @@ public:
 
 public:
 
-    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper);
+    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager);
 
 signals:
 
@@ -70,6 +78,24 @@ private slots:
 
     void onTimerEvent();
 
+    void onWssMessageReceived(QString message);
+
+    void onLogined(bool isInit, const QString login);
+
+private:
+
+    void processWalletsList(const std::vector<WalletInfo> &wallets);
+
+    void getAllWallets();
+
+    void sendAllWallets();
+
+private:
+
+    enum class StateRequest {
+        NotRequest, Requested, Intercepted
+    };
+
 private:
 
     WalletNamesDbStorage &db;
@@ -77,6 +103,18 @@ private:
     JavascriptWrapper &javascriptWrapper;
 
     std::function<void(const std::function<void()> &callback)> signalFunc;
+
+    auth::Auth &authManager;
+
+    WebSocketClient client;
+
+    QString token;
+
+    QString hwid;
+
+    RequestId id;
+
+    StateRequest stateRequest = StateRequest::NotRequest;
 
 };
 
