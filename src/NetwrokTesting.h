@@ -17,7 +17,7 @@ private slots:
 
 private:
     void testHosts();
-    void testHostAndPort(const QString &host, quint16 port);
+    std::string testHostAndPort(const QString &host, quint16 port);
 };
 
 #endif // NETWROKTESTING_H
