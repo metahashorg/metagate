@@ -6,6 +6,7 @@ REG add "HKEY_CLASSES_ROOT\metapay" /ve /t REG_SZ /d "URL:Mh pay protocol" /f
 REG add "HKEY_CLASSES_ROOT\metapay" /v "URL Protocol" /t REG_SZ /d "" /f
 REG add "HKEY_CLASSES_ROOT\metapay\shell\open\command" /ve /t REG_SZ /d "\"%~f2\MetaGate.exe\" \"%%1\"" /f
 REG add "HKEY_CLASSES_ROOT\metapay\DefaultIcon" /ve /t REG_SZ /d "%~f2\MetaGate.exe,1" /f
+REG ADD "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "MetaGate" /t REG_SZ /d "\"%~f2\MetaGate.exe\" \"-t\"" /f
 exit /b
 )
 
