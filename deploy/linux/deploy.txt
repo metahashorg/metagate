@@ -2,7 +2,7 @@
 ./deploy.sh /home/user/qtExamples/MetaGate/MetaGate
 Копировать каталог startSettings
 Копировать каталог ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt с заменой в startSettings
-Копировать файл metagate_template.desktop и иконку metagate.png
+Копировать файлы metagate_template.desktop, metagate_atemplate.desktop и иконку metagate.png
 Скопировать файл run.sh
 Скопировать файлы из libssl в корневую для приложения папку
 Запуск ./run.sh
