@@ -4,10 +4,14 @@ cd ${MY_PATH}
 
 sed "s?sssssss?${PWD}/run.sh?g" < ./metagate_template.desktop > metagate.desktop
 mkdir -p ~/.local/share/applications/
-mv metagate.desktop ~/.local/share/applications/
+mkdir -p ~/.config/autostart/
+cp metagate.desktop ~/.local/share/applications/
+mv metagate.desktop ~/.config/autostart/
 if type "xdg-mime" > /dev/null; then
   xdg-mime default metagate.desktop x-scheme-handler/metapay
 fi
+mkdir -p ~/.local/share/icons/
+cp metagate.svg ~/.local/share/icons/
 
 echo > ./qt.conf
 echo [Paths] >> ./qt.conf
@@ -28,4 +32,4 @@ echo Qml2Imports = qml >> ./qt.conf
 
 chmod +x ./libexec/QtWebEngineProcess
 chmod +x ./MetaGate
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/" QT_QPA_PLATFORM_PLUGIN_PATH="./plugins/" ./MetaGate $1 --remote-debugging-port=8081
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib/" QT_QPA_PLATFORM_PLUGIN_PATH="./plugins/" ./MetaGate $* --remote-debugging-port=8081
