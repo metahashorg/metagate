@@ -755,10 +755,12 @@ void MainWindow::showExpanded() {
 
 void MainWindow::showOnTop()
 {
+    qDebug() << "Show on top";
     setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     showNormal();
     show();
     activateWindow();
+    raise();
     setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
     show();
 }
