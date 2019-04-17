@@ -106,6 +106,8 @@ private:
 private:
 
     Transactions *transactionsManager;
+
+    std::function<void(const std::function<void()> &callback)> signalFunc;
 };
 
 }

@@ -117,25 +117,25 @@ public:
 
     using SignalFunc = std::function<void(const std::function<void()> &callback)>;
 
-    using RegisterAddressCallback = std::function<void(const TypedException &exception)>;
+    using RegisterAddressCallback = CallbackWrapper<void()>;
 
-    using GetTxsCallback = std::function<void(const std::vector<Transaction> &txs, const TypedException &exception)>;
+    using GetTxsCallback = CallbackWrapper<void(const std::vector<Transaction> &txs)>;
 
-    using CalcBalanceCallback = std::function<void(const BalanceInfo &txs, const TypedException &exception)>;
+    using CalcBalanceCallback = CallbackWrapper<void(const BalanceInfo &txs)>;
 
-    using SetCurrentGroupCallback = std::function<void(const TypedException &exception)>;
+    using SetCurrentGroupCallback = CallbackWrapper<void()>;
 
-    using GetAddressesCallback = std::function<void(const std::vector<AddressInfo> &result, const TypedException &exception)>;
+    using GetAddressesCallback = CallbackWrapper<void(const std::vector<AddressInfo> &result)>;
 
-    using GetTxCallback = std::function<void(const Transaction &txs, const TypedException &exception)>;
+    using GetTxCallback = CallbackWrapper<void(const Transaction &txs)>;
 
-    using GetLastUpdateCallback = std::function<void(const system_time_point &lastUpdate, const system_time_point &now)>;
+    using GetLastUpdateCallback = CallbackWrapper<void(const system_time_point &lastUpdate, const system_time_point &now)>;
 
     using GetNonceCallback = CallbackWrapper<void(size_t nonce, const QString &serverError)>;
 
     using SendTransactionCallback = CallbackWrapper<void()>;
 
-    using ClearDbCallback = std::function<void(const TypedException &exception)>;
+    using ClearDbCallback = CallbackWrapper<void()>;
 
     using Callback = std::function<void()>;
 
@@ -238,9 +238,6 @@ private:
     void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
     void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
-
-    template<typename Func>
-    void runCallback(const Func &callback);
 
     std::vector<AddressInfo> getAddressesInfos(const QString &group);
 
