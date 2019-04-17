@@ -439,6 +439,7 @@ void Transactions::fetchBalanceAddress(const QString &address) {
         return info.address == address;
     });
 
+    LOG << "Found " << addressInfos.size() << " records on adrress " << address;
     for (const AddressInfo &addr: addressInfos) {
         const std::vector<QString> servers = nsLookup.getRandom(addr.type, 3, 3);
         if (servers.empty()) {
