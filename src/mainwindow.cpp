@@ -84,7 +84,22 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
         BEGIN_SLOT_WRAPPER
         if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
             return;
-        this->setVisible(!this->isVisible());
+        if (this->isVisible()) {
+            if (this->isActiveWindow())
+                this->setVisible(false);
+            else
+                showOnTop();
+        } else {
+            showOnTop();
+        }
+        //qDebug() << "A? " << this->isActiveWindow();
+        //this->setVisible(!this->isVisible());
+//        if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
+//            return;
+//        if (this->isVisible() && !this->isActiveWindow())
+//            this->setVisible(false);
+//        else
+//            this->showOnTop();
         END_SLOT_WRAPPER
     });
 
