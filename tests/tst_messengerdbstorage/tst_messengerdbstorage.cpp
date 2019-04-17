@@ -7,8 +7,7 @@
 #include "check.h"
 
 #include "MessengerDBStorage.h"
-
-const QString dbName = "messenger.db";
+#include "MessengerDBRes.h"
 
 tst_MessengerDBStorage::tst_MessengerDBStorage(QObject *parent)
     : QObject(parent)
@@ -17,8 +16,8 @@ tst_MessengerDBStorage::tst_MessengerDBStorage(QObject *parent)
 
 void tst_MessengerDBStorage::testDB()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(messenger::databaseFileName))
+        QFile::remove(messenger::databaseFileName);
     messenger::MessengerDBStorage db;
     db.init();
     DBStorage::DbId id1 = db.getUserId("ddfjgjgj");
@@ -28,8 +27,8 @@ void tst_MessengerDBStorage::testDB()
 
 void tst_MessengerDBStorage::testMessengerDB2()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(messenger::databaseFileName))
+        QFile::remove(messenger::databaseFileName);
     messenger::MessengerDBStorage db;
     db.init();
 
@@ -137,8 +136,8 @@ void tst_MessengerDBStorage::testMessengerDB2()
 
 void tst_MessengerDBStorage::testMessengerDBChannels()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(messenger::databaseFileName))
+        QFile::remove(messenger::databaseFileName);
     messenger::MessengerDBStorage db;
     db.init();
     db.setUserPublicKey("1234", "23424", "2345342", "", "");
@@ -205,8 +204,8 @@ void tst_MessengerDBStorage::testMessengerDBChannels()
 
 void tst_MessengerDBStorage::testMessengerDBSpeed()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(messenger::databaseFileName))
+        QFile::remove(messenger::databaseFileName);
     messenger::MessengerDBStorage db;
     db.init();
     db.setUserPublicKey("1234", "23424", "2345342", "", "");
@@ -220,8 +219,8 @@ void tst_MessengerDBStorage::testMessengerDBSpeed()
 
 void tst_MessengerDBStorage::testMessengerDecryptedText()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(messenger::databaseFileName))
+        QFile::remove(messenger::databaseFileName);
     messenger::MessengerDBStorage db;
     db.init();
 

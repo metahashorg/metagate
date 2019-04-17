@@ -3,8 +3,7 @@
 #include <QTest>
 
 #include "TransactionsDBStorage.h"
-
-const QString dbName = "payments.db";
+#include "TransactionsDBRes.h"
 
 tst_TransactionsDBStorage::tst_TransactionsDBStorage(QObject *parent)
     : QObject(parent)
@@ -13,8 +12,8 @@ tst_TransactionsDBStorage::tst_TransactionsDBStorage(QObject *parent)
 
 void tst_TransactionsDBStorage::testDB1()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
@@ -178,8 +177,8 @@ void tst_TransactionsDBStorage::testDB1()
 
 void tst_TransactionsDBStorage::testBigNumSum()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
@@ -200,8 +199,8 @@ void tst_TransactionsDBStorage::testBigNumSum()
 
 void tst_TransactionsDBStorage::testGetPayments()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
     auto transactionGuard = db.beginTransaction();
@@ -252,8 +251,8 @@ void tst_TransactionsDBStorage::testGetPayments()
 
 void tst_TransactionsDBStorage::testAddressInfos()
 {
-    if (QFile::exists(dbName))
-        QFile::remove(dbName);
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
 
