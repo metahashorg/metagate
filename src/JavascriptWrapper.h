@@ -256,6 +256,8 @@ public slots:
 
     Q_INVOKABLE void clearNsLookup();
 
+    Q_INVOKABLE void sendMessageToWss(QString message);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);

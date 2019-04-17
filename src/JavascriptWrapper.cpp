@@ -1742,6 +1742,15 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::sendMessageToWss(QString message) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "sendMessageToWssResultJs";
+    LOG << "Send message to wss: " << message;
+    emit wssClient.sendMessage(message);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::onWssMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
