@@ -136,6 +136,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(WalletsListCallback, "WalletsListCallback");
+    Q_REG(JavascriptWrapper::WalletType, "JavascriptWrapper::WalletType");
 
     emit authManager.reEmit();
 

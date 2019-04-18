@@ -17,7 +17,7 @@ const static QString GET_WALLETS_METHOD = "get-wallets";
 static void addHeaderToJson(QJsonObject &json, size_t id, const QString &token, const QString &hwid) {
     json.insert("jsonrpc", "2.0");
     json.insert("token", token);
-    json.insert("uid", hwid);
+    json.insert("machine_id", hwid);
     json.insert("request_id", QString::fromStdString(std::to_string(id)));
 }
 
@@ -109,19 +109,17 @@ std::vector<WalletInfo> parseGetWalletsMessage(const QJsonDocument &response) {
 
     CHECK(response.isObject(), "Response field not found");
     const QJsonObject root = response.object();
-    CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
-    const QJsonObject data = root.value("data").toObject();
-    CHECK(data.contains("wallets") && data.value("wallets").isArray(), "wallets field not found");
-    const QJsonArray walletsJson = data.value("wallets").toArray();
-    for (const QJsonValue &walletJson: walletsJson) {
+    CHECK(root.contains("data") && root.value("data").isArray(), "data field not found");
+    const QJsonArray data = root.value("data").toArray();
+    for (const QJsonValue &walletJson: data) {
         CHECK(walletJson.isObject(), "wallets field not found");
         const QJsonObject &walletJsonObj = walletJson.toObject();
 
         WalletInfo wallet;
-        CHECK(walletJsonObj.contains("address") && data.value("address").isString(), "address field not found");
-        wallet.address = data.value("address").toString();
-        CHECK(walletJsonObj.contains("name") && data.value("name").isString(), "name field not found");
-        wallet.name = fromHex(data.value("name").toString());
+        CHECK(walletJsonObj.contains("address") && walletJsonObj.value("address").isString(), "address field not found");
+        wallet.address = walletJsonObj.value("address").toString();
+        CHECK(walletJsonObj.contains("name") && walletJsonObj.value("name").isString(), "name field not found");
+        wallet.name = fromHex(walletJsonObj.value("name").toString());
 
         if (walletJsonObj.contains("locations") && walletJsonObj.value("locations").isArray()) {
             const QJsonArray locations = walletJsonObj.value("locations").toArray();
