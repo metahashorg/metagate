@@ -64,9 +64,9 @@ NsLookup::NsLookup(QObject *parent)
                 throwErr("Incorrect subtype: " + subtype.toStdString());
             }
         }
-        LOG << "node " << info.type << ". " << info.node.str() << ". " << info.port << ". " << info.network;
         nodes[info.type] = info;
     }
+    LOG << "nodes types " << nodes.size();
     settings.endArray();
 
     CHECK(settings.contains("ns_lookup/countSuccessTests"), "settings ns_lookup/countSuccessTests field not found");
