@@ -258,6 +258,8 @@ public slots:
 
     Q_INVOKABLE void sendMessageToWss(QString message);
 
+    Q_INVOKABLE void setIsForgingActive(bool isActive);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
@@ -387,6 +389,8 @@ private:
     std::vector<FolderWalletInfo> folderWalletsInfos;
 
     QFileSystemWatcher fileSystemWatcher;
+
+    bool isForgingActive = true;
 
 };
 
