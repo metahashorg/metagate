@@ -74,11 +74,11 @@ public slots:
 
 signals:
 
-    void getListWallets(const WalletType &type, const WalletsListCallback &callback);
+    void getListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
 
 private slots:
 
-    void onGetListWallets(const WalletType &type, const WalletsListCallback &callback);
+    void onGetListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
 
 public slots:
 
@@ -258,6 +258,8 @@ public slots:
 
     Q_INVOKABLE void sendMessageToWss(QString message);
 
+    Q_INVOKABLE void setIsForgingActive(bool isActive);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
@@ -387,6 +389,8 @@ private:
     std::vector<FolderWalletInfo> folderWalletsInfos;
 
     QFileSystemWatcher fileSystemWatcher;
+
+    bool isForgingActive = true;
 
 };
 

@@ -77,7 +77,7 @@ static QString makeCommandLineMessageForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &utmData, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &utmData, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, bool isForgingActive, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
     QJsonObject allJson;
     allJson.insert("app", "MetaGate");
     QJsonObject data;
@@ -87,6 +87,7 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     data.insert("application_ver", applicationVersion);
     data.insert("interface_ver", interfaceVersion);
     data.insert("is_virtual", isVirtualMachine());
+    data.insert("isForgingActive", isForgingActive);
     data.insert("os_name", osName);
 
     QJsonArray keysTmhJson;
@@ -136,6 +137,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(WalletsListCallback, "WalletsListCallback");
+    Q_REG(JavascriptWrapper::WalletType, "JavascriptWrapper::WalletType");
 
     emit authManager.reEmit();
 
@@ -217,7 +219,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
-        const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
+        const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
@@ -1748,6 +1750,18 @@ BEGIN_SLOT_WRAPPER
     LOG << "Send message to wss: " << message;
     emit wssClient.sendMessage(message);
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::setIsForgingActive(bool isActive) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "setIsForgingActiveResultJs";
+    LOG << "Set is forging active: " << isActive;
+    const TypedException exception = apiVrapper2([&, this](){
+        isForgingActive = isActive;
+        sendAppInfoToWss(userName, true);
+    });
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
 END_SLOT_WRAPPER
 }
 
