@@ -18,25 +18,62 @@
 
 #include "duration.h"
 
-static std::ofstream __log_file__;
-static std::ofstream __log_file2__;
+class LogImplVars {
+public:
 
-static std::mutex mutGlobal;
+    std::ofstream __log_file__;
+    std::ofstream __log_file2__;
 
-struct PeriodicStruct {
-    std::string content;
-    std::vector<milliseconds> periods;
-    time_point lastPeriod;
-    int iteration = 0;
-    size_t count = 20;
+    std::mutex mutGlobal;
 
-    milliseconds calcInterval(const time_point &now) const {
-        return std::chrono::duration_cast<milliseconds>(now - lastPeriod);
+    struct PeriodicStruct {
+        std::string content;
+        std::vector<milliseconds> periods;
+        time_point lastPeriod;
+        int iteration = 0;
+        size_t count = 20;
+
+        milliseconds calcInterval(const time_point &now) const {
+            return std::chrono::duration_cast<milliseconds>(now - lastPeriod);
+        }
+    };
+
+    static std::string makeStrPeriodic(const LogImplVars::PeriodicStruct &p) {
+        std::string addedStr = "Changed " + std::to_string(p.iteration) + ". ";
+        addedStr += "Repeated " + std::to_string(p.periods.size()) + " times: ";
+        addedStr = std::accumulate(p.periods.begin(), p.periods.end(), addedStr, [](const std::string &str, const milliseconds &ms) {
+            return str + std::to_string(std::chrono::duration_cast<seconds>(ms).count()) + ", ";
+        });
+        addedStr += " seconds";
+        return addedStr;
     }
+
+    std::map<std::string, PeriodicStruct> periodics;
+    std::mutex mutPeriodics;
+
+    ~LogImplVars() {
+        try {
+            std::unique_lock<std::mutex> lock(mutPeriodics);
+            const std::map<std::string, PeriodicStruct> copy = periodics;
+            lock.unlock();
+            for (const auto &pair: copy) {
+                if (!pair.second.periods.empty()) {
+                    const std::string toLog = makeStrPeriodic(pair.second);
+                    std::lock_guard<std::mutex> lockLog(mutGlobal);
+                    __log_file__ << pair.first << ": " << toLog << std::endl;
+                    __log_file2__ << pair.first << ": " << toLog << std::endl;
+                }
+            }
+        } catch (...) {
+            std::cout << "Error while end periodic log" << std::endl;
+            __log_file__ << "Error while end periodic log" << std::endl;
+            __log_file2__ << "Error while end periodic log" << std::endl;
+        }
+    }
+
 };
 
-static std::map<std::string, PeriodicStruct> periodics;
-static std::mutex mutPeriodics;
+static LogImplVars vars;
 
 static std::map<std::string, std::string>& getFileNamesImpl(bool isRead) {
     static const auto mainThreadId = std::this_thread::get_id();
@@ -117,33 +154,23 @@ bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
     if (periodic.notSet()) {
         return true;
     } else {
-        const auto makeStr = [](const PeriodicStruct &p) {
-            std::string addedStr = "Changed " + std::to_string(p.iteration) + ". ";
-            addedStr += "Repeated " + std::to_string(p.periods.size()) + " times: ";
-            addedStr = std::accumulate(p.periods.begin(), p.periods.end(), addedStr, [](const std::string &str, const milliseconds &ms) {
-                return str + std::to_string(std::chrono::duration_cast<seconds>(ms).count()) + ", ";
-            });
-            addedStr += " seconds";
-            return addedStr;
-        };
-
         const time_point now = ::now();
         bool to_return;
-        std::lock_guard<std::mutex> lock(mutPeriodics);
-        auto found = periodics.find(periodic.str);
-        if (found != periodics.end()) {
-            PeriodicStruct &p = found->second;
+        std::lock_guard<std::mutex> lock(vars.mutPeriodics);
+        auto found = vars.periodics.find(periodic.str);
+        if (found != vars.periodics.end()) {
+            LogImplVars::PeriodicStruct &p = found->second;
             if (p.content == s) {
                 const milliseconds interval = p.calcInterval(now);
                 p.periods.push_back(interval);
                 p.lastPeriod = now;
                 if (p.periods.size() >= p.count) {
-                    addedStr = makeStr(p);
+                    addedStr = LogImplVars::makeStrPeriodic(p);
                     p.periods.clear();
                 }
                 to_return = false;
             } else {
-                addedStr = makeStr(p);
+                addedStr = LogImplVars::makeStrPeriodic(p);
                 p.periods.clear();
                 p.lastPeriod = now;
                 p.content = s;
@@ -151,10 +178,10 @@ bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
                 to_return = true;
             }
         } else {
-            PeriodicStruct p;
+            LogImplVars::PeriodicStruct p;
             p.content = s;
             p.lastPeriod = now;
-            periodics[periodic.str] = p;
+            vars.periodics[periodic.str] = p;
             to_return = true;
         }
         return to_return;
@@ -169,15 +196,15 @@ void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
         std::string addedStr;
         const bool isPrint = processPeriodic(toCoutStr, addedStr);
 
-        std::lock_guard<std::mutex> lock(mutGlobal);
+        std::lock_guard<std::mutex> lock(vars.mutGlobal);
         std::cout << toCoutStr << *pManip;
         if (!addedStr.empty()) {
-            __log_file__ << toLogStr << addedStr << *pManip;
-            __log_file2__ << toLogStr << addedStr << *pManip;
+            vars.__log_file__ << toLogStr << addedStr << *pManip;
+            vars.__log_file2__ << toLogStr << addedStr << *pManip;
         }
         if (isPrint) {
-            __log_file__ << toLogStr << toCoutStr << *pManip;
-            __log_file2__ << toLogStr << toCoutStr << *pManip;
+            vars.__log_file__ << toLogStr << toCoutStr << *pManip;
+            vars.__log_file2__ << toLogStr << toCoutStr << *pManip;
         }
     } catch (...) {
         std::cerr << "Error";
@@ -223,8 +250,8 @@ void initLog() {
     auto path2 = logFile2.toStdString();
 #endif
 
-    __log_file__.open(path, std::ios_base::trunc);
-    __log_file2__.open(path2, std::ios_base::trunc);
+    vars.__log_file__.open(path, std::ios_base::trunc);
+    vars.__log_file2__.open(path2, std::ios_base::trunc);
 }
 
 AddFileNameAlias_::AddFileNameAlias_(const std::string &fileName, const std::string &alias) {
