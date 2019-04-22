@@ -1,4 +1,6 @@
-Messenger регестрируется в javascript по имени wallet_names
+WalletNames регестрируется в javascript по имени wallet_names
+
+Имена кошельков сохраняются глобально в рамках одного логина. То есть кошельки tmh и mth с одним адресом будут иметь одно и тоже имя в рамках одного логина
 
 Q_INVOKABLE void advanceFill(QString jsonNames);
 Предварительное заполнение имен кошельков. Должно вызываться 1 раз если таблица не была заполнена
@@ -22,6 +24,7 @@ currency == tmh|mth|btc|eth|all
 Результат вернется в функцию
 wnsGetKeyNameResultJs(currency, result, errorNum, errorMessage)
 где result - json вида
+{\"other\":[],\"this\":[{\"address\":\"0x001146ec98b972ebc01ea45317165fa1d27fce3dc4fa791ff8\",\"info\":[{\"currency\":\"mth\",\"device\":\"29548;30434;1673716737\",\"user\":\"ivan.suvorov@adsniper.ru\"},{\"currency\":\"mth\",\"device\":\"29548;30434;1673716737\",\"user\":\"ivan.suvorov@adsniper.ru\"}],\"name\":\"\"}]
 где this - кошельки на этом устройстве, other - кошельки на других устройствах
 
 
