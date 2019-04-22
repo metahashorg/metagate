@@ -140,8 +140,6 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     Q_REG(JavascriptWrapper::WalletType, "JavascriptWrapper::WalletType");
 
     emit authManager.reEmit();
-
-    sendAppInfoToWss("", true);
 }
 
 void JavascriptWrapper::mvToThread(QThread *thread) {
@@ -154,18 +152,22 @@ BEGIN_SLOT_WRAPPER
     std::vector<QString> result;
     const TypedException &exception = apiVrapper2([&]{
         if (type == WalletType::Tmh) {
+            CHECK(!walletPathTmh.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathTmh);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Mth) {
+            CHECK(!walletPathMth.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathMth);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Btc) {
+            CHECK(!walletPathBtc.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPathBtc);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Eth) {
+            CHECK(!walletPathEth.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPathEth);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
@@ -213,6 +215,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
     const QString newUserName = userName;
     if (force || newUserName != sendedUserName) {
         std::vector<QString> keysTmh;
+        CHECK(!walletPathTmh.isEmpty() && !walletPathMth.isEmpty(), "Wallet paths is empty");
         const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh);
         std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
         std::vector<QString> keysMth;
