@@ -99,7 +99,7 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     } else if (type.isEmpty()) {
         // ignore
     } else {
-        throwErr(("Incorrect response: " + type).toStdString());
+        result.method = METHOD::ALIEN;
     }
     return result;
 }

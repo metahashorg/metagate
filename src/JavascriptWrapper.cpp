@@ -1778,7 +1778,9 @@ BEGIN_SLOT_WRAPPER
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
     CHECK(document.isObject(), "Message not is object");
     const QJsonObject root = document.object();
-    CHECK(root.contains("app") && root.value("app").isString(), "app field not found");
+    if (!root.contains("app") || !root.value("app").isString()) {
+        return;
+    }
     const std::string appType = root.value("app").toString().toStdString();
 
     if (appType == "MetaOnline") {

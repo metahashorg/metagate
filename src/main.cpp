@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, jsWrapper);
 
-        //const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth);
+        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient);
 
         initManager.complete();
 
