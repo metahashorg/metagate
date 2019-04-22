@@ -1765,6 +1765,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::getIsForgingActive() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "getIsForgingActiveResultJs";
+    LOG << "Get is forging active: " << isForgingActive;
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<bool>(isForgingActive));
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::onWssMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());

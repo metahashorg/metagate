@@ -260,6 +260,8 @@ public slots:
 
     Q_INVOKABLE void setIsForgingActive(bool isActive);
 
+    Q_INVOKABLE void getIsForgingActive();
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
