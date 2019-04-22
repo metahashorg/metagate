@@ -263,10 +263,10 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         std::string pKey;
         std::string addr;
-        Wallet::createWallet(walletPath, password.toStdString(), pKey, addr);
+        Wallet::createWallet(walletPath, password.normalized(QString::NormalizationForm_C).toStdString(), pKey, addr);
 
         pKey.clear();
-        Wallet wallet(walletPath, addr, password.toStdString());
+        Wallet wallet(walletPath, addr, password.normalized(QString::NormalizationForm_C).toStdString());
         signature = wallet.sign(exampleMessage.get(), pKey);
         publicKey = pKey;
         address = addr;
@@ -701,7 +701,7 @@ void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey
     Opt<std::string> address;
     const TypedException exception = apiVrapper2([&]() {
         std::string addr;
-        Wallet::createWalletFromRaw(walletPath, rawPrivKey.toStdString(), password.toStdString(), pubkey, addr);
+        Wallet::createWalletFromRaw(walletPath, rawPrivKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
         address = addr;
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), address);
@@ -925,7 +925,7 @@ BEGIN_SLOT_WRAPPER
     QString fullPath;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
-        address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
+        address = EthWallet::genPrivateKey(walletPathEth, password.normalized(QString::NormalizationForm_C).toStdString());
 
         fullPath = EthWallet::getFullPath(walletPathEth, address.get());
         LOG << "Create eth wallet ok " << requestId << " " << address.get();
