@@ -62,21 +62,19 @@ bool MhPayEventHandler::eventFilter(QObject *object, QEvent *event) {
 
 void MhPayEventHandler::timerEvent() {
 BEGIN_SLOT_WRAPPER
-    //mainWindow->setWindowFlags(mainWindow->windowFlags() & ~Qt::WindowStaysOnTopHint);
-    //mainWindow->show();
-
     const std::string commandLine = runGuard.getValueAndReset();
     if (commandLine.empty()) {
+        return;
+    }
+    if (commandLine == std::string("#")) {
+        if (mainWindow)
+            mainWindow->showOnTop();
         return;
     }
     const QUrl url(QString::fromStdString(commandLine));
     const bool success = processUrl(url);
     if (success) {
-        if (mainWindow != nullptr) {
-//            mainWindow->setWindowFlags(mainWindow->windowFlags() | Qt::WindowStaysOnTopHint);
-//            mainWindow->showNormal();
-//            mainWindow->show();
-//            mainWindow->activateWindow();
+        if (mainWindow) {
             mainWindow->showOnTop();
         }
     }

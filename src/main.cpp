@@ -112,7 +112,9 @@ int main(int argc, char *argv[]) {
     RunGuard guard("MetaGate");
     if (!guard.tryToRun()) {
         std::cout << "Programm already running" << std::endl;
-        if (!supposedMhPayUrl.empty()) {
+        if (supposedMhPayUrl.empty()) {
+            guard.storeValue(std::string("#"));
+        } else  {
             guard.storeValue(supposedMhPayUrl);
         }
         return 0;
