@@ -112,6 +112,10 @@ signals:
 
     void processExternalUrl(const QUrl &url);
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
+
 private slots:
 
     void onSetJavascriptWrapper(JavascriptWrapper *jsWrapper, const SetJavascriptWrapperCallback &callback);

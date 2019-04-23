@@ -14,6 +14,7 @@
 #include <QLineEdit>
 #include <QWebEngineProfile>
 #include <QKeyEvent>
+#include <QApplicationStateChangeEvent>
 #include <QMenu>
 #include <QStandardItemModel>
 #include <QFontDatabase>
@@ -84,7 +85,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
         BEGIN_SLOT_WRAPPER
         if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
             return;
-        //qDebug() << "A? " << this->isActiveWindow();
 
         if (this->isVisible()) {
             this->setVisible(false);
@@ -104,6 +104,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 //            this->showOnTop();
         END_SLOT_WRAPPER
     });
+    qApp->installEventFilter(this);
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
     CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
@@ -757,7 +758,6 @@ void MainWindow::showExpanded() {
 
 void MainWindow::showOnTop()
 {
-    qDebug() << "Show on top";
     setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     showNormal();
     show();
@@ -781,6 +781,19 @@ QString MainWindow::getServerIp(const QString &text, const std::set<QString> &ex
 LastHtmlVersion MainWindow::getCurrentHtmls() const {
     std::lock_guard<std::mutex> lock(mutLastHtmls);
     return last_htmls;
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+#ifdef Q_OS_MACOS
+    // Show window on dock clicks
+    if (obj == qApp && event->type() == QEvent::ApplicationStateChange) {
+        QApplicationStateChangeEvent *ev = static_cast<QApplicationStateChangeEvent *>(event);
+        if (ev->applicationState() == Qt::ApplicationActive)
+            showOnTop();
+    }
+#endif // Q_OS_MACOS
+    return QMainWindow::eventFilter(obj, event);
 }
 
 void MainWindow::onLogined(bool isInit, const QString &login) {
