@@ -39,7 +39,7 @@ QByteArray QRCoder::encode(const QByteArray &data)
 QByteArray QRCoder::decode(const QByteArray &data)
 {
     QImage image;
-    CHECK(image.loadFromData(data, "PNG"), "Load image error");
+    CHECK(image.loadFromData(data), "Load image error");
     image = image.convertToFormat(QImage::Format_Grayscale8);
 
     zbar::Image zimage(static_cast<unsigned int>(image.bytesPerLine()), static_cast<unsigned int>(image.height()), "Y800", image.bits(), static_cast<unsigned long>(image.sizeInBytes()));
