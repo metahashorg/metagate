@@ -113,7 +113,8 @@ int main(int argc, char *argv[]) {
     if (!guard.tryToRun()) {
         std::cout << "Programm already running" << std::endl;
         if (supposedMhPayUrl.empty()) {
-            guard.storeValue(std::string("#"));
+            if (!hide)
+                guard.storeValue(std::string("#"));
         } else  {
             guard.storeValue(supposedMhPayUrl);
         }
