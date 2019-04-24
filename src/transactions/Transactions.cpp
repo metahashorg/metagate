@@ -103,11 +103,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-template<typename Func>
-void Transactions::runCallback(const Func &callback) {
-    emit javascriptWrapper.callbackCall(callback);
-}
-
 uint64_t Transactions::calcCountTxs(const QString &address, const QString &currency) const {
     const uint64_t countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
     const uint64_t countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
@@ -444,6 +439,7 @@ void Transactions::fetchBalanceAddress(const QString &address) {
         return info.address == address;
     });
 
+    LOG << "Found " << addressInfos.size() << " records on adrress " << address;
     for (const AddressInfo &addr: addressInfos) {
         const std::vector<QString> servers = nsLookup.getRandom(addr.type, 3, 3);
         if (servers.empty()) {
@@ -464,7 +460,7 @@ BEGIN_SLOT_WRAPPER
         }
         transactionGuard.commit();
     });
-    runCallback(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
@@ -477,14 +473,14 @@ BEGIN_SLOT_WRAPPER
             info.balance = getBalance(info.address, info.currency);
         }
     });
-    runCallback(std::bind(callback, result, exception));
+    callback.emitFunc(exception, result);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback) {
 BEGIN_SLOT_WRAPPER
     currentGroup = group;
-    runCallback(std::bind(callback, TypedException()));
+    callback.emitFunc(TypedException());
 END_SLOT_WRAPPER
 }
 
@@ -495,7 +491,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
 
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -505,7 +501,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getPaymentsForAddress(address, currency, from, count, asc);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -516,7 +512,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
 
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -526,7 +522,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getPaymentsForCurrency(currency, from, count, asc);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -536,7 +532,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getForgingPaymentsForAddress(address, currency, from, count, asc);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -546,7 +542,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getLastForgingTransaction(address, currency);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -556,7 +552,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         balance = getBalance(address, currency);
     });
-    runCallback(std::bind(callback, balance, exception));
+    callback.emitFunc(exception, balance);
 END_SLOT_WRAPPER
 }
 
@@ -739,12 +735,12 @@ BEGIN_SLOT_WRAPPER
                 CHECK_TYPED(!error.isSet(), TypeErrors::CLIENT_ERROR, error.description);
                 tx = parseGetTxResponse(QString::fromStdString(response), "", "");
             });
-            runCallback(std::bind(callback, tx, exception));
+            callback.emitFunc(exception, tx);
         }, timeout);
     });
 
     if (exception.isSet()) {
-        runCallback(std::bind(callback, Transaction(), exception));
+        callback.emitException(exception);
     }
 END_SLOT_WRAPPER
 }
@@ -757,7 +753,7 @@ BEGIN_SLOT_WRAPPER
     if (found != lastSuccessUpdateTimestamps.end()) {
         result = found->second;
     }
-    runCallback(std::bind(callback, result, now));
+    callback.emitFunc(TypedException(), result, now);
 END_SLOT_WRAPPER
 }
 
@@ -767,7 +763,7 @@ BEGIN_SLOT_WRAPPER
         db.removePaymentsForCurrency(currency);
         nsLookup.resetFile();
     });
-    runCallback(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 

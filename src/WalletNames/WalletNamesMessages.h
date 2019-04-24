@@ -16,7 +16,8 @@ QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hw
 
 enum METHOD: int {
     RENAME = 0, SET_WALLETS = 1, GET_WALLETS = 2,
-    NOT_SET = 1000
+    NOT_SET = 1000,
+    ALIEN = 1001
 };
 
 struct ResponseType {

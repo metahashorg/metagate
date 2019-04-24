@@ -38,7 +38,7 @@ public:
 
 public:
 
-    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager);
+    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client);
 
 signals:
 
@@ -106,7 +106,7 @@ private:
 
     auth::Auth &authManager;
 
-    WebSocketClient client;
+    WebSocketClient &client;
 
     QString token;
 

@@ -165,7 +165,7 @@ void MainWindow::loadPagesMappings() {
     const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
     if (isExistFile(routesFile)) {
         const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
-        LOG << "Set mappings from file " << QString::fromStdString(contentMappings).simplified();
+        LOG << "Set mappings from file " << contentMappings.size();
         try {
             pagesMappings.setMappings(QString::fromStdString(contentMappings));
         } catch (const Exception &e) {

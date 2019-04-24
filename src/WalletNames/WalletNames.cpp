@@ -2,12 +2,10 @@
 
 #include <set>
 
-#include <QSettings>
 #include <QJsonDocument>
 
 #include "Log.h"
 #include "QRegister.h"
-#include "Paths.h"
 #include "SlotWrapper.h"
 
 #include "JavascriptWrapper.h"
@@ -30,18 +28,12 @@ const static QString WALLET_TYPE_MTH = "mth";
 const static QString WALLET_TYPE_BTC = "btc";
 const static QString WALLET_TYPE_ETH = "eth";
 
-static QString getWssServer() {
-    QSettings settings(getSettingsPath(), QSettings::IniFormat);
-    CHECK(settings.contains("wallet_names/server"), "settings wallet_names/server not found");
-    return settings.value("wallet_names/server").toString();
-}
-
-WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager)
+WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client)
     : TimerClass(5min, nullptr)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
     , authManager(authManager)
-    , client(getWssServer())
+    , client(client)
 {
     CHECK(connect(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall), "not connect onCallbackCall");
 
@@ -67,8 +59,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     emit authManager.reEmit();
 
     moveToThread(&thread1); // TODO вызывать в TimerClass
-
-    client.start();
 }
 
 void WalletNames::onCallbackCall(WalletNames::Callback callback) {
@@ -293,6 +283,8 @@ BEGIN_SLOT_WRAPPER
         LOG << "Get wallets ok";
         const std::vector<WalletInfo> wallets = parseGetWalletsMessage(messageJson);
         processWalletsList(wallets);
+    } else if (responseType.method == METHOD::ALIEN) {
+        return;
     } else {
         throwErr("Incorrect response type");
     }

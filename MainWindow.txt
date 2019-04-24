@@ -437,3 +437,14 @@ Q_INVOKABLE void sendMessageToWss(QString message);
 # Result returns to the function:
 sendMessageToWssResultJs("Ok", errorNum, errorMessage);
 # Отсутствие ошибки не говорит об успешной доставке сообщения
+
+Q_INVOKABLE void setIsForgingActive(bool isActive);
+# Установить активным или нет форджинг
+# Result returns to the function:
+setIsForgingActiveResultJs("Ok", errorNum, errorMessage);
+# Отсутствие ошибки не говорит об успешной доставке сообщения
+
+Q_INVOKABLE void getIsForgingActive();
+# узнать активен или нет форджинг
+# Result returns to the function:
+getIsForgingActiveResultJs(bool, errorNum, errorMessage);

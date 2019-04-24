@@ -25,6 +25,7 @@ class AuthJavascript;
 }
 
 class MainWindow;
+class WebSocketClient;
 
 namespace initializer {
 
@@ -46,7 +47,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient);
 
     static int countEvents() {
         return 1;

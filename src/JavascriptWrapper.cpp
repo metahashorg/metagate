@@ -77,7 +77,7 @@ static QString makeCommandLineMessageForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &utmData, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
+static QString makeMessageApplicationForWss(const QString &hardwareId, const QString &utmData, const QString &userId, const QString &applicationVersion, const QString &interfaceVersion, bool isForgingActive, const std::vector<QString> &keysTmh, const std::vector<QString> &keysMth) {
     QJsonObject allJson;
     allJson.insert("app", "MetaGate");
     QJsonObject data;
@@ -87,6 +87,7 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     data.insert("application_ver", applicationVersion);
     data.insert("interface_ver", interfaceVersion);
     data.insert("is_virtual", isVirtualMachine());
+    data.insert("isForgingActive", isForgingActive);
     data.insert("os_name", osName);
 
     QJsonArray keysTmhJson;
@@ -136,10 +137,9 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(WalletsListCallback, "WalletsListCallback");
+    Q_REG(JavascriptWrapper::WalletType, "JavascriptWrapper::WalletType");
 
     emit authManager.reEmit();
-
-    sendAppInfoToWss("", true);
 }
 
 void JavascriptWrapper::mvToThread(QThread *thread) {
@@ -152,18 +152,22 @@ BEGIN_SLOT_WRAPPER
     std::vector<QString> result;
     const TypedException &exception = apiVrapper2([&]{
         if (type == WalletType::Tmh) {
+            CHECK(!walletPathTmh.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathTmh);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Mth) {
+            CHECK(!walletPathMth.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathMth);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Btc) {
+            CHECK(!walletPathBtc.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPathBtc);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Eth) {
+            CHECK(!walletPathEth.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPathEth);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
@@ -211,13 +215,14 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
     const QString newUserName = userName;
     if (force || newUserName != sendedUserName) {
         std::vector<QString> keysTmh;
+        CHECK(!walletPathTmh.isEmpty() && !walletPathMth.isEmpty(), "Wallet paths is empty");
         const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh);
         std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
         std::vector<QString> keysMth;
         const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
-        const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, keysTmh, keysMth);
+        const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
@@ -261,10 +266,10 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         std::string pKey;
         std::string addr;
-        Wallet::createWallet(walletPath, password.toStdString(), pKey, addr);
+        Wallet::createWallet(walletPath, password.normalized(QString::NormalizationForm_C).toStdString(), pKey, addr);
 
         pKey.clear();
-        Wallet wallet(walletPath, addr, password.toStdString());
+        Wallet wallet(walletPath, addr, password.normalized(QString::NormalizationForm_C).toStdString());
         signature = wallet.sign(exampleMessage.get(), pKey);
         publicKey = pKey;
         address = addr;
@@ -699,7 +704,7 @@ void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey
     Opt<std::string> address;
     const TypedException exception = apiVrapper2([&]() {
         std::string addr;
-        Wallet::createWalletFromRaw(walletPath, rawPrivKey.toStdString(), password.toStdString(), pubkey, addr);
+        Wallet::createWalletFromRaw(walletPath, rawPrivKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
         address = addr;
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), address);
@@ -923,7 +928,7 @@ BEGIN_SLOT_WRAPPER
     QString fullPath;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
-        address = EthWallet::genPrivateKey(walletPathEth, password.toStdString());
+        address = EthWallet::genPrivateKey(walletPathEth, password.normalized(QString::NormalizationForm_C).toStdString());
 
         fullPath = EthWallet::getFullPath(walletPathEth, address.get());
         LOG << "Create eth wallet ok " << requestId << " " << address.get();
@@ -1751,12 +1756,34 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::setIsForgingActive(bool isActive) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "setIsForgingActiveResultJs";
+    LOG << "Set is forging active: " << isActive;
+    const TypedException exception = apiVrapper2([&, this](){
+        isForgingActive = isActive;
+        sendAppInfoToWss(userName, true);
+    });
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::getIsForgingActive() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "getIsForgingActiveResultJs";
+    LOG << "Get is forging active: " << isForgingActive;
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<bool>(isForgingActive));
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::onWssMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
     CHECK(document.isObject(), "Message not is object");
     const QJsonObject root = document.object();
-    CHECK(root.contains("app") && root.value("app").isString(), "app field not found");
+    if (!root.contains("app") || !root.value("app").isString()) {
+        return;
+    }
     const std::string appType = root.value("app").toString().toStdString();
 
     if (appType == "MetaOnline") {
