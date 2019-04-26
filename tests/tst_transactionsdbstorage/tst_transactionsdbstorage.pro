@@ -14,10 +14,7 @@ SOURCES += \
     tst_transactionsdbstorage.cpp \
     ../../src/dbstorage.cpp \
     ../../src/BigNumber.cpp \
-    ../../src/Log.cpp \
-    ../../src/utils.cpp \
-    ../../src/Paths.cpp \
-    ../../src/btctx/Base58.cpp \
+    ../LogMock.cpp \
     ../../src/transactions/TransactionsDBStorage.cpp
 
 
