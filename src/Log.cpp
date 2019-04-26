@@ -122,19 +122,6 @@ bool PeriodicLog::notSet() const {
     return str.empty();
 }
 
-Log_ &Log_::operator <<(const QString &s) {
-    print(s.toStdString());
-    return *this;
-}
-
-Log_ &Log_::operator <<(const PeriodicLog &p) {
-    CHECK(periodic.notSet(), "Periodic already set");
-    CHECK(!p.notSet(), "Periodic not set");
-    periodic = p;
-    ssLog << ": \'" << p.str << "\'";
-    return *this;
-}
-
 Log_::Log_(const std::string &fileName) {
     const QDateTime now = QDateTime::currentDateTime();
     const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
@@ -209,6 +196,17 @@ void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
     } catch (...) {
         std::cerr << "Error";
     }
+}
+
+void Log_::print(const QString &s) {
+    print(s.toStdString());
+}
+
+void Log_::print(const PeriodicLog &p) {
+    CHECK(periodic.notSet(), "Periodic already set");
+    CHECK(!p.notSet(), "Periodic not set");
+    periodic = p;
+    ssLog << ": \'" << p.str << "\'";
 }
 
 void Log_::print(const std::string &t) {
