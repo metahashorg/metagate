@@ -28,8 +28,7 @@ SOURCES += \
     ../../src/openssl_wrapper/openssl_wrapper.cpp \
     ../../src/utils.cpp \
     ../../src/ethtx/utils2.cpp \
-    ../../src/Log.cpp \
-    ../../src/Paths.cpp \
+    ../LogMock.cpp \
     tst_Metahash.cpp \
     tst_Bitcoin.cpp \
     tst_Ethereum.cpp \
