@@ -64,10 +64,11 @@ QString getNsLookupPath() {
     return res;
 }
 
-static QString getOldPagesPath() {
+static QString getStartSettingsPath() {
     const auto path = qgetenv(metahashWalletPagesPathEnv);
-    if (!path.isEmpty())
+    if (!path.isEmpty()) {
         return QString(path);
+    }
 
     const QString path1(makePath(QApplication::applicationDirPath(), "startSettings/"));
     const QString path2(makePath(QApplication::applicationDirPath(), "../WalletMetahash/startSettings/"));
@@ -88,14 +89,13 @@ static QString getOldPagesPath() {
 static void initializePagesPath() {
     CHECK(!isInitializePagesPath, "Already initialized page path");
 
-    const QString oldPagesPath = getOldPagesPath();
+    const QString startSettingsPath = getStartSettingsPath();
+    const QString pagesPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, PAGES_PATH);
 
-    const QString newPagesPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, PAGES_PATH);
-
-    if (!isExistFolder(newPagesPath)) {
-        LOG << "Create pages folder: " << newPagesPath << " " << oldPagesPath;
-        CHECK(copyRecursively(oldPagesPath, newPagesPath, true, false), "not copy pages");
-        removeFile(makePath(newPagesPath, SETTINGS_NAME));
+    if (!isExistFolder(pagesPath)) {
+        LOG << "Create pages folder: " << pagesPath << " " << startSettingsPath;
+        CHECK(copyRecursively(startSettingsPath, pagesPath, true, false), "not copy pages");
+        removeFile(makePath(pagesPath, SETTINGS_NAME));
     }
 
     isInitializePagesPath = true;
@@ -110,13 +110,12 @@ QString getPagesPath() {
 static void initializeSettingsPath() {
     CHECK(!isInitializeSettingsPath, "Already initialized settings path");
 
-    const QString oldPagesPath = getOldPagesPath();
-    const QString oldSettingsPath = makePath(oldPagesPath, SETTINGS_NAME);
+    const QString startSettingsPath = getStartSettingsPath();
+    const QString startSettings = makePath(startSettingsPath, SETTINGS_NAME);
 
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
     createFolder(res);
     const QString settings = makePath(res, SETTINGS_NAME);
-
     const QString pagesPath = getPagesPath();
 
     const auto replaceSettings = [&] {
@@ -125,16 +124,12 @@ static void initializeSettingsPath() {
             const QString settingsOld = makePath(res, SETTINGS_NAME_OLD);
             copyFile(settings, settingsOld, true);
 
-            QSettings qsettings(settings, QSettings::IniFormat);
+            const QSettings qsettings(settings, QSettings::IniFormat);
             if (qsettings.contains("notify") && qsettings.value("notify").toBool()) {
                 isNotify = true;
             }
         }
-        copyFile(oldSettingsPath, settings, true);
-        removeFile(makePath(pagesPath, "nodes.txt"));
-        removeFile(makePath(pagesPath, "servers.txt"));
-        removeFile(makePath(pagesPath, "web_socket.txt"));
-        removeFile(makePath(pagesPath, "version.txt"));
+        copyFile(startSettings, settings, true);
 
         if (isNotify) {
             QSettings qsettings(settings, QSettings::IniFormat);
@@ -148,17 +143,17 @@ static void initializeSettingsPath() {
     };
 
     if (!isExistFile(settings)) {
-        LOG << "Create settings: " << oldSettingsPath << " " << settings;
+        LOG << "Create settings: " << startSettings << " " << settings;
         replaceSettings();
     }
 
     const auto compareVersion = [&]() {// Чтобы в деструкторе закрылось
         const QSettings settingsFile(settings, QSettings::IniFormat);
-        const QSettings oldSettingsFile(oldSettingsPath, QSettings::IniFormat);
-        return settingsFile.value("version") == oldSettingsFile.value("version");
+        const QSettings startSettingsFile(startSettings, QSettings::IniFormat);
+        return settingsFile.value("version") == startSettingsFile.value("version");
     };
     if (!compareVersion()) {
-        LOG << "Replace settings: " << oldSettingsPath << " " << settings;
+        LOG << "Replace settings: " << startSettings << " " << settings;
         replaceSettings();
     }
 
