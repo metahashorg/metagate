@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "check.h"
 #include "Log.h"
+#include "merge_settings.h"
 
 constexpr auto *metahashWalletPagesPathEnv = "METAHASH_WALLET_PAGES_PATH";
 
@@ -28,6 +29,8 @@ const static QString SETTINGS_NAME_OLD = "settingsOld.ini";
 const static QString STORAGE_NAME = "storage.ini";
 
 const static QString MAC_ADDRESS_NAME = "mac.txt";
+
+const static QString SPECS_SETTINGS_FILE_NAME = "mergeSettings.txt";
 
 const static QString DB_PATH = "database/";
 
@@ -110,13 +113,15 @@ QString getPagesPath() {
 static void initializeSettingsPath() {
     CHECK(!isInitializeSettingsPath, "Already initialized settings path");
 
-    const QString startSettingsPath = getStartSettingsPath();
-    const QString startSettings = makePath(startSettingsPath, SETTINGS_NAME);
+    const QString startSettingsFolder = getStartSettingsPath();
+    const QString startSettings = makePath(startSettingsFolder, SETTINGS_NAME);
 
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
     createFolder(res);
     const QString settings = makePath(res, SETTINGS_NAME);
     const QString pagesPath = getPagesPath();
+
+    const QString specsFile = makePath(startSettingsFolder, SPECS_SETTINGS_FILE_NAME);
 
     const auto replaceSettings = [&] {
         bool isNotify = false;
@@ -128,8 +133,11 @@ static void initializeSettingsPath() {
             if (qsettings.contains("notify") && qsettings.value("notify").toBool()) {
                 isNotify = true;
             }
+
+            mergeSettings(settings, startSettings, specsFile);
+        } else {
+            copyFile(startSettings, settings, true);
         }
-        copyFile(startSettings, settings, true);
 
         if (isNotify) {
             QSettings qsettings(settings, QSettings::IniFormat);

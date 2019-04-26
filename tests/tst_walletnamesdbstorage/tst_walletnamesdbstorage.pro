@@ -17,6 +17,8 @@ SOURCES += \
     ../../src/Log.cpp \
     ../../src/utils.cpp \
     ../../src/Paths.cpp \
+    ../../src/merge_settings.cpp \
+    ../../src/VersionWrapper.cpp \
     ../../src/btctx/Base58.cpp \
     ../../src/WalletNames/WalletNamesDbStorage.cpp
 

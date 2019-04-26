@@ -30,6 +30,8 @@ SOURCES += \
     ../../src/ethtx/utils2.cpp \
     ../../src/Log.cpp \
     ../../src/Paths.cpp \
+    ../../src/merge_settings.cpp \
+    ../../src/VersionWrapper.cpp \
     tst_Metahash.cpp \
     tst_Bitcoin.cpp \
     tst_Ethereum.cpp \
