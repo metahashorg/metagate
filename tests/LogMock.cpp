@@ -27,7 +27,7 @@ Log_::Log_(const std::string &fileName) {
 }
 
 bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
-
+    return false;
 }
 
 void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
