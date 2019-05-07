@@ -13,6 +13,7 @@
 #include "PagesMappings.h"
 #include "CallbackWrapper.h"
 
+class QSystemTrayIcon;
 class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
@@ -34,6 +35,10 @@ class MainWindow;
 
 namespace initializer {
 class InitializerJavascript;
+}
+
+namespace wallet_names {
+class WalletNamesJavascript;
 }
 
 class EvFilter: public QObject {
@@ -73,6 +78,8 @@ public:
 
     using SetProxyJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetWalletNamesJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
@@ -80,6 +87,8 @@ public:
     ~MainWindow();
 
     void showExpanded();
+
+    void showOnTop();
 
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
@@ -97,9 +106,15 @@ signals:
 
     void setProxyJavascript(proxy::ProxyJavascript *transactionsJavascript, const SetProxyJavascriptCallback &callback);
 
+    void setWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
+
     void initFinished();
 
     void processExternalUrl(const QUrl &url);
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 
 private slots:
 
@@ -112,6 +127,8 @@ private slots:
     void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
 
     void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
+
+    void onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 
     void onInitFinished();
 
@@ -182,12 +199,13 @@ private slots:
     void onLogined(bool isInit, const QString &login);
 
 private:
+    std::unique_ptr<Ui::MainWindow> ui;
+
+    QSystemTrayIcon *systemTray;
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
 
     MHPayUrlSchemeHandler *shemeHandler2 = nullptr;
-
-    std::unique_ptr<Ui::MainWindow> ui;
 
     std::unique_ptr<QWebChannel> channel;
 

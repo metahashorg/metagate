@@ -139,6 +139,8 @@ public slots:
 
     Q_INVOKABLE void lockWallet();
 
+    Q_INVOKABLE void remainingTime();
+
 
     Q_INVOKABLE void reEmit();
 

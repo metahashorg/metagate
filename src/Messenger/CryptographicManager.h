@@ -45,6 +45,8 @@ public:
 
     using LockWalletCallback = CallbackWrapper<void()>;
 
+    using RemainingTimeCallback = CallbackWrapper<void(const QString &address, const seconds &elapsed)>;
+
 signals:
 
     void decryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
@@ -67,6 +69,8 @@ signals:
 
     void lockWallet(const LockWalletCallback &callback);
 
+    void remainingTime(const RemainingTimeCallback &callback);
+
 private slots:
 
     void onDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback);
@@ -88,6 +92,8 @@ private slots:
     void onUnlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
 
     void onLockWallet(const LockWalletCallback &callback);
+
+    void onRemainingTime(const RemainingTimeCallback &callback);
 
 private slots:
 

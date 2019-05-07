@@ -28,7 +28,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler);
+    Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler, bool hide);
 
     static int countEvents() {
         return 1;

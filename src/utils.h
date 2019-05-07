@@ -8,6 +8,8 @@
 
 std::string toHex(const std::string &data);
 
+QString toHex(const QString &data);
+
 std::string toBase64(const std::string &value);
 
 std::string fromBase64(const std::string &value);
@@ -15,6 +17,8 @@ std::string fromBase64(const std::string &value);
 std::string base58ToHex(const std::string &value);
 
 std::string fromHex(const std::string &value);
+
+QString fromHex(const QString &data);
 
 bool isDecimal(const std::string &str);
 

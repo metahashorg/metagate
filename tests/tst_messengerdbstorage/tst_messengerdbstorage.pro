@@ -13,10 +13,7 @@ INCLUDEPATH = ../../src ../../src/Messenger
 SOURCES += \
     tst_messengerdbstorage.cpp \
     ../../src/dbstorage.cpp \
-    ../../src/Log.cpp \
-    ../../src/utils.cpp \
-    ../../src/Paths.cpp \
-    ../../src/btctx/Base58.cpp \
+    ../LogMock.cpp \
     ../../src/Messenger/MessengerDBStorage.cpp
 
 

@@ -209,7 +209,7 @@ static std::string decryptRsa(const RsaKey &rsa, const std::string &message) {
 }
 
 static std::string makeMessageHex(const std::string &aes, const std::vector<unsigned char> &iv, const std::vector<unsigned char> &message, const std::vector<unsigned char> &pubkeyPart) {
-    const auto writeInt = [](size_t value) {
+    const auto writeInt = [](uint64_t value) {
         std::string res;
         const int len = sizeof(value);
         for (int i = 0; i < len; i++) {
@@ -239,9 +239,9 @@ static void parseMessageHex(const std::string &message, std::string &aes, std::v
     const std::string normMessage = fromHex(message);
 
     const auto readInt = [](auto &currIter, auto endIter) {
-        const int len = sizeof(size_t);
+        const int len = sizeof(uint64_t);
         CHECK(std::distance(currIter, endIter) >= len, "Incorrect message");
-        size_t result = 0;
+        uint64_t result = 0;
         for (int i = 0; i < len; i++) {
             result *= 256;
             result += (unsigned char)(*currIter);

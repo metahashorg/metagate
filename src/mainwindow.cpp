@@ -14,11 +14,13 @@
 #include <QLineEdit>
 #include <QWebEngineProfile>
 #include <QKeyEvent>
+#include <QApplicationStateChangeEvent>
 #include <QMenu>
 #include <QStandardItemModel>
 #include <QFontDatabase>
 #include <QDesktopServices>
 #include <QSettings>
+#include <QSystemTrayIcon>
 
 #include "ui_mainwindow.h"
 
@@ -43,6 +45,7 @@
 #include "transactions/TransactionsJavascript.h"
 #include "Initializer/InitializerJavascript.h"
 #include "proxy/ProxyJavascript.h"
+#include "WalletNames/WalletNamesJavascript.h"
 
 #include "machine_uid.h"
 
@@ -72,16 +75,43 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
+    , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.png"), this))
     , last_htmls(Uploader::getLastHtmlVersion())
     , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
+    systemTray->setVisible(true);
+    connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
+        BEGIN_SLOT_WRAPPER
+        if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
+            return;
+
+        if (this->isVisible()) {
+            this->setVisible(false);
+            /*if (this->isActiveWindow())
+                this->setVisible(false);
+            else
+                showOnTop();*/
+        } else {
+            showOnTop();
+        }
+        //this->setVisible(!this->isVisible());
+//        if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
+//            return;
+//        if (this->isVisible() && !this->isActiveWindow())
+//            this->setVisible(false);
+//        else
+//            this->showOnTop();
+        END_SLOT_WRAPPER
+    });
+    qApp->installEventFilter(this);
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
     CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
     CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
     CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
     CHECK(connect(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript), "not connect onSetProxyJavascript");
+    CHECK(connect(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript), "not connect onSetWalletNamesJavascript");
     CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
     CHECK(connect(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl), "not connect onProcessExternalUrl");
 
@@ -90,6 +120,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
     Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
     Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
+    Q_REG(SetWalletNamesJavascriptCallback, "SetWalletNamesJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
 
     shemeHandler = new MHUrlSchemeHandler(this);
@@ -134,7 +165,7 @@ void MainWindow::loadPagesMappings() {
     const QString routesFile = makePath(last_htmls.fullPath, "core/routes.json");
     if (isExistFile(routesFile)) {
         const std::string contentMappings = readFile(makePath(last_htmls.fullPath, "core/routes.json"));
-        LOG << "Set mappings from file " << QString::fromStdString(contentMappings).simplified();
+        LOG << "Set mappings from file " << contentMappings.size();
         try {
             pagesMappings.setMappings(QString::fromStdString(contentMappings));
         } catch (const Exception &e) {
@@ -242,6 +273,17 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MainWindow::onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(walletNamesJavascript != nullptr, "Incorrect proxyJavascript");
+        CHECK(connect(walletNamesJavascript, &wallet_names::WalletNamesJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        registerWebChannel(QString("wallet_names"), walletNamesJavascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
 void MainWindow::onInitFinished() {
 BEGIN_SLOT_WRAPPER
     isInitFinished = true;
@@ -260,7 +302,7 @@ END_SLOT_WRAPPER
 void MainWindow::onProcessExternalUrl(const QUrl &url) {
 BEGIN_SLOT_WRAPPER
     if (isInitFinished) {
-        enterCommandAndAddToHistory(url.toString(), true, true);
+        enterCommandAndAddToHistory(url.toString(), false, true);
     } else {
         saveUrlToMove = url;
     }
@@ -597,7 +639,7 @@ bool MainWindow::currentFileIsEqual(const QString &pageName) {
 }
 
 void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isAddToHistory, bool isReplace) {
-    LOG << "scl " << text;
+    LOG << "scl " << isAddToHistory << " " << text;
 
     unregisterCommandLine();
     const QString currText = ui->commandLine->currentText();
@@ -714,6 +756,17 @@ void MainWindow::showExpanded() {
     show();
 }
 
+void MainWindow::showOnTop()
+{
+    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    showNormal();
+    show();
+    activateWindow();
+    raise();
+    setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+    show();
+}
+
 QString MainWindow::getServerIp(const QString &text, const std::set<QString> &excludesIps) {
     try {
         QString ip = pagesMappings.getIp(text, excludesIps);
@@ -728,6 +781,19 @@ QString MainWindow::getServerIp(const QString &text, const std::set<QString> &ex
 LastHtmlVersion MainWindow::getCurrentHtmls() const {
     std::lock_guard<std::mutex> lock(mutLastHtmls);
     return last_htmls;
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+#ifdef Q_OS_MACOS
+    // Show window on dock clicks
+    if (obj == qApp && event->type() == QEvent::ApplicationStateChange) {
+        QApplicationStateChangeEvent *ev = static_cast<QApplicationStateChangeEvent *>(event);
+        if (ev->applicationState() == Qt::ApplicationActive)
+            showOnTop();
+    }
+#endif // Q_OS_MACOS
+    return QMainWindow::eventFilter(obj, event);
 }
 
 void MainWindow::onLogined(bool isInit, const QString &login) {

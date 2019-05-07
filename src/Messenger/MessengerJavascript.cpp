@@ -1116,6 +1116,27 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MessengerJavascript::remainingTime() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "msgRemainingTimeResultJs";
+
+    const auto errorFunc = [this, JS_NAME_RESULT](const TypedException &exception) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, QString(""), 0);
+    };
+
+    LOG << "Remaining time";
+    const TypedException exception = apiVrapper2([&, this](){
+        emit cryptoManager.remainingTime(CryptographicManager::RemainingTimeCallback([this, JS_NAME_RESULT](const QString &address, const seconds &elapsed) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, elapsed.count());
+        }, errorFunc, signalFunc));
+    });
+
+    if (exception.isSet()) {
+        errorFunc(exception);
+    }
+END_SLOT_WRAPPER
+}
+
 void MessengerJavascript::reEmit() {
 BEGIN_SLOT_WRAPPER
     LOG << "Messenger Reemit";
@@ -1125,7 +1146,7 @@ END_SLOT_WRAPPER
 }
 
 void MessengerJavascript::runJs(const QString &script) {
-    //LOG << "Javascript " << script;
+    LOG << "Javascript " << script;
     emit jsRunSig(script);
 }
 

@@ -10,6 +10,8 @@
 
 #include "client.h"
 
+#include "CallbackWrapper.h"
+
 class NsLookup;
 class WebSocketClient;
 struct TypedException;
@@ -31,12 +33,22 @@ class JavascriptWrapper : public QObject
     Q_OBJECT
 public:
 
-using ReturnCallback = std::function<void()>;
+    using ReturnCallback = std::function<void()>;
+
+    using WalletsListCallback = CallbackWrapper<void(const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses)>;
+
+public:
+
+    enum class WalletType {
+        Mth, Tmh, Btc, Eth
+    };
 
 public:
     explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
+
+    void mvToThread(QThread *thread);
 
 signals:
 
@@ -57,7 +69,16 @@ signals:
     void mthWalletCreated(QString name);
 
 public slots:
+
     void onLogined(bool isInit, const QString login);
+
+signals:
+
+    void getListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
+
+private slots:
+
+    void onGetListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
 
 public slots:
 
@@ -235,6 +256,12 @@ public slots:
 
     Q_INVOKABLE void clearNsLookup();
 
+    Q_INVOKABLE void sendMessageToWss(QString message);
+
+    Q_INVOKABLE void setIsForgingActive(bool isActive);
+
+    Q_INVOKABLE void getIsForgingActive();
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
@@ -364,6 +391,8 @@ private:
     std::vector<FolderWalletInfo> folderWalletsInfos;
 
     QFileSystemWatcher fileSystemWatcher;
+
+    bool isForgingActive = true;
 
 };
 

@@ -60,6 +60,10 @@ inline QString toJsString(const int &arg) {
     return QString::fromStdString(std::to_string(arg));
 }
 
+inline QString toJsString(const long int &arg) {
+    return QString::fromStdString(std::to_string(arg));
+}
+
 inline QString toJsString(const long long int &arg) {
     return QString::fromStdString(std::to_string(arg));
 }

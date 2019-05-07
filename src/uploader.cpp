@@ -1,10 +1,5 @@
 #include "uploader.h"
 
-#include <thread>
-
-#include <QThread>
-#include <QTimer>
-
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
@@ -16,6 +11,7 @@
 #include <QUrl>
 
 #include "mainwindow.h"
+#include "auth/Auth.h"
 
 #include "check.h"
 #include "duration.h"
@@ -26,6 +22,10 @@
 #include "utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
+#include "machine_uid.h"
+
+using namespace std::placeholders;
 
 SET_LOG_NAMESPACE("UPL");
 
@@ -77,8 +77,19 @@ Uploader::Servers Uploader::getServers() {
     return servers;
 }
 
-Uploader::Uploader(MainWindow &mainWindow)
-    : mainWindow(mainWindow)
+static milliseconds getTimerInterval() {
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+
+    CHECK(settings.contains("downloader/period_sec"), "downloader/period_sec not found");
+    const seconds minMsTimer = 15s;
+    const milliseconds msTimer = std::max(minMsTimer, seconds(settings.value("downloader/period_sec").toInt()));
+    return msTimer;
+}
+
+Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
+    : TimerClass(getTimerInterval(), nullptr)
+    , auth(auth)
+    , mainWindow(mainWindow)
 {
     const Servers servers = getServers();
     if (isProductionSetup) {
@@ -91,12 +102,20 @@ Uploader::Uploader(MainWindow &mainWindow)
         serverName = QString::fromStdString(servers.dev);
     }
 
+    CHECK(connect(this, &Uploader::timerEvent, this, &Uploader::uploadEvent), "not connect onTimerEvent");
+    CHECK(connect(this, &Uploader::startedEvent, this, &Uploader::run), "not connect run");
+
     CHECK(connect(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent), "not connect processEvent");
     CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");
 
+    CHECK(connect(&auth, &auth::Auth::logined, this, &Uploader::onLogined), "not connect onLogined");
+
     client.setParent(this);
 
+    CHECK(connect(this, &Uploader::callbackCall, this, &Uploader::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall), "not connect callbackCall");
+
+    Q_REG(Uploader::Callback, "Uploader::Callback");
 
     currentBeginPath = getPagesPath();
     const auto &lastVersionPair = Uploader::getLastVersion(currentBeginPath);
@@ -105,45 +124,27 @@ Uploader::Uploader(MainWindow &mainWindow)
 
     currentAppVersion = Version(VERSION_STRING);
 
-    CHECK(connect(&thread1, &QThread::started, this, &Uploader::run), "not connect run");
-    CHECK(connect(this, &Uploader::finished, &thread1, &QThread::terminate), "not connect terminate");
-
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
-    const milliseconds msTimer = 10s;
-    qtimer.moveToThread(&thread1);
-    qtimer.setInterval(msTimer.count());
-    CHECK(connect(&qtimer, &QTimer::timeout, this, &Uploader::uploadEvent), "not connect uploadEvent");
-    CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
-    CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
-
     client.moveToThread(&thread1);
+
+    emit auth.reEmit();
 
     moveToThread(&thread1);
 }
 
-Uploader::~Uploader() {
-    thread1.quit();
-    if (!thread1.wait(3000)) {
-        thread1.terminate();
-        thread1.wait();
-    }
-}
-
-void Uploader::start() {
-    thread1.start();
-}
-
-void Uploader::callbackCall(SimpleClient::ReturnCallback callback) {
+void Uploader::onCallbackCall(Uploader::Callback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
 }
 
 void Uploader::run() {
+BEGIN_SLOT_WRAPPER
     emit uploadEvent();
+END_SLOT_WRAPPER
 }
 
 static void removeOlderFolders(const QString &folderHtmls, const QString &currentVersion) {
@@ -159,15 +160,26 @@ static void removeOlderFolders(const QString &folderHtmls, const QString &curren
     }
 }
 
+void Uploader::onLogined(bool isInit, const QString login) {
+BEGIN_SLOT_WRAPPER
+    if (isInit && !login.isEmpty()) {
+        emit auth.getLoginInfo(auth::Auth::LoginInfoCallback([this](const auth::LoginInfo &info){
+            apiToken = info.token;
+            emit uploadEvent();
+        }, [](const TypedException &e) {
+            LOG << "Error: " << e.description;
+        }, std::bind(&Uploader::callbackCall, this, _1)));
+    }
+END_SLOT_WRAPPER
+}
+
 void Uploader::uploadEvent() {
 BEGIN_SLOT_WRAPPER
-    const QString UPDATE_API = serverName;
-
-    if (UPDATE_API == "") {
+    if (serverName == "") {
         return;
     }
 
-    auto callbackGetHtmls = [this, UPDATE_API](const std::string &result, const SimpleClient::ServerException &exception) {
+    const auto callbackGetHtmls = [this](const std::string &result, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
         const QJsonObject root = document.object();
@@ -182,7 +194,7 @@ BEGIN_SLOT_WRAPPER
 
         LOG << PeriodicLog::make("n_htm") << "Server html version " << version << " " << hash << " " << url.toStdString().substr(0, url.toStdString().find("?secure")) << ". Current version " << lastVersion;
 
-        const QString folderServer = toHash(UPDATE_API);
+        const QString folderServer = toHash(serverName);
         if (hash == "false") {
             emit checkedUpdatesHtmls(TypedException());
             return;
@@ -195,7 +207,7 @@ BEGIN_SLOT_WRAPPER
             return;
         }
 
-        auto interfaceGetCallback = [this, version, hash, UPDATE_API, folderServer](const std::string &result, const SimpleClient::ServerException &exception) {
+        const auto interfaceGetCallback = [this, version, hash, folderServer](const std::string &result, const SimpleClient::ServerException &exception) {
             versionHtmlForUpdate = "";
             CHECK(!exception.isSet(), "Server error: " + exception.toString());
 
@@ -206,7 +218,7 @@ BEGIN_SLOT_WRAPPER
             QCryptographicHash hashAlg(QCryptographicHash::Md5);
             hashAlg.addData(result.data(), result.size());
             const QString hashStr(hashAlg.result().toHex());
-            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash).toStdString());
+            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash + ", response size " + QString::number(result.size())).toStdString());
 
             removeOlderFolders(makePath(currentBeginPath, mainWindow.getCurrentHtmls().folderName), mainWindow.getCurrentHtmls().lastVersion);
 
@@ -215,7 +227,7 @@ BEGIN_SLOT_WRAPPER
 
             const QString extractedPath = makePath(currentBeginPath, folderServer, version);
             extractDir(archiveFilePath, extractedPath);
-            LOG << "Extracted " << extractedPath << ".";
+            LOG << "Extracted " << extractedPath << "." << "Size: " << result.size();
             removeFile(archiveFilePath);
 
             Uploader::setLastVersion(currentBeginPath, folderServer, version);
@@ -230,16 +242,21 @@ BEGIN_SLOT_WRAPPER
 
         LOG << "download html";
         countDownloads["html_" + version]++;
-        CHECK(countDownloads["html_" + version] < 5, "Maximum download");
+        CHECK(countDownloads["html_" + version] < 3, "Maximum download");
         versionHtmlForUpdate = version;
         client.sendMessageGet(url, interfaceGetCallback); // Без таймаута, так как загрузка большого бинарника
         id++;
     };
-
-    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"\", \"params\":[]}"), callbackGetHtmls, timeout);
+    client.sendMessagePost(
+        QUrl(serverName),
+        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
+        "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"" + apiToken.toStdString() +
+        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}")
+        , callbackGetHtmls, timeout
+    );
     id++;
 
-    auto callbackAppVersion = [this, UPDATE_API](const std::string &result, const SimpleClient::ServerException &exception) {
+    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
 
         const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
@@ -264,7 +281,7 @@ BEGIN_SLOT_WRAPPER
             return;
         }
 
-        auto autoupdateGetCallback = [this, version, reference](const std::string &result, const SimpleClient::ServerException &exception) {
+        const auto autoupdateGetCallback = [this, version, reference](const std::string &result, const SimpleClient::ServerException &exception) {
             versionForUpdate.clear();
             LOG << "autoupdater callback";
             CHECK(!exception.isSet(), "Server error: " + exception.toString());
@@ -283,13 +300,19 @@ BEGIN_SLOT_WRAPPER
 
         LOG << "New app version download";
         countDownloads["p_" + version]++;
-        CHECK(countDownloads["p_" + version] < 5, "Maximum download");
+        CHECK(countDownloads["p_" + version] < 3, "Maximum download");
         client.sendMessageGet(QUrl(autoupdater), autoupdateGetCallback); // Без таймаута, так как загрузка большого бинарника
 
         versionForUpdate = version;
     };
 
-    client.sendMessagePost(QUrl(UPDATE_API), QString::fromStdString("{\"id\": \"" + std::to_string(id) + "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"), callbackAppVersion, timeout);
+    client.sendMessagePost(
+        QUrl(serverName),
+        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
+        "\",\"version\":\"1.0.0\",\"method\":\"app.version\", \"token\":\"" + apiToken.toStdString() +
+        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
+        callbackAppVersion, timeout
+    );
     id++;
 END_SLOT_WRAPPER
 }

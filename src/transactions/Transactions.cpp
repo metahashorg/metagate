@@ -49,7 +49,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
     CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
     CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
-    CHECK(connect(this, &Transactions::getDelegateStatus, this, &Transactions::onGetDelegateStatus), "not connect onGetDelegateStatus");
     CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
 
     Q_REG(Transactions::Callback, "Transactions::Callback");
@@ -61,7 +60,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_REG(GetTxCallback, "GetTxCallback");
     Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
     Q_REG(GetNonceCallback, "GetNonceCallback");
-    Q_REG(GetStatusDelegateCallback, "GetStatusDelegateCallback");
     Q_REG(SendTransactionCallback, "SendTransactionCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
     Q_REG(SignalFunc, "SignalFunc");
@@ -105,11 +103,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-template<typename Func>
-void Transactions::runCallback(const Func &callback) {
-    emit javascriptWrapper.callbackCall(callback);
-}
-
 uint64_t Transactions::calcCountTxs(const QString &address, const QString &currency) const {
     const uint64_t countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
     const uint64_t countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
@@ -129,7 +122,9 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
 }
 
 void Transactions::updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct) {
-    CHECK(servStruct != nullptr, "Incorrect servStruct");
+    if (servStruct == nullptr) {
+        return;
+    }
     CHECK(servStruct->currency == currency, "Incorrect servStruct currency");
     servStruct->countRequests--;
     if (servStruct->countRequests == 0) {
@@ -191,7 +186,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         newBalance(address, currency, savedCountTxs, balance, txs, servStruct);
     };
 
-    const auto processNewTransactions = [this, address, currency, servStruct, getBlockHeaderCallback](const BalanceInfo &balance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server) {
+    const auto processNewTransactions = [this, address, currency, getBlockHeaderCallback](const BalanceInfo &balance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server) {
         const auto maxElement = std::max_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
             return first.blockNumber < second.blockNumber;
         });
@@ -201,7 +196,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, balance, savedCountTxs, txs, _1, _2), timeout);
     };
 
-    const auto getAllHistoryCallback = [address, currency, servStruct, processNewTransactions](const BalanceInfo &balance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getAllHistoryCallback = [address, currency, processNewTransactions](const BalanceInfo &balance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
@@ -209,7 +204,7 @@ void Transactions::processAddressMth(const QString &address, const QString &curr
         processNewTransactions(balance, savedCountTxs, txs, server);
     };
 
-    const auto getBalanceConfirmeCallback = [this, address, currency, getAllHistoryCallback, processNewTransactions, servStruct](const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceConfirmeCallback = [this, address, currency, getAllHistoryCallback, processNewTransactions](const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countReceived + balance.countSpent;
@@ -437,6 +432,25 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void Transactions::fetchBalanceAddress(const QString &address) {
+    const std::vector<AddressInfo> infos = getAddressesInfos(currentGroup);
+    std::vector<AddressInfo> addressInfos;
+    std::copy_if(infos.begin(), infos.end(), std::back_inserter(addressInfos), [&address](const AddressInfo &info) {
+        return info.address == address;
+    });
+
+    LOG << "Found " << addressInfos.size() << " records on adrress " << address;
+    for (const AddressInfo &addr: addressInfos) {
+        const std::vector<QString> servers = nsLookup.getRandom(addr.type, 3, 3);
+        if (servers.empty()) {
+            LOG << "Warn: servers empty: " << addr.type;
+            continue;
+        }
+
+        processAddressMth(addr.address, addr.currency, servers, nullptr, {});
+    }
+}
+
 void Transactions::onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
@@ -446,7 +460,7 @@ BEGIN_SLOT_WRAPPER
         }
         transactionGuard.commit();
     });
-    runCallback(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 
@@ -459,14 +473,14 @@ BEGIN_SLOT_WRAPPER
             info.balance = getBalance(info.address, info.currency);
         }
     });
-    runCallback(std::bind(callback, result, exception));
+    callback.emitFunc(exception, result);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback) {
 BEGIN_SLOT_WRAPPER
     currentGroup = group;
-    runCallback(std::bind(callback, TypedException()));
+    callback.emitFunc(TypedException());
 END_SLOT_WRAPPER
 }
 
@@ -477,7 +491,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
 
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -487,7 +501,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getPaymentsForAddress(address, currency, from, count, asc);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -498,7 +512,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
 
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -508,7 +522,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getPaymentsForCurrency(currency, from, count, asc);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -518,7 +532,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getForgingPaymentsForAddress(address, currency, from, count, asc);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -528,7 +542,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getLastForgingTransaction(address, currency);
     });
-    runCallback(std::bind(callback, txs, exception));
+    callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER
 }
 
@@ -538,7 +552,7 @@ BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         balance = getBalance(address, currency);
     });
-    runCallback(std::bind(callback, balance, exception));
+    callback.emitFunc(exception, balance);
 END_SLOT_WRAPPER
 }
 
@@ -584,7 +598,7 @@ BEGIN_SLOT_WRAPPER
                         }
                         if (*isFirst) {
                             *isFirst = false;
-                            emit timerEvent();
+                            fetchBalanceAddress(tx.from);
                         }
                         found->second.okServer(server);
                         return;
@@ -721,12 +735,12 @@ BEGIN_SLOT_WRAPPER
                 CHECK_TYPED(!error.isSet(), TypeErrors::CLIENT_ERROR, error.description);
                 tx = parseGetTxResponse(QString::fromStdString(response), "", "");
             });
-            runCallback(std::bind(callback, tx, exception));
+            callback.emitFunc(exception, tx);
         }, timeout);
     });
 
     if (exception.isSet()) {
-        runCallback(std::bind(callback, Transaction(), exception));
+        callback.emitException(exception);
     }
 END_SLOT_WRAPPER
 }
@@ -739,31 +753,7 @@ BEGIN_SLOT_WRAPPER
     if (found != lastSuccessUpdateTimestamps.end()) {
         result = found->second;
     }
-    runCallback(std::bind(callback, result, now));
-END_SLOT_WRAPPER
-}
-
-void Transactions::onGetDelegateStatus(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, const GetStatusDelegateCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    DelegateStatus status = DelegateStatus::NOT_FOUND;
-    Transaction txDelegate;
-    Transaction txUnDelegate;
-    const TypedException exception = apiVrapper2([&, this] {
-        txDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, true);
-        txUnDelegate = db.getLastPaymentIsSetDelegate(address, currency, from, to, isInput, false);
-        if (txDelegate.id == -1) {
-            status = DelegateStatus::NOT_FOUND;
-        } else if (txDelegate.status == Transaction::PENDING) {
-            status = DelegateStatus::PENDING;
-        } else if (txDelegate.status == Transaction::ERROR) {
-            status = DelegateStatus::ERROR;
-        } else if (txUnDelegate.id != -1 && txUnDelegate.timestamp > txDelegate.timestamp) {
-            status = DelegateStatus::UNDELEGATE;
-        } else {
-            status = DelegateStatus::DELEGATE;
-        }
-    });
-    runCallback(std::bind(callback, exception, status, txDelegate, txUnDelegate));
+    callback.emitFunc(TypedException(), result, now);
 END_SLOT_WRAPPER
 }
 
@@ -773,7 +763,7 @@ BEGIN_SLOT_WRAPPER
         db.removePaymentsForCurrency(currency);
         nsLookup.resetFile();
     });
-    runCallback(std::bind(callback, exception));
+    callback.emitFunc(exception);
 END_SLOT_WRAPPER
 }
 

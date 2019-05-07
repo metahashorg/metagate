@@ -30,7 +30,9 @@ private slots:
 
 private:
 
-    void processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, bool isFirstRun, const std::set<QString> &excludesIps);
+    void processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, const std::set<QString> &excludesIps);
+
+    void removeOnRequestId(const std::string &requestId);
 
 private:
     QNetworkAccessManager *m_manager;

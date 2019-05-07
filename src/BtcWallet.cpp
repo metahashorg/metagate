@@ -292,14 +292,22 @@ std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const 
     const QDir dir(folder);
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
-        const std::string address = getWifAndAddress(folder, file.toStdString(), true).second;
-        if (address.empty()) {
-            continue;
+        try {
+            const std::string address = getWifAndAddress(folder, file.toStdString(), true).second;
+            if (address.empty()) {
+                continue;
+            }
+            if (!isAddressBase56(address)) {
+                continue;
+            }
+            result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
+        } catch (const TypedException &error) {
+            LOG << "Error: " << file << " " << error.description;
+        } catch (const Exception &e) {
+            LOG << "Error: " << file << " " << e;
+        } catch (...) {
+            LOG << "Error: " << file << " " << " Unknown error";
         }
-        if (!isAddressBase56(address)) {
-            continue;
-        }
-        result.emplace_back(QString::fromStdString(address), getFullPath(folder, address));
     }
 
     return result;

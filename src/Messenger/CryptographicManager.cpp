@@ -29,6 +29,7 @@ CryptographicManager::CryptographicManager(QObject *parent)
     CHECK(connect(this, &CryptographicManager::encryptDataPrivateKey, this, &CryptographicManager::onEncryptDataPrivateKey), "not connect onSignAndEncryptDataRsa");
     CHECK(connect(this, &CryptographicManager::unlockWallet, this, &CryptographicManager::onUnlockWallet), "not connect onUnlockWallet");
     CHECK(connect(this, &CryptographicManager::lockWallet, this, &CryptographicManager::onLockWallet), "not connect onLockWallet");
+    CHECK(connect(this, &CryptographicManager::remainingTime, this, &CryptographicManager::onRemainingTime), "not connect onRemainingTime");
 
     Q_REG(DecryptMessagesCallback, "DecryptMessagesCallback");
     Q_REG(std::vector<Message>, "std::vector<Message>");
@@ -40,6 +41,7 @@ CryptographicManager::CryptographicManager(QObject *parent)
     Q_REG(EncryptMessageCallback, "EncryptMessageCallback");
     Q_REG(UnlockWalletCallback, "UnlockWalletCallback");
     Q_REG(LockWalletCallback, "LockWalletCallback");
+    Q_REG(RemainingTimeCallback, "RemainingTimeCallback");
     Q_REG2(std::string, "std::string", false);
     Q_REG2(seconds, "seconds", false);
     Q_REG2(uint64_t, "uint64_t", false);
@@ -259,6 +261,27 @@ BEGIN_SLOT_WRAPPER
     });
 
     callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void CryptographicManager::onRemainingTime(const RemainingTimeCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    QString address;
+    seconds remaining(0);
+    const TypedException exception = apiVrapper2([&] {
+        if (wallet == nullptr || walletRsa == nullptr) {
+            return;
+        }
+        address = QString::fromStdString(wallet->getAddress());
+        const time_point now = ::now();
+        const milliseconds elapsedTime = std::chrono::duration_cast<milliseconds>(now - startTime);
+        remaining = std::chrono::duration_cast<seconds>(time - elapsedTime);
+        if (remaining < seconds(0)) {
+            remaining = seconds(0);
+        }
+    });
+
+    callback.emitFunc(exception, address, remaining);
 END_SLOT_WRAPPER
 }
 

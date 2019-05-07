@@ -18,6 +18,11 @@ std::string toHex(const std::string &data) {
     return QString(array.toHex()).toStdString();
 }
 
+QString toHex(const QString &data) {
+    QByteArray array = data.toUtf8();
+    return QString(array.toHex());
+}
+
 std::string toBase64(const std::string &value) {
     QByteArray array(value.data(), value.size());
     return QString(array.toBase64()).toStdString();
@@ -38,6 +43,11 @@ std::string base58ToHex(const std::string &value) {
 std::string fromHex(const std::string &value) {
     QByteArray pubKeyArray(value.data(), value.size());
     return QByteArray::fromHex(pubKeyArray).toStdString();
+}
+
+QString fromHex(const QString &data) {
+    QByteArray pubKeyArray = data.toUtf8();
+    return QString(QByteArray::fromHex(pubKeyArray));
 }
 
 bool isDecimal(const std::string &str) {

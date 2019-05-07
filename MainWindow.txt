@@ -431,3 +431,20 @@ Q_INVOKABLE void clearNsLookup();
 # Clean the file with the saved nsLoolup nodes. Reboot is required.
 # Result returns to the function:
 clearNsLookupResultJs("Ok", errorNum, errorMessage);
+
+Q_INVOKABLE void sendMessageToWss(QString message);
+# Послать сообщение в wss
+# Result returns to the function:
+sendMessageToWssResultJs("Ok", errorNum, errorMessage);
+# Отсутствие ошибки не говорит об успешной доставке сообщения
+
+Q_INVOKABLE void setIsForgingActive(bool isActive);
+# Установить активным или нет форджинг
+# Result returns to the function:
+setIsForgingActiveResultJs("Ok", errorNum, errorMessage);
+# Отсутствие ошибки не говорит об успешной доставке сообщения
+
+Q_INVOKABLE void getIsForgingActive();
+# узнать активен или нет форджинг
+# Result returns to the function:
+getIsForgingActiveResultJs(bool, errorNum, errorMessage);

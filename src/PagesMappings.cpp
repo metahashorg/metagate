@@ -81,11 +81,6 @@ void PagesMappings::addMappingsMh(QString mapping) {
         std::shared_ptr<PageInfo> page = std::make_shared<PageInfo>(url, isExternal, isDefault, false);
         page->isApp = false;
         page->printedName = METAHASH_URL + name;
-        if (url.endsWith('/')) {
-            if (!page->printedName.endsWith('/')) {
-                page->printedName += "/";
-            }
-        }
 
         if (element.contains("ip") && element.value("ip").isArray()) {
             for (const QJsonValue &ip: element.value("ip").toArray()) {
@@ -96,7 +91,14 @@ void PagesMappings::addMappingsMh(QString mapping) {
                 urlToName[ipHttp] = page;
             }
         }
-        urlToName[url] = page;
+
+        std::shared_ptr<PageInfo> pageCopy = std::make_shared<PageInfo>(*page);
+        if (url.endsWith('/')) {
+            if (!pageCopy->printedName.endsWith('/')) {
+                pageCopy->printedName += "/";
+            }
+        }
+        urlToName[url] = pageCopy;
 
         auto addToMap = [](auto &map, const QString &key, const std::shared_ptr<PageInfo> &page) {
             const Name name(key);

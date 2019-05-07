@@ -423,7 +423,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
                 const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
                 const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
                 if (savedPos == -1) {
-                    db.setLastReadCounterForUserContact(m.username, collocutorOrChannel, -1, isChannel); // Это нужно, чтобы в базе данных отпечаталась связь между отправителем и получателем
+                    db.setLastReadCounterForUserContact(m.username, collocutorOrChannel, -1, isChannel); // TODO подумать нужен ли этот вызов
                 }
             } else {
                 const auto idPair = db.findFirstNotConfirmedMessageWithHash(m.username, m.hash, channel);
@@ -619,6 +619,7 @@ BEGIN_SLOT_WRAPPER
             if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
                 LOG << "Set user pubkey " << address << " " << pubkeyAddressHex;
                 db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, "", "");
+                addAddressToMonitored(address);
             }
             callback.emitFunc(exception, isNew);
         };
@@ -646,6 +647,7 @@ BEGIN_SLOT_WRAPPER
             if (!exception.isSet() || isForcibly) { // TODO убрать isForcibly
                 LOG << "Set user pubkey2 " << address << " " << pubkeyAddressHex << " " << txHash << " " << blockchainName;
                 db.setUserPublicKey(address, pubkeyAddressHex, rsaPubkeyHex, txHash, blockchainName);
+                addAddressToMonitored(address);
             }
             callback.emitFunc(exception, isNew);
         };

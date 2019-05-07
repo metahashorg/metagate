@@ -30,6 +30,11 @@ private:
         }
     }
 
+    template<typename OtherCallback>
+    static auto makeErrorFunc(const CallbackWrapper<OtherCallback> &errorCallback) {
+        return std::bind(&CallbackWrapper<OtherCallback>::emitException, errorCallback, std::placeholders::_1);
+    }
+
 public:
 
     CallbackWrapper() = default;
@@ -37,6 +42,13 @@ public:
     CallbackWrapper(const std::function<Callback> &callback, const ErrorCallback &errorCallback, const SignalFunc &signal, bool isWrapError=true)
         : callback(makeWrapCallback(isWrapError, callback, errorCallback))
         , errorCallback(errorCallback)
+        , signal(signal)
+    {}
+
+    template<typename OtherCallback>
+    CallbackWrapper(const std::function<Callback> &callback, const CallbackWrapper<OtherCallback> &errorCallback, const SignalFunc &signal, bool isWrapError=true)
+        : callback(makeWrapCallback(isWrapError, callback, makeErrorFunc(errorCallback)))
+        , errorCallback(makeErrorFunc(errorCallback))
         , signal(signal)
     {}
 

@@ -57,7 +57,7 @@ static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::S
     return publicKeyStr;
 }
 
-static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
+static std::string getPrivateKeyR1(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
     std::string result = "0x3077";
     {
         std::string privateKeyStr;
@@ -84,6 +84,37 @@ static std::string getPrivateKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::
     result += "a144";
 
     result += ::getPublicKey(privateKey).substr(46);
+
+    return toLower(result);
+}
+
+static std::string getPrivateKeyK1(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
+    std::string result = "0x3074";
+    {
+        std::string privateKeyStr;
+        privateKeyStr.reserve(1000); // Обязательно для windows
+        CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(privateKeyStr), true);
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey copy = privateKey;
+        copy.DEREncodePrivateKey(encoder);
+
+        result += privateKeyStr.substr(4);
+    }
+    result += "a007";
+
+    {
+        std::string privateKeyStr;
+        privateKeyStr.reserve(1000); // Обязательно для windows
+        CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(privateKeyStr), true);
+        CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey copy = privateKey;
+        copy.AccessGroupParameters().SetEncodeAsOID(true);
+        copy.DEREncodeAlgorithmParameters(encoder);
+
+        result += privateKeyStr;
+    }
+
+    result += "a144";
+
+    result += ::getPublicKey(privateKey).substr(40);
 
     return toLower(result);
 }
@@ -213,14 +244,19 @@ std::string Wallet::createV8Address(const std::string &addr, int nonce) {
     return "0x" + toHex(address);
 }
 
+static std::string createAddressFromPrivate(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey) {
+    const std::string pubKeyElements = getPublicKeyElements(privKey);
+    const std::string pubKeyBinary = fromHex(pubKeyElements);
+
+    const std::string hexAddr = Wallet::createAddress(pubKeyBinary);
+    return hexAddr;
+}
+
 void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr) {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
 
     publicKey = getPublicKey(privKey);
-    const std::string pubKeyElements = getPublicKeyElements(privKey);
-    const std::string pubKeyBinary = fromHex(pubKeyElements);
-
-    const std::string hexAddr = createAddress(pubKeyBinary);
+    const std::string hexAddr = createAddressFromPrivate(privKey);
 
     const QString filePath = makeFullWalletPath(folder, hexAddr);
 #ifdef TARGET_WINDOWS
@@ -234,9 +270,14 @@ void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoP
     CryptoPP::StringSink ss(privateKeyStr);
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::PEM_Save(ss, prng, privKey, "AES-128-CBC", password.c_str(), password.size());
+
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
     CryptoPP::StringSource ss1(privateKeyStr, true);
     CryptoPP::PEM_Load(ss1, privateKey, password.c_str(), password.size());
+
+    const std::string hexAddressCheck = createAddressFromPrivate(privateKey);
+    CHECK_TYPED(hexAddressCheck == hexAddr, TypeErrors::DONT_CREATE_KEY, "Error while create key");
+
     CryptoPP::StringSource(privateKeyStr, true, new CryptoPP::FileSink(file1));
 
     addr = hexAddr;
@@ -246,7 +287,7 @@ void Wallet::createWallet(const QString &folder, const std::string &password, st
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
-    privateKey.Initialize(prng, CryptoPP::ASN1::secp256r1());
+    privateKey.Initialize(prng, CryptoPP::ASN1::secp256k1());
     const bool resultCreatePrivate = privateKey.Validate(prng, 3);
     CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create private key");
 
@@ -304,7 +345,7 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
         if (std::string(e.what()).find("PEM_Decrypt: invalid PKCS #7 block padding found") != std::string::npos) {
             throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
         } else {
-            throwErrTyped(TypeErrors::PRIVATE_KEY_ERROR, std::string("Dont load private key. Possibly file corrupted. ") + e.what() + " " + fullPath.toStdString());
+            throwErrTyped(TypeErrors::INCORRECT_PASSWORD, std::string("Dont load private key. Possibly incorrect password. ") + e.what());
         }
     }
 
@@ -471,5 +512,11 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
 }
 
 std::string Wallet::getNotProtectedKeyHex() const {
-    return ::getPrivateKey(privateKey);
+    if (privateKey.GetGroupParameters() == CryptoPP::ASN1::secp256k1()) {
+        return ::getPrivateKeyK1(privateKey);
+    } else if (privateKey.GetGroupParameters() == CryptoPP::ASN1::secp256r1()) {
+        return ::getPrivateKeyR1(privateKey);
+    } else {
+        throwErrTyped(PRIVATE_KEY_ERROR, "Unknown private key type");
+    }
 }

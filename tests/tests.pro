@@ -5,3 +5,4 @@ SUBDIRS += tst_wallet
 SUBDIRS += tst_qrcoder
 SUBDIRS += tst_messengerdbstorage
 SUBDIRS += tst_transactionsdbstorage
+SUBDIRS += tst_walletnamesdbstorage

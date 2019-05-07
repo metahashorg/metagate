@@ -15,6 +15,11 @@ Q_INVOKABLE void lockWallet();
 Результат вернется в функцию
 msgLockWalletResultJs(errorNum, errorMessage)
 
+Q_INVOKABLE void remainingTime();
+Возвращает оставшееся время разблокировки ключа
+Результат вернется в функцию
+msgRemainingTimeResultJs(address, remainingTime, errorNum, errorMessage)
+
 
 Q_INVOKABLE void sendPubkeyAddressToBlockchain(QString address, QString feeStr, QString paramsJson);
 Отправляет публичный ключ адреса в блокчейн

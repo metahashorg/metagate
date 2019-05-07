@@ -16,6 +16,6 @@
         <file>resources/svg/menu_white.svg</file>
         <file>resources/svg/user_white.svg</file>
         <file>resources/svg/arrow.svg</file>
-        <file>WalletMetahash.icns</file>
+        <file>resources/svg/systemtray.png</file>
     </qresource>
 </RCC>

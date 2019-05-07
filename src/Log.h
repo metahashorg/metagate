@@ -35,10 +35,6 @@ struct Log_ {
         return *this;
     }
 
-    Log_& operator <<(const QString &s);
-
-    Log_& operator <<(const PeriodicLog &p);
-
     void finalize(std::ostream&(*pManip)(std::ostream&)) noexcept;
 
     ~Log_() noexcept {
@@ -48,9 +44,15 @@ struct Log_ {
 private:
 
     template<typename T>
-    void print(T t) {
+    void print(const T &t) {
         ssCout << t;
     }
+
+    void print(const std::string &t);
+
+    void print(const QString &s);
+
+    void print(const PeriodicLog &p);
 
     bool processPeriodic(const std::string &s, std::string &addedStr);
 

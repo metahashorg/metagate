@@ -56,7 +56,7 @@ InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
     const TypedException exception = apiVrapper2([&, this] {
         MainWindow &mw = *mainWindow.get();
         jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get(), *transactions.get().second, *auth.get().first, versionString);
-        jsWrapper->moveToThread(mainThread);
+        jsWrapper->mvToThread(mainThread);
         emit mw.setJavascriptWrapper(jsWrapper.get(), MainWindow::SetJavascriptWrapperCallback([this]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitJavascriptWrapper::sendInitSuccess, this, _1), std::bind(&InitJavascriptWrapper::callbackCall, this, _1)));

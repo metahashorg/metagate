@@ -34,6 +34,8 @@ Component.prototype.createOperations = function()
     component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "URL Protocol", "");
     component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\shell\\open\\command", "Default", "\"@TargetDir@\\MetaGate.exe\" \"%1\"");
     component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\DefaultIcon", "Default", "@TargetDir@\\MetaGate.exe,1");
+    //component.addElevatedOperation("GlobalConfig", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"@TargetDir@\\MetaGate.exe\" \"-t\"");
+    component.addElevatedOperation("GlobalConfig", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"@TargetDir@\\MetaGate.exe\" \"-t\"");
 }
 
 Component.prototype.IntroductionPageCallback =function() {

@@ -131,24 +131,6 @@ std::vector<transactions::Transaction> transactions::TransactionsDBStorage::getF
     return res;
 }
 
-Transaction TransactionsDBStorage::getLastPaymentIsSetDelegate(const QString &address, const QString &currency, const QString &from, const QString &to, bool isInput, bool isDelegate)
-{
-    Transaction trans;
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectLastPaymentIsSetDelegate), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    query.bindValue(":ufrom", from);
-    query.bindValue(":uto", to);
-    query.bindValue(":isInput", isInput);
-    query.bindValue(":isDelegate", isDelegate);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    if (query.next()) {
-        setTransactionFromQuery(query, trans);
-    }
-    return trans;
-}
-
 Transaction TransactionsDBStorage::getLastTransaction(const QString &address, const QString &currency) {
     Transaction trans;
     QSqlQuery query(database());

@@ -112,7 +112,17 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, bool isFirstRun, const std::set<QString> &excludesIps) {
+void MHUrlSchemeHandler::removeOnRequestId(const std::string &requestId) {
+    requests.erase(std::remove_if(requests.begin(), requests.end(), [&requestId](const QNetworkReply* reply) {
+        if (isRequestId(*reply)) {
+            const auto reqId = getRequestId(*reply);
+            return reqId == requestId;
+        }
+        return false;
+    }), requests.end());
+}
+
+void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, const std::set<QString> &excludesIps) {
     CHECK(win, "mainwin cast");
     const QString ip = win->getServerIp(url.toString(), excludesIps);
     if (ip.isEmpty()) {
@@ -127,8 +137,10 @@ void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow
         isLog = false;
     }
     QNetworkRequest req(newurl);
+    unsigned long reqId = 0;
     if (isFirstRun) {
-        addRequestId(req, std::to_string(requestId++));
+        reqId = requestId++;
+        addRequestId(req, std::to_string(reqId));
         addIgnoreError(req);
         const time_point time = ::now();
         addBeginTime(req, time);
@@ -139,16 +151,22 @@ void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow
     reply->setParent(job);
     CHECK(connect(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished), "connect finished fail");
     if (isFirstRun) {
-        CHECK(connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), [this, job, win, url, host, ip, isFirstRun, excludesIps](QNetworkReply::NetworkError err) {
+        CHECK(connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), [this, job, win, url, host, ip, excludesIps](QNetworkReply::NetworkError err) {
         BEGIN_SLOT_WRAPPER
             LOG << "Error request MHUrlSchemeHandler " << ip;
             std::set<QString> copyExcludes = excludesIps;
             copyExcludes.insert(ip);
-            processRequest(job, win, url, host, isFirstRun, copyExcludes);
+            processRequest(job, win, url, host, copyExcludes);
         END_SLOT_WRAPPER
         }), "connect error fail");
 
         requests.emplace_back(reply);
+
+        CHECK(connect(job, &QWebEngineUrlRequestJob::destroyed, [this, reqIdStr=std::to_string(reqId)]() {
+        BEGIN_SLOT_WRAPPER
+            removeOnRequestId(reqIdStr);
+        END_SLOT_WRAPPER
+        }), "connect finished fail");
     }
     isFirstRun = false;
 }
@@ -158,7 +176,7 @@ void MHUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job) {
     const QString host = url.host();
 
     MainWindow *win = qobject_cast<MainWindow *>(parent());
-    processRequest(job, win, url, host, isFirstRun, {});
+    processRequest(job, win, url, host, {});
 }
 
 void MHUrlSchemeHandler::onRequestFinished() {
@@ -170,13 +188,7 @@ BEGIN_SLOT_WRAPPER
 
     if (isRequestId(*reply)) {
         const auto requestId = getRequestId(*reply);
-        requests.erase(std::remove_if(requests.begin(), requests.end(), [requestId](const QNetworkReply* reply) {
-            if (isRequestId(*reply)) {
-                const auto reqId = getRequestId(*reply);
-                return reqId == requestId;
-            }
-            return false;
-        }), requests.end());
+        removeOnRequestId(requestId);
     }
 
     QWebEngineUrlRequestJob *job = qobject_cast<QWebEngineUrlRequestJob *>(reply->parent());
