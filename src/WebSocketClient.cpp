@@ -32,7 +32,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(this, &WebSocketClient::addHelloString, this, &WebSocketClient::onAddHelloString), "not connect setHelloString");
 
     CHECK(connect(&m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
-        LOG << "Wss Web socket error " << m_webSocket.errorString();
+        LOG << "Wss Web socket error " << m_webSocket.errorString() << " " << m_url.toString();
     }), "not connect error");
     CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
     CHECK(connect(&m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong), "not connect onPong");
