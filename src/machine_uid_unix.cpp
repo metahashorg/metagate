@@ -48,13 +48,10 @@
 
 #include <iostream>
 
-static const char* getMachineName()
-{
+static const char* getMachineName() {
     static struct utsname u;
 
-    if ( uname( &u ) < 0 )
-    {
-        assert(0);
+    if (uname(&u) < 0) {
         return "unknown";
     }
 
@@ -69,19 +66,16 @@ static std::string osNameImpl() {
 
 //---------------------------------get MAC addresses ------------------------------------unsigned short-unsigned short----------
 // we just need this for purposes of unique machine id. So any one or two mac's is fine.
-static unsigned short hashMacAddress( unsigned char* mac )
-{
+static unsigned short hashMacAddress(unsigned char* mac) {
     unsigned short hash = 0;
 
-    for ( unsigned int i = 0; i < 6; i++ )
-    {
-        hash += ( mac[i] << (( i & 1 ) * 8 ));
+    for (unsigned int i = 0; i < 6; i++) {
+        hash += (mac[i] << ((i & 1) * 8));
     }
     return hash;
 }
 
-static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
-{
+static void getMacHash(unsigned short& mac1, unsigned short& mac2) {
     mac1 = 0;
     mac2 = 0;
 
@@ -90,20 +84,19 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
 #ifdef TARGET_OS_MAC
 
     struct ifaddrs* ifaphead;
-    if ( getifaddrs( &ifaphead ) != 0 )
+    if (getifaddrs(&ifaphead) != 0) {
         return;
+    }
 
     // iterate over the net interfaces
     struct ifaddrs* ifap;
-    for ( ifap = ifaphead; ifap; ifap = ifap->ifa_next )
-    {
+    for (ifap = ifaphead; ifap; ifap = ifap->ifa_next) {
         if (ifap->ifa_name[0] != 'e') {
             continue;
         }
         struct sockaddr_dl* sdl = (struct sockaddr_dl*)ifap->ifa_addr;
-        if ( sdl && ( sdl->sdl_family == AF_LINK ) && ( sdl->sdl_type == IFT_ETHER ))
-        {
-            addrs.emplace_back(hashMacAddress( (unsigned char*)(LLADDR(sdl))));
+        if (sdl && (sdl->sdl_family == AF_LINK) && (sdl->sdl_type == IFT_ETHER)) {
+            addrs.emplace_back(hashMacAddress((unsigned char*)(LLADDR(sdl))));
         }
     }
 
@@ -111,36 +104,36 @@ static void getMacHash( unsigned short& mac1, unsigned short& mac2 )
 
 #else // !TARGET_OS_MAC
 
-    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP );
-    if ( sock < 0 ) return;
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sock < 0) {
+        return;
+    }
 
     // enumerate all IP addresses of the system
     struct ifconf conf;
-    char ifconfbuf[ 128 * sizeof(struct ifreq)  ];
-    memset( ifconfbuf, 0, sizeof( ifconfbuf ));
+    char ifconfbuf[128 * sizeof(struct ifreq)];
+    memset(ifconfbuf, 0, sizeof(ifconfbuf));
     conf.ifc_buf = ifconfbuf;
-    conf.ifc_len = sizeof( ifconfbuf );
-    if ( ioctl( sock, SIOCGIFCONF, &conf ))
-    {
-        assert(0);
+    conf.ifc_len = sizeof(ifconfbuf);
+    if (ioctl(sock, SIOCGIFCONF, &conf)) {
         return;
     }
 
     // get MAC address
     struct ifreq* ifr;
-    for ( ifr = conf.ifc_req; (char*)ifr < (char*)conf.ifc_req + conf.ifc_len; ifr++ )
-    {
+    for (ifr = conf.ifc_req; (char*)ifr < (char*)conf.ifc_req + conf.ifc_len; ifr++) {
         if (ifr->ifr_name[0] != 'e' && ifr->ifr_name[0] != 'w') {
             continue;
         }
-        if ( ifr->ifr_addr.sa_data == (ifr+1)->ifr_addr.sa_data )
+        if (ifr->ifr_addr.sa_data == (ifr+1)->ifr_addr.sa_data) {
             continue;  // duplicate, skip it
+        }
 
-        if ( ioctl( sock, SIOCGIFFLAGS, ifr ))
+        if (ioctl(sock, SIOCGIFFLAGS, ifr)) {
             continue;  // failed to get flags, skip it
-        if ( ioctl( sock, SIOCGIFHWADDR, ifr ) == 0 )
-        {
-            addrs.emplace_back(hashMacAddress( (unsigned char*)&(ifr->ifr_addr.sa_data)));
+        }
+        if (ioctl(sock, SIOCGIFHWADDR, ifr) == 0) {
+            addrs.emplace_back(hashMacAddress((unsigned char*)&(ifr->ifr_addr.sa_data)));
         }
     }
 
@@ -222,14 +215,14 @@ static unsigned short getVolumeHash() {
 #endif
     unsigned short hash = 0;
 
-    for ( unsigned int i = 0; sysname[i]; i++ )
-        hash += ( sysname[i] << (( i & 1 ) * 8 ));
+    for (unsigned int i = 0; sysname[i]; i++) {
+        hash += (sysname[i] << ((i & 1) * 8));
+    }
 
     return hash;
 }
 
-static void getCpuid( unsigned int* p, unsigned int ax )
-{
+static void getCpuid( unsigned int* p, unsigned int ax ) {
     if (__get_cpuid(ax, &p[0], &p[1], &p[2], &p[3]) == 0) {
         p[0] = 0;
         p[1] = 0;
@@ -238,14 +231,14 @@ static void getCpuid( unsigned int* p, unsigned int ax )
     }
 }
 
-static unsigned short getCpuHash()
-{
-    unsigned int cpuinfo[4] = { 0, 0, 0, 0 };
-    getCpuid( cpuinfo, 0 );
+static unsigned short getCpuHash() {
+    unsigned int cpuinfo[4] = {0, 0, 0, 0};
+    getCpuid(cpuinfo, 0);
     unsigned short hash = 0;
     unsigned int* ptr = (&cpuinfo[0]);
-    for ( unsigned int i = 0; i < 4; i++ )
-        hash += (ptr[i] & 0xFFFF) + ( ptr[i] >> 16 );
+    for (unsigned int i = 0; i < 4; i++) {
+        hash += (ptr[i] & 0xFFFF) + (ptr[i] >> 16);
+    }
 
     return hash;
 }
@@ -254,7 +247,7 @@ std::string getMachineUidInternal() {
     std::string result;
     result += std::to_string(getCpuHash()) + std::string(";");
     result += std::to_string(getVolumeHash()) + std::string(";");
-    unsigned short mac1, mac2;
+    unsigned short mac1 = 0, mac2 = 0;
     getMacHash(mac1, mac2);
     result += std::to_string(mac1) + std::to_string(mac2);
     return result;

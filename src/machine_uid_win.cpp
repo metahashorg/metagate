@@ -20,12 +20,10 @@
 #pragma comment(lib, "netapi32.lib")
 #pragma comment(lib, "wbemuuid.lib")
 
-static bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
-{
+static bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor) {
     bool bRetCode = false;
     LPBYTE pinfoRawData = 0;
-    if (NERR_Success == NetWkstaGetInfo(NULL, 100, &pinfoRawData))
-    {
+    if (NERR_Success == NetWkstaGetInfo(NULL, 100, &pinfoRawData)) {
         WKSTA_INFO_100* pworkstationInfo = (WKSTA_INFO_100*)pinfoRawData;
         major = pworkstationInfo->wki100_ver_major;
         minor = pworkstationInfo->wki100_ver_minor;
@@ -36,7 +34,7 @@ static bool GetWinMajorMinorVersion(DWORD& major, DWORD& minor)
 }
 
 
-static std::string osNameImpl(){
+static std::string osNameImpl() {
     std::string     winver;
     OSVERSIONINFOEX osver;
     SYSTEM_INFO     sysInfo;
@@ -50,27 +48,25 @@ static std::string osNameImpl(){
     __pragma(warning(pop))
     DWORD major = 0;
     DWORD minor = 0;
-    if (GetWinMajorMinorVersion(major, minor))
-    {
+    if (GetWinMajorMinorVersion(major, minor)) {
         osver.dwMajorVersion = major;
         osver.dwMinorVersion = minor;
-    }
-    else if (osver.dwMajorVersion == 6 && osver.dwMinorVersion == 2)
-    {
+    } else if (osver.dwMajorVersion == 6 && osver.dwMinorVersion == 2) {
         OSVERSIONINFOEXW osvi;
         ULONGLONG cm = 0;
         cm = VerSetConditionMask(cm, VER_MINORVERSION, VER_EQUAL);
         ZeroMemory(&osvi, sizeof(osvi));
         osvi.dwOSVersionInfoSize = sizeof(osvi);
         osvi.dwMinorVersion = 3;
-        if (VerifyVersionInfoW(&osvi, VER_MINORVERSION, cm))
-        {
+        if (VerifyVersionInfoW(&osvi, VER_MINORVERSION, cm)) {
             osver.dwMinorVersion = 3;
         }
     }
 
     GETSYSTEMINFO getSysInfo = (GETSYSTEMINFO)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetNativeSystemInfo");
-    if (getSysInfo == NULL)  getSysInfo = ::GetSystemInfo;
+    if (getSysInfo == NULL) {
+        getSysInfo = ::GetSystemInfo;
+    }
     getSysInfo(&sysInfo);
 
     /*if (osver.dwMajorVersion == 10 && osver.dwMinorVersion >= 0 && osver.wProductType != VER_NT_WORKSTATION)  winver = "Windows 10 Server";
@@ -91,8 +87,7 @@ static std::string osNameImpl(){
     if (osver.dwMajorVersion < 5)   winver = "unknown";*/
     winver = "win" + std::to_string(osver.dwMajorVersion) + "." + std::to_string(osver.dwMinorVersion) + "." + std::to_string(osver.wProductType);
 
-    if (osver.wServicePackMajor != 0)
-    {
+    if (osver.wServicePackMajor != 0) {
         std::string sp;
         char buf[128] = { 0 };
         sp = " Service Pack ";
@@ -106,26 +101,24 @@ static std::string osNameImpl(){
 
 // we just need this for purposes of unique machine id. So any one or two mac's is
 // fine.
-static uint16_t hashMacAddress( PIP_ADAPTER_INFO info )
-{
+static uint16_t hashMacAddress(PIP_ADAPTER_INFO info) {
    uint16_t hash = 0;
-   for ( uint32_t i = 0; i < info->AddressLength; i++ )
-   {
-      hash += ( info->Address[i] << (( i & 1 ) * 8 ));
+   for (uint32_t i = 0; i < info->AddressLength; i++) {
+      hash += (info->Address[i] << ((i & 1) * 8));
    }
    return hash;
 }
 
-static void getMacHash( uint16_t& mac1, uint16_t& mac2 )
-{
+static void getMacHash(uint16_t& mac1, uint16_t& mac2) {
    mac1 = 0;
    mac2 = 0;
    IP_ADAPTER_INFO AdapterInfo[32];
-   DWORD dwBufLen = sizeof( AdapterInfo );
+   DWORD dwBufLen = sizeof(AdapterInfo);
 
-   DWORD dwStatus = GetAdaptersInfo( AdapterInfo, &dwBufLen );
-   if ( dwStatus != ERROR_SUCCESS )
+   DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+   if (dwStatus != ERROR_SUCCESS) {
       return; // no adapters.
+   }
 
    std::vector<uint16_t> addrs;
    PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
@@ -153,8 +146,7 @@ static void getMacHash( uint16_t& mac1, uint16_t& mac2 )
    saveMacAddressesToFile(std::to_string(mac1), std::to_string(mac2));
 }
 
-static uint16_t getVolumeHash()
-{
+static uint16_t getVolumeHash() {
    DWORD serialNum = 0;
 
    // Determine if this volume uses an NTFS file system.
@@ -162,28 +154,27 @@ static uint16_t getVolumeHash()
    if (!res) {
        serialNum = 0;
    }
-   uint16_t hash = (uint16_t)(( serialNum + ( serialNum >> 16 )) & 0xFFFF );
+   uint16_t hash = (uint16_t)((serialNum + (serialNum >> 16)) & 0xFFFF);
 
    return hash;
 }
 
-static uint16_t getCpuHash()
-{
-   int cpuinfo[4] = { 0, 0, 0, 0 };
-   __cpuid( cpuinfo, 0 );
+static uint16_t getCpuHash() {
+   int cpuinfo[4] = {0, 0, 0, 0};
+   __cpuid(cpuinfo, 0);
    uint16_t hash = 0;
    uint16_t* ptr = (uint16_t*)(&cpuinfo[0]);
-   for ( uint32_t i = 0; i < 8; i++ )
+   for ( uint32_t i = 0; i < 8; i++ ) {
       hash += ptr[i];
+   }
 
    return hash;
 }
 
-static std::string getMachineName()
-{
+static std::string getMachineName() {
    static char computerName[1024];
    DWORD size = 1024;
-   GetComputerName( LPWSTR(computerName), &size );
+   GetComputerName(LPWSTR(computerName), &size);
    return std::string(computerName);
 }
 
