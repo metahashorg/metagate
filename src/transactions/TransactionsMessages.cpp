@@ -19,6 +19,20 @@ QString makeGetBalanceRequest(const QString &address) {
     return "{\"id\":1,\"params\":{\"address\": \"" + address + "\"},\"method\":\"fetch-balance\", \"pretty\": false}";
 }
 
+QString makeGetBalancesRequest(const std::vector<QString> &addresses) {
+    QJsonObject request;
+    request.insert("jsonrpc", "2.0");
+    request.insert("method", "fetch-balances");
+    QJsonObject params;
+    QJsonArray addressesJson;
+    for (const QString &address: addresses) {
+        addressesJson.push_back(address);
+    }
+    params.insert("addresses", addressesJson);
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
 static QString getIntOrString(const QJsonObject &json, const QString &key) {
     CHECK(json.contains(key), "Incorrect json: " + key.toStdString() + " field not found");
     if (json.value(key).isDouble()) {
@@ -30,13 +44,7 @@ static QString getIntOrString(const QJsonObject &json, const QString &key) {
     }
 }
 
-BalanceInfo parseBalanceResponse(const QString &response) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
-    CHECK(jsonResponse.isObject(), "Incorrect json ");
-    const QJsonObject &json1 = jsonResponse.object();
-    CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
-    const QJsonObject &json = json1.value("result").toObject();
-
+static BalanceInfo parseBalanceResponseInternal(const QJsonObject &json) {
     BalanceInfo result;
 
     CHECK(json.contains("address") && json.value("address").isString(), "Incorrect json: address field not found");
@@ -62,6 +70,32 @@ BalanceInfo parseBalanceResponse(const QString &response) {
 
     if (json.contains("forged")) {
         result.forged = getIntOrString(json, "forged");
+    }
+
+    return result;
+}
+
+BalanceInfo parseBalanceResponse(const QString &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
+    const QJsonObject &json = json1.value("result").toObject();
+
+    return parseBalanceResponseInternal(json);
+}
+
+std::vector<BalanceInfo> parseBalancesResponse(const QString &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(json1.contains("result") && json1.value("result").isArray(), "Incorrect json: result field not found");
+    const QJsonArray &json = json1.value("result").toArray();
+
+    std::vector<BalanceInfo> result;
+    for (const auto &j: json) {
+        CHECK(j.isObject(), "result field not found");
+        result.emplace_back(parseBalanceResponseInternal(j.toObject()));
     }
 
     return result;

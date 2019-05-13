@@ -16,6 +16,10 @@ QString makeGetBalanceRequest(const QString &address);
 
 BalanceInfo parseBalanceResponse(const QString &response);
 
+QString makeGetBalancesRequest(const std::vector<QString> &addresses);
+
+std::vector<BalanceInfo> parseBalancesResponse(const QString &response);
+
 QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t cnt);
 
 QString makeGetTxRequest(const QString &hash);
