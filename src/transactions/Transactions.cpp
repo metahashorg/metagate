@@ -442,6 +442,7 @@ BEGIN_SLOT_WRAPPER
             servers = nsLookup.getRandom(addr.type, 3, 3);
             if (servers.empty()) {
                 LOG << "Warn: servers empty: " << addr.type;
+                posInAddressInfos++;
                 continue;
             }
             currentType = addr.type;
@@ -464,7 +465,7 @@ BEGIN_SLOT_WRAPPER
 
         posInAddressInfos++;
     }
-    if (!currentCurrency.isEmpty()) {
+    if (servStructs.find(currentCurrency) != servStructs.end()) {
         processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
     }
 
