@@ -101,11 +101,11 @@ std::vector<BalanceInfo> parseBalancesResponse(const QString &response) {
     return result;
 }
 
-QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t cnt) {
-    if (isCnt) {
+QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t fromTx, uint64_t cnt) {
+    if (!isCnt) {
         return "{\"id\":1,\"params\":{\"address\": \"" + address + "\"},\"method\":\"fetch-history\", \"pretty\": false}";
     } else {
-        return "{\"id\":1,\"params\":{\"address\": \"" + address + "\", \"countTxs\": " + QString::fromStdString(std::to_string(cnt)) + "},\"method\":\"fetch-history\", \"pretty\": false}";
+        return "{\"id\":1,\"params\":{\"address\": \"" + address + "\", \"beginTx\": " + QString::fromStdString(std::to_string(fromTx)) + ", \"countTxs\": " + QString::fromStdString(std::to_string(cnt)) + "},\"method\":\"fetch-history\", \"pretty\": false}";
     }
 }
 

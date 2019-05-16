@@ -23,6 +23,7 @@ SET_LOG_NAMESPACE("TXS");
 namespace transactions {
 
 static const uint64_t ADD_TO_COUNT_TXS = 10;
+static const uint64_t MAX_TXS_IN_RESPONSE = 2000;
 
 Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent)
     : TimerClass(5s, parent)
@@ -199,15 +200,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, txs, _1, _2), timeout);
     };
 
-    const auto getAllHistoryCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
-        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
-
-        LOG << "Txs geted2 " << address << " " << txs.size();
-        processNewTransactions(address, balance, savedCountTxs, txs, server);
-    };
-
-    const auto getBalanceConfirmeCallback = [this, currency, getAllHistoryCallback, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countReceived + balance.countSpent;
@@ -215,15 +208,10 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
             LOG << "Balance " << address << " confirmed";
             processNewTransactions(address, serverBalance, savedCountTxs, txs, server);
-        } else {
-            LOG << "Balance " << address << " not confirmed";
-            const QString requestForTxs = makeGetHistoryRequest(address, false, 0);
-
-            client.sendMessagePost(server, requestForTxs, std::bind(getAllHistoryCallback, address, balance, savedCountTxs, server, _1, _2), timeout);
         }
     };
 
-    const auto getHistoryCallback = [this, currency, getAllHistoryCallback, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getHistoryCallback = [this, currency, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
@@ -234,7 +222,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, txs, server, _1, _2), timeout);
     };
 
-    const auto getBalanceCallback = [this, servStruct, addressesAndUnconfirmedTxs, currency, getAllHistoryCallback, getBalanceConfirmeCallback, getHistoryCallback, processPendingTx](const std::vector<QUrl> &servers, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
+    const auto getBalanceCallback = [this, servStruct, addressesAndUnconfirmedTxs, currency, getHistoryCallback, processPendingTx](const std::vector<QUrl> &servers, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
         CHECK(!servers.empty(), "Incorrect response size");
         CHECK(servers.size() == responses.size(), "Incorrect response size");
         std::vector<std::pair<QUrl, BalanceInfo>> bestAnswers(addressesAndUnconfirmedTxs.size());
@@ -273,8 +261,9 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                 processCheckTxsOneServer(address, currency, bestServer);
 
                 const uint64_t countMissingTxs = countInServer - countAll;
-                const uint64_t requestCountTxs = countMissingTxs + ADD_TO_COUNT_TXS;
-                const QString requestForTxs = makeGetHistoryRequest(address, true, requestCountTxs);
+                const uint64_t beginTx = countMissingTxs >= MAX_TXS_IN_RESPONSE ? countMissingTxs - MAX_TXS_IN_RESPONSE : 0;
+                const uint64_t requestCountTxs = std::min(countMissingTxs, MAX_TXS_IN_RESPONSE) + ADD_TO_COUNT_TXS;
+                const QString requestForTxs = makeGetHistoryRequest(address, true, beginTx, requestCountTxs);
 
                 client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, bestServer, _1, _2), timeout);
             } else {

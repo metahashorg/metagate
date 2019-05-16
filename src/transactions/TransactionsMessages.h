@@ -20,7 +20,7 @@ QString makeGetBalancesRequest(const std::vector<QString> &addresses);
 
 std::vector<BalanceInfo> parseBalancesResponse(const QString &response);
 
-QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t cnt);
+QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t fromTx, uint64_t cnt);
 
 QString makeGetTxRequest(const QString &hash);
 
