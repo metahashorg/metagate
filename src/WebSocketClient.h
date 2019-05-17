@@ -18,8 +18,6 @@ public:
 
     ~WebSocketClient();
 
-    void start();
-
 signals:
 
     void closed();

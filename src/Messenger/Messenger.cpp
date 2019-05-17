@@ -182,6 +182,10 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     wssClient.start();
 }
 
+Messenger::~Messenger() {
+    TimerClass::exit();
+}
+
 void Messenger::onCallbackCall(const std::function<void()> &callback) {
 BEGIN_SLOT_WRAPPER
     callback();

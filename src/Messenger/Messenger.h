@@ -181,6 +181,8 @@ public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
 
+    ~Messenger();
+
 signals:
 
     void callbackCall(const Messenger::Callback &callback);

@@ -9,6 +9,8 @@ class NetwrokTesting : public TimerClass
 public:
     explicit NetwrokTesting(QObject *parent = nullptr);
 
+    ~NetwrokTesting();
+
 private slots:
     void onStarted();
 

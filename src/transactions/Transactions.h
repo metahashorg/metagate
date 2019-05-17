@@ -143,6 +143,8 @@ public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
+    ~Transactions();
+
 signals:
 
     void callbackCall(Transactions::Callback callback);

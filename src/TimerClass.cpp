@@ -1,6 +1,7 @@
 #include "TimerClass.h"
 
 #include "check.h"
+#include "Log.h"
 
 TimerClass::TimerClass(const milliseconds &timerPeriod, QObject *parent)
     : QObject(parent)
@@ -15,11 +16,19 @@ TimerClass::TimerClass(const milliseconds &timerPeriod, QObject *parent)
     CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
 }
 
-TimerClass::~TimerClass() {
+void TimerClass::exit() {
     thread1.quit();
     if (!thread1.wait(3000)) {
         thread1.terminate();
         thread1.wait();
+    }
+
+    isExited = true;
+}
+
+TimerClass::~TimerClass() {
+    if (!isExited) {
+        LOG << "Error: child class not call TimerClass::exit method in destructor";
     }
 }
 

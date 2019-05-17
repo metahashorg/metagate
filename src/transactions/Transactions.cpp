@@ -92,6 +92,10 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
+Transactions::~Transactions() {
+    TimerClass::exit();
+}
+
 void Transactions::onCallbackCall(Callback callback) {
 BEGIN_SLOT_WRAPPER
     callback();
