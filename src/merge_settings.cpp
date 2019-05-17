@@ -3,11 +3,13 @@
 #include <QSettings>
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
 #include "VersionWrapper.h"
 #include "utils.h"
+#include "check.h"
 
 static std::vector<std::string> splitStr(const std::string &str, const std::string &delimiter) {
     std::vector<std::string> result;
@@ -23,8 +25,9 @@ static std::vector<std::string> splitStr(const std::string &str, const std::stri
     return result;
 }
 
-static std::map<std::string, VersionVar> parseSpecFile(const QString &specFile) {
+static std::pair<std::map<std::string, VersionVar>, std::set<VersionVar>> parseSpecFile(const QString &specFile) {
     std::map<std::string, VersionVar> result;
+    std::set<VersionVar> allVersions;
 
     const std::string fileContent = readFile(specFile);
     const std::vector<std::string> lines = splitStr(fileContent, "\n");
@@ -38,6 +41,7 @@ static std::map<std::string, VersionVar> parseSpecFile(const QString &specFile) 
         }
         const size_t foundDots = stripLine.find(":");
         const VersionVar version(stripLine.substr(0, foundDots));
+        allVersions.insert(version);
         const std::vector<std::string> strings = splitStr(stripLine.substr(foundDots + 1), " ");
         for (const std::string &string: strings) {
             const std::string splitStr = trim(string);
@@ -48,7 +52,7 @@ static std::map<std::string, VersionVar> parseSpecFile(const QString &specFile) 
         }
     }
 
-    return result;
+    return std::make_pair(result, allVersions);
 }
 
 static QString makeKey(const QString &first, const QString &second) {
@@ -124,10 +128,14 @@ static void recMerge(QSettings &oldSettings, QSettings &newSettings, const Versi
 }
 
 void mergeSettings(const QString &oldSettingsPath, const QString &newSettingsPath, const QString &specFile) {
-    const std::map<std::string, VersionVar> specs = parseSpecFile(specFile);
+    const auto specsPair = parseSpecFile(specFile);
+    const std::map<std::string, VersionVar> &specs = specsPair.first;
+    const std::set<VersionVar> &allVersions = specsPair.second;
     QSettings oldSettings(oldSettingsPath, QSettings::IniFormat);
     QSettings newSettings(newSettingsPath, QSettings::IniFormat);
     const VersionVar oldSettingsVersion(oldSettings.value("version").toString().toStdString());
+    const VersionVar newSettingsVersion(newSettings.value("version").toString().toStdString());
+    CHECK(allVersions.find(newSettingsVersion) != allVersions.end(), "Incorrect mergeSettings file: there are no rules for this version");
 
     recMerge(oldSettings, newSettings, oldSettingsVersion, specs, newSettings.group());
 
