@@ -209,6 +209,8 @@ std::string Wallet::createAddress(const std::string &publicKeyBinary) {
 
 void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
     std::string addr = address;
+    if (addr == "0x00000000000000000000000000000000000000000000000000")
+        return;
     CHECK_TYPED(addr.size() == 52, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     CHECK_TYPED(addr.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address " + address);
     addr = addr.substr(2);
