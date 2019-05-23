@@ -76,11 +76,28 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.png"), this))
+    , trayMenu(new QMenu(this))
     , last_htmls(Uploader::getLastHtmlVersion())
     , currentUserName(DEFAULT_USERNAME)
 {
     ui->setupUi(this);
     systemTray->setVisible(true);
+    systemTray->setContextMenu(trayMenu);
+
+    hideAction = new QAction(tr("&Hide"), this);
+    connect(hideAction, &QAction::triggered, this, &QWidget::hide);
+
+    showAction = new QAction(tr("&Show"), this);
+    connect(showAction, &QAction::triggered, this, &QWidget::show);
+
+    QAction *quitAction = new QAction(tr("&Quit"), this);
+    connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
+
+    trayMenu->addAction(hideAction);
+    trayMenu->addAction(showAction);
+    trayMenu->addSeparator();
+    trayMenu->addAction(quitAction);
+
     connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
         BEGIN_SLOT_WRAPPER
         if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
@@ -95,13 +112,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
         } else {
             showOnTop();
         }
-        //this->setVisible(!this->isVisible());
-//        if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
-//            return;
-//        if (this->isVisible() && !this->isActiveWindow())
-//            this->setVisible(false);
-//        else
-//            this->showOnTop();
         END_SLOT_WRAPPER
     });
     qApp->installEventFilter(this);
@@ -783,6 +793,13 @@ LastHtmlVersion MainWindow::getCurrentHtmls() const {
     return last_htmls;
 }
 
+void MainWindow::setVisible(bool visible)
+{
+    hideAction->setEnabled(visible);
+    showAction->setEnabled(!visible);
+    QMainWindow::setVisible(visible);
+}
+
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
 #ifdef Q_OS_MACOS
@@ -794,6 +811,18 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     }
 #endif // Q_OS_MACOS
     return QMainWindow::eventFilter(obj, event);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+#ifdef Q_OS_OSX
+    if (!event->spontaneous() || !isVisible()) {
+        return;
+    }
+#endif
+    hide();
+    hideAction->setEnabled(this->isVisible());
+    event->ignore();
 }
 
 void MainWindow::onLogined(bool isInit, const QString &login) {

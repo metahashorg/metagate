@@ -94,6 +94,8 @@ public:
 
     LastHtmlVersion getCurrentHtmls() const;
 
+    virtual void setVisible(bool visible) override;
+
 signals:
 
     void setJavascriptWrapper(JavascriptWrapper *jsWrapper, const SetJavascriptWrapperCallback &callback);
@@ -113,8 +115,9 @@ signals:
     void processExternalUrl(const QUrl &url);
 
 protected:
-    bool eventFilter(QObject *obj, QEvent *event) override;
+    virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
+    virtual void closeEvent(QCloseEvent *event) override;
 
 private slots:
 
@@ -202,6 +205,9 @@ private:
     std::unique_ptr<Ui::MainWindow> ui;
 
     QSystemTrayIcon *systemTray;
+    QMenu *trayMenu;
+    QAction *hideAction;
+    QAction *showAction;
 
     MHUrlSchemeHandler *shemeHandler = nullptr;
 
