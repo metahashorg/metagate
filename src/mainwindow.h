@@ -88,11 +88,14 @@ public:
 
     void showExpanded();
 
-    void showOnTop();
+
 
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
     LastHtmlVersion getCurrentHtmls() const;
+
+public slots:
+    void showOnTop();
 
     virtual void setVisible(bool visible) override;
 
@@ -118,6 +121,8 @@ protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
     virtual void closeEvent(QCloseEvent *event) override;
+
+    virtual void changeEvent(QEvent *event) override;
 
 private slots:
 

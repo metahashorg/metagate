@@ -88,7 +88,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     connect(hideAction, &QAction::triggered, this, &QWidget::hide);
 
     showAction = new QAction(tr("&Show"), this);
-    connect(showAction, &QAction::triggered, this, &QWidget::show);
+    connect(showAction, &QAction::triggered, this, &MainWindow::showOnTop);
 
     QAction *quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
@@ -98,6 +98,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     trayMenu->addSeparator();
     trayMenu->addAction(quitAction);
 
+#ifndef Q_OS_MACOS
     connect(systemTray, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
         BEGIN_SLOT_WRAPPER
         if (reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::DoubleClick)
@@ -114,6 +115,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
         }
         END_SLOT_WRAPPER
     });
+#endif
     qApp->installEventFilter(this);
 
     CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
@@ -823,6 +825,23 @@ void MainWindow::closeEvent(QCloseEvent *event)
     hide();
     hideAction->setEnabled(this->isVisible());
     event->ignore();
+}
+
+void MainWindow::changeEvent(QEvent *event)
+{
+#ifdef Q_OS_OSX
+    if(event->type() == QEvent::WindowStateChange)
+    {
+        if (isMinimized()) {
+            // Disable hide/show for minimized window
+            hideAction->setEnabled(false);
+            showAction->setEnabled(false);
+        } else {
+            hideAction->setEnabled(isVisible());
+            showAction->setEnabled(!isVisible());
+        }
+    }
+#endif
 }
 
 void MainWindow::onLogined(bool isInit, const QString &login) {
