@@ -1784,9 +1784,9 @@ BEGIN_SLOT_WRAPPER
     if (!root.contains("app") || !root.value("app").isString()) {
         return;
     }
-    const std::string appType = root.value("app").toString().toStdString();
+    const QString appType = root.value("app").toString();
 
-    if (appType == "MetaOnline") {
+    if (appType == QStringLiteral("MetaOnline")) {
         const QString JS_NAME_RESULT = "onlineResultJs";
         Opt<QJsonDocument> result;
         const TypedException exception = apiVrapper2([&, this](){
@@ -1797,6 +1797,17 @@ BEGIN_SLOT_WRAPPER
         });
 
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    }
+
+    if (appType == QStringLiteral("InEvent")) {
+        const QString event = root.value("event").toString();
+            if (event == QStringLiteral("showExchangePopUp")) {
+                const QString user = root.value("user").toString();
+                if (user == userName) {
+                    const QString JS_NAME_RESULT = "showExchangePopUpJs";
+                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+                }
+        }
     }
 END_SLOT_WRAPPER
 }
