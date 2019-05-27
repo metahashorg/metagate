@@ -1800,12 +1800,14 @@ BEGIN_SLOT_WRAPPER
     }
 
     if (appType == QStringLiteral("InEvent")) {
+        LOG << "EVENT: " << message;
         const QString event = root.value("event").toString();
             if (event == QStringLiteral("showExchangePopUp")) {
                 const QString user = root.value("user").toString();
+                const QString type = root.value("type").toString();
                 if (user == userName) {
                     const QString JS_NAME_RESULT = "showExchangePopUpJs";
-                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(type));
                 }
         }
     }
