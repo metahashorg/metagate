@@ -832,7 +832,7 @@ void MainWindow::changeEvent(QEvent *event)
 #ifdef Q_OS_OSX
     if(event->type() == QEvent::WindowStateChange)
     {
-        if (isMinimized()) {
+        if (isMinimized() || isFullScreen()) {
             // Disable hide/show for minimized window
             hideAction->setEnabled(false);
             showAction->setEnabled(false);
