@@ -24,7 +24,11 @@ public:
 
     static void createWalletFromRaw(const QString &folder, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr);
 
+    static void createWalletWatch(const QString &folder, const std::string &addr);
+
     static QString makeFullWalletPath(const QString &folder, const std::string &addr);
+
+    static QString makeFullWalletWatchPath(const QString &folder, const std::string &addr);
 
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder);
 
@@ -39,6 +43,8 @@ public:
 public:
 
     Wallet(const QString &folder, const std::string &name, const std::string &password);
+
+    Wallet(const QString &folder, const std::string &name);
 
     std::string sign(const std::string &message, std::string &publicKey) const;
 
@@ -72,6 +78,7 @@ private:
 
 private:
 
+    bool noKey;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     QString folder;

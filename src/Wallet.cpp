@@ -32,6 +32,7 @@ const QString Wallet::WALLET_PATH_MTH = "mhc/";
 const QString Wallet::WALLET_PATH_TMH = "tmh/";
 
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
+const static QString FILE_METAHASH_NO_KEY_SUFFIX(".watch");
 
 const std::string PRIV_KEY_PREFIX = "-----BEGIN EC PRIVATE KEY-----\n";
 const std::string PRIV_KEY_SUFFIX = "\n-----END EC PRIVATE KEY-----";
@@ -41,6 +42,10 @@ const std::string CURRENT_COMPACT_FORMAT = "1";
 
 QString Wallet::makeFullWalletPath(const QString &folder, const std::string &addr) {
     return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_PRIV_KEY_SUFFIX));
+}
+
+QString Wallet::makeFullWalletWatchPath(const QString &folder, const std::string &addr) {
+    return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_NO_KEY_SUFFIX));
 }
 
 static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
@@ -307,6 +312,11 @@ void Wallet::createWalletFromRaw(const QString &folder, const std::string &rawPr
     savePrivateKey(folder, privateKey, password, publicKey, addr);
 }
 
+void Wallet::createWalletWatch(const QString &folder, const std::string &addr)
+{
+
+}
+
 std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder) {
     std::vector<std::pair<QString, QString>> result;
 
@@ -326,7 +336,8 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
 }
 
 Wallet::Wallet(const QString &folder, const std::string &name, const std::string &password)
-    : folder(folder)
+    : noKey(false)
+    , folder(folder)
     , name(name)
 {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
@@ -355,6 +366,15 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     const std::string pubKeyBinary = fromHex(pubKeyElements);
     const std::string hexAddr = createAddress(pubKeyBinary);
     CHECK_TYPED(hexAddr == name, TypeErrors::PRIVATE_KEY_ERROR, "Private key error: incorrect address. Possibly renamed wallet ." + hexAddr + "." + name + ".");
+}
+
+Wallet::Wallet(const QString &folder, const std::string &name)
+    : noKey(true)
+    , folder(folder)
+    , name(name)
+{
+    CHECK_TYPED(!name.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty name");
+    fullPath = makeFullWalletWatchPath(folder, name);
 }
 
 std::string Wallet::sign(const std::string &message, std::string &publicKey) const {

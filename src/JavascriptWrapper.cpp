@@ -286,6 +286,28 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
 }
 
+void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult)
+{
+    LOG << "Create wallet mths no key " << requestId;
+    Opt<QString> walletFullPath;
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet::createWalletWatch(walletPath, address.toStdString());
+
+        LOG << "Create wallet watch ok " << requestId << " " << address;
+
+        Wallet wallet(walletPath, address.toStdString());
+
+        walletFullPath = wallet.getFullPath();
+
+        //sendAppInfoToWss(userName, true);
+
+        emit mthWalletCreated(address);
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
+}
+
 void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult) {
     LOG << "Check wallet password " << requestId << " " << keyName << " " << walletPath;
 
@@ -310,6 +332,13 @@ void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyNa
 void JavascriptWrapper::createWallet(QString requestId, QString password) {
 BEGIN_SLOT_WRAPPER
     createWalletMTHS(requestId, password, walletPathTmh, "createWalletResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::createWalletWatch(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletResultJs");
 END_SLOT_WRAPPER
 }
 
