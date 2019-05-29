@@ -364,6 +364,11 @@ QString JavascriptWrapper::getAllWalletsJson() {
     return getAllMTHSWalletsJson(walletPathTmh, "tmh");
 }
 
+QString JavascriptWrapper::getAllWalletsInfoJson()
+{
+    return getAllMTHSWalletsInfoJson(walletPathTmh, "tmh");
+}
+
 QString JavascriptWrapper::getAllMHCWalletsJson() {
     return getAllMTHSWalletsJson(walletPathMth, "mhc");
 }
@@ -445,6 +450,29 @@ static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &w
     return json.toJson(QJsonDocument::Compact);
 }
 
+static QString makeJsonWalletsInfo(const std::vector<std::pair<QString, QString>> &wallets)
+{
+    // TODO refactoring
+    const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
+    const static QString FILE_METAHASH_WATCH_SUFFIX(".watch");
+
+    QJsonArray jsonArray;
+    for (const auto &r: wallets) {
+        QJsonObject val;
+        val.insert("address", r.first);
+        if (r.second.endsWith(FILE_METAHASH_PRIV_KEY_SUFFIX))
+            val.insert("type", 1);
+        else if (r.second.endsWith(FILE_METAHASH_WATCH_SUFFIX))
+            val.insert("type", 2);
+        else
+            val.insert("type", -1);
+        val.insert("path", r.second);
+        jsonArray.push_back(val);
+    }
+    QJsonDocument json(jsonArray);
+    return json.toJson(QJsonDocument::Compact);
+}
+
 static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QString>> &wallets) {
     QJsonArray jsonArray;
     for (const auto &r: wallets) {
@@ -479,6 +507,23 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath, QString nam
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
         LOG << PeriodicLog::make("w_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
+        return jsonStr;
+    } catch (const Exception &e) {
+        LOG << "Error: " + e;
+        return "Error: " + QString::fromStdString(e);
+    } catch (...) {
+        LOG << "Unknown error";
+        return "Unknown error";
+    }
+}
+
+QString JavascriptWrapper::getAllMTHSWalletsInfoJson(QString walletPath, QString name)
+{
+    try {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
+        const QString jsonStr = makeJsonWalletsInfo(result);
+        LOG << PeriodicLog::make("w2_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;

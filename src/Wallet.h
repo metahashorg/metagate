@@ -36,6 +36,8 @@ public:
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
 
+    static void saveWalletWatch(const QString &folder, const std::string &addr);
+
     static void checkAddress(const std::string &address, bool isCheckHash=true);
 
     static std::string createV8Address(const std::string &address, int nonce);

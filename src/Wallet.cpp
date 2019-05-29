@@ -32,7 +32,7 @@ const QString Wallet::WALLET_PATH_MTH = "mhc/";
 const QString Wallet::WALLET_PATH_TMH = "tmh/";
 
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
-const static QString FILE_METAHASH_NO_KEY_SUFFIX(".watch");
+const static QString FILE_METAHASH_WATCH_SUFFIX(".watch");
 
 const std::string PRIV_KEY_PREFIX = "-----BEGIN EC PRIVATE KEY-----\n";
 const std::string PRIV_KEY_SUFFIX = "\n-----END EC PRIVATE KEY-----";
@@ -45,7 +45,7 @@ QString Wallet::makeFullWalletPath(const QString &folder, const std::string &add
 }
 
 QString Wallet::makeFullWalletWatchPath(const QString &folder, const std::string &addr) {
-    return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_NO_KEY_SUFFIX));
+    return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_WATCH_SUFFIX));
 }
 
 static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
@@ -314,7 +314,7 @@ void Wallet::createWalletFromRaw(const QString &folder, const std::string &rawPr
 
 void Wallet::createWalletWatch(const QString &folder, const std::string &addr)
 {
-
+    saveWalletWatch(folder, addr);
 }
 
 std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder) {
@@ -329,6 +329,13 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
                 continue;
             }
             result.emplace_back(QString::fromStdString(address), makeFullWalletPath(folder, address));
+        }
+        if (file.endsWith(FILE_METAHASH_WATCH_SUFFIX)) {
+            const std::string address = file.split(FILE_METAHASH_WATCH_SUFFIX).first().toStdString();
+            if (address.size() != 52 || !isHex(address)) {
+                continue;
+            }
+            result.emplace_back(QString::fromStdString(address), makeFullWalletWatchPath(folder, address));
         }
     }
 
@@ -530,6 +537,13 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
     const std::string hexAddr = createAddress(pubKeyBinary);
 
     const QString filePath = makeFullWalletPath(folder, hexAddr);
+    writeToFile(filePath, result, true);
+}
+
+void Wallet::saveWalletWatch(const QString &folder, const std::string &addr)
+{
+    std::string result; // Empty file data
+    const QString filePath = makeFullWalletWatchPath(folder, addr);
     writeToFile(filePath, result, true);
 }
 

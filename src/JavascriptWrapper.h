@@ -90,6 +90,8 @@ public slots:
 
     Q_INVOKABLE QString getAllWalletsJson();
 
+    Q_INVOKABLE QString getAllWalletsInfoJson();
+
     Q_INVOKABLE QString getAllWalletsAndPathsJson();
 
     Q_INVOKABLE void checkAddress(QString requestId, QString address);
@@ -311,6 +313,8 @@ private:
     void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult);
 
     QString getAllMTHSWalletsJson(QString walletPath, QString name);
+
+    QString getAllMTHSWalletsInfoJson(QString walletPath, QString name);
 
     QString getAllMTHSWalletsAndPathsJson(QString walletPath, QString name);
 
