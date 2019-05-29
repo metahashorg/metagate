@@ -317,6 +317,12 @@ void Wallet::createWalletWatch(const QString &folder, const std::string &addr)
     saveWalletWatch(folder, addr);
 }
 
+void Wallet::removeWalletWatch(const QString &folder, const std::string &addr)
+{
+    const QString filePath = makeFullWalletWatchPath(folder, addr);
+    removeFile(filePath);
+}
+
 std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder) {
     std::vector<std::pair<QString, QString>> result;
 

@@ -26,6 +26,8 @@ public:
 
     static void createWalletWatch(const QString &folder, const std::string &addr);
 
+    static void removeWalletWatch(const QString &folder, const std::string &addr);
+
     static QString makeFullWalletPath(const QString &folder, const std::string &addr);
 
     static QString makeFullWalletWatchPath(const QString &folder, const std::string &addr);
