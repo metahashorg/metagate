@@ -86,6 +86,8 @@ public slots:
 
     Q_INVOKABLE void createWalletWatch(QString requestId, QString address);
 
+    Q_INVOKABLE void checkWalletExists(QString requestId, QString address);
+
     Q_INVOKABLE void checkWalletPassword(QString requestId, QString keyName, QString password);
 
     Q_INVOKABLE void removeWalletWatch(QString requestId, QString address);
@@ -121,6 +123,8 @@ public slots:
     Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
 
     Q_INVOKABLE void createWalletWatchMHC(QString requestId, QString address);
+
+    Q_INVOKABLE void checkWalletExistsMHC(QString requestId, QString address);
 
     Q_INVOKABLE void checkWalletPasswordMHC(QString requestId, QString keyName, QString password);
 
@@ -315,6 +319,8 @@ private:
     void createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
 
     void removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
+
+    void checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult);
 
     void checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult);
 

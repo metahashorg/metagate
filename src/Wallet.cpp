@@ -323,6 +323,17 @@ void Wallet::removeWalletWatch(const QString &folder, const std::string &addr)
     removeFile(filePath);
 }
 
+bool Wallet::isWalletExists(const QString &folder, const std::string &addr)
+{
+    QString filePath = makeFullWalletPath(folder, addr);
+    if (isExistFile(filePath))
+        return true;
+    filePath = makeFullWalletWatchPath(folder, addr);
+    if (isExistFile(filePath))
+        return true;
+    return false;
+}
+
 std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder) {
     std::vector<std::pair<QString, QString>> result;
 
@@ -349,7 +360,7 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
 }
 
 Wallet::Wallet(const QString &folder, const std::string &name, const std::string &password)
-    : noKey(false)
+    : type(Type::Key)
     , folder(folder)
     , name(name)
 {
@@ -382,7 +393,7 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
 }
 
 Wallet::Wallet(const QString &folder, const std::string &name)
-    : noKey(true)
+    : type(Type::Watch)
     , folder(folder)
     , name(name)
 {

@@ -18,6 +18,11 @@ public:
 
     const static QString WALLET_PATH_TMH;
 
+    enum class Type {
+        Key,
+        Watch
+    };
+
 public:
 
     static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);
@@ -27,6 +32,8 @@ public:
     static void createWalletWatch(const QString &folder, const std::string &addr);
 
     static void removeWalletWatch(const QString &folder, const std::string &addr);
+
+    static bool isWalletExists(const QString &folder, const std::string &addr);
 
     static QString makeFullWalletPath(const QString &folder, const std::string &addr);
 
@@ -81,8 +88,7 @@ private:
     static void savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr);
 
 private:
-
-    bool noKey;
+    Wallet::Type type;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     QString folder;

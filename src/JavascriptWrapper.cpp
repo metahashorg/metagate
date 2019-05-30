@@ -300,7 +300,7 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 
         walletFullPath = wallet.getFullPath();
 
-        //sendAppInfoToWss(userName, true);
+        sendAppInfoToWss(userName, true);
 
         // TODO remove? Using at messanger
         emit mthWalletCreated(address);
@@ -317,13 +317,26 @@ void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet::removeWalletWatch(walletPath, address.toStdString());
 
-        LOG << "Create wallet watch ok " << requestId << " " << address;
+        LOG << "Remove wallet watch ok " << requestId << " " << address;
+
+        sendAppInfoToWss(userName, true);
 
         // TODO remove? Using at messanger
         //emit mthWalletCreated(address);
     });
 
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>(address));
+}
+
+void JavascriptWrapper::checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult)
+{
+    Opt<bool> res;
+    const TypedException exception = apiVrapper2([&]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        res = Wallet::isWalletExists(walletPath, address.toStdString());
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), res);
 }
 
 void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult) {
@@ -356,7 +369,14 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::createWalletWatch(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletResultJs");
+    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletWatchResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::checkWalletExists(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    checkWalletMTHSExists(requestId, address, walletPathTmh, "checkWalletExistsResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -369,7 +389,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::removeWalletWatch(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    removeWalletMTHSWatch(requestId, address, walletPathTmh, "removeWalletResultJs");
+    removeWalletMTHSWatch(requestId, address, walletPathTmh, "removeWalletWatchResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -382,7 +402,14 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::createWalletWatchMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHSWatch(requestId, address, walletPathMth, "createWalletMHCResultJs");
+    createWalletMTHSWatch(requestId, address, walletPathMth, "createWalletWatchMHCResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::checkWalletExistsMHC(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    checkWalletMTHSExists(requestId, address, walletPathMth, "checkWalletExistsMHCResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -395,7 +422,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::removeWalletWatchMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    removeWalletMTHSWatch(requestId, address, walletPathMth, "removeWalletResultJs");
+    removeWalletMTHSWatch(requestId, address, walletPathMth, "removeWalletWatchMHCResultJs");
 END_SLOT_WRAPPER
 }
 
