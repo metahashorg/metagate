@@ -23,6 +23,12 @@ public:
         Watch
     };
 
+    struct WalletInfo {
+        QString address;
+        QString path;
+        Type type;
+    };
+
 public:
 
     static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);
@@ -40,6 +46,8 @@ public:
     static QString makeFullWalletWatchPath(const QString &folder, const std::string &addr);
 
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder);
+
+    static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder);
 
     static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH);
 

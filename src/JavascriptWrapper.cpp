@@ -303,7 +303,7 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
         sendAppInfoToWss(userName, true);
 
         // TODO remove? Using at messanger
-        emit mthWalletCreated(address);
+        //emit mthWalletCreated(address);
     });
 
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
@@ -441,7 +441,7 @@ QString JavascriptWrapper::getAllMHCWalletsJson() {
 
 QString JavascriptWrapper::getAllMHCWalletsInfoJson()
 {
-    return getAllMTHSWalletsInfoJson(walletPathTmh, "mhc");
+    return getAllMTHSWalletsInfoJson(walletPathMth, "mhc");
 }
 
 QString JavascriptWrapper::getAllWalletsAndPathsJson() {
@@ -521,23 +521,19 @@ static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &w
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeJsonWalletsInfo(const std::vector<std::pair<QString, QString>> &wallets)
+static QString makeJsonWalletsInfo(const std::vector<Wallet::WalletInfo> &wallets)
 {
-    // TODO refactoring
-    const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
-    const static QString FILE_METAHASH_WATCH_SUFFIX(".watch");
-
     QJsonArray jsonArray;
     for (const auto &r: wallets) {
         QJsonObject val;
-        val.insert("address", r.first);
-        if (r.second.endsWith(FILE_METAHASH_PRIV_KEY_SUFFIX))
+        val.insert("address", r.address);
+        if (r.type == Wallet::Type::Key)
             val.insert("type", 1);
-        else if (r.second.endsWith(FILE_METAHASH_WATCH_SUFFIX))
+        else if (r.type == Wallet::Type::Watch)
             val.insert("type", 2);
         else
             val.insert("type", -1);
-        val.insert("path", r.second);
+        val.insert("path", r.path);
         jsonArray.push_back(val);
     }
     QJsonDocument json(jsonArray);
@@ -592,9 +588,9 @@ QString JavascriptWrapper::getAllMTHSWalletsInfoJson(QString walletPath, QString
 {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
+        const std::vector<Wallet::WalletInfo> result = Wallet::getAllWalletsInfoInFolder(walletPath);
         const QString jsonStr = makeJsonWalletsInfo(result);
-        LOG << PeriodicLog::make("w2_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
+        LOG << PeriodicLog::make("w3_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
