@@ -102,7 +102,7 @@ void CryptographicManager::timerMethod() {
         const time_point now = ::now();
         const milliseconds elapsedTime = std::chrono::duration_cast<milliseconds>(now - startTime);
 
-        if (elapsedTime >= time) {
+        if (elapsedTime >= time && (wallet != nullptr || walletRsa != nullptr)) {
             LOG << "Reseted wallets";
             wallet = nullptr;
             walletRsa = nullptr;
