@@ -117,9 +117,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
 
     CHECK(connect(this, &Messenger::callbackCall, this, &Messenger::onCallbackCall), "not connect onCallbackCall");
 
-    CHECK(connect(this, &TimerClass::timerEvent, this, &Messenger::onTimerEvent), "not connect onTimerEvent");
     CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived), "not connect wssClient");
-    CHECK(connect(this, &TimerClass::startedEvent, this, &Messenger::onRun), "not connect run");
 
     CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
     CHECK(connect(this, &Messenger::registerAddressFromBlockchain, this, &Messenger::onRegisterAddressFromBlockchain), "not connect onRegisterAddressFromBlockchain");
@@ -199,6 +197,10 @@ void Messenger::invokeCallback(size_t requestId, const TypedException &exception
     const ResponseCallbacks callback = found->second; // копируем
     callbacks.erase(found);
     callback(exception);
+}
+
+void Messenger::finishMethod() {
+    // empty
 }
 
 std::vector<QString> Messenger::getMonitoredAddresses() const {
@@ -340,8 +342,7 @@ QString Messenger::getSignFromMethod(const QString &address, const QString &meth
     throwErrTyped(TypeErrors::INCOMPLETE_USER_INFO, ("Not found signed method " + method + " in address " + address).toStdString());
 }
 
-void Messenger::onRun() {
-BEGIN_SLOT_WRAPPER
+void Messenger::startMethod() {
     const std::vector<QString> monitoredAddresses = getMonitoredAddresses();
     LOG << "Monitored addresses: " << monitoredAddresses.size();
     clearAddressesToMonitored();
@@ -353,11 +354,9 @@ BEGIN_SLOT_WRAPPER
             LOG << "Monitored address exception: " << address << " " << exception.description;
         }
     }
-END_SLOT_WRAPPER
 }
 
-void Messenger::onTimerEvent() {
-BEGIN_SLOT_WRAPPER
+void Messenger::timerMethod() {
     for (auto &pairDeferred: deferredMessages) {
         const QString &address = pairDeferred.first.first;
         const QString &channel = pairDeferred.first.second;
@@ -373,7 +372,6 @@ BEGIN_SLOT_WRAPPER
             }
         }
     }
-END_SLOT_WRAPPER
 }
 
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel) {

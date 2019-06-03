@@ -33,9 +33,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
 {
     CHECK(connect(this, &Transactions::callbackCall, this, &Transactions::onCallbackCall), "not connect onCallbackCall");
 
-    CHECK(connect(this, &Transactions::timerEvent, this, &Transactions::onTimerEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &Transactions::startedEvent, this, &Transactions::onRun), "not connect run");
-
     CHECK(connect(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses), "not connect onRegisterAddresses");
     CHECK(connect(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses), "not connect onGetAddresses");
     CHECK(connect(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup), "not connect onSetCurrentGroup");
@@ -86,7 +83,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     timerSendTx.moveToThread(TimerClass::getThread());
     timerSendTx.setInterval(milliseconds(100).count());
     CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent), "not connect onFindTxOnTorrentEvent");
-    CHECK(connect(this, &TimerClass::finishedEvent, &timerSendTx, &QTimer::stop), "not connect stop");
 
     javascriptWrapper.setTransactions(*this);
 
@@ -103,9 +99,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onRun() {
-BEGIN_SLOT_WRAPPER
-END_SLOT_WRAPPER
+void Transactions::startMethod() {
+    // empty
+}
+
+void Transactions::finishMethod() {
+    emit timerSendTx.stop();
 }
 
 uint64_t Transactions::calcCountTxs(const QString &address, const QString &currency) const {
@@ -386,8 +385,7 @@ void Transactions::processCheckTxs(const QString &address, const QString &curren
     client.sendMessagesPost(address.toStdString(), urls, countBlocksRequest, std::bind(countBlocksCallback, urls, _1), timeout);
 }
 
-void Transactions::onTimerEvent() {
-BEGIN_SLOT_WRAPPER
+void Transactions::timerMethod() {
     static const size_t COUNT_PARALLEL_REQUESTS = 15;
     static const size_t MAXIMUM_ADDRESSES_IN_BATCH = 20;
 
@@ -468,7 +466,6 @@ BEGIN_SLOT_WRAPPER
     }
 
     processPendingsMth(servers);
-END_SLOT_WRAPPER
 }
 
 void Transactions::fetchBalanceAddress(const QString &address) {

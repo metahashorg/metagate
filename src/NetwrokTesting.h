@@ -11,11 +11,13 @@ public:
 
     ~NetwrokTesting();
 
-private slots:
-    void onStarted();
+protected:
 
-    void onTimerEvent();
+    void startMethod() override;
 
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 private:
     void testHosts();

@@ -17,9 +17,6 @@ static const QList<HostPort> testsHostPort {
 NetwrokTesting::NetwrokTesting(QObject *parent)
     : TimerClass(5min, parent)
 {
-    CHECK(connect(this, &NetwrokTesting::timerEvent, this, &NetwrokTesting::onTimerEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &NetwrokTesting::startedEvent, this, &NetwrokTesting::onStarted), "not connect onStarted");
-
     moveToThread(TimerClass::getThread());
 }
 
@@ -27,18 +24,16 @@ NetwrokTesting::~NetwrokTesting() {
     TimerClass::exit();
 }
 
-void NetwrokTesting::onStarted()
-{
-BEGIN_SLOT_WRAPPER
+void NetwrokTesting::startMethod() {
     testHosts();
-END_SLOT_WRAPPER
 }
 
-void NetwrokTesting::onTimerEvent()
-{
-BEGIN_SLOT_WRAPPER
+void NetwrokTesting::timerMethod() {
     testHosts();
-END_SLOT_WRAPPER
+}
+
+void NetwrokTesting::finishMethod() {
+    // empty
 }
 
 void NetwrokTesting::testHosts()

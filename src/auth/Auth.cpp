@@ -32,9 +32,6 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
 
     readLoginInfo();
 
-    CHECK(connect(this, &Auth::timerEvent, this, &Auth::onTimerEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &Auth::startedEvent, this, &Auth::onStarted), "not connect onStarted");
-
     CHECK(connect(this, &Auth::login, this, &Auth::onLogin), "not connect onLogin");
     CHECK(connect(this, &Auth::logout, this, &Auth::onLogout), "not connect onLogout");
     CHECK(connect(this, &Auth::check, this, &Auth::onCheck), "not connect onCheck");
@@ -108,20 +105,20 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void auth::Auth::onStarted() {
-BEGIN_SLOT_WRAPPER
+void auth::Auth::finishMethod() {
+    // empty
+}
+
+void auth::Auth::startMethod() {
     const bool isChecked = checkToken();
     if (isChecked) {
         emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
         emit checkTokenFinished(TypedException());
     }
-END_SLOT_WRAPPER
 }
 
-void auth::Auth::onTimerEvent() {
-BEGIN_SLOT_WRAPPER
+void auth::Auth::timerMethod() {
     checkToken();
-END_SLOT_WRAPPER
 }
 
 void auth::Auth::readLoginInfo() {

@@ -91,6 +91,14 @@ public:
 
     void resetFile();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
 
     void finished();
@@ -98,10 +106,6 @@ signals:
     void serversFlushed(const TypedException &exception);
 
 public slots:
-
-    void run();
-
-    void uploadEvent();
 
     void callbackCall(SimpleClient::ReturnCallback callback);
 

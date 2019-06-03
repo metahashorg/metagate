@@ -40,9 +40,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WalletNames::onWssMessageReceived), "not connect wssClient");
     CHECK(connect(&authManager, &auth::Auth::logined, this, &WalletNames::onLogined), "not connect onLogined");
 
-    CHECK(connect(this, &WalletNames::timerEvent, this, &WalletNames::onTimerEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &WalletNames::startedEvent, this, &WalletNames::onRun), "not connect run");
-
     CHECK(connect(this, &WalletNames::addOrUpdateWallets, this, &WalletNames::onAddOrUpdateWallets), "not connect onAddOrUpdateWallets");
     CHECK(connect(this, &WalletNames::saveWalletName, this, &WalletNames::onSaveWalletName), "not connect onSaveWalletName");
     CHECK(connect(this, &WalletNames::getWalletName, this, &WalletNames::onGetWalletName), "not connect onGetWalletName");
@@ -71,16 +68,16 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletNames::onRun() {
-BEGIN_SLOT_WRAPPER
+void WalletNames::startMethod() {
     getAllWallets();
-END_SLOT_WRAPPER
 }
 
-void WalletNames::onTimerEvent() {
-BEGIN_SLOT_WRAPPER
+void WalletNames::timerMethod() {
     getAllWallets();
-END_SLOT_WRAPPER
+}
+
+void WalletNames::finishMethod() {
+    // empty
 }
 
 void WalletNames::getAllWallets() {

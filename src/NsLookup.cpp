@@ -89,9 +89,6 @@ NsLookup::NsLookup(QObject *parent)
         passedTime = UPDATE_PERIOD;
     }
 
-    CHECK(connect(this, &NsLookup::timerEvent, this, &NsLookup::uploadEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &NsLookup::startedEvent, this, &NsLookup::run), "not connect run");
-
     if (passedTime >= UPDATE_PERIOD) {
         isSafeCheck = false;
     } else {
@@ -104,9 +101,9 @@ NsLookup::NsLookup(QObject *parent)
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
 
-    udpClient.mvToThread(&thread1);
-    client.moveToThread(&thread1);
-    moveToThread(&thread1);
+    udpClient.mvToThread(TimerClass::getThread());
+    client.moveToThread(TimerClass::getThread());
+    moveToThread(TimerClass::getThread());
 
     udpClient.startTm();
 }
@@ -126,16 +123,16 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void NsLookup::run() {
-BEGIN_SLOT_WRAPPER
+void NsLookup::startMethod() {
     process();
-END_SLOT_WRAPPER
 }
 
-void NsLookup::uploadEvent() {
-BEGIN_SLOT_WRAPPER
+void NsLookup::timerMethod() {
     process();
-END_SLOT_WRAPPER
+}
+
+void NsLookup::finishMethod() {
+    // empty
 }
 
 void NsLookup::process() {

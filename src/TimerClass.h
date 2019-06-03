@@ -28,13 +28,27 @@ signals:
 
     void finished();
 
-    void startedEvent();
+    void startedEventInternal();
 
-    void timerEvent();
+    void timerEventInternal();
 
-    void finishedEvent();
+    void finishedEventInternal();
 
-public slots:
+private slots:
+
+    void onStartedEvent();
+
+    void onTimerEvent();
+
+    void onFinishedEvent();
+
+protected:
+
+    virtual void startMethod() = 0;
+
+    virtual void timerMethod() = 0;
+
+    virtual void finishMethod() = 0;
 
 private:
 

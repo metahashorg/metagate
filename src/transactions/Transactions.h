@@ -145,6 +145,14 @@ public:
 
     ~Transactions();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
 
     void callbackCall(Transactions::Callback callback);
@@ -216,10 +224,6 @@ public slots:
 private slots:
 
     void onCallbackCall(Transactions::Callback callback);
-
-    void onRun();
-
-    void onTimerEvent();
 
     void onFindTxOnTorrentEvent();
 

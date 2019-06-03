@@ -17,8 +17,6 @@ CryptographicManager::CryptographicManager(QObject *parent)
     : TimerClass(1s, parent)
     , isSaveDecrypted_(false)
 {
-    CHECK(connect(this, &TimerClass::timerEvent, this, &CryptographicManager::onResetWallets), "not connect onTimerEvent");
-
     CHECK(connect(this, &CryptographicManager::decryptMessages, this, &CryptographicManager::onDecryptMessages), "not connect onDecryptMessages");
     CHECK(connect(this, &CryptographicManager::tryDecryptMessages, this, &CryptographicManager::onTryDecryptMessages), "not connect onTryDecryptMessages");
     CHECK(connect(this, &CryptographicManager::signMessage, this, &CryptographicManager::onSignMessage), "not connect onSignMessage");
@@ -51,6 +49,14 @@ CryptographicManager::CryptographicManager(QObject *parent)
 
 CryptographicManager::~CryptographicManager() {
     TimerClass::exit();
+}
+
+void CryptographicManager::startMethod() {
+    // empty
+}
+
+void CryptographicManager::finishMethod() {
+    // empty
 }
 
 Wallet& CryptographicManager::getWallet(const std::string &address) const {
@@ -90,8 +96,7 @@ void CryptographicManager::unlockWalletImpl(const QString &folder, const std::st
     startTime = ::now();
 }
 
-void CryptographicManager::onResetWallets() {
-BEGIN_SLOT_WRAPPER
+void CryptographicManager::timerMethod() {
     LOG << PeriodicLog::make("r_wlt") << "Try reset wallets";
     if (wallet != nullptr || walletRsa != nullptr) {
         const time_point now = ::now();
@@ -103,7 +108,6 @@ BEGIN_SLOT_WRAPPER
             walletRsa = nullptr;
         }
     }
-END_SLOT_WRAPPER
 }
 
 static std::vector<Message> decryptMsg(const std::vector<Message> &messages, const WalletRsa *walletRsa, bool isThrow) {

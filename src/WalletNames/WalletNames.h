@@ -42,6 +42,14 @@ public:
 
     ~WalletNames();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
 
     void addOrUpdateWallets(const std::vector<WalletInfo> &infos, const AddWalletsNamesCallback &callback);
@@ -75,10 +83,6 @@ signals:
 private slots:
 
     void onCallbackCall(WalletNames::Callback callback);
-
-    void onRun();
-
-    void onTimerEvent();
 
     void onWssMessageReceived(QString message);
 

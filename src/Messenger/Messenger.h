@@ -183,6 +183,14 @@ public:
 
     ~Messenger();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
 
     void callbackCall(const Messenger::Callback &callback);
@@ -333,10 +341,6 @@ private slots:
     void onReEmit();
 
 private slots:
-
-    void onRun();
-
-    void onTimerEvent();
 
     void onWssMessageReceived(QString message);
 

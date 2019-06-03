@@ -23,8 +23,6 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         m_url.setScheme("ws");
     }
 
-    CHECK(connect(this, &WebSocketClient::startedEvent, this, &WebSocketClient::onStarted), "not connect started");
-
     CHECK(connect(this, &WebSocketClient::sendMessage, this, &WebSocketClient::onSendMessage), "not connect sendMessage");
     CHECK(connect(this, &WebSocketClient::sendMessages, this, &WebSocketClient::onSendMessages), "not connect sendMessage");
     CHECK(connect(this, QOverload<QString, QString>::of(&WebSocketClient::setHelloString), this, QOverload<QString, QString>::of(&WebSocketClient::onSetHelloString)), "not connect setHelloString");
@@ -42,19 +40,11 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         LOG << "Wss client disconnected. Url " << m_url.toString();
         m_webSocket.close();
         if (!isStopped) {
-            QTimer::singleShot(milliseconds(10s).count(), this, SLOT(onStarted()));
+            QTimer::singleShot(milliseconds(10s).count(), this, &WebSocketClient::onStarted);
         }
         isConnected = false;
         END_SLOT_WRAPPER
     }), "not connect disconnected");
-    CHECK(connect(this, &TimerClass::finishedEvent, [this]{
-        BEGIN_SLOT_WRAPPER
-        LOG << "Wss client finished " << m_url.toString();
-        m_webSocket.close();
-        END_SLOT_WRAPPER
-    }), "not connect finished");
-
-    CHECK(connect(this, &WebSocketClient::timerEvent, this, &WebSocketClient::onTimerEvent), "not connect onTimerEvent");
 
     prevPongTime = ::now();
 
@@ -66,14 +56,17 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
 
 void WebSocketClient::onStarted() {
 BEGIN_SLOT_WRAPPER
-    m_webSocket.open(m_url);
-    LOG << "Wss client onStarted. Url " << m_url.toString();
-    prevPongTime = ::now();
+    startMethod();
 END_SLOT_WRAPPER
 }
 
-void WebSocketClient::onTimerEvent() {
-BEGIN_SLOT_WRAPPER
+void WebSocketClient::startMethod() {
+    m_webSocket.open(m_url);
+    LOG << "Wss client onStarted. Url " << m_url.toString();
+    prevPongTime = ::now();
+}
+
+void WebSocketClient::timerMethod() {
     LOG << "Wss check ping " << m_url.toString();
     const time_point now = ::now();
     if (std::chrono::duration_cast<seconds>(now - prevPongTime) >= 3min) {
@@ -82,7 +75,11 @@ BEGIN_SLOT_WRAPPER
     } else {
         emit m_webSocket.ping();
     }
-END_SLOT_WRAPPER
+}
+
+void WebSocketClient::finishMethod() {
+    LOG << "Wss client finished " << m_url.toString();
+    m_webSocket.close();
 }
 
 void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {

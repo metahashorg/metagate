@@ -49,6 +49,14 @@ public:
 
     ~Uploader();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
 
     void checkedUpdatesHtmls(const TypedException &exception);
@@ -71,11 +79,7 @@ signals:
 
 public slots:
 
-    void run();
-
     void onCallbackCall(Uploader::Callback callback);
-
-    void uploadEvent();
 
     void onLogined(bool isInit, const QString login);
 
@@ -84,6 +88,10 @@ signals:
     void generateUpdateHtmlsEvent();
 
     void generateUpdateApp(const QString version, const QString reference, const QString message);
+
+private:
+
+    void uploadEvent();
 
 private:
 

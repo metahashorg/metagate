@@ -44,6 +44,14 @@ public:
 
     ~Auth();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
     void logined(bool isInit, const QString &login);
 
@@ -84,10 +92,6 @@ public slots:
 private slots:
 
     void onCallbackCall(Callback callback);
-
-    void onStarted();
-
-    void onTimerEvent();
 
 private:
 

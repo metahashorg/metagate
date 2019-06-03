@@ -18,6 +18,14 @@ public:
 
     ~WebSocketClient();
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 signals:
 
     void closed();
@@ -40,8 +48,6 @@ signals:
 
 public slots:
 
-    void onStarted();
-
     void onConnected();
     void onTextMessageReceived(QString message);
 
@@ -57,9 +63,9 @@ public slots:
 
 private slots:
 
-    void onTimerEvent();
-
     void onPong(quint64 elapsedTime, const QByteArray &payload);
+
+    void onStarted();
 
 private:
 

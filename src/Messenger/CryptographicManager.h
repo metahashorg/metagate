@@ -27,6 +27,14 @@ public:
         return isSaveDecrypted_;
     }
 
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
+
 public:
 
     using DecryptMessagesCallback = CallbackWrapper<void(const std::vector<Message> &messages)>;
@@ -94,10 +102,6 @@ private slots:
     void onLockWallet(const LockWalletCallback &callback);
 
     void onRemainingTime(const RemainingTimeCallback &callback);
-
-private slots:
-
-    void onResetWallets();
 
 private:
 

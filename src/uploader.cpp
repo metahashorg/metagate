@@ -102,9 +102,6 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
         serverName = QString::fromStdString(servers.dev);
     }
 
-    CHECK(connect(this, &Uploader::timerEvent, this, &Uploader::uploadEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &Uploader::startedEvent, this, &Uploader::run), "not connect run");
-
     CHECK(connect(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent), "not connect processEvent");
     CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");
 
@@ -145,10 +142,16 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Uploader::run() {
-BEGIN_SLOT_WRAPPER
-    emit uploadEvent();
-END_SLOT_WRAPPER
+void Uploader::startMethod() {
+    uploadEvent();
+}
+
+void Uploader::timerMethod() {
+    uploadEvent();
+}
+
+void Uploader::finishMethod() {
+    // empty
 }
 
 static void removeOlderFolders(const QString &folderHtmls, const QString &currentVersion) {
@@ -178,7 +181,6 @@ END_SLOT_WRAPPER
 }
 
 void Uploader::uploadEvent() {
-BEGIN_SLOT_WRAPPER
     if (serverName == "") {
         return;
     }
@@ -318,5 +320,4 @@ BEGIN_SLOT_WRAPPER
         callbackAppVersion, timeout
     );
     id++;
-END_SLOT_WRAPPER
 }
