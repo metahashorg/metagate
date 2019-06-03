@@ -23,7 +23,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         m_url.setScheme("ws");
     }
 
-    CHECK(connect(&thread1, &QThread::started, this, &WebSocketClient::onStarted), "not connect started");
+    CHECK(connect(this, &WebSocketClient::startedEvent, this, &WebSocketClient::onStarted), "not connect started");
 
     CHECK(connect(this, &WebSocketClient::sendMessage, this, &WebSocketClient::onSendMessage), "not connect sendMessage");
     CHECK(connect(this, &WebSocketClient::sendMessages, this, &WebSocketClient::onSendMessages), "not connect sendMessage");
@@ -47,7 +47,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         isConnected = false;
         END_SLOT_WRAPPER
     }), "not connect disconnected");
-    CHECK(connect(&thread1, &QThread::finished, [this]{
+    CHECK(connect(this, &TimerClass::finishedEvent, [this]{
         BEGIN_SLOT_WRAPPER
         LOG << "Wss client finished " << m_url.toString();
         m_webSocket.close();
@@ -58,8 +58,8 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
 
     prevPongTime = ::now();
 
-    moveToThread(&thread1);
-    m_webSocket.moveToThread(&thread1);
+    moveToThread(TimerClass::getThread());
+    m_webSocket.moveToThread(TimerClass::getThread());
 
     LOG << "Wss client started. Url " << m_url.toString();
 }

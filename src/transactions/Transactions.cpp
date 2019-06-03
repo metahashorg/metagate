@@ -78,19 +78,19 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
 
     client.setParent(this);
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect callbackCall");
-    client.moveToThread(&thread1);
+    client.moveToThread(TimerClass::getThread());
 
     CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect callbackCall");
-    tcpClient.moveToThread(&thread1);
+    tcpClient.moveToThread(TimerClass::getThread());
 
-    timerSendTx.moveToThread(&thread1);
+    timerSendTx.moveToThread(TimerClass::getThread());
     timerSendTx.setInterval(milliseconds(100).count());
     CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent), "not connect onFindTxOnTorrentEvent");
-    CHECK(connect(&thread1, &QThread::finished, &timerSendTx, &QTimer::stop), "not connect stop");
+    CHECK(connect(this, &TimerClass::finishedEvent, &timerSendTx, &QTimer::stop), "not connect stop");
 
     javascriptWrapper.setTransactions(*this);
 
-    moveToThread(&thread1); // TODO вызывать в TimerClass
+    moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
 }
 
 Transactions::~Transactions() {

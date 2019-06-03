@@ -12,6 +12,7 @@ TimerClass::TimerClass(const milliseconds &timerPeriod, QObject *parent)
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(timerPeriod.count());
     CHECK(connect(&qtimer, &QTimer::timeout, this, &TimerClass::timerEvent), "not connect timerEvent");
+    CHECK(connect(&thread1, &QThread::finished, this, &TimerClass::finishedEvent), "not connect finishedEvent");
     CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
     CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
 }
@@ -34,4 +35,8 @@ TimerClass::~TimerClass() {
 
 void TimerClass::start() {
     thread1.start();
+}
+
+QThread* TimerClass::getThread() {
+    return &thread1;
 }

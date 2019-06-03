@@ -58,7 +58,7 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
 
     emit authManager.reEmit();
 
-    moveToThread(&thread1); // TODO вызывать в TimerClass
+    moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
 }
 
 WalletNames::~WalletNames() {

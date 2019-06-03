@@ -49,11 +49,11 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
 
     tcpClient.setParent(this);
     CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect onCallbackCall");
-    tcpClient.moveToThread(&thread1);
+    tcpClient.moveToThread(TimerClass::getThread());
 
     javascriptWrapper.setAuthManager(*this);
 
-    moveToThread(&thread1); // TODO вызывать в TimerClass
+    moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
 }
 
 Auth::~Auth() {

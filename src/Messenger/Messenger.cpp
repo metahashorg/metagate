@@ -177,7 +177,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
         db.removeDecryptedData();
     }
 
-    moveToThread(&thread1);
+    moveToThread(TimerClass::getThread());
 
     wssClient.start();
 }

@@ -20,7 +20,7 @@ NetwrokTesting::NetwrokTesting(QObject *parent)
     CHECK(connect(this, &NetwrokTesting::timerEvent, this, &NetwrokTesting::onTimerEvent), "not connect onTimerEvent");
     CHECK(connect(this, &NetwrokTesting::startedEvent, this, &NetwrokTesting::onStarted), "not connect onStarted");
 
-    moveToThread(&thread1); // TODO вызывать в TimerClass
+    moveToThread(TimerClass::getThread());
 }
 
 NetwrokTesting::~NetwrokTesting() {

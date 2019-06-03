@@ -46,7 +46,7 @@ CryptographicManager::CryptographicManager(QObject *parent)
     Q_REG2(seconds, "seconds", false);
     Q_REG2(uint64_t, "uint64_t", false);
 
-    moveToThread(&thread1);
+    moveToThread(TimerClass::getThread());
 }
 
 CryptographicManager::~CryptographicManager() {

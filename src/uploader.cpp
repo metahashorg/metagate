@@ -128,11 +128,11 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
-    client.moveToThread(&thread1);
+    client.moveToThread(TimerClass::getThread());
 
     emit auth.reEmit();
 
-    moveToThread(&thread1);
+    moveToThread(TimerClass::getThread());
 }
 
 Uploader::~Uploader() {

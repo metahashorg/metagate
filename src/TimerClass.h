@@ -13,6 +13,7 @@ class TimerClass : public QObject
 {
     Q_OBJECT
 public:
+
     TimerClass(const milliseconds &timerPeriod, QObject *parent);
 
     void exit();
@@ -20,6 +21,8 @@ public:
     ~TimerClass();
 
     void start();
+
+    QThread* getThread();
 
 signals:
 
@@ -29,9 +32,11 @@ signals:
 
     void timerEvent();
 
+    void finishedEvent();
+
 public slots:
 
-protected:
+private:
 
     QThread thread1;
 
