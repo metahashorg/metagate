@@ -334,7 +334,7 @@ bool Wallet::isWalletExists(const QString &folder, const std::string &addr)
     return false;
 }
 
-std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder) {
+std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder, bool all) {
     std::vector<std::pair<QString, QString>> result;
 
     const QDir dir(folder);
@@ -347,7 +347,7 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
             }
             result.emplace_back(QString::fromStdString(address), makeFullWalletPath(folder, address));
         }
-        if (file.endsWith(FILE_METAHASH_WATCH_SUFFIX)) {
+        if (file.endsWith(FILE_METAHASH_WATCH_SUFFIX) && all) {
             const std::string address = file.split(FILE_METAHASH_WATCH_SUFFIX).first().toStdString();
             if (address.size() != 52 || !isHex(address)) {
                 continue;
