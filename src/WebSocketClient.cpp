@@ -89,6 +89,7 @@ void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {
 
 WebSocketClient::~WebSocketClient() {
     TimerClass::exit();
+    isStopped = true;
 }
 
 void WebSocketClient::onConnected() {
