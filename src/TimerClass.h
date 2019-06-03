@@ -8,9 +8,7 @@
 
 #include "duration.h"
 
-// TODO переписать на него все, зависящее от таймера
-class TimerClass : public QObject
-{
+class TimerClass : public QObject {
     Q_OBJECT
 public:
 
@@ -18,7 +16,7 @@ public:
 
     void exit();
 
-    ~TimerClass();
+    virtual ~TimerClass();
 
     void start();
 
@@ -27,12 +25,6 @@ public:
 signals:
 
     void finished();
-
-    void startedEventInternal();
-
-    void timerEventInternal();
-
-    void finishedEventInternal();
 
 private slots:
 
@@ -55,8 +47,6 @@ private:
     QThread thread1;
 
     QTimer qtimer;
-
-private:
 
     bool isExited = false;
 
