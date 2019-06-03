@@ -143,6 +143,8 @@ public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
+    ~Transactions();
+
 signals:
 
     void callbackCall(Transactions::Callback callback);
@@ -229,7 +231,7 @@ private:
 
     void processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber);
 
-    void processAddressMth(const QString &address, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct, const std::vector<QString> &pendingTxs);
+    void processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
     void processPendingsMth(const std::vector<QString> &servers);
 

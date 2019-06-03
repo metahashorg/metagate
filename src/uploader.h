@@ -47,6 +47,8 @@ public:
 
     explicit Uploader(auth::Auth &auth, MainWindow &mainWindow);
 
+    ~Uploader();
+
 signals:
 
     void checkedUpdatesHtmls(const TypedException &exception);

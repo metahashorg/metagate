@@ -15,6 +15,8 @@ class TimerClass : public QObject
 public:
     TimerClass(const milliseconds &timerPeriod, QObject *parent);
 
+    void exit();
+
     ~TimerClass();
 
     void start();
@@ -34,6 +36,10 @@ protected:
     QThread thread1;
 
     QTimer qtimer;
+
+private:
+
+    bool isExited = false;
 
 };
 

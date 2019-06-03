@@ -49,7 +49,9 @@ CryptographicManager::CryptographicManager(QObject *parent)
     moveToThread(&thread1);
 }
 
-CryptographicManager::~CryptographicManager() = default;
+CryptographicManager::~CryptographicManager() {
+    TimerClass::exit();
+}
 
 Wallet& CryptographicManager::getWallet(const std::string &address) const {
     CHECK_TYPED(wallet != nullptr, TypeErrors::WALLET_NOT_UNLOCK, "wallet not unlock " + address);

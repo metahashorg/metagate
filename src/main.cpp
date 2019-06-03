@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     QCoreApplication::setApplicationName("MetaGate");
     QCoreApplication::setApplicationVersion(QStringLiteral(VERSION_STRING));
+    app.setQuitOnLastWindowClosed(false);
 
     QCommandLineParser parser;
     parser.setApplicationDescription("MetaGate");

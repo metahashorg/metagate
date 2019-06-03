@@ -92,16 +92,7 @@ void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {
 }
 
 WebSocketClient::~WebSocketClient() {
-    isStopped = true;
-    thread1.quit();
-    if (!thread1.wait(3000)) {
-        thread1.terminate();
-        thread1.wait();
-    }
-}
-
-void WebSocketClient::start() {
-    thread1.start();
+    TimerClass::exit();
 }
 
 void WebSocketClient::onConnected() {

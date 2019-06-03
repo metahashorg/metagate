@@ -42,6 +42,8 @@ public:
 
     explicit Auth(AuthJavascript &javascriptWrapper, QObject *parent = nullptr);
 
+    ~Auth();
+
 signals:
     void logined(bool isInit, const QString &login);
 
