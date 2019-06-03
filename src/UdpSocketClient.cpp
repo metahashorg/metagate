@@ -25,6 +25,7 @@ void UdpSocketClient::mvToThread(QThread *thread) {
     this->moveToThread(thread);
     socket.moveToThread(thread);
     CHECK(!isTimerStarted, "Timer already started");
+    CHECK(connect(thread, &QThread::finished, &timer, &QTimer::stop), "not connect stop");
     timer.moveToThread(thread);
     thread1 = thread;
 }
