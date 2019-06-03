@@ -19,7 +19,10 @@ UdpSocketClient::UdpSocketClient(QObject *parent)
     timer.setInterval(milliseconds(1s).count());
 }
 
-UdpSocketClient::~UdpSocketClient() = default;
+UdpSocketClient::~UdpSocketClient()
+{
+    timer.moveToThread(QThread::currentThread());
+}
 
 void UdpSocketClient::mvToThread(QThread *thread) {
     this->moveToThread(thread);

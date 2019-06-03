@@ -162,7 +162,7 @@ private:
 
     QThread thread1;
 
-    QTimer qtimer;
+    QTimer *qtimer;
 
     SimpleClient client;
 

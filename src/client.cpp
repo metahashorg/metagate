@@ -104,8 +104,9 @@ private:
     const size_t index;
 };
 
-SimpleClient::SimpleClient() {
-    manager = std::make_unique<QNetworkAccessManager>(this);
+SimpleClient::SimpleClient()
+    : manager(new QNetworkAccessManager(this))
+{
     Q_REG(SimpleClient::ReturnCallback, "SimpleClient::ReturnCallback");
 }
 

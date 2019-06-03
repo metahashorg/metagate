@@ -42,6 +42,7 @@ static QString makeAddress(const QString &ip, const QString &port) {
 
 NsLookup::NsLookup(QObject *parent)
     : QObject(parent)
+    , qtimer(new QTimer(this))
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("nodes");
@@ -99,12 +100,12 @@ NsLookup::NsLookup(QObject *parent)
         isSafeCheck = true;
     }
     LOG << "Start ns resolve after " << msTimer.count() << " ms " << isSafeCheck;
-    qtimer.moveToThread(&thread1);
-    qtimer.setInterval(msTimer.count());
-    qtimer.setSingleShot(true);
-    CHECK(connect(&qtimer, &QTimer::timeout, this, &NsLookup::uploadEvent), "not connect uploadEvent");
-    CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
-    CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
+    //qtimer.moveToThread(&thread1);
+    qtimer->setInterval(msTimer.count());
+    qtimer->setSingleShot(true);
+    CHECK(connect(qtimer, &QTimer::timeout, this, &NsLookup::uploadEvent), "not connect uploadEvent");
+    CHECK(connect(&thread1, &QThread::started, qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
+    CHECK(connect(&thread1, &QThread::finished, qtimer, &QTimer::stop), "not connect stop");
 
     CHECK(connect(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
 
@@ -147,8 +148,8 @@ void NsLookup::run() {
 
 void NsLookup::uploadEvent() {
 BEGIN_SLOT_WRAPPER
-    qtimer.setSingleShot(true);
-    qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
+    qtimer->setSingleShot(true);
+    qtimer->start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
 
     startScanTime = ::now();
 
@@ -210,8 +211,8 @@ void NsLookup::finalizeLookup() {
         }
     }
     isSafeCheck = false;
-    qtimer.setInterval(msTimer.count());
-    qtimer.setSingleShot(true);
+    qtimer->setInterval(msTimer.count());
+    qtimer->setSingleShot(true);
 }
 
 bool NsLookup::repeatResolveDns(

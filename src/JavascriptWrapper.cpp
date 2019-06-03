@@ -145,6 +145,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
 void JavascriptWrapper::mvToThread(QThread *thread) {
     moveToThread(thread);
     client.moveToThread(thread);
+    fileSystemWatcher.moveToThread(thread);
 }
 
 void JavascriptWrapper::onGetListWallets(const WalletType &type, const WalletsListCallback &callback) {

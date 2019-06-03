@@ -69,7 +69,7 @@ private:
 
 private:
 
-    QWebSocket m_webSocket;
+    QWebSocket *m_webSocket;
     QUrl m_url;
 
     bool isStopped = false;
