@@ -41,7 +41,7 @@ static QString makeAddress(const QString &ip, const QString &port) {
 }
 
 NsLookup::NsLookup(QObject *parent)
-    : QObject(parent)
+    : TimerClass(1s, nullptr)
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("nodes");
@@ -89,22 +89,15 @@ NsLookup::NsLookup(QObject *parent)
         passedTime = UPDATE_PERIOD;
     }
 
-    CHECK(connect(&thread1, &QThread::started, this, &NsLookup::run), "not connect started");
-    CHECK(connect(this, &NsLookup::finished, &thread1, &QThread::terminate), "not connect finished");
+    CHECK(connect(this, &NsLookup::timerEvent, this, &NsLookup::uploadEvent), "not connect onTimerEvent");
+    CHECK(connect(this, &NsLookup::startedEvent, this, &NsLookup::run), "not connect run");
 
-    milliseconds msTimer = 1ms;
     if (passedTime >= UPDATE_PERIOD) {
         isSafeCheck = false;
     } else {
         isSafeCheck = true;
     }
-    LOG << "Start ns resolve after " << msTimer.count() << " ms " << isSafeCheck;
-    qtimer.moveToThread(&thread1);
-    qtimer.setInterval(msTimer.count());
-    qtimer.setSingleShot(true);
-    CHECK(connect(&qtimer, &QTimer::timeout, this, &NsLookup::uploadEvent), "not connect uploadEvent");
-    CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
-    CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
+    LOG << "Start ns resolve after " << 1 << " ms " << isSafeCheck;
 
     CHECK(connect(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
 
@@ -120,11 +113,7 @@ NsLookup::NsLookup(QObject *parent)
 
 NsLookup::~NsLookup() {
     isStopped = true;
-    thread1.quit();
-    if (!thread1.wait(3000)) {
-        thread1.terminate();
-        thread1.wait();
-    }
+    TimerClass::exit();
 
     if (isResetFilledFile.load()) {
         removeFile(savedNodesPath);
@@ -137,25 +126,31 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void NsLookup::start() {
-    thread1.start();
-}
-
 void NsLookup::run() {
-    // empty
+BEGIN_SLOT_WRAPPER
+    process();
+END_SLOT_WRAPPER
 }
 
 void NsLookup::uploadEvent() {
 BEGIN_SLOT_WRAPPER
-    qtimer.setSingleShot(true);
-    qtimer.start(milliseconds(10min).count()); // В случае, если что-то не удастся, через 10 минут произойдет повторная попытка
+    process();
+END_SLOT_WRAPPER
+}
 
-    startScanTime = ::now();
+void NsLookup::process() {
+BEGIN_SLOT_WRAPPER
+    if (now() - prevCheckTime >= msTimer) {
+        msTimer = 60s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
+        startScanTime = ::now();
 
-    allNodesForTypesNew.clear();
+        allNodesForTypesNew.clear();
 
-    LOG << "Dns scan start";
-    continueResolve(nodes.begin());
+        LOG << "Dns scan start";
+        continueResolve(nodes.begin());
+
+        prevCheckTime = now();
+    }
 END_SLOT_WRAPPER
 }
 
@@ -173,7 +168,6 @@ void NsLookup::finalizeLookup() {
     const time_point stopScan = ::now();
     LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
 
-    milliseconds msTimer;
     bool isSuccessFl = false;
     if (isSafeCheck) {
         bool isSuccess = true;
@@ -210,8 +204,6 @@ void NsLookup::finalizeLookup() {
         }
     }
     isSafeCheck = false;
-    qtimer.setInterval(msTimer.count());
-    qtimer.setSingleShot(true);
 }
 
 bool NsLookup::repeatResolveDns(

@@ -2,8 +2,6 @@
 #define NSLOOKUP_H
 
 #include <QObject>
-#include <QThread>
-#include <QTimer>
 
 #include <vector>
 #include <map>
@@ -13,6 +11,7 @@
 
 #include "duration.h"
 
+#include "TimerClass.h"
 #include "client.h"
 
 #include "UdpSocketClient.h"
@@ -72,8 +71,7 @@ struct NodeInfo {
     }
 };
 
-class NsLookup : public QObject
-{
+class NsLookup : public TimerClass {
     Q_OBJECT
 private:
 
@@ -86,8 +84,6 @@ public:
     explicit NsLookup(QObject *parent = nullptr);
 
     ~NsLookup() override;
-
-    void start();
 
     std::vector<QString> getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const;
 
@@ -110,6 +106,8 @@ public slots:
     void callbackCall(SimpleClient::ReturnCallback callback);
 
 private:
+
+    void process();
 
     void sortAll();
 
@@ -160,9 +158,9 @@ private:
 
     mutable std::mutex nodeMutex;
 
-    QThread thread1;
+    milliseconds msTimer = 10s;
 
-    QTimer qtimer;
+    time_point prevCheckTime;
 
     SimpleClient client;
 
