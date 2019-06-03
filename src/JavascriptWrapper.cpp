@@ -286,6 +286,59 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
 }
 
+void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult)
+{
+    LOG << "Create wallet mths watch " << requestId << address;
+    Opt<QString> walletFullPath;
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet::createWalletWatch(walletPath, address.toStdString());
+
+        LOG << "Create wallet watch ok " << requestId << " " << address;
+
+        Wallet wallet(walletPath, address.toStdString());
+
+        walletFullPath = wallet.getFullPath();
+
+        sendAppInfoToWss(userName, true);
+
+        // TODO remove? Using at messanger
+        //emit mthWalletCreated(address);
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
+}
+
+void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult)
+{
+    LOG << "Remove wallet mths watch " << requestId << address;
+    Opt<QString> walletFullPath;
+    const TypedException exception = apiVrapper2([&]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet::removeWalletWatch(walletPath, address.toStdString());
+
+        LOG << "Remove wallet watch ok " << requestId << " " << address;
+
+        sendAppInfoToWss(userName, true);
+
+        // TODO remove? Using at messanger
+        //emit mthWalletCreated(address);
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>(address));
+}
+
+void JavascriptWrapper::checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult)
+{
+    Opt<bool> res;
+    const TypedException exception = apiVrapper2([&]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        res = Wallet::isWalletExists(walletPath, address.toStdString());
+    });
+
+    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), res);
+}
+
 void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult) {
     LOG << "Check wallet password " << requestId << " " << keyName << " " << walletPath;
 
@@ -313,9 +366,30 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::createWalletWatch(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletWatchResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::checkWalletExists(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    checkWalletMTHSExists(requestId, address, walletPathTmh, "checkWalletExistsResultJs");
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::checkWalletPassword(QString requestId, QString keyName, QString password) {
 BEGIN_SLOT_WRAPPER
     checkWalletPasswordMTHS(requestId, keyName, password, walletPathTmh, "checkWalletPasswordResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::removeWalletWatch(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    removeWalletMTHSWatch(requestId, address, walletPathTmh, "removeWalletWatchResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -325,9 +399,30 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::createWalletWatchMHC(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    createWalletMTHSWatch(requestId, address, walletPathMth, "createWalletWatchMHCResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::checkWalletExistsMHC(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    checkWalletMTHSExists(requestId, address, walletPathMth, "checkWalletExistsMHCResultJs");
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::checkWalletPasswordMHC(QString requestId, QString keyName, QString password) {
 BEGIN_SLOT_WRAPPER
     checkWalletPasswordMTHS(requestId, keyName, password, walletPathMth, "checkWalletPasswordMHCResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::removeWalletWatchMHC(QString requestId, QString address)
+{
+BEGIN_SLOT_WRAPPER
+    removeWalletMTHSWatch(requestId, address, walletPathMth, "removeWalletWatchMHCResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -335,8 +430,18 @@ QString JavascriptWrapper::getAllWalletsJson() {
     return getAllMTHSWalletsJson(walletPathTmh, "tmh");
 }
 
+QString JavascriptWrapper::getAllWalletsInfoJson()
+{
+    return getAllMTHSWalletsInfoJson(walletPathTmh, "tmh");
+}
+
 QString JavascriptWrapper::getAllMHCWalletsJson() {
     return getAllMTHSWalletsJson(walletPathMth, "mhc");
+}
+
+QString JavascriptWrapper::getAllMHCWalletsInfoJson()
+{
+    return getAllMTHSWalletsInfoJson(walletPathMth, "mhc");
 }
 
 QString JavascriptWrapper::getAllWalletsAndPathsJson() {
@@ -416,6 +521,25 @@ static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &w
     return json.toJson(QJsonDocument::Compact);
 }
 
+static QString makeJsonWalletsInfo(const std::vector<Wallet::WalletInfo> &wallets)
+{
+    QJsonArray jsonArray;
+    for (const auto &r: wallets) {
+        QJsonObject val;
+        val.insert("address", r.address);
+        if (r.type == Wallet::Type::Key)
+            val.insert("type", 1);
+        else if (r.type == Wallet::Type::Watch)
+            val.insert("type", 2);
+        else
+            val.insert("type", -1);
+        val.insert("path", r.path);
+        jsonArray.push_back(val);
+    }
+    QJsonDocument json(jsonArray);
+    return json.toJson(QJsonDocument::Compact);
+}
+
 static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QString>> &wallets) {
     QJsonArray jsonArray;
     for (const auto &r: wallets) {
@@ -450,6 +574,23 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath, QString nam
         const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
         LOG << PeriodicLog::make("w_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
+        return jsonStr;
+    } catch (const Exception &e) {
+        LOG << "Error: " + e;
+        return "Error: " + QString::fromStdString(e);
+    } catch (...) {
+        LOG << "Unknown error";
+        return "Unknown error";
+    }
+}
+
+QString JavascriptWrapper::getAllMTHSWalletsInfoJson(QString walletPath, QString name)
+{
+    try {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<Wallet::WalletInfo> result = Wallet::getAllWalletsInfoInFolder(walletPath);
+        const QString jsonStr = makeJsonWalletsInfo(result);
+        LOG << PeriodicLog::make("w3_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
         LOG << "Error: " + e;
@@ -1784,9 +1925,9 @@ BEGIN_SLOT_WRAPPER
     if (!root.contains("app") || !root.value("app").isString()) {
         return;
     }
-    const std::string appType = root.value("app").toString().toStdString();
+    const QString appType = root.value("app").toString();
 
-    if (appType == "MetaOnline") {
+    if (appType == QStringLiteral("MetaOnline")) {
         const QString JS_NAME_RESULT = "onlineResultJs";
         Opt<QJsonDocument> result;
         const TypedException exception = apiVrapper2([&, this](){
@@ -1797,6 +1938,19 @@ BEGIN_SLOT_WRAPPER
         });
 
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    }
+
+    if (appType == QStringLiteral("InEvent")) {
+        LOG << "EVENT: " << message;
+        const QString event = root.value("event").toString();
+            if (event == QStringLiteral("showExchangePopUp")) {
+                const QString user = root.value("user").toString();
+                const QString type = root.value("type").toString();
+                if (user == userName) {
+                    const QString JS_NAME_RESULT = "showExchangePopUpJs";
+                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(type));
+                }
+        }
     }
 END_SLOT_WRAPPER
 }

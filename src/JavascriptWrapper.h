@@ -84,9 +84,17 @@ public slots:
 
     Q_INVOKABLE void createWallet(QString requestId, QString password);
 
+    Q_INVOKABLE void createWalletWatch(QString requestId, QString address);
+
+    Q_INVOKABLE void checkWalletExists(QString requestId, QString address);
+
     Q_INVOKABLE void checkWalletPassword(QString requestId, QString keyName, QString password);
 
+    Q_INVOKABLE void removeWalletWatch(QString requestId, QString address);
+
     Q_INVOKABLE QString getAllWalletsJson();
+
+    Q_INVOKABLE QString getAllWalletsInfoJson();
 
     Q_INVOKABLE QString getAllWalletsAndPathsJson();
 
@@ -114,9 +122,17 @@ public slots:
 
     Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
 
+    Q_INVOKABLE void createWalletWatchMHC(QString requestId, QString address);
+
+    Q_INVOKABLE void checkWalletExistsMHC(QString requestId, QString address);
+
     Q_INVOKABLE void checkWalletPasswordMHC(QString requestId, QString keyName, QString password);
 
+    Q_INVOKABLE void removeWalletWatchMHC(QString requestId, QString address);
+
     Q_INVOKABLE QString getAllMHCWalletsJson();
+
+    Q_INVOKABLE QString getAllMHCWalletsInfoJson();
 
     Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
 
@@ -300,6 +316,12 @@ private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
 
+    void createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
+
+    void removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
+
+    void checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult);
+
     void checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult);
 
     void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh);
@@ -307,6 +329,8 @@ private:
     void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult);
 
     QString getAllMTHSWalletsJson(QString walletPath, QString name);
+
+    QString getAllMTHSWalletsInfoJson(QString walletPath, QString name);
 
     QString getAllMTHSWalletsAndPathsJson(QString walletPath, QString name);
 

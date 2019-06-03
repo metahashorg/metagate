@@ -61,6 +61,10 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
+WalletNames::~WalletNames() {
+    TimerClass::exit();
+}
+
 void WalletNames::onCallbackCall(WalletNames::Callback callback) {
 BEGIN_SLOT_WRAPPER
     callback();

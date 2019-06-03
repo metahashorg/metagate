@@ -23,6 +23,10 @@ NetwrokTesting::NetwrokTesting(QObject *parent)
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
+NetwrokTesting::~NetwrokTesting() {
+    TimerClass::exit();
+}
+
 void NetwrokTesting::onStarted()
 {
 BEGIN_SLOT_WRAPPER

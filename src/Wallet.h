@@ -18,19 +18,42 @@ public:
 
     const static QString WALLET_PATH_TMH;
 
+    enum class Type {
+        Key,
+        Watch
+    };
+
+    struct WalletInfo {
+        QString address;
+        QString path;
+        Type type;
+    };
+
 public:
 
     static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);
 
     static void createWalletFromRaw(const QString &folder, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr);
 
+    static void createWalletWatch(const QString &folder, const std::string &addr);
+
+    static void removeWalletWatch(const QString &folder, const std::string &addr);
+
+    static bool isWalletExists(const QString &folder, const std::string &addr);
+
     static QString makeFullWalletPath(const QString &folder, const std::string &addr);
 
+    static QString makeFullWalletWatchPath(const QString &folder, const std::string &addr);
+
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder);
+
+    static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder);
 
     static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH);
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
+
+    static void saveWalletWatch(const QString &folder, const std::string &addr);
 
     static void checkAddress(const std::string &address, bool isCheckHash=true);
 
@@ -39,6 +62,8 @@ public:
 public:
 
     Wallet(const QString &folder, const std::string &name, const std::string &password);
+
+    Wallet(const QString &folder, const std::string &name);
 
     std::string sign(const std::string &message, std::string &publicKey) const;
 
@@ -71,7 +96,7 @@ private:
     static void savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr);
 
 private:
-
+    Wallet::Type type;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     QString folder;

@@ -135,6 +135,10 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     moveToThread(&thread1);
 }
 
+Uploader::~Uploader() {
+    TimerClass::exit();
+}
+
 void Uploader::onCallbackCall(Uploader::Callback callback) {
 BEGIN_SLOT_WRAPPER
     callback();

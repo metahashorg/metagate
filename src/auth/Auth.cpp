@@ -56,6 +56,10 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     moveToThread(&thread1); // TODO вызывать в TimerClass
 }
 
+Auth::~Auth() {
+    TimerClass::exit();
+}
+
 void Auth::onLogin(const QString &login, const QString &password) {
 BEGIN_SLOT_WRAPPER
     const QString request = makeLoginRequest(login, password);

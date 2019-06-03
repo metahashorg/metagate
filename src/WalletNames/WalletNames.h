@@ -40,6 +40,8 @@ public:
 
     WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client);
 
+    ~WalletNames();
+
 signals:
 
     void addOrUpdateWallets(const std::vector<WalletInfo> &infos, const AddWalletsNamesCallback &callback);
