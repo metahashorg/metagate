@@ -40,6 +40,11 @@ private:
     };
 
 public:
+    const static QString MAINTENANCETOOL;
+
+    static QString getMaintenanceToolExe();
+
+public:
 
     using Callback = std::function<void()>;
 

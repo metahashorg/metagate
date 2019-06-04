@@ -9,6 +9,10 @@
 #include <QSettings>
 #include <QTextStream>
 #include <QUrl>
+#include <QProcess>
+#include <QDomDocument>
+#include <QApplication>
+#include <QDebug>
 
 #include "mainwindow.h"
 #include "auth/Auth.h"
@@ -30,6 +34,24 @@ using namespace std::placeholders;
 SET_LOG_NAMESPACE("UPL");
 
 std::mutex Uploader::lastVersionMut;
+
+#ifdef Q_OS_WINDOWS
+const QString Uploader::MAINTENANCETOOL = QStringLiteral("maintenancetool.exe");
+#elif Q_OS_MACOS
+const QString Uploader::MAINTENANCETOOL = QStringLiteral("maintenancetool");
+#else
+const QString Uploader::MAINTENANCETOOL = QStringLiteral("maintenancetool");
+#endif
+
+QString Uploader::getMaintenanceToolExe()
+{
+    QDir dir(qApp->applicationDirPath());
+#ifdef Q_OS_MACOS
+    dir.cdUp();
+    dir.cdUp();
+#endif
+    return dir.filePath(MAINTENANCETOOL);
+}
 
 static QString toHash(const QString &valueQ) {
     const std::string value = valueQ.toStdString();
@@ -140,15 +162,15 @@ Uploader::~Uploader() {
 }
 
 void Uploader::onCallbackCall(Uploader::Callback callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
+    BEGIN_SLOT_WRAPPER
+            callback();
+    END_SLOT_WRAPPER
 }
 
 void Uploader::run() {
-BEGIN_SLOT_WRAPPER
-    emit uploadEvent();
-END_SLOT_WRAPPER
+    BEGIN_SLOT_WRAPPER
+            emit uploadEvent();
+    END_SLOT_WRAPPER
 }
 
 static void removeOlderFolders(const QString &folderHtmls, const QString &currentVersion) {
@@ -165,8 +187,8 @@ static void removeOlderFolders(const QString &folderHtmls, const QString &curren
 }
 
 void Uploader::onLogined(bool isInit, const QString login) {
-BEGIN_SLOT_WRAPPER
-    if (isInit && !login.isEmpty()) {
+    BEGIN_SLOT_WRAPPER
+            if (isInit && !login.isEmpty()) {
         emit auth.getLoginInfo(auth::Auth::LoginInfoCallback([this](const auth::LoginInfo &info){
             apiToken = info.token;
             emit uploadEvent();
@@ -174,12 +196,12 @@ BEGIN_SLOT_WRAPPER
             LOG << "Error: " << e.description;
         }, std::bind(&Uploader::callbackCall, this, _1)));
     }
-END_SLOT_WRAPPER
+    END_SLOT_WRAPPER
 }
 
 void Uploader::uploadEvent() {
-BEGIN_SLOT_WRAPPER
-    if (serverName == "") {
+    BEGIN_SLOT_WRAPPER
+            if (serverName == "") {
         return;
     }
 
@@ -252,14 +274,32 @@ BEGIN_SLOT_WRAPPER
         id++;
     };
     client.sendMessagePost(
-        QUrl(serverName),
-        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
-        "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"" + apiToken.toStdString() +
-        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}")
-        , callbackGetHtmls, timeout
-    );
+                QUrl(serverName),
+                QString::fromStdString("{\"id\": \"" + std::to_string(id) +
+                                       "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"" + apiToken.toStdString() +
+                                       "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}")
+                , callbackGetHtmls, timeout
+                );
     id++;
 
+    QProcess checkPrc;
+    checkPrc.start(Uploader::getMaintenanceToolExe(), QStringList() << "--checkupdates");
+    if (!checkPrc.waitForStarted())
+        return;
+
+    if (!checkPrc.waitForFinished())
+        return;
+
+    QByteArray result = checkPrc.readAll();
+    //qDebug() << "res " << result;
+
+    QDomDocument document;
+    document.setContent(result);
+
+    if (!document.isNull() && document.firstChildElement().hasChildNodes()) {
+        emit generateUpdateApp(QStringLiteral(""), QStringLiteral(""), "");
+    }
+    /*
     const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
 
@@ -317,6 +357,7 @@ BEGIN_SLOT_WRAPPER
         "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
         callbackAppVersion, timeout
     );
+    */
     id++;
-END_SLOT_WRAPPER
+    END_SLOT_WRAPPER
 }

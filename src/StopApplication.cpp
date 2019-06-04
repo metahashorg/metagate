@@ -15,6 +15,14 @@
 
 #include <iostream>
 
+void updateAndRestart()
+{
+//    if (QMessageBox::question(ICore::dialogParent(), tr("Qt Updater"),
+//                              tr("New updates are available. Do you want to start the update?"))
+//            == QMessageBox::Yes)
+    QProcess::startDetached(Uploader::getMaintenanceToolExe(), QStringList(QLatin1String("--updater")));
+}
+
 #ifdef TARGET_WINDOWS
 
 #include <shlobj.h>
@@ -102,7 +110,7 @@ void updateAndRestart() {
     QApplication::exit(SIMPLE_EXIT);
 }
 #else
-
+/*
 static const QString pathToUpdater = "updater";
 static const QString pathToNewApplication = "WalletMetahashUpdater";
 
@@ -161,4 +169,5 @@ void updateAndRestart() {
     CHECK(process.startDetached(updaterPath + " --install-dir \"" + thisPath + "\" --package-dir " + newAppPath + " --script " + scriptPatch), "dont start updater process");
     QApplication::exit(SIMPLE_EXIT);
 }
+*/
 #endif
