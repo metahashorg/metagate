@@ -145,6 +145,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
 void JavascriptWrapper::mvToThread(QThread *thread) {
     moveToThread(thread);
     client.moveToThread(thread);
+    fileSystemWatcher.moveToThread(thread);
 }
 
 void JavascriptWrapper::onGetListWallets(const WalletType &type, const WalletsListCallback &callback) {
@@ -153,12 +154,12 @@ BEGIN_SLOT_WRAPPER
     const TypedException &exception = apiVrapper2([&]{
         if (type == WalletType::Tmh) {
             CHECK(!walletPathTmh.isEmpty(), "Wallet path not set");
-            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathTmh);
+            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathTmh, true);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Mth) {
             CHECK(!walletPathMth.isEmpty(), "Wallet path not set");
-            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathMth);
+            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathMth, true);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
         } else if (type == WalletType::Btc) {
@@ -216,10 +217,10 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
     if (force || newUserName != sendedUserName) {
         std::vector<QString> keysTmh;
         CHECK(!walletPathTmh.isEmpty() && !walletPathMth.isEmpty(), "Wallet paths is empty");
-        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh);
+        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh, true);
         std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
         std::vector<QString> keysMth;
-        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth);
+        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth, true);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
         const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);

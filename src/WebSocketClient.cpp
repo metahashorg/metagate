@@ -14,6 +14,7 @@
 
 WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     : TimerClass(1min, parent)
+    , m_webSocket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this))
 {
     Q_REG2(QAbstractSocket::SocketState, "QAbstractSocket::SocketState", false);
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
@@ -29,16 +30,16 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     CHECK(connect(this, QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::setHelloString), this, QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::onSetHelloString)), "not connect setHelloString");
     CHECK(connect(this, &WebSocketClient::addHelloString, this, &WebSocketClient::onAddHelloString), "not connect setHelloString");
 
-    CHECK(connect(&m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
-        LOG << "Wss Web socket error " << m_webSocket.errorString() << " " << m_url.toString();
+    CHECK(connect(m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
+        LOG << "Wss Web socket error " << m_webSocket->errorString() << " " << m_url.toString();
     }), "not connect error");
-    CHECK(connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
-    CHECK(connect(&m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong), "not connect onPong");
-    CHECK(connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
-    CHECK(connect(&m_webSocket, &QWebSocket::disconnected, [this]{
+    CHECK(connect(m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
+    CHECK(connect(m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong), "not connect onPong");
+    CHECK(connect(m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
+    CHECK(connect(m_webSocket, &QWebSocket::disconnected, [this]{
         BEGIN_SLOT_WRAPPER
         LOG << "Wss client disconnected. Url " << m_url.toString();
-        m_webSocket.close();
+        m_webSocket->close();
         if (!isStopped) {
             QTimer::singleShot(milliseconds(10s).count(), this, &WebSocketClient::onStarted);
         }
@@ -49,7 +50,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     prevPongTime = ::now();
 
     moveToThread(TimerClass::getThread());
-    m_webSocket.moveToThread(TimerClass::getThread());
+    m_webSocket->moveToThread(TimerClass::getThread());
 
     LOG << "Wss client started. Url " << m_url.toString();
 }
@@ -61,7 +62,7 @@ END_SLOT_WRAPPER
 }
 
 void WebSocketClient::startMethod() {
-    m_webSocket.open(m_url);
+    m_webSocket->open(m_url);
     LOG << "Wss client onStarted. Url " << m_url.toString();
     prevPongTime = ::now();
 }
@@ -71,15 +72,15 @@ void WebSocketClient::timerMethod() {
     const time_point now = ::now();
     if (std::chrono::duration_cast<seconds>(now - prevPongTime) >= 3min) {
         LOG << "Wss close " << m_url.toString();
-        m_webSocket.close();
+        m_webSocket->close();
     } else {
-        emit m_webSocket.ping();
+        emit m_webSocket->ping();
     }
 }
 
 void WebSocketClient::finishMethod() {
     LOG << "Wss client finished " << m_url.toString();
-    m_webSocket.close();
+    m_webSocket->close();
 }
 
 void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {
@@ -100,7 +101,7 @@ BEGIN_SLOT_WRAPPER
     for (const auto &pair: helloStrings) {
         for (const QString &helloString: pair.second) {
             LOG << "Wss send hello message " << helloString;
-            m_webSocket.sendTextMessage(helloString);
+            m_webSocket->sendTextMessage(helloString);
         }
     }
 
@@ -113,7 +114,7 @@ void WebSocketClient::sendMessagesInternal() {
     if (isConnected.load()) {
         LOG << "Wss client send message " << (!messageQueue.empty() ? messageQueue.back() : "") << ". Count " << messageQueue.size();
         for (const QString &m: messageQueue) {
-            m_webSocket.sendTextMessage(m);
+            m_webSocket->sendTextMessage(m);
         }
         messageQueue.clear();
     }

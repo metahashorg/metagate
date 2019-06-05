@@ -138,7 +138,7 @@ void NsLookup::finishMethod() {
 void NsLookup::process() {
 BEGIN_SLOT_WRAPPER
     if (now() - prevCheckTime >= msTimer) {
-        msTimer = 60s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
+        msTimer = 600s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
         startScanTime = ::now();
 
         allNodesForTypesNew.clear();

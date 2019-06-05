@@ -3,10 +3,25 @@ mainWindow регестрируется в javascript по имени mainWindow
 ### How to work with TMH wallets
 
 ```shell
-Q_INVOKABLE void createWallet(QString requestId, QString password);`
+Q_INVOKABLE void createWallet(QString requestId, QString password);
 # Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address. 
 # javascript is called after completion of this function
 createWalletResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
+
+Q_INVOKABLE void createWalletWatch(QString requestId, QString address);
+# Creates Metahash watch wallet with address, puts this file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+createWalletWatchResultJs(requestid, address, errorNum, errorMessage, fullKeyPath)
+
+Q_INVOKABLE void checkWalletExists(QString requestId, QString address);
+# Checks is wallet (any type) with address exists.
+# javascript is called after completion of this function res: true/false
+checkWalletExistsResultJs(requestid, res, errorNum, errorMessage)
+
+Q_INVOKABLE void removeWalletWatch(QString requestId, QString address);
+# Removes Metahash watch wallet with address, file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+removeWalletWatchResultJs(requestid, address, errorNum, errorMessage)
 
 Q_INVOKABLE void checkWalletPassword(QString requestId, QString keyName, QString password);
 # Проверяет правильность пароля от данного кошелька
@@ -19,6 +34,11 @@ Q_INVOKABLE QString getAllWalletsJson();
 
 Q_INVOKABLE QString getAllWalletsAndPathsJson();
 # Gets the list of all metahash accounts. Result returns as a json array [{"address":"addr","path":"path"}]
+
+Q_INVOKABLE QString getAllWalletsInfoJson();
+# Gets the list of all metahash accounts. Result returns as a json array [{"address":"addr", "type":type, "path":"path"}]
+# Type 1 - wallet with key
+# Type 2 - watch wallet
 
 Q_INVOKABLE void signMessage(QString requestId, QString address, QString text, QString password);
 # Message's signing.
@@ -117,6 +137,21 @@ Q_INVOKABLE void createWalletMHC(QString requestId, QString password);
 # javascript is called after completion of this function 
 createWalletMHCResultJs(requestid, publickey, address, exampleMessage, signature, errorNum, errorMessage, fullKeyPath)
 
+Q_INVOKABLE void createWalletWatchMHC(QString requestId, QString address);
+# Creates Metahash watch wallet with address, puts this file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+createWalletWatchMHCResultJs(requestid, address, errorNum, errorMessage, fullKeyPath)
+
+Q_INVOKABLE void checkWalletExistsMHC(QString requestId, QString address);
+# Checks is wallet (any type) with address exists.
+# javascript is called after completion of this function res: true/false
+checkWalletExistsMHCResultJs(requestid, res, errorNum, errorMessage)
+
+Q_INVOKABLE void removeWalletWatchMHC(QString requestId, QString address);
+# Removes Metahash watch wallet with address, file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+removeWalletWatchMHCResultJs(requestid, address, errorNum, errorMessage)
+
 Q_INVOKABLE void checkWalletPasswordMHC(QString requestId, QString keyName, QString password);
 # Проверяет правильность пароля от данного кошелька
 # javascript is called after completion of this function
@@ -129,6 +164,11 @@ Q_INVOKABLE QString getAllMHCWalletsJson();
 Q_INVOKABLE QString getAllMHCWalletsAndPathsJson();
 # Gets the list of all metahash accounts. 
 # Result returns as a json array [{"address":"addr","path":"path"}]
+
+Q_INVOKABLE QString getAllMHCWalletsInfoJson();
+# Gets the list of all metahash accounts. Result returns as a json array [{"address":"addr", "type":type, "path":"path"}]
+# Type 1 - wallet with key
+# Type 2 - watch wallet
 
 Q_INVOKABLE void signMessageMHC(QString requestId, QString address, QString text, QString password);
 # Message's signing.

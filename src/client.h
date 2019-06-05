@@ -130,7 +130,7 @@ private:
     void startTimer1();
 
 private:
-    std::unique_ptr<QNetworkAccessManager> manager;
+    QNetworkAccessManager *manager;
     std::unordered_map<std::string, ClientCallback> callbacks_;
     std::unordered_map<std::string, PingCallbackInternal> pingCallbacks_;
 

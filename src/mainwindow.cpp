@@ -137,6 +137,9 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
+    channel = std::make_unique<QWebChannel>(ui->webView->page());
+    ui->webView->page()->setWebChannel(channel.get());
+    registerWebChannel(QString("initializer"), &initializerJs);
 
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -156,10 +159,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
 
     CHECK(connect(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
-
-    channel = std::make_unique<QWebChannel>(ui->webView->page());
-    ui->webView->page()->setWebChannel(channel.get());
-    registerWebChannel(QString("initializer"), &initializerJs);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
     CHECK(connect(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu), "not connect customContextMenuRequested");
