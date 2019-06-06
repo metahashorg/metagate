@@ -10,7 +10,7 @@
 using HostPort = QPair<QString, quint16>;
 static const QList<HostPort> testsHostPort {
                 {QStringLiteral("www.google.com"), 80},
-                {QStringLiteral("74.125.232.243"), 80},
+                {QStringLiteral("1.1.1.1"), 80},
                 {QStringLiteral("echo.metahash.io"), 7654}
 };
 
