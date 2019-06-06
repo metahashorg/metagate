@@ -97,7 +97,6 @@ void CryptographicManager::unlockWalletImpl(const QString &folder, const std::st
 }
 
 void CryptographicManager::timerMethod() {
-    LOG << PeriodicLog::make("r_wlt") << "Try reset wallets";
     if (wallet != nullptr || walletRsa != nullptr) {
         const time_point now = ::now();
         const milliseconds elapsedTime = std::chrono::duration_cast<milliseconds>(now - startTime);
