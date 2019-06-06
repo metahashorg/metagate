@@ -21,7 +21,7 @@ UdpSocketClient::UdpSocketClient(QObject *parent)
 
 UdpSocketClient::~UdpSocketClient()
 {
-    timer.moveToThread(QThread::currentThread());
+    //timer.moveToThread(QThread::currentThread());
 }
 
 void UdpSocketClient::mvToThread(QThread *thread) {
