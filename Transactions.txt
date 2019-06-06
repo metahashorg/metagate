@@ -89,6 +89,14 @@ count == -1 выдать все
 Результат вернется в функцию
 txsGetForgingTxsJs(address, currency, result, errorNum, errorMessage)
 
+Q_INVOKABLE void getDelegateTxsAll(QString address, QString currency, QString to, int from, int count, bool asc);
+Получение транзакций типа DELEGATE по address и currency
+asc порядок сортировки
+Выдаются транзакции, начиная с порядкового номера from (в зависимости от сортировки) и количеством count
+count == -1 выдать все
+Результат вернется в функцию
+txsGetDelegateTxsJs(address, currency, result, errorNum, errorMessage)
+
 Q_INVOKABLE void getLastForgingTx(QString address, QString currency)
 Получить последнюю транзакцию с типом FORGING по address и currency
 Результат вернется в функцию

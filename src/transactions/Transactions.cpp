@@ -41,6 +41,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
     CHECK(connect(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2), "not connect onGetTxsAll2");
     CHECK(connect(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs), "not connect onGetForgingTxs");
+    CHECK(connect(this, &Transactions::getDelegateTxs, this, &Transactions::onGetDelegateTxs), "not connect onGetDelegateTxs");
     CHECK(connect(this, &Transactions::getLastForgingTx, this, &Transactions::onGetLastForgingTx), "not connect onGetLastForgingTx");
     CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
     CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
@@ -569,6 +570,16 @@ BEGIN_SLOT_WRAPPER
     std::vector<Transaction> txs;
     const TypedException exception = apiVrapper2([&, this] {
         txs = db.getForgingPaymentsForAddress(address, currency, from, count, asc);
+    });
+    callback.emitFunc(exception, txs);
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<Transaction> txs;
+    const TypedException exception = apiVrapper2([&, this] {
+        txs = db.getDelegatePaymentsForAddress(address, to, currency, from, count, asc);
     });
     callback.emitFunc(exception, txs);
 END_SLOT_WRAPPER

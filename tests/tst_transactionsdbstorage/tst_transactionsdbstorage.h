@@ -16,6 +16,8 @@ private slots:
     void testGetPayments();
     void testAddressInfos();
 
+    void tstFilterDelegate();
+
 private:
 };
 

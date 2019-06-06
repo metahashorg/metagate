@@ -175,6 +175,31 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(count3, 0);
 }
 
+#include "check.h"
+#include <iostream>
+
+void tst_TransactionsDBStorage::tstFilterDelegate() {
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
+    transactions::TransactionsDBStorage db;
+    db.init();
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "address100", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", true, "address100", "user1", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "3242", 2);
+    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", true, "address100", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11114, "", 1);
+    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", false, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11115, "324521354", 2);
+    db.addPayment("mh", "gfklklklrttrrrduidgjkg", "address100", false, "user7", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "15434900", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 11116, "", 1);
+    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", false, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::ERROR, transactions::Transaction::DELEGATE, 11117, "", 1);
+    db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", false, "user1", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11118, "", 1);
+    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", false, "user1", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11119, "", 1);
+
+    try {
+    const auto res = db.getDelegatePaymentsForAddress("address100", "user1", "mh", 0, -1, true);
+    QCOMPARE(res.size(), 2);
+    } catch (const Exception &e) {
+        std::cout << "Ya tuta 1 " << e;
+    }
+}
+
 void tst_TransactionsDBStorage::testBigNumSum()
 {
     if (QFile::exists(transactions::databaseFileName))

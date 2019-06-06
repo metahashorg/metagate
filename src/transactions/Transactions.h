@@ -175,6 +175,8 @@ signals:
 
     void getForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
+    void getDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback);
+
     void getLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback);
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
@@ -206,6 +208,8 @@ public slots:
     void onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onGetForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
+
+    void onGetDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onGetLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback);
 
