@@ -3,10 +3,14 @@
 #include <set>
 
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QSettings>
 
 #include "Log.h"
 #include "QRegister.h"
 #include "SlotWrapper.h"
+#include "Paths.h"
 
 #include "JavascriptWrapper.h"
 
@@ -14,6 +18,9 @@
 
 #include "machine_uid.h"
 
+#include "uploader.h"
+#include "platform.h"
+#include "Wallet.h"
 #include "WalletNamesDbStorage.h"
 #include "WalletNamesMessages.h"
 
@@ -28,6 +35,37 @@ const static QString WALLET_TYPE_MTH = "mth";
 const static QString WALLET_TYPE_BTC = "btc";
 const static QString WALLET_TYPE_ETH = "eth";
 
+static void parseAddressListResponse(const QString &response, QStringList &tmhs, QStringList &mhcs)
+{
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(json1.contains("result") && json1.value("result").isString() && json1.value("result").toString() == QStringLiteral("OK"), "Incorrect json: result field not found or wrong");
+    CHECK(json1.contains("data") && json1.value("data").isArray(), "Incorrect json: data field not found");
+    const QJsonArray &json = json1.value("data").toArray();
+
+    QStringList result;
+
+    for (const QJsonValue &elementJson: json) {
+        CHECK(elementJson.isObject(), "Incorrect json");
+        const QJsonObject walJson = elementJson.toObject();
+
+        CHECK(walJson.contains("address") && walJson.value("address").isString(), "Incorrect json: address field not found");
+        const QString address = walJson.value("address").toString();
+        CHECK(walJson.contains("read_only") && walJson.value("read_only").isBool(), "Incorrect json: read_only field not found");
+        const bool readOnly = walJson.value("read_only").toBool();
+        CHECK(walJson.contains("currency_code") && walJson.value("currency_code").isString(), "Incorrect json: currency_code field not found");
+        const QString currency = walJson.value("currency_code").toString();
+        if (readOnly) {
+            if (currency == QStringLiteral("MHC"))
+                mhcs.append(address);
+            if (currency == QStringLiteral("TMH"))
+                tmhs.append(address);
+        }
+    }
+}
+
+
 WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client)
     : TimerClass(5min, nullptr)
     , db(db)
@@ -35,6 +73,20 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     , authManager(authManager)
     , client(client)
 {
+    const Uploader::Servers servers = Uploader::getServers();
+    if (isProductionSetup) {
+        LOG << "Set production server " << servers.prod;
+        CHECK(!servers.prod.empty(), "Empty server name");
+        serverName = QString::fromStdString(servers.prod);
+    } else {
+        LOG << "Set development server " << servers.dev;
+        CHECK(!servers.dev.empty(), "Empty server name");
+        serverName = QString::fromStdString(servers.dev);
+    }
+    QSettings settings(getSettingsPath(), QSettings::IniFormat);
+    CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
+    timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
+
     CHECK(connect(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall), "not connect onCallbackCall");
 
     CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WalletNames::onWssMessageReceived), "not connect wssClient");
@@ -55,6 +107,11 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
 
     emit authManager.reEmit();
 
+    httpClient.setParent(this);
+    CHECK(connect(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall), "not connect onCallbackCall");
+    CHECK(connect(&httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall), "not connect callbackCall");
+    httpClient.moveToThread(TimerClass::getThread());
+
     moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
 }
 
@@ -70,10 +127,12 @@ END_SLOT_WRAPPER
 
 void WalletNames::startMethod() {
     getAllWallets();
+    getAllWalletsApps();
 }
 
 void WalletNames::timerMethod() {
     getAllWallets();
+    getAllWalletsApps();
 }
 
 void WalletNames::finishMethod() {
@@ -266,6 +325,31 @@ void WalletNames::sendAllWallets() {
     }
 }
 
+void WalletNames::getAllWalletsApps()
+{
+    LOG << "Sync wallets";
+    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.toString());
+        QStringList tmhs;
+        QStringList mhcs;
+        parseAddressListResponse(QString::fromStdString(result), tmhs, mhcs);
+        for (const QString &addr : tmhs) {
+            QMetaObject::invokeMethod(&javascriptWrapper, "createWalletWatch", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QString, addr));
+        }
+        for (const QString &addr : mhcs) {
+            QMetaObject::invokeMethod(&javascriptWrapper, "createWalletWatchMHC", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QString, addr));
+        }
+    };
+
+    const QString req = QStringLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"%1\", \"uid\": \"%2\", \"params\":[]}")
+            .arg(token).arg(QString::fromStdString(getMachineUid()));
+    httpClient.sendMessagePost(
+        QUrl(serverName),
+        req,
+        callbackAppVersion, timeout);
+
+}
+
 void WalletNames::onWssMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     const QJsonDocument messageJson = QJsonDocument::fromJson(message.toUtf8());
@@ -300,6 +384,7 @@ BEGIN_SLOT_WRAPPER
             hwid = QString::fromStdString(getMachineUid());
 
             getAllWallets();
+            getAllWalletsApps();
         }, [](const TypedException &e) {
             LOG << "Error: " << e.description;
         }, signalFunc));

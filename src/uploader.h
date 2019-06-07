@@ -32,7 +32,7 @@ struct LastHtmlVersion {
 
 class Uploader : public TimerClass {
 Q_OBJECT
-private:
+public:
 
     struct Servers {
         std::string dev;

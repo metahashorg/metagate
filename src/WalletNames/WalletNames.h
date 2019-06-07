@@ -11,6 +11,7 @@
 #include "WalletInfo.h"
 
 #include "WebSocketClient.h"
+#include "client.h"
 
 class JavascriptWrapper;
 
@@ -23,7 +24,7 @@ namespace wallet_names {
 class WalletNamesDbStorage;
 
 class WalletNames: public TimerClass {
-    Q_OBJECT   
+    Q_OBJECT
 public:
 
     using Callback = std::function<void()>;
@@ -96,6 +97,8 @@ private:
 
     void sendAllWallets();
 
+    void getAllWalletsApps();
+
 private:
 
     enum class StateRequest {
@@ -121,6 +124,12 @@ private:
     RequestId id;
 
     StateRequest stateRequest = StateRequest::NotRequest;
+
+    QString serverName;
+
+    seconds timeout;
+
+    SimpleClient httpClient;
 
 };
 
