@@ -360,7 +360,7 @@ private:
 
     QString getSignFromMethod(const QString &address, const QString &method) const;
 
-    std::vector<QString> getMonitoredAddresses() const;
+    std::vector<QString> getAddresses() const;
 
     void processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels);
 

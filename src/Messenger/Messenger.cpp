@@ -203,7 +203,7 @@ void Messenger::finishMethod() {
     // empty
 }
 
-std::vector<QString> Messenger::getMonitoredAddresses() const {
+std::vector<QString> Messenger::getAddresses() const {
     const QStringList res = db.getUsersList();
     std::vector<QString> result;
     for (const QString r: res) {
@@ -343,7 +343,7 @@ QString Messenger::getSignFromMethod(const QString &address, const QString &meth
 }
 
 void Messenger::startMethod() {
-    const std::vector<QString> monitoredAddresses = getMonitoredAddresses();
+    const std::vector<QString> monitoredAddresses = getAddresses();
     LOG << "Monitored addresses: " << monitoredAddresses.size();
     clearAddressesToMonitored();
     for (const QString &address: monitoredAddresses) {
