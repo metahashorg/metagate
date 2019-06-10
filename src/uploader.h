@@ -32,11 +32,11 @@ struct LastHtmlVersion {
 
 class Uploader : public TimerClass {
 Q_OBJECT
-public:
+private:
 
     struct Servers {
-        std::string dev;
-        std::string prod;
+        QString dev;
+        QString prod;
     };
 
 public:
@@ -70,6 +70,8 @@ public:
     static void setLastVersion(const QString &pagesPath, const QString &folder, const QString &version);
 
     static Servers getServers();
+
+    static QString getServerName();
 
     static LastHtmlVersion getLastHtmlVersion();
 

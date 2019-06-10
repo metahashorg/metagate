@@ -35,37 +35,6 @@ const static QString WALLET_TYPE_MTH = "mth";
 const static QString WALLET_TYPE_BTC = "btc";
 const static QString WALLET_TYPE_ETH = "eth";
 
-static void parseAddressListResponse(const QString &response, QStringList &tmhs, QStringList &mhcs)
-{
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
-    CHECK(jsonResponse.isObject(), "Incorrect json");
-    const QJsonObject &json1 = jsonResponse.object();
-    CHECK(json1.contains("result") && json1.value("result").isString() && json1.value("result").toString() == QStringLiteral("OK"), "Incorrect json: result field not found or wrong");
-    CHECK(json1.contains("data") && json1.value("data").isArray(), "Incorrect json: data field not found");
-    const QJsonArray &json = json1.value("data").toArray();
-
-    QStringList result;
-
-    for (const QJsonValue &elementJson: json) {
-        CHECK(elementJson.isObject(), "Incorrect json");
-        const QJsonObject walJson = elementJson.toObject();
-
-        CHECK(walJson.contains("address") && walJson.value("address").isString(), "Incorrect json: address field not found");
-        const QString address = walJson.value("address").toString();
-        CHECK(walJson.contains("read_only") && walJson.value("read_only").isBool(), "Incorrect json: read_only field not found");
-        const bool readOnly = walJson.value("read_only").toBool();
-        CHECK(walJson.contains("currency_code") && walJson.value("currency_code").isString(), "Incorrect json: currency_code field not found");
-        const QString currency = walJson.value("currency_code").toString();
-        if (readOnly) {
-            if (currency == QStringLiteral("MHC"))
-                mhcs.append(address);
-            if (currency == QStringLiteral("TMH"))
-                tmhs.append(address);
-        }
-    }
-}
-
-
 WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client)
     : TimerClass(5min, nullptr)
     , db(db)
@@ -73,16 +42,8 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     , authManager(authManager)
     , client(client)
 {
-    const Uploader::Servers servers = Uploader::getServers();
-    if (isProductionSetup) {
-        LOG << "Set production server " << servers.prod;
-        CHECK(!servers.prod.empty(), "Empty server name");
-        serverName = QString::fromStdString(servers.prod);
-    } else {
-        LOG << "Set development server " << servers.dev;
-        CHECK(!servers.dev.empty(), "Empty server name");
-        serverName = QString::fromStdString(servers.dev);
-    }
+    serverName = Uploader::getServerName();
+
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
@@ -333,12 +294,9 @@ void WalletNames::getAllWalletsApps()
         QStringList tmhs;
         QStringList mhcs;
         parseAddressListResponse(QString::fromStdString(result), tmhs, mhcs);
-        for (const QString &addr : tmhs) {
-            QMetaObject::invokeMethod(&javascriptWrapper, "createWalletWatch", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QString, addr));
-        }
-        for (const QString &addr : mhcs) {
-            QMetaObject::invokeMethod(&javascriptWrapper, "createWalletWatchMHC", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QString, addr));
-        }
+
+        QMetaObject::invokeMethod(&javascriptWrapper, "createWatchWalletsList", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QStringList, tmhs));
+        QMetaObject::invokeMethod(&javascriptWrapper, "createWatchWalletsListMHC", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QStringList, mhcs));
     };
 
     const QString req = QStringLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"%1\", \"uid\": \"%2\", \"params\":[]}")

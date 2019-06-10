@@ -72,6 +72,10 @@ public slots:
 
     void onLogined(bool isInit, const QString login);
 
+    void createWatchWalletsList(const QString &requestId, const QStringList &addresses);
+
+    void createWatchWalletsListMHC(const QString &requestId, const QStringList &addresses);
+
 signals:
 
     void getListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
@@ -317,6 +321,8 @@ private:
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
 
     void createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
+
+    void createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, QString walletPath, QString jsNameResult);
 
     void removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
 

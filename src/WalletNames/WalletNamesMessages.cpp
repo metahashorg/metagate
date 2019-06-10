@@ -145,4 +145,34 @@ std::vector<WalletInfo> parseGetWalletsMessage(const QJsonDocument &response) {
     return result;
 }
 
+void parseAddressListResponse(const QString &response, QStringList &tmhs, QStringList &mhcs)
+{
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json");
+    const QJsonObject &json1 = jsonResponse.object();
+    CHECK(json1.contains("result") && json1.value("result").isString() && json1.value("result").toString() == QStringLiteral("OK"), "Incorrect json: result field not found or wrong");
+    CHECK(json1.contains("data") && json1.value("data").isArray(), "Incorrect json: data field not found");
+    const QJsonArray &json = json1.value("data").toArray();
+
+    QStringList result;
+
+    for (const QJsonValue &elementJson: json) {
+        CHECK(elementJson.isObject(), "Incorrect json");
+        const QJsonObject walJson = elementJson.toObject();
+
+        CHECK(walJson.contains("address") && walJson.value("address").isString(), "Incorrect json: address field not found");
+        const QString address = walJson.value("address").toString();
+        CHECK(walJson.contains("read_only") && walJson.value("read_only").isBool(), "Incorrect json: read_only field not found");
+        const bool readOnly = walJson.value("read_only").toBool();
+        CHECK(walJson.contains("currency_code") && walJson.value("currency_code").isString(), "Incorrect json: currency_code field not found");
+        const QString currency = walJson.value("currency_code").toString();
+        if (readOnly) {
+            if (currency == QStringLiteral("MHC"))
+                mhcs.append(address);
+            if (currency == QStringLiteral("TMH"))
+                tmhs.append(address);
+        }
+    }
+}
+
 } // namespace wallet_names

@@ -314,8 +314,8 @@ void Wallet::createWalletFromRaw(const QString &folder, const std::string &rawPr
 
 void Wallet::createWalletWatch(const QString &folder, const std::string &addr)
 {
-    if (isWalletExists(folder, addr))
-        return;
+    //if (isWalletExists(folder, addr))
+    //    return;
     saveWalletWatch(folder, addr);
 }
 

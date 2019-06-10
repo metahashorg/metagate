@@ -45,7 +45,7 @@ public:
 
     static QString makeFullWalletWatchPath(const QString &folder, const std::string &addr);
 
-    static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder, bool all = true);
+    static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder, bool all = false);
 
     static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder);
 

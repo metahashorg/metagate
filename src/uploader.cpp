@@ -70,11 +70,25 @@ Uploader::Servers Uploader::getServers() {
     Servers servers;
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("servers/production"), "settings production server not found");
-    servers.prod = settings.value("servers/production").toString().toStdString();
+    servers.prod = settings.value("servers/production").toString();
     CHECK(settings.contains("servers/development"), "settings development server not found");
-    servers.dev = settings.value("servers/development").toString().toStdString();
+    servers.dev = settings.value("servers/development").toString();
 
     return servers;
+}
+
+QString Uploader::getServerName()
+{
+    const Servers servers = Uploader::getServers();
+    if (isProductionSetup) {
+        LOG << "Set production server " << servers.prod;
+        CHECK(!servers.prod.isEmpty(), "Empty server name");
+        return servers.prod;
+    } else {
+        LOG << "Set development server " << servers.dev;
+        CHECK(!servers.dev.isEmpty(), "Empty server name");
+        return servers.dev;
+    }
 }
 
 static milliseconds getTimerInterval() {
@@ -91,16 +105,7 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     , auth(auth)
     , mainWindow(mainWindow)
 {
-    const Servers servers = getServers();
-    if (isProductionSetup) {
-        LOG << "Set production server " << servers.prod;
-        CHECK(!servers.prod.empty(), "Empty server name");
-        serverName = QString::fromStdString(servers.prod);
-    } else {
-        LOG << "Set development server " << servers.dev;
-        CHECK(!servers.dev.empty(), "Empty server name");
-        serverName = QString::fromStdString(servers.dev);
-    }
+    serverName = getServerName();
 
     CHECK(connect(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent), "not connect processEvent");
     CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");

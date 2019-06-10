@@ -108,6 +108,46 @@ static QString makeMessageApplicationForWss(const QString &hardwareId, const QSt
     return json.toJson(QJsonDocument::Compact);
 }
 
+static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &wallets) {
+    QJsonArray jsonArray;
+    for (const auto &r: wallets) {
+        jsonArray.push_back(r.first);
+    }
+    QJsonDocument json(jsonArray);
+    return json.toJson(QJsonDocument::Compact);
+}
+
+static QString makeJsonWalletsInfo(const std::vector<Wallet::WalletInfo> &wallets)
+{
+    QJsonArray jsonArray;
+    for (const auto &r: wallets) {
+        QJsonObject val;
+        val.insert("address", r.address);
+        if (r.type == Wallet::Type::Key)
+            val.insert("type", 1);
+        else if (r.type == Wallet::Type::Watch)
+            val.insert("type", 2);
+        else
+            val.insert("type", -1);
+        val.insert("path", r.path);
+        jsonArray.push_back(val);
+    }
+    QJsonDocument json(jsonArray);
+    return json.toJson(QJsonDocument::Compact);
+}
+
+static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QString>> &wallets) {
+    QJsonArray jsonArray;
+    for (const auto &r: wallets) {
+        QJsonObject val;
+        val.insert("address", r.first);
+        val.insert("path", r.second);
+        jsonArray.push_back(val);
+    }
+    QJsonDocument json(jsonArray);
+    return json.toJson(QJsonDocument::Compact);
+}
+
 JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
     : mainWindow(mainWindow)
     , walletDefaultPath(getWalletPath())
@@ -197,6 +237,20 @@ BEGIN_SLOT_WRAPPER
     } else {
         setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
     }
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::createWatchWalletsList(const QString &requestId, const QStringList &addresses)
+{
+BEGIN_SLOT_WRAPPER
+    createWatchWalletsListMTHS(requestId, addresses, walletPathTmh, "createWatchWalletsListResultJs");
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::createWatchWalletsListMHC(const QString &requestId, const QStringList &addresses)
+{
+BEGIN_SLOT_WRAPPER
+    createWatchWalletsListMTHS(requestId, addresses, walletPathMth, "createWatchWalletsListMHCResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -308,6 +362,30 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
     });
 
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
+}
+
+void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, QString walletPath, QString jsNameResult)
+{
+    LOG << "Create watch wallets list mths " << requestId << "(" << addresses.join(",") << ")";
+    std::vector<std::pair<QString, QString>> created;
+    const TypedException exception = apiVrapper2([&, this]() {
+        CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        for (const QString &addr : addresses) {
+            if (Wallet::isWalletExists(walletPath, addr.toStdString()))
+                continue;
+            Wallet::createWalletWatch(walletPath, addr.toStdString());
+            Wallet wallet(walletPath, addr.toStdString());
+            const QString walletFullPath = wallet.getFullPath();
+            LOG << "Create wallet watch ok " << requestId << " " << addr <<  walletFullPath;
+            created.emplace_back(std::pair<QString, QString>(addr, walletFullPath));
+        }
+        if (!created.empty())
+            sendAppInfoToWss(userName, true);
+    });
+    if (!created.empty()) {
+        const QString json = makeJsonWallets(created);
+        makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>(json));
+    }
 }
 
 void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult)
@@ -511,46 +589,6 @@ void JavascriptWrapper::signMessageMHCV3(QString requestId, QString keyName, QSt
 BEGIN_SLOT_WRAPPER
     signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, walletPathMth, "signMessageMHCV3ResultJs");
 END_SLOT_WRAPPER
-}
-
-static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &wallets) {
-    QJsonArray jsonArray;
-    for (const auto &r: wallets) {
-        jsonArray.push_back(r.first);
-    }
-    QJsonDocument json(jsonArray);
-    return json.toJson(QJsonDocument::Compact);
-}
-
-static QString makeJsonWalletsInfo(const std::vector<Wallet::WalletInfo> &wallets)
-{
-    QJsonArray jsonArray;
-    for (const auto &r: wallets) {
-        QJsonObject val;
-        val.insert("address", r.address);
-        if (r.type == Wallet::Type::Key)
-            val.insert("type", 1);
-        else if (r.type == Wallet::Type::Watch)
-            val.insert("type", 2);
-        else
-            val.insert("type", -1);
-        val.insert("path", r.path);
-        jsonArray.push_back(val);
-    }
-    QJsonDocument json(jsonArray);
-    return json.toJson(QJsonDocument::Compact);
-}
-
-static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QString>> &wallets) {
-    QJsonArray jsonArray;
-    for (const auto &r: wallets) {
-        QJsonObject val;
-        val.insert("address", r.first);
-        val.insert("path", r.second);
-        jsonArray.push_back(val);
-    }
-    QJsonDocument json(jsonArray);
-    return json.toJson(QJsonDocument::Compact);
 }
 
 QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath, QString name) {

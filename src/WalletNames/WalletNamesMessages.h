@@ -37,6 +37,8 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response);
 
 std::vector<WalletInfo> parseGetWalletsMessage(const QJsonDocument &response);
 
+void parseAddressListResponse(const QString &response, QStringList &tmhs, QStringList &mhcs);
+
 } // namespace wallet_names
 
 #endif // WALLETNAMESMESSAGES_H
