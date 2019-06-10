@@ -707,7 +707,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
         tx2 = tx;
         signature2 = signature;
 
-        LOG << "Sign message ok " << Wallet::calcHash(tx);
+        LOG << "Sign message ok " << Wallet::calcHash(tx, signature, publicKey);
     });
 
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature2, publicKey2, tx2);

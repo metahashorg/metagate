@@ -526,8 +526,11 @@ std::string Wallet::genDataDelegateHex(bool isDelegate, uint64_t value) {
     return toHex(result);
 }
 
-std::string Wallet::calcHash(const std::string &txHex) {
-    return toHex(doubleSha(fromHex(txHex)));
+std::string Wallet::calcHash(const std::string &txHex, const std::string &signHex, const std::string &pubkeyHex) {
+    const std::string sign = fromHex(signHex);
+    const std::string pubkey = fromHex(pubkeyHex);
+    const std::string rawTx = fromHex(txHex) + packInteger(sign.size()) + sign + packInteger(pubkey.size()) + pubkey;
+    return toHex(doubleSha(rawTx));
 }
 
 std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH) {

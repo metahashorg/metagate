@@ -77,7 +77,7 @@ public:
 
     static std::string genDataDelegateHex(bool isDelegate, uint64_t value);
 
-    static std::string calcHash(const std::string &txHex);
+    static std::string calcHash(const std::string &txHex, const std::string &signHex, const std::string &pubkeyHex);
 
     const QString& getFullPath() const {
         return fullPath;
