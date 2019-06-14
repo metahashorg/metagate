@@ -7,25 +7,18 @@
 
 #include "TypedException.h"
 
+#include "WrapperJavascript.h"
+
 namespace wallet_names {
 
 class WalletNames;
 
-class WalletNamesJavascript :public QObject {
+class WalletNamesJavascript :public WrapperJavascript {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
 
 public:
 
     explicit WalletNamesJavascript(WalletNames& walletNames, QObject *parent = nullptr);
-
-signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const WalletNamesJavascript::Callback &callback);
 
 public slots:
 
@@ -39,26 +32,13 @@ public slots:
 
 private slots:
 
-    void onCallbackCall(const WalletNamesJavascript::Callback &callback);
-
-private slots:
-
     void onUpdatedWalletName(const QString &address, const QString &name);
 
     void onWalletsFlushed();
 
 private:
 
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
-
-private:
-
     WalletNames &manager;
-
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 
 };
 
