@@ -9,16 +9,22 @@ namespace wallet_names {
 
 struct WalletInfo {
     struct Info {
+        enum class Type {
+            Watch, Key
+        };
+
         QString user = "";
         QString device = "";
         QString currency = "";
+        Type type = Type::Key;
 
         Info() = default;
 
-        Info(const QString &user, const QString &device, const QString &currency)
+        Info(const QString &user, const QString &device, const QString &currency, Type type)
             : user(user)
             , device(device)
             , currency(currency)
+            , type(type)
         {}
     };
 
@@ -26,6 +32,8 @@ struct WalletInfo {
     QString name;
 
     std::vector<Info> infos;
+
+    Info currentInfo;
 };
 
 } // namespace wallet_names

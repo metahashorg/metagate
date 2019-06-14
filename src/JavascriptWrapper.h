@@ -12,6 +12,8 @@
 
 #include "CallbackWrapper.h"
 
+#include "Wallet.h"
+
 class NsLookup;
 class WebSocketClient;
 struct TypedException;
@@ -35,11 +37,11 @@ public:
 
     using ReturnCallback = std::function<void()>;
 
-    using WalletsListCallback = CallbackWrapper<void(const QString &hwid, const QString &userName, const std::vector<QString> &walletAddresses)>;
+    using WalletsListCallback = CallbackWrapper<void(const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses)>;
 
 public:
 
-    enum class WalletType {
+    enum class WalletCurrency {
         Mth, Tmh, Btc, Eth
     };
 
@@ -74,7 +76,7 @@ public slots:
 
 signals:
 
-    void getListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
+    void getListWallets(const JavascriptWrapper::WalletCurrency &type, const WalletsListCallback &callback);
 
     void createWatchWalletsList(const QString &requestId, const QStringList &addresses);
 
@@ -83,7 +85,7 @@ signals:
 
 private slots:
 
-    void onGetListWallets(const JavascriptWrapper::WalletType &type, const WalletsListCallback &callback);
+    void onGetListWallets(const JavascriptWrapper::WalletCurrency &type, const WalletsListCallback &callback);
 
     void onCreateWatchWalletsList(const QString &requestId, const QStringList &addresses);
 

@@ -70,6 +70,16 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+static int typeToInt(const WalletInfo::Info::Type &type) {
+    if (type == WalletInfo::Info::Type::Key) {
+        return 1;
+    } else if (type == WalletInfo::Info::Type::Watch) {
+        return 2;
+    } else {
+        throwErr("Unknown type");
+    }
+}
+
 static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
     const auto walletsToJson = [](const std::vector<WalletInfo> &wallets) {
         QJsonArray walletsJson;
@@ -77,6 +87,8 @@ static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, c
             QJsonObject walletJson;
             walletJson.insert("address", wallet.address);
             walletJson.insert("name", wallet.name);
+            walletJson.insert("currency", wallet.currentInfo.currency);
+            walletJson.insert("type", typeToInt(wallet.currentInfo.type));
 
             QJsonArray infosJosn;
             for (const WalletInfo::Info &info: wallet.infos) {
@@ -84,6 +96,7 @@ static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, c
                 infoJson.insert("currency", info.currency);
                 infoJson.insert("device", info.device);
                 infoJson.insert("user", info.user);
+                infoJson.insert("type", typeToInt(info.type));
 
                 infosJosn.append(infoJson);
             }

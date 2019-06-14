@@ -32,6 +32,16 @@ QString makeRenameMessage(const QString &address, const QString &name, size_t id
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
+QString typeToString(const WalletInfo::Info::Type &type) {
+    if (type == WalletInfo::Info::Type::Key) {
+        return "key";
+    } else if (type == WalletInfo::Info::Type::Watch) {
+        return "watch";
+    } else {
+        throwErr("Incorrect wallet type");
+    }
+}
+
 QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, const QString &token, const QString &hwid) {
     QJsonObject json;
     addHeaderToJson(json, id, token, hwid);
@@ -48,6 +58,7 @@ QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, c
             location.insert("user", toHex(i.user));
             location.insert("device", i.device);
             location.insert("currency", i.currency);
+            location.insert("type", typeToString(i.type));
 
             locations.push_back(location);
         }

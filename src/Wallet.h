@@ -27,6 +27,14 @@ public:
         QString address;
         QString path;
         Type type;
+
+        WalletInfo() = default;
+
+        WalletInfo(const QString &address, const QString &path, Type type)
+            : address(address)
+            , path(path)
+            , type(type)
+        {}
     };
 
 public:

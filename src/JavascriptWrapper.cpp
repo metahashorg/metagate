@@ -179,7 +179,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(WalletsListCallback, "WalletsListCallback");
-    Q_REG(JavascriptWrapper::WalletType, "JavascriptWrapper::WalletType");
+    Q_REG(JavascriptWrapper::WalletCurrency, "JavascriptWrapper::WalletType");
 
     emit authManager.reEmit();
 }
@@ -190,30 +190,30 @@ void JavascriptWrapper::mvToThread(QThread *thread) {
     fileSystemWatcher.moveToThread(thread);
 }
 
-void JavascriptWrapper::onGetListWallets(const WalletType &type, const WalletsListCallback &callback) {
+void JavascriptWrapper::onGetListWallets(const WalletCurrency &type, const WalletsListCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<QString> result;
+    std::vector<Wallet::WalletInfo> result;
     const TypedException &exception = apiVrapper2([&]{
-        if (type == WalletType::Tmh) {
+        if (type == WalletCurrency::Tmh) {
             CHECK(!walletPathTmh.isEmpty(), "Wallet path not set");
-            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathTmh, true);
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
-        } else if (type == WalletType::Mth) {
+            result = Wallet::getAllWalletsInfoInFolder(walletPathTmh);
+        } else if (type == WalletCurrency::Mth) {
             CHECK(!walletPathMth.isEmpty(), "Wallet path not set");
-            const std::vector<std::pair<QString, QString>> res = Wallet::getAllWalletsInFolder(walletPathMth, true);
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
-        } else if (type == WalletType::Btc) {
+            result = Wallet::getAllWalletsInfoInFolder(walletPathMth);
+        } else if (type == WalletCurrency::Btc) {
             CHECK(!walletPathBtc.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPathBtc);
             result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
-        } else if (type == WalletType::Eth) {
+            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
+                return Wallet::WalletInfo(pair.first, pair.second, Wallet::Type::Key);
+            });
+        } else if (type == WalletCurrency::Eth) {
             CHECK(!walletPathEth.isEmpty(), "Wallet path not set");
             const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPathEth);
             result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), std::mem_fn(&std::pair<QString, QString>::first));
+            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
+                return Wallet::WalletInfo(pair.first, pair.second, Wallet::Type::Key);
+            });
         } else {
             throwErr("Incorrect type");
         }
