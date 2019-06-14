@@ -14,6 +14,8 @@ QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, c
 
 QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hwid);
 
+QString makeGetWalletsAppsMessage(size_t id, const QString &token, const QString &hwid);
+
 enum METHOD: int {
     RENAME = 0, SET_WALLETS = 1, GET_WALLETS = 2,
     NOT_SET = 1000,

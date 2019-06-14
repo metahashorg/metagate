@@ -65,6 +65,11 @@ QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hw
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
+QString makeGetWalletsAppsMessage(size_t id, const QString &token, const QString &hwid) {
+    return QStringLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"%1\", \"uid\": \"%2\", \"params\":[]}")
+            .arg(token).arg(hwid);
+}
+
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     ResponseType result;
     QString type;

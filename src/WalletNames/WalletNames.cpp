@@ -106,6 +106,26 @@ void WalletNames::getAllWallets() {
     emit client.sendMessage(message);
 }
 
+void WalletNames::getAllWalletsApps() {
+    LOG << "Sync wallets";
+    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), "Server error: " + exception.toString());
+        QStringList tmhs;
+        QStringList mhcs;
+        parseAddressListResponse(QString::fromStdString(result), tmhs, mhcs);
+
+        emit javascriptWrapper.createWatchWalletsList(QStringLiteral(""), tmhs);
+        emit javascriptWrapper.createWatchWalletsListMHC(QStringLiteral(""), mhcs);
+    };
+
+    const QString req = makeGetWalletsAppsMessage(id.get(), token, hwid);
+    httpClient.sendMessagePost(
+        QUrl(serverName),
+        req,
+        callbackAppVersion, timeout
+    );
+}
+
 void WalletNames::onAddOrUpdateWallets(const std::vector<WalletInfo> &infos, const AddWalletsNamesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException &exception = apiVrapper2([&]{
@@ -284,28 +304,6 @@ void WalletNames::sendAllWallets() {
             LOG << "Error: " << e.description;
         }, signalFunc));
     }
-}
-
-void WalletNames::getAllWalletsApps()
-{
-    LOG << "Sync wallets";
-    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
-        QStringList tmhs;
-        QStringList mhcs;
-        parseAddressListResponse(QString::fromStdString(result), tmhs, mhcs);
-
-        emit javascriptWrapper.createWatchWalletsList(QStringLiteral(""), tmhs);
-        emit javascriptWrapper.createWatchWalletsListMHC(QStringLiteral(""), mhcs);
-    };
-
-    const QString req = QStringLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"%1\", \"uid\": \"%2\", \"params\":[]}")
-            .arg(token).arg(QString::fromStdString(getMachineUid()));
-    httpClient.sendMessagePost(
-        QUrl(serverName),
-        req,
-        callbackAppVersion, timeout);
-
 }
 
 void WalletNames::onWssMessageReceived(QString message) {
