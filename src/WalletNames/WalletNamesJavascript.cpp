@@ -4,13 +4,14 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "QRegister.h"
-#include "makeJsFunc.h"
 
 #include "WalletNames.h"
 
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+
+#include "WrapperJavascriptImpl.h"
 
 using namespace std::placeholders;
 

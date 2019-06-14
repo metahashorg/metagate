@@ -199,7 +199,8 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitWalletsNames.h \
     NetwrokTesting.h \
     WalletNames/WalletNamesMessages.h \
-    WrapperJavascript.h
+    WrapperJavascript.h \
+    WrapperJavascriptImpl.h
 
 FORMS += mainwindow.ui
 

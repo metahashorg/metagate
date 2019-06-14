@@ -5,8 +5,6 @@
 
 #include <functional>
 
-#include "makeJsFunc.h"
-
 struct TypedException;
 
 class WrapperJavascript : public QObject {
@@ -74,19 +72,10 @@ private slots:
 protected:
 
     template<typename ...Args>
-    auto makeJavascriptReturnAndErrorFuncs(const QString &jsNameResult, Args&& ...args) {
-        return make_func([jsNameResult, this](const TypedException &exception, const typename Args::type& ...args) {
-            makeAndRunJsFuncParams(jsNameResult, exception, args...);
-        }, [=, this](const TypedException &exception){
-            makeAndRunJsFuncParams(jsNameResult, exception, args.value...);
-        });
-    }
+    auto makeJavascriptReturnAndErrorFuncs(const QString &jsNameResult, Args&& ...args);
 
     template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-        const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-        runJs(res);
-    }
+    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 
 private:
 

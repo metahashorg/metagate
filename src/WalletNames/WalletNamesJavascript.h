@@ -5,8 +5,6 @@
 
 #include <QObject>
 
-#include "TypedException.h"
-
 #include "WrapperJavascript.h"
 
 namespace wallet_names {
