@@ -295,8 +295,8 @@ void WalletNames::getAllWalletsApps()
         QStringList mhcs;
         parseAddressListResponse(QString::fromStdString(result), tmhs, mhcs);
 
-        QMetaObject::invokeMethod(&javascriptWrapper, "createWatchWalletsList", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QStringList, tmhs));
-        QMetaObject::invokeMethod(&javascriptWrapper, "createWatchWalletsListMHC", Qt::QueuedConnection, Q_ARG(QString, QStringLiteral("")), Q_ARG(QStringList, mhcs));
+        emit javascriptWrapper.createWatchWalletsList(QStringLiteral(""), tmhs);
+        emit javascriptWrapper.createWatchWalletsListMHC(QStringLiteral(""), mhcs);
     };
 
     const QString req = QStringLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"%1\", \"uid\": \"%2\", \"params\":[]}")

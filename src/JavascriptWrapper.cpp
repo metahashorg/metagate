@@ -173,6 +173,8 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
 
     CHECK(connect(this, &JavascriptWrapper::getListWallets, this, &JavascriptWrapper::onGetListWallets), "not connect onGetListWallets");
+    CHECK(connect(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList), "not connect onCreateWatchWalletsList");
+    CHECK(connect(this, &JavascriptWrapper::createWatchWalletsListMHC, this, &JavascriptWrapper::onCreateWatchWalletsListMHC), "not connect onCreateWatchWalletsListMHC");
 
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
@@ -240,14 +242,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::createWatchWalletsList(const QString &requestId, const QStringList &addresses)
+void JavascriptWrapper::onCreateWatchWalletsList(const QString &requestId, const QStringList &addresses)
 {
 BEGIN_SLOT_WRAPPER
     createWatchWalletsListMTHS(requestId, addresses, walletPathTmh, "createWatchWalletsListResultJs");
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::createWatchWalletsListMHC(const QString &requestId, const QStringList &addresses)
+void JavascriptWrapper::onCreateWatchWalletsListMHC(const QString &requestId, const QStringList &addresses)
 {
 BEGIN_SLOT_WRAPPER
     createWatchWalletsListMTHS(requestId, addresses, walletPathMth, "createWatchWalletsListMHCResultJs");
