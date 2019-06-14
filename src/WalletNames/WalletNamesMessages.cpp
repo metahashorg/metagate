@@ -32,13 +32,23 @@ QString makeRenameMessage(const QString &address, const QString &name, size_t id
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString typeToString(const WalletInfo::Info::Type &type) {
+static QString typeToString(const WalletInfo::Info::Type &type) {
     if (type == WalletInfo::Info::Type::Key) {
         return "key";
     } else if (type == WalletInfo::Info::Type::Watch) {
         return "watch";
     } else {
         throwErr("Incorrect wallet type");
+    }
+}
+
+static WalletInfo::Info::Type stringToType(const QString &type) {
+    if (type == "key") {
+        return WalletInfo::Info::Type::Key;
+    } else if (type == "watch") {
+        return WalletInfo::Info::Type::Watch;
+    } else {
+        return WalletInfo::Info::Type::Key;
     }
 }
 
@@ -150,6 +160,9 @@ std::vector<WalletInfo> parseGetWalletsMessage(const QJsonDocument &response) {
                 info.device = locationObj.value("device").toString();
                 CHECK(locationObj.contains("currency") && locationObj.value("currency").isString(), "currency field not found");
                 info.currency = locationObj.value("currency").toString();
+                if (locationObj.contains("type") && locationObj.value("type").isString()) {
+                    info.type = stringToType(locationObj.value("type").toString());
+                }
 
                 wallet.infos.emplace_back(info);
             }
