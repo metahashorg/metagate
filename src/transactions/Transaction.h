@@ -50,17 +50,18 @@ struct Transaction {
 
 struct BalanceInfo {
     QString address;
-    BigNumber received;
-    BigNumber spent;
+    BigNumber received = QString("0");
+    BigNumber spent = QString("0");
     uint64_t countReceived = 0;
     uint64_t countSpent = 0;
+    uint64_t countTxs = 0;
     uint64_t currBlockNum = 0;
 
-    uint64_t countDelegated;
-    BigNumber delegate;
-    BigNumber undelegate;
-    BigNumber delegated;
-    BigNumber undelegated;
+    uint64_t countDelegated = 0;
+    BigNumber delegate = QString("0");
+    BigNumber undelegate = QString("0");
+    BigNumber delegated = QString("0");
+    BigNumber undelegated = QString("0");
     BigNumber reserved = QString("0");
     BigNumber forged = QString("0");
 

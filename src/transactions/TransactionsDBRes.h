@@ -131,6 +131,9 @@ static const QString selectPaymentsCountForAddress = "SELECT COUNT(*) AS count F
                                                     "WHERE address = :address AND currency = :currency "
                                                     "AND isInput = :input";
 
+static const QString selectPaymentsCountForAddress2 = "SELECT COUNT(DISTINCT txid) AS count FROM payments "
+                                                    "WHERE address = :address AND currency = :currency ";
+
 static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, address, name, type, tgroup) "
                                             "VALUES (:currency, :address, :name, :type, :tgroup)";
 

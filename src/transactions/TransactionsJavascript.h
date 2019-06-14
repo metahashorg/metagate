@@ -42,6 +42,8 @@ signals:
 
     void newBalanceSig(const QString &address, const QString &currency, const BalanceInfo &balance);
 
+    void newBalance2Sig(const QString &address, const QString &currency, const BalanceInfo &balance, const BalanceInfo &confirmedBalance);
+
     void sendedTransactionsResponseSig(const QString &requestId, const QString &server, const QString &response, const TypedException &error);
 
     void transactionInTorrentSig(const QString &requestId, const QString &server, const QString &txHash, const Transaction &tx, const TypedException &error);
@@ -57,6 +59,8 @@ public slots:
 private slots:
 
     void onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance);
+
+    void onNewBalance2(const QString &address, const QString &currency, const BalanceInfo &balance, const BalanceInfo &confirmedBalance);
 
     void onSendedTransactionsResponse(const QString &requestId, const QString &server, const QString &response, const TypedException &error);
 

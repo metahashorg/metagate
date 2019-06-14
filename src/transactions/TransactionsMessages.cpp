@@ -53,6 +53,7 @@ static BalanceInfo parseBalanceResponseInternal(const QJsonObject &json) {
     result.spent = getIntOrString(json, "spent");
     result.countReceived = getIntOrString(json, "count_received").toULong();
     result.countSpent = getIntOrString(json, "count_spent").toULong();
+    result.countTxs = getIntOrString(json, "count_txs").toULong();
     result.currBlockNum = getIntOrString(json, "currentBlock").toULong();
 
     if (json.contains("countDelegatedOps")) {

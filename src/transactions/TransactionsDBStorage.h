@@ -47,6 +47,8 @@ public:
 
     qint64 getPaymentsCountForAddress(const QString &address, const QString &currency, bool input);
 
+    qint64 getPaymentsCountForAddress(const QString &address, const QString &currency);
+
     BigNumber calcInValueForAddress(const QString &address, const QString &currency);
     BigNumber calcOutValueForAddress(const QString &address, const QString &currency);
 

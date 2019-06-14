@@ -224,6 +224,18 @@ qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address,
     return 0;
 }
 
+qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address, const QString &currency) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectPaymentsCountForAddress2), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    if (query.next()) {
+        return query.value("count").toLongLong();
+    }
+    return 0;
+}
+
 BigNumber TransactionsDBStorage::calcInValueForAddress(const QString &address, const QString &currency)
 {
     QSqlQuery query(database());
@@ -299,17 +311,6 @@ void TransactionsDBStorage::calcBalance(const QString &address, const QString &c
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     CHECK(query.exec(), query.lastError().text().toStdString());
-    balance.received = BigNumber();
-    balance.spent = BigNumber();
-    balance.delegate = BigNumber();
-    balance.undelegate = BigNumber();
-    balance.delegated = BigNumber();
-    balance.undelegated = BigNumber();
-    balance.reserved = BigNumber();
-    balance.forged = BigNumber();
-    balance.countReceived = 0;
-    balance.countSpent = 0;
-    balance.countDelegated = 0;
 
     BigNumber value;
     BigNumber fee;
@@ -358,8 +359,9 @@ void TransactionsDBStorage::calcBalance(const QString &address, const QString &c
         if (type == Transaction::Type::FORGING && !isInput) {
             balance.forged += value;
         }
-
     }
+
+    balance.countTxs = getPaymentsCountForAddress(address, currency);
 }
 
 void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)

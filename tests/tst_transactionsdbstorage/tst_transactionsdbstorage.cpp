@@ -37,6 +37,8 @@ void tst_TransactionsDBStorage::testDB1()
     db.addPayment("mh", "gfklklkltrkjtrtritrdf134", "address100", false, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "33", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::FORGING, 12332, "3453", 1);
     db.addPayment("mh", "wuklklkltrkjtrtritrdf215", "address100", false, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11232, "", 1);
     db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", false, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11455, "", 1);
+    db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", true, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
+    db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", false, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
 
     {
         const transactions::Transaction tx1 = db.getLastTransaction("address100", "mh");
@@ -63,6 +65,9 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 10);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", false), 7);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh2", false), 0);
+    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh"), 17);
+    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh2"), 1);
+    QCOMPARE(db.getPaymentsCountForAddress("address100", "mh3"), 1);
 
     db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh", true), 10);

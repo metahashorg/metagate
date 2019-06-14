@@ -109,9 +109,8 @@ void Transactions::finishMethod() {
 }
 
 uint64_t Transactions::calcCountTxs(const QString &address, const QString &currency) const {
-    const uint64_t countReceived = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, false));
-    const uint64_t countSpent = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency, true));
-    return  countReceived + countSpent;
+    const uint64_t countTxs = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency));
+    return countTxs;
 }
 
 void Transactions::newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
@@ -122,7 +121,12 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
         db.addPayment(tx);
     }
     transactionGuard.commit();
+
+    BalanceInfo confirmedBalance;
+    db.calcBalance(address, currency, confirmedBalance);
+
     emit javascriptWrapper.newBalanceSig(address, currency, balance);
+    emit javascriptWrapper.newBalance2Sig(address, currency, balance, confirmedBalance);
     updateBalanceTime(currency, servStruct);
 }
 
@@ -198,7 +202,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         const auto maxElement = std::max_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
             return first.blockNumber < second.blockNumber;
         });
-        CHECK(maxElement != txs.end(), "Incorrect min element");
+        CHECK(maxElement != txs.end(), "Incorrect max element");
         const int64_t blockNumber = maxElement->blockNumber;
         const QString request = makeGetBlockInfoRequest(blockNumber);
         client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, txs, _1, _2), timeout);
@@ -207,8 +211,8 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
     const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
-        const uint64_t countInServer = balance.countReceived + balance.countSpent;
-        const uint64_t countSave = serverBalance.countReceived + serverBalance.countSpent;
+        const uint64_t countInServer = balance.countTxs;
+        const uint64_t countSave = serverBalance.countTxs;
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
             LOG << "Balance " << address << " confirmed";
             processNewTransactions(address, serverBalance, savedCountTxs, txs, server);
@@ -219,7 +223,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
-        LOG << "Txs geted " << address << " " << txs.size();
+        LOG << "Txs geted with duplicates " << address << " " << txs.size();
 
         const QString requestBalance = makeGetBalanceRequest(address);
 
@@ -259,7 +263,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
 
             CHECK(!bestServer.isEmpty(), "Best server with txs not found. Error: " + std::get<SimpleClient::ServerException>(responses[0]).toString());
             const uint64_t countAll = calcCountTxs(address, currency);
-            const uint64_t countInServer = serverBalance.countReceived + serverBalance.countSpent;
+            const uint64_t countInServer = serverBalance.countTxs;
             LOG << PeriodicLog::make("t_" + address.right(4).toStdString()) << "Automatic get txs " << address << " " << currency << " " << countAll << " " << countInServer;
             if (countAll < countInServer) {
                 processCheckTxsOneServer(address, currency, bestServer);

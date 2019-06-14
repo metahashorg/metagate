@@ -62,7 +62,7 @@ Q_INVOKABLE void calcBalance(QString address, QString currency);
 Получение баланса
 Результат вернется в функцию
 txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)
-где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}
+где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"countTxs\":\"1\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}
 
 Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 Получает транзакцию с сервера. 
@@ -105,7 +105,12 @@ txsGetLastForgingTxJs(address, currency, result, errorNum, errorMessage)
 
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
-Возвращается при изменении баланса по остлеживаемому адресу
+Возвращается при изменении баланса по остлеживаемому адресу. Эта структура указывает на значение баланса на сервере. Если транзакций на адресе слишком много, они могут не успеть к этому моменту докачаться
+balanceJson вида как в txsCalcBalanceResultJs
+
+txsNewBalance2Js(address, currency, balanceJson, confirmedBalanceJson, errorNum, errorMessage)
+Возвращается при изменении баланса по остлеживаемому адресу. Эта структура указывает на значение баланса на сервере. Если транзакций на адресе слишком много, они могут не успеть к этому моменту докачаться
+confirmedBalanceJson - баланс, уже сохраненный в базу
 balanceJson вида как в txsCalcBalanceResultJs
 
 txsSendedTxJs(requestId, server, result, errorNum, errorMessage)
