@@ -42,7 +42,7 @@ static std::vector<WalletInfo> parseWalletNames(const QString &walletsJson) {
 }
 
 WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames, QObject *parent)
-    : WrapperJavascript(false)
+    : WrapperJavascript(true)
     , manager(walletNames)
 {
     CHECK(connect(&manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName), "not connect onUpdatedWalletName");
