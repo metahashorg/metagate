@@ -30,10 +30,10 @@ SET_LOG_NAMESPACE("WNS");
 
 namespace wallet_names {
 
-const static QString WALLET_TYPE_TMH = "tmh";
-const static QString WALLET_TYPE_MTH = "mth";
-const static QString WALLET_TYPE_BTC = "btc";
-const static QString WALLET_TYPE_ETH = "eth";
+const QString WALLET_CURRENCY_TMH = "tmh";
+const QString WALLET_CURRENCY_MTH = "mth";
+const QString WALLET_CURRENCY_BTC = "btc";
+const QString WALLET_CURRENCY_ETH = "eth";
 
 WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client)
     : TimerClass(5min, nullptr)
@@ -87,12 +87,12 @@ END_SLOT_WRAPPER
 }
 
 void WalletNames::startMethod() {
-    getAllWallets();
+    //getAllWallets();
     getAllWalletsApps();
 }
 
 void WalletNames::timerMethod() {
-    getAllWallets();
+    //getAllWallets();
     getAllWalletsApps();
 }
 
@@ -116,13 +116,27 @@ void WalletNames::getAllWalletsApps() {
     LOG << "Sync wallets";
     const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
+        const std::vector<WalletInfo> wallets = parseAddressListResponse(QString::fromStdString(result));
         QStringList tmhs;
         QStringList mhcs;
-        parseAddressListResponse(QString::fromStdString(result), tmhs, mhcs);
+        for (const WalletInfo &wallet: wallets) {
+            if (wallet.currentInfo.type != WalletInfo::Info::Type::Watch) {
+                continue;
+            }
+            if (wallet.currentInfo.currency == WALLET_CURRENCY_TMH) {
+                tmhs.append(wallet.address);
+            } else if (wallet.currentInfo.currency == WALLET_CURRENCY_MTH) {
+                mhcs.append(wallet.address);
+            }
+        }
 
         emit javascriptWrapper.createWatchWalletsList(QStringLiteral(""), tmhs);
         emit javascriptWrapper.createWatchWalletsListMHC(QStringLiteral(""), mhcs);
+
+        processWalletsList(wallets);
     };
+
+    stateRequest = StateRequest::Requested;
 
     const QString req = makeGetWalletsAppsMessage(id.get(), token, hwid);
     httpClient.sendMessagePost(QUrl(serverName), req, callbackAppVersion, timeout);
@@ -164,13 +178,13 @@ END_SLOT_WRAPPER
 }
 
 static JavascriptWrapper::WalletCurrency strToWalletCurrency(const QString &currency) {
-    if (currency == WALLET_TYPE_TMH) {
+    if (currency == WALLET_CURRENCY_TMH) {
         return JavascriptWrapper::WalletCurrency::Tmh;
-    } else if (currency == WALLET_TYPE_MTH) {
+    } else if (currency == WALLET_CURRENCY_MTH) {
         return JavascriptWrapper::WalletCurrency::Mth;
-    } else if (currency == WALLET_TYPE_BTC) {
+    } else if (currency == WALLET_CURRENCY_BTC) {
         return JavascriptWrapper::WalletCurrency::Btc;
-    } else if (currency == WALLET_TYPE_ETH) {
+    } else if (currency == WALLET_CURRENCY_ETH) {
         return JavascriptWrapper::WalletCurrency::Eth;
     } else {
         throwErr(("Incorrect type: " + currency).toStdString());
@@ -179,13 +193,13 @@ static JavascriptWrapper::WalletCurrency strToWalletCurrency(const QString &curr
 
 static QString walletCurrencyToStr(const JavascriptWrapper::WalletCurrency &type) {
     if (type == JavascriptWrapper::WalletCurrency::Tmh) {
-        return WALLET_TYPE_TMH;
+        return WALLET_CURRENCY_TMH;
     } else if (type == JavascriptWrapper::WalletCurrency::Mth) {
-        return WALLET_TYPE_MTH;
+        return WALLET_CURRENCY_MTH;
     } else if (type == JavascriptWrapper::WalletCurrency::Btc) {
-        return WALLET_TYPE_BTC;
+        return WALLET_CURRENCY_BTC;
     } else if (type == JavascriptWrapper::WalletCurrency::Eth) {
-        return WALLET_TYPE_ETH;
+        return WALLET_CURRENCY_ETH;
     } else {
         throwErr("Incorrect type");
     }
@@ -353,7 +367,7 @@ BEGIN_SLOT_WRAPPER
             token = info.token;
             hwid = QString::fromStdString(getMachineUid());
 
-            getAllWallets();
+            //getAllWallets();
             getAllWalletsApps();
         }, [](const TypedException &e) {
             LOG << "Error: " << e.description;

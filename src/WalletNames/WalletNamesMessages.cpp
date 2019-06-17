@@ -174,8 +174,10 @@ std::vector<WalletInfo> parseGetWalletsMessage(const QJsonDocument &response) {
     return result;
 }
 
-void parseAddressListResponse(const QString &response, QStringList &tmhs, QStringList &mhcs)
+std::vector<WalletInfo> parseAddressListResponse(const QString &response)
 {
+    std::vector<WalletInfo> result;
+
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();
@@ -183,25 +185,33 @@ void parseAddressListResponse(const QString &response, QStringList &tmhs, QStrin
     CHECK(json1.contains("data") && json1.value("data").isArray(), "Incorrect json: data field not found");
     const QJsonArray &json = json1.value("data").toArray();
 
-    QStringList result;
-
     for (const QJsonValue &elementJson: json) {
         CHECK(elementJson.isObject(), "Incorrect json");
         const QJsonObject walJson = elementJson.toObject();
 
+        WalletInfo info;
+
         CHECK(walJson.contains("address") && walJson.value("address").isString(), "Incorrect json: address field not found");
-        const QString address = walJson.value("address").toString();
+        info.address = walJson.value("address").toString();
+        CHECK(walJson.contains("name") && walJson.value("name").isString(), "Incorrect json: name field not found");
+        info.name = walJson.value("name").toString();
         CHECK(walJson.contains("read_only") && walJson.value("read_only").isBool(), "Incorrect json: read_only field not found");
         const bool readOnly = walJson.value("read_only").toBool();
+        info.currentInfo.type = readOnly ? WalletInfo::Info::Type::Watch : WalletInfo::Info::Type::Key;
         CHECK(walJson.contains("currency_code") && walJson.value("currency_code").isString(), "Incorrect json: currency_code field not found");
         const QString currency = walJson.value("currency_code").toString();
-        if (readOnly) {
-            if (currency == QStringLiteral("MHC"))
-                mhcs.append(address);
-            if (currency == QStringLiteral("TMH"))
-                tmhs.append(address);
+        if (currency == QStringLiteral("MHC")) {
+            info.currentInfo.currency = WALLET_CURRENCY_MTH;
+        } else if (currency == QStringLiteral("TMH")) {
+            info.currentInfo.currency = WALLET_CURRENCY_TMH;
+        } else if (currency == QStringLiteral("BTC")) {
+            info.currentInfo.currency = WALLET_CURRENCY_BTC;
+        } else if (currency == QStringLiteral("ETH")) {
+            info.currentInfo.currency = WALLET_CURRENCY_ETH;
         }
     }
+
+    return result;
 }
 
 } // namespace wallet_names

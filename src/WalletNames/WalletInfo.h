@@ -36,6 +36,11 @@ struct WalletInfo {
     Info currentInfo;
 };
 
+const extern QString WALLET_CURRENCY_TMH;
+const extern QString WALLET_CURRENCY_MTH;
+const extern QString WALLET_CURRENCY_BTC;
+const extern QString WALLET_CURRENCY_ETH;
+
 } // namespace wallet_names
 
 #endif // WALLETINFO_WALLET_NAMES_H
