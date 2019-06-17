@@ -31,3 +31,11 @@ BEGIN_SLOT_WRAPPER
     callback();
 END_SLOT_WRAPPER
 }
+
+void WrapperJavascript::wrapOperation(const std::function<void()> &f, const std::function<void(const TypedException &e)> &errorFunc) {
+    const TypedException exception = apiVrapper2(f);
+
+    if (exception.isSet()) {
+        errorFunc(exception);
+    }
+}

@@ -77,6 +77,10 @@ protected:
     template<typename... Args>
     void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
 
+protected:
+
+    void wrapOperation(const std::function<void()> &f, const std::function<void(const TypedException &e)> &errorFunc);
+
 private:
 
     void runJs(const QString &script);

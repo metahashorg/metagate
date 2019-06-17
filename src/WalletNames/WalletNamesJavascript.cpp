@@ -104,15 +104,11 @@ BEGIN_SLOT_WRAPPER
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address));
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit manager.saveWalletName(address, name, WalletNames::SaveWalletNameCallback([address, makeFunc] {
             makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc.error(exception);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -124,15 +120,11 @@ BEGIN_SLOT_WRAPPER
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(""));
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit manager.getWalletName(address, WalletNames::GetWalletNameCallback([address, makeFunc] (const QString &name) {
             makeFunc.func(TypedException(), address, name);
         }, makeFunc.error, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc.error(exception);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -144,15 +136,11 @@ BEGIN_SLOT_WRAPPER
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit manager.getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
             makeFunc.func(TypedException(), currency, walletsToJson(thisWallets, otherWallets));
         }, makeFunc.error, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc.error(exception);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -164,17 +152,13 @@ BEGIN_SLOT_WRAPPER
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         const std::vector<WalletInfo> wallets = parseWalletNames(jsonNames);
 
         emit manager.addOrUpdateWallets(wallets, WalletNames::AddWalletsNamesCallback([makeFunc] {
             makeFunc.func(TypedException(), "Ok");
         }, makeFunc.error, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc.error(exception);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
