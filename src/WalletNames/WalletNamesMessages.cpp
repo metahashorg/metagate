@@ -209,6 +209,8 @@ std::vector<WalletInfo> parseAddressListResponse(const QString &response)
         } else if (currency == QStringLiteral("ETH")) {
             info.currentInfo.currency = WALLET_CURRENCY_ETH;
         }
+
+        result.emplace_back(info);
     }
 
     return result;
