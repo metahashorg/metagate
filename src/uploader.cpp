@@ -282,6 +282,18 @@ void Uploader::uploadEvent() {
                 );
     id++;
 
+    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
+        qDebug() << "!!!!" << QString::fromStdString(result);
+    };
+
+    client.sendMessagePost(
+        QUrl(serverName),
+        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
+        "\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"" + apiToken.toStdString() +
+        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}"),
+        callbackAppVersion, timeout
+    );
+
     QProcess checkPrc;
     checkPrc.start(Uploader::getMaintenanceToolExe(), QStringList() << "--checkupdates");
     if (!checkPrc.waitForStarted())
