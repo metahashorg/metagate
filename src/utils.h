@@ -12,7 +12,11 @@ QString toHex(const QString &data);
 
 std::string toBase64(const std::string &value);
 
+QString toBase64(const QString &value);
+
 std::string fromBase64(const std::string &value);
+
+QString fromBase64(const QString &value);
 
 std::string base58ToHex(const std::string &value);
 

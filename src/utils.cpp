@@ -28,9 +28,19 @@ std::string toBase64(const std::string &value) {
     return QString(array.toBase64()).toStdString();
 }
 
+QString toBase64(const QString &value) {
+    QByteArray array(value.toUtf8());
+    return QString(array.toBase64());
+}
+
 std::string fromBase64(const std::string &value) {
     QByteArray pubKeyArray(value.data(), value.size());
     return QByteArray::fromBase64(pubKeyArray).toStdString();
+}
+
+QString fromBase64(const QString &value) {
+    QByteArray pubKeyArray(value.toUtf8());
+    return QByteArray::fromBase64(pubKeyArray);
 }
 
 std::string base58ToHex(const std::string &value) {

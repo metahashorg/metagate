@@ -10,6 +10,8 @@ namespace wallet_names {
 
 QString makeRenameMessage(const QString &address, const QString &name, size_t id, const QString &token, const QString &hwid);
 
+QString makeRenameMessageHttp(const QString &address, const QString &name, const QString &currency, size_t id, const QString &token, const QString &hwid);
+
 QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, const QString &token, const QString &hwid);
 
 QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hwid);

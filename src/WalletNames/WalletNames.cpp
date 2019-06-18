@@ -162,6 +162,11 @@ BEGIN_SLOT_WRAPPER
             stateRequest = StateRequest::Intercepted;
         }
         emit client.sendMessage(message);
+
+        const QString message2 = makeRenameMessageHttp(address, name, WALLET_CURRENCY_MTH, id.get(), token, hwid);
+        emit httpClient.sendMessagePost(serverName, message2, [](const std::string &result, const SimpleClient::ServerException &exception) {
+            CHECK(!exception.isSet(), "Server error: " + exception.toString());
+        });
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER

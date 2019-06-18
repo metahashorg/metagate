@@ -32,6 +32,32 @@ QString makeRenameMessage(const QString &address, const QString &name, size_t id
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
+QString makeRenameMessageHttp(const QString &address, const QString &name, const QString &currency, size_t id, const QString &token, const QString &hwid) {
+    QJsonObject json;
+    json.insert("jsonrpc", "2.0");
+    json.insert("token", token);
+    json.insert("uid", hwid);
+    json.insert("method", "address.name.set");
+    QJsonObject param;
+    param.insert("address", address);
+    param.insert("name", toBase64(name));
+    int cur = 0;
+    if (currency == WALLET_CURRENCY_BTC) {
+        cur = 2;
+    } else if (currency == WALLET_CURRENCY_ETH) {
+        cur = 3;
+    } else if (currency == WALLET_CURRENCY_MTH) {
+        cur = 4;
+    } else if (currency == WALLET_CURRENCY_TMH) {
+        cur = 1;
+    }
+    param.insert("currency", cur);
+    QJsonArray params;
+    params.push_back(param);
+    json.insert("params", params);
+    return QJsonDocument(json).toJson(QJsonDocument::Compact);
+}
+
 static QString typeToString(const WalletInfo::Info::Type &type) {
     if (type == WalletInfo::Info::Type::Key) {
         return "key";
@@ -194,7 +220,7 @@ std::vector<WalletInfo> parseAddressListResponse(const QString &response)
         CHECK(walJson.contains("address") && walJson.value("address").isString(), "Incorrect json: address field not found");
         info.address = walJson.value("address").toString();
         CHECK(walJson.contains("name") && walJson.value("name").isString(), "Incorrect json: name field not found");
-        info.name = walJson.value("name").toString();
+        info.name = fromBase64(walJson.value("name").toString());
         CHECK(walJson.contains("read_only") && walJson.value("read_only").isBool(), "Incorrect json: read_only field not found");
         const bool readOnly = walJson.value("read_only").toBool();
         info.currentInfo.type = readOnly ? WalletInfo::Info::Type::Watch : WalletInfo::Info::Type::Key;
