@@ -149,7 +149,7 @@ ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     } else if (type == GET_WALLETS_METHOD) {
         result.method = METHOD::GET_WALLETS;
     } else if (type.isEmpty()) {
-        // ignore
+        result.method = METHOD::ALIEN;
     } else {
         result.method = METHOD::ALIEN;
     }
