@@ -310,4 +310,17 @@ void tst_TransactionsDBStorage::testAddressInfos()
     }
 }
 
+void tst_TransactionsDBStorage::testBlockNumer() {
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
+    transactions::TransactionsDBStorage db;
+    db.init();
+
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", true, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "", 1);
+
+    long long tt = db.getPaymentsCountForAddress("address100", "mh");
+    QCOMPARE(tt, 2);
+}
+
 QTEST_MAIN(tst_TransactionsDBStorage)
