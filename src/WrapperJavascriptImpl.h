@@ -9,7 +9,7 @@ template<typename ...Args>
 auto WrapperJavascript::makeJavascriptReturnAndErrorFuncs(const QString &jsNameResult, Args&& ...args) {
     return make_func([jsNameResult, this](const TypedException &exception, const typename Args::type& ...args) {
         makeAndRunJsFuncParams(jsNameResult, exception, args...);
-    }, [=, this](const TypedException &exception){
+    }, [=](const TypedException &exception){
         makeAndRunJsFuncParams(jsNameResult, exception, args.value...);
     });
 }
