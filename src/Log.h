@@ -54,6 +54,8 @@ private:
 
     void print(const PeriodicLog &p);
 
+    void print(const bool &b);
+
     bool processPeriodic(const std::string &s, std::string &addedStr);
 
     std::stringstream ssCout;

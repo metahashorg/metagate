@@ -217,6 +217,10 @@ void Log_::print(const std::string &t) {
     }
 }
 
+void Log_::print(const bool &b) {
+    ssCout << (b ? "true" : "false");
+}
+
 void initLog() {
     const QString logPath = getLogPath();
 
