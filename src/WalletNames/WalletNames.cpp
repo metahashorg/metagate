@@ -69,7 +69,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     emit authManager.reEmit();
 
     httpClient.setParent(this);
-    CHECK(connect(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall), "not connect onCallbackCall");
     CHECK(connect(&httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall), "not connect callbackCall");
     httpClient.moveToThread(TimerClass::getThread());
 
