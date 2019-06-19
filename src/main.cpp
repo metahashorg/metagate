@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDateTime>
 
 #include "RunGuard.h"
 
@@ -64,6 +65,12 @@ static void crash_handler(int sig) {
     exit(1);
 }
 #endif
+
+static void printCurrentYear() {
+    const QDateTime nowYear = QDateTime::currentDateTime();
+    const std::string year = nowYear.toString("yyyy").toStdString();
+    LOG << "Current year: " << year;
+}
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -164,6 +171,7 @@ int main(int argc, char *argv[]) {
         LOG << "Platform " << osName;
         LOG << "Machine uid " << getMachineUid();
         LOG << "Is virtual machine " << isVirtualMachine();
+        printCurrentYear();
 
         NetwrokTesting nettesting;
         nettesting.start();

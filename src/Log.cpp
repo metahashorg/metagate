@@ -124,7 +124,7 @@ bool PeriodicLog::notSet() const {
 
 Log_::Log_(const std::string &fileName) {
     const QDateTime now = QDateTime::currentDateTime();
-    const std::string time = now.toString("yyyy.MM.dd_hh:mm:ss").toStdString();
+    const std::string time = now.toString("MM.dd_hh:mm:ss").toStdString();
     const auto tId = std::this_thread::get_id();
     ssLog << std::hex << std::noshowbase << tId << std::dec << " " << time;
 
