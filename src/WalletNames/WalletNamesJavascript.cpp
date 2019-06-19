@@ -138,6 +138,7 @@ BEGIN_SLOT_WRAPPER
 
     wrapOperation([&, this](){
         emit manager.getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
+            LOG << PeriodicLog::make("wn_" + currency.toStdString()) << "get wallets in currency ok " << currency << " " << QString(walletsToJson(thisWallets, otherWallets).toJson(QJsonDocument::Compact));
             makeFunc.func(TypedException(), currency, walletsToJson(thisWallets, otherWallets));
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);

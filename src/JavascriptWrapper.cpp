@@ -311,7 +311,7 @@ END_SLOT_WRAPPER
 ////////////////
 
 void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult) {
-    LOG << "Create wallet mths " << requestId;
+    LOG << "Create wallet mths " << requestId << " " << walletPath;
 
     Opt<QString> walletFullPath;
     Opt<std::string> publicKey;

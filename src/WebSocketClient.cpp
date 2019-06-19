@@ -100,7 +100,6 @@ BEGIN_SLOT_WRAPPER
     prevPongTime = ::now();
     for (const auto &pair: helloStrings) {
         for (const QString &helloString: pair.second) {
-            LOG << "Wss send hello message " << helloString;
             m_webSocket->sendTextMessage(helloString);
         }
     }
