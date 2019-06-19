@@ -104,6 +104,7 @@ void WalletNames::getAllWallets() {
     if (token.isEmpty()) {
         return;
     }
+    LOG << "Sync wallets2";
     const QString message = makeGetWalletsMessage(id.get(), token, hwid);
     stateRequest = StateRequest::Requested;
     emit client.sendMessage(message);
@@ -327,6 +328,8 @@ void WalletNames::sendAllWallets() {
         return thisWallets;
     };
 
+    LOG << "Send all wallets";
+
     const std::vector<JavascriptWrapper::WalletCurrency> types = {JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletCurrency::Btc, JavascriptWrapper::WalletCurrency::Eth};
     for (const JavascriptWrapper::WalletCurrency type: types) {
         emit javascriptWrapper.getListWallets(type, JavascriptWrapper::WalletsListCallback([this, type, processWallets](const QString &hw, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) mutable {
@@ -354,8 +357,8 @@ BEGIN_SLOT_WRAPPER
     } else if (responseType.method == METHOD::SET_WALLETS) {
         LOG << "Set wallets ok";
     } else if (responseType.method == METHOD::GET_WALLETS) {
-        LOG << "Get wallets ok";
         const std::vector<WalletInfo> wallets = parseGetWalletsMessage(messageJson);
+        LOG << "Get wallets ok " << wallets.size();
         processWalletsList(wallets);
     } else if (responseType.method == METHOD::ALIEN) {
         return;

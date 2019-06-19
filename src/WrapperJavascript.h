@@ -57,7 +57,7 @@ protected:
 
 public:
 
-    WrapperJavascript(bool printJs);
+    WrapperJavascript(bool printJs, const std::string &cppFileName);
 
 signals:
 
@@ -88,6 +88,8 @@ private:
 protected:
 
     const bool printJs;
+
+    const std::string cppFileName;
 
     std::function<void(const std::function<void()> &callback)> signalFunc;
 };

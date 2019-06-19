@@ -280,6 +280,7 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
         const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);
+        LOG << "Send MetaGate info to wss. Count keys " << keysTmh.size() << " " << keysMth.size() << ". " << userName;
         emit wssClient.sendMessage(message);
         emit wssClient.setHelloString(message, "jsWrapper");
         sendedUserName = newUserName;
@@ -300,6 +301,7 @@ QByteArray JavascriptWrapper::getUtmData()
 
 void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
 BEGIN_SLOT_WRAPPER
+    LOG << "Send command line " << line;
     emit wssClient.sendMessage(makeCommandLineMessageForWss(hardwareId, userId, focusCount, line, isEnter, isUserText));
 END_SLOT_WRAPPER
 }
@@ -1974,23 +1976,21 @@ BEGIN_SLOT_WRAPPER
         const TypedException exception = apiVrapper2([&, this](){
             CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
             const QJsonObject data = root.value("data").toObject();
-            LOG << "Meta online response";
+            LOG << "Meta online response: " << message;
             result = QJsonDocument(data);
         });
 
         makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    }
-
-    if (appType == QStringLiteral("InEvent")) {
+    } else if (appType == QStringLiteral("InEvent")) {
         LOG << "EVENT: " << message;
         const QString event = root.value("event").toString();
-            if (event == QStringLiteral("showExchangePopUp")) {
-                const QString user = root.value("user").toString();
-                const QString type = root.value("type").toString();
-                if (user == userName) {
-                    const QString JS_NAME_RESULT = "showExchangePopUpJs";
-                    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(type));
-                }
+        if (event == QStringLiteral("showExchangePopUp")) {
+            const QString user = root.value("user").toString();
+            const QString type = root.value("type").toString();
+            if (user == userName) {
+                const QString JS_NAME_RESULT = "showExchangePopUpJs";
+                makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(type));
+            }
         }
     }
 END_SLOT_WRAPPER

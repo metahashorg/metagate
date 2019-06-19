@@ -73,7 +73,9 @@ struct AddFileNameAlias_ {
 
 };
 
-#define LOG Log_(std::string(__FILE__))
+#define LOG_FILE (std::string(__FILE__))
+
+#define LOG Log_(LOG_FILE)
 
 #define LOG2(file) Log_(file)
 

@@ -9,8 +9,9 @@
 
 using namespace std::placeholders;
 
-WrapperJavascript::WrapperJavascript(bool printJs)
+WrapperJavascript::WrapperJavascript(bool printJs, const std::string &cppFileName)
     : printJs(printJs)
+    , cppFileName(cppFileName)
 {
     CHECK(connect(this, &WrapperJavascript::callbackCall, this, &WrapperJavascript::onCallbackCall), "not connect onCallbackCall");
 
@@ -21,7 +22,7 @@ WrapperJavascript::WrapperJavascript(bool printJs)
 
 void WrapperJavascript::runJs(const QString &script) {
     if (printJs) {
-        LOG << "Javascript " << script;
+        LOG2(cppFileName) << "Javascript " << script;
     }
     emit jsRunSig(script);
 }

@@ -92,6 +92,8 @@ void AuthJavascript::onSendLoginInfoResponseSig(const LoginInfo &response, const
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "authLoginInfoJs";
 
+    LOG << "Logined: " << response.login << ". Is test: " << response.isTest;
+
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, loginInfoToJson(response));
 END_SLOT_WRAPPER
 }

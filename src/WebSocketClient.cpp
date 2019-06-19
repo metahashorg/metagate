@@ -112,7 +112,6 @@ END_SLOT_WRAPPER
 
 void WebSocketClient::sendMessagesInternal() {
     if (isConnected.load()) {
-        LOG << "Wss client send message " << (!messageQueue.empty() ? messageQueue.back() : "") << ". Count " << messageQueue.size();
         for (const QString &m: messageQueue) {
             m_webSocket->sendTextMessage(m);
         }
@@ -159,7 +158,7 @@ END_SLOT_WRAPPER
 
 void WebSocketClient::onTextMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
-    LOG << "Wss received part: " << message.left(2000);
+    LOG << "Wss received size: " << message.size();
     emit messageReceived(message);
 END_SLOT_WRAPPER
 }
