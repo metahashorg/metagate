@@ -25,7 +25,7 @@ QString InitTransactions::stateName() {
 InitTransactions::InitTransactions(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall);
     Q_REG(InitTransactions::Callback, "InitTransactions::Callback");
 
     registerStateType("init", "transactions initialized", true, true);

@@ -27,7 +27,7 @@ QString InitMessenger::stateName() {
 InitMessenger::InitMessenger(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitMessenger::callbackCall, this, &InitMessenger::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitMessenger::callbackCall, this, &InitMessenger::onCallbackCall);
     Q_REG(InitMessenger::Callback, "InitMessenger::Callback");
 
     registerStateType("init", "messenger initialized", true, true);

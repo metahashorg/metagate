@@ -32,20 +32,20 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
 
     readLoginInfo();
 
-    CHECK(connect(this, &Auth::login, this, &Auth::onLogin), "not connect onLogin");
-    CHECK(connect(this, &Auth::logout, this, &Auth::onLogout), "not connect onLogout");
-    CHECK(connect(this, &Auth::check, this, &Auth::onCheck), "not connect onCheck");
-    CHECK(connect(this, &Auth::forceRefresh, this, &Auth::onForceRefresh), "not connect onForceRefresh");
-    CHECK(connect(this, &Auth::reEmit, this, &Auth::onReEmit), "not connect onReEmit");
+    Q_CONNECT(this, &Auth::login, this, &Auth::onLogin);
+    Q_CONNECT(this, &Auth::logout, this, &Auth::onLogout);
+    Q_CONNECT(this, &Auth::check, this, &Auth::onCheck);
+    Q_CONNECT(this, &Auth::forceRefresh, this, &Auth::onForceRefresh);
+    Q_CONNECT(this, &Auth::reEmit, this, &Auth::onReEmit);
 
-    CHECK(connect(this, &Auth::getLoginInfo, this, &Auth::onGetLoginInfo), "not connect onGetLoginInfo");
+    Q_CONNECT(this, &Auth::getLoginInfo, this, &Auth::onGetLoginInfo);
 
     Q_REG(LoginInfoCallback, "LoginInfoCallback");
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(LoginInfo, "LoginInfo");
 
     tcpClient.setParent(this);
-    CHECK(connect(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall);
     tcpClient.moveToThread(TimerClass::getThread());
 
     javascriptWrapper.setAuthManager(*this);

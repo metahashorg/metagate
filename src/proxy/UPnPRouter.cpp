@@ -7,6 +7,7 @@
 
 #include "check.h"
 #include "Log.h"
+#include "QRegister.h"
 
 SET_LOG_NAMESPACE("PRX");
 
@@ -102,8 +103,8 @@ void UPnPRouter::downloadXMLFile()
     QNetworkRequest request(m_location);
     //qDebug() << "Router UPnP XML location " << m_location;
     QNetworkReply *reply = m_manager.get(request);
-    CHECK(connect(reply, &QNetworkReply::finished,
-                  [this, reply]() {
+    Q_CONNECT3(reply, &QNetworkReply::finished,
+                  ([this, reply]() {
         if (reply->error()) {
             //m_error = "Failed to download %1: %2", d->location.toDisplayString(), j->errorString());
             //LOG
@@ -133,7 +134,7 @@ void UPnPRouter::downloadXMLFile()
 
         emit xmlFileDownloaded(true);
         reply->deleteLater();
-    }), "");
+    }));
 }
 
 
@@ -195,8 +196,8 @@ void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, con
     req.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("text/xml"));
     req.setRawHeader(QByteArrayLiteral("SOAPAction"), QStringLiteral("\"%1\"").arg(soapact).toLatin1());
     QNetworkReply *reply = m_manager.post(req, query.toLatin1());
-    CHECK(connect(reply, &QNetworkReply::finished,
-                     [reply, callback]() {
+    Q_CONNECT3(reply, &QNetworkReply::finished,
+                     ([reply, callback]() {
         if (reply->error()) {
             //qDebug()  << reply->errorString();
             callback(false, reply->errorString());
@@ -207,8 +208,7 @@ void UPnPRouter::sendSoapQuery(const QString &query, const QString &soapact, con
         //qDebug() << "ret " << reply->readAll();
         callback(true, QStringLiteral("OK"));
         reply->deleteLater();
-    }), "");
-
+    }));
 }
 
 void UPnPRouter::parseXML(QByteArray &data)

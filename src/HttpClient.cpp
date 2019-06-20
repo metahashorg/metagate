@@ -26,9 +26,9 @@ void HttpSimpleClient::startTimer1()
 {
     if (timer == nullptr) {
         timer = new QTimer();
-        CHECK(connect(timer, &QTimer::timeout, this, &HttpSimpleClient::onTimerEvent), "not connect timeout");
+        Q_CONNECT(timer, &QTimer::timeout, this, &HttpSimpleClient::onTimerEvent);
         if (thread1 != nullptr) {
-            CHECK(connect(thread1, &QThread::finished, timer, &QTimer::stop), "not connect finished");
+            Q_CONNECT(thread1, &QThread::finished, timer, &QTimer::stop);
         }
         timer->setInterval(milliseconds(1s).count());
         timer->start();

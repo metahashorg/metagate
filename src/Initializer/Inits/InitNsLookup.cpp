@@ -4,6 +4,7 @@
 
 #include "check.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -16,7 +17,7 @@ QString InitNsLookup::stateName() {
 InitNsLookup::InitNsLookup(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
-    CHECK(connect(this, &InitNsLookup::serversFlushed, this, &InitNsLookup::onServersFlushed), "not connect onServersFlushed");
+    Q_CONNECT(this, &InitNsLookup::serversFlushed, this, &InitNsLookup::onServersFlushed);
 
     registerStateType("init", "nslookup initialized", true, true);
     registerStateType("flushed", "nslookup flushed", false, false, 50s, "nslookup flushed timeout");
@@ -41,7 +42,7 @@ END_SLOT_WRAPPER
 InitNsLookup::Return InitNsLookup::initialize() {
     const TypedException exception = apiVrapper2([&, this] {
         nsLookup = std::make_unique<NsLookup>();
-        CHECK(connect(nsLookup.get(), &NsLookup::serversFlushed, this, &InitNsLookup::serversFlushed), "not connect onServersFlushed");
+        Q_CONNECT(nsLookup.get(), &NsLookup::serversFlushed, this, &InitNsLookup::serversFlushed);
         nsLookup->start();
     });
     sendInitSuccess(exception);

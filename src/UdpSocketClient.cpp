@@ -11,10 +11,10 @@
 UdpSocketClient::UdpSocketClient(QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(&socket, &QUdpSocket::readyRead, this, &UdpSocketClient::onReadyRead), "not connect onReadyRead");
-    CHECK(connect(&socket, QOverload<QAbstractSocket::SocketError>::of(&QUdpSocket::error), this, &UdpSocketClient::onSocketError), "not connect error");
+    Q_CONNECT(&socket, &QUdpSocket::readyRead, this, &UdpSocketClient::onReadyRead);
+    Q_CONNECT(&socket, QOverload<QAbstractSocket::SocketError>::of(&QUdpSocket::error), this, &UdpSocketClient::onSocketError);
 
-    CHECK(connect(&timer, &QTimer::timeout, this, &UdpSocketClient::onTimerEvent), "not connect timeout");
+    Q_CONNECT(&timer, &QTimer::timeout, this, &UdpSocketClient::onTimerEvent);
 
     timer.setInterval(milliseconds(1s).count());
 }
@@ -28,7 +28,7 @@ void UdpSocketClient::mvToThread(QThread *thread) {
     this->moveToThread(thread);
     socket.moveToThread(thread);
     CHECK(!isTimerStarted, "Timer already started");
-    CHECK(connect(thread, &QThread::finished, &timer, &QTimer::stop), "not connect stop");
+    Q_CONNECT(thread, &QThread::finished, &timer, &QTimer::stop);
     timer.moveToThread(thread);
     thread1 = thread;
 }
@@ -36,7 +36,7 @@ void UdpSocketClient::mvToThread(QThread *thread) {
 void UdpSocketClient::startTm() {
     CHECK(!isTimerStarted, "Timer already started");
     if (thread1 != nullptr) {
-        CHECK(connect(thread1, &QThread::started, &timer, QOverload<>::of(&QTimer::start)), "not connect start");
+        Q_CONNECT(thread1, &QThread::started, &timer, QOverload<>::of(&QTimer::start));
     } else {
         timer.start();
     }

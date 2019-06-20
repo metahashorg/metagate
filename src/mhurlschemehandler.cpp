@@ -7,6 +7,7 @@
 
 #include "mainwindow.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 #include "check.h"
 
 SET_LOG_NAMESPACE("MW");
@@ -75,7 +76,7 @@ MHUrlSchemeHandler::MHUrlSchemeHandler(QObject *parent)
 {
     m_manager = new QNetworkAccessManager(this);
 
-    CHECK(connect(&timer, &QTimer::timeout, this, &MHUrlSchemeHandler::onTimerEvent), "not connect timeout");
+    Q_CONNECT(&timer, &QTimer::timeout, this, &MHUrlSchemeHandler::onTimerEvent);
     timer.setInterval(milliseconds(1s).count());
     timer.start();
 }
@@ -149,24 +150,24 @@ void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow
     req.setRawHeader(QByteArray("Host"), host.toUtf8());
     QNetworkReply *reply = m_manager->get(req);
     reply->setParent(job);
-    CHECK(connect(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished), "connect finished fail");
+    Q_CONNECT(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished);
     if (isFirstRun) {
-        CHECK(connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), [this, job, win, url, host, ip, excludesIps](QNetworkReply::NetworkError err) {
+        Q_CONNECT3(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), ([this, job, win, url, host, ip, excludesIps](QNetworkReply::NetworkError err) {
         BEGIN_SLOT_WRAPPER
             LOG << "Error request MHUrlSchemeHandler " << ip;
             std::set<QString> copyExcludes = excludesIps;
             copyExcludes.insert(ip);
             processRequest(job, win, url, host, copyExcludes);
         END_SLOT_WRAPPER
-        }), "connect error fail");
+        }));
 
         requests.emplace_back(reply);
 
-        CHECK(connect(job, &QWebEngineUrlRequestJob::destroyed, [this, reqIdStr=std::to_string(reqId)]() {
+        Q_CONNECT3(job, &QWebEngineUrlRequestJob::destroyed, ([this, reqIdStr=std::to_string(reqId)]() {
         BEGIN_SLOT_WRAPPER
             removeOnRequestId(reqIdStr);
         END_SLOT_WRAPPER
-        }), "connect finished fail");
+        }));
     }
     isFirstRun = false;
 }

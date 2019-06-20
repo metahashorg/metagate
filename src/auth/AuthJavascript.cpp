@@ -7,6 +7,7 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "makeJsFunc.h"
+#include "QRegister.h"
 
 #include "Auth.h"
 
@@ -26,8 +27,8 @@ static QJsonDocument loginInfoToJson(const LoginInfo &info) {
 AuthJavascript::AuthJavascript(QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(this, &AuthJavascript::callbackCall, this, &AuthJavascript::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig), "not connect onSendLoginInfoResponseSig");
+    Q_CONNECT(this, &AuthJavascript::callbackCall, this, &AuthJavascript::onCallbackCall);
+    Q_CONNECT(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig);
 }
 
 void AuthJavascript::login(const QString &login, const QString &password) {

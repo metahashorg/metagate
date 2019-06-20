@@ -12,7 +12,7 @@ using namespace std::placeholders;
 WrapperJavascript::WrapperJavascript(bool printJs)
     : printJs(printJs)
 {
-    CHECK(connect(this, &WrapperJavascript::callbackCall, this, &WrapperJavascript::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &WrapperJavascript::callbackCall, this, &WrapperJavascript::onCallbackCall);
 
     Q_REG(WrapperJavascript::Callback, "WrapperJavascript::Callback");
 

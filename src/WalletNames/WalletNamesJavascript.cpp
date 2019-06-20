@@ -45,8 +45,8 @@ WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames, QObject *
     : WrapperJavascript(true)
     , manager(walletNames)
 {
-    CHECK(connect(&manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName), "not connect onUpdatedWalletName");
-    CHECK(connect(&manager, &WalletNames::walletsFlushed, this, &WalletNamesJavascript::onWalletsFlushed), "not connect onWalletsFlushed");
+    Q_CONNECT(&manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName);
+    Q_CONNECT(&manager, &WalletNames::walletsFlushed, this, &WalletNamesJavascript::onWalletsFlushed);
 }
 
 static int typeToInt(const WalletInfo::Info::Type &type) {

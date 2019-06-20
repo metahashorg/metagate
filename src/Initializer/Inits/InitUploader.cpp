@@ -4,6 +4,7 @@
 
 #include "check.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -16,7 +17,7 @@ QString InitUploader::stateName() {
 InitUploader::InitUploader(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
-    CHECK(connect(this, &InitUploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
+    Q_CONNECT(this, &InitUploader::checkedUpdatesHtmls, this, &InitUploader::onCheckedUpdatesHtmls);
 
     registerStateType("init", "uploader initialized", true, true);
     registerStateType("check_updates_htmls", "uploader check updates", false, false, 30s, "uploader check updates");
@@ -41,7 +42,7 @@ END_SLOT_WRAPPER
 InitUploader::Return InitUploader::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth) {
     const TypedException exception = apiVrapper2([&, this] {
         uploader = std::make_unique<Uploader>(*auth.get().first, *mainWindow.get());
-        CHECK(connect(uploader.get(), &Uploader::checkedUpdatesHtmls, this, &InitUploader::checkedUpdatesHtmls), "not connect onCheckedUpdatesHtmls");
+        Q_CONNECT(uploader.get(), &Uploader::checkedUpdatesHtmls, this, &InitUploader::checkedUpdatesHtmls);
         uploader->start();
     });
     sendInitSuccess(exception);

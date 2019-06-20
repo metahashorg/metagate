@@ -45,11 +45,11 @@ static QJsonDocument subTypesToJson(const std::vector<Initializer::StateType> &t
 InitializerJavascript::InitializerJavascript(QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(this, &InitializerJavascript::callbackCall, this, &InitializerJavascript::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitializerJavascript::callbackCall, this, &InitializerJavascript::onCallbackCall);
 
-    CHECK(connect(this, &InitializerJavascript::stateChangedSig, this, &InitializerJavascript::onStateChanged), "not connect onStateChanged");
-    CHECK(connect(this, &InitializerJavascript::initializedSig, this, &InitializerJavascript::onInitialized), "not connect onInitialized");
-    CHECK(connect(this, &InitializerJavascript::initializedCriticalSig, this, &InitializerJavascript::onInitializedCritical), "not connect onInitializedCritical");
+    Q_CONNECT(this, &InitializerJavascript::stateChangedSig, this, &InitializerJavascript::onStateChanged);
+    Q_CONNECT(this, &InitializerJavascript::initializedSig, this, &InitializerJavascript::onInitialized);
+    Q_CONNECT(this, &InitializerJavascript::initializedCriticalSig, this, &InitializerJavascript::onInitializedCritical);
 
     Q_REG3(InitState, "InitState", "initialize");
     Q_REG2(TypedException, "TypedException", false);

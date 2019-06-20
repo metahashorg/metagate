@@ -23,8 +23,8 @@ QString InitAuth::stateName() {
 InitAuth::InitAuth(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
-    CHECK(connect(this, &InitAuth::callbackCall, this, &InitAuth::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(this, &InitAuth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished), "not connect onCheckTokenFinished");
+    Q_CONNECT(this, &InitAuth::callbackCall, this, &InitAuth::onCallbackCall);
+    Q_CONNECT(this, &InitAuth::checkTokenFinished, this, &InitAuth::onCheckTokenFinished);
     Q_REG(InitAuth::Callback, "InitAuth::Callback");
 
     registerStateType("init", "auth initialized", true, true);
@@ -63,7 +63,7 @@ InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow
         authJavascript = std::make_unique<auth::AuthJavascript>();
         authJavascript->moveToThread(mainThread);
         authManager = std::make_unique<auth::Auth>(*authJavascript);
-        CHECK(connect(authManager.get(), &auth::Auth::checkTokenFinished, this, &InitAuth::checkTokenFinished), "not connect checkTokenFinished");
+        Q_CONNECT(authManager.get(), &auth::Auth::checkTokenFinished, this, &InitAuth::checkTokenFinished);
         authManager->start();
         MainWindow &mw = *mainWindow.get();
         emit mw.setAuth(authJavascript.get(), authManager.get(), MainWindow::SetAuthCallback([this]() {

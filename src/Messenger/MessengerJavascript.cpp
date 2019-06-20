@@ -33,16 +33,16 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     , cryptoManager(cryptoManager)
     , txManager(txManager)
 {
-    CHECK(connect(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges), "not connect onNewMesseges");
-    CHECK(connect(this, &MessengerJavascript::addedToChannelSig, this, &MessengerJavascript::onAddedToChannel), "not connect onAddedToChannel");
-    CHECK(connect(this, &MessengerJavascript::deletedFromChannelSig, this, &MessengerJavascript::onDeletedFromChannel), "not connect onDeletedFromChannel");
-    CHECK(connect(this, &MessengerJavascript::newMessegesChannelSig, this, &MessengerJavascript::onNewMessegesChannel), "not connect onNewMessegesChannel");
-    CHECK(connect(this, &MessengerJavascript::requiresPubkeySig, this, &MessengerJavascript::onRequiresPubkey), "not connect onRequiresPubkey");
-    CHECK(connect(this, &MessengerJavascript::collocutorAddedPubkeySig, this, &MessengerJavascript::onCollocutorAddedPubkey), "not connect onCollocutorAddedPubkey");
+    Q_CONNECT(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall);
+    Q_CONNECT(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges);
+    Q_CONNECT(this, &MessengerJavascript::addedToChannelSig, this, &MessengerJavascript::onAddedToChannel);
+    Q_CONNECT(this, &MessengerJavascript::deletedFromChannelSig, this, &MessengerJavascript::onDeletedFromChannel);
+    Q_CONNECT(this, &MessengerJavascript::newMessegesChannelSig, this, &MessengerJavascript::onNewMessegesChannel);
+    Q_CONNECT(this, &MessengerJavascript::requiresPubkeySig, this, &MessengerJavascript::onRequiresPubkey);
+    Q_CONNECT(this, &MessengerJavascript::collocutorAddedPubkeySig, this, &MessengerJavascript::onCollocutorAddedPubkey);
 
-    CHECK(connect(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined), "not connect onLogined");
-    CHECK(connect(&jsWrapper, &JavascriptWrapper::mthWalletCreated, this, &MessengerJavascript::onMthWalletCreated), "not connect onMthWalletCreated");
+    Q_CONNECT(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined);
+    Q_CONNECT(&jsWrapper, &JavascriptWrapper::mthWalletCreated, this, &MessengerJavascript::onMthWalletCreated);
 
     Q_REG(MessengerJavascript::Callback, "MessengerJavascript::Callback");
 

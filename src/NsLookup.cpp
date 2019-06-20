@@ -17,6 +17,7 @@
 #include "Log.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
+#include "QRegister.h"
 
 #include "algorithms.h"
 
@@ -96,10 +97,10 @@ NsLookup::NsLookup(QObject *parent)
     }
     LOG << "Start ns resolve after " << 1 << " ms " << isSafeCheck;
 
-    CHECK(connect(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
+    Q_CONNECT(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall);
 
     client.setParent(this);
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall), "not connect callbackCall");
+    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall);
 
     udpClient.mvToThread(TimerClass::getThread());
     client.moveToThread(TimerClass::getThread());

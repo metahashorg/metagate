@@ -27,11 +27,11 @@ Initializer::Initializer(InitializerJavascript &javascriptWrapper, QObject *pare
     : QObject(parent)
     , javascriptWrapper(javascriptWrapper)
 {
-    CHECK(connect(this, &Initializer::resendAllStatesSig, this, &Initializer::onResendAllStates), "not connect onGetAllStates");
-    CHECK(connect(this, &Initializer::javascriptReadySig, this, &Initializer::onJavascriptReady), "not connect onJavascriptReady");
-    CHECK(connect(this, &Initializer::sendState, this, &Initializer::onSendState, Qt::ConnectionType::QueuedConnection), "not connect onSendState");
-    CHECK(connect(this, &Initializer::getAllTypes, this, &Initializer::onGetAllTypes, Qt::ConnectionType::QueuedConnection), "not connect onGetAllTypes");
-    CHECK(connect(this, &Initializer::getAllSubTypes, this, &Initializer::onGetAllSubTypes, Qt::ConnectionType::QueuedConnection), "not connect onGetAllSubTypes");
+    Q_CONNECT(this, &Initializer::resendAllStatesSig, this, &Initializer::onResendAllStates);
+    Q_CONNECT(this, &Initializer::javascriptReadySig, this, &Initializer::onJavascriptReady);
+    Q_CONNECT2(this, &Initializer::sendState, this, &Initializer::onSendState, Qt::ConnectionType::QueuedConnection);
+    Q_CONNECT2(this, &Initializer::getAllTypes, this, &Initializer::onGetAllTypes, Qt::ConnectionType::QueuedConnection);
+    Q_CONNECT2(this, &Initializer::getAllSubTypes, this, &Initializer::onGetAllSubTypes, Qt::ConnectionType::QueuedConnection);
 
     Q_REG(Initializer::Callback, "Initializer::Callback");
     Q_REG(GetAllStatesCallback, "GetAllStatesCallback");

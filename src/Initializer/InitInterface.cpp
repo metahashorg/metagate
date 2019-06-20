@@ -2,6 +2,7 @@
 
 #include "check.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 #include <functional>
 using namespace std::placeholders;
@@ -28,7 +29,7 @@ InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializ
     , isTimerEnabled(isTimerEnabled)
 {
     if (isTimerEnabled) {
-        CHECK(connect(&timer, &QTimer::timeout, this, &InitInterface::onTimerEvent), "not connect timeout");
+        Q_CONNECT(&timer, &QTimer::timeout, this, &InitInterface::onTimerEvent);
         timer.setInterval(milliseconds(1s).count());
         timer.moveToThread(mainThread);
         timer.start();

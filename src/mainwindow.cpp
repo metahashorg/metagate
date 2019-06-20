@@ -118,14 +118,14 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 #endif
     qApp->installEventFilter(this);
 
-    CHECK(connect(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper), "not connect onSetJavascriptWrapper");
-    CHECK(connect(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth), "not connect onSetAuth");
-    CHECK(connect(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript), "not connect onSetMessengerJavascript");
-    CHECK(connect(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript), "not connect onSetTransactionsJavascript");
-    CHECK(connect(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript), "not connect onSetProxyJavascript");
-    CHECK(connect(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript), "not connect onSetWalletNamesJavascript");
-    CHECK(connect(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished), "not connect onInitFinished");
-    CHECK(connect(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl), "not connect onProcessExternalUrl");
+    Q_CONNECT(this, &MainWindow::setJavascriptWrapper, this, &MainWindow::onSetJavascriptWrapper);
+    Q_CONNECT(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth);
+    Q_CONNECT(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript);
+    Q_CONNECT(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript);
+    Q_CONNECT(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript);
+    Q_CONNECT(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript);
+    Q_CONNECT(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished);
+    Q_CONNECT(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl);
 
     Q_REG(SetJavascriptWrapperCallback, "SetJavascriptWrapperCallback");
     Q_REG(SetAuthCallback, "SetAuthCallback");
@@ -156,16 +156,16 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     loadFile("core/loader/index.html");
 
     client.setParent(this);
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall), "not connect callbackCall");
+    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall);
 
-    CHECK(connect(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+    Q_CONNECT(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun);
 
     ui->webView->setContextMenuPolicy(Qt::CustomContextMenu);
-    CHECK(connect(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu), "not connect customContextMenuRequested");
+    Q_CONNECT(ui->webView, &QWebEngineView::customContextMenuRequested, this, &MainWindow::onShowContextMenu);
 
-    //CHECK(connect(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished), "not connect loadFinished");
+    //Q_CONNECT(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished);
 
-    CHECK(connect(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged), "not connect loadFinished");
+    Q_CONNECT(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged);
 }
 
 MainWindow::~MainWindow() = default;
@@ -224,12 +224,12 @@ BEGIN_SLOT_WRAPPER
         CHECK(jsWrapper1 != nullptr, "Incorrect jsWrapper1");
         jsWrapper = jsWrapper1;
         jsWrapper->setWidget(this);
-        CHECK(connect(jsWrapper, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        Q_CONNECT(jsWrapper, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("mainWindow"), jsWrapper);
-        CHECK(connect(jsWrapper, &JavascriptWrapper::setHasNativeToolbarVariableSig, this, &MainWindow::onSetHasNativeToolbarVariable), "not connect setHasNativeToolbarVariableSig");
-        CHECK(connect(jsWrapper, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText), "not connect setCommandLineTextSig");
-        CHECK(connect(jsWrapper, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings), "not connect setMappingsSig");
-        CHECK(connect(jsWrapper, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory), "not connect lineEditReturnPressedSig");
+        Q_CONNECT(jsWrapper, &JavascriptWrapper::setHasNativeToolbarVariableSig, this, &MainWindow::onSetHasNativeToolbarVariable);
+        Q_CONNECT(jsWrapper, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText);
+        Q_CONNECT(jsWrapper, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings);
+        Q_CONNECT(jsWrapper, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
         doConfigureMenu();
     });
     callback.emitFunc(exception);
@@ -240,11 +240,11 @@ void MainWindow::onSetAuth(auth::AuthJavascript *authJavascript, auth::Auth *aut
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(authJavascript != nullptr, "Incorrect authJavascript");
-        CHECK(connect(authJavascript, &auth::AuthJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        Q_CONNECT(authJavascript, &auth::AuthJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("auth"), authJavascript);
 
         CHECK(authManager != nullptr, "Incorrect authManager");
-        CHECK(connect(authManager, &auth::Auth::logined, this, &MainWindow::onLogined), "not connect onLogined");
+        Q_CONNECT(authManager, &auth::Auth::logined, this, &MainWindow::onLogined);
         emit authManager->reEmit();
     });
     callback.emitFunc(exception);
@@ -255,7 +255,7 @@ void MainWindow::onSetMessengerJavascript(messenger::MessengerJavascript *messen
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(messengerJavascript != nullptr, "Incorrect messengerJavascript");
-        CHECK(connect(messengerJavascript, &messenger::MessengerJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        Q_CONNECT(messengerJavascript, &messenger::MessengerJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("messenger"), messengerJavascript);
     });
     callback.emitFunc(exception);
@@ -266,7 +266,7 @@ void MainWindow::onSetTransactionsJavascript(transactions::TransactionsJavascrip
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
-        CHECK(connect(transactionsJavascript, &transactions::TransactionsJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        Q_CONNECT(transactionsJavascript, &transactions::TransactionsJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("transactions"), transactionsJavascript);
     });
     callback.emitFunc(exception);
@@ -277,7 +277,7 @@ void MainWindow::onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, c
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
-        CHECK(connect(proxyJavascript, &proxy::ProxyJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        Q_CONNECT(proxyJavascript, &proxy::ProxyJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("proxy"), proxyJavascript);
     });
     callback.emitFunc(exception);
@@ -288,7 +288,7 @@ void MainWindow::onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript 
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(walletNamesJavascript != nullptr, "Incorrect proxyJavascript");
-        CHECK(connect(walletNamesJavascript, &wallet_names::WalletNamesJavascript::jsRunSig, this, &MainWindow::onJsRun), "not connect jsRunSig");
+        Q_CONNECT(walletNamesJavascript, &wallet_names::WalletNamesJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("wallet_names"), walletNamesJavascript);
     });
     callback.emitFunc(exception);
@@ -328,25 +328,25 @@ END_SLOT_WRAPPER
 
 void MainWindow::doConfigureMenu() {
     CHECK(jsWrapper != nullptr, "jsWrapper not set");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
+    Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
         countFocusLineEditChanged++;
-    }), "Not connect editingFinished");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+    });
+    Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
         lineEditUserChanged = true;
         emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
-    }), "Not connect textChanged");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
+    });
+    Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
         if (!lineEditUserChanged) {
             emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
         }
-    }), "Not connect textChanged");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+    });
+    Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
         emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
-    }), "Not connect returnPressed");
-    CHECK(connect(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
+    });
+    Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){
         lineEditUserChanged = false;
-    }), "Not connect textChanged");
+    });
 }
 
 void MainWindow::configureMenu() {
@@ -406,53 +406,53 @@ void MainWindow::configureMenu() {
 
     registerCommandLine();
 
-    CHECK(connect(ui->backButton, &QToolButton::pressed, [this] {
+    Q_CONNECT3(ui->backButton, &QToolButton::pressed, [this] {
         BEGIN_SLOT_WRAPPER
         historyPos--;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
         END_SLOT_WRAPPER;
-    }), "not connect backButton::pressed");
+    });
     ui->backButton->setEnabled(false);
 
-    CHECK(connect(ui->forwardButton, &QToolButton::pressed, [this]{
+    Q_CONNECT3(ui->forwardButton, &QToolButton::pressed, [this]{
         BEGIN_SLOT_WRAPPER
         historyPos++;
         enterCommandAndAddToHistory(history.at(historyPos - 1), false, false);
         ui->backButton->setEnabled(historyPos > 1);
         ui->forwardButton->setEnabled(historyPos < history.size());
         END_SLOT_WRAPPER
-    }), "not connect forwardButton::pressed");
+    });
     ui->forwardButton->setEnabled(false);
 
-    CHECK(connect(ui->refreshButton, &QToolButton::pressed, ui->webView, &QWebEngineView::reload), "not connect refreshButton::pressed");
+    Q_CONNECT(ui->refreshButton, &QToolButton::pressed, ui->webView, &QWebEngineView::reload);
 
-    CHECK(connect(ui->userButton, &QAbstractButton::pressed, [this]{
+    Q_CONNECT3(ui->userButton, &QAbstractButton::pressed, [this]{
         BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Settings");
         END_SLOT_WRAPPER
-    }), "not connect userButton::pressed");
+    });
 
-    /*CHECK(connect(ui->buyButton, &QAbstractButton::pressed, [this]{
+    /*Q_CONNECT3(ui->buyButton, &QAbstractButton::pressed, [this]{
         onEnterCommandAndAddToHistory("BuyMHC");
-    }), "not connect buyButton::pressed");*/
+    });*/
 
-    CHECK(connect(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
+    Q_CONNECT3(ui->metaWalletButton, &QAbstractButton::pressed, [this]{
         BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("Wallet");
         END_SLOT_WRAPPER
-    }), "not connect metaWalletButton::pressed");
+    });
 
-    CHECK(connect(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
+    Q_CONNECT3(ui->metaAppsButton, &QAbstractButton::pressed, [this]{
         BEGIN_SLOT_WRAPPER
         onEnterCommandAndAddToHistory("MetaApps");
         END_SLOT_WRAPPER
-    }), "not connect metaAppsButton::pressed");
+    });
 }
 
 void MainWindow::registerCommandLine() {
-    CHECK(connect(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate), "not connect currentIndexChanged");
+    Q_CONNECT(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate);
 }
 
 void MainWindow::unregisterCommandLine() {

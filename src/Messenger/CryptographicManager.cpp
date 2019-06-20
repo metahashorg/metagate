@@ -17,17 +17,17 @@ CryptographicManager::CryptographicManager(QObject *parent)
     : TimerClass(1s, parent)
     , isSaveDecrypted_(false)
 {
-    CHECK(connect(this, &CryptographicManager::decryptMessages, this, &CryptographicManager::onDecryptMessages), "not connect onDecryptMessages");
-    CHECK(connect(this, &CryptographicManager::tryDecryptMessages, this, &CryptographicManager::onTryDecryptMessages), "not connect onTryDecryptMessages");
-    CHECK(connect(this, &CryptographicManager::signMessage, this, &CryptographicManager::onSignMessage), "not connect onSignMessage");
-    CHECK(connect(this, &CryptographicManager::signMessages, this, &CryptographicManager::onSignMessages), "not connect onSignMessages");
-    CHECK(connect(this, &CryptographicManager::signTransaction, this, &CryptographicManager::onSignTransaction), "not connect onSignTransaction");
-    CHECK(connect(this, &CryptographicManager::getPubkeyRsa, this, &CryptographicManager::onGetPubkeyRsa), "not connect onGetPubkeyRsa");
-    CHECK(connect(this, &CryptographicManager::encryptDataRsa, this, &CryptographicManager::onEncryptDataRsa), "not connect onEncryptDataRsa");
-    CHECK(connect(this, &CryptographicManager::encryptDataPrivateKey, this, &CryptographicManager::onEncryptDataPrivateKey), "not connect onSignAndEncryptDataRsa");
-    CHECK(connect(this, &CryptographicManager::unlockWallet, this, &CryptographicManager::onUnlockWallet), "not connect onUnlockWallet");
-    CHECK(connect(this, &CryptographicManager::lockWallet, this, &CryptographicManager::onLockWallet), "not connect onLockWallet");
-    CHECK(connect(this, &CryptographicManager::remainingTime, this, &CryptographicManager::onRemainingTime), "not connect onRemainingTime");
+    Q_CONNECT(this, &CryptographicManager::decryptMessages, this, &CryptographicManager::onDecryptMessages);
+    Q_CONNECT(this, &CryptographicManager::tryDecryptMessages, this, &CryptographicManager::onTryDecryptMessages);
+    Q_CONNECT(this, &CryptographicManager::signMessage, this, &CryptographicManager::onSignMessage);
+    Q_CONNECT(this, &CryptographicManager::signMessages, this, &CryptographicManager::onSignMessages);
+    Q_CONNECT(this, &CryptographicManager::signTransaction, this, &CryptographicManager::onSignTransaction);
+    Q_CONNECT(this, &CryptographicManager::getPubkeyRsa, this, &CryptographicManager::onGetPubkeyRsa);
+    Q_CONNECT(this, &CryptographicManager::encryptDataRsa, this, &CryptographicManager::onEncryptDataRsa);
+    Q_CONNECT(this, &CryptographicManager::encryptDataPrivateKey, this, &CryptographicManager::onEncryptDataPrivateKey);
+    Q_CONNECT(this, &CryptographicManager::unlockWallet, this, &CryptographicManager::onUnlockWallet);
+    Q_CONNECT(this, &CryptographicManager::lockWallet, this, &CryptographicManager::onLockWallet);
+    Q_CONNECT(this, &CryptographicManager::remainingTime, this, &CryptographicManager::onRemainingTime);
 
     Q_REG(DecryptMessagesCallback, "DecryptMessagesCallback");
     Q_REG(std::vector<Message>, "std::vector<Message>");

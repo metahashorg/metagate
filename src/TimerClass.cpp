@@ -3,19 +3,20 @@
 #include "check.h"
 #include "Log.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 TimerClass::TimerClass(const milliseconds &timerPeriod, QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(&thread1, &QThread::started, this, &TimerClass::onStartedEvent), "not connect onStartedEvent");
-    CHECK(connect(this, &TimerClass::finished, &thread1, &QThread::terminate), "not connect terminate");
+    Q_CONNECT(&thread1, &QThread::started, this, &TimerClass::onStartedEvent);
+    Q_CONNECT(this, &TimerClass::finished, &thread1, &QThread::terminate);
 
     qtimer.moveToThread(&thread1);
     qtimer.setInterval(timerPeriod.count());
-    CHECK(connect(&qtimer, &QTimer::timeout, this, &TimerClass::onTimerEvent), "not connect onTimerEvent");
-    CHECK(connect(&thread1, &QThread::finished, this, &TimerClass::onFinishedEvent), "not connect onFinishedEvent");
-    CHECK(connect(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start)), "not connect start");
-    CHECK(connect(&thread1, &QThread::finished, &qtimer, &QTimer::stop), "not connect stop");
+    Q_CONNECT(&qtimer, &QTimer::timeout, this, &TimerClass::onTimerEvent);
+    Q_CONNECT(&thread1, &QThread::finished, this, &TimerClass::onFinishedEvent);
+    Q_CONNECT(&thread1, &QThread::started, &qtimer, QOverload<>::of(&QTimer::start));
+    Q_CONNECT(&thread1, &QThread::finished, &qtimer, &QTimer::stop);
 }
 
 void TimerClass::exit() {
