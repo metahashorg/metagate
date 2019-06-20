@@ -31,24 +31,24 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     , javascriptWrapper(javascriptWrapper)
     , db(db)
 {
-    CHECK(connect(this, &Transactions::callbackCall, this, &Transactions::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &Transactions::callbackCall, this, &Transactions::onCallbackCall);
 
-    CHECK(connect(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses), "not connect onRegisterAddresses");
-    CHECK(connect(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses), "not connect onGetAddresses");
-    CHECK(connect(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup), "not connect onSetCurrentGroup");
-    CHECK(connect(this, &Transactions::getTxs, this, &Transactions::onGetTxs), "not connect onGetTxs");
-    CHECK(connect(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2), "not connect onGetTxs2");
-    CHECK(connect(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll), "not connect onGetTxsAll");
-    CHECK(connect(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2), "not connect onGetTxsAll2");
-    CHECK(connect(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs), "not connect onGetForgingTxs");
-    CHECK(connect(this, &Transactions::getDelegateTxs, this, &Transactions::onGetDelegateTxs), "not connect onGetDelegateTxs");
-    CHECK(connect(this, &Transactions::getLastForgingTx, this, &Transactions::onGetLastForgingTx), "not connect onGetLastForgingTx");
-    CHECK(connect(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance), "not connect onCalcBalance");
-    CHECK(connect(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction), "not connect onSendTransaction");
-    CHECK(connect(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer), "not connect onGetTxFromServer");
-    CHECK(connect(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance), "not connect onGetLastUpdateBalance");
-    CHECK(connect(this, &Transactions::getNonce, this, &Transactions::onGetNonce), "not connect onGetNonce");
-    CHECK(connect(this, &Transactions::clearDb, this, &Transactions::onClearDb), "not connect onClearDb");
+    Q_CONNECT(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses);
+    Q_CONNECT(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses);
+    Q_CONNECT(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup);
+    Q_CONNECT(this, &Transactions::getTxs, this, &Transactions::onGetTxs);
+    Q_CONNECT(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2);
+    Q_CONNECT(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll);
+    Q_CONNECT(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2);
+    Q_CONNECT(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs);
+    Q_CONNECT(this, &Transactions::getDelegateTxs, this, &Transactions::onGetDelegateTxs);
+    Q_CONNECT(this, &Transactions::getLastForgingTx, this, &Transactions::onGetLastForgingTx);
+    Q_CONNECT(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance);
+    Q_CONNECT(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction);
+    Q_CONNECT(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer);
+    Q_CONNECT(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance);
+    Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
+    Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
 
     Q_REG(Transactions::Callback, "Transactions::Callback");
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
@@ -75,15 +75,15 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     timeout = seconds(settings.value("timeouts_sec/transactions").toInt());
 
     client.setParent(this);
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect callbackCall");
+    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Transactions::callbackCall);
     client.moveToThread(TimerClass::getThread());
 
-    CHECK(connect(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::callbackCall), "not connect callbackCall");
+    Q_CONNECT(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::callbackCall);
     tcpClient.moveToThread(TimerClass::getThread());
 
     timerSendTx.moveToThread(TimerClass::getThread());
     timerSendTx.setInterval(milliseconds(100).count());
-    CHECK(connect(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent), "not connect onFindTxOnTorrentEvent");
+    Q_CONNECT(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent);
 
     javascriptWrapper.setTransactions(*this);
 

@@ -31,10 +31,10 @@ QString InitProxy::stateName() {
 InitProxy::InitProxy(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
-    CHECK(connect(this, &InitProxy::callbackCall, this, &InitProxy::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(this, &InitProxy::upnpStarted, this, &InitProxy::onUpnpStarted), "not connect onUpnpStarted");
-    CHECK(connect(this, &InitProxy::proxyStarted, this, &InitProxy::onProxyStarted), "not connect onProxyStarted");
-    CHECK(connect(this, &InitProxy::proxyCompleted, this, &InitProxy::onProxyCompleted), "not connect onProxyCompleted");
+    Q_CONNECT(this, &InitProxy::callbackCall, this, &InitProxy::onCallbackCall);
+    Q_CONNECT(this, &InitProxy::upnpStarted, this, &InitProxy::onUpnpStarted);
+    Q_CONNECT(this, &InitProxy::proxyStarted, this, &InitProxy::onProxyStarted);
+    Q_CONNECT(this, &InitProxy::proxyCompleted, this, &InitProxy::onProxyCompleted);
     Q_REG(InitProxy::Callback, "InitProxy::Callback");
 
     registerStateType("init", "proxy initialized", true, true);
@@ -96,9 +96,9 @@ InitProxy::Return InitProxy::initialize(std::shared_future<MainWindow*> mainWind
         proxyJavascript = std::make_unique<proxy::ProxyJavascript>();
         proxyJavascript->moveToThread(mainThread);
         proxyManager = std::make_unique<proxy::Proxy>(*proxyJavascript);
-        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoProxyResult, this, &InitProxy::proxyStarted), "not connect onProxyStarted");
-        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoUPnPResult, this, &InitProxy::upnpStarted), "not connect onUpnpStarted");
-        CHECK(connect(proxyManager.get(), &proxy::Proxy::startAutoComplete1, this, &InitProxy::proxyCompleted), "not connect proxyCompleted");
+        Q_CONNECT(proxyManager.get(), &proxy::Proxy::startAutoProxyResult, this, &InitProxy::proxyStarted);
+        Q_CONNECT(proxyManager.get(), &proxy::Proxy::startAutoUPnPResult, this, &InitProxy::upnpStarted);
+        Q_CONNECT(proxyManager.get(), &proxy::Proxy::startAutoComplete1, this, &InitProxy::proxyCompleted);
         proxyWebsocket = std::make_unique<proxy::WebSocketSender>(*proxyManager);
         proxyWebsocket->moveToThread(mainThread);
         changeStatus(proxy::Proxy::moduleName(), StatusModule::found);

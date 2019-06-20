@@ -65,20 +65,20 @@ static QJsonDocument portMappingResultToJson(const Proxy::PortMappingResult &res
 ProxyJavascript::ProxyJavascript(QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(this, &ProxyJavascript::sendServerStatusResponseSig, this, &ProxyJavascript::onSendServerStatusResponseSig), "not connect onSendServerStatusResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendServerPortResponseSig, this, &ProxyJavascript::onSendServerPortResponseSig), "not connect onSendServerPortResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendGetRoutersResponseSig, this, &ProxyJavascript::onSendGetRoutersResponseSig), "not connect onSendGetRoutersResponseSig");
+    Q_CONNECT(this, &ProxyJavascript::sendServerStatusResponseSig, this, &ProxyJavascript::onSendServerStatusResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendServerPortResponseSig, this, &ProxyJavascript::onSendServerPortResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendGetRoutersResponseSig, this, &ProxyJavascript::onSendGetRoutersResponseSig);
 
-    CHECK(connect(this, &ProxyJavascript::sendAutoStartExecutedResponseSig, this, &ProxyJavascript::onSendAutoStartExecutedResponseSig), "not connect onSendAutoStartExecutedResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendAutoStartProxyResponseSig, this, &ProxyJavascript::onSendAutoStartProxyResponseSig), "not connect onSendAutoStartProxyResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendAutoStartRouterResponseSig, this, &ProxyJavascript::onSendAutoStartRouterResponseSig), "not connect onSendAutoStartRouterResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendAutoStartTestResponseSig, this, &ProxyJavascript::onSendAutoStartTestResponseSig), "not connect onSendAutoStartTestResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendAutoStartCompleteResponseSig, this, &ProxyJavascript::onSendAutoStartCompleteResponseSig), "not connect onSendAutoStartCompleteResponseSig");
-    CHECK(connect(this, &ProxyJavascript::sendAutoStartIsActiveResponseSig, this, &ProxyJavascript::onSendAutoStartIsActiveResponseSig), "not connect onSendAutoStartIsActiveResponseSig");
+    Q_CONNECT(this, &ProxyJavascript::sendAutoStartExecutedResponseSig, this, &ProxyJavascript::onSendAutoStartExecutedResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendAutoStartProxyResponseSig, this, &ProxyJavascript::onSendAutoStartProxyResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendAutoStartRouterResponseSig, this, &ProxyJavascript::onSendAutoStartRouterResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendAutoStartTestResponseSig, this, &ProxyJavascript::onSendAutoStartTestResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendAutoStartCompleteResponseSig, this, &ProxyJavascript::onSendAutoStartCompleteResponseSig);
+    Q_CONNECT(this, &ProxyJavascript::sendAutoStartIsActiveResponseSig, this, &ProxyJavascript::onSendAutoStartIsActiveResponseSig);
 
-    CHECK(connect(this, &ProxyJavascript::sendConnectedPeersResponseSig, this, &ProxyJavascript::onSendConnectedPeersResponseSig), "not connect onSendConnectedPeersResponseSig");
+    Q_CONNECT(this, &ProxyJavascript::sendConnectedPeersResponseSig, this, &ProxyJavascript::onSendConnectedPeersResponseSig);
 
-    CHECK(connect(this, &ProxyJavascript::callbackCall, this, &ProxyJavascript::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &ProxyJavascript::callbackCall, this, &ProxyJavascript::onCallbackCall);
 
     Q_REG(ProxyJavascript::Callback, "ProxyJavascript::Callback");
 }

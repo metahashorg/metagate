@@ -124,9 +124,9 @@ void SimpleClient::moveToThread(QThread *thread) {
 void SimpleClient::startTimer1() {
     if (timer == nullptr) {
         timer = new QTimer();
-        CHECK(connect(timer, &QTimer::timeout, this, &SimpleClient::onTimerEvent), "not connect timeout");
+        Q_CONNECT(timer, &QTimer::timeout, this, &SimpleClient::onTimerEvent);
         if (thread1 != nullptr) {
-            CHECK(connect(thread1, &QThread::finished, timer, &QTimer::stop), "not connect finished");
+            Q_CONNECT(thread1, &QThread::finished, timer, &QTimer::stop);
         }
         timer->setInterval(milliseconds(1s).count());
         timer->start();
@@ -238,7 +238,7 @@ void SimpleClient::sendMessageInternal(
     if (isQueuedConnection) {
         connType = Qt::QueuedConnection;
     }
-    CHECK(connect(reply, &QNetworkReply::finished, this, onTextMessageReceived, connType), "not connect onTextMessageReceived");
+    Q_CONNECT2(reply, &QNetworkReply::finished, this, onTextMessageReceived, connType);
     requests[requestId] = reply;
 }
 

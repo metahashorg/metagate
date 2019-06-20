@@ -6,6 +6,7 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "Log.h"
+#include "QRegister.h"
 
 #include "RunGuard.h"
 
@@ -18,7 +19,7 @@ MhPayEventHandler::MhPayEventHandler(RunGuard &runGuard)
     : runGuard(runGuard)
 {
     timer.setInterval(milliseconds(1s).count());
-    CHECK(connect(&timer, &QTimer::timeout, this, &MhPayEventHandler::timerEvent), "not connect timerEvent");
+    Q_CONNECT(&timer, &QTimer::timeout, this, &MhPayEventHandler::timerEvent);
     timer.start();
 }
 

@@ -161,20 +161,20 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
 
     LOG << "Wallets default path " << walletDefaultPath;
 
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
-    CHECK(connect(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall), "not connect callbackCall");
+    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall);
+    Q_CONNECT(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall);
 
-    CHECK(connect(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged), "not connect directoryChanged");
+    Q_CONNECT(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged);
 
-    CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived), "not connect onWssMessageReceived");
+    Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived);
 
-    CHECK(connect(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss), "not connect onSendCommandLineMessageToWss");
+    Q_CONNECT(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss);
 
-    CHECK(connect(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined), "not connect onLogined");
+    Q_CONNECT(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined);
 
-    CHECK(connect(this, &JavascriptWrapper::getListWallets, this, &JavascriptWrapper::onGetListWallets), "not connect onGetListWallets");
-    CHECK(connect(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList), "not connect onCreateWatchWalletsList");
-    CHECK(connect(this, &JavascriptWrapper::createWatchWalletsListMHC, this, &JavascriptWrapper::onCreateWatchWalletsListMHC), "not connect onCreateWatchWalletsListMHC");
+    Q_CONNECT(this, &JavascriptWrapper::getListWallets, this, &JavascriptWrapper::onGetListWallets);
+    Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList);
+    Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsListMHC, this, &JavascriptWrapper::onCreateWatchWalletsListMHC);
 
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");

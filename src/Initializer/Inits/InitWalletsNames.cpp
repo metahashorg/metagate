@@ -26,7 +26,7 @@ QString InitWalletsNames::stateName() {
 InitWalletsNames::InitWalletsNames(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitWalletsNames::callbackCall, this, &InitWalletsNames::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitWalletsNames::callbackCall, this, &InitWalletsNames::onCallbackCall);
     Q_REG(InitWalletsNames::Callback, "InitWalletsNames::Callback");
 
     registerStateType("init", "wallet names initialized", true, true);

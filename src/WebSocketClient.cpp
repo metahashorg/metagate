@@ -24,19 +24,19 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         m_url.setScheme("ws");
     }
 
-    CHECK(connect(this, &WebSocketClient::sendMessage, this, &WebSocketClient::onSendMessage), "not connect sendMessage");
-    CHECK(connect(this, &WebSocketClient::sendMessages, this, &WebSocketClient::onSendMessages), "not connect sendMessage");
-    CHECK(connect(this, QOverload<QString, QString>::of(&WebSocketClient::setHelloString), this, QOverload<QString, QString>::of(&WebSocketClient::onSetHelloString)), "not connect setHelloString");
-    CHECK(connect(this, QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::setHelloString), this, QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::onSetHelloString)), "not connect setHelloString");
-    CHECK(connect(this, &WebSocketClient::addHelloString, this, &WebSocketClient::onAddHelloString), "not connect setHelloString");
+    Q_CONNECT(this, &WebSocketClient::sendMessage, this, &WebSocketClient::onSendMessage);
+    Q_CONNECT(this, &WebSocketClient::sendMessages, this, &WebSocketClient::onSendMessages);
+    Q_CONNECT(this, (QOverload<QString, QString>::of(&WebSocketClient::setHelloString)), this, (QOverload<QString, QString>::of(&WebSocketClient::onSetHelloString)));
+    Q_CONNECT(this, (QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::setHelloString)), this, (QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::onSetHelloString)));
+    Q_CONNECT(this, &WebSocketClient::addHelloString, this, &WebSocketClient::onAddHelloString);
 
-    CHECK(connect(m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
+    Q_CONNECT3(m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
         LOG << "Wss Web socket error " << m_webSocket->errorString() << " " << m_url.toString();
-    }), "not connect error");
-    CHECK(connect(m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected), "not connect connected");
-    CHECK(connect(m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong), "not connect onPong");
-    CHECK(connect(m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived), "not connect textMessageReceived");
-    CHECK(connect(m_webSocket, &QWebSocket::disconnected, [this]{
+    });
+    Q_CONNECT(m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
+    Q_CONNECT(m_webSocket, &QWebSocket::pong, this, &WebSocketClient::onPong);
+    Q_CONNECT(m_webSocket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived);
+    Q_CONNECT3(m_webSocket, &QWebSocket::disconnected, [this]{
         BEGIN_SLOT_WRAPPER
         LOG << "Wss client disconnected. Url " << m_url.toString();
         m_webSocket->close();
@@ -45,7 +45,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
         }
         isConnected = false;
         END_SLOT_WRAPPER
-    }), "not connect disconnected");
+    });
 
     prevPongTime = ::now();
 

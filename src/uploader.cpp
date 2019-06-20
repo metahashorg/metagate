@@ -107,15 +107,15 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
 {
     serverName = getServerName();
 
-    CHECK(connect(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent), "not connect processEvent");
-    CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");
+    Q_CONNECT(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent);
+    Q_CONNECT(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent);
 
-    CHECK(connect(&auth, &auth::Auth::logined, this, &Uploader::onLogined), "not connect onLogined");
+    Q_CONNECT(&auth, &auth::Auth::logined, this, &Uploader::onLogined);
 
     client.setParent(this);
 
-    CHECK(connect(this, &Uploader::callbackCall, this, &Uploader::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall), "not connect callbackCall");
+    Q_CONNECT(this, &Uploader::callbackCall, this, &Uploader::onCallbackCall);
+    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall);
 
     Q_REG(Uploader::Callback, "Uploader::Callback");
 

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -114,17 +115,17 @@ WebSocketSender::WebSocketSender(Proxy &proxyManager, QObject *parent)
     , client("wss://wss.osenyndab.com/")
     , proxyManager(proxyManager)
 {
-    CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WebSocketSender::onWssReceived), "not connect onWssReceived");
+    Q_CONNECT(&client, &WebSocketClient::messageReceived, this, &WebSocketSender::onWssReceived);
 
-    CHECK(connect(this, &WebSocketSender::tryStartTest, this, &WebSocketSender::onTryStartTest), "not connect onStartTest");
+    Q_CONNECT(this, &WebSocketSender::tryStartTest, this, &WebSocketSender::onTryStartTest);
 
-    CHECK(connect(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onBeginStart), "not connect onModuleFound");
-    CHECK(connect(&proxyManager, &Proxy::startAutoProxyResult, this, &WebSocketSender::onStartAutoProxyResult), "not connect onStartAutoProxyResult");
-    CHECK(connect(&proxyManager, &Proxy::startAutoUPnPResult, this, &WebSocketSender::onStartAutoUPnPResult), "not connect onStartAutoUPnPResult");
-    CHECK(connect(&proxyManager, &Proxy::startAutoReadyToTest, this, &WebSocketSender::onReadyToTest), "not connect onStartAutoComplete");
-    CHECK(connect(&proxyManager, &Proxy::stopProxyExecuted, this, &WebSocketSender::onStopProxy), "not connect onStopProxy");
-    CHECK(connect(this, &WebSocketSender::testResult, this, &WebSocketSender::onTestResult), "not connect onTestResult");
-    CHECK(connect(this, &WebSocketSender::proxyTested, &proxyManager, &Proxy::proxyTested), "not connect proxyTested");
+    Q_CONNECT(&proxyManager, &Proxy::startAutoExecued, this, &WebSocketSender::onBeginStart);
+    Q_CONNECT(&proxyManager, &Proxy::startAutoProxyResult, this, &WebSocketSender::onStartAutoProxyResult);
+    Q_CONNECT(&proxyManager, &Proxy::startAutoUPnPResult, this, &WebSocketSender::onStartAutoUPnPResult);
+    Q_CONNECT(&proxyManager, &Proxy::startAutoReadyToTest, this, &WebSocketSender::onReadyToTest);
+    Q_CONNECT(&proxyManager, &Proxy::stopProxyExecuted, this, &WebSocketSender::onStopProxy);
+    Q_CONNECT(this, &WebSocketSender::testResult, this, &WebSocketSender::onTestResult);
+    Q_CONNECT(this, &WebSocketSender::proxyTested, &proxyManager, &Proxy::proxyTested);
 
     client.start();
     //client.moveToThread(thread);

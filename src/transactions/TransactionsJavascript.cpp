@@ -22,13 +22,13 @@ namespace transactions {
 TransactionsJavascript::TransactionsJavascript(QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance), "not connect onNewBalance");
-    CHECK(connect(this, &TransactionsJavascript::newBalance2Sig, this, &TransactionsJavascript::onNewBalance2), "not connect onNewBalance2");
-    CHECK(connect(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse), "not connect onSendedTransactionsResponse");
-    CHECK(connect(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent), "not connect onTransactionInTorrent");
-    CHECK(connect(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged), "not connect onTransactionStatusChanged");
-    CHECK(connect(this, &TransactionsJavascript::transactionStatusChanged2Sig, this, &TransactionsJavascript::onTransactionStatusChanged2), "not connect onTransactionStatusChanged2");
+    Q_CONNECT(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall);
+    Q_CONNECT(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance);
+    Q_CONNECT(this, &TransactionsJavascript::newBalance2Sig, this, &TransactionsJavascript::onNewBalance2);
+    Q_CONNECT(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse);
+    Q_CONNECT(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent);
+    Q_CONNECT(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged);
+    Q_CONNECT(this, &TransactionsJavascript::transactionStatusChanged2Sig, this, &TransactionsJavascript::onTransactionStatusChanged2);
 
     Q_REG(TransactionsJavascript::Callback, "TransactionsJavascript::Callback");
 

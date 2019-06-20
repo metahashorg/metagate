@@ -48,15 +48,15 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
-    CHECK(connect(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall);
 
-    CHECK(connect(&client, &WebSocketClient::messageReceived, this, &WalletNames::onWssMessageReceived), "not connect wssClient");
-    CHECK(connect(&authManager, &auth::Auth::logined, this, &WalletNames::onLogined), "not connect onLogined");
+    Q_CONNECT(&client, &WebSocketClient::messageReceived, this, &WalletNames::onWssMessageReceived);
+    Q_CONNECT(&authManager, &auth::Auth::logined, this, &WalletNames::onLogined);
 
-    CHECK(connect(this, &WalletNames::addOrUpdateWallets, this, &WalletNames::onAddOrUpdateWallets), "not connect onAddOrUpdateWallets");
-    CHECK(connect(this, &WalletNames::saveWalletName, this, &WalletNames::onSaveWalletName), "not connect onSaveWalletName");
-    CHECK(connect(this, &WalletNames::getWalletName, this, &WalletNames::onGetWalletName), "not connect onGetWalletName");
-    CHECK(connect(this, &WalletNames::getAllWalletsCurrency, this, &WalletNames::onGetAllWalletsCurrency), "not connect onGetAllWalletsCurrency");
+    Q_CONNECT(this, &WalletNames::addOrUpdateWallets, this, &WalletNames::onAddOrUpdateWallets);
+    Q_CONNECT(this, &WalletNames::saveWalletName, this, &WalletNames::onSaveWalletName);
+    Q_CONNECT(this, &WalletNames::getWalletName, this, &WalletNames::onGetWalletName);
+    Q_CONNECT(this, &WalletNames::getAllWalletsCurrency, this, &WalletNames::onGetAllWalletsCurrency);
 
     Q_REG(WalletNames::Callback, "WalletNames::Callback");
     Q_REG(AddWalletsNamesCallback, "AddWalletsNamesCallback");
@@ -69,8 +69,7 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     emit authManager.reEmit();
 
     httpClient.setParent(this);
-    CHECK(connect(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(&httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall), "not connect callbackCall");
+    Q_CONNECT(&httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall);
     httpClient.moveToThread(TimerClass::getThread());
 
     moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
