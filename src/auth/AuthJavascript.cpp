@@ -11,6 +11,8 @@
 
 #include "Auth.h"
 
+#include "WrapperJavascriptImpl.h"
+
 SET_LOG_NAMESPACE("AUTH");
 
 namespace auth {
@@ -25,9 +27,8 @@ static QJsonDocument loginInfoToJson(const LoginInfo &info) {
 }
 
 AuthJavascript::AuthJavascript(QObject *parent)
-    : QObject(parent)
+    : WrapperJavascript(false, LOG_FILE)
 {
-    Q_CONNECT(this, &AuthJavascript::callbackCall, this, &AuthJavascript::onCallbackCall);
     Q_CONNECT(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig);
 }
 
@@ -97,23 +98,6 @@ BEGIN_SLOT_WRAPPER
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, loginInfoToJson(response));
 END_SLOT_WRAPPER
-}
-
-void AuthJavascript::onCallbackCall(const Callback &callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
-}
-
-template<typename... Args>
-void AuthJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-    const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-    runJs(res);
-}
-
-void AuthJavascript::runJs(const QString &script) {
-    LOG << "Js " << script;
-    emit jsRunSig(script);
 }
 
 }
