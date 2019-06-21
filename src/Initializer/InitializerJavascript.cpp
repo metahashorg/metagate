@@ -15,6 +15,8 @@ using namespace std::placeholders;
 
 #include "Initializer.h"
 
+#include "WrapperJavascriptImpl.h"
+
 SET_LOG_NAMESPACE("INIT");
 
 namespace initializer {
@@ -43,24 +45,14 @@ static QJsonDocument subTypesToJson(const std::vector<Initializer::StateType> &t
 }
 
 InitializerJavascript::InitializerJavascript(QObject *parent)
-    : QObject(parent)
+    : WrapperJavascript(false, LOG_FILE)
 {
-    Q_CONNECT(this, &InitializerJavascript::callbackCall, this, &InitializerJavascript::onCallbackCall);
-
     Q_CONNECT(this, &InitializerJavascript::stateChangedSig, this, &InitializerJavascript::onStateChanged);
     Q_CONNECT(this, &InitializerJavascript::initializedSig, this, &InitializerJavascript::onInitialized);
     Q_CONNECT(this, &InitializerJavascript::initializedCriticalSig, this, &InitializerJavascript::onInitializedCritical);
 
     Q_REG3(InitState, "InitState", "initialize");
     Q_REG2(TypedException, "TypedException", false);
-
-    signalFunc = std::bind(&InitializerJavascript::callbackCall, this, _1);
-}
-
-void InitializerJavascript::onCallbackCall(const Callback &callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
 }
 
 void InitializerJavascript::resendEvents() {
@@ -71,23 +63,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Init Resend events";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT);
 
-    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
-        makeFunc(exception);
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit m_initializer->resendAllStatesSig(Initializer::GetAllStatesCallback([makeFunc]() {
-            makeFunc(TypedException());
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception);
-    }
+            makeFunc.func(TypedException());
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -99,15 +81,9 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Init js ready " << force;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
 
-    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
-        makeFunc(exception, "");
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit m_initializer->javascriptReadySig(force, Initializer::ReadyCallback([makeFunc](const Initializer::ReadyType &result) {
             QString r;
             if (result == Initializer::ReadyType::Error) {
@@ -126,13 +102,9 @@ BEGIN_SLOT_WRAPPER
                 throwErr("Unknown type");
             }
             LOG << "Init js ready type " << r;
-            makeFunc(TypedException(), r);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, "error");
-    }
+            makeFunc.func(TypedException(), r);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -143,24 +115,14 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "initGetAllTypesResultJs";
     LOG << "Init getAllTypes";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
-        makeFunc(exception, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit m_initializer->getAllTypes(Initializer::GetTypesCallback([makeFunc](const std::vector<QString> &result) {
             LOG << "Init getAllTypes size " << result.size();
-            makeFunc(TypedException(), typesToJson(result));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), typesToJson(result));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -171,24 +133,14 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "initGetAllSubTypesResultJs";
     LOG << "Init getAllSubTypes";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, this](const TypedException &exception) {
-        makeFunc(exception, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit m_initializer->getAllSubTypes(Initializer::GetSubTypesCallback([makeFunc](const std::vector<Initializer::StateType> &result) {
             LOG << "Init getAllSubTypes size " << result.size();
-            makeFunc(TypedException(), subTypesToJson(result));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, QJsonDocument());
-    }
+            makeFunc.func(TypedException(), subTypesToJson(result));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -220,17 +172,6 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "initInitializedCriticalJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, isSuccess);
 END_SLOT_WRAPPER
-}
-
-template<typename... Args>
-void InitializerJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-    const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-    runJs(res);
-}
-
-void InitializerJavascript::runJs(const QString &script) {
-    LOG << "Js " << script;
-    emit jsRunSig(script);
 }
 
 }
