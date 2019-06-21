@@ -343,6 +343,26 @@ Q_INVOKABLE void savePrivateKeyAny(QString requestId, QString privateKey, QStrin
 # After the operation is completed, it calls function
 savePrivateKeyAnyResultJs(requestId, "ok", errorNum, errorMessage)
 
+Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+savePrivateKeyResultJs(requestId, "ok", errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+savePrivateKeyMHCResultJs(requestId, "ok", errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+savePrivateKeyEthResultJs(requestId, "ok", errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+savePrivateKeyBtcResultJs(requestId, "ok", errorNum, errorMessage)
+
 Q_INVOKABLE void updateAndReloadApplication();
 # Restarts wallet installing updates
 

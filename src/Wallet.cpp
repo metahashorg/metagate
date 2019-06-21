@@ -549,25 +549,11 @@ std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr
         privKey = COMPACT_FORMAT + CURRENT_COMPACT_FORMAT + "\n" + privKey;
     }
 
-    std::string result;
-    if (isTMH) {
-        result = PREFIX_ONE_KEY_TMH + privKey;
-    } else {
-        result = PREFIX_ONE_KEY_MTH + privKey;
-    }
-    return result;
+    return privKey;
 }
 
 void Wallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
     std::string result;
-    if (data.compare(0, PREFIX_ONE_KEY_MTH.size(), PREFIX_ONE_KEY_MTH) == 0) {
-        result = data.substr(PREFIX_ONE_KEY_MTH.size());
-    } else if (data.compare(0, PREFIX_ONE_KEY_TMH.size(), PREFIX_ONE_KEY_TMH) == 0) {
-        result = data.substr(PREFIX_ONE_KEY_TMH.size());
-    } else {
-        throwErrTyped(TypeErrors::INCORRECT_USER_DATA, "Incorrect data");
-    }
-
     if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
         result = result.substr(COMPACT_FORMAT.size());
         CHECK_TYPED(result.compare(0, CURRENT_COMPACT_FORMAT.size() + 1, CURRENT_COMPACT_FORMAT + "\n") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect private key");

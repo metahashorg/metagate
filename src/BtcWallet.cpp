@@ -315,20 +315,16 @@ std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const 
 
 std::string BtcWallet::getOneKey(const QString &folder, const std::string &address) {
     const QString filePath = getFullPath(folder, address);
-    return PREFIX_ONE_KEY + readFile(filePath);
+    return readFile(filePath);
 }
 
 void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
-    CHECK_TYPED(data.compare(0, PREFIX_ONE_KEY.size(), PREFIX_ONE_KEY) == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect data");
-
-    const std::string result = data.substr(PREFIX_ONE_KEY.size());
-
-    const auto pair = getWifAndAddress(result, true);
+    const auto pair = getWifAndAddress(data, true);
     const std::string &addressBase58 = pair.second;
     const std::string &encodedWif = pair.first;
     decryptWif(encodedWif, password);
     const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
-    writeToFile(pathToFile, result, true);
+    writeToFile(pathToFile, data, true);
 }
 
 void BtcWallet::checkAddress(const std::string &address) {

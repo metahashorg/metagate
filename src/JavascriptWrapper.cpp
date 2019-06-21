@@ -877,11 +877,18 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult) {
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
+        std::string key = privateKey.toStdString();
+        if (key.compare(0, Wallet::PREFIX_ONE_KEY_MTH.size(), Wallet::PREFIX_ONE_KEY_MTH) == 0) {
+            key = key.substr(Wallet::PREFIX_ONE_KEY_MTH.size());
+        } else if (key.compare(0, Wallet::PREFIX_ONE_KEY_TMH.size(), Wallet::PREFIX_ONE_KEY_TMH) == 0) {
+            key = key.substr(Wallet::PREFIX_ONE_KEY_TMH.size());
+        }
+
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key";
 
-        Wallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
+        Wallet::savePrivateKey(walletPath, key, password.toStdString());
         result = "ok";
     });
 
@@ -893,14 +900,14 @@ void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey
 
 void JavascriptWrapper::savePrivateKey(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";
+    const QString JS_NAME_RESULT = "savePrivateKeyResultJs";
     savePrivateKeyMTHS(requestId, privateKey, password, walletPathTmh, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";
+    const QString JS_NAME_RESULT = "savePrivateKeyMHCResultJs";
     savePrivateKeyMTHS(requestId, privateKey, password, walletPathMth, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
@@ -1276,10 +1283,14 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";
+    const QString JS_NAME_RESULT = "savePrivateKeyEthResultJs";
 
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
+        std::string key = privateKey.toStdString();
+        if (key.compare(0, EthWallet::PREFIX_ONE_KEY.size(), EthWallet::PREFIX_ONE_KEY) == 0) {
+            key = key.substr(EthWallet::PREFIX_ONE_KEY.size());
+        }
         CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key eth";
@@ -1517,10 +1528,15 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "savePrivateKeyAnyResultJs";
+    const QString JS_NAME_RESULT = "savePrivateKeyBtcResultJs";
 
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
+        std::string key = privateKey.toStdString();
+        if (key.compare(0, BtcWallet::PREFIX_ONE_KEY.size(), BtcWallet::PREFIX_ONE_KEY) == 0) {
+            key = key.substr(BtcWallet::PREFIX_ONE_KEY.size());
+        }
+
         CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key btc";

@@ -227,6 +227,14 @@ public slots:
 
     Q_INVOKABLE void savePrivateKeyAny(QString requestId, QString privateKey, QString password);
 
+    Q_INVOKABLE void savePrivateKey(QString requestId, QString privateKey, QString password);
+
+    Q_INVOKABLE void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
+
+    Q_INVOKABLE void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
+
+    Q_INVOKABLE void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
+
 public slots:
 
     Q_INVOKABLE bool migrateKeysToPath(QString newPath);
@@ -312,14 +320,6 @@ private:
 private:
 
     void setPathsImpl(QString newPatch, QString newUserName);
-
-    void savePrivateKey(QString requestId, QString privateKey, QString password);
-
-    void savePrivateKeyMHC(QString requestId, QString privateKey, QString password);
-
-    void savePrivateKeyEth(QString requestId, QString privateKey, QString password);
-
-    void savePrivateKeyBtc(QString requestId, QString privateKey, QString password);
 
     void saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, QString walletPath, QString jsNameResult);
 
