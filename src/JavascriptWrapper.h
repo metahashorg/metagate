@@ -327,11 +327,11 @@ private:
 
     void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
 
-    void createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
+    void createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth);
 
     void createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, QString walletPath, QString jsNameResult);
 
-    void removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult);
+    void removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth);
 
     void checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult);
 
@@ -389,11 +389,15 @@ private:
 
     transactions::Transactions &transactionsManager;
 
+    auth::Auth &auth;
+
     const QString applicationVersion;
 
     QString sendedUserName;
 
     QString hardwareId;
+
+    QString token;
 
     QString utmData;
 

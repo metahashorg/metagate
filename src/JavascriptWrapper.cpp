@@ -154,6 +154,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
+    , auth(authManager)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -236,6 +237,12 @@ void JavascriptWrapper::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(walletDefaultPath, login), login);
+
+        auth.getLoginInfo(auth::Auth::LoginInfoCallback([this](const auth::LoginInfo &info) {
+            token = info.token;
+        }, [](const TypedException &e) {
+            LOG << "Error: " << e.description;
+        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
     } else {
         setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
     }
@@ -345,7 +352,7 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
 }
 
-void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult)
+void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth)
 {
     LOG << "Create wallet mths watch " << requestId << address;
     Opt<QString> walletFullPath;
@@ -361,6 +368,13 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 
         sendAppInfoToWss(userName, true);
 
+        const QString serverName = Uploader::getServerName();
+
+        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMth ? "4" : "1") + ", \"flag\": true}]}";
+
+        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([this](const std::string &result, const SimpleClient::ServerException &exception) {
+            CHECK(!exception.isSet(), exception.toString());
+        }));
         // TODO remove? Using at messanger
         //emit mthWalletCreated(address);
     });
@@ -392,7 +406,7 @@ void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, con
     }
 }
 
-void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult)
+void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth)
 {
     LOG << "Remove wallet mths watch " << requestId << address;
     Opt<QString> walletFullPath;
@@ -403,6 +417,14 @@ void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address
         LOG << "Remove wallet watch ok " << requestId << " " << address;
 
         sendAppInfoToWss(userName, true);
+
+        const QString serverName = Uploader::getServerName();
+
+        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMth ? "4" : "1") + ", \"flag\": false}]}";
+
+        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([this](const std::string &result, const SimpleClient::ServerException &exception) {
+            CHECK(!exception.isSet(), exception.toString());
+        }));
 
         // TODO remove? Using at messanger
         //emit mthWalletCreated(address);
@@ -452,7 +474,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::createWalletWatch(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletWatchResultJs");
+    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletWatchResultJs", false);
 END_SLOT_WRAPPER
 }
 
@@ -472,7 +494,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::removeWalletWatch(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    removeWalletMTHSWatch(requestId, address, walletPathTmh, "removeWalletWatchResultJs");
+    removeWalletMTHSWatch(requestId, address, walletPathTmh, "removeWalletWatchResultJs", false);
 END_SLOT_WRAPPER
 }
 
@@ -485,7 +507,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::createWalletWatchMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHSWatch(requestId, address, walletPathMth, "createWalletWatchMHCResultJs");
+    createWalletMTHSWatch(requestId, address, walletPathMth, "createWalletWatchMHCResultJs", true);
 END_SLOT_WRAPPER
 }
 
@@ -505,7 +527,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::removeWalletWatchMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    removeWalletMTHSWatch(requestId, address, walletPathMth, "removeWalletWatchMHCResultJs");
+    removeWalletMTHSWatch(requestId, address, walletPathMth, "removeWalletWatchMHCResultJs", true);
 END_SLOT_WRAPPER
 }
 
