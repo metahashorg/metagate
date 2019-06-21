@@ -5,18 +5,12 @@
 
 #include "Proxy.h"
 
-struct TypedException;
+#include "WrapperJavascript.h"
 
-namespace proxy
-{
+namespace proxy {
 
-class ProxyJavascript : public QObject
-{
+class ProxyJavascript: public WrapperJavascript {
     Q_OBJECT
-
-public:
-    using Callback = std::function<void()>;
-
 public:
     explicit ProxyJavascript(QObject *parent = nullptr);
 
@@ -83,19 +77,6 @@ public slots:
     void onSendAutoStartIsActiveResponseSig(bool active, const TypedException &error);
 
     void onSendConnectedPeersResponseSig(int num, const TypedException &error);
-
-    void onCallbackCall(const ProxyJavascript::Callback &callback);
-
-signals:
-    void callbackCall(const ProxyJavascript::Callback &callback);
-
-    void jsRunSig(QString jsString);
-
-private:
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
 
 private:
     Proxy *m_proxyManager;

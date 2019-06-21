@@ -11,6 +11,8 @@
 #include <QJsonObject>
 #include <QDebug>
 
+#include "WrapperJavascriptImpl.h"
+
 SET_LOG_NAMESPACE("PRX");
 
 namespace proxy
@@ -63,7 +65,7 @@ static QJsonDocument portMappingResultToJson(const Proxy::PortMappingResult &res
 }
 
 ProxyJavascript::ProxyJavascript(QObject *parent)
-    : QObject(parent)
+    : WrapperJavascript(false, LOG_FILE)
 {
     Q_CONNECT(this, &ProxyJavascript::sendServerStatusResponseSig, this, &ProxyJavascript::onSendServerStatusResponseSig);
     Q_CONNECT(this, &ProxyJavascript::sendServerPortResponseSig, this, &ProxyJavascript::onSendServerPortResponseSig);
@@ -77,10 +79,6 @@ ProxyJavascript::ProxyJavascript(QObject *parent)
     Q_CONNECT(this, &ProxyJavascript::sendAutoStartIsActiveResponseSig, this, &ProxyJavascript::onSendAutoStartIsActiveResponseSig);
 
     Q_CONNECT(this, &ProxyJavascript::sendConnectedPeersResponseSig, this, &ProxyJavascript::onSendConnectedPeersResponseSig);
-
-    Q_CONNECT(this, &ProxyJavascript::callbackCall, this, &ProxyJavascript::onCallbackCall);
-
-    Q_REG(ProxyJavascript::Callback, "ProxyJavascript::Callback");
 }
 
 void ProxyJavascript::proxyStart()
@@ -92,21 +90,14 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "proxyStartResultJs";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit m_proxyManager->proxyStart([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
             LOG << "Proxt started " << res.ok << res.error;
-            makeFunc(exception, proxyResultToJson(res));
+            makeFunc.func(exception, proxyResultToJson(res));
         });
-    });
-
-    if (exception.isSet()) {
-        //makeFunc(exception, false);
-    }
-
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -118,20 +109,14 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "proxyStopResultJs";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit m_proxyManager->proxyStop([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
             LOG << "Proxt stoped " << res.ok << res.error;
-            makeFunc(exception, proxyResultToJson(res));
+            makeFunc.func(exception, proxyResultToJson(res));
         });
-    });
-
-    if (exception.isSet()) {
-        //makeFunc(exception, false);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -204,19 +189,14 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "proxyDiscoverRoutersResultJs";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, bool result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<bool>(false));
 
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit m_proxyManager->discoverRouters([makeFunc](bool res, const TypedException &exception) {
             LOG << "Started routers discover " << res;
-            makeFunc(exception, res);
+            makeFunc.func(exception, res);
         });
-    });
-    if (exception.isSet()) {
-        makeFunc(exception, false);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -229,20 +209,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Add Port Mapping to router " << udn;
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit m_proxyManager->addPortMapping(udn, [makeFunc](const Proxy::PortMappingResult &res, const TypedException &exception) {
             LOG << "Added port mapping " << res.ok << res.error;
-            makeFunc(exception, portMappingResultToJson(res));
+            makeFunc.func(exception, portMappingResultToJson(res));
         });
-    });
-
-    if (exception.isSet()) {
-        //makeFunc(exception, false);
-    }
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -255,21 +229,15 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Delete Port Mapping ";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit m_proxyManager->deletePortMapping([makeFunc](const Proxy::PortMappingResult &res, const TypedException &exception) {
             LOG << "Deleted port mapping " << res.ok << res.error;
-            makeFunc(exception, portMappingResultToJson(res));
+            makeFunc.func(exception, portMappingResultToJson(res));
         });
-    });
-
-    if (exception.isSet()) {
-        //makeFunc(exception, false);
-    }
-    END_SLOT_WRAPPER
+    }, makeFunc.error);
+END_SLOT_WRAPPER
 }
 
 void ProxyJavascript::proxyAutoStart()
@@ -280,13 +248,11 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "proxyAutoStartResultJs";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     emit m_proxyManager->autoStart([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
         LOG << "Proxy auto exec started " << res.ok << res.error;
-        makeFunc(exception, proxyResultToJson(res));
+        makeFunc.func(exception, proxyResultToJson(res));
     });
 END_SLOT_WRAPPER
 }
@@ -299,13 +265,11 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "proxyAutoStopResultJs";
 
-    auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     emit m_proxyManager->autoStop([makeFunc](const Proxy::ProxyResult &res, const TypedException &exception) {
         LOG << "Proxy stoped " << res.ok << res.error;
-        makeFunc(exception, proxyResultToJson(res));
+        makeFunc.func(exception, proxyResultToJson(res));
     });
 END_SLOT_WRAPPER
 }
@@ -397,25 +361,6 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "proxyConnectedPeersResJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, num);
 END_SLOT_WRAPPER
-}
-
-void ProxyJavascript::onCallbackCall(const ProxyJavascript::Callback &callback)
-{
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
-}
-
-template<typename... Args>
-void ProxyJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-    const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-    runJs(res);
-}
-
-void ProxyJavascript::runJs(const QString &script)
-{
-    LOG << "Js " << script;
-    emit jsRunSig(script);
 }
 
 }
