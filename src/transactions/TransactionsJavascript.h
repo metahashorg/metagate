@@ -5,9 +5,7 @@
 
 #include <functional>
 
-class QThread;
-
-struct TypedException;
+#include "WrapperJavascript.h"
 
 namespace transactions {
 
@@ -16,14 +14,8 @@ class Transactions;
 struct BalanceInfo;
 struct Transaction;
 
-class TransactionsJavascript
-    : public QObject
-{
+class TransactionsJavascript: public WrapperJavascript {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
-
 public:
 
     explicit TransactionsJavascript(QObject *parent = nullptr);
@@ -31,12 +23,6 @@ public:
     void setTransactions(Transactions &trans) {
         transactionsManager = &trans;
     }
-
-signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const TransactionsJavascript::Callback &callback);
 
 signals:
 
@@ -51,10 +37,6 @@ signals:
     void transactionStatusChangedSig(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx);
 
     void transactionStatusChanged2Sig(const QString &txHash, const Transaction &tx);
-
-public slots:
-
-    void onCallbackCall(const TransactionsJavascript::Callback &callback);
 
 private slots:
 
@@ -104,16 +86,7 @@ public slots:
 
 private:
 
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
-
-private:
-
     Transactions *transactionsManager;
-
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 };
 
 }

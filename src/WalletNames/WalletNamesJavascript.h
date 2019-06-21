@@ -11,7 +11,7 @@ namespace wallet_names {
 
 class WalletNames;
 
-class WalletNamesJavascript :public WrapperJavascript {
+class WalletNamesJavascript: public WrapperJavascript {
     Q_OBJECT
 
 public:

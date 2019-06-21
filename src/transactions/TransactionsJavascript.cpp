@@ -13,6 +13,8 @@
 
 #include "Transactions.h"
 
+#include "WrapperJavascriptImpl.h"
+
 using namespace std::placeholders;
 
 SET_LOG_NAMESPACE("TXS");
@@ -20,9 +22,8 @@ SET_LOG_NAMESPACE("TXS");
 namespace transactions {
 
 TransactionsJavascript::TransactionsJavascript(QObject *parent)
-    : QObject(parent)
+    : WrapperJavascript(false, LOG_FILE)
 {
-    Q_CONNECT(this, &TransactionsJavascript::callbackCall, this, &TransactionsJavascript::onCallbackCall);
     Q_CONNECT(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance);
     Q_CONNECT(this, &TransactionsJavascript::newBalance2Sig, this, &TransactionsJavascript::onNewBalance2);
     Q_CONNECT(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse);
@@ -30,29 +31,8 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     Q_CONNECT(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged);
     Q_CONNECT(this, &TransactionsJavascript::transactionStatusChanged2Sig, this, &TransactionsJavascript::onTransactionStatusChanged2);
 
-    Q_REG(TransactionsJavascript::Callback, "TransactionsJavascript::Callback");
-
     Q_REG(BalanceInfo, "BalanceInfo");
     Q_REG(Transaction, "Transaction");
-
-    signalFunc = std::bind(&TransactionsJavascript::callbackCall, this, _1);
-}
-
-void TransactionsJavascript::onCallbackCall(const Callback &callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
-}
-
-template<typename... Args>
-void TransactionsJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-    const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-    runJs(res);
-}
-
-void TransactionsJavascript::runJs(const QString &script) {
-    //LOG << "Javascript " << script;
-    emit jsRunSig(script);
 }
 
 static QJsonObject balanceToJson1(const BalanceInfo &balance) {
@@ -186,25 +166,15 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Txs register address " << address << " " << currency << " " << type << " " << group;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency);
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         AddressInfo info(currency, address, type, group, name);
         emit transactionsManager->registerAddresses({info}, Transactions::RegisterAddressCallback([address, currency, makeFunc]() {
             LOG << "Txs register address ok " << address << " " << currency;
-            makeFunc(TypedException(), address, currency);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -238,24 +208,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Txs register addresses " << infos.size();
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, QString("Ok"));
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
-    const auto errorFunc = [JS_NAME_RESULT, this](const TypedException &e) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, e, QString("Not ok"));
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->registerAddresses(infos, Transactions::RegisterAddressCallback([makeFunc]() {
             LOG << "Txs register addresses ok";
-            makeFunc(TypedException());
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -267,25 +227,15 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Txs get addresses " << group;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc](const TypedException &e) {
-        makeFunc(e, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getAddresses(group, Transactions::GetAddressesCallback([makeFunc](const std::vector<AddressInfo> &infos) {
             LOG << "Txs get addresses ok " << infos.size();
             const QJsonDocument &result = addressInfoToJson(infos);
-            makeFunc(TypedException(), result);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -297,24 +247,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Txs Set group " << group;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, QString("Ok"));
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
-    const auto errorFunc = [JS_NAME_RESULT, this](const TypedException &e) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, e, QString("Not ok"));
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->setCurrentGroup(group, Transactions::SetCurrentGroupCallback([makeFunc, group]() {
             LOG << "Txs Set group ok " << group;
-            makeFunc(TypedException());
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -326,24 +266,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get txs address " << address << " " << currency << " " << fromTx << " " << count << " " << asc;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getTxs(address, currency, fromTx, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get txs address ok " << address << " " << currency << " " << txs.size();
-            makeFunc(TypedException(), address, currency, txsToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -355,24 +285,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get txs address " << currency << " " << fromTx << " " << count << " " << asc;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, currency](const TypedException &e) {
-        makeFunc(e, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getTxsAll(currency, fromTx, count, asc, Transactions::GetTxsCallback([currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get txs address ok " << currency << " " << txs.size();
-            makeFunc(TypedException(), currency, txsToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -384,24 +304,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get txs2 address " << address << " " << currency << " " << from << " " << count << " " << asc;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getTxs2(address, currency, from, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get txs2 address ok " << address << " " << currency << " " << txs.size();
-            makeFunc(TypedException(), address, currency, txsToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -413,25 +323,15 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get txs2 address " << currency << " " << from << " " << count << " " << asc;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, currency](const TypedException &e) {
-        makeFunc(e, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getTxsAll2(currency, from, count, asc, Transactions::GetTxsCallback([currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get txs2 address ok " << currency << " " << txs.size();
-            makeFunc(TypedException(), currency, txsToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
-    END_SLOT_WRAPPER
+            makeFunc.func(TypedException(), currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
 }
 
 void TransactionsJavascript::getForgingTxsAll(QString address, QString currency, int from, int count, bool asc) {
@@ -442,24 +342,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get forging txs address " << address << " " << currency << " " << from << " " << count << " " << asc;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit transactionsManager->getForgingTxs(address, currency, from, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get forging txs address ok " << address << " " << currency << " " << txs.size();
-            makeFunc(TypedException(), address, currency, txsToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -471,24 +361,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get delegate txs address " << address << " " << currency << " " << to << " " << from << " " << count << " " << asc;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit transactionsManager->getDelegateTxs(address, currency, to, from, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get delegate txs address ok " << address << " " << currency << " " << txs.size();
-            makeFunc(TypedException(), address, currency, txsToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -500,24 +380,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get forging tx address " << address << " " << currency;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this]() {
+    wrapOperation([&, this]() {
         emit transactionsManager->getLastForgingTx(address, currency, Transactions::GetTxCallback([address, currency, makeFunc](const Transaction &txs) {
             LOG << "get forging tx address ok " << address << " " << currency << " " << txs.tx;
-            makeFunc(TypedException(), address, currency, txInfoToJson(txs));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency, txInfoToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -529,24 +399,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "calc balance address " << currency << " " << address;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, address, currency](const TypedException &e) {
-        makeFunc(e, address, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->calcBalance(address, currency, Transactions::CalcBalanceCallback([currency, address, makeFunc](const BalanceInfo &balance) {
             LOG << "calc balance ok " << currency << " " << address << " " << QString(balance.calcBalance().getDecimal()) << " " << balance.countReceived << " " << balance.countSpent;
-            makeFunc(TypedException(), address, currency, balanceToJson(balance));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), address, currency, balanceToJson(balance));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -558,24 +418,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "getTxFromServer address " << txHash << " " << type;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &txHash, const QString &type, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, txHash, type, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(txHash), JsTypeReturn<QString>(type), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [makeFunc, txHash, type](const TypedException &e) {
-        makeFunc(e, txHash, type, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getTxFromServer(txHash, type, Transactions::GetTxCallback([txHash, type, makeFunc](const Transaction &tx) {
             LOG << "getTxFromServer address ok " << txHash << " " << type;
-            makeFunc(TypedException(), txHash, type, txInfoToJson(tx));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), txHash, type, txInfoToJson(tx));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -587,26 +437,16 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "getLastUpdatedBalance " << currency;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QString &timestamp, const QString &now) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, timestamp, now);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
-    const auto errorFunc = [makeFunc, currency](const TypedException &e) {
-        makeFunc(e, currency, "", "");
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->getLastUpdateBalance(currency, Transactions::GetLastUpdateCallback([currency, makeFunc](const system_time_point &result, const system_time_point &now) {
             const QString r = QString::fromStdString(std::to_string(systemTimePointToMilliseconds(result)));
             const QString n = QString::fromStdString(std::to_string(systemTimePointToMilliseconds(now)));
             LOG << "Get getLastUpdateBalance ok " << r << " " << n;
-            makeFunc(TypedException(), currency, r, n);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), currency, r, n);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -618,23 +458,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "clear db " << currency;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const std::string &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<std::string>("Not ok"));
 
-    const auto errorFunc = [makeFunc, currency](const TypedException &e) {
-        makeFunc(e, currency, "Not ok");
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit transactionsManager->clearDb(currency, Transactions::ClearDbCallback([currency, makeFunc]() {
-            makeFunc(TypedException(), currency, "Ok");
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), currency, "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
