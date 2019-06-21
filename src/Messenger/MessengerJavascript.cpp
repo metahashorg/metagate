@@ -21,6 +21,8 @@
 #include "transactions/Transactions.h"
 #include "JavascriptWrapper.h"
 
+#include "WrapperJavascriptImpl.h"
+
 using namespace std::placeholders;
 
 SET_LOG_NAMESPACE("MSG");
@@ -28,12 +30,11 @@ SET_LOG_NAMESPACE("MSG");
 namespace messenger {
 
 MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent)
-    : QObject(parent)
+    : WrapperJavascript(false, LOG_FILE)
     , authManager(authManager)
     , cryptoManager(cryptoManager)
     , txManager(txManager)
 {
-    Q_CONNECT(this, &MessengerJavascript::callbackCall, this, &MessengerJavascript::onCallbackCall);
     Q_CONNECT(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges);
     Q_CONNECT(this, &MessengerJavascript::addedToChannelSig, this, &MessengerJavascript::onAddedToChannel);
     Q_CONNECT(this, &MessengerJavascript::deletedFromChannelSig, this, &MessengerJavascript::onDeletedFromChannel);
@@ -44,13 +45,9 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     Q_CONNECT(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined);
     Q_CONNECT(&jsWrapper, &JavascriptWrapper::mthWalletCreated, this, &MessengerJavascript::onMthWalletCreated);
 
-    Q_REG(MessengerJavascript::Callback, "MessengerJavascript::Callback");
-
     walletPath = getWalletPath();
     mthWalletType = Wallet::WALLET_PATH_MTH;
     defaultUserName = JavascriptWrapper::defaultUsername;
-
-    signalFunc = std::bind(&MessengerJavascript::callbackCall, this, _1);
 
     emit authManager.reEmit();
 }
@@ -59,18 +56,6 @@ void MessengerJavascript::setMessenger(Messenger &m) {
     messenger = &m;
     emit authManager.reEmit();
     setPathsImpl();
-}
-
-void MessengerJavascript::onCallbackCall(const std::function<void()> &callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
-}
-
-template<typename... Args>
-void MessengerJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-    const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-    runJs(res);
 }
 
 static QJsonDocument messagesToJson(const std::vector<Message> &messages) {
@@ -139,32 +124,22 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages " << address << " " << from << " " << to;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter fromC = from.toLongLong(&isValid);
         CHECK(isValid, "from field incorrect");
         const Message::Counter toC = to.toLongLong(&isValid);
         CHECK(isValid, "to field incorrect");
 
-        emit messenger->getHistoryAddress(address, fromC, toC, Messenger::GetMessagesCallback([this, address, makeFunc, errorFunc](const std::vector<Message> &messages) {
+        emit messenger->getHistoryAddress(address, fromC, toC, Messenger::GetMessagesCallback([this, address, makeFunc](const std::vector<Message> &messages) {
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, makeFunc](const std::vector<Message> &messages){
                 LOG << "get messages ok " << address << " " << messages.size();
-                makeFunc(TypedException(), address, messagesToJson(messages));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, QJsonDocument());
-    }
+                makeFunc.func(TypedException(), address, messagesToJson(messages));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -176,32 +151,22 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get messages " << address << " " << collocutor << " " << from << " " << to;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter fromC = from.toLongLong(&isValid);
         CHECK(isValid, "from field incorrect");
         const Message::Counter toC = to.toLongLong(&isValid);
         CHECK(isValid, "to field incorrect");
 
-        emit messenger->getHistoryAddressAddress(address, false, collocutor, fromC, toC, Messenger::GetMessagesCallback([this, address, collocutor, makeFunc, errorFunc](const std::vector<Message> &messages) {
+        emit messenger->getHistoryAddressAddress(address, false, collocutor, fromC, toC, Messenger::GetMessagesCallback([this, address, collocutor, makeFunc](const std::vector<Message> &messages) {
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, collocutor, makeFunc](const std::vector<Message> &messages){
                 LOG << "get messages ok " << address << " " << collocutor << " " << messages.size();
-                makeFunc(TypedException(), address, collocutor, messagesToJson(messages));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, collocutor, QJsonDocument());
-    }
+                makeFunc.func(TypedException(), address, collocutor, messagesToJson(messages));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -211,34 +176,24 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetHistoryAddressAddressCountJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor, result);
-    };
-
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor, QJsonDocument());
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     LOG << "get messagesC " << address << " " << collocutor << " " << count << " " << to;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter countC = count.toLongLong(&isValid);
         CHECK(isValid, "count field incorrect");
         const Message::Counter toC = to.toLongLong(&isValid);
         CHECK(isValid, "to field incorrect");
 
-        emit messenger->getHistoryAddressAddressCount(address, false, collocutor, countC, toC, Messenger::GetMessagesCallback([this, address, collocutor, makeFunc, errorFunc](const std::vector<Message> &messages) {
+        emit messenger->getHistoryAddressAddressCount(address, false, collocutor, countC, toC, Messenger::GetMessagesCallback([this, address, collocutor, makeFunc](const std::vector<Message> &messages) {
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, collocutor, makeFunc](const std::vector<Message> &messages){
                 LOG << "get messagesC ok " << address << " " << collocutor << " " << messages.size();
-                makeFunc(TypedException(), address, collocutor, messagesToJson(messages));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, collocutor, QJsonDocument());
-    }
+                makeFunc.func(TypedException(), address, collocutor, messagesToJson(messages));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -249,38 +204,28 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Send pubkey to blockchain " << address << " " << feeStr << " " << paramsJson;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
-    const auto errorFunc = [makeFunc](const TypedException &exception) {
-        makeFunc(exception, QString("Not ok"));
-    };
-
-    const TypedException exception = apiVrapper2([&, this]{
+    wrapOperation([&, this]{
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field incorrect");
 
         const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
-        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, fee, sendParams, makeFunc, errorFunc](const QString &pubkeyRsa){
-            emit txManager.getNonce("1", address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc, errorFunc](size_t nonce, const QString &server) {
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, fee, sendParams, makeFunc](const QString &pubkeyRsa){
+            emit txManager.getNonce("1", address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc](size_t nonce, const QString &server) {
                 LOG << "Get nonce ok " << nonce;
-                emit cryptoManager.signTransaction(address, address, 0, fee, nonce, pubkeyRsa, CryptographicManager::SignTransactionCallback([this, address, pubkeyRsa, nonce, fee, sendParams, makeFunc, errorFunc](const QString &transaction, const QString &pubkey, const QString &sign){
+                emit cryptoManager.signTransaction(address, address, 0, fee, nonce, pubkeyRsa, CryptographicManager::SignTransactionCallback([this, address, pubkeyRsa, nonce, fee, sendParams, makeFunc](const QString &transaction, const QString &pubkey, const QString &sign){
                     LOG << "Sign Transaction size " << transaction.size();
                     const QString feeStr = QString::fromStdString(std::to_string(fee));
                     emit txManager.sendTransaction("1", address, "0", nonce, pubkeyRsa, feeStr, pubkey, sign, sendParams, transactions::Transactions::SendTransactionCallback([address, makeFunc](){
                         LOG << "Send pubkey to blockchain ok " << address;
-                        makeFunc(TypedException(), "Ok");
-                    }, errorFunc, signalFunc));
-                }, errorFunc, signalFunc));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, QString("Not ok"));
-    }
+                        makeFunc.func(TypedException(), "Ok");
+                    }, makeFunc.error, signalFunc));
+                }, makeFunc.error, signalFunc));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -304,33 +249,23 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgAddressAppendToMessengerJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
-
-    const auto errorFunc = [makeFunc](const TypedException &exception) {
-        makeFunc(exception, QString("Not ok"));
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
     LOG << "registerAddress " << address << " " << isForcibly;
 
-    const TypedException exception = apiVrapper2([&, this](){
-        const auto processFunc = std::bind(&MessengerJavascript::doRegisterAddress, this, address, _1, isForcibly, makeFunc, errorFunc);
+    wrapOperation([&, this](){
+        const auto processFunc = std::bind(&MessengerJavascript::doRegisterAddress, this, address, _1, isForcibly, makeFunc.func, makeFunc.error);
 
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field incorrect");
-        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, isForcibly, fee, makeFunc, processFunc](const QString &pubkeyRsa){
             const QString messageToSign = Messenger::makeTextForSignRegisterRequest(address, pubkeyRsa, fee);
-            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, errorFunc, processFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
-                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, errorFunc, signalFunc));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, QString("Not ok"));
-    }
+            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, makeFunc, processFunc, pubkeyRsa](const QString &pubkey, const QString &sign){
+                emit messenger->registerAddress(isForcibly, address, pubkeyRsa, pubkey, sign, fee, Messenger::RegisterAddressCallback(processFunc, makeFunc.error, signalFunc));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -340,33 +275,23 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgAddressAppendToMessengerBlockchainJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
-
-    const auto errorFunc = [makeFunc](const TypedException &exception) {
-        makeFunc(exception, QString("Not ok"));
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
     LOG << "registerAddressBlockchain " << address << " " << isForcibly << " " << txHash << " " << blockchainName << " " << blockchainServ;
 
-    const TypedException exception = apiVrapper2([&, this](){
-        const auto processFunc = std::bind(&MessengerJavascript::doRegisterAddress, this, address, _1, isForcibly, makeFunc, errorFunc);
+    wrapOperation([&, this](){
+        const auto processFunc = std::bind(&MessengerJavascript::doRegisterAddress, this, address, _1, isForcibly, makeFunc.func, makeFunc.error);
 
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "Fee field incorrect");
         const QString messageToSign = Messenger::makeTextForSignRegisterBlockchainRequest(address, fee, txHash, blockchainServ, blockchainName);
-        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, messageToSign, isForcibly, fee, txHash, blockchainServ, blockchainName, makeFunc, errorFunc, processFunc](const QString &pubkeyRsa){
-            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, pubkeyRsa, txHash, blockchainServ, blockchainName, makeFunc, errorFunc, processFunc](const QString &pubkey, const QString &sign){
-                emit messenger->registerAddressFromBlockchain(isForcibly, address, pubkeyRsa, pubkey, sign, fee, txHash, blockchainServ, blockchainName, Messenger::RegisterAddressBlockchainCallback(processFunc, errorFunc, signalFunc));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, QString("Not ok"));
-    }
+        emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, messageToSign, isForcibly, fee, txHash, blockchainServ, blockchainName, makeFunc, processFunc](const QString &pubkeyRsa){
+            emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, isForcibly, fee, pubkeyRsa, txHash, blockchainServ, blockchainName, makeFunc, processFunc](const QString &pubkey, const QString &sign){
+                emit messenger->registerAddressFromBlockchain(isForcibly, address, pubkeyRsa, pubkey, sign, fee, txHash, blockchainServ, blockchainName, Messenger::RegisterAddressBlockchainCallback(processFunc, makeFunc.error, signalFunc));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -376,41 +301,31 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgPublicKeyCollocutorGettedJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor);
-    };
-
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor));
 
     LOG << "savePublicKeyCollocutor " << address << " " << collocutor;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         const QString messageToSign = Messenger::makeTextForGetPubkeyRequest(collocutor);
-        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, isForcibly, makeFunc, errorFunc](const QString &pubkey, const QString &sign){
+        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, isForcibly, makeFunc](const QString &pubkey, const QString &sign){
             emit messenger->savePubkeyAddress(isForcibly, collocutor, pubkey, sign, Messenger::SavePubkeyCallback([this, address, collocutor, makeFunc](bool /*isNew*/) {
                 LOG << "Pubkey saved " << collocutor;
-                makeFunc(TypedException(), address, collocutor);
-            }, [this, address, collocutor, makeFunc, errorFunc](const TypedException &exception) {
+                makeFunc.func(TypedException(), address, collocutor);
+            }, [this, address, collocutor, makeFunc](const TypedException &exception) {
                 if (exception.numError != TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND) {
-                    errorFunc(exception);
+                    makeFunc.error(exception);
                     return;
                 }
                 const QString messageToSign = Messenger::makeTextForWantToTalkRequest(collocutor);
-                emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc](const QString &pubkey, const QString &sign){
+                emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc](const QString &pubkey, const QString &sign){
                     emit messenger->wantToTalk(collocutor, pubkey, sign, Messenger::WantToTalkCallback([this, address, collocutor, makeFunc](){
                         LOG << "Want to talk " << address << " " << collocutor;
-                        makeFunc(TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND, "Not found"), address, collocutor);
-                    }, errorFunc, signalFunc));
-                }, errorFunc, signalFunc));
+                        makeFunc.func(TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND, "Not found"), address, collocutor);
+                    }, makeFunc.error, signalFunc));
+                }, makeFunc.error, signalFunc));
             }, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -422,17 +337,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "getUserInfo " << " " << address;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, QJsonDocument());
-    };
-
-    emit messenger->getUserInfo(address, Messenger::UserInfoCallback([address, makeFunc](bool complete, const ContactInfo &info) {
-        makeFunc(TypedException(), address, contactInfoToJson(complete, info));
-    }, errorFunc, signalFunc));
+    wrapOperation([&, this](){
+        emit messenger->getUserInfo(address, Messenger::UserInfoCallback([address, makeFunc](bool complete, const ContactInfo &info) {
+            makeFunc.func(TypedException(), address, contactInfoToJson(complete, info));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -444,17 +355,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "getContactInfo " << " " << address;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, QJsonDocument());
-    };
-
-    emit messenger->getCollocutorInfo(address, Messenger::UserInfoCallback([address, makeFunc](bool isComplete, const ContactInfo &info) {
-        makeFunc(TypedException(), address, contactInfoToJson(isComplete, info));
-    }, errorFunc, signalFunc));
+    wrapOperation([&, this](){
+        emit messenger->getCollocutorInfo(address, Messenger::UserInfoCallback([address, makeFunc](bool isComplete, const ContactInfo &info) {
+            makeFunc.func(TypedException(), address, contactInfoToJson(isComplete, info));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -464,41 +371,31 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgMessageSendedJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor);
-    };
-
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor));
 
     LOG << "sendMessage " << " " << address << " " << collocutor << " " << timestampStr << " " << feeStr;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         CHECK(!dataHex.isEmpty(), "Empty message");
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
         CHECK(isValid, "fee field incorrect");
         const uint64_t timestamp = timestampStr.toULongLong(&isValid);
         CHECK(isValid, "timestamp field incorrect");
-        emit messenger->getPubkeyAddress(collocutor, Messenger::GetPubkeyAddressCallback([this, makeFunc, errorFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey) mutable {
-            emit cryptoManager.encryptDataRsa(dataHex, pubkey, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex](const QString &encryptedDataToWss) {
-                emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &encryptedDataToBd) {
+        emit messenger->getPubkeyAddress(collocutor, Messenger::GetPubkeyAddressCallback([this, makeFunc, address, collocutor, dataHex, fee, timestamp](const QString &pubkey) mutable {
+            emit cryptoManager.encryptDataRsa(dataHex, pubkey, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, dataHex](const QString &encryptedDataToWss) {
+                emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &encryptedDataToBd) {
                     const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, encryptedDataToBd, fee, timestamp);
-                    emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, errorFunc, fee, timestamp, dataHex, encryptedDataToWss, encryptedDataToBd](const QString &pubkey, const QString &sign) {
+                    emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, dataHex, encryptedDataToWss, encryptedDataToBd](const QString &pubkey, const QString &sign) {
                         emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, dataHex, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([this, makeFunc, address, collocutor]() {
                             LOG << "Message sended " << address << " " << collocutor;
-                            makeFunc(TypedException(), address, collocutor);
-                        }, errorFunc, signalFunc));
-                    }, errorFunc, signalFunc));
-                }, errorFunc, signalFunc));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, collocutor);
-    }
+                            makeFunc.func(TypedException(), address, collocutor);
+                        }, makeFunc.error, signalFunc));
+                    }, makeFunc.error, signalFunc));
+                }, makeFunc.error, signalFunc));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -508,26 +405,16 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgLastMessegesJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const Message::Counter &pos) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, pos);
-    };
-
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, 0);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<Message::Counter>(0));
 
     LOG << "getLastMessageNumber " << address;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit messenger->getLastMessage(address, false, "", Messenger::GetSavedPosCallback([this, makeFunc, address](const Message::Counter &pos) {
             LOG << "getLastMessageNumber ok " << address << " " << pos;
-            makeFunc(TypedException(), address, pos);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, 0);
-    }
+            makeFunc.func(TypedException(), address, pos);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -537,26 +424,16 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgSavedPosJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor, const Message::Counter &pos) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor, pos);
-    };
-
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor, 0);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor), JsTypeReturn<Message::Counter>(0));
 
     LOG << "getSavedPos " << address << " " << collocutor;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit messenger->getSavedPos(address, false, collocutor, Messenger::GetSavedPosCallback([this, makeFunc, address, collocutor](const Message::Counter &pos) {
             LOG << "getSavedPos ok " << address << " " << collocutor << " " << pos;
-            makeFunc(TypedException(), address, collocutor, pos);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, collocutor, 0);
-    }
+            makeFunc.func(TypedException(), address, collocutor, pos);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -566,28 +443,18 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgSavedsPosJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, result);
-    };
-
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, QJsonDocument());
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     LOG << "getSavedsPos " << address;
 
-    const TypedException exception = apiVrapper2([&, this](){
-        emit messenger->getSavedsPos(address, false, Messenger::GetSavedsPosCallback([this, makeFunc, address](const std::vector<std::pair<QString, Message::Counter>> &pos) {
+    wrapOperation([&, this](){
+        emit messenger->getSavedsPos(address, false, Messenger::GetSavedsPosCallback([makeFunc, address](const std::vector<std::pair<QString, Message::Counter>> &pos) {
             const QJsonDocument result(allPosToJson(pos));
 
             LOG << "getSavedsPos ok " << address << " " << pos.size();
-            makeFunc(TypedException(), address, result);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, QJsonDocument());
-    }
+            makeFunc.func(TypedException(), address, result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -597,29 +464,19 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgStorePosJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor, result);
-    };
-
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor, "Not ok");
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor), JsTypeReturn<QString>("Not ok"));
 
     LOG << "savePos " << address << " " << collocutor << " " << counterStr;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter counter = counterStr.toLongLong(&isValid);
         CHECK(isValid, "counter field invalid");
         emit messenger->savePos(address, false, collocutor, counter, Messenger::SavePosCallback([this, makeFunc, address, collocutor](){
             LOG << "savePos ok " << address << " " << collocutor;
-            makeFunc(TypedException(), address, collocutor, "Ok");
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, collocutor, "Not ok");
-    }
+            makeFunc.func(TypedException(), address, collocutor, "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -629,29 +486,19 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgCountMessagesJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &collocutor, const Message::Counter &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, collocutor, result);
-    };
-
-    const auto errorFunc = [address, collocutor, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, collocutor, 0);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(collocutor), JsTypeReturn<Message::Counter>(0));
 
     LOG << "getCountMessages " << address << " " << collocutor << " " << from;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter fromI = from.toLongLong(&isValid);
         CHECK(isValid, "from field invalid");
         emit messenger->getCountMessages(address, collocutor, fromI, Messenger::GetCountMessagesCallback([this, makeFunc, address, collocutor](const Message::Counter &count) {
             LOG << "getCountMessages ok " << address << " " << collocutor << " " << count;
-            makeFunc(TypedException(), address, collocutor, count);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, collocutor, 0);
-    }
+            makeFunc.func(TypedException(), address, collocutor, count);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -698,29 +545,19 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgAddWriterToChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &channelSha, const QString &writer) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, channelSha, writer);
-    };
-
-    const auto errorFunc = [address, titleSha, writer, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, writer);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<QString>(writer));
 
     LOG << "add writer " << address << " " << titleSha << " " << writer;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         const QString messageToSign = Messenger::makeTextForChannelAddWriterRequest(titleSha, writer);
-        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
+        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc](const QString &pubkey, const QString &sign) {
             emit messenger->addWriterToChannel(titleSha, writer, pubkey, sign, Messenger::AddWriterToChannelCallback([this, makeFunc, address, titleSha, writer]() {
                 LOG << "add writer ok " << address << " " << titleSha << " " << writer;
-                makeFunc(TypedException(), address, titleSha, writer);
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, writer);
-    }
+                makeFunc.func(TypedException(), address, titleSha, writer);
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -730,29 +567,19 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgDelWriterFromChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &channelSha, const QString &writer) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, channelSha, writer);
-    };
-
-    const auto errorFunc = [address, titleSha, writer, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, writer);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<QString>(writer));
 
     LOG << "del writer " << address << " " << titleSha << " " << writer;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         const QString messageToSign = Messenger::makeTextForChannelDelWriterRequest(titleSha, writer);
-        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
+        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc](const QString &pubkey, const QString &sign) {
             emit messenger->delWriterFromChannel(titleSha, writer, pubkey, sign, Messenger::DelWriterToChannelCallback([this, makeFunc, address, titleSha, writer]() {
                 LOG << "del writer ok " << address << " " << titleSha << " " << writer;
-                makeFunc(TypedException(), address, titleSha, writer);
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, writer);
-    }
+                makeFunc.func(TypedException(), address, titleSha, writer);
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -762,17 +589,11 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgMessageSendedToChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &channelSha) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, channelSha);
-    };
-
-    const auto errorFunc = [address, titleSha, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha));
 
     LOG << "sendMessageToChannel " << " " << address << " " << titleSha << " " << timestampStr << " " << feeStr;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         CHECK(!dataHex.isEmpty(), "Empty message");
         bool isValid;
         const uint64_t fee = feeStr.toULongLong(&isValid);
@@ -781,17 +602,13 @@ BEGIN_SLOT_WRAPPER
         CHECK(isValid, "timestamp field invalid");
 
         const QString messageToSign = Messenger::makeTextForSendToChannelRequest(titleSha, dataHex, fee, timestamp);
-        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, dataHex, titleSha, fee, timestamp, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
+        emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, dataHex, titleSha, fee, timestamp, makeFunc](const QString &pubkey, const QString &sign) {
             emit messenger->sendMessage(address, address, true, titleSha, dataHex, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
                 LOG << "sendMessageToChannel ok " << address << " " << titleSha;
-                makeFunc(TypedException(), address, titleSha);
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha);
-    }
+                makeFunc.func(TypedException(), address, titleSha);
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -801,27 +618,17 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetChannelListJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QJsonDocument &channels) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, channels);
-    };
-
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, QJsonDocument());
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     LOG << "getChannelList " << " " << address;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit messenger->getChannelList(address, Messenger::GetChannelListCallback([this, makeFunc, address](const std::vector<ChannelInfo> &channels) {
             LOG << "getChannelList ok " << address << " " << channels.size();
             const QJsonDocument channelsJson = channelListToJson(channels);
-            makeFunc(TypedException(), address, channelsJson);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, QJsonDocument());
-    }
+            makeFunc.func(TypedException(), address, channelsJson);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -831,26 +638,16 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetLastMessageChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &titleSha, Message::Counter pos) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, titleSha, pos);
-    };
-
-    const auto errorFunc = [address, titleSha, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, 0);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<Message::Counter>(0));
 
     LOG << "get last message channel " << " " << address << " " << titleSha;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit messenger->getLastMessage(address, true, titleSha, Messenger::GetSavedPosCallback([this, makeFunc, address, titleSha](const Message::Counter &pos) {
             LOG << "get last message channel ok " << address << " " << pos;
-            makeFunc(TypedException(), address, titleSha, pos);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, 0);
-    }
+            makeFunc.func(TypedException(), address, titleSha, pos);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -860,26 +657,16 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgSavedPosChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &titleSha, Message::Counter pos) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, titleSha, pos);
-    };
-
-    const auto errorFunc = [address, titleSha, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, 0);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<Message::Counter>(0));
 
     LOG << "getSavedPosChannel " << address << " " << titleSha;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         emit messenger->getSavedPos(address, true, titleSha, Messenger::GetSavedPosCallback([this, makeFunc, address, titleSha](const Message::Counter &pos) {
             LOG << "getSavedPosChannel ok " << address << " " << titleSha << " " << pos;
-            makeFunc(TypedException(), address, titleSha, pos);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, 0);
-    }
+            makeFunc.func(TypedException(), address, titleSha, pos);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -889,29 +676,19 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgStorePosToChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &titleSha, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, titleSha, result);
-    };
-
-    const auto errorFunc = [address, titleSha, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, "Not ok");
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<QString>("Not ok"));
 
     LOG << "savePosToChannel " << address << " " << titleSha << " " << counterStr;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter counter = counterStr.toLongLong(&isValid);
         CHECK(isValid, "counter field invalid");
         emit messenger->savePos(address, true, titleSha, counter, Messenger::SavePosCallback([this, makeFunc, address, titleSha](){
             LOG << "savePosToChannel ok " << address << " " << titleSha;
-            makeFunc(TypedException(), address, titleSha, "Ok");
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, "Not ok");
-    }
+            makeFunc.func(TypedException(), address, titleSha, "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -921,33 +698,23 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetHistoryAddressChannelJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &titleSha, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, titleSha, result);
-    };
-
-    const auto errorFunc = [address, titleSha, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, QJsonDocument());
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     LOG << "get messages channel " << address << " " << titleSha << " " << from << " " << to;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter fromC = from.toLongLong(&isValid);
         CHECK(isValid, "from field invalid");
         const Message::Counter toC = to.toLongLong(&isValid);
         CHECK(isValid, "to field invalid");
-        emit messenger->getHistoryAddressAddress(address, true, titleSha, fromC, toC, Messenger::GetMessagesCallback([this, makeFunc, address, titleSha, errorFunc](const std::vector<Message> &messages) {
+        emit messenger->getHistoryAddressAddress(address, true, titleSha, fromC, toC, Messenger::GetMessagesCallback([this, makeFunc, address, titleSha](const std::vector<Message> &messages) {
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, titleSha, makeFunc](const std::vector<Message> &messages){
                 LOG << "get messages channel ok " << address << " " << titleSha << " " << messages.size();
-                makeFunc(TypedException(), address, titleSha, messagesToJson(messages));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, QJsonDocument());
-    }
+                makeFunc.func(TypedException(), address, titleSha, messagesToJson(messages));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -957,34 +724,24 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgGetHistoryAddressChannelCountJs";
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &titleSha, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, titleSha, result);
-    };
-
-    const auto errorFunc = [address, titleSha, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, titleSha, QJsonDocument());
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(titleSha), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     LOG << "get messagesCC " << address << " " << titleSha << " " << count << " " << to;
 
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         bool isValid;
         const Message::Counter countC = count.toLongLong(&isValid);
         CHECK(isValid, "count field invalid");
         const Message::Counter toC = to.toLongLong(&isValid);
         CHECK(isValid, "to field invalid");
 
-        emit messenger->getHistoryAddressAddressCount(address, true, titleSha, countC, toC, Messenger::GetMessagesCallback([this, makeFunc, errorFunc, address, titleSha](const std::vector<Message> &messages) {
+        emit messenger->getHistoryAddressAddressCount(address, true, titleSha, countC, toC, Messenger::GetMessagesCallback([this, makeFunc, address, titleSha](const std::vector<Message> &messages) {
             emit cryptoManager.decryptMessages(messages, address, CryptographicManager::DecryptMessagesCallback([address, titleSha, makeFunc](const std::vector<Message> &messages){
                 LOG << "get messagesCC ok " << address << " " << titleSha << " " << messages.size();
-                makeFunc(TypedException(), address, titleSha, messagesToJson(messages));
-            }, errorFunc, signalFunc));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeFunc(exception, address, titleSha, QJsonDocument());
-    }
+                makeFunc.func(TypedException(), address, titleSha, messagesToJson(messages));
+            }, makeFunc.error, signalFunc));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -1063,35 +820,29 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "msgUnlockWalletResultJs";
 
-    const auto errorFunc = [this, JS_NAME_RESULT, address](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address));
 
     const QString walletPathFull = makePath(walletPath, mthWalletType);
     LOG << "Unlock wallet " << address << " Wallet path " << walletPathFull << " timeout " << timeSeconds;
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         CHECK_TYPED(!walletPathFull.isEmpty(), TypeErrors::MESSENGER_NOT_CONFIGURED, "Wallet path not set");
 
-        emit cryptoManager.unlockWallet(walletPathFull, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, JS_NAME_RESULT, errorFunc]() {
-            emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([this, address, JS_NAME_RESULT]() {
+        emit cryptoManager.unlockWallet(walletPathFull, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, makeFunc]() {
+            emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([this, address, makeFunc]() {
                 LOG << "Unlock wallet ok " << address;
-                makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address);
-            }, errorFunc, signalFunc));
-         }, errorFunc, signalFunc));
+                makeFunc.func(TypedException(), address);
+            }, makeFunc.error, signalFunc));
+         }, makeFunc.error, signalFunc));
 
-        emit messenger->isCompleteUser(address, Messenger::CompleteUserCallback([this, address, JS_NAME_RESULT, errorFunc](bool isComplete) {
+        emit messenger->isCompleteUser(address, Messenger::CompleteUserCallback([this, address, makeFunc](bool isComplete) {
             if (!isComplete) {
-                const auto makeFunc = [this, JS_NAME_RESULT, address](const TypedException &exception, const QString &/*result*/) {
-                    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
-                };
-                doRegisterAddress(address, false, true, makeFunc, errorFunc);
+                const auto mFunc = [this, address, makeFunc](const TypedException &exception, const QString &/*result*/) {
+                    makeFunc.func(exception, address);
+                }; // TODO ???
+                doRegisterAddress(address, false, true, mFunc, makeFunc.error);
             }
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
-    }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -1099,20 +850,15 @@ void MessengerJavascript::lockWallet() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgLockWalletResultJs";
 
-    const auto errorFunc = [this, JS_NAME_RESULT](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT);
 
     LOG << "lock wallets";
-    const TypedException exception = apiVrapper2([&, this](){
-        emit cryptoManager.lockWallet(CryptographicManager::LockWalletCallback([this, JS_NAME_RESULT]() {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException());
-        }, errorFunc, signalFunc));
-    });
 
-    if (exception.isSet()) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception);
-    }
+    wrapOperation([&, this](){
+        emit cryptoManager.lockWallet(CryptographicManager::LockWalletCallback([this, makeFunc]() {
+            makeFunc.func(TypedException());
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -1120,20 +866,14 @@ void MessengerJavascript::remainingTime() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "msgRemainingTimeResultJs";
 
-    const auto errorFunc = [this, JS_NAME_RESULT](const TypedException &exception) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, QString(""), 0);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<size_t>(0));
 
     LOG << "Remaining time";
-    const TypedException exception = apiVrapper2([&, this](){
-        emit cryptoManager.remainingTime(CryptographicManager::RemainingTimeCallback([this, JS_NAME_RESULT](const QString &address, const seconds &elapsed) {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, elapsed.count());
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+    wrapOperation([&, this](){
+        emit cryptoManager.remainingTime(CryptographicManager::RemainingTimeCallback([this, makeFunc](const QString &address, const seconds &elapsed) {
+            makeFunc.func(TypedException(), address, elapsed.count());
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -1143,11 +883,6 @@ BEGIN_SLOT_WRAPPER
     CHECK(messenger != nullptr, "Messenger not set");
     emit messenger->reEmit();
 END_SLOT_WRAPPER
-}
-
-void MessengerJavascript::runJs(const QString &script) {
-    LOG << "Javascript " << script;
-    emit jsRunSig(script);
 }
 
 void MessengerJavascript::onLogined(bool isInit, const QString login) {

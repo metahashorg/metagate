@@ -7,7 +7,7 @@
 
 #include "Message.h"
 
-struct TypedException;
+#include "WrapperJavascript.h"
 
 namespace auth {
 class Auth;
@@ -25,31 +25,18 @@ class CryptographicManager;
 
 class Messenger;
 
-class MessengerJavascript : public QObject {
+class MessengerJavascript: public WrapperJavascript {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
 
 public:
     explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m);
 
-signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const MessengerJavascript::Callback &callback);
-
 public slots:
     void onLogined(bool isInit, const QString login);
 
     void onMthWalletCreated(QString name);
-
-public slots:
-
-    void onCallbackCall(const MessengerJavascript::Callback &callback);
 
 signals:
 
@@ -152,13 +139,6 @@ private:
 
 private:
 
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
-
-private:
-
     auth::Auth &authManager;
 
     Messenger *messenger = nullptr;
@@ -172,8 +152,6 @@ private:
     QString mthWalletType;
 
     QString defaultUserName;
-
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 
 };
 
