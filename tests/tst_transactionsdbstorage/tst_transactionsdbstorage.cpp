@@ -62,7 +62,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(res.at(0).address, QStringLiteral("address100"));
     QCOMPARE(res.at(0).tx, QStringLiteral("fkfkgkgktrkjtrtritrdf1"));
     QCOMPARE(res.at(0).currency, QStringLiteral("mh"));
-    QCOMPARE(res.at(0).isInput, true);
     QCOMPARE(res.at(0).from, QStringLiteral("user7"));
     QCOMPARE(res.at(0).to, QStringLiteral("user2"));
     QCOMPARE(res.at(0).value, QStringLiteral("1334"));
@@ -93,7 +92,7 @@ void tst_TransactionsDBStorage::testDB1()
     trans.status = transactions::Transaction::ERROR;
     trans.type = transactions::Transaction::FORGING;
     trans.blockNumber = 2233;
-    db.updatePayment("address100", "mh", "fkfkgkgktrkjtrtritrdf1", true, trans);
+    db.updatePayment("address100", "mh", "fkfkgkgktrkjtrtritrdf1", trans);
 
 
     res = db.getPaymentsForAddressPending("address100", "mh", true);
@@ -105,7 +104,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(trans.address, QStringLiteral("address100"));
     QCOMPARE(trans.tx, QStringLiteral("fkfkgkgktrkjtrtritrdf1"));
     QCOMPARE(trans.currency, QStringLiteral("mh"));
-    QCOMPARE(trans.isInput, true);
     QCOMPARE(trans.from, QStringLiteral("a1"));
     QCOMPARE(trans.to, QStringLiteral("a2"));
     QCOMPARE(trans.value, QStringLiteral("a3"));
@@ -128,7 +126,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(trans.address, QStringLiteral("address100"));
     QCOMPARE(trans.tx, QStringLiteral("gfklklklrttrrrduidgjkg"));
     QCOMPARE(trans.currency, QStringLiteral("mh"));
-    QCOMPARE(trans.isInput, false);
     QCOMPARE(trans.from, QStringLiteral("user7"));
     QCOMPARE(trans.to, QStringLiteral("user3"));
     QCOMPARE(trans.value, QStringLiteral("2340"));

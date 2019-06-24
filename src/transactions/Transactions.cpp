@@ -180,7 +180,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
-            db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
+            db.updatePayment(address, currency, tx.tx, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
             emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
         }

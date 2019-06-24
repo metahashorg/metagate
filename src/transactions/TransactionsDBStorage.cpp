@@ -56,7 +56,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
 
 void TransactionsDBStorage::addPayment(const Transaction &trans)
 {
-    addPayment(trans.currency, trans.tx, trans.address, trans.isInput,
+    addPayment(trans.currency, trans.tx, trans.address, true/*ignored*/,
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
@@ -173,14 +173,14 @@ Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &addr
     return trans;
 }
 
-void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans)
+void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, const Transaction &trans)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(updatePaymentForAddress), query.lastError().text().toStdString())
             query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
-    query.bindValue(":isInput", isInput);
+    query.bindValue(":isInput", true/*ignored*/);
 
     query.bindValue(":ufrom", trans.from);
     query.bindValue(":uto", trans.to);
@@ -369,7 +369,6 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
     trans.fee = query.value("fee").toString();
     trans.nonce = query.value("nonce").toLongLong();
-    trans.isInput = query.value("isInput").toBool();
     trans.isSetDelegate = query.value("isSetDelegate").toBool();
     trans.isDelegate = query.value("isDelegate").toBool();
     trans.delegateValue = query.value("delegateValue").toString();

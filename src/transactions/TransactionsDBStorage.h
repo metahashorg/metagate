@@ -42,7 +42,7 @@ public:
 
     Transaction getLastForgingTransaction(const QString &address, const QString &currency);
 
-    void updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans);
+    void updatePayment(const QString &address, const QString &currency, const QString &txid, const Transaction &trans);
     void removePaymentsForDest(const QString &address, const QString &currency);
 
     qint64 getPaymentsCountForAddress(const QString &address, const QString &currency);

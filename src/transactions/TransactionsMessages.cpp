@@ -174,7 +174,6 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
 
     res.address = address;
     res.currency = currency;
-    res.isInput = res.address == res.from;
     return res;
 }
 
@@ -194,11 +193,6 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
         const Transaction res = parseTransaction(txJson, address, currency);
 
         result.emplace_back(res);
-        if (res.from == address && res.to == address) {
-            Transaction res2 = res;
-            res2.isInput = false;
-            result.emplace_back(res2);
-        }
     }
 
     return result;
