@@ -180,9 +180,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(count3, 0);
 }
 
-#include "check.h"
-#include <iostream>
-
 void tst_TransactionsDBStorage::tstFilterDelegate() {
     if (QFile::exists(transactions::databaseFileName))
         QFile::remove(transactions::databaseFileName);
@@ -197,12 +194,82 @@ void tst_TransactionsDBStorage::tstFilterDelegate() {
     db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", false, "user1", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11118, "", 1);
     db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", false, "user1", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11119, "", 1);
 
-    try {
     const auto res = db.getDelegatePaymentsForAddress("address100", "user1", "mh", 0, -1, true);
     QCOMPARE(res.size(), 2);
-    } catch (const Exception &e) {
-        std::cout << "Ya tuta 1 " << e;
-    }
+}
+
+static void compareBalances(const transactions::BalanceInfo &balance1, const transactions::BalanceInfo &balance2) {
+    QCOMPARE(balance1.address, balance2.address);
+    QCOMPARE(balance1.countDelegated, balance2.countDelegated);
+    QCOMPARE(balance1.countReceived, balance2.countReceived);
+    QCOMPARE(balance1.countSpent, balance2.countSpent);
+    QCOMPARE(balance1.countTxs, balance2.countTxs);
+    QCOMPARE(balance1.currBlockNum, balance2.currBlockNum);
+    QCOMPARE(balance1.delegate, balance2.delegate);
+    QCOMPARE(balance1.delegated, balance2.delegated);
+    QCOMPARE(balance1.forged, balance2.forged);
+    QCOMPARE(balance1.received, balance2.received);
+    QCOMPARE(balance1.reserved, balance2.reserved);
+    QCOMPARE(balance1.spent, balance2.spent);
+    QCOMPARE(balance1.undelegate, balance2.undelegate);
+    QCOMPARE(balance1.undelegated, balance2.undelegated);
+}
+
+void tst_TransactionsDBStorage::tstBalance() {
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
+    transactions::TransactionsDBStorage db;
+    db.init();
+
+    transactions::BalanceInfo balance1;
+    balance1.address = "addr1";
+    balance1.countDelegated = 10;
+    balance1.countReceived = 100;
+    balance1.countSpent = 101;
+    balance1.countTxs = 200;
+    balance1.currBlockNum = 1000;
+    balance1.delegate = BigNumber(QString("1202239"));
+
+    db.setBalance("cur1", balance1.address, balance1);
+
+    transactions::BalanceInfo balance2;
+    balance2.address = "addr1";
+    balance2.countDelegated = 11;
+    balance2.countReceived = 101;
+    balance2.countSpent = 102;
+    balance2.countTxs = 200000000;
+    balance2.currBlockNum = 1000000000;
+    balance2.delegate = BigNumber(QString("1200215463145647002239"));
+    balance2.delegated = BigNumber(QString("100"));
+    balance2.forged = BigNumber(QString("0"));
+    balance2.received = BigNumber(QString("1000"));
+    balance2.reserved = BigNumber(QString("233"));
+    balance2.spent = BigNumber(QString("2000"));
+    balance2.undelegate = BigNumber(QString("343"));
+    balance2.undelegated = BigNumber(QString("445"));
+
+    db.setBalance("cur1", balance2.address, balance2);
+
+    transactions::BalanceInfo balance3;
+    balance3.address = "addr3";
+    balance3.countDelegated = 100;
+    balance3.countReceived = 200;
+    balance3.countSpent = 201;
+    balance3.countTxs = 300000000;
+    balance3.currBlockNum = 4000000000;
+    balance3.delegate = BigNumber(QString("3145647002239"));
+    balance3.delegated = BigNumber(QString("1000100000000000000"));
+    balance3.forged = BigNumber(QString("0"));
+    balance3.received = BigNumber(QString("10001"));
+    balance3.reserved = BigNumber(QString("546368"));
+    balance3.spent = BigNumber(QString("3000"));
+    balance3.undelegate = BigNumber(QString("5543"));
+    balance3.undelegated = BigNumber(QString("41445"));
+
+    db.setBalance("cur1", balance3.address, balance3);
+
+    compareBalances(balance2, db.getBalance("cur1", balance2.address));
+    compareBalances(balance3, db.getBalance("cur1", balance3.address));
 }
 
 void tst_TransactionsDBStorage::testBigNumSum()

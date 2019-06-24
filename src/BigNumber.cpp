@@ -67,6 +67,10 @@ BigNumber &BigNumber::operator-=(const BigNumber &rhs)
     return *this;
 }
 
+bool BigNumber::operator==(const BigNumber &second) const {
+    return BN_cmp(this->ptr.get(), second.ptr.get()) == 0;
+}
+
 const BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs)
 {
     BigNumber res(lhs);

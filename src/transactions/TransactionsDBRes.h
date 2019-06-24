@@ -7,7 +7,7 @@ namespace transactions {
 
 static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
-static const int databaseVersion = 4;
+static const int databaseVersion = 5;
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -36,6 +36,28 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
 static const QString createPaymentsUniqueIndex = "CREATE UNIQUE INDEX paymentsUniqueIdx ON payments ( "
                                                     "currency ASC, address ASC, txid ASC, isInput ASC, blockNumber ASC ) ";
 
+static const QString createBalanceTable = "CREATE TABLE balance ( "
+                                                "id INTEGER PRIMARY KEY NOT NULL, "
+                                                "currency VARCHAR(100), "
+                                                "address TEXT NOT NULL, "
+                                                "received TEXT NOT NULL, "
+                                                "spent TEXT NOT NULL, "
+                                                "countReceived INT8 NOT NULL, "
+                                                "countSpent INT8 NOT NULL, "
+                                                "countTxs INT8 NOT NULL, "
+                                                "currBlockNum INT8 NOT NULL, "
+                                                "countDelegated INT8 NOT NULL, "
+                                                "delegate TEXT NOT NULL, "
+                                                "undelegate TEXT NOT NULL, "
+                                                "delegated TEXT NOT NULL, "
+                                                "undelegated TEXT NOT NULL, "
+                                                "reserved TEXT NOT NULL, "
+                                                "forged TEXT NOT NULL "
+                                                ")";
+
+static const QString createBalanceUniqueIndex = "CREATE UNIQUE INDEX balanceUniqueIdx ON balance ( "
+                                                    "currency ASC, address ASC) ";
+
 static const QString createPaymentsIndex1 = "CREATE INDEX paymentsIdx1 ON payments(address, currency, isInput, isDelegate, isSetDelegate)";
 static const QString createPaymentsIndex2 = "CREATE INDEX paymentsIdx2 ON payments(address, currency, ts, txid)";
 static const QString createPaymentsIndex3 = "CREATE INDEX paymentsIdx3 ON payments(currency, ts, txid)";
@@ -52,8 +74,16 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency) ";
 
+static const QString deleteBalance = "DELETE FROM balance WHERE address = :address AND  currency = :currency ";
+
+static const QString insertBalance = "INSERT OR IGNORE INTO balance (currency, address, received, spent, countReceived, countSpent, countTxs, currBlockNum, countDelegated, delegate, undelegate, delegated, undelegated, reserved, forged) "
+                                        "VALUES (:currency, :address, :received, :spent, :countReceived, :countSpent, :countTxs, :currBlockNum, :countDelegated, :delegate, :undelegate, :delegated, :undelegated, :reserved, :forged)";
+
 static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, isInput, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash, intStatus) "
                                         "VALUES (:currency, :txid, :address, :isInput, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash, :intStatus)";
+
+static const QString selectBalance = "SELECT * FROM balance "
+                                                    "WHERE address = :address AND  currency = :currency ";
 
 static const QString selectPaymentsForDest = "SELECT * FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "

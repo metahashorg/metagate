@@ -65,6 +65,10 @@ public:
 
     void removePaymentsForCurrency(const QString &currency);
 
+    void setBalance(const QString &currency, const QString &address, const BalanceInfo &balance);
+
+    BalanceInfo getBalance(const QString &currency, const QString &address);
+
 protected:
     virtual void createDatabase() final;
 

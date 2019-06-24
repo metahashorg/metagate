@@ -19,6 +19,8 @@ private slots:
 
     void tstFilterDelegate();
 
+    void tstBalance();
+
 private:
 };
 
