@@ -25,7 +25,6 @@ TransactionsJavascript::TransactionsJavascript(QObject *parent)
     : WrapperJavascript(false, LOG_FILE)
 {
     Q_CONNECT(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance);
-    Q_CONNECT(this, &TransactionsJavascript::newBalance2Sig, this, &TransactionsJavascript::onNewBalance2);
     Q_CONNECT(this, &TransactionsJavascript::sendedTransactionsResponseSig, this, &TransactionsJavascript::onSendedTransactionsResponse);
     Q_CONNECT(this, &TransactionsJavascript::transactionInTorrentSig, this, &TransactionsJavascript::onTransactionInTorrent);
     Q_CONNECT(this, &TransactionsJavascript::transactionStatusChangedSig, this, &TransactionsJavascript::onTransactionStatusChanged);
@@ -42,6 +41,7 @@ static QJsonObject balanceToJson1(const BalanceInfo &balance) {
     messagesBalanceJson.insert("countReceived", QString::fromStdString(std::to_string(balance.countReceived)));
     messagesBalanceJson.insert("countSpent", QString::fromStdString(std::to_string(balance.countSpent)));
     messagesBalanceJson.insert("countTxs", QString::fromStdString(std::to_string(balance.countTxs)));
+    messagesBalanceJson.insert("savedTxs", QString::fromStdString(std::to_string(balance.savedTxs)));
     messagesBalanceJson.insert("currBlock", QString::fromStdString(std::to_string(balance.currBlockNum)));
     messagesBalanceJson.insert("countDelegated", QString::fromStdString(std::to_string(balance.countDelegated)));
     messagesBalanceJson.insert("delegate", QString(balance.delegate.getDecimal()));
@@ -145,16 +145,6 @@ BEGIN_SLOT_WRAPPER
     LOG << "New balance " << address << " " << currency << " " << balance.countTxs << " " << QString(balance.calcBalance().getDecimal());
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, currency, balanceToJson(balance));
-END_SLOT_WRAPPER
-}
-
-void TransactionsJavascript::onNewBalance2(const QString &address, const QString &currency, const BalanceInfo &balance, const BalanceInfo &confirmedBalance) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "txsNewBalance2Js";
-
-    LOG << "New balance2 " << address << " " << currency << " " << balance.countTxs << " " << QString(balance.calcBalance().getDecimal()) << " " << confirmedBalance.countTxs << " " << QString(balance.calcBalance().getDecimal());
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), address, currency, balanceToJson(balance), balanceToJson(confirmedBalance));
 END_SLOT_WRAPPER
 }
 

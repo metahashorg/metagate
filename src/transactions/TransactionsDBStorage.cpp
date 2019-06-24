@@ -303,67 +303,6 @@ BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString 
     return res;
 }
 
-void TransactionsDBStorage::calcBalance(const QString &address, const QString &currency,
-                                        BalanceInfo &balance)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectAllPaymentsValuesForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-
-    BigNumber value;
-    BigNumber fee;
-    BigNumber delegateValue;
-    bool isSetDelegate;
-    bool isDelegate;
-    bool isInput;
-    Transaction::Status status;
-    Transaction::Type type;
-
-    while (query.next()) {
-        value.setDecimal(query.value("value").toByteArray());
-        fee.setDecimal(query.value("fee").toByteArray());
-        delegateValue.setDecimal(query.value("delegateValue").toByteArray());
-        isSetDelegate = query.value("isSetDelegate").toBool();
-        isDelegate = query.value("isDelegate").toBool();
-        isInput = query.value("isInput").toBool();
-        status = static_cast<Transaction::Status>(query.value("status").toInt());
-        type = static_cast<Transaction::Type>(query.value("type").toInt());
-        if (isInput) {
-            balance.spent += value;
-            balance.spent += fee;
-            balance.countSpent++;
-        } else {
-            balance.received += value;
-            balance.countReceived++;
-        }
-        if (isSetDelegate){
-            balance.countDelegated++;
-            if (status == Transaction::Status::OK) {
-                balance.countDelegated++; // count transaction twice
-                if (isInput && isDelegate) {
-                    balance.delegate += delegateValue;
-                } else if (!isInput && isDelegate) {
-                    balance.delegated += delegateValue;
-                } else if (isInput && !isDelegate) {
-                    balance.undelegate += delegateValue;
-                } else if (!isInput && !isDelegate) {
-                    balance.undelegated += delegateValue;
-                }
-            }
-            if (isInput && isDelegate  && status == Transaction::Status::PENDING) {
-                balance.reserved += delegateValue;
-            }
-        }
-        if (type == Transaction::Type::FORGING && !isInput) {
-            balance.forged += value;
-        }
-    }
-
-    balance.countTxs = getPaymentsCountForAddress(address, currency);
-}
-
 void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
 {
     QSqlQuery query(database());

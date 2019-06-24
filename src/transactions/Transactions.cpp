@@ -113,20 +113,19 @@ uint64_t Transactions::calcCountTxs(const QString &address, const QString &curre
     return countTxs;
 }
 
-void Transactions::newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
+void Transactions::newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
     const uint64_t currCountTxs = calcCountTxs(address, currency);
     CHECK(savedCountTxs == currCountTxs, "Trancastions in db on address " + address.toStdString() + " " + currency.toStdString() + " changed");
     auto transactionGuard = db.beginTransaction();
     for (const Transaction &tx: txs) {
         db.addPayment(tx);
     }
+    db.setBalance(currency, address, balance);
     transactionGuard.commit();
 
-    BalanceInfo confirmedBalance;
-    db.calcBalance(address, currency, confirmedBalance);
-
-    emit javascriptWrapper.newBalanceSig(address, currency, balance);
-    emit javascriptWrapper.newBalance2Sig(address, currency, balance, confirmedBalance);
+    BalanceInfo balanceCopy = balance;
+    balanceCopy.savedTxs = confirmedCountTxsInThisLoop;
+    emit javascriptWrapper.newBalanceSig(address, currency, balanceCopy);
     updateBalanceTime(currency, servStruct);
 }
 
@@ -187,7 +186,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         }
     };
 
-    const auto getBlockHeaderCallback = [this, currency, servStruct](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, std::vector<Transaction> txs, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBlockHeaderCallback = [this, currency, servStruct](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, std::vector<Transaction> txs, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response));
         for (Transaction &tx: txs) {
@@ -195,31 +194,31 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                 tx.blockHash = bi.hash;
             }
         }
-        newBalance(address, currency, savedCountTxs, balance, txs, servStruct);
+        newBalance(address, currency, savedCountTxs, confirmedCountTxsInThisLoop, balance, txs, servStruct);
     };
 
-    const auto processNewTransactions = [this, currency, getBlockHeaderCallback](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server) {
+    const auto processNewTransactions = [this, currency, getBlockHeaderCallback](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const std::vector<Transaction> &txs, const QUrl &server) {
         const auto maxElement = std::max_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
             return first.blockNumber < second.blockNumber;
         });
         CHECK(maxElement != txs.end(), "Incorrect max element");
         const int64_t blockNumber = maxElement->blockNumber;
         const QString request = makeGetBlockInfoRequest(blockNumber);
-        client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, txs, _1, _2), timeout);
+        client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, confirmedCountTxsInThisLoop, txs, _1, _2), timeout);
     };
 
-    const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countTxs;
         const uint64_t countSave = serverBalance.countTxs;
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
             LOG << "Balance " << address << " confirmed";
-            processNewTransactions(address, serverBalance, savedCountTxs, txs, server);
+            processNewTransactions(address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server);
         }
     };
 
-    const auto getHistoryCallback = [this, currency, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getHistoryCallback = [this, currency, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
@@ -227,7 +226,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
 
         const QString requestBalance = makeGetBalanceRequest(address);
 
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, txs, server, _1, _2), timeout);
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server, _1, _2), timeout);
     };
 
     const auto getBalanceCallback = [this, servStruct, addressesAndUnconfirmedTxs, currency, getHistoryCallback, processPendingTx](const std::vector<QUrl> &servers, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
@@ -273,9 +272,16 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                 const uint64_t requestCountTxs = std::min(countMissingTxs, MAX_TXS_IN_RESPONSE) + ADD_TO_COUNT_TXS;
                 const QString requestForTxs = makeGetHistoryRequest(address, true, beginTx, requestCountTxs);
 
-                client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, bestServer, _1, _2), timeout);
+                client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, requestCountTxs + countAll, bestServer, _1, _2), timeout);
+            } else if (countAll > countInServer) {
+                // TODO remove history
             } else {
-                updateBalanceTime(currency, servStruct);
+                const BalanceInfo confirmedBalance = db.getBalance(currency, address);
+                if (confirmedBalance.countTxs != countInServer) {
+                    newBalance(address, currency, countAll, serverBalance.countTxs, serverBalance, {}, servStruct);
+                } else {
+                    updateBalanceTime(currency, servStruct);
+                }
             }
 
             if (!pendingTxs.empty()) {
@@ -304,11 +310,8 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
 }
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
-    BalanceInfo balance;
-    db.calcBalance(address, currency, balance);
-
-    balance.received += balance.undelegate;
-    balance.spent += balance.delegate;
+    BalanceInfo balance = db.getBalance(address, currency);
+    balance.savedTxs = balance.countTxs;
 
     return balance;
 }

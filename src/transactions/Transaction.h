@@ -56,6 +56,7 @@ struct BalanceInfo {
     uint64_t countSpent = 0;
     uint64_t countTxs = 0;
     uint64_t currBlockNum = 0;
+    uint64_t savedTxs = 0;
 
     uint64_t countDelegated = 0;
     BigNumber delegate = QString("0");
