@@ -117,6 +117,8 @@ signals:
 
     void processExternalUrl(const QUrl &url);
 
+    void showNotification(const QString &title, const QString &message);
+
 protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
@@ -141,6 +143,8 @@ private slots:
     void onInitFinished();
 
     void onProcessExternalUrl(const QUrl &url);
+
+    void onShowNotification(const QString &title, const QString &message);
 
 private:
 

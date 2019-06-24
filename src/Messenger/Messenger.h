@@ -18,6 +18,7 @@
 #include <functional>
 
 struct TypedException;
+class MainWindow;
 
 struct MessengerDeleteFromChannelVariant {
     QString address;
@@ -179,7 +180,7 @@ public:
 
 public:
 
-    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
+    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, MainWindow &mainWin, QObject *parent = nullptr);
 
     ~Messenger();
 
@@ -194,6 +195,8 @@ protected:
 signals:
 
     void callbackCall(const Messenger::Callback &callback);
+
+    void showNotification(const QString &title, const QString &message);
 
 public slots:
 
