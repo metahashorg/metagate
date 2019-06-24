@@ -140,26 +140,9 @@ static const QString deletePaymentsForAddress = "DELETE FROM payments "
 static const QString selectAllPaymentsValuesForAddress = "SELECT value, fee, isInput, delegateValue,isSetDelegate,isDelegate, status, type FROM payments "
                                                          "WHERE address = :address AND currency = :currency ";
 
-static const QString selectInPaymentsValuesForAddress = "SELECT value, fee FROM payments "
-                                                         "WHERE address = :address AND currency = :currency "
-                                                         "AND isInput = 1";
-
-static const QString selectOutPaymentsValuesForAddress = "SELECT value FROM payments "
-                                                          "WHERE address = :address AND currency = :currency "
-                                                          "AND isInput = 0";
-
 static const QString selectIsSetDelegatePaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
                                                                         "WHERE address = :address AND currency = :currency "
                                                                         "AND isSetDelegate = 1 AND status = :status";
-
-static const QString selectIsSetDelegatePaymentsValuesForAddress = "SELECT delegateValue FROM payments "
-                                                                        "WHERE address = :address AND currency = :currency "
-                                                                        "AND isInput = :isInput AND isDelegate = :isDelegate "
-                                                                        "AND isSetDelegate = 1 AND status = :status";
-
-static const QString selectPaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
-                                                    "WHERE address = :address AND currency = :currency "
-                                                    "AND isInput = :input";
 
 static const QString selectPaymentsCountForAddress2 = "SELECT COUNT(DISTINCT txid || ',' || blockNumber) AS count FROM payments "
                                                     "WHERE address = :address AND currency = :currency ";
