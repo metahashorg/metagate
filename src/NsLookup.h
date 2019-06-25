@@ -131,6 +131,12 @@ private:
 
     void finalizeLookupP2P();
 
+    void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
+
+    void finalizeRefresh(const NodeType::Node &node);
+
+    void processRefresh();
+
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
     bool repeatResolveDns(
@@ -155,6 +161,8 @@ private:
     std::map<QString, NodeType> nodes;
 
     std::vector<QString> ipsTemp;
+
+    std::vector<QString> ipsTempRefresh;
 
     std::vector<std::pair<NodeType::SubType, QString>> ipsTempP2P;
 
@@ -195,6 +203,10 @@ private:
     time_point prevPrintTime;
 
     bool isProcess = false;
+
+    bool isProcessRefresh = false;
+
+    std::vector<std::pair<QString, size_t>> defectiveTorrents;
 
 };
 
