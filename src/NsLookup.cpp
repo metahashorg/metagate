@@ -169,6 +169,8 @@ void NsLookup::process() {
 
         allNodesForTypesNew.clear();
 
+        isProcess = true;
+
         LOG << "Dns scan start";
         continueResolve(nodes.begin());
 
@@ -177,6 +179,8 @@ void NsLookup::process() {
 }
 
 void NsLookup::finalizeLookup() {
+    isProcess = false;
+
     std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
         allNodesForTypes.swap(allNodesForTypesNew);
@@ -205,6 +209,7 @@ void NsLookup::finalizeLookup() {
             isSuccessFl = true;
         } else {
             LOG << "Dns safe check not success. Start full scan";
+            isProcess = true;
             msTimer = 1ms;
         }
     } else {

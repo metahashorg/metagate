@@ -194,6 +194,8 @@ private:
 
     time_point prevPrintTime;
 
+    bool isProcess = false;
+
 };
 
 #endif // NSLOOKUP_H
