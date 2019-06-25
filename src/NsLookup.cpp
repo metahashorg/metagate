@@ -129,14 +129,40 @@ void NsLookup::startMethod() {
 
 void NsLookup::timerMethod() {
     process();
+
+    if (now() - prevPrintTime >= 1min) {
+        printNodes();
+        prevPrintTime = now();
+    }
 }
 
 void NsLookup::finishMethod() {
     // empty
 }
 
+void NsLookup::printNodes() const {
+    std::string result;
+    for (const auto &pair: allNodesForTypes) {
+        const size_t countSuccess = countWorkedNodes(pair.second);
+        const auto bestResult = !pair.second.empty() ? pair.second[0].ping : 0;
+        result += pair.first.str().toStdString() + ": " + std::to_string(countSuccess) + "/" + std::to_string(pair.second.size()) + ", " + std::to_string(bestResult) + "; ";
+    }
+
+    LOG << "Nodes result: " << result;
+}
+
+size_t NsLookup::countWorkedNodes(const std::vector<NodeInfo> &nodes) const {
+    const size_t countSuccess = std::accumulate(nodes.begin(), nodes.end(), size_t(0), [](size_t prev, const NodeInfo &subElem) -> size_t {
+        if (subElem.isChecked && !subElem.isTimeout) {
+            return prev + 1;
+        } else {
+            return prev + 0;
+        }
+    });
+    return countSuccess;
+}
+
 void NsLookup::process() {
-BEGIN_SLOT_WRAPPER
     if (now() - prevCheckTime >= msTimer) {
         msTimer = 600s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
         startScanTime = ::now();
@@ -148,7 +174,6 @@ BEGIN_SLOT_WRAPPER
 
         prevCheckTime = now();
     }
-END_SLOT_WRAPPER
 }
 
 void NsLookup::finalizeLookup() {
@@ -169,13 +194,7 @@ void NsLookup::finalizeLookup() {
     if (isSafeCheck) {
         bool isSuccess = true;
         for (const auto &elem: allNodesForTypes) {
-            const size_t countSuccess = std::accumulate(elem.second.begin(), elem.second.end(), size_t(0), [](size_t prev, const NodeInfo &subElem) -> size_t {
-                if (subElem.isChecked && !subElem.isTimeout) {
-                    return prev + 1;
-                } else {
-                    return prev + 0;
-                }
-            });
+            const size_t countSuccess = countWorkedNodes(elem.second);
             if (countSuccess < ACCEPTABLE_COUNT_ADDRESSES) {
                 isSuccess = false;
             }
@@ -307,10 +326,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
         const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
 
         CHECK(countSteps != 0, "Incorrect countSteps");
-        std::vector<QString> requests;
-        std::transform(ipsIter, ipsIter + countSteps, std::back_inserter(requests), [](const auto &r) {
-            return r;
-        });
+        std::vector<QString> requests(ipsIter, ipsIter + countSteps);
 
         client.pings(node->second.node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
             const TypedException exception = apiVrapper2([&]{

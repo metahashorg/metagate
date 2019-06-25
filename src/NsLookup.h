@@ -142,6 +142,10 @@ private:
         size_t countRepeat
     );
 
+    void printNodes() const;
+
+    size_t countWorkedNodes(const std::vector<NodeInfo> &nodes) const;
+
 private:
 
     UdpSocketClient udpClient;
@@ -187,6 +191,8 @@ private:
     int dnsServerPort;
 
     bool useUsersServers = false;
+
+    time_point prevPrintTime;
 
 };
 
