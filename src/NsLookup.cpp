@@ -110,7 +110,6 @@ NsLookup::NsLookup(QObject *parent)
 }
 
 NsLookup::~NsLookup() {
-    isStopped = true;
     TimerClass::exit();
 
     if (isResetFilledFile.load()) {
@@ -221,9 +220,8 @@ bool NsLookup::repeatResolveDns(
             CHECK(!exception.isSet(), "Dns exception: " + exception.toString());
             CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
             packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
-
-            LOG << "Dns ok " << node->second.type << ". " << packet.answers().size();
             CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(response.begin(), response.end())));
+            LOG << "Dns ok " << node->second.type << ". " << packet.answers().size();
         });
 
         if (except.isSet()) {
@@ -251,9 +249,6 @@ bool NsLookup::repeatResolveDns(
 }
 
 void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node) {
-    if (isStopped.load()) {
-        return;
-    }
     if (node == nodes.end()) {
         finalizeLookup();
         return;
@@ -303,10 +298,6 @@ static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, 
 }
 
 void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node) {
-    if (isStopped.load()) {
-        return;
-    }
-
     if (!isSafeCheck) {
         if (ipsIter == ipsTemp.end()) {
             continueResolve(std::next(node));
@@ -442,9 +433,6 @@ static std::vector<P2PNodeResult> parseNodesP2P(const std::string &resp) {
 };
 
 void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator node) {
-    if (isStopped.load()) {
-        return;
-    }
     if (node == nodes.end()) {
         finalizeLookupP2P();
         return;
@@ -500,10 +488,6 @@ void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator no
 }
 
 void NsLookup::continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy) {
-    if (isStopped.load()) {
-        return;
-    }
-
     if (ipsIter == ipsTempP2P.end()) {
         continueResolveP2P(std::next(node));
         return;
@@ -549,11 +533,6 @@ void NsLookup::sortAll() {
     for (auto &element: allNodesForTypes) {
         std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
     }
-}
-
-static void createSymlink(const QString &file) {
-    const QString symlink = makePath(QApplication::applicationDirPath(), "fill_nodes_symlink.lnk");
-    QFile::link(file, symlink);
 }
 
 static std::string calcHashNodes(const std::map<QString, NodeType> &expectedNodes) {
@@ -612,8 +591,6 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
 
     sortAll();
 
-    createSymlink(file);
-
     return timePoint;
 }
 
@@ -634,8 +611,6 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp, cons
     }
 
     writeToFile(file, content, false);
-
-    createSymlink(file);
 }
 
 std::vector<QString> NsLookup::getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const {

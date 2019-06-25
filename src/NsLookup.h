@@ -176,8 +176,6 @@ private:
 
     milliseconds passedTime;
 
-    std::atomic<bool> isStopped{false};
-
     CacheDns cacheDns;
 
     int countSuccessTestsForP2PNodes = 0;
