@@ -393,7 +393,7 @@ BEGIN_SLOT_WRAPPER
 
     wrapOperation([&, this](){
         emit transactionsManager->calcBalance(address, currency, Transactions::CalcBalanceCallback([currency, address, makeFunc](const BalanceInfo &balance) {
-            LOG << "calc balance ok " << currency << " " << address << " " << QString(balance.calcBalance().getDecimal()) << " " << balance.countReceived << " " << balance.countSpent;
+            LOG << "calc balance ok " << currency << " " << address << " " << QString(balance.calcBalance().getDecimal()) << " " << balance.countTxs << " " << balance.savedTxs;
             makeFunc.func(TypedException(), address, currency, balanceToJson(balance));
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);

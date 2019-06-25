@@ -23,7 +23,7 @@ SET_LOG_NAMESPACE("TXS");
 namespace transactions {
 
 static const uint64_t ADD_TO_COUNT_TXS = 10;
-static const uint64_t MAX_TXS_IN_RESPONSE = 4000;
+static const uint64_t MAX_TXS_IN_RESPONSE = 2000;
 
 Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent)
     : TimerClass(5s, parent)
@@ -133,7 +133,7 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
     }
 
     BalanceInfo balanceCopy = balance;
-    balanceCopy.savedTxs = confirmedCountTxsInThisLoop;
+    balanceCopy.savedTxs = std::min(confirmedCountTxsInThisLoop, balance.countTxs);
     emit javascriptWrapper.newBalanceSig(address, currency, balanceCopy);
     updateBalanceTime(currency, servStruct);
 }
@@ -319,7 +319,7 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
 }
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
-    BalanceInfo balance = db.getBalance(address, currency);
+    BalanceInfo balance = db.getBalance(currency, address);
     balance.savedTxs = balance.countTxs;
 
     return balance;
