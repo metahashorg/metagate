@@ -15,7 +15,7 @@ public:
 
     virtual int currentVersion() const final;
 
-    void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
+    void addPayment(const QString &currency, const QString &txid, const QString &address, qint64 index,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                     bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
@@ -42,7 +42,7 @@ public:
 
     Transaction getLastForgingTransaction(const QString &address, const QString &currency);
 
-    void updatePayment(const QString &address, const QString &currency, const QString &txid, const Transaction &trans);
+    void updatePayment(const QString &address, const QString &currency, const QString &txid, qint64 blockNumber, qint64 index, const Transaction &trans);
     void removePaymentsForDest(const QString &address, const QString &currency);
 
     qint64 getPaymentsCountForAddress(const QString &address, const QString &currency);

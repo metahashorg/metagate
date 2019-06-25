@@ -22,7 +22,7 @@ int TransactionsDBStorage::currentVersion() const
     return databaseVersion;
 }
 
-void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
+void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, qint64 index,
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                                        bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
@@ -33,7 +33,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
     query.bindValue(":address", address);
-    query.bindValue(":isInput", isInput);
+    query.bindValue(":ind", index);
     query.bindValue(":ufrom", ufrom);
     query.bindValue(":uto", uto);
     query.bindValue(":value", value);
@@ -56,7 +56,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
 
 void TransactionsDBStorage::addPayment(const Transaction &trans)
 {
-    addPayment(trans.currency, trans.tx, trans.address, true/*ignored*/,
+    addPayment(trans.currency, trans.tx, trans.address, trans.blockIndex,
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
@@ -173,14 +173,15 @@ Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &addr
     return trans;
 }
 
-void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, const Transaction &trans)
+void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, qint64 blockNumber, qint64 index, const Transaction &trans)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(updatePaymentForAddress), query.lastError().text().toStdString())
             query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
-    query.bindValue(":isInput", true/*ignored*/);
+    query.bindValue(":blockNumber", blockNumber);
+    query.bindValue(":ind", index);
 
     query.bindValue(":ufrom", trans.from);
     query.bindValue(":uto", trans.to);
@@ -195,7 +196,6 @@ void TransactionsDBStorage::updatePayment(const QString &address, const QString 
     query.bindValue(":delegateHash", trans.delegateHash);
     query.bindValue(":status", trans.status);
     query.bindValue(":type", trans.type);
-    query.bindValue(":blockNumber", static_cast<qint64>(trans.blockNumber));
     query.bindValue(":blockHash", trans.blockHash);
     query.bindValue(":intStatus", trans.intStatus);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -374,6 +374,7 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
     trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
     trans.blockNumber = query.value("blockNumber").toLongLong();
+    trans.blockIndex = query.value("ind").toLongLong();
     trans.blockHash = query.value("blockHash").toString();
     trans.intStatus = query.value("intStatus").toInt();
 }

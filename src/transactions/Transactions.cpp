@@ -23,7 +23,7 @@ SET_LOG_NAMESPACE("TXS");
 namespace transactions {
 
 static const uint64_t ADD_TO_COUNT_TXS = 10;
-static const uint64_t MAX_TXS_IN_RESPONSE = 2000;
+static const uint64_t MAX_TXS_IN_RESPONSE = 4000;
 
 Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent)
     : TimerClass(5s, parent)
@@ -123,6 +123,15 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
     db.setBalance(currency, address, balance);
     transactionGuard.commit();
 
+    std::set<std::string> ss;
+    for (const Transaction &tx: txs) {
+        const std::string s = tx.tx.toStdString() + "," + std::to_string(tx.blockNumber);
+        if (ss.find(s) != ss.end()) {
+            LOG << "Ya tuta 1 " << s;
+        }
+        ss.emplace(s);
+    }
+
     BalanceInfo balanceCopy = balance;
     balanceCopy.savedTxs = confirmedCountTxsInThisLoop;
     emit javascriptWrapper.newBalanceSig(address, currency, balanceCopy);
@@ -180,7 +189,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
-            db.updatePayment(address, currency, tx.tx, tx);
+            db.updatePayment(address, currency, tx.tx, tx.blockNumber, tx.blockIndex, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
             emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
         }

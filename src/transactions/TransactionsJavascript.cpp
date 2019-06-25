@@ -69,6 +69,7 @@ static QJsonObject txToJson(const Transaction &tx) {
     txJson.insert("fee", tx.fee);
     txJson.insert("nonce", QString::fromStdString(std::to_string(tx.nonce)));
     txJson.insert("blockNumber", QString::fromStdString(std::to_string(tx.blockNumber)));
+    txJson.insert("blockIndex", QString::fromStdString(std::to_string(tx.blockIndex)));
     txJson.insert("intStatus", tx.intStatus);
     if (tx.isSetDelegate) {
         txJson.insert("isDelegate", tx.isDelegate);

@@ -34,6 +34,7 @@ struct Transaction {
     QString fee;
     int64_t nonce = 0;
     int64_t blockNumber = 0;
+    int64_t blockIndex = 0;
     QString blockHash = "";
     int intStatus = 0;
 
