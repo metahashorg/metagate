@@ -44,6 +44,8 @@ public:
             return code != 0;
         }
 
+        bool isTimeout() const;
+
         std::string toString() const {
             return server + ". " + description + ". " + content + ".";
         }

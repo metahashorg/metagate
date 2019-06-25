@@ -104,6 +104,10 @@ private:
     const size_t index;
 };
 
+bool SimpleClient::ServerException::isTimeout() const {
+    return code == QNetworkReply::OperationCanceledError || code == QNetworkReply::TimeoutError;
+}
+
 SimpleClient::SimpleClient()
     : manager(new QNetworkAccessManager(this))
 {
