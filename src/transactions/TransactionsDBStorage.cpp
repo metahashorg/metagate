@@ -288,7 +288,6 @@ void TransactionsDBStorage::removePaymentsForCurrency(const QString &currency)
 }
 
 void TransactionsDBStorage::setBalance(const QString &currency, const QString &address, const BalanceInfo &balance) {
-    auto transactionGuard = beginTransaction();
     QSqlQuery queryDelete(database());
     CHECK(queryDelete.prepare(deleteBalance), queryDelete.lastError().text().toStdString());
     queryDelete.bindValue(":currency", currency);
@@ -313,7 +312,6 @@ void TransactionsDBStorage::setBalance(const QString &currency, const QString &a
     query.bindValue(":reserved", balance.reserved.getDecimal());
     query.bindValue(":forged", balance.forged.getDecimal());
     CHECK(query.exec(), query.lastError().text().toStdString());
-    transactionGuard.commit();
 }
 
 BalanceInfo TransactionsDBStorage::getBalance(const QString &currency, const QString &address) {
