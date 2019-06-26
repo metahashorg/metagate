@@ -42,6 +42,9 @@ static QString makeAddress(const QString &ip, const QString &port) {
 }
 
 static QString getAddressWithoutHttp(const QString &address) {
+    if (!address.startsWith("http") && !address.startsWith("https")) {
+        return address;
+    }
     return QUrl(address).host() + ":" + QString::fromStdString(std::to_string(QUrl(address).port()));
 }
 
