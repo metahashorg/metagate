@@ -16,6 +16,8 @@
 
 #include "UdpSocketClient.h"
 
+#include "CallbackWrapper.h"
+
 struct TypedException;
 
 struct NodeType {
@@ -71,6 +73,32 @@ struct NodeInfo {
     }
 };
 
+struct DnsErrorDetails {
+    QString dnsName;
+
+    void clear() {
+        dnsName.clear();
+    }
+
+    bool isEmpty() const {
+        return dnsName.isEmpty();
+    }
+};
+
+struct NodeTypeStatus {
+    QString node;
+    size_t countWorked;
+    size_t countAll;
+    size_t bestResult;
+
+    NodeTypeStatus(const QString &node, size_t countWorked, size_t countAll, size_t bestResult)
+        : node(node)
+        , countWorked(countWorked)
+        , countAll(countAll)
+        , bestResult(bestResult)
+    {}
+};
+
 class NsLookup : public TimerClass {
     Q_OBJECT
 private:
@@ -79,6 +107,10 @@ private:
         std::map<QString, std::vector<QString>> cache;
         time_point lastUpdate;
     };
+
+public:
+
+    using GetStatusCallback = CallbackWrapper<void(const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError)>;
 
 public:
     explicit NsLookup(QObject *parent = nullptr);
@@ -98,6 +130,14 @@ protected:
     void timerMethod() override;
 
     void finishMethod() override;
+
+signals:
+
+    void getStatus(const GetStatusCallback &callback);
+
+public slots:
+
+    void onGetStatus(const GetStatusCallback &callback);
 
 signals:
 
@@ -147,6 +187,8 @@ private:
         time_point now,
         size_t countRepeat
     );
+
+    std::vector<NodeTypeStatus> getNodesStatus() const;
 
     void printNodes() const;
 
@@ -207,6 +249,8 @@ private:
     bool isProcessRefresh = false;
 
     std::vector<std::pair<QString, size_t>> defectiveTorrents;
+
+    DnsErrorDetails dnsErrorDetails;
 
 };
 

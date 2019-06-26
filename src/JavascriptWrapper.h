@@ -18,6 +18,7 @@ class NsLookup;
 class WebSocketClient;
 struct TypedException;
 class MainWindow;
+class NetwrokTesting;
 
 namespace transactions {
 class Transactions;
@@ -46,7 +47,7 @@ public:
     };
 
 public:
-    explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, NetwrokTesting &networkTesting, const QString &applicationVersion, QObject *parent = nullptr);
 
     void setWidget(QWidget *widget);
 
@@ -297,6 +298,8 @@ public slots:
 
     Q_INVOKABLE void getIsForgingActive();
 
+    Q_INVOKABLE void getNetworkStatus();
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
@@ -390,6 +393,8 @@ private:
     transactions::Transactions &transactionsManager;
 
     auth::Auth &auth;
+
+    NetwrokTesting &networkTesting;
 
     const QString applicationVersion;
 

@@ -508,3 +508,10 @@ Q_INVOKABLE void getIsForgingActive();
 # узнать активен или нет форджинг
 # Result returns to the function:
 getIsForgingActiveResultJs(bool, errorNum, errorMessage);
+
+Q_INVOKABLE void getNetworkStatus();
+# выдать инфу о сети
+# Result returns to the function:
+getNetworkStatusResultJs(result, errorNum, errorMessage);
+# где result json вида
+{\"dnsErrors\":{},\"dnsStats\":[{\"bestTime\":51,\"countAll\":21,\"countWorked\":0,\"node\":\"proxy.net-dev.metahashnetwork.com\"},{\"bestTime\":51,\"countAll\":5,\"countWorked\":0,\"node\":\"proxy.net-main.metahashnetwork.com\"},{\"bestTime\":99,\"countAll\":12,\"countWorked\":0,\"node\":\"tor.net-dev.metahashnetwork.com\"},{\"bestTime\":99,\"countAll\":9,\"countWorked\":0,\"node\":\"tor.net-main.metahashnetwork.com\"},{\"bestTime\":51,\"countAll\":1,\"countWorked\":0,\"node\":\"torv8.net-dev.metahashnetwork.com\"}],\"networkTests\":[{\"isTimeout\":false,\"node\":\"www.google.com:80\",\"timeMs\":99},{\"isTimeout\":false,\"node\":\"1.1.1.1:80\",\"timeMs\":48},{\"isTimeout\":false,\"node\":\"echo.metahash.io:7654\",\"timeMs\":110}]}

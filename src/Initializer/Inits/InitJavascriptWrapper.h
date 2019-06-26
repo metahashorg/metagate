@@ -14,6 +14,7 @@ class JavascriptWrapper;
 class MainWindow;
 class NsLookup;
 class WebSocketClient;
+class NetwrokTesting;
 
 namespace transactions {
 class TransactionsJavascript;
@@ -51,7 +52,8 @@ public:
         std::shared_future<MainWindow*> mainWindow,
         std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-        const QString &versionString
+        const QString &versionString,
+        NetwrokTesting &nettest
     );
 
     static int countEvents() {

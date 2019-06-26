@@ -51,6 +51,10 @@ static QString getAddressWithoutHttp(const QString &address) {
 NsLookup::NsLookup(QObject *parent)
     : TimerClass(1s, nullptr)
 {
+    Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
+
+    Q_REG(GetStatusCallback, "GetStatusCallback");
+
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("nodes");
     for (int i = 0; i < size; i++) {
@@ -148,12 +152,24 @@ void NsLookup::finishMethod() {
     // empty
 }
 
-void NsLookup::printNodes() const {
-    std::string result;
+std::vector<NodeTypeStatus> NsLookup::getNodesStatus() const {
+    std::vector<NodeTypeStatus> result;
+
     for (const auto &pair: allNodesForTypes) {
         const size_t countSuccess = countWorkedNodes(pair.second);
         const auto bestResult = !pair.second.empty() ? pair.second[0].ping : 0;
-        result += pair.first.str().toStdString() + ": " + std::to_string(countSuccess) + "/" + std::to_string(pair.second.size()) + ", " + std::to_string(bestResult) + "; ";
+        result.emplace_back(pair.first.str(), countSuccess, pair.second.size(), bestResult);
+    }
+
+    return result;
+}
+
+void NsLookup::printNodes() const {
+    const std::vector<NodeTypeStatus> nodesStatuses = getNodesStatus();
+
+    std::string result;
+    for (const NodeTypeStatus &stat: nodesStatuses) {
+        result += stat.node.toStdString() + ": " + std::to_string(stat.countWorked) + "/" + std::to_string(stat.countAll) + ", " + std::to_string(stat.bestResult) + "; ";
     }
 
     LOG << "Nodes result: " << result;
@@ -180,6 +196,8 @@ void NsLookup::process() {
         startScanTime = ::now();
 
         allNodesForTypesNew.clear();
+
+        dnsErrorDetails.clear();
 
         isProcess = true;
 
@@ -264,6 +282,7 @@ bool NsLookup::repeatResolveDns(
             LOG << "Dns repeat number " << countRepeat - 1;
             const bool res = repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, countRepeat - 1);
             if (!res) {
+                dnsErrorDetails.dnsName = dnsServerName;
                 throw except;
             } else {
                 return;
@@ -772,4 +791,14 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
 
 void NsLookup::resetFile() {
      isResetFilledFile = true;
+}
+
+void NsLookup::onGetStatus(const GetStatusCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<NodeTypeStatus> nodeStatuses;
+    const TypedException &exception = apiVrapper2([&, this]{
+        nodeStatuses = getNodesStatus();
+    });
+    callback.emitFunc(exception, nodeStatuses, dnsErrorDetails);
+END_SLOT_WRAPPER
 }
