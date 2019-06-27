@@ -241,7 +241,7 @@ private:
 
     void processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
-    void processPendingsMth(const std::vector<QString> &servers);
+    void processPendingsMth();
 
     uint64_t calcCountTxs(const QString &address, const QString &currency) const;
 
@@ -279,7 +279,7 @@ private:
 
     std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
 
-    std::vector<QString> pendingTxsAfterSend;
+    std::vector<std::pair<QString, std::set<QString>>> pendingTxsAfterSend;
 
     seconds timeout;
 

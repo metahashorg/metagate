@@ -141,17 +141,17 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
-void Transactions::processPendingsMth(const std::vector<QString> &servers) {
-    if (servers.empty()) {
-        return;
-    }
-
+void Transactions::processPendingsMth() {
     const auto processPendingTx = [this](const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
         if (tx.status != Transaction::PENDING) {
-            if (std::find(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx) != pendingTxsAfterSend.end()) {
-                pendingTxsAfterSend.erase(std::remove(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx), pendingTxsAfterSend.end());
+            if (std::find_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
+                return pair.first == txHash;
+            }) != pendingTxsAfterSend.end()) {
+                pendingTxsAfterSend.erase(std::remove_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
+                    return pair.first == txHash;
+                }), pendingTxsAfterSend.end());
                 emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
             }
         }
@@ -160,9 +160,9 @@ void Transactions::processPendingsMth(const std::vector<QString> &servers) {
     LOG << PeriodicLog::make("pas") << "Pending after send: " << pendingTxsAfterSend.size();
 
     const auto copyPending = pendingTxsAfterSend;
-    for (const QString &txHash: copyPending) {
-        const QString message = makeGetTxRequest(txHash);
-        for (const QString &server: servers) {
+    for (const auto &pair: copyPending) {
+        const QString message = makeGetTxRequest(pair.first);
+        for (const QString &server: pair.second) {
             client.sendMessagePost(server, message, processPendingTx, timeout);
         }
     }
@@ -477,7 +477,7 @@ void Transactions::timerMethod() {
         lastCheckTxsTime = now;
     }
 
-    processPendingsMth(servers);
+    processPendingsMth();
 }
 
 void Transactions::fetchBalanceAddress(const QString &address) {
@@ -644,7 +644,7 @@ BEGIN_SLOT_WRAPPER
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId](const std::string &response, const SimpleClient::ServerException &exception) {
+            client.sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId, serversCopy](const std::string &response, const SimpleClient::ServerException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
@@ -654,7 +654,7 @@ BEGIN_SLOT_WRAPPER
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
                         emit javascriptWrapper.transactionInTorrentSig(requestId, server, QString::fromStdString(hash), tx, TypedException());
                         if (tx.status == Transaction::Status::PENDING) {
-                            pendingTxsAfterSend.emplace_back(tx.tx);
+                            pendingTxsAfterSend.emplace_back(tx.tx, serversCopy);
                         }
                         if (*isFirst) {
                             *isFirst = false;
