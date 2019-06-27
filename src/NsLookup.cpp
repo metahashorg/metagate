@@ -52,6 +52,7 @@ NsLookup::NsLookup(QObject *parent)
     : TimerClass(1s, nullptr)
 {
     Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
+    Q_CONNECT(this, &NsLookup::rejectServer, this, &NsLookup::onRejectServer);
 
     Q_REG(GetStatusCallback, "GetStatusCallback");
 
@@ -800,5 +801,22 @@ BEGIN_SLOT_WRAPPER
         nodeStatuses = getNodesStatus();
     });
     callback.emitFunc(exception, nodeStatuses, dnsErrorDetails);
+END_SLOT_WRAPPER
+}
+
+void NsLookup::onRejectServer(const QString &server) {
+BEGIN_SLOT_WRAPPER
+    bool isFound = false;
+    for (auto &defective: defectiveTorrents) {
+        if (getAddressWithoutHttp(defective.first) == getAddressWithoutHttp(server)) {
+            defective.second++;
+            isFound = true;
+            break;
+        }
+    }
+
+    if (!isFound) {
+        defectiveTorrents.emplace_back(server, 1);
+    }
 END_SLOT_WRAPPER
 }

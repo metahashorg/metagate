@@ -250,6 +250,10 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                         bestAnswers[j].first = server;
                     }
                 }
+            } else {
+                if (exception.isTimeout()) {
+                    emit nsLookup.rejectServer(server.toString());
+                }
             }
         }
 
@@ -717,6 +721,9 @@ BEGIN_SLOT_WRAPPER
             tcpClient.sendMessagePost(server, request, [this, server, requestId, sendParams, serversGet](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
+                    if (error.isSet()) {
+                        nsLookup.rejectServer(server);
+                    }
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                     addToSendTxWatcher(requestId, result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);

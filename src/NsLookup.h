@@ -141,6 +141,14 @@ public slots:
 
 signals:
 
+    void rejectServer(const QString &server);
+
+public slots:
+
+    void onRejectServer(const QString &server);
+
+signals:
+
     void finished();
 
     void serversFlushed(const TypedException &exception);
