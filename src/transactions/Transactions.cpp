@@ -109,8 +109,7 @@ void Transactions::finishMethod() {
 }
 
 uint64_t Transactions::calcCountTxs(const QString &address, const QString &currency) const {
-    const uint64_t countTxs = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency));
-    return countTxs;
+    return static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency));
 }
 
 void Transactions::newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
@@ -141,17 +140,17 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
-void Transactions::processPendingsMth() {
+void Transactions::processPendings() {
     const auto processPendingTx = [this](const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
         if (tx.status != Transaction::PENDING) {
-            if (std::find_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
+            const auto foundIter = std::remove_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
                 return pair.first == txHash;
-            }) != pendingTxsAfterSend.end()) {
-                pendingTxsAfterSend.erase(std::remove_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
-                    return pair.first == txHash;
-                }), pendingTxsAfterSend.end());
+            });
+            const bool found = foundIter != pendingTxsAfterSend.end();
+            pendingTxsAfterSend.erase(foundIter, pendingTxsAfterSend.end());
+            if (found) {
                 emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
             }
         }
@@ -315,7 +314,6 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
     BalanceInfo balance = db.getBalance(currency, address);
-    balance.savedTxs = balance.countTxs;
 
     return balance;
 }
@@ -429,11 +427,14 @@ void Transactions::timerMethod() {
     while (posInAddressInfos < addressesInfos.size()) {
         const AddressInfo &addr = addressesInfos[posInAddressInfos];
         if ((!currentCurrency.isEmpty() && (addr.currency != currentCurrency || addr.type != currentType)) || batch.size() >= MAXIMUM_ADDRESSES_IN_BATCH) {
-            processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
-            batch.clear();
-            countParallelRequests++;
-            if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
-                break;
+            if (servStructs.find(currentCurrency) == servStructs.end()) {
+                // В предыдущий раз список серверов оказался пустым, поэтому структуру мы не заполнили. Пропускаем
+                processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
+                batch.clear();
+                countParallelRequests++;
+                if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
+                    break;
+                }
             }
             currentCurrency = addr.currency;
         }
@@ -477,7 +478,7 @@ void Transactions::timerMethod() {
         lastCheckTxsTime = now;
     }
 
-    processPendingsMth();
+    processPendings();
 }
 
 void Transactions::fetchBalanceAddress(const QString &address) {
@@ -521,6 +522,7 @@ BEGIN_SLOT_WRAPPER
         result = getAddressesInfos(group);
         for (AddressInfo &info: result) {
             info.balance = getBalance(info.address, info.currency);
+            info.balance.savedTxs = info.balance.countTxs;
         }
     });
     callback.emitFunc(exception, result);
@@ -611,6 +613,7 @@ BEGIN_SLOT_WRAPPER
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
         balance = getBalance(address, currency);
+        balance.savedTxs = balance.countTxs;
     });
     callback.emitFunc(exception, balance);
 END_SLOT_WRAPPER

@@ -241,7 +241,7 @@ private:
 
     void processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
-    void processPendingsMth();
+    void processPendings();
 
     uint64_t calcCountTxs(const QString &address, const QString &currency) const;
 
