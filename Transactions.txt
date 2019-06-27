@@ -64,7 +64,7 @@ Q_INVOKABLE void calcBalance(QString address, QString currency);
 Результат вернется в функцию
 txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)
 где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"countTxs\":\"1\",\"savedTxs\":\"1\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}
-Если savedTxs != countTxs, значит еще идет докачивание транзакций.
+Если savedTxs != countTxs, значит еще идет докачивание транзакций. Это актуально для метода txsNewBalanceJs. Для метода calcBalance savedTxs всегда равно countTxs
 
 Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 Получает транзакцию с сервера. 
