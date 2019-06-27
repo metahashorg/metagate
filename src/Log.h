@@ -27,7 +27,17 @@ private:
 
 struct Log_ {
 
+    struct Alias {
+        std::string name;
+
+        Alias(const std::string &name)
+            : name(name)
+        {}
+    };
+
     Log_(const std::string &fileName);
+
+    Log_(const Alias &alias);
 
     template<typename T>
     Log_& operator <<(T t) {
@@ -42,6 +52,10 @@ struct Log_ {
     }
 
 private:
+
+    void printHead();
+
+    void printAlias(const std::string &alias);
 
     template<typename T>
     void print(const T &t) {
@@ -78,6 +92,8 @@ struct AddFileNameAlias_ {
 #define LOG Log_(LOG_FILE)
 
 #define LOG2(file) Log_(file)
+
+#define LOG3(alias) Log_(Log_::Alias(alias))
 
 #define SET_LOG_NAMESPACE(name) \
     static AddFileNameAlias_ log_alias_(std::string(__FILE__), name);

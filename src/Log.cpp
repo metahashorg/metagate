@@ -122,19 +122,36 @@ bool PeriodicLog::notSet() const {
     return str.empty();
 }
 
-Log_::Log_(const std::string &fileName) {
+void Log_::printHead() {
     const QDateTime now = QDateTime::currentDateTime();
     const std::string time = now.toString("MM.dd_hh:mm:ss").toStdString();
     const auto tId = std::this_thread::get_id();
     ssLog << std::hex << std::noshowbase << tId << std::dec << " " << time;
+}
 
-    const auto found = getFileNamesC().find(fileName);
-    if (found != getFileNamesC().end()) {
-        const std::string &alias = found->second;
+void Log_::printAlias(const std::string &alias) {
+    if (!alias.empty()) {
         ssLog << " " << std::setfill(' ') << std::setw(getMaxAliasSize()) << alias;
     } else {
         ssLog << std::setfill(' ') << std::setw(getMaxAliasSize() + 1) << " ";
     }
+}
+
+Log_::Log_(const std::string &fileName) {
+    printHead();
+
+    const auto found = getFileNamesC().find(fileName);
+    if (found != getFileNamesC().end()) {
+        printAlias(found->second);
+    } else {
+        printAlias("");
+    }
+}
+
+Log_::Log_(const Alias &alias) {
+    printHead();
+
+    printAlias(alias.name);
 }
 
 bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
