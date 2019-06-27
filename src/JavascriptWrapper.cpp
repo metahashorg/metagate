@@ -2046,6 +2046,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void JavascriptWrapper::javascriptLog(const QString &message) {
+BEGIN_SLOT_WRAPPER
+    LOG3("ECMA") << message;
+END_SLOT_WRAPPER
+}
+
 void JavascriptWrapper::onWssMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());

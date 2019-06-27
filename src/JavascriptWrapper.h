@@ -300,6 +300,8 @@ public slots:
 
     Q_INVOKABLE void getNetworkStatus();
 
+    Q_INVOKABLE void javascriptLog(const QString &message);
+
 private slots:
 
     void onCallbackCall(ReturnCallback callback);
