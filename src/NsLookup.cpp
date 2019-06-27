@@ -671,6 +671,13 @@ void NsLookup::processRefresh() {
 
 void NsLookup::sortAll() {
     for (auto &element: allNodesForTypes) {
+        std::sort(element.second.begin(), element.second.end(), [](const NodeInfo &first, const NodeInfo &second) {
+            return first.address < second.address;
+        });
+        element.second.erase(std::unique(element.second.begin(), element.second.end(), [](const NodeInfo &first, const NodeInfo &second) {
+            return first.address == second.address;
+        }), element.second.end());
+
         std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
     }
 }

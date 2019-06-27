@@ -70,7 +70,7 @@ struct NodeInfo {
         } else {
             return this->ping < second.ping;
         }
-    }
+    }    
 };
 
 struct DnsErrorDetails {
