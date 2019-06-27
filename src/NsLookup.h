@@ -16,6 +16,8 @@
 
 #include "UdpSocketClient.h"
 
+#include "CallbackWrapper.h"
+
 struct TypedException;
 
 struct NodeType {
@@ -71,6 +73,32 @@ struct NodeInfo {
     }
 };
 
+struct DnsErrorDetails {
+    QString dnsName;
+
+    void clear() {
+        dnsName.clear();
+    }
+
+    bool isEmpty() const {
+        return dnsName.isEmpty();
+    }
+};
+
+struct NodeTypeStatus {
+    QString node;
+    size_t countWorked;
+    size_t countAll;
+    size_t bestResult;
+
+    NodeTypeStatus(const QString &node, size_t countWorked, size_t countAll, size_t bestResult)
+        : node(node)
+        , countWorked(countWorked)
+        , countAll(countAll)
+        , bestResult(bestResult)
+    {}
+};
+
 class NsLookup : public TimerClass {
     Q_OBJECT
 private:
@@ -79,6 +107,10 @@ private:
         std::map<QString, std::vector<QString>> cache;
         time_point lastUpdate;
     };
+
+public:
+
+    using GetStatusCallback = CallbackWrapper<void(const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError)>;
 
 public:
     explicit NsLookup(QObject *parent = nullptr);
@@ -98,6 +130,14 @@ protected:
     void timerMethod() override;
 
     void finishMethod() override;
+
+signals:
+
+    void getStatus(const GetStatusCallback &callback);
+
+public slots:
+
+    void onGetStatus(const GetStatusCallback &callback);
 
 signals:
 
@@ -131,6 +171,12 @@ private:
 
     void finalizeLookupP2P();
 
+    void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
+
+    void finalizeRefresh(const NodeType::Node &node);
+
+    void processRefresh();
+
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
     bool repeatResolveDns(
@@ -142,6 +188,12 @@ private:
         size_t countRepeat
     );
 
+    std::vector<NodeTypeStatus> getNodesStatus() const;
+
+    void printNodes() const;
+
+    size_t countWorkedNodes(const std::vector<NodeInfo> &nodes) const;
+
 private:
 
     UdpSocketClient udpClient;
@@ -151,6 +203,8 @@ private:
     std::map<QString, NodeType> nodes;
 
     std::vector<QString> ipsTemp;
+
+    std::vector<QString> ipsTempRefresh;
 
     std::vector<std::pair<NodeType::SubType, QString>> ipsTempP2P;
 
@@ -176,8 +230,6 @@ private:
 
     milliseconds passedTime;
 
-    std::atomic<bool> isStopped{false};
-
     CacheDns cacheDns;
 
     int countSuccessTestsForP2PNodes = 0;
@@ -189,6 +241,16 @@ private:
     int dnsServerPort;
 
     bool useUsersServers = false;
+
+    time_point prevPrintTime;
+
+    bool isProcess = false;
+
+    bool isProcessRefresh = false;
+
+    std::vector<std::pair<QString, size_t>> defectiveTorrents;
+
+    DnsErrorDetails dnsErrorDetails;
 
 };
 

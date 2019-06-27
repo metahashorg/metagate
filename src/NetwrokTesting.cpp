@@ -6,6 +6,7 @@
 #include "check.h"
 #include "Log.h"
 #include "SlotWrapper.h"
+#include "QRegister.h"
 
 using HostPort = QPair<QString, quint16>;
 static const QList<HostPort> testsHostPort {
@@ -17,6 +18,10 @@ static const QList<HostPort> testsHostPort {
 NetwrokTesting::NetwrokTesting(QObject *parent)
     : TimerClass(5min, parent)
 {
+    Q_CONNECT(this, &NetwrokTesting::getTestResults, this, &NetwrokTesting::onGetTestResults);
+
+    Q_REG(GetTestResultsCallback, "GetTestResultsCallback");
+
     moveToThread(TimerClass::getThread());
 }
 
@@ -36,30 +41,43 @@ void NetwrokTesting::finishMethod() {
     // empty
 }
 
-void NetwrokTesting::testHosts()
-{
-    std::vector<std::string> result;
+void NetwrokTesting::testHosts() {
+    lastResults.clear();
     for (const HostPort &hp : testsHostPort) {
-        const std::string r = testHostAndPort(hp.first, hp.second);
-        result.emplace_back(r);
+        const TestResult r = testHostAndPort(hp.first, hp.second);
+        lastResults.emplace_back(r);
     }
-    for (const std::string &r: result) {
-        LOG << "NetworkTesting: " + r;
+
+    const auto resultToString = [](const TestResult &r) {
+        if (r.isTimeout) {
+            return r.host.toStdString() + " not connected 10s timeout";
+        } else {
+            return r.host.toStdString() + " connected " + std::to_string(r.timeMs) + " ms";
+        }
+    };
+
+    for (const TestResult &r: lastResults) {
+        LOG << "NetworkTesting: " + resultToString(r);
     }
 }
 
-std::string NetwrokTesting::testHostAndPort(const QString &host, quint16 port)
-{
+NetwrokTesting::TestResult NetwrokTesting::testHostAndPort(const QString &host, quint16 port) {
     QTime timer;
     timer.start();
     QTcpSocket socket(this);
     socket.connectToHost(host, port);
-    std::string result;
+    TestResult result;
     if (socket.waitForConnected(10000)) {
-        result = host.toStdString() + ":" + std::to_string(port) + " connected " + std::to_string(timer.elapsed()) + " ms";
+        result = TestResult(host + ":" + QString::fromStdString(std::to_string(port)), timer.elapsed(), false);
         socket.disconnectFromHost();
     } else {
-        result = host.toStdString() + ":" + std::to_string(port) + " not connected 10s timeout";
+        result = TestResult(host + ":" + QString::fromStdString(std::to_string(port)), 0, true);
     }
     return result;
+}
+
+void NetwrokTesting::onGetTestResults(const GetTestResultsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    callback.emitFunc(TypedException(), lastResults);
+END_SLOT_WRAPPER
 }

@@ -126,6 +126,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_CONNECT(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript);
     Q_CONNECT(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished);
     Q_CONNECT(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl);
+    Q_CONNECT(this, &MainWindow::showNotification, this, &MainWindow::onShowNotification);
 
     Q_REG(SetJavascriptWrapperCallback, "SetJavascriptWrapperCallback");
     Q_REG(SetAuthCallback, "SetAuthCallback");
@@ -317,6 +318,14 @@ BEGIN_SLOT_WRAPPER
     } else {
         saveUrlToMove = url;
     }
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onShowNotification(const QString &title, const QString &message)
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(systemTray, "systemTray error");
+    //systemTray->showMessage(title, message, QSystemTrayIcon::Information, 5000);
 END_SLOT_WRAPPER
 }
 
@@ -599,6 +608,7 @@ END_SLOT_WRAPPER
 
 void MainWindow::updateHtmlsEvent() {
 BEGIN_SLOT_WRAPPER
+    showNotification(tr("Web application updated"), tr("Restart MetaGate"));
     softReloadPage();
 END_SLOT_WRAPPER
 }
@@ -608,6 +618,7 @@ BEGIN_SLOT_WRAPPER
     const QString currentVersion = VERSION_STRING;
     const QString jsScript = "window.onQtAppUpdate  && window.onQtAppUpdate(\"" + appVersion + "\", \"" + reference + "\", \"" + currentVersion + "\", \"" + message + "\");";
     LOG << "Update script " << jsScript;
+    showNotification(tr("New MetaGate version %1 available").arg(appVersion), tr("Current version %1").arg(currentVersion));
     ui->webView->page()->runJavaScript(jsScript);
 END_SLOT_WRAPPER
 }

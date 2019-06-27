@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "QRegister.h"
 
+#include "mainwindow.h"
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
 #include "CryptographicManager.h"
@@ -104,7 +105,7 @@ static QString getWssServer() {
     return settings.value("web_socket/messenger").toString();
 };
 
-Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent)
+Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, MainWindow &mainWin, QObject *parent)
     : TimerClass(1s, parent)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
@@ -116,6 +117,7 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     isDecryptDataSave = settings.value("messenger/saveDecryptedMessage").toBool();
 
     Q_CONNECT(this, &Messenger::callbackCall, this, &Messenger::onCallbackCall);
+    Q_CONNECT(this, &Messenger::showNotification, &mainWin, &MainWindow::showNotification);
 
     Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived);
 
@@ -421,6 +423,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
 
             if (m.isInput) {
                 LOG << "Add message " << m.username << " " << channel << " " << m.collocutor << " " << m.counter;
+                emit showNotification(tr("Message from %1").arg(m.collocutor), QStringLiteral(""));
                 db.addMessage(m);
                 const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
                 const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is

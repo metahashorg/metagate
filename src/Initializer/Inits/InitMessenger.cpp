@@ -60,7 +60,7 @@ InitMessenger::Return InitMessenger::initialize(std::shared_future<MainWindow*> 
         javascript->moveToThread(mainThread);
         database = std::make_unique<messenger::MessengerDBStorage>(getDbPath());
         database->init();
-        manager = std::make_unique<messenger::Messenger>(*javascript, *database, *crypto);
+        manager = std::make_unique<messenger::Messenger>(*javascript, *database, *crypto, *(mainWindow.get()));
         manager->start();
         javascript->setMessenger(*manager);
 

@@ -50,6 +50,7 @@ using namespace std::placeholders;
 
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
+#include "NetwrokTesting.h"
 
 SET_LOG_NAMESPACE("JSW");
 
@@ -148,13 +149,14 @@ static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QStr
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject */*parent*/)
+JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, NetwrokTesting &networkTesting, const QString &applicationVersion, QObject */*parent*/)
     : mainWindow(mainWindow)
     , walletDefaultPath(getWalletPath())
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
     , auth(authManager)
+    , networkTesting(networkTesting)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -1995,6 +1997,52 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getIsForgingActiveResultJs";
     LOG << "Get is forging active: " << isForgingActive;
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<bool>(isForgingActive));
+END_SLOT_WRAPPER
+}
+
+static QJsonDocument makeNetworkStatusResponse(const std::vector<NetwrokTesting::TestResult> &networkTestsResults, const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError) {
+    QJsonObject result;
+    QJsonArray networkTestsJson;
+    for (const NetwrokTesting::TestResult &r: networkTestsResults) {
+        QJsonObject rJson;
+        rJson.insert("node", r.host);
+        rJson.insert("isTimeout", r.isTimeout);
+        rJson.insert("timeMs", r.timeMs);
+        networkTestsJson.push_back(rJson);
+    }
+    result.insert("networkTests", networkTestsJson);
+
+    QJsonObject dnsErrorJson;
+    if (!dnsError.isEmpty()) {
+        dnsErrorJson.insert("node", dnsError.dnsName);
+    }
+    result.insert("dnsErrors", dnsErrorJson);
+
+    QJsonArray nodesStatusesJson;
+    for (const NodeTypeStatus &st: nodeStatuses) {
+        QJsonObject stJson;
+        stJson.insert("node", st.node);
+        stJson.insert("countWorked", (int)st.countWorked);
+        stJson.insert("countAll", (int)st.countAll);
+        stJson.insert("bestTime", (int)st.bestResult);
+        nodesStatusesJson.push_back(stJson);
+    }
+    result.insert("dnsStats", nodesStatusesJson);
+    return QJsonDocument(result);
+}
+
+void JavascriptWrapper::getNetworkStatus() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "getNetworkStatusResultJs";
+    networkTesting.getTestResults(NetwrokTesting::GetTestResultsCallback([this, JS_NAME_RESULT](const std::vector<NetwrokTesting::TestResult> &networkTestsResults) {
+        nsLookup.getStatus(NsLookup::GetStatusCallback([this, JS_NAME_RESULT, networkTestsResults](const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QJsonDocument>(makeNetworkStatusResponse(networkTestsResults, nodeStatuses, dnsError)));
+        }, [](const TypedException &e) {
+            LOG << "Error: " << e.description;
+        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
+    }, [](const TypedException &e) {
+        LOG << "Error: " << e.description;
+    }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
