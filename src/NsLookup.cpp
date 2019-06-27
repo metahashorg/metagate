@@ -596,6 +596,8 @@ void NsLookup::finalizeRefresh(const NodeType::Node &node) {
         }
     }
 
+    LOG << "Updated ip status. Left " << defectiveTorrents.size();
+
     std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
         allNodesForTypes[node] = allNodesForTypesNew[node];
@@ -658,7 +660,7 @@ void NsLookup::processRefresh() {
 
                 isProcessRefresh = true;
 
-                LOG << "Update status for ip: " << address;
+                LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
 
                 continuePingRefresh(std::begin(ipsTempRefresh), pairNodes.first);
                 break;
