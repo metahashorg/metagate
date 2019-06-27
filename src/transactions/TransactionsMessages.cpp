@@ -167,8 +167,9 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
     if (txJson.contains("type") && txJson.value("type").isString() && txJson.value("type").toString() == "forging") {
         res.type = Transaction::FORGING;
     }
-    CHECK(txJson.contains("intStatus") && txJson.value("intStatus").isDouble(), "Incorrect json: intStatus field not found");
-    res.intStatus = txJson.value("intStatus").toInt();
+    if (txJson.contains("intStatus") && txJson.value("intStatus").isDouble()) {
+        res.intStatus = txJson.value("intStatus").toInt();
+    }
 
     res.address = address;
     res.currency = currency;
