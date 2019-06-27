@@ -123,15 +123,6 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
     db.setBalance(currency, address, balance);
     transactionGuard.commit();
 
-    std::set<std::string> ss;
-    for (const Transaction &tx: txs) {
-        const std::string s = tx.tx.toStdString() + "," + std::to_string(tx.blockNumber);
-        if (ss.find(s) != ss.end()) {
-            LOG << "Ya tuta 1 " << s;
-        }
-        ss.emplace(s);
-    }
-
     BalanceInfo balanceCopy = balance;
     balanceCopy.savedTxs = std::min(confirmedCountTxsInThisLoop, balance.countTxs);
     emit javascriptWrapper.newBalanceSig(address, currency, balanceCopy);
