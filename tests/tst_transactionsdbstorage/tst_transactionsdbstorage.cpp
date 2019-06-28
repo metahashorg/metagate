@@ -47,8 +47,6 @@ void tst_TransactionsDBStorage::testDB1()
         QCOMPARE(tx3.blockNumber, 0);
     }
 
-    QCOMPARE(db.getIsSetDelegatePaymentsCountForAddress("address100", "mh"), 6);
-
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh"), 17);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh2"), 1);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh3"), 1);

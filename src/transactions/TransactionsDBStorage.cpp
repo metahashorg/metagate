@@ -222,20 +222,6 @@ qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address,
     return 0;
 }
 
-qint64 TransactionsDBStorage::getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency, Transaction::Status status)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectIsSetDelegatePaymentsCountForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    query.bindValue(":status", status);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    if (query.next()) {
-        return query.value("count").toLongLong();
-    }
-    return 0;
-}
-
 void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
 {
     QSqlQuery query(database());

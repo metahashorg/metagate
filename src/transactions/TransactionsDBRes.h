@@ -137,10 +137,6 @@ static const QString updatePaymentForAddress = "UPDATE payments "
 static const QString deletePaymentsForAddress = "DELETE FROM payments "
                                                 "WHERE address = :address AND  currency = :currency";
 
-static const QString selectIsSetDelegatePaymentsCountForAddress = "SELECT COUNT(*) AS count FROM payments "
-                                                                        "WHERE address = :address AND currency = :currency "
-                                                                        "AND isSetDelegate = 1 AND status = :status";
-
 static const QString selectPaymentsCountForAddress2 = "SELECT COUNT(DISTINCT txid || ',' || blockNumber || ',' || ind) AS count FROM payments "
                                                     "WHERE address = :address AND currency = :currency ";
 
