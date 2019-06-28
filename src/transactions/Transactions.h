@@ -259,6 +259,8 @@ private:
 
     void fetchBalanceAddress(const QString &address);
 
+    void removeAddress(const QString &address, const QString &currency);
+
 private:
 
     NsLookup &nsLookup;

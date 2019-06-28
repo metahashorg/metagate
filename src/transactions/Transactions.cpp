@@ -277,7 +277,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
 
                 client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, requestCountTxs + countAll, bestServer, _1, _2), timeout);
             } else if (countAll > countInServer) {
-                // TODO remove history
+                removeAddress(address, currency);
             } else {
                 const BalanceInfo confirmedBalance = db.getBalance(currency, address);
                 if (confirmedBalance.countTxs != countInServer) {
@@ -336,22 +336,23 @@ void Transactions::processCheckTxsOneServer(const QString &address, const QStrin
     client.sendMessagePost(server, countBlocksRequest, std::bind(countBlocksCallback, server, _1, _2), timeout);
 }
 
-void Transactions::processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber) {
-    const auto removeAllTxs = [this](const QString &address, const QString &currency) {
-        LOG << "Remove txs " << address << " " << currency;
-        db.removePaymentsForDest(address, currency);
-    };
+void Transactions::removeAddress(const QString &address, const QString &currency) {
+    LOG << "Remove txs " << address << " " << currency;
+    db.removePaymentsForDest(address, currency);
+    db.removeBalance(currency, address);
+}
 
-    const auto getBlockInfoCallback = [address, currency, removeAllTxs] (const QString &hash, const std::string &response, const SimpleClient::ServerException &exception) {
+void Transactions::processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber) {
+    const auto getBlockInfoCallback = [address, currency, this] (const QString &hash, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response));
         if (bi.hash != hash) {
-            removeAllTxs(address, currency);
+            removeAddress(address, currency);
         }
     };
 
     if (tx.blockNumber > serverBlockNumber) {
-        removeAllTxs(address, currency);
+        removeAddress(address, currency);
         return;
     }
 

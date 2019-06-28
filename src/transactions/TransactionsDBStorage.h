@@ -60,6 +60,8 @@ public:
 
     BalanceInfo getBalance(const QString &currency, const QString &address);
 
+    void removeBalance(const QString &currency, const QString &address);
+
 protected:
     virtual void createDatabase() final;
 
