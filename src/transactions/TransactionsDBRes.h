@@ -58,9 +58,15 @@ static const QString createBalanceTable = "CREATE TABLE balance ( "
 static const QString createBalanceUniqueIndex = "CREATE UNIQUE INDEX balanceUniqueIdx ON balance ( "
                                                     "currency ASC, address ASC) ";
 
-static const QString createPaymentsIndex1 = "CREATE INDEX paymentsIdx1 ON payments(address, currency, ind, isDelegate, isSetDelegate)";
+static const QString createPaymentsIndex1 = "CREATE INDEX paymentsIdx1 ON payments(address, currency, txid, blockNumber, ind)";
 static const QString createPaymentsIndex2 = "CREATE INDEX paymentsIdx2 ON payments(address, currency, ts, txid)";
 static const QString createPaymentsIndex3 = "CREATE INDEX paymentsIdx3 ON payments(currency, ts, txid)";
+static const QString createPaymentsIndex4 = "CREATE INDEX paymentsIdx4 ON payments(address, currency, status, ts, txid)";
+static const QString createPaymentsIndex5 = "CREATE INDEX paymentsIdx5 ON payments(address, currency, type, ts, txid)";
+static const QString createPaymentsIndex6 = "CREATE INDEX paymentsIdx6 ON payments(address, currency, ufrom, uto, type, status, ts, txid)";
+static const QString createPaymentsIndex7 = "CREATE INDEX paymentsIdx7 ON payments(address, currency, blockNumber)";
+
+static const QString createBalanceIndex1 = "CREATE INDEX balanceIdx1 ON balance(address, currency)";
 
 static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "

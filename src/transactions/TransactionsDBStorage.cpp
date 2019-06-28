@@ -336,6 +336,11 @@ void TransactionsDBStorage::createDatabase()
     createIndex(createPaymentsIndex1);
     createIndex(createPaymentsIndex2);
     createIndex(createPaymentsIndex3);
+    createIndex(createPaymentsIndex4);
+    createIndex(createPaymentsIndex5);
+    createIndex(createPaymentsIndex6);
+    createIndex(createPaymentsIndex7);
+    createIndex(createBalanceIndex1);
     createIndex(createPaymentsUniqueIndex);
     createIndex(createTrackedUniqueIndex);
 }
