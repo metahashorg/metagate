@@ -246,8 +246,6 @@ public slots:
 
     Q_INVOKABLE void getWalletFolders();
 
-    Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-
     Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption);
 
     Q_INVOKABLE void exitApplication();
@@ -260,17 +258,11 @@ public slots:
 
     Q_INVOKABLE void getMachineUid();
 
-    Q_INVOKABLE void setUserName(const QString &userName);
-
     Q_INVOKABLE void setHasNativeToolbarVariable();
 
     Q_INVOKABLE void lineEditReturnPressed(QString text);
 
-    Q_INVOKABLE void setCommandLineText(const QString &text);
-
     Q_INVOKABLE void openWalletPathInStandartExplorer();
-
-    Q_INVOKABLE void setPagesMapping(QString mapping);
 
     Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
 

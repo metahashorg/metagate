@@ -1658,23 +1658,6 @@ void JavascriptWrapper::setPathsImpl(QString newPatch, QString newUserName) {
     sendAppInfoToWss(newUserName, false);
 }
 
-void JavascriptWrapper::setPaths(QString newPatch, QString newUserName) {
-BEGIN_SLOT_WRAPPER
-    /*const QString JS_NAME_RESULT = "setPathsJs";
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        setPathsImpl(newPatch, newUserName);
-        result = "Ok";
-    });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        result = "Not ok";
-    }
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);*/
-END_SLOT_WRAPPER
-}
-
 QString JavascriptWrapper::openFolderDialog(QString beginPath, QString caption) {
     const QString dir = QFileDialog::getExistingDirectory(widget_, caption, beginPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     LOG << "choised dir " << dir;
@@ -1760,12 +1743,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::setCommandLineText(const QString &/*text*/) {
-BEGIN_SLOT_WRAPPER
-    //emit setCommandLineTextSig(text);
-END_SLOT_WRAPPER
-}
-
 void JavascriptWrapper::openFolderInStandartExplored(const QString &folder) {
     QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
 }
@@ -1773,12 +1750,6 @@ void JavascriptWrapper::openFolderInStandartExplored(const QString &folder) {
 void JavascriptWrapper::openWalletPathInStandartExplorer() {
 BEGIN_SLOT_WRAPPER
     openFolderInStandartExplored(walletPath);
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::setPagesMapping(QString mapping) {
-BEGIN_SLOT_WRAPPER
-    //emit setMappingsSig(mapping);
 END_SLOT_WRAPPER
 }
 
@@ -1809,12 +1780,6 @@ BEGIN_SLOT_WRAPPER
     LOG << "get ips servers ok " << type << " " << res.get();
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), res);
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::setUserName(const QString &userName) {
-BEGIN_SLOT_WRAPPER
-    // ignore
 END_SLOT_WRAPPER
 }
 
