@@ -221,7 +221,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
-        LOG << "Txs geted with duplicates " << address << " " << txs.size();
+        LOG << "geted with duplicates " << address << " " << txs.size();
 
         const QString requestBalance = makeGetBalanceRequest(address);
 

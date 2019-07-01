@@ -154,14 +154,14 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsRegisterAddressJs";
 
-    LOG << "Txs register address " << address << " " << currency << " " << type << " " << group;
+    LOG << "Register address " << address << " " << currency << " " << type << " " << group;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency));
 
     wrapOperation([&, this](){
         AddressInfo info(currency, address, type, group, name);
         emit transactionsManager->registerAddresses({info}, Transactions::RegisterAddressCallback([address, currency, makeFunc]() {
-            LOG << "Txs register address ok " << address << " " << currency;
+            LOG << "Register address ok " << address << " " << currency;
             makeFunc.func(TypedException(), address, currency);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
@@ -196,13 +196,13 @@ BEGIN_SLOT_WRAPPER
         infos.emplace_back(addressInfo);
     }
 
-    LOG << "Txs register addresses " << infos.size();
+    LOG << "Register addresses " << infos.size();
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit transactionsManager->registerAddresses(infos, Transactions::RegisterAddressCallback([makeFunc]() {
-            LOG << "Txs register addresses ok";
+            LOG << "Register addresses ok";
             makeFunc.func(TypedException(), "Ok");
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
@@ -215,13 +215,13 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsGetAddressesResultJs";
 
-    LOG << "Txs get addresses " << group;
+    LOG << "Get addresses " << group;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     wrapOperation([&, this](){
         emit transactionsManager->getAddresses(group, Transactions::GetAddressesCallback([makeFunc](const std::vector<AddressInfo> &infos) {
-            LOG << "Txs get addresses ok " << infos.size();
+            LOG << "Get addresses ok " << infos.size();
             const QJsonDocument &result = addressInfoToJson(infos);
             makeFunc.func(TypedException(), result);
         }, makeFunc.error, signalFunc));
@@ -235,13 +235,13 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "txsSetCurrentGroupResultJs";
 
-    LOG << "Txs Set group " << group;
+    LOG << "Set group " << group;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit transactionsManager->setCurrentGroup(group, Transactions::SetCurrentGroupCallback([makeFunc, group]() {
-            LOG << "Txs Set group ok " << group;
+            LOG << "Set group ok " << group;
             makeFunc.func(TypedException(), "Ok");
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
