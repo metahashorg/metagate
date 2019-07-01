@@ -26,6 +26,11 @@ class Auth;
 class AuthJavascript;
 }
 
+namespace utils {
+class Utils;
+class UtilsJavascript;
+}
+
 namespace initializer {
 
 class InitializerJavascript;
@@ -52,6 +57,7 @@ public:
         std::shared_future<MainWindow*> mainWindow,
         std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
+        std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
         const QString &versionString,
         NetwrokTesting &nettest
     );

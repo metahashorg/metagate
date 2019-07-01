@@ -41,6 +41,7 @@
 #include "Initializer/Inits/InitProxy.h"
 #include "Initializer/Inits/InitMessenger.h"
 #include "Initializer/Inits/InitWalletsNames.h"
+#include "Initializer/Inits/InitUtils.h"
 
 #include "Module.h"
 #include "proxy/Proxy.h"
@@ -185,6 +186,8 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
+        const std::shared_future<InitUtils::Return> utils = initManager.addInit<InitUtils>(mainWindow);
+
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
 
         const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup>();
@@ -193,7 +196,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
-        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, QString::fromStdString(versionString), std::ref(nettesting));
+        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, QString::fromStdString(versionString), std::ref(nettesting));
 
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow, auth);
 

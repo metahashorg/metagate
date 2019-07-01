@@ -28,6 +28,10 @@ namespace auth {
 class Auth;
 }
 
+namespace utils {
+class Utils;
+}
+
 template<bool isLastArg, typename... Args>
 struct JsFunc;
 
@@ -47,7 +51,17 @@ public:
     };
 
 public:
-    explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, NetwrokTesting &networkTesting, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(
+        MainWindow &mainWindow,
+        WebSocketClient &wssClient,
+        NsLookup &nsLookup,
+        transactions::Transactions &transactionsManager,
+        auth::Auth &authManager,
+        NetwrokTesting &networkTesting,
+        utils::Utils &utilsManager,
+        const QString &applicationVersion,
+        QObject *parent = nullptr
+    );
 
     void setWidget(QWidget *widget);
 
@@ -268,8 +282,6 @@ public slots:
 
     Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
 
-    Q_INVOKABLE void printUrl(QString url, QString printWindowCaption, QString text);
-
     Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName);
 
     Q_INVOKABLE void getAppInfo(const QString requestId);
@@ -291,8 +303,6 @@ public slots:
     Q_INVOKABLE void getIsForgingActive();
 
     Q_INVOKABLE void getNetworkStatus();
-
-    Q_INVOKABLE void javascriptLog(const QString &message);
 
 private slots:
 
@@ -389,6 +399,8 @@ private:
     auth::Auth &auth;
 
     NetwrokTesting &networkTesting;
+
+    utils::Utils &utilsManager;
 
     const QString applicationVersion;
 

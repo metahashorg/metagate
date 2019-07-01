@@ -14,9 +14,6 @@ using namespace std::placeholders;
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QPrinter>
-#include <QPrintDialog>
-#include <QPainter>
 #include <QFile>
 
 #include "Wallet.h"
@@ -50,6 +47,7 @@ using namespace std::placeholders;
 
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
+#include "Utils/Utils.h"
 #include "NetwrokTesting.h"
 
 SET_LOG_NAMESPACE("JSW");
@@ -149,7 +147,17 @@ static QString makeJsonWalletsAndPaths(const std::vector<std::pair<QString, QStr
     return json.toJson(QJsonDocument::Compact);
 }
 
-JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, NetwrokTesting &networkTesting, const QString &applicationVersion, QObject */*parent*/)
+JavascriptWrapper::JavascriptWrapper(
+    MainWindow &mainWindow,
+    WebSocketClient &wssClient,
+    NsLookup &nsLookup,
+    transactions::Transactions &transactionsManager,
+    auth::Auth &authManager,
+    NetwrokTesting &networkTesting,
+    utils::Utils &utilsManager,
+    const QString &applicationVersion,
+    QObject */*parent*/
+)
     : mainWindow(mainWindow)
     , walletDefaultPath(getWalletPath())
     , wssClient(wssClient)
@@ -157,6 +165,7 @@ JavascriptWrapper::JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &ws
     , transactionsManager(transactionsManager)
     , auth(authManager)
     , networkTesting(networkTesting)
+    , utilsManager(utilsManager)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -1592,7 +1601,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::qtOpenInBrowser(QString url) {
 BEGIN_SLOT_WRAPPER
     LOG << "Open another url " << url;
-    QDesktopServices::openUrl(QUrl(url));
+    emit utilsManager.openInBrowser(url, utils::Utils::OpenInBrowserCallback([]{}, [](const TypedException &e) {}, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1787,16 +1796,7 @@ void JavascriptWrapper::saveFileFromUrl(QString url, QString saveFileWindowCapti
 BEGIN_SLOT_WRAPPER
     LOG << "Save file from url";
     const QString beginPath = makePath(walletPath, fileName);
-    const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
-    CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
-
-    client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Error load image: " + exception.description);
-        writeToFileBinary(file, response, false);
-        if (openAfterSave) {
-            openFolderInStandartExplored(QFileInfo(file).dir().path());
-        }
-    });
+    emit utilsManager.saveFileFromUrl(url, saveFileWindowCaption, beginPath, openAfterSave, utils::Utils::SaveFileFromUrlCallback([]{}, [](const TypedException &e) {}, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1806,51 +1806,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "change file and load " << requestId;
 
-    Opt<std::string> base64Data;
-    const TypedException exception = apiVrapper2([&, this]() {
-        const QString beginPath = makePath(walletPath, fileName);
-        const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
-        const std::string fileData = readFileBinary(file);
-        base64Data = toBase64(fileData);
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), base64Data);
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::printUrl(QString url, QString printWindowCaption, QString text) {
-BEGIN_SLOT_WRAPPER
-    LOG << "print url";
-    client.sendMessageGet(url, [printWindowCaption, text](const std::string &response, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Error load image: " + exception.description);
-
-        QImage image;
-        image.loadFromData((const unsigned char*)response.data(), (int)response.size());
-
-        QPrinter printer;
-
-        QPrintDialog *dialog = new QPrintDialog(&printer);
-        dialog->setWindowTitle(printWindowCaption);
-
-        if (dialog->exec() != QDialog::Accepted) {
-            return;
-        }
-
-        QPainter painter;
-        painter.begin(&printer);
-
-        const int printerWidth = printer.pageRect().width();
-        const int printerHeight = printer.pageRect().height();
-        const int imageWidth = image.size().width();
-        const int imageHeight = image.size().height();
-        const int paddingX = (printerWidth - imageWidth) / 2;
-        const int paddingY = (printerHeight - imageHeight) / 2;
-
-        painter.drawText(100, 100, 500, 500, Qt::AlignLeft|Qt::AlignTop, text);
-        painter.drawImage(QRect(paddingX, paddingY, imageWidth, imageHeight), image);
-
-        painter.end();
-    });
+    emit utilsManager.chooseFileAndLoad(openFileWindowCaption, makePath(walletPath, fileName), utils::Utils::ChooseFileAndLoadCallback([requestId, this, JS_NAME_RESULT](const std::string &result){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<std::string>(result));
+    }, [requestId, this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<std::string>(""));
+    }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1860,18 +1820,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "qr encode";
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this](){
-        CHECK_TYPED(!textHex.isEmpty(), TypeErrors::INCORRECT_USER_DATA, "text for encode empty");
-        const QByteArray data = QByteArray::fromHex(textHex.toUtf8());
-        const QByteArray res = QRCoder::encode(data);
-        CHECK_TYPED(res.size() > 0, TypeErrors::QR_ENCODE_ERROR, "Incorrect encoded qr: incorrect result");
-        const QByteArray check = QRCoder::decode(res);
-        CHECK_TYPED(check == data, TypeErrors::QR_ENCODE_ERROR, "Incorrect encoded qr: incorrect check result");
-        result = QString(res.toBase64());
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    emit utilsManager.qrEncode(textHex, utils::Utils::QrEncodeCallback([requestId, this, JS_NAME_RESULT](const QString &result){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [requestId, this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1881,16 +1834,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "qr decode";
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this](){
-        CHECK_TYPED(!pngBase64.isEmpty(), TypeErrors::INCORRECT_USER_DATA, "text for encode empty");
-        const QByteArray data = QByteArray::fromBase64(pngBase64.toUtf8());
-        const QByteArray res = QRCoder::decode(data);
-        CHECK_TYPED(res.size() > 0, TypeErrors::QR_ENCODE_ERROR, "Incorrect encoded qr: incorrect result");
-        result = QString(res.toHex());
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    emit utilsManager.qrDecode(pngBase64, utils::Utils::QrEncodeCallback([requestId, this, JS_NAME_RESULT](const QString &result){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [requestId, this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -2008,12 +1956,6 @@ BEGIN_SLOT_WRAPPER
     }, [](const TypedException &e) {
         LOG << "Error: " << e.description;
     }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::javascriptLog(const QString &message) {
-BEGIN_SLOT_WRAPPER
-    LOG3("ECMA") << message;
 END_SLOT_WRAPPER
 }
 

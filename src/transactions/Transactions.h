@@ -143,7 +143,7 @@ public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
-    ~Transactions();
+    ~Transactions() override;
 
 protected:
 
