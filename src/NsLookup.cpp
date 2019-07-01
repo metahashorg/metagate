@@ -646,6 +646,17 @@ void NsLookup::processRefresh() {
         }
     }
 
+    const auto cntPing = [this](const NodeType::Node &type, const std::vector<NodeInfo> &nodes) {
+        ipsTempRefresh.clear();
+        for (const auto &t: nodes) {
+            ipsTempRefresh.emplace_back(t.address);
+        }
+
+        isProcessRefresh = true;
+
+        continuePingRefresh(std::begin(ipsTempRefresh), type);
+    };
+
     if (!address.isEmpty()) {
         allNodesForTypesNew.clear();
 
@@ -653,18 +664,27 @@ void NsLookup::processRefresh() {
             if (std::find_if(pairNodes.second.cbegin(), pairNodes.second.cend(), [&address](const NodeInfo &info) {
                 return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(address);
             }) != pairNodes.second.cend()) {
-                ipsTempRefresh.clear();
-                for (const auto &t: pairNodes.second) {
-                    ipsTempRefresh.emplace_back(t.address);
-                }
-
-                isProcessRefresh = true;
-
                 LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
 
-                continuePingRefresh(std::begin(ipsTempRefresh), pairNodes.first);
+                cntPing(pairNodes.first, pairNodes.second);
                 break;
             }
+        }
+    } else {
+        std::vector<std::map<NodeType::Node, std::vector<NodeInfo>>::const_iterator> pairs;
+        for (auto pairNodes = allNodesForTypes.cbegin(); pairNodes != allNodesForTypes.cend(); pairNodes++) {
+            const size_t countWorked = countWorkedNodes(pairNodes->second);
+            if (countWorked == 0) {
+                pairs.emplace_back(pairNodes);
+            }
+        }
+
+        if (!pairs.empty()) {
+            const size_t counter = randomCounter++;
+            const auto &pairNodes = pairs[counter % pairs.size()];
+            LOG << "Update status for type: " << pairNodes->first.str();
+
+            cntPing(pairNodes->first, pairNodes->second);
         }
     }
 }

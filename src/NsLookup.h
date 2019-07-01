@@ -260,6 +260,7 @@ private:
 
     DnsErrorDetails dnsErrorDetails;
 
+    size_t randomCounter = 0;
 };
 
 #endif // NSLOOKUP_H
