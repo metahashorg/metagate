@@ -428,7 +428,7 @@ void Transactions::timerMethod() {
     while (posInAddressInfos < addressesInfos.size()) {
         const AddressInfo &addr = addressesInfos[posInAddressInfos];
         if ((!currentCurrency.isEmpty() && (addr.currency != currentCurrency || addr.type != currentType)) || batch.size() >= MAXIMUM_ADDRESSES_IN_BATCH) {
-            if (servStructs.find(currentCurrency) == servStructs.end()) {
+            if (servStructs.find(currentCurrency) != servStructs.end()) {
                 // В предыдущий раз список серверов оказался пустым, поэтому структуру мы не заполнили. Пропускаем
                 processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
                 batch.clear();
