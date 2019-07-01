@@ -277,7 +277,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
 
                 client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, requestCountTxs + countAll, bestServer, _1, _2), timeout);
             } else if (countAll > countInServer) {
-                removeAddress(address, currency);
+                //removeAddress(address, currency); Не удаляем, так как при перевыкачки базы начнется свистопляска
             } else {
                 const BalanceInfo confirmedBalance = db.getBalance(currency, address);
                 if (confirmedBalance.countTxs != countInServer) {
