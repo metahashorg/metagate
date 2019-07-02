@@ -138,8 +138,6 @@ std::string readFileBinary(const QString &pathToFile) {
     return file.readAll().toStdString();
 }
 
-#include <iostream>
-
 bool copyRecursively(const QString &srcFilePath, const QString &tgtFilePath, bool isDirs, bool isReplace) {
     QFileInfo srcFileInfo(srcFilePath);
     if (srcFileInfo.isDir()) {

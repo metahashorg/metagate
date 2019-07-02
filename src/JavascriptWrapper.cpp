@@ -47,7 +47,7 @@ using namespace std::placeholders;
 
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
-#include "Utils/Utils.h"
+#include "Utils/UtilsManager.h"
 #include "NetwrokTesting.h"
 
 SET_LOG_NAMESPACE("JSW");

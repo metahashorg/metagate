@@ -2,7 +2,7 @@
 
 #include "WrapperJavascriptImpl.h"
 
-#include "Utils/Utils.h"
+#include "Utils/UtilsManager.h"
 
 #include "SlotWrapper.h"
 

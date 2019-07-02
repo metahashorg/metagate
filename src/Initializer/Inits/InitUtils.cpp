@@ -3,7 +3,7 @@
 #include <functional>
 using namespace std::placeholders;
 
-#include "Utils/Utils.h"
+#include "Utils/UtilsManager.h"
 #include "Utils/UtilsJavascript.h"
 #include "mainwindow.h"
 
