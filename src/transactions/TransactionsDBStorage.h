@@ -15,7 +15,7 @@ public:
 
     virtual int currentVersion() const final;
 
-    void addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
+    void addPayment(const QString &currency, const QString &txid, const QString &address, qint64 index,
                     const QString &ufrom, const QString &uto, const QString &value,
                     quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                     bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
@@ -42,21 +42,12 @@ public:
 
     Transaction getLastForgingTransaction(const QString &address, const QString &currency);
 
-    void updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans);
+    void updatePayment(const QString &address, const QString &currency, const QString &txid, qint64 blockNumber, qint64 index, const Transaction &trans);
     void removePaymentsForDest(const QString &address, const QString &currency);
-
-    qint64 getPaymentsCountForAddress(const QString &address, const QString &currency, bool input);
 
     qint64 getPaymentsCountForAddress(const QString &address, const QString &currency);
 
-    BigNumber calcInValueForAddress(const QString &address, const QString &currency);
-    BigNumber calcOutValueForAddress(const QString &address, const QString &currency);
-
     qint64 getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency, Transaction::Status status = Transaction::OK);
-    BigNumber calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status = Transaction::OK);
-
-    void calcBalance(const QString &address, const QString &currency,
-                     BalanceInfo &balance);
 
     void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
     void addTracked(const AddressInfo &info);
@@ -64,6 +55,12 @@ public:
     std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
     void removePaymentsForCurrency(const QString &currency);
+
+    void setBalance(const QString &currency, const QString &address, const BalanceInfo &balance);
+
+    BalanceInfo getBalance(const QString &currency, const QString &address);
+
+    void removeBalance(const QString &currency, const QString &address);
 
 protected:
     virtual void createDatabase() final;

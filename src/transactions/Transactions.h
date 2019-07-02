@@ -143,7 +143,7 @@ public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
 
-    ~Transactions();
+    ~Transactions() override;
 
 protected:
 
@@ -241,11 +241,11 @@ private:
 
     void processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
-    void processPendingsMth(const std::vector<QString> &servers);
+    void processPendings();
 
     uint64_t calcCountTxs(const QString &address, const QString &currency) const;
 
-    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
+    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
     void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
 
@@ -258,6 +258,8 @@ private:
     void sendErrorGetTx(const QString &requestId, const TransactionHash &hash, const QString &server);
 
     void fetchBalanceAddress(const QString &address);
+
+    void removeAddress(const QString &address, const QString &currency);
 
 private:
 
@@ -279,7 +281,7 @@ private:
 
     std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
 
-    std::vector<QString> pendingTxsAfterSend;
+    std::vector<std::pair<QString, std::set<QString>>> pendingTxsAfterSend;
 
     seconds timeout;
 

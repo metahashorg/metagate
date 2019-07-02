@@ -18,6 +18,7 @@ Q_INVOKABLE void getAddresses(QString group);
 txsGetAddressesResultJs(result, errorNum, errorMessage)
 где result - json массив вида
 [{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\",\"balance\":{\"countReceived\":\"1\",\"countSpent\":\"0\",\"currBlock\":\"0\",\"received\":\"4000000000\",\"spent\":\"0\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}}]
+Полный формат баланса см в calcBalance
 
 Q_INVOKABLE void setCurrentGroup(QString group);
 Устанавливает группу, по которой будет идти автоматическое отслеживание изменений
@@ -33,7 +34,7 @@ count == -1 выдать все
 Результат вернется в функцию
 txsGetTxsJs(address, currency, result, errorNum, errorMessage)
 где result - json массив вида
-[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\",\"isInput\":true, \"isDelegate\": true, \"delegate_value\": \"500\", \"blockNumber\":\"0\", \"delegate_hash\":\"546450\",\"type\":\"type\",\"intStatus\":10}]
+[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\", \"isDelegate\": true, \"delegate_value\": \"500\", \"blockNumber\":\"0\", \"delegate_hash\":\"546450\",\"type\":\"type\",\"intStatus\":10}]
 Параметры isDelegate и delegate_value, delegate_hash - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
 type == simple, delegate, forging
 
@@ -62,7 +63,8 @@ Q_INVOKABLE void calcBalance(QString address, QString currency);
 Получение баланса
 Результат вернется в функцию
 txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)
-где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"countTxs\":\"1\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}
+где result - json вида {\"received\":\"100\",\"spent\":\"100\",\"countReceived\":\"1\",\"countSpent\":\"1\",\"countTxs\":\"1\",\"savedTxs\":\"1\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}
+Если savedTxs != countTxs, значит еще идет докачивание транзакций. Это актуально для метода txsNewBalanceJs. Для метода calcBalance savedTxs всегда равно countTxs
 
 Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 Получает транзакцию с сервера. 
@@ -106,11 +108,6 @@ txsGetLastForgingTxJs(address, currency, result, errorNum, errorMessage)
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)
 Возвращается при изменении баланса по остлеживаемому адресу. Эта структура указывает на значение баланса на сервере. Если транзакций на адресе слишком много, они могут не успеть к этому моменту докачаться
-balanceJson вида как в txsCalcBalanceResultJs
-
-txsNewBalance2Js(address, currency, balanceJson, confirmedBalanceJson, errorNum, errorMessage)
-Возвращается при изменении баланса по остлеживаемому адресу. Эта структура указывает на значение баланса на сервере. Если транзакций на адресе слишком много, они могут не успеть к этому моменту докачаться
-confirmedBalanceJson - баланс, уже сохраненный в базу
 balanceJson вида как в txsCalcBalanceResultJs
 
 txsSendedTxJs(requestId, server, result, errorNum, errorMessage)

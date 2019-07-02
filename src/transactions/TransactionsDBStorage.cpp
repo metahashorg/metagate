@@ -22,7 +22,7 @@ int TransactionsDBStorage::currentVersion() const
     return databaseVersion;
 }
 
-void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, bool isInput,
+void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, qint64 index,
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
                                        bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
@@ -33,7 +33,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
     query.bindValue(":address", address);
-    query.bindValue(":isInput", isInput);
+    query.bindValue(":ind", index);
     query.bindValue(":ufrom", ufrom);
     query.bindValue(":uto", uto);
     query.bindValue(":value", value);
@@ -56,7 +56,7 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
 
 void TransactionsDBStorage::addPayment(const Transaction &trans)
 {
-    addPayment(trans.currency, trans.tx, trans.address, trans.isInput,
+    addPayment(trans.currency, trans.tx, trans.address, trans.blockIndex,
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
                trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
@@ -173,14 +173,15 @@ Transaction TransactionsDBStorage::getLastForgingTransaction(const QString &addr
     return trans;
 }
 
-void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, bool isInput, const Transaction &trans)
+void TransactionsDBStorage::updatePayment(const QString &address, const QString &currency, const QString &txid, qint64 blockNumber, qint64 index, const Transaction &trans)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(updatePaymentForAddress), query.lastError().text().toStdString())
             query.bindValue(":address", address);
     query.bindValue(":currency", currency);
     query.bindValue(":txid", txid);
-    query.bindValue(":isInput", isInput);
+    query.bindValue(":blockNumber", blockNumber);
+    query.bindValue(":ind", index);
 
     query.bindValue(":ufrom", trans.from);
     query.bindValue(":uto", trans.to);
@@ -195,7 +196,6 @@ void TransactionsDBStorage::updatePayment(const QString &address, const QString 
     query.bindValue(":delegateHash", trans.delegateHash);
     query.bindValue(":status", trans.status);
     query.bindValue(":type", trans.type);
-    query.bindValue(":blockNumber", static_cast<qint64>(trans.blockNumber));
     query.bindValue(":blockHash", trans.blockHash);
     query.bindValue(":intStatus", trans.intStatus);
     CHECK(query.exec(), query.lastError().text().toStdString());
@@ -210,20 +210,6 @@ void TransactionsDBStorage::removePaymentsForDest(const QString &address, const 
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
-qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address, const QString &currency, bool input)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectPaymentsCountForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    query.bindValue(":input", input);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    if (query.next()) {
-        return query.value("count").toLongLong();
-    }
-    return 0;
-}
-
 qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address, const QString &currency) {
     QSqlQuery query(database());
     CHECK(query.prepare(selectPaymentsCountForAddress2), query.lastError().text().toStdString());
@@ -234,134 +220,6 @@ qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address,
         return query.value("count").toLongLong();
     }
     return 0;
-}
-
-BigNumber TransactionsDBStorage::calcInValueForAddress(const QString &address, const QString &currency)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectInPaymentsValuesForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    BigNumber res;
-    BigNumber r;
-    while (query.next()) {
-        r.setDecimal(query.value("value").toByteArray());
-        res += r;
-        r.setDecimal(query.value("fee").toByteArray());
-        res += r;
-    }
-    return res;
-}
-
-BigNumber TransactionsDBStorage::calcOutValueForAddress(const QString &address, const QString &currency)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectOutPaymentsValuesForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    BigNumber res;
-    BigNumber r;
-    while (query.next()) {
-        r.setDecimal(query.value("value").toByteArray());
-        res += r;
-    }
-    return res;
-}
-
-qint64 TransactionsDBStorage::getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency, Transaction::Status status)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectIsSetDelegatePaymentsCountForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    query.bindValue(":status", status);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    if (query.next()) {
-        return query.value("count").toLongLong();
-    }
-    return 0;
-}
-
-BigNumber TransactionsDBStorage::calcIsSetDelegateValueForAddress(const QString &address, const QString &currency, bool isDelegate, bool isInput, Transaction::Status status)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectIsSetDelegatePaymentsValuesForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    query.bindValue(":isDelegate", isDelegate);
-    query.bindValue(":isInput", isInput);
-    query.bindValue(":status", status);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-    BigNumber res;
-    BigNumber r;
-    while (query.next()) {
-        r.setDecimal(query.value("delegateValue").toByteArray());
-        res += r;
-    }
-    return res;
-}
-
-void TransactionsDBStorage::calcBalance(const QString &address, const QString &currency,
-                                        BalanceInfo &balance)
-{
-    QSqlQuery query(database());
-    CHECK(query.prepare(selectAllPaymentsValuesForAddress), query.lastError().text().toStdString());
-    query.bindValue(":address", address);
-    query.bindValue(":currency", currency);
-    CHECK(query.exec(), query.lastError().text().toStdString());
-
-    BigNumber value;
-    BigNumber fee;
-    BigNumber delegateValue;
-    bool isSetDelegate;
-    bool isDelegate;
-    bool isInput;
-    Transaction::Status status;
-    Transaction::Type type;
-
-    while (query.next()) {
-        value.setDecimal(query.value("value").toByteArray());
-        fee.setDecimal(query.value("fee").toByteArray());
-        delegateValue.setDecimal(query.value("delegateValue").toByteArray());
-        isSetDelegate = query.value("isSetDelegate").toBool();
-        isDelegate = query.value("isDelegate").toBool();
-        isInput = query.value("isInput").toBool();
-        status = static_cast<Transaction::Status>(query.value("status").toInt());
-        type = static_cast<Transaction::Type>(query.value("type").toInt());
-        if (isInput) {
-            balance.spent += value;
-            balance.spent += fee;
-            balance.countSpent++;
-        } else {
-            balance.received += value;
-            balance.countReceived++;
-        }
-        if (isSetDelegate){
-            balance.countDelegated++;
-            if (status == Transaction::Status::OK) {
-                balance.countDelegated++; // count transaction twice
-                if (isInput && isDelegate) {
-                    balance.delegate += delegateValue;
-                } else if (!isInput && isDelegate) {
-                    balance.delegated += delegateValue;
-                } else if (isInput && !isDelegate) {
-                    balance.undelegate += delegateValue;
-                } else if (!isInput && !isDelegate) {
-                    balance.undelegated += delegateValue;
-                }
-            }
-            if (isInput && isDelegate  && status == Transaction::Status::PENDING) {
-                balance.reserved += delegateValue;
-            }
-        }
-        if (type == Transaction::Type::FORGING && !isInput) {
-            balance.forged += value;
-        }
-    }
-
-    balance.countTxs = getPaymentsCountForAddress(address, currency);
 }
 
 void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
@@ -415,13 +273,79 @@ void TransactionsDBStorage::removePaymentsForCurrency(const QString &currency)
     transactionGuard.commit();
 }
 
+void TransactionsDBStorage::setBalance(const QString &currency, const QString &address, const BalanceInfo &balance) {
+    removeBalance(currency, address);
+
+    QSqlQuery query(database());
+    CHECK(query.prepare(insertBalance), query.lastError().text().toStdString());
+    query.bindValue(":currency", currency);
+    query.bindValue(":address", address);
+    query.bindValue(":received", balance.received.getDecimal());
+    query.bindValue(":spent", balance.spent.getDecimal());
+    query.bindValue(":countReceived", (qint64)balance.countReceived);
+    query.bindValue(":countSpent", (qint64)balance.countSpent);
+    query.bindValue(":countTxs", (qint64)balance.countTxs);
+    query.bindValue(":currBlockNum", (qint64)balance.currBlockNum);
+    query.bindValue(":countDelegated", (qint64)balance.countDelegated);
+    query.bindValue(":delegate", balance.delegate.getDecimal());
+    query.bindValue(":undelegate", balance.undelegate.getDecimal());
+    query.bindValue(":delegated", balance.delegated.getDecimal());
+    query.bindValue(":undelegated", balance.undelegated.getDecimal());
+    query.bindValue(":reserved", balance.reserved.getDecimal());
+    query.bindValue(":forged", balance.forged.getDecimal());
+    CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+BalanceInfo TransactionsDBStorage::getBalance(const QString &currency, const QString &address) {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectBalance), query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+
+    BalanceInfo balance;
+    balance.address = address;
+
+    if (query.next()) {
+        balance.received = query.value("received").toByteArray();
+        balance.spent = query.value("spent").toByteArray();
+        balance.countReceived = static_cast<quint64>(query.value("countReceived").toLongLong());
+        balance.countSpent = static_cast<quint64>(query.value("countSpent").toLongLong());
+        balance.countTxs = static_cast<quint64>(query.value("countTxs").toLongLong());
+        balance.currBlockNum = static_cast<quint64>(query.value("currBlockNum").toLongLong());
+        balance.countDelegated = static_cast<quint64>(query.value("countDelegated").toLongLong());
+        balance.delegate = query.value("delegate").toByteArray();
+        balance.undelegate = query.value("undelegate").toByteArray();
+        balance.delegated = query.value("delegated").toByteArray();
+        balance.undelegated = query.value("undelegated").toByteArray();
+        balance.reserved = query.value("reserved").toByteArray();
+        balance.forged = query.value("forged").toByteArray();
+    }
+    return balance;
+}
+
+void TransactionsDBStorage::removeBalance(const QString &currency, const QString &address) {
+    QSqlQuery queryDelete(database());
+    CHECK(queryDelete.prepare(deleteBalance), queryDelete.lastError().text().toStdString());
+    queryDelete.bindValue(":currency", currency);
+    queryDelete.bindValue(":address", address);
+    CHECK(queryDelete.exec(), queryDelete.lastError().text().toStdString());
+}
+
 void TransactionsDBStorage::createDatabase()
 {
     createTable(QStringLiteral("payments"), createPaymentsTable);
     createTable(QStringLiteral("tracked"), createTrackedTable);
+    createTable(QStringLiteral("balance"), createBalanceTable);
     createIndex(createPaymentsIndex1);
     createIndex(createPaymentsIndex2);
     createIndex(createPaymentsIndex3);
+    createIndex(createPaymentsIndex4);
+    createIndex(createPaymentsIndex5);
+    createIndex(createPaymentsIndex6);
+    createIndex(createPaymentsIndex7);
+    createIndex(createBalanceIndex1);
+    createIndex(createBalanceUniqueIndex);
     createIndex(createPaymentsUniqueIndex);
     createIndex(createTrackedUniqueIndex);
 }
@@ -439,7 +363,6 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
     trans.fee = query.value("fee").toString();
     trans.nonce = query.value("nonce").toLongLong();
-    trans.isInput = query.value("isInput").toBool();
     trans.isSetDelegate = query.value("isSetDelegate").toBool();
     trans.isDelegate = query.value("isDelegate").toBool();
     trans.delegateValue = query.value("delegateValue").toString();
@@ -447,6 +370,7 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.status = static_cast<Transaction::Status>(query.value("status").toInt());
     trans.type = static_cast<Transaction::Type>(query.value("type").toInt());
     trans.blockNumber = query.value("blockNumber").toLongLong();
+    trans.blockIndex = query.value("ind").toLongLong();
     trans.blockHash = query.value("blockHash").toString();
     trans.intStatus = query.value("intStatus").toInt();
 }

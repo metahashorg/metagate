@@ -109,24 +109,22 @@ void Transactions::finishMethod() {
 }
 
 uint64_t Transactions::calcCountTxs(const QString &address, const QString &currency) const {
-    const uint64_t countTxs = static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency));
-    return countTxs;
+    return static_cast<uint64_t>(db.getPaymentsCountForAddress(address, currency));
 }
 
-void Transactions::newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
+void Transactions::newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct) {
     const uint64_t currCountTxs = calcCountTxs(address, currency);
     CHECK(savedCountTxs == currCountTxs, "Trancastions in db on address " + address.toStdString() + " " + currency.toStdString() + " changed");
     auto transactionGuard = db.beginTransaction();
     for (const Transaction &tx: txs) {
         db.addPayment(tx);
     }
+    db.setBalance(currency, address, balance);
     transactionGuard.commit();
 
-    BalanceInfo confirmedBalance;
-    db.calcBalance(address, currency, confirmedBalance);
-
-    emit javascriptWrapper.newBalanceSig(address, currency, balance);
-    emit javascriptWrapper.newBalance2Sig(address, currency, balance, confirmedBalance);
+    BalanceInfo balanceCopy = balance;
+    balanceCopy.savedTxs = std::min(confirmedCountTxsInThisLoop, balance.countTxs);
+    emit javascriptWrapper.newBalanceSig(address, currency, balanceCopy);
     updateBalanceTime(currency, servStruct);
 }
 
@@ -142,17 +140,17 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
     }
 }
 
-void Transactions::processPendingsMth(const std::vector<QString> &servers) {
-    if (servers.empty()) {
-        return;
-    }
-
+void Transactions::processPendings() {
     const auto processPendingTx = [this](const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
         if (tx.status != Transaction::PENDING) {
-            if (std::find(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx) != pendingTxsAfterSend.end()) {
-                pendingTxsAfterSend.erase(std::remove(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), tx.tx), pendingTxsAfterSend.end());
+            const auto foundIter = std::remove_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
+                return pair.first == txHash;
+            });
+            const bool found = foundIter != pendingTxsAfterSend.end();
+            pendingTxsAfterSend.erase(foundIter, pendingTxsAfterSend.end());
+            if (found) {
                 emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
             }
         }
@@ -161,9 +159,9 @@ void Transactions::processPendingsMth(const std::vector<QString> &servers) {
     LOG << PeriodicLog::make("pas") << "Pending after send: " << pendingTxsAfterSend.size();
 
     const auto copyPending = pendingTxsAfterSend;
-    for (const QString &txHash: copyPending) {
-        const QString message = makeGetTxRequest(txHash);
-        for (const QString &server: servers) {
+    for (const auto &pair: copyPending) {
+        const QString message = makeGetTxRequest(pair.first);
+        for (const QString &server: pair.second) {
             client.sendMessagePost(server, message, processPendingTx, timeout);
         }
     }
@@ -181,13 +179,13 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
-            db.updatePayment(address, currency, tx.tx, tx.isInput, tx);
+            db.updatePayment(address, currency, tx.tx, tx.blockNumber, tx.blockIndex, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
             emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
         }
     };
 
-    const auto getBlockHeaderCallback = [this, currency, servStruct](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, std::vector<Transaction> txs, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBlockHeaderCallback = [this, currency, servStruct](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, std::vector<Transaction> txs, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response));
         for (Transaction &tx: txs) {
@@ -195,39 +193,39 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                 tx.blockHash = bi.hash;
             }
         }
-        newBalance(address, currency, savedCountTxs, balance, txs, servStruct);
+        newBalance(address, currency, savedCountTxs, confirmedCountTxsInThisLoop, balance, txs, servStruct);
     };
 
-    const auto processNewTransactions = [this, currency, getBlockHeaderCallback](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server) {
+    const auto processNewTransactions = [this, currency, getBlockHeaderCallback](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const std::vector<Transaction> &txs, const QUrl &server) {
         const auto maxElement = std::max_element(txs.begin(), txs.end(), [](const Transaction &first, const Transaction &second) {
             return first.blockNumber < second.blockNumber;
         });
         CHECK(maxElement != txs.end(), "Incorrect max element");
         const int64_t blockNumber = maxElement->blockNumber;
         const QString request = makeGetBlockInfoRequest(blockNumber);
-        client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, txs, _1, _2), timeout);
+        client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, confirmedCountTxsInThisLoop, txs, _1, _2), timeout);
     };
 
-    const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const std::vector<Transaction> &txs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response));
         const uint64_t countInServer = balance.countTxs;
         const uint64_t countSave = serverBalance.countTxs;
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
             LOG << "Balance " << address << " confirmed";
-            processNewTransactions(address, serverBalance, savedCountTxs, txs, server);
+            processNewTransactions(address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server);
         }
     };
 
-    const auto getHistoryCallback = [this, currency, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
+    const auto getHistoryCallback = [this, currency, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const QUrl &server, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response));
 
-        LOG << "Txs geted with duplicates " << address << " " << txs.size();
+        LOG << "geted with duplicates " << address << " " << txs.size();
 
         const QString requestBalance = makeGetBalanceRequest(address);
 
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, txs, server, _1, _2), timeout);
+        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server, _1, _2), timeout);
     };
 
     const auto getBalanceCallback = [this, servStruct, addressesAndUnconfirmedTxs, currency, getHistoryCallback, processPendingTx](const std::vector<QUrl> &servers, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
@@ -251,6 +249,10 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                         bestAnswers[j].first = server;
                     }
                 }
+            } else {
+                if (exception.isTimeout()) {
+                    emit nsLookup.rejectServer(server.toString());
+                }
             }
         }
 
@@ -273,9 +275,16 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                 const uint64_t requestCountTxs = std::min(countMissingTxs, MAX_TXS_IN_RESPONSE) + ADD_TO_COUNT_TXS;
                 const QString requestForTxs = makeGetHistoryRequest(address, true, beginTx, requestCountTxs);
 
-                client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, bestServer, _1, _2), timeout);
+                client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, requestCountTxs + countAll, bestServer, _1, _2), timeout);
+            } else if (countAll > countInServer) {
+                //removeAddress(address, currency); Не удаляем, так как при перевыкачки базы начнется свистопляска
             } else {
-                updateBalanceTime(currency, servStruct);
+                const BalanceInfo confirmedBalance = db.getBalance(currency, address);
+                if (confirmedBalance.countTxs != countInServer) {
+                    newBalance(address, currency, countAll, serverBalance.countTxs, serverBalance, {}, servStruct);
+                } else {
+                    updateBalanceTime(currency, servStruct);
+                }
             }
 
             if (!pendingTxs.empty()) {
@@ -304,11 +313,7 @@ std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
 }
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
-    BalanceInfo balance;
-    db.calcBalance(address, currency, balance);
-
-    balance.received += balance.undelegate;
-    balance.spent += balance.delegate;
+    BalanceInfo balance = db.getBalance(currency, address);
 
     return balance;
 }
@@ -331,22 +336,23 @@ void Transactions::processCheckTxsOneServer(const QString &address, const QStrin
     client.sendMessagePost(server, countBlocksRequest, std::bind(countBlocksCallback, server, _1, _2), timeout);
 }
 
-void Transactions::processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber) {
-    const auto removeAllTxs = [this](const QString &address, const QString &currency) {
-        LOG << "Remove txs " << address << " " << currency;
-        db.removePaymentsForDest(address, currency);
-    };
+void Transactions::removeAddress(const QString &address, const QString &currency) {
+    LOG << "Remove txs " << address << " " << currency;
+    db.removePaymentsForDest(address, currency);
+    db.removeBalance(currency, address);
+}
 
-    const auto getBlockInfoCallback = [address, currency, removeAllTxs] (const QString &hash, const std::string &response, const SimpleClient::ServerException &exception) {
+void Transactions::processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber) {
+    const auto getBlockInfoCallback = [address, currency, this] (const QString &hash, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response));
         if (bi.hash != hash) {
-            removeAllTxs(address, currency);
+            removeAddress(address, currency);
         }
     };
 
     if (tx.blockNumber > serverBlockNumber) {
-        removeAllTxs(address, currency);
+        removeAddress(address, currency);
         return;
     }
 
@@ -422,11 +428,14 @@ void Transactions::timerMethod() {
     while (posInAddressInfos < addressesInfos.size()) {
         const AddressInfo &addr = addressesInfos[posInAddressInfos];
         if ((!currentCurrency.isEmpty() && (addr.currency != currentCurrency || addr.type != currentType)) || batch.size() >= MAXIMUM_ADDRESSES_IN_BATCH) {
-            processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
-            batch.clear();
-            countParallelRequests++;
-            if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
-                break;
+            if (servStructs.find(currentCurrency) != servStructs.end()) {
+                // В предыдущий раз список серверов оказался пустым, поэтому структуру мы не заполнили. Пропускаем
+                processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
+                batch.clear();
+                countParallelRequests++;
+                if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
+                    break;
+                }
             }
             currentCurrency = addr.currency;
         }
@@ -470,7 +479,7 @@ void Transactions::timerMethod() {
         lastCheckTxsTime = now;
     }
 
-    processPendingsMth(servers);
+    processPendings();
 }
 
 void Transactions::fetchBalanceAddress(const QString &address) {
@@ -514,6 +523,7 @@ BEGIN_SLOT_WRAPPER
         result = getAddressesInfos(group);
         for (AddressInfo &info: result) {
             info.balance = getBalance(info.address, info.currency);
+            info.balance.savedTxs = info.balance.countTxs;
         }
     });
     callback.emitFunc(exception, result);
@@ -604,6 +614,7 @@ BEGIN_SLOT_WRAPPER
     BalanceInfo balance;
     const TypedException exception = apiVrapper2([&, this] {
         balance = getBalance(address, currency);
+        balance.savedTxs = balance.countTxs;
     });
     callback.emitFunc(exception, balance);
 END_SLOT_WRAPPER
@@ -637,7 +648,7 @@ BEGIN_SLOT_WRAPPER
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId](const std::string &response, const SimpleClient::ServerException &exception) {
+            client.sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId, serversCopy](const std::string &response, const SimpleClient::ServerException &exception) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
@@ -647,7 +658,7 @@ BEGIN_SLOT_WRAPPER
                         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), "", "");
                         emit javascriptWrapper.transactionInTorrentSig(requestId, server, QString::fromStdString(hash), tx, TypedException());
                         if (tx.status == Transaction::Status::PENDING) {
-                            pendingTxsAfterSend.emplace_back(tx.tx);
+                            pendingTxsAfterSend.emplace_back(tx.tx, serversCopy);
                         }
                         if (*isFirst) {
                             *isFirst = false;
@@ -714,6 +725,9 @@ BEGIN_SLOT_WRAPPER
             tcpClient.sendMessagePost(server, request, [this, server, requestId, sendParams, serversGet](const std::string &response, const TypedException &error) {
                 QString result;
                 const TypedException exception = apiVrapper2([&] {
+                    if (error.isSet()) {
+                        nsLookup.rejectServer(server);
+                    }
                     CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
                     result = parseSendTransactionResponse(QString::fromStdString(response));
                     addToSendTxWatcher(requestId, result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);

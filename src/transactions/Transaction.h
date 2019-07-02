@@ -33,8 +33,8 @@ struct Transaction {
     uint64_t timestamp;
     QString fee;
     int64_t nonce = 0;
-    bool isInput;
     int64_t blockNumber = 0;
+    int64_t blockIndex = 0;
     QString blockHash = "";
     int intStatus = 0;
 
@@ -56,6 +56,7 @@ struct BalanceInfo {
     uint64_t countSpent = 0;
     uint64_t countTxs = 0;
     uint64_t currBlockNum = 0;
+    uint64_t savedTxs = 0;
 
     uint64_t countDelegated = 0;
     BigNumber delegate = QString("0");

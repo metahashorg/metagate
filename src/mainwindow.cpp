@@ -46,6 +46,7 @@
 #include "Initializer/InitializerJavascript.h"
 #include "proxy/ProxyJavascript.h"
 #include "WalletNames/WalletNamesJavascript.h"
+#include "Utils/UtilsJavascript.h"
 
 #include "machine_uid.h"
 
@@ -124,6 +125,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_CONNECT(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript);
     Q_CONNECT(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript);
     Q_CONNECT(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript);
+    Q_CONNECT(this, &MainWindow::setUtilsJavascript, this, &MainWindow::onSetUtilsJavascript);
     Q_CONNECT(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished);
     Q_CONNECT(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl);
     Q_CONNECT(this, &MainWindow::showNotification, this, &MainWindow::onShowNotification);
@@ -134,6 +136,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
     Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
     Q_REG(SetWalletNamesJavascriptCallback, "SetWalletNamesJavascriptCallback");
+    Q_REG(SetUtilsJavascriptCallback, "SetUtilsJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
 
     shemeHandler = new MHUrlSchemeHandler(this);
@@ -291,6 +294,17 @@ BEGIN_SLOT_WRAPPER
         CHECK(walletNamesJavascript != nullptr, "Incorrect proxyJavascript");
         Q_CONNECT(walletNamesJavascript, &wallet_names::WalletNamesJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("wallet_names"), walletNamesJavascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(utilsJavascript != nullptr, "Incorrect utilsJavascript");
+        Q_CONNECT(utilsJavascript, &utils::UtilsJavascript::jsRunSig, this, &MainWindow::onJsRun);
+        registerWebChannel(QString("utils"), utilsJavascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER

@@ -3,13 +3,42 @@
 
 #include "TimerClass.h"
 
-class NetwrokTesting : public TimerClass
-{
+#include "CallbackWrapper.h"
+
+class NetwrokTesting : public TimerClass {
     Q_OBJECT
+public:
+
+    struct TestResult {
+        QString host;
+        int timeMs;
+        bool isTimeout = true;
+
+        TestResult() = default;
+
+        TestResult(const QString &host, int timeMs, bool isTimeout)
+            : host(host)
+            , timeMs(timeMs)
+            , isTimeout(isTimeout)
+        {}
+    };
+
+public:
+
+    using GetTestResultsCallback = CallbackWrapper<void(const std::vector<TestResult> &results)>;
+
 public:
     explicit NetwrokTesting(QObject *parent = nullptr);
 
-    ~NetwrokTesting();
+    ~NetwrokTesting() override;
+
+signals:
+
+    void getTestResults(const GetTestResultsCallback &callback);
+
+public slots:
+
+    void onGetTestResults(const GetTestResultsCallback &callback);
 
 protected:
 
@@ -21,7 +50,11 @@ protected:
 
 private:
     void testHosts();
-    std::string testHostAndPort(const QString &host, quint16 port);
+    TestResult testHostAndPort(const QString &host, quint16 port);
+
+private:
+
+    std::vector<TestResult> lastResults;
 };
 
 #endif // NETWROKTESTING_H

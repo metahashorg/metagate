@@ -23,6 +23,8 @@ public:
     BigNumber &operator+=(const BigNumber &rhs);
     BigNumber &operator-=(const BigNumber &rhs);
 
+    bool operator==(const BigNumber &second) const;
+
 private:
     std::unique_ptr<BIGNUM, std::function<void(BIGNUM *)>> ptr;
 };

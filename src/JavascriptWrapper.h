@@ -18,6 +18,7 @@ class NsLookup;
 class WebSocketClient;
 struct TypedException;
 class MainWindow;
+class NetwrokTesting;
 
 namespace transactions {
 class Transactions;
@@ -25,6 +26,10 @@ class Transactions;
 
 namespace auth {
 class Auth;
+}
+
+namespace utils {
+class Utils;
 }
 
 template<bool isLastArg, typename... Args>
@@ -46,7 +51,17 @@ public:
     };
 
 public:
-    explicit JavascriptWrapper(MainWindow &mainWindow, WebSocketClient &wssClient, NsLookup &nsLookup, transactions::Transactions &transactionsManager, auth::Auth &authManager, const QString &applicationVersion, QObject *parent = nullptr);
+    explicit JavascriptWrapper(
+        MainWindow &mainWindow,
+        WebSocketClient &wssClient,
+        NsLookup &nsLookup,
+        transactions::Transactions &transactionsManager,
+        auth::Auth &authManager,
+        NetwrokTesting &networkTesting,
+        utils::Utils &utilsManager,
+        const QString &applicationVersion,
+        QObject *parent = nullptr
+    );
 
     void setWidget(QWidget *widget);
 
@@ -245,8 +260,6 @@ public slots:
 
     Q_INVOKABLE void getWalletFolders();
 
-    Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-
     Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption);
 
     Q_INVOKABLE void exitApplication();
@@ -259,23 +272,15 @@ public slots:
 
     Q_INVOKABLE void getMachineUid();
 
-    Q_INVOKABLE void setUserName(const QString &userName);
-
     Q_INVOKABLE void setHasNativeToolbarVariable();
 
     Q_INVOKABLE void lineEditReturnPressed(QString text);
 
-    Q_INVOKABLE void setCommandLineText(const QString &text);
-
     Q_INVOKABLE void openWalletPathInStandartExplorer();
-
-    Q_INVOKABLE void setPagesMapping(QString mapping);
 
     Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
 
     Q_INVOKABLE void saveFileFromUrl(QString url, QString saveFileWindowCaption, QString fileName, bool openAfterSave);
-
-    Q_INVOKABLE void printUrl(QString url, QString printWindowCaption, QString text);
 
     Q_INVOKABLE void chooseFileAndLoad(QString requestId, QString openFileWindowCaption, QString fileName);
 
@@ -296,6 +301,8 @@ public slots:
     Q_INVOKABLE void setIsForgingActive(bool isActive);
 
     Q_INVOKABLE void getIsForgingActive();
+
+    Q_INVOKABLE void getNetworkStatus();
 
 private slots:
 
@@ -390,6 +397,10 @@ private:
     transactions::Transactions &transactionsManager;
 
     auth::Auth &auth;
+
+    NetwrokTesting &networkTesting;
+
+    utils::Utils &utilsManager;
 
     const QString applicationVersion;
 

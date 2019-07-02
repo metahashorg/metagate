@@ -41,9 +41,21 @@ static QString makeAddress(const QString &ip, const QString &port) {
     return makeAddress(ip + ":" + port);
 }
 
+static QString getAddressWithoutHttp(const QString &address) {
+    if (!address.startsWith("http") && !address.startsWith("https")) {
+        return address;
+    }
+    return QUrl(address).host() + ":" + QString::fromStdString(std::to_string(QUrl(address).port()));
+}
+
 NsLookup::NsLookup(QObject *parent)
     : TimerClass(1s, nullptr)
 {
+    Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
+    Q_CONNECT(this, &NsLookup::rejectServer, this, &NsLookup::onRejectServer);
+
+    Q_REG(GetStatusCallback, "GetStatusCallback");
+
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("nodes");
     for (int i = 0; i < size; i++) {
@@ -110,7 +122,6 @@ NsLookup::NsLookup(QObject *parent)
 }
 
 NsLookup::~NsLookup() {
-    isStopped = true;
     TimerClass::exit();
 
     if (isResetFilledFile.load()) {
@@ -130,29 +141,77 @@ void NsLookup::startMethod() {
 
 void NsLookup::timerMethod() {
     process();
+    processRefresh();
+
+    if (now() - prevPrintTime >= 1min) {
+        printNodes();
+        prevPrintTime = now();
+    }
 }
 
 void NsLookup::finishMethod() {
     // empty
 }
 
+std::vector<NodeTypeStatus> NsLookup::getNodesStatus() const {
+    std::vector<NodeTypeStatus> result;
+
+    for (const auto &pair: allNodesForTypes) {
+        const size_t countSuccess = countWorkedNodes(pair.second);
+        const auto bestResult = !pair.second.empty() ? pair.second[0].ping : 0;
+        result.emplace_back(pair.first.str(), countSuccess, pair.second.size(), bestResult);
+    }
+
+    return result;
+}
+
+void NsLookup::printNodes() const {
+    const std::vector<NodeTypeStatus> nodesStatuses = getNodesStatus();
+
+    std::string result;
+    for (const NodeTypeStatus &stat: nodesStatuses) {
+        result += stat.node.toStdString() + ": " + std::to_string(stat.countWorked) + "/" + std::to_string(stat.countAll) + ", " + std::to_string(stat.bestResult) + "; ";
+    }
+
+    LOG << "Nodes result: " << result;
+}
+
+size_t NsLookup::countWorkedNodes(const std::vector<NodeInfo> &nodes) const {
+    const size_t countSuccess = std::accumulate(nodes.begin(), nodes.end(), size_t(0), [](size_t prev, const NodeInfo &subElem) -> size_t {
+        if (subElem.isChecked && !subElem.isTimeout) {
+            return prev + 1;
+        } else {
+            return prev + 0;
+        }
+    });
+    return countSuccess;
+}
+
 void NsLookup::process() {
-BEGIN_SLOT_WRAPPER
+    if (isProcessRefresh) {
+        return;
+    }
+
     if (now() - prevCheckTime >= msTimer) {
         msTimer = 600s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
         startScanTime = ::now();
 
         allNodesForTypesNew.clear();
 
+        dnsErrorDetails.clear();
+
+        isProcess = true;
+
         LOG << "Dns scan start";
         continueResolve(nodes.begin());
 
         prevCheckTime = now();
     }
-END_SLOT_WRAPPER
 }
 
 void NsLookup::finalizeLookup() {
+    isProcess = false;
+
     std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
         allNodesForTypes.swap(allNodesForTypesNew);
@@ -170,13 +229,7 @@ void NsLookup::finalizeLookup() {
     if (isSafeCheck) {
         bool isSuccess = true;
         for (const auto &elem: allNodesForTypes) {
-            const size_t countSuccess = std::accumulate(elem.second.begin(), elem.second.end(), size_t(0), [](size_t prev, const NodeInfo &subElem) -> size_t {
-                if (subElem.isChecked && !subElem.isTimeout) {
-                    return prev + 1;
-                } else {
-                    return prev + 0;
-                }
-            });
+            const size_t countSuccess = countWorkedNodes(elem.second);
             if (countSuccess < ACCEPTABLE_COUNT_ADDRESSES) {
                 isSuccess = false;
             }
@@ -187,6 +240,7 @@ void NsLookup::finalizeLookup() {
             isSuccessFl = true;
         } else {
             LOG << "Dns safe check not success. Start full scan";
+            isProcess = true;
             msTimer = 1ms;
         }
     } else {
@@ -221,15 +275,15 @@ bool NsLookup::repeatResolveDns(
             CHECK(!exception.isSet(), "Dns exception: " + exception.toString());
             CHECK(response.size() > 0, "Incorrect response dns " + node->second.type.toStdString());
             packet = DnsPacket::fromBytesArary(QByteArray(response.data(), response.size()));
-
-            LOG << "Dns ok " << node->second.type << ". " << packet.answers().size();
             CHECK(!packet.answers().empty(), "Empty dns response " + toHex(std::string(response.begin(), response.end())));
+            LOG << "Dns ok " << node->second.type << ". " << packet.answers().size();
         });
 
         if (except.isSet()) {
             LOG << "Dns repeat number " << countRepeat - 1;
             const bool res = repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, countRepeat - 1);
             if (!res) {
+                dnsErrorDetails.dnsName = dnsServerName;
                 throw except;
             } else {
                 return;
@@ -251,9 +305,6 @@ bool NsLookup::repeatResolveDns(
 }
 
 void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node) {
-    if (isStopped.load()) {
-        return;
-    }
     if (node == nodes.end()) {
         finalizeLookup();
         return;
@@ -303,10 +354,6 @@ static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, 
 }
 
 void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node) {
-    if (isStopped.load()) {
-        return;
-    }
-
     if (!isSafeCheck) {
         if (ipsIter == ipsTemp.end()) {
             continueResolve(std::next(node));
@@ -316,10 +363,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
         const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
 
         CHECK(countSteps != 0, "Incorrect countSteps");
-        std::vector<QString> requests;
-        std::transform(ipsIter, ipsIter + countSteps, std::back_inserter(requests), [](const auto &r) {
-            return r;
-        });
+        std::vector<QString> requests(ipsIter, ipsIter + countSteps);
 
         client.pings(node->second.node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
             const TypedException exception = apiVrapper2([&]{
@@ -442,9 +486,6 @@ static std::vector<P2PNodeResult> parseNodesP2P(const std::string &resp) {
 };
 
 void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator node) {
-    if (isStopped.load()) {
-        return;
-    }
     if (node == nodes.end()) {
         finalizeLookupP2P();
         return;
@@ -500,10 +541,6 @@ void NsLookup::continueResolveP2P(std::map<QString, NodeType>::const_iterator no
 }
 
 void NsLookup::continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy) {
-    if (isStopped.load()) {
-        return;
-    }
-
     if (ipsIter == ipsTempP2P.end()) {
         continueResolveP2P(std::next(node));
         return;
@@ -545,15 +582,124 @@ void NsLookup::continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>
     }, 2s);
 }
 
-void NsLookup::sortAll() {
-    for (auto &element: allNodesForTypes) {
-        std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
+void NsLookup::finalizeRefresh(const NodeType::Node &node) {
+    isProcessRefresh = false;
+
+    const std::vector<NodeInfo> &nds = allNodesForTypesNew[node];
+    for (auto iter = defectiveTorrents.begin(); iter != defectiveTorrents.end();) {
+        if (std::find_if(nds.cbegin(), nds.cend(), [n=*iter](const NodeInfo &info) {
+            return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(n.first);
+        }) != nds.cend()) {
+            iter = defectiveTorrents.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+
+    LOG << "Updated ip status. Left " << defectiveTorrents.size();
+
+    std::unique_lock<std::mutex> lock(nodeMutex);
+    if (!isSafeCheck) {
+        allNodesForTypes[node] = allNodesForTypesNew[node];
+    }
+    sortAll();
+    lock.unlock();
+    saveToFile(savedNodesPath, system_now(), nodes);
+}
+
+void NsLookup::continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node) {
+    if (ipsIter == ipsTempRefresh.end()) {
+        finalizeRefresh(node);
+        return;
+    }
+
+    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTempRefresh.cend())));
+
+    CHECK(countSteps != 0, "Incorrect countSteps");
+    const std::vector<QString> requests(ipsIter, ipsIter + countSteps);
+
+    client.pings(node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        const TypedException exception = apiVrapper2([&]{
+            CHECK(requestsSize == results.size(), "Incorrect results");
+            for (const auto &result: results) {
+                allNodesForTypesNew[node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result)));
+            }
+        });
+
+        if (exception.isSet()) {
+            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+        }
+        continuePingRefresh(std::next(ipsIter, countSteps), node);
+    }, 2s);
+}
+
+void NsLookup::processRefresh() {
+    if (isProcess || isProcessRefresh) {
+        return;
+    }
+
+    QString address;
+    for (const auto &pair: defectiveTorrents) {
+        if (pair.second >= 3) {
+            address = pair.first;
+            break;
+        }
+    }
+
+    const auto cntPing = [this](const NodeType::Node &type, const std::vector<NodeInfo> &nodes) {
+        ipsTempRefresh.clear();
+        for (const auto &t: nodes) {
+            ipsTempRefresh.emplace_back(t.address);
+        }
+
+        isProcessRefresh = true;
+
+        continuePingRefresh(std::begin(ipsTempRefresh), type);
+    };
+
+    if (!address.isEmpty()) {
+        allNodesForTypesNew.clear();
+
+        for (const auto &pairNodes: allNodesForTypes) {
+            if (std::find_if(pairNodes.second.cbegin(), pairNodes.second.cend(), [&address](const NodeInfo &info) {
+                return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(address);
+            }) != pairNodes.second.cend()) {
+                LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
+
+                cntPing(pairNodes.first, pairNodes.second);
+                break;
+            }
+        }
+    } else {
+        std::vector<std::map<NodeType::Node, std::vector<NodeInfo>>::const_iterator> pairs;
+        for (auto pairNodes = allNodesForTypes.cbegin(); pairNodes != allNodesForTypes.cend(); pairNodes++) {
+            const size_t countWorked = countWorkedNodes(pairNodes->second);
+            if (countWorked == 0) {
+                pairs.emplace_back(pairNodes);
+            }
+        }
+
+        if (!pairs.empty()) {
+            const size_t counter = randomCounter++;
+            const auto &pairNodes = pairs[counter % pairs.size()];
+            LOG << "Update status for type: " << pairNodes->first.str();
+
+            cntPing(pairNodes->first, pairNodes->second);
+        }
     }
 }
 
-static void createSymlink(const QString &file) {
-    const QString symlink = makePath(QApplication::applicationDirPath(), "fill_nodes_symlink.lnk");
-    QFile::link(file, symlink);
+void NsLookup::sortAll() {
+    for (auto &element: allNodesForTypes) {
+        std::sort(element.second.begin(), element.second.end(), [](const NodeInfo &first, const NodeInfo &second) {
+            return first.address < second.address;
+        });
+        element.second.erase(std::unique(element.second.begin(), element.second.end(), [](const NodeInfo &first, const NodeInfo &second) {
+            return first.address == second.address;
+        }), element.second.end());
+
+        std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
+    }
 }
 
 static std::string calcHashNodes(const std::map<QString, NodeType> &expectedNodes) {
@@ -612,8 +758,6 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
 
     sortAll();
 
-    createSymlink(file);
-
     return timePoint;
 }
 
@@ -634,12 +778,10 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp, cons
     }
 
     writeToFile(file, content, false);
-
-    createSymlink(file);
 }
 
 std::vector<QString> NsLookup::getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const {
-    return getRandom(type, limit, count, [](const NodeInfo &node) {return QUrl(node.address).host() + ":" + QString::fromStdString(std::to_string(QUrl(node.address).port()));});
+    return getRandom(type, limit, count, [](const NodeInfo &node) {return getAddressWithoutHttp(node.address);});
 }
 
 std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count) const {
@@ -679,4 +821,31 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
 
 void NsLookup::resetFile() {
      isResetFilledFile = true;
+}
+
+void NsLookup::onGetStatus(const GetStatusCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    std::vector<NodeTypeStatus> nodeStatuses;
+    const TypedException &exception = apiVrapper2([&, this]{
+        nodeStatuses = getNodesStatus();
+    });
+    callback.emitFunc(exception, nodeStatuses, dnsErrorDetails);
+END_SLOT_WRAPPER
+}
+
+void NsLookup::onRejectServer(const QString &server) {
+BEGIN_SLOT_WRAPPER
+    bool isFound = false;
+    for (auto &defective: defectiveTorrents) {
+        if (getAddressWithoutHttp(defective.first) == getAddressWithoutHttp(server)) {
+            defective.second++;
+            isFound = true;
+            break;
+        }
+    }
+
+    if (!isFound) {
+        defectiveTorrents.emplace_back(server, 1);
+    }
+END_SLOT_WRAPPER
 }

@@ -41,6 +41,10 @@ namespace wallet_names {
 class WalletNamesJavascript;
 }
 
+namespace utils {
+class UtilsJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -80,6 +84,8 @@ public:
 
     using SetWalletNamesJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetUtilsJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
@@ -87,8 +93,6 @@ public:
     ~MainWindow();
 
     void showExpanded();
-
-
 
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
@@ -112,6 +116,8 @@ signals:
     void setProxyJavascript(proxy::ProxyJavascript *transactionsJavascript, const SetProxyJavascriptCallback &callback);
 
     void setWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
+
+    void setUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
 
     void initFinished();
 
@@ -139,6 +145,8 @@ private slots:
     void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
 
     void onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
+
+    void onSetUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
 
     void onInitFinished();
 

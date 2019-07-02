@@ -373,11 +373,6 @@ Q_INVOKABLE void getWalletFolders();
 # Function calls javascript
 walletFoldersJs(walletDefaultPath, walletCurrentPath, userName, errorNum, errorMessage)
 
-Q_INVOKABLE void setPaths(QString newPatch, QString newUserName);
-# Set current walletPath.  newUserName to the path  has not to be written! It is needed for reference only.
-# javascript is called after completion of this function
-setPathsJs(result("Ok", "Not ok"), errorNum, errorMessage)
-
 Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption);
 # Shows to user the dialog box providing the ability to select a directory. 
 beginPath # initial directory location
@@ -406,35 +401,11 @@ caption # name of the dialog
 Q_INVOKABLE void getMachineUid();
 # Returns unique machine ID to the machineUidJs(uid) function.
 
-Q_INVOKABLE void setUserName(const QString &userName);
-# Sets username for the user button.
-
 Q_INVOKABLE void setHasNativeToolbarVariable()
 # Sets window.hasNativeToolbar javascript variable to true.
 
-Q_INVOKABLE void setCommandLineText(const QString &text);
-# Sets text to command line.
-
 Q_INVOKABLE void openWalletPathInStandartExplorer();
 # Open directory containing keys in standard explorer.
-
-Q_INVOKABLE void setPagesMapping(QString mapping);
-# Set up correspondence between metagate links and pages. Format:
-{
-  "routes": 
-  [
-    {
-      "url":"login.html", 
-      "name":"/MetaGate/Login",
-      "isExternal":false
-    },
-    {
-      "url":"login.html", 
-      "name":"/MetaGate/Login",
-      "isExternal":true
-     }
-  ]
-}
 
 Q_INVOKABLE void getIpsServers(QString requestId, QString type, int length, int count);
 # Request ip list from top to ping
@@ -508,3 +479,10 @@ Q_INVOKABLE void getIsForgingActive();
 # узнать активен или нет форджинг
 # Result returns to the function:
 getIsForgingActiveResultJs(bool, errorNum, errorMessage);
+
+Q_INVOKABLE void getNetworkStatus();
+# выдать инфу о сети
+# Result returns to the function:
+getNetworkStatusResultJs(result, errorNum, errorMessage);
+# где result json вида
+{\"dnsErrors\":{},\"dnsStats\":[{\"bestTime\":51,\"countAll\":21,\"countWorked\":0,\"node\":\"proxy.net-dev.metahashnetwork.com\"},{\"bestTime\":51,\"countAll\":5,\"countWorked\":0,\"node\":\"proxy.net-main.metahashnetwork.com\"},{\"bestTime\":99,\"countAll\":12,\"countWorked\":0,\"node\":\"tor.net-dev.metahashnetwork.com\"},{\"bestTime\":99,\"countAll\":9,\"countWorked\":0,\"node\":\"tor.net-main.metahashnetwork.com\"},{\"bestTime\":51,\"countAll\":1,\"countWorked\":0,\"node\":\"torv8.net-dev.metahashnetwork.com\"}],\"networkTests\":[{\"isTimeout\":false,\"node\":\"www.google.com:80\",\"timeMs\":99},{\"isTimeout\":false,\"node\":\"1.1.1.1:80\",\"timeMs\":48},{\"isTimeout\":false,\"node\":\"echo.metahash.io:7654\",\"timeMs\":110}]}

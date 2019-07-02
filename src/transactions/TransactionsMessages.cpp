@@ -124,9 +124,8 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
     res.value = getIntOrString(txJson, "value");
     CHECK(txJson.contains("transaction") && txJson.value("transaction").isString(), "Incorrect json: transaction field not found");
     res.tx = txJson.value("transaction").toString();
-    if (txJson.contains("data") && txJson.value("data").isString()) {
-        res.data = txJson.value("data").toString();
-    }
+    CHECK(txJson.contains("data") && txJson.value("data").isString(), "Incorrect json: data field not found");
+    res.data = txJson.value("data").toString();
     res.timestamp = getIntOrString(txJson, "timestamp").toULongLong();
     if (txJson.contains("realFee")) {
         res.fee = getIntOrString(txJson, "realFee");
@@ -136,9 +135,8 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
     if (res.fee.isEmpty() || res.fee.isNull()) {
         res.fee = "0";
     }
-    if (txJson.contains("nonce")) {
-        res.nonce = getIntOrString(txJson, "nonce").toLong();
-    }
+    CHECK(txJson.contains("nonce") && txJson.value("nonce").isDouble(), "Incorrect json: nonce field not found");
+    res.nonce = getIntOrString(txJson, "nonce").toLong();
     if (txJson.contains("isDelegate") && txJson.value("isDelegate").isBool()) {
         res.isSetDelegate = true;
         res.isDelegate = txJson.value("isDelegate").toBool();
@@ -148,22 +146,23 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
         }
         res.type = Transaction::DELEGATE;
     }
-    if (txJson.contains("status") && txJson.value("status").isString()) {
-        const QString status = txJson.value("status").toString();
-        if (status == "ok") {
-            res.status = Transaction::OK;
-        } else if (status == "error") {
-            res.status = Transaction::ERROR;
-        } else if (status == "pending") {
-            res.status = Transaction::PENDING;
-        } else if (status == "module_not_set") {
-            res.status = Transaction::MODULE_NOT_SET;
-        }
+    CHECK(txJson.contains("status") && txJson.value("status").isString(), "Incorrect json: status field not found");
+    const QString status = txJson.value("status").toString();
+    if (status == "ok") {
+        res.status = Transaction::OK;
+    } else if (status == "error") {
+        res.status = Transaction::ERROR;
+    } else if (status == "pending") {
+        res.status = Transaction::PENDING;
+    } else if (status == "module_not_set") {
+        res.status = Transaction::MODULE_NOT_SET;
     }
 
-    if (txJson.contains("blockNumber")) {
-        res.blockNumber = getIntOrString(txJson, "blockNumber").toLong();
-    }
+    CHECK(txJson.contains("blockNumber") && txJson.value("blockNumber").isDouble(), "Incorrect json: blockNumber field not found");
+    res.blockNumber = getIntOrString(txJson, "blockNumber").toLong();
+
+    CHECK(txJson.contains("blockIndex") && txJson.value("blockIndex").isDouble(), "Incorrect json: blockIndex field not found");
+    res.blockIndex = getIntOrString(txJson, "blockIndex").toLong();
 
     if (txJson.contains("type") && txJson.value("type").isString() && txJson.value("type").toString() == "forging") {
         res.type = Transaction::FORGING;
@@ -174,7 +173,6 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
 
     res.address = address;
     res.currency = currency;
-    res.isInput = res.address == res.from;
     return res;
 }
 
@@ -194,11 +192,6 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
         const Transaction res = parseTransaction(txJson, address, currency);
 
         result.emplace_back(res);
-        if (res.from == address && res.to == address) {
-            Transaction res2 = res;
-            res2.isInput = false;
-            result.emplace_back(res2);
-        }
     }
 
     return result;
