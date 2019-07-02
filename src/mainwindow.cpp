@@ -325,7 +325,7 @@ void MainWindow::onShowNotification(const QString &title, const QString &message
 {
 BEGIN_SLOT_WRAPPER
     CHECK(systemTray, "systemTray error");
-    //systemTray->showMessage(title, message, QSystemTrayIcon::Information, 5000);
+    systemTray->showMessage(title, message, QSystemTrayIcon::Information, 5000);
 END_SLOT_WRAPPER
 }
 
