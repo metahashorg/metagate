@@ -46,14 +46,19 @@ constexpr bool IsOneParamFunc() {
     return !IsTupleFunc<F>() && !IsVoidFunc<F>();
 }
 
-template<typename F, typename Callback, typename std::enable_if<IsVoidFunc<F>(), int>::type = 0>
-void runAndEmitCallback(const F &f, const Callback &callback) {
+template<int> struct ChoiseRunAndEmitCallback {};
+using VoidChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<0>;
+using TupleChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<1>;
+using OtherChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<2>;
+
+template<typename F, typename Callback>
+void runAndEmitCallbackImpl(const F &f, const Callback &callback, VoidChoiseRunAndEmitCallback) {
     const TypedException exception = apiVrapper2(f);
     callback.emitFunc(exception);
 }
 
-template<typename F, typename Callback, typename std::enable_if<IsTupleFunc<F>(), int>::type = 0>
-void runAndEmitCallback(const F &f, const Callback &callback) {
+template<typename F, typename Callback>
+void runAndEmitCallbackImpl(const F &f, const Callback &callback, TupleChoiseRunAndEmitCallback) {
     typename std::result_of<F()>::type tuple;
     const TypedException exception = apiVrapper2([&tuple, &f](){
         tuple = f();
@@ -63,13 +68,18 @@ void runAndEmitCallback(const F &f, const Callback &callback) {
     }, std::tuple_cat(std::make_tuple(exception), tuple));
 }
 
-template<typename F, typename Callback, typename std::enable_if<IsOneParamFunc<F>(), int>::type = 0>
-void runAndEmitCallback(const F &f, const Callback &callback) {
+template<typename F, typename Callback>
+void runAndEmitCallbackImpl(const F &f, const Callback &callback, OtherChoiseRunAndEmitCallback) {
     typename std::result_of<F()>::type param;
     const TypedException exception = apiVrapper2([&param, &f](){
         param = f();
     });
     callback.emitFunc(exception, param);
+}
+
+template<typename F, typename Callback>
+void runAndEmitCallback(const F &f, const Callback &callback) {
+    runAndEmitCallbackImpl(f, callback, std::conditional<IsVoidFunc<F>(), VoidChoiseRunAndEmitCallback, std::conditional<IsTupleFunc<F>(), TupleChoiseRunAndEmitCallback, OtherChoiseRunAndEmitCallback>::type>::type());
 }
 
 #endif // MANAGERWRAPPERIMPL_H
