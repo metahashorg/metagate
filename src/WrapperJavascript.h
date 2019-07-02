@@ -5,14 +5,12 @@
 
 #include <functional>
 
+#include "CallbackCallWrapper.h"
+
 struct TypedException;
 
-class WrapperJavascript : public QObject {
+class WrapperJavascript : public CallbackCallWrapper {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
-
 protected:
 
     template<typename T>
@@ -59,15 +57,11 @@ public:
 
     WrapperJavascript(bool printJs, const std::string &cppFileName);
 
+    virtual ~WrapperJavascript();
+
 signals:
 
     void jsRunSig(QString jsString);
-
-    void callbackCall(const WrapperJavascript::Callback &callback);
-
-private slots:
-
-    void onCallbackCall(const WrapperJavascript::Callback &callback);
 
 protected:
 
@@ -91,7 +85,6 @@ protected:
 
     const std::string cppFileName;
 
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 };
 
 #endif // WRAPPERJAVASCRIPT_H

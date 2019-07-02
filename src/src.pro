@@ -99,7 +99,8 @@ SOURCES += main.cpp mainwindow.cpp \
     WrapperJavascript.cpp \
     Utils/UtilsJavascript.cpp \
     Initializer/Inits/InitUtils.cpp \
-    Utils/UtilsManager.cpp
+    Utils/UtilsManager.cpp \
+    CallbackCallWrapper.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -206,7 +207,8 @@ HEADERS += mainwindow.h \
     WrapperJavascriptImpl.h \
     Utils/UtilsJavascript.h \
     Initializer/Inits/InitUtils.h \
-    Utils/UtilsManager.h
+    Utils/UtilsManager.h \
+    CallbackCallWrapper.h
 
 FORMS += mainwindow.ui
 
