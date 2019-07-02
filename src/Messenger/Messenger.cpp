@@ -984,6 +984,15 @@ BEGIN_SLOT_WRAPPER
         const QString messageGetMyChannels = makeAddAllKeysRequest(addresses, size_t(-1));
         emit wssClient.addHelloString(messageGetMyChannels, "Messenger");
         emit wssClient.sendMessage(messageGetMyChannels);
+        // Get missed messages
+        for (const QString &address: addresses) {
+            const QString pubkeyHex = db.getUserPublicKey(address);
+            if (pubkeyHex.isEmpty())
+                continue;
+            const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(address);
+            getMessagesFromAddressFromWss(address, currCounter + 1, -1);
+        }
+        //
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER

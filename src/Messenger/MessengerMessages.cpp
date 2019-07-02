@@ -163,10 +163,11 @@ QString makeGetMyMessagesRequest(const QString &pubkeyHex, const QString &signHe
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_MY_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
-    params.insert("cnt_from", QString::fromStdString(std::to_string(from)));
-    params.insert("cnt_to", QString::fromStdString(std::to_string(to)));
+    params.insert("cnt_from", QString::number(from));
+    if (to != -1)
+        params.insert("cnt_to", QString::number(to));
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
     json.insert("params", params);
