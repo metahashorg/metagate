@@ -31,7 +31,7 @@ struct LoginInfo
     }
 };
 
-class Auth : public TimerClass
+class Auth : public QObject, public TimerClass
 {
     Q_OBJECT
 public:
@@ -42,7 +42,7 @@ public:
 
     explicit Auth(AuthJavascript &javascriptWrapper, QObject *parent = nullptr);
 
-    ~Auth();
+    ~Auth() override;
 
 protected:
 

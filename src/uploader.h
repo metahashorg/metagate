@@ -30,7 +30,7 @@ struct LastHtmlVersion {
     QString fullPath;
 };
 
-class Uploader : public TimerClass {
+class Uploader : public QObject, public TimerClass {
 Q_OBJECT
 private:
 
@@ -47,7 +47,7 @@ public:
 
     explicit Uploader(auth::Auth &auth, MainWindow &mainWindow);
 
-    ~Uploader();
+    ~Uploader() override;
 
 protected:
 

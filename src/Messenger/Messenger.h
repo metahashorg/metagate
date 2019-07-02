@@ -95,7 +95,7 @@ class MessengerDBStorage;
 struct ChannelInfo;
 class CryptographicManager;
 
-class Messenger : public TimerClass
+class Messenger : public QObject, public TimerClass
 {
     Q_OBJECT
 public:
@@ -182,7 +182,7 @@ public:
 
     explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, MainWindow &mainWin, QObject *parent = nullptr);
 
-    ~Messenger();
+    ~Messenger() override;
 
 protected:
 

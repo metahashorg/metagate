@@ -23,7 +23,7 @@ namespace wallet_names {
 
 class WalletNamesDbStorage;
 
-class WalletNames: public TimerClass {
+class WalletNames: public QObject, public TimerClass {
     Q_OBJECT
 public:
 
@@ -41,7 +41,7 @@ public:
 
     WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client);
 
-    ~WalletNames();
+    ~WalletNames() override;
 
 protected:
 

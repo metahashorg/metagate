@@ -99,7 +99,7 @@ struct NodeTypeStatus {
     {}
 };
 
-class NsLookup : public TimerClass {
+class NsLookup : public QObject, public TimerClass {
     Q_OBJECT
 private:
 

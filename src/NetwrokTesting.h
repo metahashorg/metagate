@@ -5,7 +5,7 @@
 
 #include "CallbackWrapper.h"
 
-class NetwrokTesting : public TimerClass {
+class NetwrokTesting : public QObject, public TimerClass {
     Q_OBJECT
 public:
 

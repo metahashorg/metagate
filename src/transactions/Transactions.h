@@ -28,7 +28,7 @@ class TransactionsJavascript;
 class TransactionsDBStorage;
 enum class DelegateStatus;
 
-class Transactions : public TimerClass {
+class Transactions : public QObject, public TimerClass {
     Q_OBJECT
 private:
 
