@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 #include "client.h"
 
@@ -11,11 +12,9 @@ struct TypedException;
 
 namespace utils {
 
-class Utils : public QObject {
+class Utils : public ManagerWrapper {
     Q_OBJECT
 public:
-
-    using Callback = std::function<void()>;
 
     using OpenInBrowserCallback = CallbackWrapper<void()>;
 
@@ -33,6 +32,8 @@ public:
 
 public:
     explicit Utils(QObject *parent = nullptr);
+
+    ~Utils() override;
 
     void setWidget(QWidget *widget);
 
@@ -73,14 +74,6 @@ private slots:
     void onQrDecode(const QString &imageBase64, const QrDecodeCallback &callback);
 
     void onJavascriptLog(const QString &message);
-
-signals:
-
-    void callbackCall(Utils::Callback callback);
-
-private slots:
-
-    void onCallbackCall(Utils::Callback callback);
 
 private:
 
