@@ -62,7 +62,6 @@ END_SLOT_WRAPPER
 
 void Utils::onOpenFolderDialog(const QString &beginPath, const QString &caption, const OpenFolderDialogCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString dir;
     runAndEmitCallback([&]{
         return QFileDialog::getExistingDirectory(widget_, caption, beginPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     }, callback);
