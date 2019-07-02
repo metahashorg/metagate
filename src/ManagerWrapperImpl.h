@@ -79,7 +79,8 @@ void runAndEmitCallbackImpl(const F &f, const Callback &callback, OtherChoiseRun
 
 template<typename F, typename Callback>
 void runAndEmitCallback(const F &f, const Callback &callback) {
-    runAndEmitCallbackImpl(f, callback, std::conditional<IsVoidFunc<F>(), VoidChoiseRunAndEmitCallback, std::conditional<IsTupleFunc<F>(), TupleChoiseRunAndEmitCallback, OtherChoiseRunAndEmitCallback>::type>::type());
+    const typename std::conditional<IsVoidFunc<F>(), VoidChoiseRunAndEmitCallback, typename std::conditional<IsTupleFunc<F>(), TupleChoiseRunAndEmitCallback, OtherChoiseRunAndEmitCallback>::type>::type tag;
+    runAndEmitCallbackImpl(f, callback, tag);
 }
 
 #endif // MANAGERWRAPPERIMPL_H
