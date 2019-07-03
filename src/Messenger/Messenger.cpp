@@ -526,6 +526,7 @@ BEGIN_SLOT_WRAPPER
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
+        /*
         const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(responseType.address);
         const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
         if (currCounter < messagesInServer) {
@@ -533,7 +534,7 @@ BEGIN_SLOT_WRAPPER
             getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer);
         } else {
             LOG << "Count messages " << responseType.address << " " << currCounter << " " << messagesInServer;
-        }
+        }*/
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
         const KeyMessageResponse publicKeyResult = parsePublicKeyMessageResponse(messageJson);
         LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey << " " << publicKeyResult.txHash << " " << publicKeyResult.blockchain_name;
