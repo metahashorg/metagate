@@ -5,6 +5,7 @@
 
 #include "TimerClass.h"
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 #include "RequestId.h"
 
@@ -23,11 +24,9 @@ namespace wallet_names {
 
 class WalletNamesDbStorage;
 
-class WalletNames: public QObject, public TimerClass {
+class WalletNames: public ManagerWrapper, public TimerClass {
     Q_OBJECT
 public:
-
-    using Callback = std::function<void()>;
 
     using AddWalletsNamesCallback = CallbackWrapper<void()>;
 
@@ -77,13 +76,7 @@ signals:
 
     void walletsFlushed();
 
-signals:
-
-    void callbackCall(WalletNames::Callback callback);
-
 private slots:
-
-    void onCallbackCall(WalletNames::Callback callback);
 
     void onWssMessageReceived(QString message);
 
@@ -110,8 +103,6 @@ private:
     WalletNamesDbStorage &db;
 
     JavascriptWrapper &javascriptWrapper;
-
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 
     auth::Auth &authManager;
 

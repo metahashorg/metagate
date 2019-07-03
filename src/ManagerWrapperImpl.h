@@ -94,4 +94,12 @@ void runAndEmitCallback(const F &f, const Callback &callback) {
     runAndEmitCallbackImpl(tag, f, callback);
 }
 
+template<typename F, typename Callback>
+void runAndEmitErrorCallback(const F &f, const Callback &callback) {
+    const TypedException exception = apiVrapper2(f);
+    if (exception.isSet()) {
+        callback.emitException(exception);
+    }
+}
+
 #endif // MANAGERWRAPPERIMPL_H

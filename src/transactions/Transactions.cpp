@@ -11,6 +11,7 @@ using namespace std::placeholders;
 #include "QRegister.h"
 
 #include "NsLookup.h"
+#include "ManagerWrapperImpl.h"
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"
@@ -31,8 +32,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     , javascriptWrapper(javascriptWrapper)
     , db(db)
 {
-    Q_CONNECT(this, &Transactions::callbackCall, this, &Transactions::onCallbackCall);
-
     Q_CONNECT(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses);
     Q_CONNECT(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses);
     Q_CONNECT(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup);
@@ -50,7 +49,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
 
-    Q_REG(Transactions::Callback, "Transactions::Callback");
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
     Q_REG(GetTxsCallback, "GetTxsCallback");
     Q_REG(CalcBalanceCallback, "CalcBalanceCallback");
@@ -61,7 +59,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_REG(GetNonceCallback, "GetNonceCallback");
     Q_REG(SendTransactionCallback, "SendTransactionCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
-    Q_REG(SignalFunc, "SignalFunc");
 
     Q_REG2(size_t, "size_t", false);
     Q_REG2(seconds, "seconds", false);
@@ -92,12 +89,6 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
 
 Transactions::~Transactions() {
     TimerClass::exit();
-}
-
-void Transactions::onCallbackCall(Callback callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
 }
 
 void Transactions::startMethod() {
@@ -505,118 +496,102 @@ void Transactions::fetchBalanceAddress(const QString &address) {
 
 void Transactions::onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         auto transactionGuard = db.beginTransaction();
         for (const AddressInfo &address: addresses) {
             db.addTracked(address);
         }
         transactionGuard.commit();
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetAddresses(const QString &group, const GetAddressesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<AddressInfo> result;
-    const TypedException exception = apiVrapper2([&, this] {
-        result = getAddressesInfos(group);
+    runAndEmitCallback([&, this] {
+        std::vector<AddressInfo> result = getAddressesInfos(group);
         for (AddressInfo &info: result) {
             info.balance = getBalance(info.address, info.currency);
             info.balance.savedTxs = info.balance.countTxs;
         }
-    });
-    callback.emitFunc(exception, result);
+        return result;
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    currentGroup = group;
-    callback.emitFunc(TypedException());
+    runAndEmitCallback([&, this]{
+        currentGroup = group;
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // TODO
-    std::vector<Transaction> txs;
-    const TypedException exception = apiVrapper2([&, this] {
-
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return std::vector<Transaction>();
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Transaction> txs;
-    const TypedException exception = apiVrapper2([&, this] {
-        txs = db.getPaymentsForAddress(address, currency, from, count, asc);
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return db.getPaymentsForAddress(address, currency, from, count, asc);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     // TODO
-    std::vector<Transaction> txs;
-    const TypedException exception = apiVrapper2([&, this] {
-
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return std::vector<Transaction>();
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Transaction> txs;
-    const TypedException exception = apiVrapper2([&, this] {
-        txs = db.getPaymentsForCurrency(currency, from, count, asc);
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return db.getPaymentsForCurrency(currency, from, count, asc);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Transaction> txs;
-    const TypedException exception = apiVrapper2([&, this] {
-        txs = db.getForgingPaymentsForAddress(address, currency, from, count, asc);
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return db.getForgingPaymentsForAddress(address, currency, from, count, asc);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Transaction> txs;
-    const TypedException exception = apiVrapper2([&, this] {
-        txs = db.getDelegatePaymentsForAddress(address, to, currency, from, count, asc);
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return db.getDelegatePaymentsForAddress(address, to, currency, from, count, asc);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    Transaction txs;
-    const TypedException exception = apiVrapper2([&, this] {
-        txs = db.getLastForgingTransaction(address, currency);
-    });
-    callback.emitFunc(exception, txs);
+    runAndEmitCallback([&, this] {
+        return db.getLastForgingTransaction(address, currency);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    BalanceInfo balance;
-    const TypedException exception = apiVrapper2([&, this] {
-        balance = getBalance(address, currency);
+    runAndEmitCallback([&, this] {
+        BalanceInfo balance = getBalance(address, currency);
         balance.savedTxs = balance.countTxs;
-    });
-    callback.emitFunc(exception, balance);
+        return balance;
+    }, callback);
 END_SLOT_WRAPPER
 }
 
@@ -708,7 +683,7 @@ void Transactions::addToSendTxWatcher(const QString &requestId, const Transactio
 
 void Transactions::onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
         const size_t countServersSend = sendParams.countServersSend;
         const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, countServersSend, countServersSend);
@@ -735,8 +710,7 @@ BEGIN_SLOT_WRAPPER
                 emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
             }, timeout);
         }
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
@@ -789,7 +763,7 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const QString message = makeGetTxRequest(txHash);
 
         const std::vector<QString> servers = nsLookup.getRandom(type, 1, 1);
@@ -804,33 +778,30 @@ BEGIN_SLOT_WRAPPER
             });
             callback.emitFunc(exception, tx);
         }, timeout);
-    });
-
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const system_time_point now = ::system_now();
-    auto found = lastSuccessUpdateTimestamps.find(currency);
-    system_time_point result;
-    if (found != lastSuccessUpdateTimestamps.end()) {
-        result = found->second;
-    }
-    callback.emitFunc(TypedException(), result, now);
+    runAndEmitCallback([&, this]{
+        const system_time_point now = ::system_now();
+        auto found = lastSuccessUpdateTimestamps.find(currency);
+        system_time_point result;
+        if (found != lastSuccessUpdateTimestamps.end()) {
+            result = found->second;
+        }
+        return std::make_tuple(result, now);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onClearDb(const QString &currency, const ClearDbCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         db.removePaymentsForCurrency(currency);
         nsLookup.resetFile();
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 

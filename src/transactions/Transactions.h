@@ -14,6 +14,7 @@
 #include "TimerClass.h"
 
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 #include "Transaction.h"
 
@@ -28,7 +29,7 @@ class TransactionsJavascript;
 class TransactionsDBStorage;
 enum class DelegateStatus;
 
-class Transactions : public QObject, public TimerClass {
+class Transactions : public ManagerWrapper, public TimerClass {
     Q_OBJECT
 private:
 
@@ -115,8 +116,6 @@ private:
 
 public:
 
-    using SignalFunc = std::function<void(const std::function<void()> &callback)>;
-
     using RegisterAddressCallback = CallbackWrapper<void()>;
 
     using GetTxsCallback = CallbackWrapper<void(const std::vector<Transaction> &txs)>;
@@ -137,8 +136,6 @@ public:
 
     using ClearDbCallback = CallbackWrapper<void()>;
 
-    using Callback = std::function<void()>;
-
 public:
 
     explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
@@ -152,10 +149,6 @@ protected:
     void timerMethod() override;
 
     void finishMethod() override;
-
-signals:
-
-    void callbackCall(Transactions::Callback callback);
 
 signals:
 
@@ -226,8 +219,6 @@ public slots:
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
 private slots:
-
-    void onCallbackCall(Transactions::Callback callback);
 
     void onFindTxOnTorrentEvent();
 
