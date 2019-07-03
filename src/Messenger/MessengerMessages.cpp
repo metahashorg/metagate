@@ -44,11 +44,11 @@ const static QString REQUIRES_PUBKEY_RESPONSE = "msg_request_pubkey";
 const static QString COLLOCUTOR_ADDED_PUBKEY_RESPONSE = "msg_new_pubkey";
 
 QString makeTextForSignRegisterRequest(const QString &address, const QString &rsaPubkeyHex, uint64_t fee) {
-    return address + QString::fromStdString(std::to_string(fee)) + rsaPubkeyHex;
+    return address + QString::number(fee) + rsaPubkeyHex;
 }
 
 QString makeTextForSignRegisterBlockchainRequest(const QString &address, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName) {
-    return address + QString::fromStdString(std::to_string(fee)) + txHash + blockchain + blockchainName;
+    return address + QString::number(fee) + txHash + blockchain + blockchainName;
 }
 
 QString makeTextForGetPubkeyRequest(const QString &address) {
@@ -56,7 +56,7 @@ QString makeTextForGetPubkeyRequest(const QString &address) {
 }
 
 QString makeTextForSendMessageRequest(const QString &address, const QString &dataHex, const QString &encryptedSelfDataHex, uint64_t fee, uint64_t timestamp) {
-    return address + QString::fromStdString(std::to_string(fee)) + dataHex + encryptedSelfDataHex + QString::fromStdString(std::to_string(timestamp));
+    return address + QString::number(fee) + dataHex + encryptedSelfDataHex + QString::number(timestamp);
 }
 
 QString makeTextForGetMyMessagesRequest() {
@@ -64,7 +64,7 @@ QString makeTextForGetMyMessagesRequest() {
 }
 
 QString makeTextForChannelCreateRequest(const QString &title, const QString titleSha, uint64_t fee) {
-    return title + QString::fromStdString(std::to_string(fee)) + titleSha;
+    return title + QString::number(fee) + titleSha;
 }
 
 QString makeTextForChannelAddWriterRequest(const QString &titleSha, const QString &address) {
@@ -76,7 +76,7 @@ QString makeTextForChannelDelWriterRequest(const QString &titleSha, const QStrin
 }
 
 QString makeTextForSendToChannelRequest(const QString &titleSha, const QString &text, uint64_t fee, uint64_t timestamp) {
-    return QString::fromStdString(std::to_string(fee)) + titleSha + text + QString::fromStdString(std::to_string(timestamp));
+    return QString::number(fee) + titleSha + text + QString::number(timestamp);
 }
 
 QString makeTextForGetChannelRequest() {
@@ -103,9 +103,9 @@ QString makeRegisterRequest(const QString &rsaPubkeyHex, const QString &pubkeyAd
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_append_key_to_addr");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
+    params.insert("fee", QString::number(fee));
     params.insert("rsa_pub_key", rsaPubkeyHex);
     params.insert("pubkey", pubkeyAddressHex);
     params.insert("sign", signHex);
@@ -117,9 +117,9 @@ QString makeRegisterBlockchainRequest(const QString &pubkeyAddressHex, const QSt
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_append_key_to_addr_blockchain");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
+    params.insert("fee", QString::number(fee));
     params.insert("pubkey", pubkeyAddressHex);
     params.insert("sign", signHex);
     params.insert("tx_hash", txHash);
@@ -133,7 +133,7 @@ QString makeGetPubkeyRequest(const QString &address, const QString &pubkeyHex, c
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_get_key_by_addr");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("addr", address);
     params.insert("pubkey", pubkeyHex);
@@ -146,13 +146,13 @@ QString makeSendMessageRequest(const QString &toAddress, const QString &dataHex,
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_send_to_addr");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("to", toAddress);
     params.insert("data", dataHex);
     params.insert("dataSender", encryptedSelfDataHex);
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
-    params.insert("timestamp", QString::fromStdString(std::to_string(timestamp)));
+    params.insert("fee", QString::number(fee));
+    params.insert("timestamp", QString::number(timestamp));
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
     json.insert("params", params);
@@ -178,9 +178,9 @@ QString makeCreateChannelRequest(const QString &title, const QString &titleSha, 
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_channel_create");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
+    params.insert("fee", QString::number(fee));
     params.insert("title", title);
     params.insert("title_sha256", titleSha);
     params.insert("pubkey", pubkeyHex);
@@ -193,7 +193,7 @@ QString makeChannelAddWriterRequest(const QString &titleSha, const QString &addr
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_channel_add_writer");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("addr", address);
     params.insert("title_sha256", titleSha);
@@ -207,7 +207,7 @@ QString makeChannelDelWriterRequest(const QString &titleSha, const QString &addr
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_channel_del_writer");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("addr", address);
     params.insert("title_sha256", titleSha);
@@ -221,10 +221,10 @@ QString makeSendToChannelRequest(const QString &titleSha, const QString &dataHex
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", "msg_send_to_channel");
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
-    params.insert("fee", QString::fromStdString(std::to_string(fee)));
-    params.insert("timestamp", QString::fromStdString(std::to_string(timestamp)));
+    params.insert("fee", QString::number(fee));
+    params.insert("timestamp", QString::number(timestamp));
     params.insert("title_sha256", titleSha);
     params.insert("data", dataHex);
     params.insert("pubkey", pubkeyHex);
@@ -237,10 +237,10 @@ QString makeGetChannelRequest(const QString &titleSha, Message::Counter from, Me
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_CHANNEL_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
-    params.insert("cnt_from", QString::fromStdString(std::to_string(from)));
-    params.insert("cnt_to", QString::fromStdString(std::to_string(to)));
+    params.insert("cnt_from", QString::number(from));
+    params.insert("cnt_to", QString::number(to));
     params.insert("title_sha256", titleSha);
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
@@ -252,7 +252,7 @@ QString makeGetChannelsRequest(const QString &pubkeyHex, const QString &signHex,
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_CHANNELS_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
@@ -264,7 +264,7 @@ QString makeGetMyChannelsRequest(const QString &pubkeyHex, const QString &signHe
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_GET_MY_CHANNELS_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
@@ -276,7 +276,7 @@ QString makeAppendKeyOnlineRequest(const QString &pubkeyHex, const QString &sign
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", MSG_APPEND_KEY_ONLINE_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("pubkey", pubkeyHex);
     params.insert("sign", signHex);
@@ -288,7 +288,7 @@ QString makeAddAllKeysRequest(const std::vector<QString> &wallets, size_t id) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", ADD_ALL_WALLETS_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonArray addresses;
     for (const QString &wallet: wallets) {
         addresses.push_back(wallet);
@@ -303,7 +303,7 @@ QString makeWantToTalkRequest(const QString &toAddress, const QString &pubkey, c
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("method", WANT_TO_TALK_REQUEST);
-    json.insert("request_id", QString::fromStdString(std::to_string(id)));
+    json.insert("request_id", QString::number(id));
     QJsonObject params;
     params.insert("addr", toAddress);
     params.insert("pubkey", pubkey);
