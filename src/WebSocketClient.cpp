@@ -11,6 +11,7 @@
 #include <QTimer>
 
 #include <thread>
+SET_LOG_NAMESPACE("WSS");
 
 WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     : TimerClass(1min, parent)
@@ -120,6 +121,7 @@ void WebSocketClient::sendMessagesInternal() {
 
 void WebSocketClient::onSendMessage(QString message) {
 BEGIN_SLOT_WRAPPER
+    //LOG << m_url.toString() << " WSS SEND MESSAGE'" << message << "'";
     if (!message.isNull() && !message.isEmpty()) {
         messageQueue.emplace_back(message);
     }
@@ -158,6 +160,7 @@ END_SLOT_WRAPPER
 void WebSocketClient::onTextMessageReceived(QString message) {
 BEGIN_SLOT_WRAPPER
     LOG << "Wss received size: " << message.size();
+    //LOG << m_url.toString() << " WSS GET: '" << message << "'";
     emit messageReceived(message);
 END_SLOT_WRAPPER
 }
