@@ -52,14 +52,14 @@ using TupleChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<1>;
 using OtherChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<2>;
 
 template<typename F, typename Callback>
-void runAndEmitCallbackImpl(const F &f, const Callback &callback, VoidChoiseRunAndEmitCallback) {
+void runAndEmitCallbackImpl(VoidChoiseRunAndEmitCallback, const F &f, const Callback &callback) {
     const TypedException exception = apiVrapper2(f);
     callback.emitFunc(exception);
 }
 
 template<typename F, typename Callback>
-void runAndEmitCallbackImpl(const F &f, const Callback &callback, TupleChoiseRunAndEmitCallback) {
-    typename std::result_of<F()>::type tuple;
+void runAndEmitCallbackImpl(TupleChoiseRunAndEmitCallback, const F &f, const Callback &callback, const typename std::result_of<F()>::type& defaultParams = typename std::result_of<F()>::type{}) {
+    typename std::result_of<F()>::type tuple(defaultParams);
     const TypedException exception = apiVrapper2([&tuple, &f](){
         tuple = f();
     });
@@ -69,18 +69,29 @@ void runAndEmitCallbackImpl(const F &f, const Callback &callback, TupleChoiseRun
 }
 
 template<typename F, typename Callback>
-void runAndEmitCallbackImpl(const F &f, const Callback &callback, OtherChoiseRunAndEmitCallback) {
-    typename std::result_of<F()>::type param;
+void runAndEmitCallbackImpl(OtherChoiseRunAndEmitCallback, const F &f, const Callback &callback, const std::tuple<typename std::result_of<F()>::type>& defaultParams = std::tuple<typename std::result_of<F()>::type>{}) {
+    typename std::result_of<F()>::type param(std::get<0>(defaultParams));
     const TypedException exception = apiVrapper2([&param, &f](){
         param = f();
     });
     callback.emitFunc(exception, param);
 }
 
+template<typename F>
+struct RunAndEmitTagType{
+    using type = typename std::conditional<IsVoidFunc<F>(), VoidChoiseRunAndEmitCallback, typename std::conditional<IsTupleFunc<F>(), TupleChoiseRunAndEmitCallback, OtherChoiseRunAndEmitCallback>::type>::type;
+};
+
+template<typename F, typename Callback, typename Val, typename... Vals>
+void runAndEmitCallback(const F &f, const Callback &callback, Val&& defaultVal1, Vals&&... defaultVals) {
+    const typename RunAndEmitTagType<F>::type tag;
+    runAndEmitCallbackImpl(tag, f, callback, std::tuple_cat(std::make_tuple(std::forward<Val>(defaultVal1)), std::make_tuple(std::forward<Vals>(defaultVals)...)));
+}
+
 template<typename F, typename Callback>
 void runAndEmitCallback(const F &f, const Callback &callback) {
-    const typename std::conditional<IsVoidFunc<F>(), VoidChoiseRunAndEmitCallback, typename std::conditional<IsTupleFunc<F>(), TupleChoiseRunAndEmitCallback, OtherChoiseRunAndEmitCallback>::type>::type tag;
-    runAndEmitCallbackImpl(f, callback, tag);
+    const typename RunAndEmitTagType<F>::type tag;
+    runAndEmitCallbackImpl(tag, f, callback);
 }
 
 #endif // MANAGERWRAPPERIMPL_H

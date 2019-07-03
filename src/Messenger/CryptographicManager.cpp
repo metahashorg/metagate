@@ -8,6 +8,7 @@
 #include "TypedException.h"
 #include "utils.h"
 #include "QRegister.h"
+#include "ManagerWrapperImpl.h"
 
 SET_LOG_NAMESPACE("MSG");
 
@@ -143,150 +144,119 @@ static std::vector<Message> decryptMsg(const std::vector<Message> &messages, con
 
 void CryptographicManager::onDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Message> result;
-    const TypedException exception = apiVrapper2([&, this] {
-        result = decryptMsg(messages, getWalletRsaWithoutCheck(address.toStdString()), true);
-    });
-
-    callback.emitFunc(exception, result);
+    runAndEmitCallback([&, this] {
+        return decryptMsg(messages, getWalletRsaWithoutCheck(address.toStdString()), true);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onTryDecryptMessages(const std::vector<Message> &messages, const QString &address, const DecryptMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Message> result;
-    const TypedException exception = apiVrapper2([&, this] {
-        result = decryptMsg(messages, getWalletRsaWithoutCheck(address.toStdString()), false);
-    });
-
-    callback.emitFunc(exception, result);
+    runAndEmitCallback([&, this] {
+        return decryptMsg(messages, getWalletRsaWithoutCheck(address.toStdString()), false);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onSignMessage(const QString &address, const QString &message, const SignMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString sign;
-    QString pub;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         std::string pubkey;
-        sign = QString::fromStdString(getWallet(address.toStdString()).sign(message.toStdString(), pubkey));
-        pub = QString::fromStdString(pubkey);
-    });
-
-    callback.emitFunc(exception, pub, sign);
+        const QString sign = QString::fromStdString(getWallet(address.toStdString()).sign(message.toStdString(), pubkey));
+        const QString pub = QString::fromStdString(pubkey);
+        return std::make_tuple(pub, sign);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onSignTransaction(const QString &address, const QString &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const QString &data, const SignTransactionCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString sign;
-    QString pub;
-    QString tx;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         std::string pubkey;
         std::string transaction;
         std::string signature;
         getWallet(address.toStdString()).sign(toAddress.toStdString(), value, fee, nonce, data.toStdString(), transaction, signature, pubkey, true);
-        sign = QString::fromStdString(signature);
-        pub = QString::fromStdString(pubkey);
-        tx = QString::fromStdString(transaction);
-    });
-
-    callback.emitFunc(exception, tx, pub, sign);
+        const QString sign = QString::fromStdString(signature);
+        const QString pub = QString::fromStdString(pubkey);
+        const QString tx = QString::fromStdString(transaction);
+        return std::make_tuple(tx, pub, sign);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onSignMessages(const QString &address, const std::vector<QString> &messages, const SignMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<QString> sign;
-    QString pub;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         std::string pubkey;
+        std::vector<QString> sign;
         for (const QString &message: messages) {
             pubkey.clear();
             sign.emplace_back(QString::fromStdString(getWallet(address.toStdString()).sign(message.toStdString(), pubkey)));
         }
-        pub = QString::fromStdString(pubkey);
-    });
-
-    callback.emitFunc(exception, pub, sign);
+        const QString pub = QString::fromStdString(pubkey);
+        return std::make_tuple(pub, sign);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onGetPubkeyRsa(const QString &address, const GetPubkeyRsaCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString pubkey;
-    const TypedException exception = apiVrapper2([&, this] {
-        pubkey = QString::fromStdString(getWalletRsa(address.toStdString()).getPublikKey());
-    });
-
-    callback.emitFunc(exception, pubkey);
+    runAndEmitCallback([&, this] {
+        return QString::fromStdString(getWalletRsa(address.toStdString()).getPublikKey());
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onEncryptDataRsa(const QString &dataHex, const QString &pubkeyDest, const EncryptMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString encryptedData;
-    const TypedException exception = apiVrapper2([&] {
+    runAndEmitCallback([&] {
         const std::string data = fromHex(dataHex.toStdString());
         const WalletRsa walletRsa = WalletRsa::fromPublicKey(pubkeyDest.toStdString());
-        encryptedData = QString::fromStdString(walletRsa.encrypt(data));
-    });
-
-    callback.emitFunc(exception, encryptedData);
+        return QString::fromStdString(walletRsa.encrypt(data));
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onEncryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString encryptedData;
-    const TypedException exception = apiVrapper2([&] {
+    runAndEmitCallback([&] {
         const std::string data = fromHex(dataHex.toStdString());
-        encryptedData = QString::fromStdString(getWalletRsa(address.toStdString()).encrypt(data));
-    });
-
-    callback.emitFunc(exception, encryptedData);
+        return QString::fromStdString(getWalletRsa(address.toStdString()).encrypt(data));
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onUnlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&] {
+    runAndEmitCallback([&] {
         unlockWalletImpl(folder, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), time_);
-    });
-
-    callbackWrapper.emitFunc(exception);
+    }, callbackWrapper);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onLockWallet(const LockWalletCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&] {
+    runAndEmitCallback([&] {
         lockWalletImpl();
-    });
-
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void CryptographicManager::onRemainingTime(const RemainingTimeCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString address;
-    seconds remaining(0);
-    const TypedException exception = apiVrapper2([&] {
+    runAndEmitCallback([&]() ->std::tuple<QString, seconds> {
         if (wallet == nullptr || walletRsa == nullptr) {
-            return;
+            return std::make_tuple("", 0s);
         }
-        address = QString::fromStdString(wallet->getAddress());
+        const QString address = QString::fromStdString(wallet->getAddress());
         const time_point now = ::now();
         const milliseconds elapsedTime = std::chrono::duration_cast<milliseconds>(now - startTime);
-        remaining = std::chrono::duration_cast<seconds>(time - elapsedTime);
+        seconds remaining = std::chrono::duration_cast<seconds>(time - elapsedTime);
         if (remaining < seconds(0)) {
             remaining = seconds(0);
         }
-    });
-
-    callback.emitFunc(exception, address, remaining);
+        return std::make_tuple(address, remaining);
+    }, callback, "", 0s);
 END_SLOT_WRAPPER
 }
 
