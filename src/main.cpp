@@ -73,10 +73,6 @@ static void printCurrentYear() {
     LOG << "Current year: " << year;
 }
 
-int cc() {
-
-}
-
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
     signal(SIGSEGV, crash_handler);
