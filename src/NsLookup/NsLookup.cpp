@@ -22,7 +22,11 @@
 
 #include "algorithms.h"
 
+#include "NslWorker.h"
+
 SET_LOG_NAMESPACE("NSL");
+
+using namespace nslookup;
 
 const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
@@ -130,21 +134,11 @@ NsLookup::~NsLookup() {
 }
 
 void NsLookup::startMethod() {
-    updateNumber++;
-
     process();
 }
 
 void NsLookup::timerMethod() {
-    updateNumber++;
-
     process();
-    processRefresh();
-
-    if (now() - prevPrintTime >= 1min) {
-        printNodes();
-        prevPrintTime = now();
-    }
 }
 
 void NsLookup::finishMethod() {
@@ -186,24 +180,17 @@ size_t NsLookup::countWorkedNodes(const std::vector<NodeInfo> &nodes) const {
 }
 
 void NsLookup::process() {
-    if (isProcessRefresh) {
+    if (taskManager.isCurrentWork()) {
         return;
     }
 
-    if (now() - prevCheckTime >= msTimer) {
-        msTimer = 600s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
-        startScanTime = ::now();
-
-        allNodesForTypesNew.clear();
-
-        dnsErrorDetails.clear();
-
-        isProcess = true;
-
-        LOG << "Dns scan start";
-        continueResolve(nodes.begin());
-
-        prevCheckTime = now();
+    if (taskManager.isTaskReady()) {
+        const Task task = taskManager.popTask();
+        const std::shared_ptr<NslWorker> worker = makeWorker(taskManager, *this, task);
+        if (worker->isActual()) {
+            updateNumber++;
+            worker->runWork(worker);
+        }
     }
 }
 

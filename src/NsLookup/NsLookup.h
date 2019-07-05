@@ -19,6 +19,8 @@
 #include "CallbackWrapper.h"
 #include "ManagerWrapper.h"
 
+#include "TaskManager.h"
+
 struct TypedException;
 
 struct NodeType {
@@ -246,6 +248,8 @@ private:
     size_t randomCounter = 0;
 
     size_t updateNumber = 0;
+
+    nslookup::TaskManager taskManager;
 };
 
 #endif // NSLOOKUP_H

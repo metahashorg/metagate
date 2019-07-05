@@ -101,7 +101,10 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitUtils.cpp \
     Utils/UtilsManager.cpp \
     CallbackCallWrapper.cpp \
-    ManagerWrapper.cpp
+    ManagerWrapper.cpp \
+    NsLookup/TaskManager.cpp \
+    NsLookup/NslWorker.cpp \
+    NsLookup/FullWorker.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -211,7 +214,10 @@ HEADERS += mainwindow.h \
     Utils/UtilsManager.h \
     CallbackCallWrapper.h \
     ManagerWrapper.h \
-    ManagerWrapperImpl.h
+    ManagerWrapperImpl.h \
+    NsLookup/TaskManager.h \
+    NsLookup/NslWorker.h \
+    NsLookup/FullWorker.h
 
 FORMS += mainwindow.ui
 
