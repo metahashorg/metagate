@@ -54,8 +54,11 @@ NsLookup::NsLookup(QObject *parent)
 {
     Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
     Q_CONNECT(this, &NsLookup::rejectServer, this, &NsLookup::onRejectServer);
+    Q_CONNECT(this, &NsLookup::getRandomServersWithoutHttp, this, &NsLookup::onGetRandomServersWithoutHttp);
+    Q_CONNECT(this, &NsLookup::getRandomServers, this, &NsLookup::onGetRandomServers);
 
     Q_REG(GetStatusCallback, "GetStatusCallback");
+    Q_REG(GetServersCallback, "GetServersCallback");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("nodes");
@@ -207,12 +210,10 @@ void NsLookup::process() {
 void NsLookup::finalizeLookup() {
     isProcess = false;
 
-    std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
         allNodesForTypes.swap(allNodesForTypesNew);
     }
     sortAll();
-    lock.unlock();
     if (!isSafeCheck) {
         saveToFile(savedNodesPath, system_now(), nodes);
     }
@@ -430,12 +431,10 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
 
 void NsLookup::finalizeLookupP2P() {
     size_t countAll = 0;
-    std::unique_lock<std::mutex> lock(nodeMutex);
     for (auto &element: allNodesForTypesP2P) {
         std::sort(element.second.begin(), element.second.end(), std::less<NodeInfo>{});
         countAll += element.second.size();
     }
-    lock.unlock();
 
     const time_point stopScan = ::now();
     LOG << "Dns scan p2p time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds. Count new nodes " << countAll;
@@ -561,7 +560,6 @@ void NsLookup::continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>
                 const NodeType::SubType &type = types[i];
                 const NodeInfo info = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result));
 
-                std::unique_lock<std::mutex> lock(nodeMutex);
                 if (type == NodeType::SubType::torrent) {
                     allNodesForTypesP2P[nodeTorrent.node].emplace_back(info); // TODO добавлять сразу к сортированному массиву
                 } else if (type == NodeType::SubType::proxy) {
@@ -593,12 +591,10 @@ void NsLookup::finalizeRefresh(const NodeType::Node &node) {
 
     LOG << "Updated ip status. Left " << defectiveTorrents.size();
 
-    std::unique_lock<std::mutex> lock(nodeMutex);
     if (!isSafeCheck) {
         allNodesForTypes[node] = allNodesForTypesNew[node];
     }
     sortAll();
-    lock.unlock();
     saveToFile(savedNodesPath, system_now(), nodes);
 }
 
@@ -775,18 +771,9 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp, cons
     writeToFile(file, content, false);
 }
 
-std::vector<QString> NsLookup::getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const {
-    return getRandom(type, limit, count, [](const NodeInfo &node) {return getAddressWithoutHttp(node.address);});
-}
-
-std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count) const {
-    return getRandom(type, limit, count, [](const NodeInfo &node) {return node.address;});
-}
-
 std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const {
     CHECK(count <= limit, "Incorrect count value");
 
-    std::unique_lock<std::mutex> lock(nodeMutex);
     const auto foundType = nodes.find(type);
     if (foundType == nodes.end()) {
         return {};
@@ -803,7 +790,6 @@ std::vector<QString> NsLookup::getRandom(const QString &type, size_t limit, size
             nodes.insert(nodes.end(), foundP2P->second.begin(), foundP2P->second.end());
         }
     }
-    lock.unlock();
 
     std::sort(nodes.begin(), nodes.end(), std::less<NodeInfo>{});
 
@@ -822,6 +808,22 @@ void NsLookup::onGetStatus(const GetStatusCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this]{
         return std::make_tuple(getNodesStatus(), dnsErrorDetails);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void NsLookup::onGetRandomServersWithoutHttp(const QString &type, size_t limit, size_t count, const GetServersCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this]{
+        return getRandom(type, limit, count, [](const NodeInfo &node) {return getAddressWithoutHttp(node.address);});
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void NsLookup::onGetRandomServers(const QString &type, size_t limit, size_t count, const GetServersCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this]{
+        return getRandom(type, limit, count, [](const NodeInfo &node) {return node.address;});
     }, callback);
 END_SLOT_WRAPPER
 }

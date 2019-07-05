@@ -113,14 +113,12 @@ public:
 
     using GetStatusCallback = CallbackWrapper<void(const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError)>;
 
+    using GetServersCallback = CallbackWrapper<void(const std::vector<QString> &servers)>;
+
 public:
     explicit NsLookup(QObject *parent = nullptr);
 
     ~NsLookup() override;
-
-    std::vector<QString> getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const;
-
-    std::vector<QString> getRandom(const QString &type, size_t limit, size_t count) const;
 
     void resetFile();
 
@@ -136,9 +134,17 @@ signals:
 
     void getStatus(const GetStatusCallback &callback);
 
+    void getRandomServersWithoutHttp(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
+
+    void getRandomServers(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
+
 public slots:
 
     void onGetStatus(const GetStatusCallback &callback);
+
+    void onGetRandomServersWithoutHttp(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
+
+    void onGetRandomServers(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
 
 signals:
 
@@ -218,8 +224,6 @@ private:
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesP2P;
-
-    mutable std::mutex nodeMutex;
 
     milliseconds msTimer = 10s;
 

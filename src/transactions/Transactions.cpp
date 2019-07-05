@@ -408,39 +408,46 @@ void Transactions::timerMethod() {
         posInAddressInfos = 0;
     }
     LOG << PeriodicLog::make("f_bln") << "Try fetch balance " << addressesInfos.size();
-    std::vector<QString> servers;
     QString currentType;
     QString currentCurrency;
     std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
     std::vector<std::pair<QString, std::vector<QString>>> batch;
     size_t countParallelRequests = 0;
 
+    const auto processBatch = [this, &batch, &countParallelRequests, &servStructs](const QString &currentCurrency, const QString &currentType) {
+        if (servStructs.find(currentCurrency) != servStructs.end()) {
+            nsLookup.getRandomServers(currentType, 3, 3, NsLookup::GetServersCallback([this, batch, currentCurrency, currentType, servStruct=servStructs.at(currentCurrency)](const std::vector<QString> &servers) {
+                if (servers.empty()) {
+                    LOG << "Warn: servers empty: " << currentType;
+                    return;
+                }
+                processAddressMth(batch, currentCurrency, servers, servStruct);
+            }, [](const TypedException &error) {
+                LOG << "Error while get servers: " << error.description;
+            }, signalFunc));
+
+            batch.clear();
+            countParallelRequests++;
+        } else {
+            // В предыдущий раз список серверов оказался пустым, поэтому структуру мы не заполнили. Пропускаем
+        }
+    };
+
     const time_point now = ::now();
     while (posInAddressInfos < addressesInfos.size()) {
         const AddressInfo &addr = addressesInfos[posInAddressInfos];
         if ((!currentCurrency.isEmpty() && (addr.currency != currentCurrency || addr.type != currentType)) || batch.size() >= MAXIMUM_ADDRESSES_IN_BATCH) {
-            if (servStructs.find(currentCurrency) != servStructs.end()) {
-                // В предыдущий раз список серверов оказался пустым, поэтому структуру мы не заполнили. Пропускаем
-                processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
-                batch.clear();
-                countParallelRequests++;
-                if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
-                    break;
-                }
+            processBatch(currentCurrency, currentType);
+            if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
+                break;
             }
             currentCurrency = addr.currency;
+            currentType = addr.type;
         }
         if (currentCurrency.isEmpty()) {
             currentCurrency = addr.currency;
         }
-
-        if (addr.type != currentType) {
-            servers = nsLookup.getRandom(addr.type, 3, 3);
-            if (servers.empty()) {
-                LOG << "Warn: servers empty: " << addr.type;
-                posInAddressInfos++;
-                continue;
-            }
+        if (currentType.isEmpty()) {
             currentType = addr.type;
         }
 
@@ -450,7 +457,11 @@ void Transactions::timerMethod() {
         }
         servStructs.at(addr.currency)->countRequests++; // Не очень хорошо здесь прибавлять по 1, но пофиг
         if (now - lastCheckTxsTime >= CHECK_TXS_PERIOD) {
-            processCheckTxs(addr.address, addr.currency, servers);
+            nsLookup.getRandomServers(addr.type, 3, 3, NsLookup::GetServersCallback([this, address=addr.address, currency=addr.currency](const std::vector<QString> &servers) {
+                processCheckTxs(address, currency, servers);
+            }, [](const TypedException &error) {
+                LOG << "Error while get servers: " << error.description;
+            }, signalFunc));
         }
         const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(addr.address, addr.currency, true);
         std::vector<QString> pendingTxsStrs;
@@ -461,9 +472,7 @@ void Transactions::timerMethod() {
 
         posInAddressInfos++;
     }
-    if (servStructs.find(currentCurrency) != servStructs.end()) {
-        processAddressMth(batch, currentCurrency, servers, servStructs.at(currentCurrency));
-    }
+    processBatch(currentCurrency, currentType);
 
     if (now - lastCheckTxsTime >= CHECK_TXS_PERIOD && posInAddressInfos >= addressesInfos.size()) {
         LOG << "All txs checked";
@@ -482,15 +491,18 @@ void Transactions::fetchBalanceAddress(const QString &address) {
 
     LOG << "Found " << addressInfos.size() << " records on adrress " << address;
     for (const AddressInfo &addr: addressInfos) {
-        const std::vector<QString> servers = nsLookup.getRandom(addr.type, 3, 3);
-        if (servers.empty()) {
-            LOG << "Warn: servers empty: " << addr.type;
-            continue;
-        }
+        nsLookup.getRandomServers(addr.type, 3, 3, NsLookup::GetServersCallback([this, addr](const std::vector<QString> &servers) {
+            if (servers.empty()) {
+                LOG << "Warn: servers empty: " << addr.type;
+                return;
+            }
 
-        std::vector<std::pair<QString, std::vector<QString>>> batch;
-        batch.emplace_back(addr.address, std::vector<QString>());
-        processAddressMth(batch, addr.currency, servers, nullptr);
+            std::vector<std::pair<QString, std::vector<QString>>> batch;
+            batch.emplace_back(addr.address, std::vector<QString>());
+            processAddressMth(batch, addr.currency, servers, nullptr);
+        }, [](const TypedException &e) {
+            LOG << "Error while get servers: " << e.description;
+        }, signalFunc));
     }
 }
 
@@ -685,79 +697,84 @@ void Transactions::onSendTransaction(const QString &requestId, const QString &to
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         const QString request = makeSendTransactionRequest(to, value, nonce, data, fee, pubkey, sign);
-        const size_t countServersSend = sendParams.countServersSend;
-        const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeSend, countServersSend, countServersSend);
-        CHECK_TYPED(!servers.empty(), TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "Not enough servers send");
-        const size_t remainServersSend = countServersSend - servers.size();
-        for (size_t i = 0; i < remainServersSend; i++) {
-            emit javascriptWrapper.sendedTransactionsResponseSig(requestId, "", "", TypedException(TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "dns return less laid"));
-        }
+        nsLookup.getRandomServers(sendParams.typeSend, sendParams.countServersSend, sendParams.countServersSend, NsLookup::GetServersCallback([this, sendParams, requestId, request, callback](const std::vector<QString> &servers) {
+            const size_t countServersSend = sendParams.countServersSend;
+            CHECK_TYPED(!servers.empty(), TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "Not enough servers send");
+            const size_t remainServersSend = countServersSend - servers.size();
+            for (size_t i = 0; i < remainServersSend; i++) {
+                emit javascriptWrapper.sendedTransactionsResponseSig(requestId, "", "", TypedException(TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "dns return less laid"));
+            }
 
-        const std::vector<QString> serversGet = nsLookup.getRandom(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet); // Получаем список серверов здесь, чтобы здесь же обработать ошибки
-        CHECK_TYPED(!serversGet.empty(), TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "Not enough servers get");
+            nsLookup.getRandomServers(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet, NsLookup::GetServersCallback([this, servers, request, requestId, sendParams](const std::vector<QString> &serversGet) {
+                CHECK_TYPED(!serversGet.empty(), TypeErrors::TRANSACTIONS_SERVER_NOT_FOUND, "Not enough servers get");
 
-        for (const QString &server: servers) {
-            tcpClient.sendMessagePost(server, request, [this, server, requestId, sendParams, serversGet](const std::string &response, const TypedException &error) {
-                QString result;
-                const TypedException exception = apiVrapper2([&] {
-                    if (error.isSet()) {
-                        nsLookup.rejectServer(server);
-                    }
-                    CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
-                    result = parseSendTransactionResponse(QString::fromStdString(response));
-                    addToSendTxWatcher(requestId, result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);
-                });
-                emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
-            }, timeout);
-        }
+                for (const QString &server: servers) {
+                    tcpClient.sendMessagePost(server, request, [this, server, requestId, sendParams, serversGet](const std::string &response, const TypedException &error) {
+                        QString result;
+                        const TypedException exception = apiVrapper2([&] {
+                            if (error.isSet()) {
+                                nsLookup.rejectServer(server);
+                            }
+                            CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
+                            result = parseSendTransactionResponse(QString::fromStdString(response));
+                            addToSendTxWatcher(requestId, result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);
+                        });
+                        emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
+                    }, timeout);
+                }
+            }, callback, signalFunc)); // Получаем список серверов здесь, чтобы здесь же обработать ошибки
+        }, callback, signalFunc));
     }, callback);
 END_SLOT_WRAPPER
 }
 
 void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const std::vector<QString> servers = nsLookup.getRandom(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet);
-    CHECK(!servers.empty(), "Not enough servers");
+    runAndEmitErrorCallback([&, this]{
+        nsLookup.getRandomServers(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet, NsLookup::GetServersCallback([this, requestId, from, callback](const std::vector<QString> &servers) {
+            CHECK(!servers.empty(), "Not enough servers");
 
-    struct NonceStruct {
-        bool isSet = false;
-        uint64_t nonce = 0;
-        size_t count;
-        TypedException exception;
-        QString serverError;
+            struct NonceStruct {
+                bool isSet = false;
+                uint64_t nonce = 0;
+                size_t count;
+                TypedException exception;
+                QString serverError;
 
-        NonceStruct(size_t count)
-           : count(count)
-        {}
-    };
+                NonceStruct(size_t count)
+                   : count(count)
+                {}
+            };
 
-    std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
+            std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
 
-    const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
-        nonceStruct->count--;
+            const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
+                nonceStruct->count--;
 
-        if (!exception.isSet()) {
-            const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
-            nonceStruct->isSet = true;
-            nonceStruct->nonce = std::max(nonceStruct->nonce, balanceResponse.countSpent);
-        } else {
-            nonceStruct->exception = TypedException(TypeErrors::CLIENT_ERROR, exception.description);
-            nonceStruct->serverError = server;
-        }
+                if (!exception.isSet()) {
+                    const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response));
+                    nonceStruct->isSet = true;
+                    nonceStruct->nonce = std::max(nonceStruct->nonce, balanceResponse.countSpent);
+                } else {
+                    nonceStruct->exception = TypedException(TypeErrors::CLIENT_ERROR, exception.description);
+                    nonceStruct->serverError = server;
+                }
 
-        if (nonceStruct->count == 0) {
-            if (!nonceStruct->isSet) {
-                callback.emitFunc(nonceStruct->exception, 0, nonceStruct->serverError);
-            } else {
-                callback.emitFunc(TypedException(), nonceStruct->nonce + 1, "");
+                if (nonceStruct->count == 0) {
+                    if (!nonceStruct->isSet) {
+                        callback.emitFunc(nonceStruct->exception, 0, nonceStruct->serverError);
+                    } else {
+                        callback.emitFunc(TypedException(), nonceStruct->nonce + 1, "");
+                    }
+                }
+            };
+
+            const QString requestBalance = makeGetBalanceRequest(from);
+            for (const QString &server: servers) {
+                client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), timeout);
             }
-        }
-    };
-
-    const QString requestBalance = makeGetBalanceRequest(from);
-    for (const QString &server: servers) {
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1, _2), timeout);
-    }
+        }, callback, signalFunc));
+    }, callback);
 END_SLOT_WRAPPER
 }
 
@@ -766,18 +783,19 @@ BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&, this] {
         const QString message = makeGetTxRequest(txHash);
 
-        const std::vector<QString> servers = nsLookup.getRandom(type, 1, 1);
-        CHECK(!servers.empty(), "Not enough servers");
-        const QString &server = servers[0];
+        nsLookup.getRandomServers(type, 1, 1, NsLookup::GetServersCallback([this, message, callback](const std::vector<QString> &servers){
+            CHECK(!servers.empty(), "Not enough servers");
+            const QString &server = servers[0];
 
-        client.sendMessagePost(server, message, [this, callback](const std::string &response, const SimpleClient::ServerException &error) mutable {
-            Transaction tx;
-            const TypedException exception = apiVrapper2([&] {
-                CHECK_TYPED(!error.isSet(), TypeErrors::CLIENT_ERROR, error.description);
-                tx = parseGetTxResponse(QString::fromStdString(response), "", "");
-            });
-            callback.emitFunc(exception, tx);
-        }, timeout);
+            client.sendMessagePost(server, message, [this, callback](const std::string &response, const SimpleClient::ServerException &error) mutable {
+                Transaction tx;
+                const TypedException exception = apiVrapper2([&] {
+                    CHECK_TYPED(!error.isSet(), TypeErrors::CLIENT_ERROR, error.description);
+                    tx = parseGetTxResponse(QString::fromStdString(response), "", "");
+                });
+                callback.emitFunc(exception, tx);
+            }, timeout);
+        }, callback, signalFunc));
     }, callback);
 END_SLOT_WRAPPER
 }
