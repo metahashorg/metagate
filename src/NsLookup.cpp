@@ -172,7 +172,7 @@ void NsLookup::printNodes() const {
 
 size_t NsLookup::countWorkedNodes(const std::vector<NodeInfo> &nodes) const {
     const size_t countSuccess = std::accumulate(nodes.begin(), nodes.end(), size_t(0), [](size_t prev, const NodeInfo &subElem) -> size_t {
-        if (subElem.isChecked && !subElem.isTimeout) {
+        if (!subElem.isTimeout) {
             return prev + 1;
         } else {
             return prev + 0;
