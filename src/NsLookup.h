@@ -56,7 +56,7 @@ struct NodeInfo {
 
     size_t ping;
 
-    bool isChecked = false;
+    size_t countUpdated = 0;
     bool isTimeout = false;
 
     bool operator< (const NodeInfo &second) const {
@@ -64,12 +64,8 @@ struct NodeInfo {
             return false;
         } else if (second.isTimeout) {
             return true;
-        } else if (this->isChecked && !second.isChecked) {
-            return true;
-        } else if (!this->isChecked && second.isChecked) {
-            return false;
         } else {
-            return this->ping < second.ping;
+            return std::make_pair(-countUpdated, ping) < std::make_pair(-second.countUpdated, second.ping);
         }
     }    
 };
@@ -248,6 +244,8 @@ private:
     DnsErrorDetails dnsErrorDetails;
 
     size_t randomCounter = 0;
+
+    size_t updateNumber = 0;
 };
 
 #endif // NSLOOKUP_H

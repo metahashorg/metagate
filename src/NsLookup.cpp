@@ -130,10 +130,14 @@ NsLookup::~NsLookup() {
 }
 
 void NsLookup::startMethod() {
+    updateNumber++;
+
     process();
 }
 
 void NsLookup::timerMethod() {
+    updateNumber++;
+
     process();
     processRefresh();
 
@@ -319,11 +323,11 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
     }
 }
 
-static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message) {
+static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message, size_t updateNumber) {
     NodeInfo info;
     info.address = address;
     info.ping = time.count();
-    info.isChecked = true;
+    info.countUpdated = updateNumber;
 
     if (message.empty()) {
         info.ping = MAX_PING.count();
@@ -356,7 +360,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
             const TypedException exception = apiVrapper2([&]{
                 CHECK(requestsSize == results.size(), "Incorrect results");
                 for (const auto &result: results) {
-                    allNodesForTypesNew[node->second.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result)));
+                    allNodesForTypesNew[node->second.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
                 }
             });
 
@@ -401,9 +405,8 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::m
                     const auto &result = results[i];
                     const size_t index = processVectPos[i];
                     NodeInfo &info = allNodesForTypes[node->second.node][index];
-                    NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result));
+                    NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
                     CHECK(info.address == newInfo.address, "Incorrect address");
-                    newInfo.isChecked = true;
                     if (!newInfo.isTimeout) {
                         newInfo.ping = info.ping;
                     }
@@ -458,7 +461,7 @@ void NsLookup::continuePingRefresh(std::vector<QString>::const_iterator ipsIter,
         const TypedException exception = apiVrapper2([&]{
             CHECK(requestsSize == results.size(), "Incorrect results");
             for (const auto &result: results) {
-                allNodesForTypesNew[node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result)));
+                allNodesForTypesNew[node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
             }
         });
 
@@ -582,7 +585,6 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
                 info.address = "http://" + info.address;
             }
             info.isTimeout = isTimeout == 1;
-            info.isChecked = false;
 
             allNodesForTypes[nodes[QString::fromStdString(type)].node].emplace_back(info);
 
