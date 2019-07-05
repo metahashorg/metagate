@@ -176,12 +176,6 @@ private:
 
     void finalizeLookup();
 
-    void continueResolveP2P(std::map<QString, NodeType>::const_iterator node);
-
-    void continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy);
-
-    void finalizeLookupP2P();
-
     void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
 
     void finalizeRefresh(const NodeType::Node &node);
@@ -217,13 +211,9 @@ private:
 
     std::vector<QString> ipsTempRefresh;
 
-    std::vector<std::pair<NodeType::SubType, QString>> ipsTempP2P;
-
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
-
-    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesP2P;
 
     milliseconds msTimer = 10s;
 
@@ -241,15 +231,11 @@ private:
 
     CacheDns cacheDns;
 
-    int countSuccessTestsForP2PNodes = 0;
-
     seconds timeoutRequestNodes;
 
     QString dnsServerName;
 
     int dnsServerPort;
-
-    bool useUsersServers = false;
 
     time_point prevPrintTime;
 
