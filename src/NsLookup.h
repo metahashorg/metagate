@@ -17,6 +17,7 @@
 #include "UdpSocketClient.h"
 
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 struct TypedException;
 
@@ -99,7 +100,7 @@ struct NodeTypeStatus {
     {}
 };
 
-class NsLookup : public QObject, public TimerClass {
+class NsLookup : public ManagerWrapper, public TimerClass {
     Q_OBJECT
 private:
 
@@ -152,10 +153,6 @@ signals:
     void finished();
 
     void serversFlushed(const TypedException &exception);
-
-public slots:
-
-    void callbackCall(SimpleClient::ReturnCallback callback);
 
 private:
 

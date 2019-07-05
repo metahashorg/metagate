@@ -18,6 +18,7 @@
 #include "SlotWrapper.h"
 #include "Paths.h"
 #include "QRegister.h"
+#include "ManagerWrapperImpl.h"
 
 #include "algorithms.h"
 
@@ -127,12 +128,6 @@ NsLookup::~NsLookup() {
     if (isResetFilledFile.load()) {
         removeFile(savedNodesPath);
     }
-}
-
-void NsLookup::callbackCall(SimpleClient::ReturnCallback callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
 }
 
 void NsLookup::startMethod() {
@@ -825,11 +820,9 @@ void NsLookup::resetFile() {
 
 void NsLookup::onGetStatus(const GetStatusCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<NodeTypeStatus> nodeStatuses;
-    const TypedException &exception = apiVrapper2([&, this]{
-        nodeStatuses = getNodesStatus();
-    });
-    callback.emitFunc(exception, nodeStatuses, dnsErrorDetails);
+    runAndEmitCallback([&, this]{
+        return std::make_tuple(getNodesStatus(), dnsErrorDetails);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
