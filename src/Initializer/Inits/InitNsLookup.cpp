@@ -1,6 +1,6 @@
 ﻿#include "InitNsLookup.h"
 
-#include "NsLookup.h"
+#include "NsLookup/NsLookup.h"
 
 #include "check.h"
 #include "SlotWrapper.h"

@@ -38,7 +38,7 @@ SOURCES += main.cpp mainwindow.cpp \
     openssl_wrapper/openssl_wrapper.cpp \
     utils.cpp \
     ethtx/utils2.cpp \
-    NsLookup.cpp \
+    NsLookup/NsLookup.cpp \
     dns/datatransformer.cpp \
     dns/dnspacket.cpp \
     dns/resourcerecord.cpp \
@@ -138,7 +138,7 @@ HEADERS += mainwindow.h \
     openssl_wrapper/openssl_wrapper.h \
     utils.h \
     ethtx/utils2.h \
-    NsLookup.h \
+    NsLookup/NsLookup.h \
     dns/datatransformer.h \
     dns/dnspacket.h \
     dns/resourcerecord.h \

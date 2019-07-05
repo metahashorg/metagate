@@ -23,7 +23,7 @@ using namespace std::placeholders;
 
 #include "mainwindow.h"
 
-#include "NsLookup.h"
+#include "NsLookup/NsLookup.h"
 #include "WebSocketClient.h"
 
 #include "unzip.h"
