@@ -1,9 +1,15 @@
 #include "FullWorker.h"
 
+#include <functional>
+
 #include "TaskManager.h"
+
+#include "NsLookup.h"
 
 #include "check.h"
 #include "Log.h"
+
+using namespace std::placeholders;
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -56,6 +62,30 @@ void FullWorker::runWorkImpl(WorkerGuard workerGuard) {
 
 void FullWorker::beginWork(const WorkerGuard &workerGuard) {
     addNewTask(makeTask(CONTROL_CHECK));
+
+    const auto finLookup = std::bind(&FullWorker::finalizeLookup, this, workerGuard);
+    const auto beginPing = std::bind(&FullWorker::beginPing, this, workerGuard, _1);
+
+    ns.beginResolve(allNodesForTypes, ipsTemp, finLookup, beginPing);
+}
+
+void FullWorker::beginPing(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node) {
+    const auto continueResolve = std::bind(&FullWorker::continueResolve, this, workerGuard, node);
+
+    ns.continuePing(false, std::begin(ipsTemp), node->second, allNodesForTypes, ipsTemp, continueResolve);
+}
+
+void FullWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node) {
+    const auto finalizeLookup = std::bind(&FullWorker::finalizeLookup, this, workerGuard);
+    const auto beginPing = std::bind(&FullWorker::beginPing, this, workerGuard, _1);
+
+    ns.continueResolve(std::next(node), allNodesForTypes, ipsTemp, finalizeLookup, beginPing);
+}
+
+void FullWorker::finalizeLookup(const WorkerGuard &workerGuard) {
+    const auto endWork = std::bind(&FullWorker::endWork, this, workerGuard);
+
+    ns.finalizeLookup(allNodesForTypes, endWork);
 }
 
 void FullWorker::endWork(const WorkerGuard &workerGuard) {

@@ -21,82 +21,9 @@
 
 #include "TaskManager.h"
 
+#include "NsLookupStructs.h"
+
 struct TypedException;
-
-struct NodeType {
-    enum class SubType {
-        none, torrent, proxy
-    };
-
-    struct Node {
-        QString node;
-
-        Node() = default;
-
-        explicit Node(const QString &node)
-            : node(node)
-        {}
-
-        const QString &str() const {
-            return node;
-        }
-
-        bool operator< (const Node &second) const {
-            return this->node < second.node;
-        }
-    };
-
-    QString type;
-    Node node;
-    QString port;
-    QString network;
-    SubType subtype = SubType::none;
-};
-
-struct NodeInfo {
-    QString address;
-
-    size_t ping;
-
-    size_t countUpdated = 0;
-    bool isTimeout = false;
-
-    bool operator< (const NodeInfo &second) const {
-        if (this->isTimeout) {
-            return false;
-        } else if (second.isTimeout) {
-            return true;
-        } else {
-            return std::make_pair(-countUpdated, ping) < std::make_pair(-second.countUpdated, second.ping);
-        }
-    }    
-};
-
-struct DnsErrorDetails {
-    QString dnsName;
-
-    void clear() {
-        dnsName.clear();
-    }
-
-    bool isEmpty() const {
-        return dnsName.isEmpty();
-    }
-};
-
-struct NodeTypeStatus {
-    QString node;
-    size_t countWorked;
-    size_t countAll;
-    size_t bestResult;
-
-    NodeTypeStatus(const QString &node, size_t countWorked, size_t countAll, size_t bestResult)
-        : node(node)
-        , countWorked(countWorked)
-        , countAll(countAll)
-        , bestResult(bestResult)
-    {}
-};
 
 class NsLookup : public ManagerWrapper, public TimerClass {
     Q_OBJECT
@@ -158,6 +85,16 @@ signals:
 
     void serversFlushed(const TypedException &exception);
 
+public:
+
+    void beginResolve(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing);
+
+    void continueResolve(std::map<QString, NodeType>::const_iterator node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing);
+
+    void continuePing(bool isSafeCheck, std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
+
+    void finalizeLookup(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
+
 private:
 
     void process();
@@ -168,17 +105,11 @@ private:
 
     void saveToFile(const QString &file, const system_time_point &tp, const std::map<QString, NodeType> &expectedNodes);
 
-    void continueResolve(std::map<QString, NodeType>::const_iterator node);
-
-    void continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node);
-
-    void finalizeLookup();
-
-    void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
+    /*void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
 
     void finalizeRefresh(const NodeType::Node &node);
 
-    void processRefresh();
+    void processRefresh();*/
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
@@ -188,7 +119,9 @@ private:
         const QByteArray &byteArray,
         std::map<QString, NodeType>::const_iterator node,
         time_point now,
-        size_t countRepeat
+        size_t countRepeat,
+        std::vector<QString> &ipsTemp,
+        const std::function<void()> &beginPing
     );
 
     std::vector<NodeTypeStatus> getNodesStatus() const;
@@ -205,13 +138,9 @@ private:
 
     std::map<QString, NodeType> nodes;
 
-    std::vector<QString> ipsTemp;
-
     std::vector<QString> ipsTempRefresh;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
-
-    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
 
     milliseconds msTimer = 10s;
 
@@ -222,8 +151,6 @@ private:
     time_point startScanTime;
 
     std::atomic<bool> isResetFilledFile{false};
-
-    bool isSafeCheck = false;
 
     milliseconds passedTime;
 
@@ -236,10 +163,6 @@ private:
     int dnsServerPort;
 
     time_point prevPrintTime;
-
-    bool isProcess = false;
-
-    bool isProcessRefresh = false;
 
     std::vector<std::pair<QString, size_t>> defectiveTorrents;
 

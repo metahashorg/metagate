@@ -217,7 +217,8 @@ HEADERS += mainwindow.h \
     ManagerWrapperImpl.h \
     NsLookup/TaskManager.h \
     NsLookup/NslWorker.h \
-    NsLookup/FullWorker.h
+    NsLookup/FullWorker.h \
+    NsLookup/NsLookupStructs.h
 
 FORMS += mainwindow.ui
 

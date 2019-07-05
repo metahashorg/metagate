@@ -1,7 +1,11 @@
 #ifndef FULLWORKER_H
 #define FULLWORKER_H
 
+#include <map>
+#include <vector>
+
 #include "NslWorker.h"
+#include "NsLookupStructs.h"
 
 #include "duration.h"
 
@@ -33,11 +37,21 @@ private:
 
     void beginWork(const WorkerGuard &workerGuard);
 
+    void beginPing(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node);
+
+    void continueResolve(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node);
+
+    void finalizeLookup(const WorkerGuard &workerGuard);
+
     void endWork(const WorkerGuard &workerGuard);
 
 private:
 
     NsLookup &ns;
+
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
+
+    std::vector<QString> ipsTemp;
 
 };
 
