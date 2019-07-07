@@ -8,8 +8,44 @@
 
 #include "duration.h"
 
-class TimerClass : public QObject {
+class TimerClass;
+
+class TimerClassImpl : public QObject {
     Q_OBJECT
+public:
+
+    TimerClassImpl(TimerClass *tc, const milliseconds &timerPeriod, QObject *parent);
+
+    void exit();
+
+    ~TimerClassImpl();
+
+    void start();
+
+    QThread* getThread();
+
+private slots:
+
+    void onStartedEvent();
+
+    void onTimerEvent();
+
+    void onFinishedEvent();
+
+private:
+
+    TimerClass *tc;
+
+    QThread thread1;
+
+    QTimer qtimer;
+
+    bool isExited = false;
+
+};
+
+class TimerClass {
+    friend class TimerClassImpl;
 public:
 
     TimerClass(const milliseconds &timerPeriod, QObject *parent);
@@ -22,18 +58,6 @@ public:
 
     QThread* getThread();
 
-signals:
-
-    void finished();
-
-private slots:
-
-    void onStartedEvent();
-
-    void onTimerEvent();
-
-    void onFinishedEvent();
-
 protected:
 
     virtual void startMethod() = 0;
@@ -44,11 +68,7 @@ protected:
 
 private:
 
-    QThread thread1;
-
-    QTimer qtimer;
-
-    bool isExited = false;
+    TimerClassImpl impl;
 
 };
 

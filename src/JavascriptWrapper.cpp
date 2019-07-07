@@ -1768,27 +1768,28 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get ips servers " << type << " " << length << " " << count;
 
-    Opt<QString> res;
     const TypedException exception = apiVrapper2([&, this]() {
-        const std::vector<QString> result = nsLookup.getRandomWithoutHttp(type, length, count);
-
-        QString resultStr = "[";
-        bool isFirst = true;
-        for (const QString &r: result) {
-            if (!isFirst) {
-                resultStr += ", ";
+        nsLookup.getRandomServersWithoutHttp(type, length, count, NsLookup::GetServersCallback([this, JS_NAME_RESULT, requestId, type](const std::vector<QString> &servers) {
+            QString resultStr = "[";
+            bool isFirst = true;
+            for (const QString &r: servers) {
+                if (!isFirst) {
+                    resultStr += ", ";
+                }
+                isFirst = false;
+                resultStr += "\"" + r + "\"";
             }
-            isFirst = false;
-            resultStr += "\"" + r + "\"";
-        }
-        resultStr += "]";
+            resultStr += "]";
 
-        res = resultStr;
+            LOG << "get ips servers ok " << type << " " << resultStr;
+
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(resultStr));
+        }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
+        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
     });
 
-    LOG << "get ips servers ok " << type << " " << res.get();
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), res);
+    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), Opt<QString>(""));
 END_SLOT_WRAPPER
 }
 

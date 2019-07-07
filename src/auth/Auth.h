@@ -4,6 +4,7 @@
 #include "TimerClass.h"
 #include "client.h"
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 struct TypedException;
 
@@ -31,18 +32,16 @@ struct LoginInfo
     }
 };
 
-class Auth : public TimerClass
+class Auth : public ManagerWrapper, public TimerClass
 {
     Q_OBJECT
 public:
-    using Callback = std::function<void()>;
-
     using LoginInfoCallback = CallbackWrapper<void(const LoginInfo &info)>;
 public:
 
     explicit Auth(AuthJavascript &javascriptWrapper, QObject *parent = nullptr);
 
-    ~Auth();
+    ~Auth() override;
 
 protected:
 
@@ -88,10 +87,6 @@ signals:
 public slots:
 
     void onGetLoginInfo(const LoginInfoCallback &callback);
-
-private slots:
-
-    void onCallbackCall(Callback callback);
 
 private:
 

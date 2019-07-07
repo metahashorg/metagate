@@ -13,6 +13,8 @@
 
 #include "AuthJavascript.h"
 
+#include "ManagerWrapperImpl.h"
+
 #include "machine_uid.h"
 
 SET_LOG_NAMESPACE("AUTH");
@@ -45,7 +47,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     Q_REG(LoginInfo, "LoginInfo");
 
     tcpClient.setParent(this);
-    Q_CONNECT(&tcpClient, &SimpleClient::callbackCall, this, &Auth::onCallbackCall);
+    Q_CONNECT(&tcpClient, &SimpleClient::callbackCall, this, &Auth::callbackCall);
     tcpClient.moveToThread(TimerClass::getThread());
 
     javascriptWrapper.setAuthManager(*this);
@@ -96,12 +98,6 @@ void Auth::logoutImpl() {
 void Auth::onCheck() {
 BEGIN_SLOT_WRAPPER
     emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
-END_SLOT_WRAPPER
-}
-
-void auth::Auth::onCallbackCall(Callback callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
 END_SLOT_WRAPPER
 }
 

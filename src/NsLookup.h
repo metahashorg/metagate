@@ -17,6 +17,7 @@
 #include "UdpSocketClient.h"
 
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 struct TypedException;
 
@@ -55,7 +56,7 @@ struct NodeInfo {
 
     size_t ping;
 
-    bool isChecked = false;
+    size_t countUpdated = 0;
     bool isTimeout = false;
 
     bool operator< (const NodeInfo &second) const {
@@ -63,12 +64,8 @@ struct NodeInfo {
             return false;
         } else if (second.isTimeout) {
             return true;
-        } else if (this->isChecked && !second.isChecked) {
-            return true;
-        } else if (!this->isChecked && second.isChecked) {
-            return false;
         } else {
-            return this->ping < second.ping;
+            return std::make_pair(-countUpdated, ping) < std::make_pair(-second.countUpdated, second.ping);
         }
     }    
 };
@@ -99,7 +96,7 @@ struct NodeTypeStatus {
     {}
 };
 
-class NsLookup : public TimerClass {
+class NsLookup : public ManagerWrapper, public TimerClass {
     Q_OBJECT
 private:
 
@@ -112,14 +109,12 @@ public:
 
     using GetStatusCallback = CallbackWrapper<void(const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError)>;
 
+    using GetServersCallback = CallbackWrapper<void(const std::vector<QString> &servers)>;
+
 public:
     explicit NsLookup(QObject *parent = nullptr);
 
     ~NsLookup() override;
-
-    std::vector<QString> getRandomWithoutHttp(const QString &type, size_t limit, size_t count) const;
-
-    std::vector<QString> getRandom(const QString &type, size_t limit, size_t count) const;
 
     void resetFile();
 
@@ -135,9 +130,17 @@ signals:
 
     void getStatus(const GetStatusCallback &callback);
 
+    void getRandomServersWithoutHttp(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
+
+    void getRandomServers(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
+
 public slots:
 
     void onGetStatus(const GetStatusCallback &callback);
+
+    void onGetRandomServersWithoutHttp(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
+
+    void onGetRandomServers(const QString &type, size_t limit, size_t count, const GetServersCallback &callback);
 
 signals:
 
@@ -152,10 +155,6 @@ signals:
     void finished();
 
     void serversFlushed(const TypedException &exception);
-
-public slots:
-
-    void callbackCall(SimpleClient::ReturnCallback callback);
 
 private:
 
@@ -172,12 +171,6 @@ private:
     void continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node);
 
     void finalizeLookup();
-
-    void continueResolveP2P(std::map<QString, NodeType>::const_iterator node);
-
-    void continuePingP2P(std::vector<std::pair<NodeType::SubType, QString>>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node, const NodeType &nodeTorrent, const NodeType &nodeProxy);
-
-    void finalizeLookupP2P();
 
     void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
 
@@ -214,15 +207,9 @@ private:
 
     std::vector<QString> ipsTempRefresh;
 
-    std::vector<std::pair<NodeType::SubType, QString>> ipsTempP2P;
-
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesNew;
-
-    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesP2P;
-
-    mutable std::mutex nodeMutex;
 
     milliseconds msTimer = 10s;
 
@@ -240,15 +227,11 @@ private:
 
     CacheDns cacheDns;
 
-    int countSuccessTestsForP2PNodes = 0;
-
     seconds timeoutRequestNodes;
 
     QString dnsServerName;
 
     int dnsServerPort;
-
-    bool useUsersServers = false;
 
     time_point prevPrintTime;
 
@@ -261,6 +244,8 @@ private:
     DnsErrorDetails dnsErrorDetails;
 
     size_t randomCounter = 0;
+
+    size_t updateNumber = 0;
 };
 
 #endif // NSLOOKUP_H

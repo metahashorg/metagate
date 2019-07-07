@@ -15,13 +15,13 @@ struct TypedException;
 
 namespace messenger {
 
-class CryptographicManager : public TimerClass {
+class CryptographicManager : public QObject, public TimerClass {
     Q_OBJECT
 public:
 
     explicit CryptographicManager(QObject *parent = nullptr);
 
-    ~CryptographicManager();
+    ~CryptographicManager() override;
 
     bool isSaveDecrypted() const {
         return isSaveDecrypted_;

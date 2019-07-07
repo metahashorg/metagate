@@ -10,13 +10,13 @@
 
 struct TypedException;
 
-class WebSocketClient : public TimerClass
+class WebSocketClient : public QObject, public TimerClass
 {
     Q_OBJECT
 public:
     explicit WebSocketClient(const QString &url, QObject *parent = nullptr);
 
-    ~WebSocketClient();
+    ~WebSocketClient() override;
 
 protected:
 

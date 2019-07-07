@@ -9,6 +9,7 @@
 
 #include "InitializerJavascript.h"
 #include "InitInterface.h"
+#include "ManagerWrapperImpl.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -108,7 +109,7 @@ END_SLOT_WRAPPER
 
 void Initializer::onResendAllStates(const GetAllStatesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         if (isCompleteSets) {
             int cCritical = 0;
             for (size_t i = 0; i < states.size(); i++) {
@@ -124,56 +125,49 @@ BEGIN_SLOT_WRAPPER
                 sendInitializedToJs(isErrorExist);
             }
         }
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Initializer::onJavascriptReady(bool force, const ReadyCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    ReadyType result = ReadyType::Error;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         if (!isCriticalInitFinished) {
-            result = ReadyType::CriticalAdvance;
-            return;
+            return ReadyType::CriticalAdvance;
         }
         if (isErrorCritical) {
-            result = ReadyType::NotSuccessCritical;
-            return;
+            return ReadyType::NotSuccessCritical;
         }
         if (!isInitFinished && !force) {
-            result = ReadyType::Advance;
-            return;
+            return ReadyType::Advance;
         }
         if (isErrorExist && !force) {
-            result = ReadyType::NotSuccess;
-            return;
+            return ReadyType::NotSuccess;
         }
         for (std::unique_ptr<InitInterface> &init: initializiers) {
             init->complete();
         }
-        result = ReadyType::Finish;
-    });
-    callback.emitFunc(exception, result);
+        return ReadyType::Finish;
+    }, callback, ReadyType::Error);
 END_SLOT_WRAPPER
 }
 
 void Initializer::onGetAllTypes(const GetTypesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<QString> result;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
+        std::vector<QString> result;
         for (const auto &init: initializiers) {
             result.emplace_back(init->getType());
         }
-    });
-    callback.emitFunc(exception, result);
+        return result;
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Initializer::onGetAllSubTypes(const GetSubTypesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<StateType> result;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
+        std::vector<StateType> result;
         for (const auto &init: initializiers) {
             const QString type = init->getType();
             const auto subTypes = init->getSubtypes();
@@ -181,8 +175,8 @@ BEGIN_SLOT_WRAPPER
                 result.emplace_back(type, std::get<0>(subType), std::get<1>(subType), std::get<2>(subType));
             }
         }
-    });
-    callback.emitFunc(exception, result);
+        return result;
+    }, callback);
 END_SLOT_WRAPPER
 }
 

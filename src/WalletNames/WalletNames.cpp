@@ -23,6 +23,7 @@
 #include "Wallet.h"
 #include "WalletNamesDbStorage.h"
 #include "WalletNamesMessages.h"
+#include "ManagerWrapperImpl.h"
 
 using namespace std::placeholders;
 
@@ -48,8 +49,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
-    Q_CONNECT(this, &WalletNames::callbackCall, this, &WalletNames::onCallbackCall);
-
     Q_CONNECT(&client, &WebSocketClient::messageReceived, this, &WalletNames::onWssMessageReceived);
     Q_CONNECT(&authManager, &auth::Auth::logined, this, &WalletNames::onLogined);
 
@@ -64,8 +63,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     Q_REG(GetWalletNameCallback, "GetWalletNameCallback");
     Q_REG(GetAllWalletsCurrencyCallback, "GetAllWalletsCurrencyCallback");
 
-    signalFunc = std::bind(&WalletNames::callbackCall, this, _1);
-
     emit authManager.reEmit();
 
     httpClient.setParent(this);
@@ -77,12 +74,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
 
 WalletNames::~WalletNames() {
     TimerClass::exit();
-}
-
-void WalletNames::onCallbackCall(WalletNames::Callback callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
 }
 
 void WalletNames::startMethod() {
@@ -144,18 +135,17 @@ void WalletNames::getAllWalletsApps() {
 
 void WalletNames::onAddOrUpdateWallets(const std::vector<WalletInfo> &infos, const AddWalletsNamesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException &exception = apiVrapper2([&]{
+    runAndEmitCallback([&]{
         for (const WalletInfo &info: infos) {
             db.addOrUpdateWallet(info);
         }
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void WalletNames::onSaveWalletName(const QString &address, const QString &name, const SaveWalletNameCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException &exception = apiVrapper2([&]{
+    runAndEmitCallback([&]{
         db.giveNameWallet(address, name);
         const QString message = makeRenameMessage(address, name, id.get(), token, hwid);
         if (stateRequest == StateRequest::Requested) {
@@ -167,18 +157,15 @@ BEGIN_SLOT_WRAPPER
         emit httpClient.sendMessagePost(serverName, message2, [](const std::string &result, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), "Server error: " + exception.toString());
         });
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void WalletNames::onGetWalletName(const QString &address, const GetWalletNameCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString result;
-    const TypedException &exception = apiVrapper2([&]{
-        result = db.getNameWallet(address);
-    });
-    callback.emitFunc(exception, result);
+    runAndEmitCallback([&]{
+        return db.getNameWallet(address);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
@@ -222,7 +209,7 @@ static WalletInfo::Info::Type convertTypes(const Wallet::Type &type) {
 
 void WalletNames::onGetAllWalletsCurrency(const QString &currency, const GetAllWalletsCurrencyCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException &exception = apiVrapper2([&]{
+    runAndEmitErrorCallback([&]{
         const auto processWallets = [this](const JavascriptWrapper::WalletCurrency &currency, const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
             const QString currencyStr = walletCurrencyToStr(currency);
 
@@ -285,10 +272,7 @@ BEGIN_SLOT_WRAPPER
                 }, callback, signalFunc));
             }, callback, signalFunc));
         }
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
