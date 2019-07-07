@@ -214,11 +214,15 @@ std::vector<QString> Messenger::getAddresses() const {
     return result;
 }
 
-void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
+void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to, bool missed) {
     const QString pubkeyHex = db.getUserPublicKey(fromAddress);
     CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + fromAddress.toStdString());
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
-    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
+    size_t requestId = id.get();
+    messageRetrieves.insert(requestId);
+    if (missed)
+        ids.insert(requestId);
+    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, requestId);
     emit wssClient.sendMessage(message);
 }
 
@@ -376,7 +380,7 @@ void Messenger::timerMethod() {
     }
 }
 
-void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel) {
+void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId) {
     CHECK(!messages.empty(), "Empty messages");
 
     std::vector<Message> msgs;
@@ -402,7 +406,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         return message;
     });
 
-    const auto nextProcess = [this, isChannel, address](const std::vector<Message> &messages) {
+    const auto nextProcess = [this, isChannel, address, requestId](const std::vector<Message> &messages) {
         CHECK(!messages.empty(), "Empty messages");
         const QString channel = isChannel ? messages.front().channel : "";
 
@@ -410,6 +414,15 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         CHECK(std::is_sorted(messages.begin(), messages.end()), "Messages not sorted");
         const Message::Counter minCounterInServer = messages.front().counter;
         const Message::Counter maxCounterInServer = messages.back().counter;
+
+        bool showNotifies = true;
+        if (ids.contains(requestId)) {
+            ids.remove(requestId);
+            showNotifies = false;
+            retrievedMissed += messages.size();
+            if (ids.isEmpty())
+                emit showNotification(tr("Retrivied %1 messages").arg(retrievedMissed), QStringLiteral(""));
+        }
 
         bool deffer = false;
         for (const Message &m: messages) {
@@ -423,7 +436,8 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
 
             if (m.isInput) {
                 LOG << "Add message " << m.username << " " << channel << " " << m.collocutor << " " << m.counter;
-                emit showNotification(tr("Message from %1").arg(m.collocutor), QStringLiteral(""));
+                if (showNotifies)
+                    emit showNotification(tr("Message from %1").arg(m.collocutor), QStringLiteral(""));
                 db.addMessage(m);
                 const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
                 const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
@@ -543,15 +557,19 @@ BEGIN_SLOT_WRAPPER
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
         LOG << "New msg " << responseType.address << " " << messages.collocutor << " " << messages.counter;
-        processMessages(responseType.address, {messages}, messages.isChannel);
+        processMessages(responseType.address, {messages}, messages.isChannel, responseType.id);
     } else if (responseType.method == METHOD::NEW_MSGS) {
         const std::vector<NewMessageResponse> messages = parseNewMessagesResponse(messageJson);
         LOG << "New msgs " << responseType.address << " " << messages.size();
-        processMessages(responseType.address, messages, false);
+        //qDebug() << requestId << messageRetrieves.toList();
+        if (messageRetrieves.contains(responseType.id)) {
+            messageRetrieves.remove(responseType.id);
+            processMessages(responseType.address, messages, false, responseType.id);
+        }
     } else if (responseType.method == METHOD::GET_CHANNEL) {
         const std::vector<NewMessageResponse> messages = parseGetChannelResponse(messageJson);
         LOG << "New msgs " << responseType.address << " " << messages.size();
-        processMessages(responseType.address, messages, true);
+        processMessages(responseType.address, messages, true, responseType.id);
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
         LOG << "Send to addr ok " << responseType.address;
         invokeCallback(responseType.id, TypedException());
@@ -986,12 +1004,15 @@ BEGIN_SLOT_WRAPPER
         emit wssClient.addHelloString(messageGetMyChannels, "Messenger");
         emit wssClient.sendMessage(messageGetMyChannels);
         // Get missed messages
+        messageRetrieves.clear();
+        ids.clear();
+        retrievedMissed = 0;
         for (const QString &address: addresses) {
             const QString pubkeyHex = db.getUserPublicKey(address);
             if (pubkeyHex.isEmpty())
                 continue;
             const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(address);
-            getMessagesFromAddressFromWss(address, currCounter + 1, -1);
+            getMessagesFromAddressFromWss(address, currCounter + 1, -1, true);
         }
         //
     });

@@ -349,7 +349,7 @@ private slots:
 
 private:
 
-    void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to);
+    void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to, bool missed = false);
 
     void getMessagesFromChannelFromWss(const QString &fromAddress, const QString &channelSha, Message::Counter from, Message::Counter to);
 
@@ -357,7 +357,7 @@ private:
 
     void addAddressToMonitored(const QString &address);
 
-    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel);
+    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId);
 
     bool checkSignsAddress(const QString &address) const;
 
@@ -374,6 +374,9 @@ private:
 private:
 
     bool isDecryptDataSave = false;
+    int retrievedMissed = 0;
+    QSet<size_t> ids;
+    QSet<size_t> messageRetrieves;
 
     MessengerDBStorage &db;
 
