@@ -17,7 +17,7 @@ namespace nslookup {
 
 static const std::string TYPE = "RefreshNode_Worker";
 
-static const seconds CONTROL_CHECK_EXPIRE = 35s;
+static const seconds CONTROL_CHECK_EXPIRE = 30s;
 
 RefreshNodeWorker::RefreshNodeWorker(TaskManager &manager, NsLookup &ns, const Task &task)
     : NslWorker(manager)

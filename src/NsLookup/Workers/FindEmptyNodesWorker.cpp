@@ -18,7 +18,7 @@ namespace nslookup {
 static const std::string TYPE = "FindEmptyNodes_Worker";
 static const std::string SUB_TYPE = "All";
 
-static const seconds REPEAT_CHECK = 1min;
+static const seconds REPEAT_CHECK = 40s;
 
 FindEmptyNodesWorker::FindEmptyNodesWorker(TaskManager &manager, NsLookup &ns, const Task &task)
     : NslWorker(manager)

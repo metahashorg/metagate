@@ -18,8 +18,8 @@ namespace nslookup {
 static const std::string TYPE = "Full_Worker";
 static const std::string SUB_TYPE = "Full";
 
-static const seconds CONTROL_CHECK = 10min;
-static const seconds CONTROL_CHECK_EXPIRE = CONTROL_CHECK + 5min;
+static const seconds CONTROL_CHECK = 3min;
+static const seconds CONTROL_CHECK_EXPIRE = CONTROL_CHECK + 2min;
 static const seconds REPEAT_CHECK = hours(24);
 
 FullWorker::FullWorker(TaskManager &manager, NsLookup &ns, const Task &task)
