@@ -30,6 +30,7 @@ class FullWorker;
 class SimpleWorker;
 class RefreshIpWorker;
 class RefreshNodeWorker;
+class FindEmptyNodesWorker;
 }
 
 class NsLookup : public ManagerWrapper, public TimerClass {
@@ -37,6 +38,7 @@ friend class nslookup::FullWorker;
 friend class nslookup::SimpleWorker;
 friend class nslookup::RefreshIpWorker;
 friend class nslookup::RefreshNodeWorker;
+friend class nslookup::FindEmptyNodesWorker;
     Q_OBJECT
 private:
 
@@ -123,6 +125,9 @@ protected:
     size_t countWorkedNodes(const NodeType::Node &node) const;
 
     size_t countWorkedNodes(const QString &nodeStr) const;
+
+
+    void findAndRefreshEmptyNodes();
 
 private:
 

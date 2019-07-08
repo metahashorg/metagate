@@ -26,6 +26,8 @@
 #include "Workers/FullWorker.h"
 #include "Workers/SimpleWorker.h"
 #include "Workers/RefreshIpWorker.h"
+#include "Workers/RefreshNodeWorker.h"
+#include "Workers/FindEmptyNodesWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -119,6 +121,8 @@ NsLookup::NsLookup(QObject *parent)
         taskManager.addTask(FullWorker::makeTask(std::chrono::duration_cast<seconds>(UPDATE_PERIOD - passedTime)));
     }
 
+    taskManager.addTask(FindEmptyNodesWorker::makeTask(1min));
+
     Q_CONNECT(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall);
 
     client.setParent(this);
@@ -191,6 +195,14 @@ size_t NsLookup::countWorkedNodes(const NodeType::Node &node) const {
 
 size_t NsLookup::countWorkedNodes(const QString &nodeStr) const {
     return countWorkedNodes(NodeType::Node(nodeStr));
+}
+
+void NsLookup::findAndRefreshEmptyNodes() {
+    for (const auto &pair: allNodesForTypes) {
+        if (countWorkedNodes(pair.second) == 0) {
+            taskManager.addTask(RefreshNodeWorker::makeTask(0s, pair.first.str()));
+        }
+    }
 }
 
 void NsLookup::process() {
