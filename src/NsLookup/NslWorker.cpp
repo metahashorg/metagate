@@ -11,6 +11,7 @@
 #include "Workers/RefreshIpWorker.h"
 #include "Workers/RefreshNodeWorker.h"
 #include "Workers/FindEmptyNodesWorker.h"
+#include "Workers/PrintNodesWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -69,6 +70,8 @@ std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLook
         return std::make_shared<RefreshNodeWorker>(taskManager, nsLookup, task);
     } else if (FindEmptyNodesWorker::isThisWorker(task.name)) {
         return std::make_shared<FindEmptyNodesWorker>(taskManager, nsLookup, task);
+    } else if (PrintNodesWorker::isThisWorker(task.name)) {
+        return std::make_shared<PrintNodesWorker>(taskManager, nsLookup, task);
     } else {
         throwErr("Incorrect task: " + task.name);
     }

@@ -31,6 +31,7 @@ class SimpleWorker;
 class RefreshIpWorker;
 class RefreshNodeWorker;
 class FindEmptyNodesWorker;
+class PrintNodesWorker;
 }
 
 class NsLookup : public ManagerWrapper, public TimerClass {
@@ -39,6 +40,7 @@ friend class nslookup::SimpleWorker;
 friend class nslookup::RefreshIpWorker;
 friend class nslookup::RefreshNodeWorker;
 friend class nslookup::FindEmptyNodesWorker;
+friend class nslookup::PrintNodesWorker;
     Q_OBJECT
 private:
 
@@ -129,6 +131,9 @@ protected:
 
     void findAndRefreshEmptyNodes();
 
+
+    void printNodes() const;
+
 private:
 
     void process();
@@ -153,8 +158,6 @@ private:
     );
 
     std::vector<NodeTypeStatus> getNodesStatus() const;
-
-    void printNodes() const;
 
     size_t countWorkedNodes(const std::vector<NodeInfo> &nodes) const;
 
@@ -182,13 +185,9 @@ private:
 
     int dnsServerPort;
 
-    time_point prevPrintTime;
-
     std::vector<std::pair<QString, size_t>> defectiveTorrents;
 
     DnsErrorDetails dnsErrorDetails;
-
-    size_t randomCounter = 0;
 
     size_t updateNumber = 0;
 

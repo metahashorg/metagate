@@ -28,6 +28,7 @@
 #include "Workers/RefreshIpWorker.h"
 #include "Workers/RefreshNodeWorker.h"
 #include "Workers/FindEmptyNodesWorker.h"
+#include "Workers/PrintNodesWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -117,11 +118,12 @@ NsLookup::NsLookup(QObject *parent)
     if (passedTime >= UPDATE_PERIOD) {
         taskManager.addTask(FullWorker::makeTask(0s));
     } else {
-        taskManager.addTask(SimpleWorker::makeTask(seconds(0)));
+        taskManager.addTask(SimpleWorker::makeTask(0s));
         taskManager.addTask(FullWorker::makeTask(std::chrono::duration_cast<seconds>(UPDATE_PERIOD - passedTime)));
     }
 
     taskManager.addTask(FindEmptyNodesWorker::makeTask(1min));
+    taskManager.addTask(PrintNodesWorker::makeTask(0s));
 
     Q_CONNECT(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall);
 
