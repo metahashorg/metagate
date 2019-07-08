@@ -23,7 +23,7 @@ bool Task::operator>(const Task &second) const {
 }
 
 bool Task::isTime(const system_time_point &tp1, const time_point &tp2) const {
-    return execTime1 >= tp1 || execTime2 >= tp2;
+    return tp1 >= execTime1 || tp2 >= execTime2;
 }
 
 TaskRecord::TaskRecord() = default;

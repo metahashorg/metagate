@@ -52,12 +52,12 @@ bool RefreshIpWorker::checkIsActual() const {
 }
 
 void RefreshIpWorker::runWorkImpl(WorkerGuard workerGuard) {
-    tt.reset();
-    LOG << "RefreshIp worker started " << t.address;
     beginWork(workerGuard);
 }
 
 void RefreshIpWorker::beginWork(const WorkerGuard &workerGuard) {
+    tt.reset();
+    LOG << "RefreshIp worker started " << t.address;
     const auto beginPing = std::bind(&RefreshIpWorker::beginPing, this, workerGuard, _1);
 
     ns.processRefreshIp(t.address, ipsTemp, beginPing);
@@ -74,9 +74,8 @@ void RefreshIpWorker::continueResolve(const WorkerGuard &workerGuard, const Node
 }
 
 void RefreshIpWorker::finalizeLookup(const WorkerGuard &workerGuard, const NodeType& node) {
-    const auto endWork = std::bind(&RefreshIpWorker::endWork, this, workerGuard);
-
-    ns.finalizeRefreshIp(node.node, allNodesForTypes, endWork);
+    ns.finalizeRefreshIp(node.node, allNodesForTypes);
+    endWork(workerGuard);
 }
 
 void RefreshIpWorker::endWork(const WorkerGuard &workerGuard) {

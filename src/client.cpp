@@ -259,6 +259,10 @@ void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, cons
 }
 
 void SimpleClient::sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout) {
+    if (urls.empty()) {
+        callback({});
+        return;
+    }
     const auto callbackImpl = std::make_shared<CallbackWrapImpl<ClientCallbacks, std::string, ServerException>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, urls.size());
     size_t index = 0;
     for (const QUrl &address: urls) {
@@ -285,6 +289,10 @@ void SimpleClient::ping(const QString &address, const PingCallback &callback, mi
 }
 
 void SimpleClient::pings(const std::string printedName, const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout) {
+    if (addresses.empty()) {
+        callback({});
+        return;
+    }
     const auto callbackImpl = std::make_shared<CallbackWrapImpl<PingsCallback, QString, milliseconds, std::string>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, addresses.size());
     size_t index = 0;
     for (const QString &address: addresses) {

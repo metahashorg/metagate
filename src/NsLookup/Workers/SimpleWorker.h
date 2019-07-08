@@ -49,8 +49,6 @@ private:
 
     NsLookup &ns;
 
-    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
-
     std::vector<QString> ipsTemp;
 
     Timer tt;

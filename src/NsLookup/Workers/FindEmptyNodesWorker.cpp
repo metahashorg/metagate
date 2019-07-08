@@ -48,12 +48,12 @@ bool FindEmptyNodesWorker::checkIsActual() const {
 }
 
 void FindEmptyNodesWorker::runWorkImpl(WorkerGuard workerGuard) {
-    tt.reset();
-    LOG << "FindEmptyNodes worker started";
     beginWork(workerGuard);
 }
 
 void FindEmptyNodesWorker::beginWork(const WorkerGuard &workerGuard) {
+    tt.reset();
+    LOG << "FindEmptyNodes worker started";
     addNewTask(makeTask(REPEAT_CHECK));
 
     ns.findAndRefreshEmptyNodes();

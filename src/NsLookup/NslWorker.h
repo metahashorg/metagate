@@ -54,7 +54,7 @@ private:
 
     TaskManager &manager;
 
-    bool finished = false;
+    bool finished = true;
 };
 
 std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLookup, const Task &task);

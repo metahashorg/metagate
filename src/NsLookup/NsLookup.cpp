@@ -116,13 +116,14 @@ NsLookup::NsLookup(QObject *parent)
     }
 
     if (passedTime >= UPDATE_PERIOD) {
+        taskManager.addTask(SimpleWorker::makeTask(10min));
         taskManager.addTask(FullWorker::makeTask(0s));
     } else {
         taskManager.addTask(SimpleWorker::makeTask(0s));
         taskManager.addTask(FullWorker::makeTask(std::chrono::duration_cast<seconds>(UPDATE_PERIOD - passedTime)));
     }
 
-    taskManager.addTask(FindEmptyNodesWorker::makeTask(1min));
+    taskManager.addTask(FindEmptyNodesWorker::makeTask(0s));
     taskManager.addTask(PrintNodesWorker::makeTask(0s));
 
     Q_CONNECT(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall);
@@ -217,32 +218,31 @@ void NsLookup::process() {
         const std::shared_ptr<NslWorker> worker = makeWorker(taskManager, *this, task);
         if (worker->isActual()) {
             updateNumber++;
-            worker->runWork(worker);
+            taskManager.runWork(worker);
         }
     }
 }
 
-void NsLookup::finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup) {
-    allNodesForTypes.swap(allNodesForTypesNew);
+void NsLookup::saveAll(bool isFullFill) {
     sortAll();
     if (isFullFill) {
         filledFileTp = system_now();
     }
     saveToFile(savedNodesPath, filledFileTp, nodes);
-
-    defectiveTorrents.clear();
-
-    endLookup();
 }
 
-void NsLookup::finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew, const std::function<void()> &endLookup) {
-    allNodesForTypes[node] = allNodesForTypesNew;
-    sortAll();
-    saveToFile(savedNodesPath, filledFileTp, nodes);
+void NsLookup::finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
+    allNodesForTypes.swap(allNodesForTypesNew);
+    saveAll(isFullFill);
 
     defectiveTorrents.clear();
+}
 
-    endLookup();
+void NsLookup::finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew) {
+    allNodesForTypes[node] = allNodesForTypesNew;
+    saveAll(false);
+
+    defectiveTorrents.clear();
 }
 
 bool NsLookup::repeatResolveDns(
@@ -294,7 +294,6 @@ bool NsLookup::repeatResolveDns(
 }
 
 void NsLookup::beginResolve(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing) {
-    const time_point startScan = ::now();
     continueResolve(std::begin(nodes), allNodesForTypesNew, ipsTemp, finalizeLookup, beginPing);
 }
 
@@ -374,7 +373,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
     }, 2s);
 }
 
-void NsLookup::continuePingSafe(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+void NsLookup::continuePingSafe(const NodeType &node, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
     if (allNodesForTypes[node.node].empty()) {
         continueResolve();
         return;
@@ -427,7 +426,7 @@ void NsLookup::continuePingSafe(std::vector<QString>::const_iterator ipsIter, co
     }, 2s);
 }
 
-void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup) {
+void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
     const std::vector<NodeInfo> &nds = allNodesForTypesNew[node];
     for (auto iter = defectiveTorrents.begin(); iter != defectiveTorrents.end();) {
         if (std::find_if(nds.cbegin(), nds.cend(), [n=*iter](const NodeInfo &info) {
@@ -442,8 +441,7 @@ void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::
     LOG << "Updated ip status. Left " << defectiveTorrents.size();
 
     allNodesForTypes[node] = allNodesForTypesNew[node];
-    sortAll();
-    saveToFile(savedNodesPath, filledFileTp, nodes);
+    saveAll(false);
 }
 
 void NsLookup::fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp) {
@@ -489,21 +487,6 @@ void NsLookup::processRefreshIp(const QString &address, std::vector<QString> &ip
             break;
         }
     }
-        /*std::vector<std::map<NodeType::Node, std::vector<NodeInfo>>::const_iterator> pairs;
-        for (auto pairNodes = allNodesForTypes.cbegin(); pairNodes != allNodesForTypes.cend(); pairNodes++) {
-            const size_t countWorked = countWorkedNodes(pairNodes->second);
-            if (countWorked == 0) {
-                pairs.emplace_back(pairNodes);
-            }
-        }
-
-        if (!pairs.empty()) {
-            const size_t counter = randomCounter++;
-            const auto &pairNodes = pairs[counter % pairs.size()];
-            LOG << "Update status for type: " << pairNodes->first.str();
-
-            cntPing(pairNodes->first, pairNodes->second);
-        }*/
 }
 
 void NsLookup::sortAll() {

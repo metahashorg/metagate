@@ -61,12 +61,12 @@ bool FullWorker::checkIsActual() const {
 }
 
 void FullWorker::runWorkImpl(WorkerGuard workerGuard) {
-    tt.reset();
-    LOG << "Full worker started";
     beginWork(workerGuard);
 }
 
 void FullWorker::beginWork(const WorkerGuard &workerGuard) {
+    tt.reset();
+    LOG << "Full worker started";
     addNewTask(makeTask(CONTROL_CHECK));
 
     const auto finLookup = std::bind(&FullWorker::finalizeLookup, this, workerGuard);
@@ -89,9 +89,8 @@ void FullWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QStrin
 }
 
 void FullWorker::finalizeLookup(const WorkerGuard &workerGuard) {
-    const auto endWork = std::bind(&FullWorker::endWork, this, workerGuard);
-
-    ns.finalizeLookup(true, allNodesForTypes, endWork);
+    ns.finalizeLookup(true, allNodesForTypes);
+    endWork(workerGuard);
 }
 
 void FullWorker::endWork(const WorkerGuard &workerGuard) {

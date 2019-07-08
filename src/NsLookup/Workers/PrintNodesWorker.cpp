@@ -48,7 +48,6 @@ bool PrintNodesWorker::checkIsActual() const {
 }
 
 void PrintNodesWorker::runWorkImpl(WorkerGuard workerGuard) {
-    tt.reset();
     beginWork(workerGuard);
 }
 
@@ -61,8 +60,6 @@ void PrintNodesWorker::beginWork(const WorkerGuard &workerGuard) {
 }
 
 void PrintNodesWorker::endWork(const WorkerGuard &workerGuard) {
-    tt.stop();
-
     finishWork(workerGuard);
 }
 

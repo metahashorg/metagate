@@ -108,18 +108,21 @@ protected:
 
     void continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
 
-    void continuePingSafe(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
+    void continuePingSafe(const NodeType &node, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
 
-    void finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
+    void finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
 
-    void finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew, const std::function<void()> &endLookup);
+    void finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew);
+
+    void saveAll(bool isFullFill);
+
 
 
     size_t findCountUpdatedIp(const QString &address) const;
 
     void processRefreshIp(const QString &address, std::vector<QString> &ipsTemp, const std::function<void(const NodeType &node)> &beginPing);
 
-    void finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
+    void finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
 
 
     void fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp);

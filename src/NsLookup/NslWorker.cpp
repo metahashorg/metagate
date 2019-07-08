@@ -32,6 +32,7 @@ bool NslWorker::isActual() const {
 }
 
 void NslWorker::runWork(WorkerGuard workerGuard) {
+    finished = false;
     runWorkImpl(workerGuard);
 }
 

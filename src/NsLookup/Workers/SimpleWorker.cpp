@@ -60,37 +60,38 @@ bool SimpleWorker::checkIsActual() const {
 }
 
 void SimpleWorker::runWorkImpl(WorkerGuard workerGuard) {
-    tt.reset();
-    LOG << "Simple worker started";
     beginWork(workerGuard);
 }
 
 void SimpleWorker::beginWork(const WorkerGuard &workerGuard) {
+    tt.reset();
+    LOG << "Simple worker started";
     addNewTask(makeTask(REPEAT_CHECK));
 
     const auto finLookup = std::bind(&SimpleWorker::finalizeLookup, this, workerGuard);
     const auto beginPing = std::bind(&SimpleWorker::beginPing, this, workerGuard, _1);
 
-    ns.beginResolve(allNodesForTypes, ipsTemp, finLookup, beginPing);
+    auto tmp = std::map<NodeType::Node, std::vector<NodeInfo>>();
+    ns.beginResolve(tmp, ipsTemp, finLookup, beginPing);
 }
 
 void SimpleWorker::beginPing(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node) {
     const auto continueResolve = std::bind(&SimpleWorker::continueResolve, this, workerGuard, node);
 
-    ns.continuePingSafe(std::begin(ipsTemp), node->second, allNodesForTypes, ipsTemp, continueResolve);
+    ns.continuePingSafe(node->second, ipsTemp, continueResolve);
 }
 
 void SimpleWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node) {
     const auto finalizeLookup = std::bind(&SimpleWorker::finalizeLookup, this, workerGuard);
     const auto beginPing = std::bind(&SimpleWorker::beginPing, this, workerGuard, _1);
 
-    ns.continueResolve(std::next(node), allNodesForTypes, ipsTemp, finalizeLookup, beginPing);
+    auto tmp = std::map<NodeType::Node, std::vector<NodeInfo>>();
+    ns.continueResolve(std::next(node), tmp, ipsTemp, finalizeLookup, beginPing);
 }
 
 void SimpleWorker::finalizeLookup(const WorkerGuard &workerGuard) {
-    const auto endWork = std::bind(&SimpleWorker::endWork, this, workerGuard);
-
-    ns.finalizeLookup(false, allNodesForTypes, endWork);
+    ns.saveAll(false);
+    endWork(workerGuard);
 }
 
 void SimpleWorker::endWork(const WorkerGuard &workerGuard) {

@@ -17,7 +17,7 @@ namespace nslookup {
 
 static const std::string TYPE = "RefreshNode_Worker";
 
-static const seconds CONTROL_CHECK_EXPIRE = 1min;
+static const seconds CONTROL_CHECK_EXPIRE = 35s;
 
 RefreshNodeWorker::RefreshNodeWorker(TaskManager &manager, NsLookup &ns, const Task &task)
     : NslWorker(manager)
@@ -52,7 +52,7 @@ bool RefreshNodeWorker::checkIsActual() const {
         const system_time_point now = ::system_now();
         const bool actual = now - record.time >= CONTROL_CHECK_EXPIRE;
         if (!actual) {
-            LOG << "RefreshNode worker not actual" << t.node;
+            LOG << "RefreshNode worker not actual " << t.node;
             return false;
         }
     }
@@ -66,12 +66,13 @@ bool RefreshNodeWorker::checkIsActual() const {
 }
 
 void RefreshNodeWorker::runWorkImpl(WorkerGuard workerGuard) {
-    tt.reset();
-    LOG << "RefreshNode worker started " << t.node;
     beginWork(workerGuard);
 }
 
 void RefreshNodeWorker::beginWork(const WorkerGuard &workerGuard) {
+    tt.reset();
+    LOG << "RefreshNode worker started " << t.node;
+
     ns.fillNodeStruct(t.node, node, ipsTemp);
 
     beginPing(workerGuard, node);
@@ -88,9 +89,8 @@ void RefreshNodeWorker::continueResolve(const WorkerGuard &workerGuard, const No
 }
 
 void RefreshNodeWorker::finalizeLookup(const WorkerGuard &workerGuard, const NodeType& node) {
-    const auto endWork = std::bind(&RefreshNodeWorker::endWork, this, workerGuard);
-
-    ns.finalizeLookup(node.node, allNodesForTypes[node.node], endWork);
+    ns.finalizeLookup(node.node, allNodesForTypes[node.node]);
+    endWork(workerGuard);
 }
 
 void RefreshNodeWorker::endWork(const WorkerGuard &workerGuard) {
