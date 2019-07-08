@@ -4,8 +4,8 @@
 #include <map>
 #include <vector>
 
-#include "NslWorker.h"
-#include "NsLookupStructs.h"
+#include "../NslWorker.h"
+#include "../NsLookupStructs.h"
 
 #include "duration.h"
 

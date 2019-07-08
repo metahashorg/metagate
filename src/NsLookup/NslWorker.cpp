@@ -6,7 +6,7 @@
 
 #include "TaskManager.h"
 
-#include "FullWorker.h"
+#include "Workers/FullWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 

@@ -104,7 +104,7 @@ SOURCES += main.cpp mainwindow.cpp \
     ManagerWrapper.cpp \
     NsLookup/TaskManager.cpp \
     NsLookup/NslWorker.cpp \
-    NsLookup/FullWorker.cpp
+    NsLookup/Workers/FullWorker.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -217,7 +217,7 @@ HEADERS += mainwindow.h \
     ManagerWrapperImpl.h \
     NsLookup/TaskManager.h \
     NsLookup/NslWorker.h \
-    NsLookup/FullWorker.h \
+    NsLookup/Workers/FullWorker.h \
     NsLookup/NsLookupStructs.h
 
 FORMS += mainwindow.ui

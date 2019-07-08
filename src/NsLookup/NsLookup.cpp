@@ -23,7 +23,7 @@
 #include "algorithms.h"
 
 #include "NslWorker.h"
-#include "FullWorker.h"
+#include "Workers/FullWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 

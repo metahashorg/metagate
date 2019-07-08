@@ -2,9 +2,9 @@
 
 #include <functional>
 
-#include "TaskManager.h"
+#include "../TaskManager.h"
 
-#include "NsLookup.h"
+#include "../NsLookup.h"
 
 #include "check.h"
 #include "Log.h"
