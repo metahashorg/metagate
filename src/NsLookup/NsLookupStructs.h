@@ -38,7 +38,7 @@ struct NodeInfo {
 
     size_t ping;
 
-    size_t countUpdated = 0;
+    size_t countUpdated = 1;
     bool isTimeout = false;
 
     bool operator< (const NodeInfo &second) const {

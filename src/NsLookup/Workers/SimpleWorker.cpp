@@ -19,7 +19,7 @@ static const std::string TYPE = "Simple_Worker";
 static const std::string SUB_TYPE = "Simple";
 
 static const seconds REPEAT_CHECK = 10min;
-static const seconds REPEAT_CHECK_EXPIRE = REPEAT_CHECK - 1min;
+static const seconds REPEAT_CHECK_EXPIRE = REPEAT_CHECK - 2min;
 
 SimpleWorker::SimpleWorker(TaskManager &manager, NsLookup &ns, const Task &task)
     : NslWorker(manager)
@@ -90,7 +90,7 @@ void SimpleWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QStr
 void SimpleWorker::finalizeLookup(const WorkerGuard &workerGuard) {
     const auto endWork = std::bind(&SimpleWorker::endWork, this, workerGuard);
 
-    ns.finalizeLookup(allNodesForTypes, endWork);
+    ns.finalizeLookup(false, allNodesForTypes, endWork);
 }
 
 void SimpleWorker::endWork(const WorkerGuard &workerGuard) {

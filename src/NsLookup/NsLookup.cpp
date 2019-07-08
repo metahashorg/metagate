@@ -103,6 +103,7 @@ NsLookup::NsLookup(QObject *parent)
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
+    filledFileTp = lastFill;
     const system_time_point now = system_now();
     milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
     if (lastFill - now >= hours(1)) {
@@ -198,10 +199,15 @@ void NsLookup::process() {
     }
 }
 
-void NsLookup::finalizeLookup(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup) {
+void NsLookup::finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup) {
     allNodesForTypes.swap(allNodesForTypesNew);
     sortAll();
-    saveToFile(savedNodesPath, system_now(), nodes);
+    if (isFullFill) {
+        filledFileTp = system_now();
+    }
+    saveToFile(savedNodesPath, filledFileTp, nodes);
+
+    defectiveTorrents.clear();
 
     const time_point stopScan = ::now();
 
@@ -390,9 +396,7 @@ void NsLookup::continuePingSafe(std::vector<QString>::const_iterator ipsIter, co
     }, 2s);
 }
 
-/*void NsLookup::finalizeRefresh(const NodeType::Node &node) {
-    isProcessRefresh = false;
-
+void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup) {
     const std::vector<NodeInfo> &nds = allNodesForTypesNew[node];
     for (auto iter = defectiveTorrents.begin(); iter != defectiveTorrents.end();) {
         if (std::find_if(nds.cbegin(), nds.cend(), [n=*iter](const NodeInfo &info) {
@@ -406,78 +410,42 @@ void NsLookup::continuePingSafe(std::vector<QString>::const_iterator ipsIter, co
 
     LOG << "Updated ip status. Left " << defectiveTorrents.size();
 
-    if (!isSafeCheck) {
-        allNodesForTypes[node] = allNodesForTypesNew[node];
-    }
+    allNodesForTypes[node] = allNodesForTypesNew[node];
     sortAll();
-    saveToFile(savedNodesPath, system_now(), nodes);
+    saveToFile(savedNodesPath, filledFileTp, nodes);
 }
 
-void NsLookup::continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node) {
-    if (ipsIter == ipsTempRefresh.end()) {
-        finalizeRefresh(node);
-        return;
-    }
-
-    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTempRefresh.cend())));
-
-    CHECK(countSteps != 0, "Incorrect countSteps");
-    const std::vector<QString> requests(ipsIter, ipsIter + countSteps);
-
-    client.pings(node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-        const TypedException exception = apiVrapper2([&]{
-            CHECK(requestsSize == results.size(), "Incorrect results");
-            for (const auto &result: results) {
-                allNodesForTypesNew[node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
+size_t NsLookup::findCountUpdatedIp(const QString &address) const {
+    for (const auto &pair: allNodesForTypes) {
+        for (const NodeInfo &info: pair.second) {
+            if (getAddressWithoutHttp(address) == getAddressWithoutHttp(info.address)) {
+                return info.countUpdated;
             }
-        });
-
-        if (exception.isSet()) {
-            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
         }
-        continuePingRefresh(std::next(ipsIter, countSteps), node);
-    }, 2s);
+    }
+    return 0;
 }
 
-void NsLookup::processRefresh() {
-    if (isProcess || isProcessRefresh) {
-        return;
-    }
+void NsLookup::processRefreshIp(const QString &address, std::vector<QString> &ipsTemp, const std::function<void(const NodeType &node)> &beginPing) {
+    for (const auto &pairNodes: allNodesForTypes) {
+        if (std::find_if(pairNodes.second.cbegin(), pairNodes.second.cend(), [&address](const NodeInfo &info) {
+            return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(address);
+        }) != pairNodes.second.cend()) {
+            LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
 
-    QString address;
-    for (const auto &pair: defectiveTorrents) {
-        if (pair.second >= 3) {
-            address = pair.first;
+            for (const auto &t: pairNodes.second) {
+                ipsTemp.emplace_back(t.address);
+            }
+
+            const auto foundNodeType = std::find_if(nodes.begin(), nodes.end(), [n=pairNodes.first](const auto &pair) {
+                return pair.second.node.str() == n.str();
+            });
+            CHECK(foundNodeType != nodes.end(), "Not found node for type");
+            beginPing(foundNodeType->second);
             break;
         }
     }
-
-    const auto cntPing = [this](const NodeType::Node &type, const std::vector<NodeInfo> &nodes) {
-        ipsTempRefresh.clear();
-        for (const auto &t: nodes) {
-            ipsTempRefresh.emplace_back(t.address);
-        }
-
-        isProcessRefresh = true;
-
-        continuePingRefresh(std::begin(ipsTempRefresh), type);
-    };
-
-    if (!address.isEmpty()) {
-        allNodesForTypesNew.clear();
-
-        for (const auto &pairNodes: allNodesForTypes) {
-            if (std::find_if(pairNodes.second.cbegin(), pairNodes.second.cend(), [&address](const NodeInfo &info) {
-                return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(address);
-            }) != pairNodes.second.cend()) {
-                LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
-
-                cntPing(pairNodes.first, pairNodes.second);
-                break;
-            }
-        }
-    } else {
-        std::vector<std::map<NodeType::Node, std::vector<NodeInfo>>::const_iterator> pairs;
+        /*std::vector<std::map<NodeType::Node, std::vector<NodeInfo>>::const_iterator> pairs;
         for (auto pairNodes = allNodesForTypes.cbegin(); pairNodes != allNodesForTypes.cend(); pairNodes++) {
             const size_t countWorked = countWorkedNodes(pairNodes->second);
             if (countWorked == 0) {
@@ -491,9 +459,8 @@ void NsLookup::processRefresh() {
             LOG << "Update status for type: " << pairNodes->first.str();
 
             cntPing(pairNodes->first, pairNodes->second);
-        }
-    }
-}*/
+        }*/
+}
 
 void NsLookup::sortAll() {
     for (auto &element: allNodesForTypes) {
@@ -638,9 +605,13 @@ END_SLOT_WRAPPER
 void NsLookup::onRejectServer(const QString &server) {
 BEGIN_SLOT_WRAPPER
     bool isFound = false;
+    QString address;
     for (auto &defective: defectiveTorrents) {
         if (getAddressWithoutHttp(defective.first) == getAddressWithoutHttp(server)) {
             defective.second++;
+            if (defective.second >= 3) {
+                address = defective.first;
+            }
             isFound = true;
             break;
         }
@@ -648,6 +619,11 @@ BEGIN_SLOT_WRAPPER
 
     if (!isFound) {
         defectiveTorrents.emplace_back(server, 1);
+    }
+
+    if (!address.isEmpty()) {
+        const size_t countUpdated = findCountUpdatedIp(address);
+        // Запустить worker с server и countUpdated
     }
 END_SLOT_WRAPPER
 }

@@ -102,7 +102,14 @@ protected:
 
     void continuePingSafe(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
 
-    void finalizeLookup(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
+    void finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
+
+
+    size_t findCountUpdatedIp(const QString &address) const;
+
+    void processRefreshIp(const QString &address, std::vector<QString> &ipsTemp, const std::function<void(const NodeType &node)> &beginPing);
+
+    void finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
 
 private:
 
@@ -113,12 +120,6 @@ private:
     system_time_point fillNodesFromFile(const QString &file, const std::map<QString, NodeType> &expectedNodes);
 
     void saveToFile(const QString &file, const system_time_point &tp, const std::map<QString, NodeType> &expectedNodes);
-
-    /*void continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node);
-
-    void finalizeRefresh(const NodeType::Node &node);
-
-    void processRefresh();*/
 
     std::vector<QString> getRandom(const QString &type, size_t limit, size_t count, const std::function<QString(const NodeInfo &node)> &process) const;
 
@@ -144,6 +145,8 @@ private:
     UdpSocketClient udpClient;
 
     QString savedNodesPath;
+
+    system_time_point filledFileTp;
 
     std::map<QString, NodeType> nodes;
 

@@ -91,7 +91,7 @@ void FullWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QStrin
 void FullWorker::finalizeLookup(const WorkerGuard &workerGuard) {
     const auto endWork = std::bind(&FullWorker::endWork, this, workerGuard);
 
-    ns.finalizeLookup(allNodesForTypes, endWork);
+    ns.finalizeLookup(true, allNodesForTypes, endWork);
 }
 
 void FullWorker::endWork(const WorkerGuard &workerGuard) {
