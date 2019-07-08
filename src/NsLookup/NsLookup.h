@@ -176,6 +176,8 @@ private:
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
+    std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesBackup;
+
     SimpleClient client;
 
     std::atomic<bool> isResetFilledFile{false};

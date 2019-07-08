@@ -557,6 +557,8 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
 
     sortAll();
 
+    allNodesForTypesBackup = allNodesForTypes;
+
     return timePoint;
 }
 
@@ -567,12 +569,24 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp, cons
     content += std::to_string(systemTimePointToInt(tp)) + "\n";
     for (const auto &nodeTypeIter: nodes) {
         const NodeType &nodeType = nodeTypeIter.second;
-        for (const NodeInfo &node: allNodesForTypes[nodeType.node]) {
+        const auto processOneNode = [](const NodeInfo &node, const NodeType &nodeType) {
+            std::string content;
             content += nodeType.type.toStdString() + " ";
             content += node.address.toStdString() + " ";
             content += std::to_string(node.ping) + " ";
             content += (node.isTimeout ? "1" : "0") + std::string(" ");
             content += "\n";
+            return content;
+        };
+        if (countWorkedNodes(allNodesForTypes[nodeType.node]) != 0 || allNodesForTypesBackup[nodeType.node].empty()) {
+            for (const NodeInfo &node: allNodesForTypes[nodeType.node]) {
+                content += processOneNode(node, nodeType);
+            }
+            allNodesForTypesBackup[nodeType.node] = allNodesForTypes[nodeType.node];
+        } else {
+            for (const NodeInfo &node: allNodesForTypesBackup[nodeType.node]) {
+                content += processOneNode(node, nodeType);
+            }
         }
     }
 
