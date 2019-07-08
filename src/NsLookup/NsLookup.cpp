@@ -104,7 +104,7 @@ NsLookup::NsLookup(QObject *parent)
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
     const system_time_point now = system_now();
-    passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
+    milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
     if (lastFill - now >= hours(1)) {
         // Защита от перевода времени назад
         passedTime = UPDATE_PERIOD;
@@ -204,7 +204,6 @@ void NsLookup::finalizeLookup(std::map<NodeType::Node, std::vector<NodeInfo>> &a
     saveToFile(savedNodesPath, system_now(), nodes);
 
     const time_point stopScan = ::now();
-    LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
 
     endLookup();
 }
@@ -312,83 +311,83 @@ static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, 
     return info;
 }
 
-void NsLookup::continuePing(bool isSafeCheck, std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
-    if (!isSafeCheck) {
-        if (ipsIter == ipsTemp.end()) {
-            continueResolve();
-            return;
-        }
-
-        const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
-
-        CHECK(countSteps != 0, "Incorrect countSteps");
-        std::vector<QString> requests(ipsIter, ipsIter + countSteps);
-
-        client.pings(node.node.str().toStdString(), requests, [this, isSafeCheck, &allNodesForTypesNew, &ipsTemp, continueResolve, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-            const TypedException exception = apiVrapper2([&]{
-                CHECK(requestsSize == results.size(), "Incorrect results");
-                for (const auto &result: results) {
-                    allNodesForTypesNew[node.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
-                }
-            });
-
-            if (exception.isSet()) {
-                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
-            }
-            continuePing(isSafeCheck, std::next(ipsIter, countSteps), node, allNodesForTypesNew, ipsTemp, continueResolve);
-        }, 2s);
-    } else {
-        if (allNodesForTypes[node.node].empty()) {
-            continueResolve();
-            return;
-        }
-
-        std::vector<size_t> processVectPos;
-        for (size_t i = 0; i < allNodesForTypes[node.node].size(); i++) {
-            NodeInfo &element = allNodesForTypes[node.node][i];
-            if (element.ping == MAX_PING.count()) {
-                element.isTimeout = true;
-            } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
-                element.ping = MAX_PING.count();
-                element.isTimeout = true;
-            } else {
-                processVectPos.emplace_back(i);
-            }
-            if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES + 2) {
-                break;
-            }
-        }
-        std::vector<QString> requests;
-        for (const size_t posInIpsTemp: processVectPos) {
-            const QString &address = allNodesForTypes[node.node][posInIpsTemp].address;
-            requests.emplace_back(address);
-        }
-        if (processVectPos.empty()) {
-            continueResolve();
-        }
-        client.pings(node.node.str().toStdString(), requests, [this, continueResolve, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-            const TypedException exception = apiVrapper2([&]{
-                CHECK(processVectPos.size() == results.size(), "Incorrect result");
-                for (size_t i = 0; i < results.size(); i++) {
-                    const auto &result = results[i];
-                    const size_t index = processVectPos[i];
-                    NodeInfo &info = allNodesForTypes[node.node][index];
-                    NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
-                    CHECK(info.address == newInfo.address, "Incorrect address");
-                    if (!newInfo.isTimeout) {
-                        newInfo.ping = info.ping;
-                    }
-
-                    info = newInfo;
-                }
-            });
-
-            if (exception.isSet()) {
-                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
-            }
-            continueResolve();
-        }, 2s);
+void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+    if (ipsIter == ipsTemp.end()) {
+        continueResolve();
+        return;
     }
+
+    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
+
+    CHECK(countSteps != 0, "Incorrect countSteps");
+    std::vector<QString> requests(ipsIter, ipsIter + countSteps);
+
+    client.pings(node.node.str().toStdString(), requests, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        const TypedException exception = apiVrapper2([&]{
+            CHECK(requestsSize == results.size(), "Incorrect results");
+            for (const auto &result: results) {
+                allNodesForTypesNew[node.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
+            }
+        });
+
+        if (exception.isSet()) {
+            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+        }
+        continuePing(std::next(ipsIter, countSteps), node, allNodesForTypesNew, ipsTemp, continueResolve);
+    }, 2s);
+}
+
+void NsLookup::continuePingSafe(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+    if (allNodesForTypes[node.node].empty()) {
+        continueResolve();
+        return;
+    }
+
+    std::vector<size_t> processVectPos;
+    for (size_t i = 0; i < allNodesForTypes[node.node].size(); i++) {
+        NodeInfo &element = allNodesForTypes[node.node][i];
+        if (element.ping == MAX_PING.count()) {
+            element.isTimeout = true;
+        } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
+            element.ping = MAX_PING.count();
+            element.isTimeout = true;
+        } else {
+            processVectPos.emplace_back(i);
+        }
+        if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES + 2) {
+            break;
+        }
+    }
+    std::vector<QString> requests;
+    for (const size_t posInIpsTemp: processVectPos) {
+        const QString &address = allNodesForTypes[node.node][posInIpsTemp].address;
+        requests.emplace_back(address);
+    }
+    if (processVectPos.empty()) {
+        continueResolve();
+    }
+    client.pings(node.node.str().toStdString(), requests, [this, continueResolve, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        const TypedException exception = apiVrapper2([&]{
+            CHECK(processVectPos.size() == results.size(), "Incorrect result");
+            for (size_t i = 0; i < results.size(); i++) {
+                const auto &result = results[i];
+                const size_t index = processVectPos[i];
+                NodeInfo &info = allNodesForTypes[node.node][index];
+                NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
+                CHECK(info.address == newInfo.address, "Incorrect address");
+                if (!newInfo.isTimeout) {
+                    newInfo.ping = info.ping;
+                }
+
+                info = newInfo;
+            }
+        });
+
+        if (exception.isSet()) {
+            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+        }
+        continueResolve();
+    }, 2s);
 }
 
 /*void NsLookup::finalizeRefresh(const NodeType::Node &node) {

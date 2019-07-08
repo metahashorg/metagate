@@ -98,7 +98,9 @@ protected:
 
     void continueResolve(std::map<QString, NodeType>::const_iterator node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing);
 
-    void continuePing(bool isSafeCheck, std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
+    void continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
+
+    void continuePingSafe(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
 
     void finalizeLookup(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
 
@@ -145,21 +147,11 @@ private:
 
     std::map<QString, NodeType> nodes;
 
-    std::vector<QString> ipsTempRefresh;
-
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
-
-    milliseconds msTimer = 10s;
-
-    time_point prevCheckTime;
 
     SimpleClient client;
 
-    time_point startScanTime;
-
     std::atomic<bool> isResetFilledFile{false};
-
-    milliseconds passedTime;
 
     CacheDns cacheDns;
 

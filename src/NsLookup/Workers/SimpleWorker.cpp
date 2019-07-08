@@ -77,7 +77,7 @@ void SimpleWorker::beginWork(const WorkerGuard &workerGuard) {
 void SimpleWorker::beginPing(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node) {
     const auto continueResolve = std::bind(&SimpleWorker::continueResolve, this, workerGuard, node);
 
-    ns.continuePing(true, std::begin(ipsTemp), node->second, allNodesForTypes, ipsTemp, continueResolve);
+    ns.continuePingSafe(std::begin(ipsTemp), node->second, allNodesForTypes, ipsTemp, continueResolve);
 }
 
 void SimpleWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QString, NodeType>::const_iterator node) {
