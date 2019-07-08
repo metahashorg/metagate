@@ -24,6 +24,7 @@
 
 #include "NslWorker.h"
 #include "Workers/FullWorker.h"
+#include "Workers/SimpleWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -112,7 +113,7 @@ NsLookup::NsLookup(QObject *parent)
     if (passedTime >= UPDATE_PERIOD) {
         taskManager.addTask(FullWorker::makeTask(0s));
     } else {
-        // add small check
+        taskManager.addTask(SimpleWorker::makeTask(seconds(0)));
         taskManager.addTask(FullWorker::makeTask(std::chrono::duration_cast<seconds>(UPDATE_PERIOD - passedTime)));
     }
 

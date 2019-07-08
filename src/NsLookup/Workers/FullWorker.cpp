@@ -53,10 +53,16 @@ bool FullWorker::checkIsActual() const {
     }
     CHECK(record.type == TYPE && record.subtype == SUB_TYPE, "Incorrect Task Record");
     const system_time_point now = ::system_now();
-    return now - record.time >= CONTROL_CHECK_EXPIRE;
+    const bool actual = now - record.time >= CONTROL_CHECK_EXPIRE;
+    if (!actual) {
+        LOG << "Full worker not actual";
+    }
+    return actual;
 }
 
 void FullWorker::runWorkImpl(WorkerGuard workerGuard) {
+    tt.reset();
+    LOG << "Full worker started";
     beginWork(workerGuard);
 }
 
@@ -91,6 +97,9 @@ void FullWorker::finalizeLookup(const WorkerGuard &workerGuard) {
 void FullWorker::endWork(const WorkerGuard &workerGuard) {
     addSpentRecord();
     addNewTask(makeTask(REPEAT_CHECK));
+
+    tt.stop();
+    LOG << "Full worker finished. Time work: " << tt.countMs();
 
     finishWork(workerGuard);
 }

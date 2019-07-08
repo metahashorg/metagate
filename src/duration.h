@@ -54,4 +54,41 @@ inline system_time_point intToSystemTimePoint(size_t timestamp) {
     return system_time_point() + milliseconds(timestamp);
 }
 
+class Timer {
+public:
+
+    Timer()
+        : beginTime(::now())
+    {}
+
+    void reset() {
+        beginTime = ::now();
+    }
+
+    void stop() {
+        stoppedTime = ::now();
+        isStopped = true;
+    }
+
+    size_t countMs() {
+        return count().count();
+    }
+
+    milliseconds count() {
+        if (!isStopped) {
+            stop();
+        }
+        return std::chrono::duration_cast<milliseconds>(stoppedTime - beginTime);
+    }
+
+private:
+
+    time_point beginTime;
+
+    bool isStopped = false;
+
+    time_point stoppedTime;
+
+};
+
 #endif // DURATION_H_

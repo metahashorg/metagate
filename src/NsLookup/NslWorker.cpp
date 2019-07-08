@@ -7,6 +7,7 @@
 #include "TaskManager.h"
 
 #include "Workers/FullWorker.h"
+#include "Workers/SimpleWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -57,6 +58,8 @@ void NslWorker::finishWork(WorkerGuard workerGuard) {
 std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLookup, const Task &task) {
     if (FullWorker::isThisWorker(task.name)) {
         return std::make_shared<FullWorker>(taskManager, nsLookup, task);
+    } else if (SimpleWorker::isThisWorker(task.name)) {
+        return std::make_shared<SimpleWorker>(taskManager, nsLookup, task);
     } else {
         throwErr("Incorrect task: " + task.name);
     }

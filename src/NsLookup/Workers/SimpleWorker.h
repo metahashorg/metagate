@@ -1,5 +1,5 @@
-#ifndef FULLWORKER_H
-#define FULLWORKER_H
+#ifndef SIMPLEWORKER_H
+#define SIMPLEWORKER_H
 
 #include <map>
 #include <vector>
@@ -13,9 +13,9 @@ class NsLookup;
 
 namespace nslookup {
 
-class FullWorker final: public NslWorker {
+class SimpleWorker final: public NslWorker {
 public:
-    FullWorker(TaskManager &manager, NsLookup &ns, const Task &task);
+    SimpleWorker(TaskManager &manager, NsLookup &ns, const Task &task);
 
 public:
 
@@ -59,4 +59,4 @@ private:
 
 } // namespace nslookup
 
-#endif // FULLWORKER_H
+#endif // SIMPLEWORKER_H

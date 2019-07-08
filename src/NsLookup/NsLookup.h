@@ -27,10 +27,12 @@ struct TypedException;
 
 namespace nslookup {
 class FullWorker;
+class SimpleWorker;
 }
 
 class NsLookup : public ManagerWrapper, public TimerClass {
 friend class nslookup::FullWorker;
+friend class nslookup::SimpleWorker;
     Q_OBJECT
 private:
 
