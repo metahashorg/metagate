@@ -8,6 +8,8 @@
 
 #include "Workers/FullWorker.h"
 #include "Workers/SimpleWorker.h"
+#include "Workers/RefreshIpWorker.h"
+#include "Workers/RefreshNodeWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -60,6 +62,10 @@ std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLook
         return std::make_shared<FullWorker>(taskManager, nsLookup, task);
     } else if (SimpleWorker::isThisWorker(task.name)) {
         return std::make_shared<SimpleWorker>(taskManager, nsLookup, task);
+    } else if (RefreshIpWorker::isThisWorker(task.name)) {
+        return std::make_shared<RefreshIpWorker>(taskManager, nsLookup, task);
+    } else if (RefreshNodeWorker::isThisWorker(task.name)) {
+        return std::make_shared<RefreshNodeWorker>(taskManager, nsLookup, task);
     } else {
         throwErr("Incorrect task: " + task.name);
     }

@@ -28,11 +28,15 @@ struct TypedException;
 namespace nslookup {
 class FullWorker;
 class SimpleWorker;
+class RefreshIpWorker;
+class RefreshNodeWorker;
 }
 
 class NsLookup : public ManagerWrapper, public TimerClass {
 friend class nslookup::FullWorker;
 friend class nslookup::SimpleWorker;
+friend class nslookup::RefreshIpWorker;
+friend class nslookup::RefreshNodeWorker;
     Q_OBJECT
 private:
 
@@ -104,12 +108,21 @@ protected:
 
     void finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
 
+    void finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew, const std::function<void()> &endLookup);
+
 
     size_t findCountUpdatedIp(const QString &address) const;
 
     void processRefreshIp(const QString &address, std::vector<QString> &ipsTemp, const std::function<void(const NodeType &node)> &beginPing);
 
     void finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::function<void()> &endLookup);
+
+
+    void fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp);
+
+    size_t countWorkedNodes(const NodeType::Node &node) const;
+
+    size_t countWorkedNodes(const QString &nodeStr) const;
 
 private:
 

@@ -25,6 +25,7 @@
 #include "NslWorker.h"
 #include "Workers/FullWorker.h"
 #include "Workers/SimpleWorker.h"
+#include "Workers/RefreshIpWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -184,6 +185,14 @@ size_t NsLookup::countWorkedNodes(const std::vector<NodeInfo> &nodes) const {
     return countSuccess;
 }
 
+size_t NsLookup::countWorkedNodes(const NodeType::Node &node) const {
+    return countWorkedNodes(allNodesForTypes.at(node));
+}
+
+size_t NsLookup::countWorkedNodes(const QString &nodeStr) const {
+    return countWorkedNodes(NodeType::Node(nodeStr));
+}
+
 void NsLookup::process() {
     if (taskManager.isCurrentWork()) {
         return;
@@ -209,7 +218,15 @@ void NsLookup::finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vec
 
     defectiveTorrents.clear();
 
-    const time_point stopScan = ::now();
+    endLookup();
+}
+
+void NsLookup::finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew, const std::function<void()> &endLookup) {
+    allNodesForTypes[node] = allNodesForTypesNew;
+    sortAll();
+    saveToFile(savedNodesPath, filledFileTp, nodes);
+
+    defectiveTorrents.clear();
 
     endLookup();
 }
@@ -413,6 +430,19 @@ void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::
     allNodesForTypes[node] = allNodesForTypesNew[node];
     sortAll();
     saveToFile(savedNodesPath, filledFileTp, nodes);
+}
+
+void NsLookup::fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp) {
+    for (const auto &pair: nodes) {
+        if (pair.second.node.str() == nodeStr) {
+            node = pair.second;
+            std::transform(allNodesForTypes[node.node].begin(), allNodesForTypes[node.node].end(), std::back_inserter(ipsTemp), [](const NodeInfo &info) {
+                return info.address;
+            });
+            return;
+        }
+    }
+    throwErr("Not found node for str " + nodeStr.toStdString());
 }
 
 size_t NsLookup::findCountUpdatedIp(const QString &address) const {
@@ -623,7 +653,7 @@ BEGIN_SLOT_WRAPPER
 
     if (!address.isEmpty()) {
         const size_t countUpdated = findCountUpdatedIp(address);
-        // Запустить worker с server и countUpdated
+        taskManager.addTask(RefreshIpWorker::makeTask(0s, address, countUpdated));
     }
 END_SLOT_WRAPPER
 }
