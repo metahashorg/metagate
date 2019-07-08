@@ -19,7 +19,7 @@ Task::Task(const std::string &name, const QVariant &parameters, const seconds &r
 {}
 
 bool Task::operator>(const Task &second) const {
-    return execTime1 < second.execTime1;
+    return execTime1 > second.execTime1;
 }
 
 bool Task::isTime(const system_time_point &tp1, const time_point &tp2) const {
@@ -50,7 +50,7 @@ bool TaskManager::isTaskReady() const {
 
 Task TaskManager::popTask() {
     CHECK(!tasks.empty(), "Empty tasks queue");
-    Task task = tasks.top();
+    const Task task = tasks.top();
     tasks.pop();
     return task;
 }
@@ -60,6 +60,7 @@ bool TaskManager::isCurrentWork() const {
 }
 
 void TaskManager::runWork(std::shared_ptr<NslWorker> worker) {
+    CHECK(worker != nullptr, "Incorrect worker");
     currentWorker = worker;
     worker->runWork(worker);
 }

@@ -16,7 +16,11 @@ NslWorker::NslWorker(TaskManager &manager)
     : manager(manager)
 {}
 
-NslWorker::~NslWorker() = default;
+NslWorker::~NslWorker() {
+    if (!finished) {
+        LOG << "WARN: " << "Nsl worker not finished";
+    }
+}
 
 bool NslWorker::isActual() const {
     return checkIsActual();
@@ -43,6 +47,11 @@ bool NslWorker::findSpentRecord(TaskRecord &result) const {
     const std::string subType = getSubType();
 
     return manager.findSpentTask(type, subType, result);
+}
+
+void NslWorker::finishWork(WorkerGuard workerGuard) {
+    CHECK(workerGuard != nullptr, "Incorrect workerGuard");
+    finished = true;
 }
 
 std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLookup, const Task &task) {

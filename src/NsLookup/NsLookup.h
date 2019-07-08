@@ -25,7 +25,12 @@
 
 struct TypedException;
 
+namespace nslookup {
+class FullWorker;
+}
+
 class NsLookup : public ManagerWrapper, public TimerClass {
+friend class nslookup::FullWorker;
     Q_OBJECT
 private:
 
@@ -85,7 +90,7 @@ signals:
 
     void serversFlushed(const TypedException &exception);
 
-public:
+protected:
 
     void beginResolve(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing);
 

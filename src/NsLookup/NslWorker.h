@@ -18,6 +18,7 @@ using WorkerGuard = std::shared_ptr<NslWorker>;
 
 class NslWorker {
 public:
+
     NslWorker(TaskManager &manager);
 
     virtual ~NslWorker();
@@ -46,9 +47,14 @@ protected:
 
     bool findSpentRecord(TaskRecord &result) const;
 
+    // Нужен в основном для того, чтобы убедиться что workerGuard не потерялся
+    void finishWork(WorkerGuard workerGuard);
+
 private:
 
     TaskManager &manager;
+
+    bool finished = false;
 };
 
 std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLookup, const Task &task);

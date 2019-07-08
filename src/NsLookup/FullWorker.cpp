@@ -89,7 +89,10 @@ void FullWorker::finalizeLookup(const WorkerGuard &workerGuard) {
 }
 
 void FullWorker::endWork(const WorkerGuard &workerGuard) {
+    addSpentRecord();
     addNewTask(makeTask(REPEAT_CHECK));
+
+    finishWork(workerGuard);
 }
 
 } // namespace nslookup
