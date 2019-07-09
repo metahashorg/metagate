@@ -106,9 +106,9 @@ protected:
 
     void continueResolve(std::map<QString, NodeType>::const_iterator node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing);
 
-    void continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
+    void continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
 
-    void continuePingSafe(const NodeType &node, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
+    void continuePingSafe(const NodeType &node, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve);
 
     void finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
 
@@ -122,7 +122,7 @@ protected:
 
     void processRefreshIp(const QString &address, std::vector<QString> &ipsTemp, const std::function<void(const NodeType &node)> &beginPing);
 
-    void finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
+    void finalizeRefreshIp(const NodeType::Node &node, const std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
 
 
     void fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp);

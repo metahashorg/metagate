@@ -347,7 +347,7 @@ static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, 
     return info;
 }
 
-void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
     if (ipsIter == ipsTemp.end()) {
         continueResolve();
         return;
@@ -373,7 +373,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
     }, 2s);
 }
 
-void NsLookup::continuePingSafe(const NodeType &node, std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
     if (allNodesForTypes[node.node].empty()) {
         continueResolve();
         return;
@@ -426,8 +426,8 @@ void NsLookup::continuePingSafe(const NodeType &node, std::vector<QString> &ipsT
     }, 2s);
 }
 
-void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
-    const std::vector<NodeInfo> &nds = allNodesForTypesNew[node];
+void NsLookup::finalizeRefreshIp(const NodeType::Node &node, const std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
+    const std::vector<NodeInfo> &nds = allNodesForTypesNew.at(node);
     for (auto iter = defectiveTorrents.begin(); iter != defectiveTorrents.end();) {
         if (std::find_if(nds.cbegin(), nds.cend(), [n=*iter](const NodeInfo &info) {
             return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(n.first);
@@ -440,7 +440,7 @@ void NsLookup::finalizeRefreshIp(const NodeType::Node &node, std::map<NodeType::
 
     LOG << "Updated ip status. Left " << defectiveTorrents.size();
 
-    allNodesForTypes[node] = allNodesForTypesNew[node];
+    allNodesForTypes[node] = allNodesForTypesNew.at(node);
     saveAll(false);
 }
 
