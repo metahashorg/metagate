@@ -29,6 +29,7 @@
 #include "Workers/RefreshNodeWorker.h"
 #include "Workers/FindEmptyNodesWorker.h"
 #include "Workers/PrintNodesWorker.h"
+#include "Workers/MiddleWorker.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -116,13 +117,13 @@ NsLookup::NsLookup(QObject *parent)
     }
 
     if (passedTime >= UPDATE_PERIOD) {
-        taskManager.addTask(SimpleWorker::makeTask(10min));
         taskManager.addTask(FullWorker::makeTask(0s));
     } else {
         taskManager.addTask(SimpleWorker::makeTask(0s));
         taskManager.addTask(FullWorker::makeTask(std::chrono::duration_cast<seconds>(UPDATE_PERIOD - passedTime)));
     }
 
+    taskManager.addTask(MiddleWorker::makeTask(3min));
     taskManager.addTask(FindEmptyNodesWorker::makeTask(0s));
     taskManager.addTask(PrintNodesWorker::makeTask(0s));
 
@@ -444,6 +445,10 @@ void NsLookup::finalizeRefreshIp(const NodeType::Node &node, const std::map<Node
     saveAll(false);
 }
 
+std::map<QString, NodeType>::const_iterator NsLookup::getBeginNodesIterator() const {
+    return std::cbegin(nodes);
+}
+
 void NsLookup::fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp) {
     for (const auto &pair: nodes) {
         if (pair.second.node.str() == nodeStr) {
@@ -455,6 +460,17 @@ void NsLookup::fillNodeStruct(const QString &nodeStr, NodeType &node, std::vecto
         }
     }
     throwErr("Not found node for str " + nodeStr.toStdString());
+}
+
+bool NsLookup::fillNodeStruct(std::map<QString, NodeType>::const_iterator &node, std::vector<QString> &ipsTemp) {
+    if (node == nodes.end()) {
+        return false;
+    }
+
+    NodeType tmp;
+    fillNodeStruct(node->second.node.str(), tmp, ipsTemp);
+
+    return true;
 }
 
 size_t NsLookup::findCountUpdatedIp(const QString &address) const {

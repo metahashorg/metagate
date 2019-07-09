@@ -109,7 +109,8 @@ SOURCES += main.cpp mainwindow.cpp \
     NsLookup/Workers/RefreshIpWorker.cpp \
     NsLookup/Workers/RefreshNodeWorker.cpp \
     NsLookup/Workers/FindEmptyNodesWorker.cpp \
-    NsLookup/Workers/PrintNodesWorker.cpp
+    NsLookup/Workers/PrintNodesWorker.cpp \
+    NsLookup/Workers/MiddleWorker.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -228,7 +229,8 @@ HEADERS += mainwindow.h \
     NsLookup/Workers/RefreshIpWorker.h \
     NsLookup/Workers/RefreshNodeWorker.h \
     NsLookup/Workers/FindEmptyNodesWorker.h \
-    NsLookup/Workers/PrintNodesWorker.h
+    NsLookup/Workers/PrintNodesWorker.h \
+    NsLookup/Workers/MiddleWorker.h
 
 FORMS += mainwindow.ui
 

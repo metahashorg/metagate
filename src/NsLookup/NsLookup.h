@@ -32,6 +32,7 @@ class RefreshIpWorker;
 class RefreshNodeWorker;
 class FindEmptyNodesWorker;
 class PrintNodesWorker;
+class MiddleWorker;
 }
 
 class NsLookup : public ManagerWrapper, public TimerClass {
@@ -41,6 +42,7 @@ friend class nslookup::RefreshIpWorker;
 friend class nslookup::RefreshNodeWorker;
 friend class nslookup::FindEmptyNodesWorker;
 friend class nslookup::PrintNodesWorker;
+friend class nslookup::MiddleWorker;
     Q_OBJECT
 private:
 
@@ -125,7 +127,11 @@ protected:
     void finalizeRefreshIp(const NodeType::Node &node, const std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
 
 
+    std::map<QString, NodeType>::const_iterator getBeginNodesIterator() const;
+
     void fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp);
+
+    bool fillNodeStruct(std::map<QString, NodeType>::const_iterator &node, std::vector<QString> &ipsTemp);
 
     size_t countWorkedNodes(const NodeType::Node &node) const;
 

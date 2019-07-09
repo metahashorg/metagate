@@ -18,8 +18,8 @@ namespace nslookup {
 static const std::string TYPE = "Simple_Worker";
 static const std::string SUB_TYPE = "Simple";
 
-static const seconds REPEAT_CHECK = 10min;
-static const seconds REPEAT_CHECK_EXPIRE = REPEAT_CHECK - 2min;
+static const seconds CONTROL_CHECK = 10min;
+static const seconds CONTROL_CHECK_EXPIRE = CONTROL_CHECK + 2min;
 
 SimpleWorker::SimpleWorker(TaskManager &manager, NsLookup &ns, const Task &task)
     : NslWorker(manager)
@@ -52,7 +52,7 @@ bool SimpleWorker::checkIsActual() const {
     }
     CHECK(record.type == TYPE && record.subtype == SUB_TYPE, "Incorrect Task Record");
     const system_time_point now = ::system_now();
-    const bool actual = now - record.time >= REPEAT_CHECK_EXPIRE;
+    const bool actual = now - record.time >= CONTROL_CHECK_EXPIRE;
     if (!actual) {
         LOG << "Simple worker not actual";
     }
@@ -66,7 +66,7 @@ void SimpleWorker::runWorkImpl(WorkerGuard workerGuard) {
 void SimpleWorker::beginWork(const WorkerGuard &workerGuard) {
     tt.reset();
     LOG << "Simple worker started";
-    addNewTask(makeTask(REPEAT_CHECK));
+    addNewTask(makeTask(CONTROL_CHECK));
 
     const auto finLookup = std::bind(&SimpleWorker::finalizeLookup, this, workerGuard);
     const auto beginPing = std::bind(&SimpleWorker::beginPing, this, workerGuard, _1);
