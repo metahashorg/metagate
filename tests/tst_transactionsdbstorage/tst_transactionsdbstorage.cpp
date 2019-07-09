@@ -159,9 +159,13 @@ void tst_TransactionsDBStorage::tstFilterDelegate() {
     db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 2, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::ERROR, transactions::Transaction::DELEGATE, 11117, "", 1);
     db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", 2, "user1", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11118, "", 1);
     db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 2, "user1", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11119, "", 1);
+    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "address100", "user2", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11120, "324521354", 2);
 
     const auto res = db.getDelegatePaymentsForAddress("address100", "user1", "mh", 0, -1, true);
     QCOMPARE(res.size(), 2);
+
+    const auto res2 = db.getDelegatePaymentsForAddress("address100", "mh", 0, -1, true);
+    QCOMPARE(res2.size(), 3);
 }
 
 static void compareBalances(const transactions::BalanceInfo &balance1, const transactions::BalanceInfo &balance2) {

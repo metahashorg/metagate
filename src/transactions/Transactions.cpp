@@ -41,6 +41,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_CONNECT(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2);
     Q_CONNECT(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs);
     Q_CONNECT(this, &Transactions::getDelegateTxs, this, &Transactions::onGetDelegateTxs);
+    Q_CONNECT(this, &Transactions::getDelegateTxs2, this, &Transactions::onGetDelegateTxs2);
     Q_CONNECT(this, &Transactions::getLastForgingTx, this, &Transactions::onGetLastForgingTx);
     Q_CONNECT(this, &Transactions::calcBalance, this, &Transactions::onCalcBalance);
     Q_CONNECT(this, &Transactions::sendTransaction, this, &Transactions::onSendTransaction);
@@ -585,6 +586,14 @@ void Transactions::onGetDelegateTxs(const QString &address, const QString &curre
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         return db.getDelegatePaymentsForAddress(address, to, currency, from, count, asc);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetDelegateTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this] {
+        return db.getDelegatePaymentsForAddress(address, currency, from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }

@@ -146,6 +146,20 @@ std::vector<Transaction> TransactionsDBStorage::getDelegatePaymentsForAddress(co
     return res;
 }
 
+std::vector<Transaction> TransactionsDBStorage::getDelegatePaymentsForAddress(const QString &address, const QString &currency, qint64 offset, qint64 count, bool asc) {
+    std::vector<Transaction> res;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectDelegatePayments.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")).arg(Transaction::DELEGATE).arg(Transaction::Status::OK)),
+          query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    query.bindValue(":offset", offset);
+    query.bindValue(":count", count);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    createPaymentsList(query, res);
+    return res;
+}
+
 Transaction TransactionsDBStorage::getLastTransaction(const QString &address, const QString &currency) {
     Transaction trans;
     QSqlQuery query(database());
@@ -344,6 +358,7 @@ void TransactionsDBStorage::createDatabase()
     createIndex(createPaymentsIndex5);
     createIndex(createPaymentsIndex6);
     createIndex(createPaymentsIndex7);
+    createIndex(createPaymentsIndex8);
     createIndex(createBalanceIndex1);
     createIndex(createBalanceUniqueIndex);
     createIndex(createPaymentsUniqueIndex);
