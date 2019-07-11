@@ -45,14 +45,7 @@ Task MiddleWorker::makeTask(const seconds &remaining) {
 }
 
 bool MiddleWorker::checkIsActual() const {
-    TaskRecord record;
-    const bool foundSpent = findSpentRecord(record);
-    if (!foundSpent) {
-        return true;
-    }
-    CHECK(record.type == TYPE && record.subtype == SUB_TYPE, "Incorrect Task Record");
-    const system_time_point now = ::system_now();
-    const bool actual = now - record.time >= REPEAT_CHECK_EXPIRE;
+    const bool actual = checkSpentRecord(REPEAT_CHECK_EXPIRE);
     if (!actual) {
         LOG << "Middle worker not actual";
     }

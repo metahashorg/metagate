@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 
+#include "duration.h"
+
 class NsLookup;
 
 namespace nslookup {
@@ -46,6 +48,8 @@ protected:
     void addSpentRecord();
 
     bool findSpentRecord(TaskRecord &result) const;
+
+    bool checkSpentRecord(const seconds &timeExpire) const;
 
     // Нужен в основном для того, чтобы убедиться что workerGuard не потерялся
     void finishWork(WorkerGuard workerGuard);

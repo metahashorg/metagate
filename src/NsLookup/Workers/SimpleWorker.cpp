@@ -45,14 +45,7 @@ Task SimpleWorker::makeTask(const seconds &remaining) {
 }
 
 bool SimpleWorker::checkIsActual() const {
-    TaskRecord record;
-    const bool foundSpent = findSpentRecord(record);
-    if (!foundSpent) {
-        return true;
-    }
-    CHECK(record.type == TYPE && record.subtype == SUB_TYPE, "Incorrect Task Record");
-    const system_time_point now = ::system_now();
-    const bool actual = now - record.time >= CONTROL_CHECK_EXPIRE;
+    const bool actual = checkSpentRecord(CONTROL_CHECK_EXPIRE);
     if (!actual) {
         LOG << "Simple worker not actual";
     }

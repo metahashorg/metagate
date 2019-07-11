@@ -56,6 +56,17 @@ bool NslWorker::findSpentRecord(TaskRecord &result) const {
     return manager.findSpentTask(type, subType, result);
 }
 
+bool NslWorker::checkSpentRecord(const seconds &timeExpire) const {
+    TaskRecord record;
+    const bool foundSpent = findSpentRecord(record);
+    if (!foundSpent) {
+        return true;
+    }
+    CHECK(record.type == getType() && record.subtype == getSubType(), "Incorrect Task Record");
+    const system_time_point now = ::system_now();
+    return now - record.time >= timeExpire;
+}
+
 void NslWorker::finishWork(WorkerGuard workerGuard) {
     CHECK(workerGuard != nullptr, "Incorrect workerGuard");
     finished = true;

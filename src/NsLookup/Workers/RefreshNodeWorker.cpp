@@ -45,16 +45,10 @@ Task RefreshNodeWorker::makeTask(const seconds &remaining, const QString &node) 
 }
 
 bool RefreshNodeWorker::checkIsActual() const {
-    TaskRecord record;
-    const bool foundSpent = findSpentRecord(record);
-    if (foundSpent) {
-        CHECK(record.type == TYPE && record.subtype == t.node.toStdString(), "Incorrect Task Record");
-        const system_time_point now = ::system_now();
-        const bool actual = now - record.time >= CONTROL_CHECK_EXPIRE;
-        if (!actual) {
-            LOG << "RefreshNode worker not actual " << t.node;
-            return false;
-        }
+    const bool actual1 = checkSpentRecord(CONTROL_CHECK_EXPIRE);
+    if (!actual1) {
+        LOG << "RefreshNode worker not actual " << t.node;
+        return false;
     }
 
     const size_t countWorked = ns.countWorkedNodes(t.node);

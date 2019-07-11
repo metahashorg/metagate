@@ -46,14 +46,7 @@ Task FullWorker::makeTask(const seconds &remaining) {
 }
 
 bool FullWorker::checkIsActual() const {
-    TaskRecord record;
-    const bool foundSpent = findSpentRecord(record);
-    if (!foundSpent) {
-        return true;
-    }
-    CHECK(record.type == TYPE && record.subtype == SUB_TYPE, "Incorrect Task Record");
-    const system_time_point now = ::system_now();
-    const bool actual = now - record.time >= CONTROL_CHECK_EXPIRE;
+    const bool actual = checkSpentRecord(CONTROL_CHECK_EXPIRE);
     if (!actual) {
         LOG << "Full worker not actual";
     }
