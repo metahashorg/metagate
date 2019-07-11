@@ -64,7 +64,8 @@ static const QString createPaymentsIndex3 = "CREATE INDEX paymentsIdx3 ON paymen
 static const QString createPaymentsIndex4 = "CREATE INDEX paymentsIdx4 ON payments(address, currency, status, ts, txid)";
 static const QString createPaymentsIndex5 = "CREATE INDEX paymentsIdx5 ON payments(address, currency, type, ts, txid)";
 static const QString createPaymentsIndex6 = "CREATE INDEX paymentsIdx6 ON payments(address, currency, ufrom, uto, type, status, ts, txid)";
-static const QString createPaymentsIndex7 = "CREATE INDEX paymentsIdx7 ON payments(address, currency, blockNumber)";
+static const QString createPaymentsIndex7 = "CREATE INDEX paymentsIdx7 ON payments(address, currency, ufrom, type, status, ts, txid)";
+static const QString createPaymentsIndex8 = "CREATE INDEX paymentsIdx8 ON payments(address, currency, blockNumber)";
 
 static const QString createBalanceIndex1 = "CREATE INDEX balanceIdx1 ON balance(address, currency)";
 
@@ -115,6 +116,14 @@ static const QString selectForgingPaymentsForDest = "SELECT * FROM payments "
 static const QString selectDelegatePaymentsForDest = "SELECT * FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "
                                                     "AND ufrom = :address AND uto = :to "
+                                                    "AND type = %2 "
+                                                    "AND status = %3 "
+                                                    "ORDER BY ts %1, txid %1 "
+                                                    "LIMIT :count OFFSET :offset";
+
+static const QString selectDelegatePayments = "SELECT * FROM payments "
+                                                    "WHERE address = :address AND  currency = :currency "
+                                                    "AND ufrom = :address "
                                                     "AND type = %2 "
                                                     "AND status = %3 "
                                                     "ORDER BY ts %1, txid %1 "

@@ -38,6 +38,8 @@ public:
 
     std::vector<Transaction> getDelegatePaymentsForAddress(const QString &address, const QString &to, const QString &currency, qint64 offset, qint64 count, bool asc);
 
+    std::vector<Transaction> getDelegatePaymentsForAddress(const QString &address, const QString &currency, qint64 offset, qint64 count, bool asc);
+
     Transaction getLastTransaction(const QString &address, const QString &currency);
 
     Transaction getLastForgingTransaction(const QString &address, const QString &currency);

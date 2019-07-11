@@ -362,6 +362,25 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::getDelegateTxsAll2(QString address, QString currency, int from, int count, bool asc) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetDelegateTxs2Js";
+
+    LOG << "get delegate txs address " << address << " " << currency << " " << from << " " << count << " " << asc;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
+
+    wrapOperation([&, this]() {
+        emit transactionsManager->getDelegateTxs2(address, currency, from, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
+            LOG << "get delegate txs address ok " << address << " " << currency << " " << txs.size();
+            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::getLastForgingTx(QString address, QString currency) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
