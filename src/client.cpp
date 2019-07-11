@@ -146,7 +146,7 @@ static bool isRequestId(const QNetworkReply &reply) {
 }
 
 static std::string getRequestId(const QNetworkReply &reply) {
-    CHECK(isRequestId(reply), "Request id field not set");
+    CHECK(isRequestId(reply), "Request id field not set"); // Эта ошибка обычно обозначает, что с url что-то не то
     return reply.request().attribute(REQUEST_ID_FIELD).toString().toStdString();
 }
 
