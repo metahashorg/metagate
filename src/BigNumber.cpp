@@ -49,6 +49,35 @@ QByteArray BigNumber::getDecimal() const
     return res;
 }
 
+#include <QDebug>
+QString BigNumber::getFracDecimal(int mod) const
+{
+    quint32 w = 1;
+    for (int i = 0; i < mod; i++)
+        w *= 10;
+    BigNumber p;
+    quint32 q = divAndModToWord(w, p);
+    QString ret = QString::fromLatin1(p.getDecimal());
+    QString sq = QString::number(q);
+    sq = sq.rightJustified(mod, '0');
+    int n = mod - 1;
+    for (; n >= 0; n--)
+        if (sq.at(n) != '0')
+            break;
+    sq = sq.left(n + 1);
+    if (!sq.isEmpty())
+        ret += QStringLiteral(".") + sq;
+    return ret;
+}
+
+quint32 BigNumber::divAndModToWord(quint32 w, BigNumber &div) const
+{
+    div = *this;
+    quint32 mod = BN_div_word(div.ptr.get(), w);
+    CHECK(mod != (BN_ULONG)(-1), "BN error");
+    return mod;
+}
+
 BigNumber &BigNumber::operator=(const BigNumber &rhs)
 {
     CHECK(BN_copy(this->ptr.get(), rhs.ptr.get()) == this->ptr.get(), "BN error");

@@ -19,6 +19,9 @@ private slots:
 
     void testBigNumberSub_data();
     void testBigNumberSub();
+
+    void testBigNumberFracDecimal_data();
+    void testBigNumberFracDecimal();
 };
 
 #endif // TST_BIGNUMBER_H

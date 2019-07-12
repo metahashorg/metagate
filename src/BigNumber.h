@@ -19,6 +19,10 @@ public:
     void setDecimal(const QByteArray &dec);
     QByteArray getDecimal() const;
 
+    QString getFracDecimal(int mod) const;
+
+    quint32 divAndModToWord(quint32 w, BigNumber &div) const;
+
     BigNumber &operator=(const BigNumber &rhs);
     BigNumber &operator+=(const BigNumber &rhs);
     BigNumber &operator-=(const BigNumber &rhs);
