@@ -22,11 +22,11 @@ bool PeriodicLog::notSet() const {
     return str.empty();
 }
 
-Log_::Log_(const std::string &fileName) {
+Log_::Log_(const std::string &/*fileName*/) {
 
 }
 
-bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
+bool Log_::processPeriodic(const std::string &/*s*/, std::string &/*addedStr*/) {
     return false;
 }
 
@@ -44,7 +44,7 @@ void Log_::print(const QString &s) {
     print(s.toStdString());
 }
 
-void Log_::print(const PeriodicLog &p) {
+void Log_::print(const PeriodicLog &/*p*/) {
 
 }
 
@@ -59,5 +59,5 @@ void Log_::print(const std::string &t) {
 void initLog() {
 }
 
-AddFileNameAlias_::AddFileNameAlias_(const std::string &fileName, const std::string &alias) {
+AddFileNameAlias_::AddFileNameAlias_(const std::string &/*fileName*/, const std::string &/*alias*/) {
 }

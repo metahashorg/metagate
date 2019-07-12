@@ -14,7 +14,7 @@ using namespace std::placeholders;
 #include "auth/Auth.h"
 #include "JavascriptWrapper.h"
 #include "Wallet.h"
-#include "NsLookup.h"
+#include "NsLookup/NsLookup.h"
 #include "ManagerWrapperImpl.h"
 
 #include "TransactionsMessages.h"

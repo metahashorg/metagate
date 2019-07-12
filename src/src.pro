@@ -38,7 +38,7 @@ SOURCES += main.cpp mainwindow.cpp \
     openssl_wrapper/openssl_wrapper.cpp \
     utils.cpp \
     ethtx/utils2.cpp \
-    NsLookup.cpp \
+    NsLookup/NsLookup.cpp \
     dns/datatransformer.cpp \
     dns/dnspacket.cpp \
     dns/resourcerecord.cpp \
@@ -101,7 +101,16 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitUtils.cpp \
     Utils/UtilsManager.cpp \
     CallbackCallWrapper.cpp \
-    ManagerWrapper.cpp
+    ManagerWrapper.cpp \
+    NsLookup/TaskManager.cpp \
+    NsLookup/NslWorker.cpp \
+    NsLookup/Workers/FullWorker.cpp \
+    NsLookup/Workers/SimpleWorker.cpp \
+    NsLookup/Workers/RefreshIpWorker.cpp \
+    NsLookup/Workers/RefreshNodeWorker.cpp \
+    NsLookup/Workers/FindEmptyNodesWorker.cpp \
+    NsLookup/Workers/PrintNodesWorker.cpp \
+    NsLookup/Workers/MiddleWorker.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
@@ -139,7 +148,7 @@ HEADERS += mainwindow.h \
     openssl_wrapper/openssl_wrapper.h \
     utils.h \
     ethtx/utils2.h \
-    NsLookup.h \
+    NsLookup/NsLookup.h \
     dns/datatransformer.h \
     dns/dnspacket.h \
     dns/resourcerecord.h \
@@ -212,7 +221,17 @@ HEADERS += mainwindow.h \
     Utils/UtilsManager.h \
     CallbackCallWrapper.h \
     ManagerWrapper.h \
-    ManagerWrapperImpl.h
+    ManagerWrapperImpl.h \
+    NsLookup/TaskManager.h \
+    NsLookup/NslWorker.h \
+    NsLookup/Workers/FullWorker.h \
+    NsLookup/NsLookupStructs.h \
+    NsLookup/Workers/SimpleWorker.h \
+    NsLookup/Workers/RefreshIpWorker.h \
+    NsLookup/Workers/RefreshNodeWorker.h \
+    NsLookup/Workers/FindEmptyNodesWorker.h \
+    NsLookup/Workers/PrintNodesWorker.h \
+    NsLookup/Workers/MiddleWorker.h
 
 FORMS += mainwindow.ui
 

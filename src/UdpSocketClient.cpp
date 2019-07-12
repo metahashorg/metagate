@@ -79,6 +79,7 @@ void UdpSocketClient::processResponse(const std::vector<char> &response, const S
     CHECK(isCurrentRequest, "callback not set");
     const UdpSocketCallback copyCallback = currentCallback; // Копируем
     isCurrentRequest = false;
+    currentCallback = nullptr;
     emit callbackCall(std::bind(copyCallback, response, exception));
 }
 

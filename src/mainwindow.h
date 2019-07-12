@@ -88,9 +88,9 @@ public:
 
 public:
 
-    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
+    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
 
-    ~MainWindow();
+    ~MainWindow() override;
 
     void showExpanded();
 

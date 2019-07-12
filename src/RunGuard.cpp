@@ -77,7 +77,7 @@ void RunGuard::storeValue(const std::string &value) {
     if (isAnotherRunning()) {
         memLock.acquire();
         const bool success = sharedMem.attach();
-        if (success && value.size() <= sharedMem.size() + 10) {
+        if (success && value.size() <= static_cast<size_t>(sharedMem.size()) + 10) {
             char *data = static_cast<char*>(sharedMem.data());
             if (data != nullptr) {
                 const std::string strInt = std::to_string(value.size());
@@ -103,7 +103,7 @@ std::string RunGuard::getValueAndReset() {
             if (found != endInt) {
                 const std::string sizeStr(data, found);
                 const size_t size = std::stoull(sizeStr);
-                if (size <= sharedMem.size() + 10) {
+                if (size <= static_cast<size_t>(sharedMem.size()) + 10) {
                     result = std::string(found + 1, found + 1 + size);
                 }
             }

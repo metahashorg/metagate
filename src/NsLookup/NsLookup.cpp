@@ -22,7 +22,20 @@
 
 #include "algorithms.h"
 
+#include "NslWorker.h"
+#include "Workers/FullWorker.h"
+#include "Workers/SimpleWorker.h"
+#include "Workers/RefreshIpWorker.h"
+#include "Workers/RefreshNodeWorker.h"
+#include "Workers/FindEmptyNodesWorker.h"
+#include "Workers/PrintNodesWorker.h"
+#include "Workers/MiddleWorker.h"
+
 SET_LOG_NAMESPACE("NSL");
+
+using namespace std::placeholders;
+
+using namespace nslookup;
 
 const static QString FILL_NODES_PATH = "fill_nodes.txt";
 
@@ -95,19 +108,24 @@ NsLookup::NsLookup(QObject *parent)
 
     savedNodesPath = makePath(getNsLookupPath(), FILL_NODES_PATH);
     const system_time_point lastFill = fillNodesFromFile(savedNodesPath, nodes);
+    filledFileTp = lastFill;
     const system_time_point now = system_now();
-    passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
+    milliseconds passedTime = std::chrono::duration_cast<milliseconds>(now - lastFill);
     if (lastFill - now >= hours(1)) {
         // Защита от перевода времени назад
         passedTime = UPDATE_PERIOD;
     }
 
     if (passedTime >= UPDATE_PERIOD) {
-        isSafeCheck = false;
+        taskManager.addTask(FullWorker::makeTask(0s));
     } else {
-        isSafeCheck = true;
+        taskManager.addTask(SimpleWorker::makeTask(0s));
+        taskManager.addTask(FullWorker::makeTask(std::chrono::duration_cast<seconds>(UPDATE_PERIOD - passedTime)));
     }
-    LOG << "Start ns resolve after " << 1 << " ms " << isSafeCheck;
+
+    taskManager.addTask(MiddleWorker::makeTask(3min));
+    taskManager.addTask(FindEmptyNodesWorker::makeTask(0s));
+    taskManager.addTask(PrintNodesWorker::makeTask(0s));
 
     Q_CONNECT(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall);
 
@@ -130,21 +148,11 @@ NsLookup::~NsLookup() {
 }
 
 void NsLookup::startMethod() {
-    updateNumber++;
-
     process();
 }
 
 void NsLookup::timerMethod() {
-    updateNumber++;
-
     process();
-    processRefresh();
-
-    if (now() - prevPrintTime >= 1min) {
-        printNodes();
-        prevPrintTime = now();
-    }
 }
 
 void NsLookup::finishMethod() {
@@ -185,68 +193,57 @@ size_t NsLookup::countWorkedNodes(const std::vector<NodeInfo> &nodes) const {
     return countSuccess;
 }
 
-void NsLookup::process() {
-    if (isProcessRefresh) {
-        return;
-    }
+size_t NsLookup::countWorkedNodes(const NodeType::Node &node) const {
+    return countWorkedNodes(allNodesForTypes.at(node));
+}
 
-    if (now() - prevCheckTime >= msTimer) {
-        msTimer = 600s; // На случай, если что-то пойдет не так, повторная проверка запустится через это время
-        startScanTime = ::now();
+size_t NsLookup::countWorkedNodes(const QString &nodeStr) const {
+    return countWorkedNodes(NodeType::Node(nodeStr));
+}
 
-        allNodesForTypesNew.clear();
-
-        dnsErrorDetails.clear();
-
-        isProcess = true;
-
-        LOG << "Dns scan start";
-        continueResolve(nodes.begin());
-
-        prevCheckTime = now();
+void NsLookup::findAndRefreshEmptyNodes() {
+    for (const auto &pair: allNodesForTypes) {
+        if (countWorkedNodes(pair.second) == 0) {
+            taskManager.addTask(RefreshNodeWorker::makeTask(0s, pair.first.str()));
+        }
     }
 }
 
-void NsLookup::finalizeLookup() {
-    isProcess = false;
-
-    if (!isSafeCheck) {
-        allNodesForTypes.swap(allNodesForTypesNew);
+void NsLookup::process() {
+    if (taskManager.isCurrentWork()) {
+        return;
     }
+
+    if (taskManager.isTaskReady()) {
+        const Task task = taskManager.popTask();
+        const std::shared_ptr<NslWorker> worker = makeWorker(taskManager, *this, task);
+        if (worker->isActual()) {
+            updateNumber++;
+            taskManager.runWork(worker);
+        }
+    }
+}
+
+void NsLookup::saveAll(bool isFullFill) {
     sortAll();
-    if (!isSafeCheck) {
-        saveToFile(savedNodesPath, system_now(), nodes);
+    if (isFullFill) {
+        filledFileTp = system_now();
     }
+    saveToFile(savedNodesPath, filledFileTp, nodes);
+}
 
-    const time_point stopScan = ::now();
-    LOG << "Dns scan time " << std::chrono::duration_cast<seconds>(stopScan - startScanTime).count() << " seconds";
+void NsLookup::finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
+    allNodesForTypes.swap(allNodesForTypesNew);
+    saveAll(isFullFill);
 
-    bool isSuccessFl = false;
-    if (isSafeCheck) {
-        bool isSuccess = true;
-        for (const auto &elem: allNodesForTypes) {
-            const size_t countSuccess = countWorkedNodes(elem.second);
-            if (countSuccess < ACCEPTABLE_COUNT_ADDRESSES) {
-                isSuccess = false;
-            }
-        }
-        if (isSuccess) {
-            LOG << "Dns safe check success";
-            msTimer = UPDATE_PERIOD - passedTime;
-            isSuccessFl = true;
-        } else {
-            LOG << "Dns safe check not success. Start full scan";
-            isProcess = true;
-            msTimer = 1ms;
-        }
-    } else {
-        msTimer = UPDATE_PERIOD;
-        isSuccessFl = true;
-    }
-    if (isSuccessFl) {
-        emit serversFlushed(TypedException());
-    }
-    isSafeCheck = false;
+    defectiveTorrents.clear();
+}
+
+void NsLookup::finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew) {
+    allNodesForTypes[node] = allNodesForTypesNew;
+    saveAll(false);
+
+    defectiveTorrents.clear();
 }
 
 bool NsLookup::repeatResolveDns(
@@ -255,12 +252,14 @@ bool NsLookup::repeatResolveDns(
     const QByteArray &byteArray,
     std::map<QString, NodeType>::const_iterator node,
     time_point now,
-    size_t countRepeat
+    size_t countRepeat,
+    std::vector<QString> &ipsTemp,
+    const std::function<void()> &beginPing
 ) {
     if (countRepeat == 0) {
         return false;
     }
-    udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, node, now, dnsServerName, dnsServerPort, byteArray, countRepeat](const std::vector<char> &response, const UdpSocketClient::SocketException &exception) {
+    udpClient.sendRequest(QHostAddress(dnsServerName), dnsServerPort, std::vector<char>(byteArray.begin(), byteArray.end()), [this, &ipsTemp, beginPing, node, now, dnsServerName, dnsServerPort, byteArray, countRepeat](const std::vector<char> &response, const UdpSocketClient::SocketException &exception) {
         DnsPacket packet;
         const TypedException except = apiVrapper2([&](){
             CHECK(!exception.isSet(), "Dns exception: " + exception.toString());
@@ -272,7 +271,7 @@ bool NsLookup::repeatResolveDns(
 
         if (except.isSet()) {
             LOG << "Dns repeat number " << countRepeat - 1;
-            const bool res = repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, countRepeat - 1);
+            const bool res = repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, countRepeat - 1, ipsTemp, beginPing);
             if (!res) {
                 dnsErrorDetails.dnsName = dnsServerName;
                 throw except;
@@ -289,20 +288,24 @@ bool NsLookup::repeatResolveDns(
         cacheDns.cache[node->second.node.str()] = ipsTemp;
         cacheDns.lastUpdate = now;
 
-        continuePing(std::begin(ipsTemp), node);
+        beginPing();
     }, timeoutRequestNodes);
 
     return true;
 }
 
-void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node) {
+void NsLookup::beginResolve(std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing) {
+    continueResolve(std::begin(nodes), allNodesForTypesNew, ipsTemp, finalizeLookup, beginPing);
+}
+
+void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, std::vector<QString> &ipsTemp, const std::function<void()> &finalizeLookup, const std::function<void(std::map<QString, NodeType>::const_iterator node)> &beginPing) {
     if (node == nodes.end()) {
         finalizeLookup();
         return;
     }
 
     if (allNodesForTypesNew.find(node->second.node) != allNodesForTypesNew.end()) {
-        continueResolve(std::next(node));
+        continueResolve(std::next(node), allNodesForTypesNew, ipsTemp, finalizeLookup, beginPing);
         return;
     }
 
@@ -311,15 +314,16 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node)
         cacheDns.cache.clear();
     }
     ipsTemp = cacheDns.cache[node->second.node.str()];
+    const auto bPing = std::bind(beginPing, node);
     if (ipsTemp.empty()) {
         DnsPacket requestPacket;
         requestPacket.addQuestion(DnsQuestion::getIp(node->second.node.str()));
         requestPacket.setFlags(DnsFlag::MyFlag);
         const auto byteArray = requestPacket.toByteArray();
         LOG << "Dns " << node->second.type << ".";
-        repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, 3);
+        repeatResolveDns(dnsServerName, dnsServerPort, byteArray, node, now, 3, ipsTemp, bPing);
     } else {
-        continuePing(std::begin(ipsTemp), node);
+        bPing();
     }
 }
 
@@ -344,89 +348,87 @@ static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, 
     return info;
 }
 
-void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, std::map<QString, NodeType>::const_iterator node) {
-    if (!isSafeCheck) {
-        if (ipsIter == ipsTemp.end()) {
-            continueResolve(std::next(node));
-            return;
-        }
-
-        const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
-
-        CHECK(countSteps != 0, "Incorrect countSteps");
-        std::vector<QString> requests(ipsIter, ipsIter + countSteps);
-
-        client.pings(node->second.node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-            const TypedException exception = apiVrapper2([&]{
-                CHECK(requestsSize == results.size(), "Incorrect results");
-                for (const auto &result: results) {
-                    allNodesForTypesNew[node->second.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
-                }
-            });
-
-            if (exception.isSet()) {
-                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
-            }
-            continuePing(std::next(ipsIter, countSteps), node);
-        }, 2s);
-    } else {
-        if (allNodesForTypes[node->second.node].empty()) {
-            continueResolve(std::next(node));
-            return;
-        }
-
-        std::vector<size_t> processVectPos;
-        for (size_t i = 0; i < allNodesForTypes[node->second.node].size(); i++) {
-            NodeInfo &element = allNodesForTypes[node->second.node][i];
-            if (element.ping == MAX_PING.count()) {
-                element.isTimeout = true;
-            } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
-                element.ping = MAX_PING.count();
-                element.isTimeout = true;
-            } else {
-                processVectPos.emplace_back(i);
-            }
-            if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES + 2) {
-                break;
-            }
-        }
-        std::vector<QString> requests;
-        for (const size_t posInIpsTemp: processVectPos) {
-            const QString &address = allNodesForTypes[node->second.node][posInIpsTemp].address;
-            requests.emplace_back(address);
-        }
-        if (processVectPos.empty()) {
-            continueResolve(std::next(node));
-        }
-        client.pings(node->second.node.str().toStdString(), requests, [this, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-            const TypedException exception = apiVrapper2([&]{
-                CHECK(processVectPos.size() == results.size(), "Incorrect result");
-                for (size_t i = 0; i < results.size(); i++) {
-                    const auto &result = results[i];
-                    const size_t index = processVectPos[i];
-                    NodeInfo &info = allNodesForTypes[node->second.node][index];
-                    NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
-                    CHECK(info.address == newInfo.address, "Incorrect address");
-                    if (!newInfo.isTimeout) {
-                        newInfo.ping = info.ping;
-                    }
-
-                    info = newInfo;
-                }
-            });
-
-            if (exception.isSet()) {
-                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
-            }
-            continueResolve(std::next(node));
-        }, 2s);
+void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+    if (ipsIter == ipsTemp.end()) {
+        continueResolve();
+        return;
     }
+
+    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
+
+    CHECK(countSteps != 0, "Incorrect countSteps");
+    std::vector<QString> requests(ipsIter, ipsIter + countSteps);
+
+    client.pings(node.node.str().toStdString(), requests, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        const TypedException exception = apiVrapper2([&]{
+            CHECK(requestsSize == results.size(), "Incorrect results");
+            for (const auto &result: results) {
+                allNodesForTypesNew[node.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
+            }
+        });
+
+        if (exception.isSet()) {
+            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+        }
+        continuePing(std::next(ipsIter, countSteps), node, allNodesForTypesNew, ipsTemp, continueResolve);
+    }, 2s);
 }
 
-void NsLookup::finalizeRefresh(const NodeType::Node &node) {
-    isProcessRefresh = false;
+void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
+    if (allNodesForTypes[node.node].empty()) {
+        continueResolve();
+        return;
+    }
 
-    const std::vector<NodeInfo> &nds = allNodesForTypesNew[node];
+    std::vector<size_t> processVectPos;
+    for (size_t i = 0; i < allNodesForTypes[node.node].size(); i++) {
+        NodeInfo &element = allNodesForTypes[node.node][i];
+        if (element.ping == MAX_PING.count()) {
+            element.isTimeout = true;
+        } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
+            element.ping = MAX_PING.count();
+            element.isTimeout = true;
+        } else {
+            processVectPos.emplace_back(i);
+        }
+        if (processVectPos.size() >= ACCEPTABLE_COUNT_ADDRESSES + 2) {
+            break;
+        }
+    }
+    std::vector<QString> requests;
+    for (const size_t posInIpsTemp: processVectPos) {
+        const QString &address = allNodesForTypes[node.node][posInIpsTemp].address;
+        requests.emplace_back(address);
+    }
+    if (processVectPos.empty()) {
+        continueResolve();
+    }
+    client.pings(node.node.str().toStdString(), requests, [this, continueResolve, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+        const TypedException exception = apiVrapper2([&]{
+            CHECK(processVectPos.size() == results.size(), "Incorrect result");
+            for (size_t i = 0; i < results.size(); i++) {
+                const auto &result = results[i];
+                const size_t index = processVectPos[i];
+                NodeInfo &info = allNodesForTypes[node.node][index];
+                NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
+                CHECK(info.address == newInfo.address, "Incorrect address");
+                if (!newInfo.isTimeout) {
+                    newInfo.ping = info.ping;
+                }
+
+                info = newInfo;
+            }
+        });
+
+        if (exception.isSet()) {
+            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+        }
+        continueResolve();
+    }, 2s);
+}
+
+void NsLookup::finalizeRefreshIp(const NodeType::Node &node, const std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
+    const std::vector<NodeInfo> &nds = allNodesForTypesNew.at(node);
     for (auto iter = defectiveTorrents.begin(); iter != defectiveTorrents.end();) {
         if (std::find_if(nds.cbegin(), nds.cend(), [n=*iter](const NodeInfo &info) {
             return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(n.first);
@@ -439,91 +441,66 @@ void NsLookup::finalizeRefresh(const NodeType::Node &node) {
 
     LOG << "Updated ip status. Left " << defectiveTorrents.size();
 
-    if (!isSafeCheck) {
-        allNodesForTypes[node] = allNodesForTypesNew[node];
-    }
-    sortAll();
-    saveToFile(savedNodesPath, system_now(), nodes);
+    allNodesForTypes[node] = allNodesForTypesNew.at(node);
+    saveAll(false);
 }
 
-void NsLookup::continuePingRefresh(std::vector<QString>::const_iterator ipsIter, const NodeType::Node &node) {
-    if (ipsIter == ipsTempRefresh.end()) {
-        finalizeRefresh(node);
-        return;
-    }
+std::map<QString, NodeType>::const_iterator NsLookup::getBeginNodesIterator() const {
+    return std::cbegin(nodes);
+}
 
-    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTempRefresh.cend())));
-
-    CHECK(countSteps != 0, "Incorrect countSteps");
-    const std::vector<QString> requests(ipsIter, ipsIter + countSteps);
-
-    client.pings(node.str().toStdString(), requests, [this, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-        const TypedException exception = apiVrapper2([&]{
-            CHECK(requestsSize == results.size(), "Incorrect results");
-            for (const auto &result: results) {
-                allNodesForTypesNew[node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
-            }
-        });
-
-        if (exception.isSet()) {
-            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+void NsLookup::fillNodeStruct(const QString &nodeStr, NodeType &node, std::vector<QString> &ipsTemp) {
+    for (const auto &pair: nodes) {
+        if (pair.second.node.str() == nodeStr) {
+            node = pair.second;
+            std::transform(allNodesForTypes[node.node].begin(), allNodesForTypes[node.node].end(), std::back_inserter(ipsTemp), [](const NodeInfo &info) {
+                return info.address;
+            });
+            return;
         }
-        continuePingRefresh(std::next(ipsIter, countSteps), node);
-    }, 2s);
+    }
+    throwErr("Not found node for str " + nodeStr.toStdString());
 }
 
-void NsLookup::processRefresh() {
-    if (isProcess || isProcessRefresh) {
-        return;
+bool NsLookup::fillNodeStruct(std::map<QString, NodeType>::const_iterator &node, std::vector<QString> &ipsTemp) {
+    if (node == nodes.end()) {
+        return false;
     }
 
-    QString address;
-    for (const auto &pair: defectiveTorrents) {
-        if (pair.second >= 3) {
-            address = pair.first;
+    NodeType tmp;
+    fillNodeStruct(node->second.node.str(), tmp, ipsTemp);
+
+    return true;
+}
+
+size_t NsLookup::findCountUpdatedIp(const QString &address) const {
+    for (const auto &pair: allNodesForTypes) {
+        for (const NodeInfo &info: pair.second) {
+            if (getAddressWithoutHttp(address) == getAddressWithoutHttp(info.address)) {
+                return info.countUpdated;
+            }
+        }
+    }
+    return 0;
+}
+
+void NsLookup::processRefreshIp(const QString &address, std::vector<QString> &ipsTemp, const std::function<void(const NodeType &node)> &beginPing) {
+    for (const auto &pairNodes: allNodesForTypes) {
+        if (std::find_if(pairNodes.second.cbegin(), pairNodes.second.cend(), [&address](const NodeInfo &info) {
+            return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(address);
+        }) != pairNodes.second.cend()) {
+            LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
+
+            for (const auto &t: pairNodes.second) {
+                ipsTemp.emplace_back(t.address);
+            }
+
+            const auto foundNodeType = std::find_if(nodes.begin(), nodes.end(), [n=pairNodes.first](const auto &pair) {
+                return pair.second.node.str() == n.str();
+            });
+            CHECK(foundNodeType != nodes.end(), "Not found node for type");
+            beginPing(foundNodeType->second);
             break;
-        }
-    }
-
-    const auto cntPing = [this](const NodeType::Node &type, const std::vector<NodeInfo> &nodes) {
-        ipsTempRefresh.clear();
-        for (const auto &t: nodes) {
-            ipsTempRefresh.emplace_back(t.address);
-        }
-
-        isProcessRefresh = true;
-
-        continuePingRefresh(std::begin(ipsTempRefresh), type);
-    };
-
-    if (!address.isEmpty()) {
-        allNodesForTypesNew.clear();
-
-        for (const auto &pairNodes: allNodesForTypes) {
-            if (std::find_if(pairNodes.second.cbegin(), pairNodes.second.cend(), [&address](const NodeInfo &info) {
-                return getAddressWithoutHttp(info.address) == getAddressWithoutHttp(address);
-            }) != pairNodes.second.cend()) {
-                LOG << "Update status for ip: " << address << ". All: " << defectiveTorrents.size();
-
-                cntPing(pairNodes.first, pairNodes.second);
-                break;
-            }
-        }
-    } else {
-        std::vector<std::map<NodeType::Node, std::vector<NodeInfo>>::const_iterator> pairs;
-        for (auto pairNodes = allNodesForTypes.cbegin(); pairNodes != allNodesForTypes.cend(); pairNodes++) {
-            const size_t countWorked = countWorkedNodes(pairNodes->second);
-            if (countWorked == 0) {
-                pairs.emplace_back(pairNodes);
-            }
-        }
-
-        if (!pairs.empty()) {
-            const size_t counter = randomCounter++;
-            const auto &pairNodes = pairs[counter % pairs.size()];
-            LOG << "Update status for type: " << pairNodes->first.str();
-
-            cntPing(pairNodes->first, pairNodes->second);
         }
     }
 }
@@ -596,6 +573,8 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
 
     sortAll();
 
+    allNodesForTypesBackup = allNodesForTypes;
+
     return timePoint;
 }
 
@@ -606,12 +585,24 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp, cons
     content += std::to_string(systemTimePointToInt(tp)) + "\n";
     for (const auto &nodeTypeIter: nodes) {
         const NodeType &nodeType = nodeTypeIter.second;
-        for (const NodeInfo &node: allNodesForTypes[nodeType.node]) {
+        const auto processOneNode = [](const NodeInfo &node, const NodeType &nodeType) {
+            std::string content;
             content += nodeType.type.toStdString() + " ";
             content += node.address.toStdString() + " ";
             content += std::to_string(node.ping) + " ";
             content += (node.isTimeout ? "1" : "0") + std::string(" ");
             content += "\n";
+            return content;
+        };
+        if (countWorkedNodes(allNodesForTypes[nodeType.node]) != 0 || allNodesForTypesBackup[nodeType.node].empty()) {
+            for (const NodeInfo &node: allNodesForTypes[nodeType.node]) {
+                content += processOneNode(node, nodeType);
+            }
+            allNodesForTypesBackup[nodeType.node] = allNodesForTypes[nodeType.node];
+        } else {
+            for (const NodeInfo &node: allNodesForTypesBackup[nodeType.node]) {
+                content += processOneNode(node, nodeType);
+            }
         }
     }
 
@@ -671,9 +662,13 @@ END_SLOT_WRAPPER
 void NsLookup::onRejectServer(const QString &server) {
 BEGIN_SLOT_WRAPPER
     bool isFound = false;
+    QString address;
     for (auto &defective: defectiveTorrents) {
         if (getAddressWithoutHttp(defective.first) == getAddressWithoutHttp(server)) {
             defective.second++;
+            if (defective.second >= 3) {
+                address = defective.first;
+            }
             isFound = true;
             break;
         }
@@ -681,6 +676,11 @@ BEGIN_SLOT_WRAPPER
 
     if (!isFound) {
         defectiveTorrents.emplace_back(server, 1);
+    }
+
+    if (!address.isEmpty()) {
+        const size_t countUpdated = findCountUpdatedIp(address);
+        taskManager.addTask(RefreshIpWorker::makeTask(0s, address, countUpdated));
     }
 END_SLOT_WRAPPER
 }
