@@ -44,10 +44,10 @@ private:
         SendedTransactionWatcher& operator=(SendedTransactionWatcher &&) = delete;
 
         SendedTransactionWatcher(Transactions &txManager, const QString &requestId, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers, const seconds &timeout)
-            : startTime(startTime)
+            : requestId(requestId)
+            , startTime(startTime)
             , timeout(timeout)
             , txManager(txManager)
-            , requestId(requestId)
             , hash(hash)
             , servers(servers.begin(), servers.end())
             , allServers(servers.begin(), servers.end())

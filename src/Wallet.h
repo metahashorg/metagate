@@ -57,7 +57,7 @@ public:
 
     static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder);
 
-    static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH);
+    static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact);
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
 

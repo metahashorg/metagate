@@ -23,9 +23,9 @@ InitInterface::StateType::StateType(bool isCritical, const QString &message, boo
 {}
 
 InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializer &manager, bool isTimerEnabled)
-    : type(type)
-    , mainThread(mainThread)
+    : mainThread(mainThread)
     , manager(manager)
+    , type(type)
     , isTimerEnabled(isTimerEnabled)
 {
     if (isTimerEnabled) {

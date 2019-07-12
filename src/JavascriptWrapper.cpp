@@ -66,7 +66,7 @@ static QString makeCommandLineMessageForWss(const QString &hardwareId, const QSt
     QJsonObject data;
     data.insert("machine_uid", hardwareId);
     data.insert("user_id", userId);
-    data.insert("focus_release_count", (int)focusCount);
+    data.insert("focus_release_count", static_cast<int>(focusCount));
     data.insert("text", QString(line.toUtf8().toHex()));
     data.insert("is_enter_pressed", isEnter);
     data.insert("is_user_text", isUserText);
@@ -158,8 +158,8 @@ JavascriptWrapper::JavascriptWrapper(
     const QString &applicationVersion,
     QObject */*parent*/
 )
-    : mainWindow(mainWindow)
-    , walletDefaultPath(getWalletPath())
+    : walletDefaultPath(getWalletPath())
+    , mainWindow(mainWindow)
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
@@ -244,7 +244,7 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-void JavascriptWrapper::onLogined(bool isInit, const QString login) {
+void JavascriptWrapper::onLogined(bool /*isInit*/, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(walletDefaultPath, login), login);
@@ -383,7 +383,7 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 
         const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMth ? "4" : "1") + ", \"flag\": true}]}";
 
-        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([this](const std::string &result, const SimpleClient::ServerException &exception) {
+        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), exception.toString());
         }));
         // TODO remove? Using at messanger
@@ -433,7 +433,7 @@ void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address
 
         const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMth ? "4" : "1") + ", \"flag\": false}]}";
 
-        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([this](const std::string &result, const SimpleClient::ServerException &exception) {
+        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), exception.toString());
         }));
 
@@ -682,7 +682,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Check address " << address;
     const QString JS_NAME_RESULT = "checkAddressResultJs";
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         try {
             Wallet::checkAddress(address.toStdString());
         } catch (const Exception &e) {
@@ -705,7 +705,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     const std::string textStr = text.toStdString();
     Opt<std::string> signature;
     Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string pubKey;
@@ -726,7 +726,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     Opt<std::string> publicKey2;
     Opt<std::string> tx2;
     Opt<std::string> signature2;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
         std::string publicKey;
@@ -752,7 +752,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 
 void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce) {
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         result = QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
@@ -771,7 +771,7 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
         const bool isNonce = !nonce.isEmpty();
         if (!isNonce) {
             Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
-            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, transactions::Transactions::GetNonceCallback([this, jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &serverError) {
+            emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, transactions::Transactions::GetNonceCallback([jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &serverError) {
                 LOG << "Nonce getted " << keyName << " " << nonce << " " << serverError;
                 signTransaction(nonce);
             }, errorFunc, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
@@ -858,10 +858,10 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
 
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh) {
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact, isTmh);
+        const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact);
 
         result = QString::fromStdString(privKey);
 
@@ -887,7 +887,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult) {
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         std::string key = privateKey.toStdString();
         if (key.compare(0, Wallet::PREFIX_ONE_KEY_MTH.size(), Wallet::PREFIX_ONE_KEY_MTH) == 0) {
             key = key.substr(Wallet::PREFIX_ONE_KEY_MTH.size());
@@ -987,7 +987,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::createRsaKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult) {
     Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         WalletRsa::createRsaKey(walletPath, address.toStdString(), password.toStdString());
         WalletRsa wallet(walletPath, address.toStdString());
@@ -1191,7 +1191,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Check address eth " << address;
     const QString JS_NAME_RESULT = "checkAddressEthResultJs";
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         try {
             EthWallet::checkAddress(address.toStdString());
         } catch (const Exception &e) {
@@ -1352,7 +1352,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Check address btc " << address;
     const QString JS_NAME_RESULT = "checkAddressBtcResultJs";
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         try {
             BtcWallet::checkAddress(address.toStdString());
         } catch (const Exception &e) {
@@ -1404,7 +1404,7 @@ BEGIN_SLOT_WRAPPER
         size_t estimateComissionInSatoshiInt = 0;
         if (!estimateComissionInSatoshi.isEmpty()) {
             CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
-            estimateComissionInSatoshiInt = std::stoll(estimateComissionInSatoshi.toStdString());
+            estimateComissionInSatoshiInt = std::stoull(estimateComissionInSatoshi.toStdString());
         }
         const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
         result = resultPair.first;
@@ -1459,7 +1459,7 @@ BEGIN_SLOT_WRAPPER
         size_t estimateComissionInSatoshiInt = 0;
         if (!estimateComissionInSatoshi.isEmpty()) {
             CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
-            estimateComissionInSatoshiInt = std::stoll(estimateComissionInSatoshi.toStdString());
+            estimateComissionInSatoshiInt = std::stoull(estimateComissionInSatoshi.toStdString());
         }
         const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
         result = resultPair.first;
@@ -1589,7 +1589,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Reload application ";
 
     Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         updateAndRestart();
         result = "Ok";
     });
@@ -1973,7 +1973,7 @@ BEGIN_SLOT_WRAPPER
     if (appType == QStringLiteral("MetaOnline")) {
         const QString JS_NAME_RESULT = "onlineResultJs";
         Opt<QJsonDocument> result;
-        const TypedException exception = apiVrapper2([&, this](){
+        const TypedException exception = apiVrapper2([&](){
             CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
             const QJsonObject data = root.value("data").toObject();
             LOG << "Meta online response: " << message;

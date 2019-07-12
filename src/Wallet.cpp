@@ -533,7 +533,7 @@ std::string Wallet::calcHash(const std::string &txHex, const std::string &signHe
     return toHex(doubleSha(rawTx));
 }
 
-std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact, bool isTMH) {
+std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact) {
     const QString fullPath = makeFullWalletPath(folder, addr);
     std::string privKey = readFile(fullPath);
 
@@ -553,7 +553,7 @@ std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr
 }
 
 void Wallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
-    std::string result;
+    std::string result = data;
     if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
         result = result.substr(COMPACT_FORMAT.size());
         CHECK_TYPED(result.compare(0, CURRENT_COMPACT_FORMAT.size() + 1, CURRENT_COMPACT_FORMAT + "\n") == 0, TypeErrors::INCORRECT_USER_DATA, "Incorrect private key");
