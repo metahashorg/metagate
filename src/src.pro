@@ -111,6 +111,7 @@ HEADERS += mainwindow.h \
     check.h \
     machine_uid.h \
     client.h \
+    transactions/TransactionsMessages_копия.h \
     unzip.h \
     uploader.h \
     EthWallet.h \

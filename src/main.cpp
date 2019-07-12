@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup>();
 
-        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup);
+        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup, auth);
 
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 

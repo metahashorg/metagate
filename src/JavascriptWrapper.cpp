@@ -168,6 +168,7 @@ JavascriptWrapper::JavascriptWrapper(
     , utilsManager(utilsManager)
     , applicationVersion(applicationVersion)
 {
+    transactionsManager.setJS(*this);
     hardwareId = QString::fromStdString(::getMachineUid());
     utmData = QString::fromLatin1(getUtmData());
 

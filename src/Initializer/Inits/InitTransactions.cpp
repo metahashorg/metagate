@@ -49,13 +49,13 @@ void InitTransactions::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup) {
+InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth) {
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<transactions::TransactionsDBStorage>(getDbPath());
         database->init();
         txJavascript = std::make_unique<transactions::TransactionsJavascript>();
         txJavascript->moveToThread(mainThread);
-        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get(), *txJavascript, *database);
+        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get(), *txJavascript, *database, *auth.get().first, *(mainWindow.get()));
         txManager->start();
         MainWindow &mw = *mainWindow.get();
         emit mw.setTransactionsJavascript(txJavascript.get(), MainWindow::SetTransactionsJavascriptCallback([this, mainWindow]() {

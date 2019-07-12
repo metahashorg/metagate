@@ -22,6 +22,11 @@ class NsLookup;
 struct TypedException;
 
 class JavascriptWrapper;
+class MainWindow;
+
+namespace auth {
+class Auth;
+}
 
 namespace transactions {
 
@@ -138,9 +143,13 @@ public:
 
 public:
 
-    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
+    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, QObject *parent = nullptr);
 
     ~Transactions() override;
+
+    void setJS(JavascriptWrapper &jst) {
+        js = &jst;
+    }
 
 protected:
 
@@ -151,6 +160,7 @@ protected:
     void finishMethod() override;
 
 signals:
+    void showNotification(const QString &title, const QString &message);
 
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
@@ -226,6 +236,8 @@ private slots:
 
     void onFindTxOnTorrentEvent();
 
+    void onLogined(bool isInit, const QString login);
+
 private:
 
     void processCheckTxs(const QString &address, const QString &currency, const std::vector<QString> &servers);
@@ -240,7 +252,7 @@ private:
 
     uint64_t calcCountTxs(const QString &address, const QString &currency) const;
 
-    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
+    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const BalanceInfo &curBalance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
     void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
 
@@ -259,6 +271,7 @@ private:
 private:
 
     NsLookup &nsLookup;
+    JavascriptWrapper *js = nullptr;
 
     TransactionsJavascript &javascriptWrapper;
 
