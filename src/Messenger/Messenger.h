@@ -11,6 +11,7 @@
 #include "Message.h"
 
 #include "CallbackWrapper.h"
+#include "ManagerWrapper.h"
 
 #include <map>
 #include <set>
@@ -95,13 +96,9 @@ class MessengerDBStorage;
 struct ChannelInfo;
 class CryptographicManager;
 
-class Messenger : public QObject, public TimerClass
+class Messenger : public ManagerWrapper, public TimerClass
 {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
-
 private:
 
     class DeferredMessage {
@@ -194,13 +191,7 @@ protected:
 
 signals:
 
-    void callbackCall(const Messenger::Callback &callback);
-
     void showNotification(const QString &title, const QString &message);
-
-public slots:
-
-    void onCallbackCall(const Messenger::Callback &callback);
 
 public:
 
