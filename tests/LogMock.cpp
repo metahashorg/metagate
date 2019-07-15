@@ -10,7 +10,7 @@
 PeriodicLog::PeriodicLog() = default;
 
 PeriodicLog::PeriodicLog(const std::string &str)
-    : str(str)
+    : name(str)
 {}
 
 PeriodicLog PeriodicLog::make(const std::string &str) {
@@ -19,22 +19,22 @@ PeriodicLog PeriodicLog::make(const std::string &str) {
 }
 
 bool PeriodicLog::notSet() const {
-    return str.empty();
+    return name.empty();
 }
 
 Log_::Log_(const std::string &/*fileName*/) {
 
 }
 
-bool Log_::processPeriodic(const std::string &/*s*/, std::string &/*addedStr*/) {
+bool Log_::processPeriodic(const std::string &/*s*/, std::string &/*addedStr*/, std::string &/*periodicStrFirstLine*/, std::string &/*periodicStrSecondLine*/) {
     return false;
 }
 
-void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
+void Log_::finalize() noexcept {
     try {
         const std::string &toCoutStr = ssCout.str();
 
-        std::cout << toCoutStr << *pManip;
+        std::cout << toCoutStr << std::endl;
     } catch (...) {
         std::cerr << "Error";
     }

@@ -10,19 +10,19 @@ class PeriodicLog {
     friend struct Log_;
 public:
 
-    static PeriodicLog make(const std::string &str);
+    static PeriodicLog make(const std::string &name);
 
 private:
 
     PeriodicLog();
 
-    PeriodicLog(const std::string &str);
+    PeriodicLog(const std::string &name);
 
     bool notSet() const;
 
 private:
 
-    std::string str;
+    std::string name;
 };
 
 struct Log_ {
@@ -45,10 +45,10 @@ struct Log_ {
         return *this;
     }
 
-    void finalize(std::ostream&(*pManip)(std::ostream&)) noexcept;
+    void finalize() noexcept;
 
     ~Log_() noexcept {
-        finalize(std::endl);
+        finalize();
     }
 
 private:
@@ -70,7 +70,7 @@ private:
 
     void print(const bool &b);
 
-    bool processPeriodic(const std::string &s, std::string &addedStr);
+    bool processPeriodic(const std::string &s, std::string &addedStr, std::string &periodicStrFirstLine, std::string &periodicStrSecondLine);
 
     std::stringstream ssCout;
     std::stringstream ssLog;
