@@ -16,6 +16,9 @@ public:
     BigNumber(const QString &dec);
     BigNumber(const BigNumber &bn);
 
+    bool isZero() const;
+    bool isNegative() const;
+
     void setDecimal(const QByteArray &dec);
     QByteArray getDecimal() const;
 

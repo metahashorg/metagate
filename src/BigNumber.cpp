@@ -30,6 +30,16 @@ BigNumber::BigNumber(const BigNumber &bn)
 
 }
 
+bool BigNumber::isZero() const
+{
+    return BN_is_zero(this->ptr.get());
+}
+
+bool BigNumber::isNegative() const
+{
+    return BN_is_negative(this->ptr.get());
+}
+
 void BigNumber::setDecimal(const QByteArray &dec)
 {
     BIGNUM *p = ptr.get();
