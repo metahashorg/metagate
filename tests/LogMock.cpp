@@ -9,13 +9,19 @@
 
 PeriodicLog::PeriodicLog() = default;
 
-PeriodicLog::PeriodicLog(const std::string &str)
+PeriodicLog::PeriodicLog(const std::string &str, bool isAutoPeriodic)
     : name(str)
+    , isAutoPeriodic(isAutoPeriodic)
 {}
 
 PeriodicLog PeriodicLog::make(const std::string &str) {
     CHECK(!str.empty(), "periodic name empty");
-    return PeriodicLog(str);
+    return PeriodicLog(str, false);
+}
+
+PeriodicLog PeriodicLog::makeAuto(const std::string &str) {
+    CHECK(!str.empty(), "periodic name empty");
+    return PeriodicLog(str, true);
 }
 
 bool PeriodicLog::notSet() const {
@@ -26,8 +32,8 @@ Log_::Log_(const std::string &/*fileName*/) {
 
 }
 
-bool Log_::processPeriodic(const std::string &/*s*/, std::string &/*addedStr*/, std::string &/*periodicStrFirstLine*/, std::string &/*periodicStrSecondLine*/) {
-    return false;
+bool Log_::processPeriodic(const std::string &s, std::string &periodicStrFirstLine, std::string &periodicStrOriginalLinePrefix) {
+    return true;
 }
 
 void Log_::finalize() noexcept {

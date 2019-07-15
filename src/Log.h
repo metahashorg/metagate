@@ -12,17 +12,22 @@ public:
 
     static PeriodicLog make(const std::string &name);
 
+    static PeriodicLog makeAuto(const std::string &name);
+
 private:
 
     PeriodicLog();
 
-    PeriodicLog(const std::string &name);
+    PeriodicLog(const std::string &name, bool isAutoPeriodic);
 
     bool notSet() const;
 
 private:
 
     std::string name;
+
+    bool isAutoPeriodic = false;
+
 };
 
 struct Log_ {
@@ -70,7 +75,7 @@ private:
 
     void print(const bool &b);
 
-    bool processPeriodic(const std::string &s, std::string &addedStr, std::string &periodicStrFirstLine, std::string &periodicStrSecondLine);
+    bool processPeriodic(const std::string &s, std::string &periodicStrFirstLine, std::string &periodicStrOriginalLinePrefix);
 
     std::stringstream ssCout;
     std::stringstream ssLog;

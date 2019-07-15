@@ -52,8 +52,15 @@ public:
         return "Changed " + std::to_string(p.iteration) + ". ";
     }
 
+    static std::string makeNameAutoPeriodic(const std::string &name, const LogImplVars::PeriodicStruct &p) {
+        return name + "_" + std::to_string(p.iteration);
+    }
+
     std::map<std::string, PeriodicStruct> periodics;
     std::mutex mutPeriodics;
+
+    std::map<std::string, std::map<std::string, PeriodicStruct>> autoPeriodics;
+    std::mutex mutAutoPeriodics;
 
     ~LogImplVars() {
         try {
@@ -66,6 +73,20 @@ public:
                     std::lock_guard<std::mutex> lockLog(mutGlobal);
                     __log_file__ << pair.first << ": " << toLog << std::endl;
                     __log_file2__ << pair.first << ": " << toLog << std::endl;
+                }
+            }
+
+            std::unique_lock<std::mutex> lock2(mutPeriodics);
+            std::map<std::string, std::map<std::string, PeriodicStruct>> copy2 = autoPeriodics;
+            lock2.unlock();
+            for (const auto &pair: copy2) {
+                for (const auto &pair2: pair.second) {
+                    if (!pair2.second.periods.empty()) {
+                        const std::string toLog = makeStrPeriodic(pair2.second);
+                        std::lock_guard<std::mutex> lockLog(mutGlobal);
+                        __log_file__ << makeNameAutoPeriodic(pair.first, pair2.second) << ": " << toLog << std::endl;
+                        __log_file2__ << makeNameAutoPeriodic(pair.first, pair2.second) << ": " << toLog << std::endl;
+                    }
                 }
             }
         } catch (...) {
@@ -113,13 +134,19 @@ static size_t& getMaxAliasSize() {
 
 PeriodicLog::PeriodicLog() = default;
 
-PeriodicLog::PeriodicLog(const std::string &str)
-    : name(str)
+PeriodicLog::PeriodicLog(const std::string &name, bool isAutoPeriodic)
+    : name(name)
+    , isAutoPeriodic(isAutoPeriodic)
 {}
 
-PeriodicLog PeriodicLog::make(const std::string &str) {
-    CHECK(!str.empty(), "periodic name empty");
-    return PeriodicLog(str);
+PeriodicLog PeriodicLog::make(const std::string &name) {
+    CHECK(!name.empty(), "periodic name empty");
+    return PeriodicLog(name, false);
+}
+
+PeriodicLog PeriodicLog::makeAuto(const std::string &name) {
+    CHECK(!name.empty(), "periodic name empty");
+    return PeriodicLog(name, true);
 }
 
 bool PeriodicLog::notSet() const {
@@ -158,55 +185,86 @@ Log_::Log_(const Alias &alias) {
     printAlias(alias.name);
 }
 
-bool Log_::processPeriodic(const std::string &s, std::string &addedStr, std::string &periodicStrFirstLine, std::string &periodicStrSecondLine) {
+bool Log_::processPeriodic(const std::string &s, std::string &periodicStrFirstLine, std::string &periodicStrOriginalLinePrefix) {
     periodicStrFirstLine.clear();
-    periodicStrSecondLine.clear();
+    periodicStrOriginalLinePrefix.clear();
 
     if (periodic.notSet()) {
         return true;
-    } else {
-        std::string periodicStr = "\'" + periodic.name + "\': ";
+    } else if (!periodic.isAutoPeriodic) {
+        const std::string periodicStr = "\'" + periodic.name + "\': ";
 
         const time_point now = ::now();
-        bool to_return;
         std::lock_guard<std::mutex> lock(vars.mutPeriodics);
         auto found = vars.periodics.find(periodic.name);
         if (found != vars.periodics.end()) {
             LogImplVars::PeriodicStruct &p = found->second;
             if (p.content == s) {
-                periodicStrFirstLine = periodicStr + LogImplVars::makeChangedPeriodic(p);
 
                 const milliseconds interval = p.calcInterval(now);
                 p.periods.push_back(interval);
                 p.lastPeriod = now;
                 if (p.periods.size() >= p.count) {
-                    addedStr = LogImplVars::makeStrPeriodic(p);
+                    periodicStrFirstLine = periodicStr + LogImplVars::makeChangedPeriodic(p);
+                    periodicStrFirstLine += LogImplVars::makeStrPeriodic(p);
                     p.periods.clear();
                 }
-                to_return = false;
+                return false;
             } else {
                 periodicStrFirstLine = periodicStr + LogImplVars::makeChangedPeriodic(p);
+                periodicStrFirstLine += LogImplVars::makeStrPeriodic(p);
 
-                addedStr = LogImplVars::makeStrPeriodic(p);
                 p.periods.clear();
                 p.lastPeriod = now;
                 p.content = s;
                 p.iteration++;
-                to_return = true;
 
-                periodicStrSecondLine = periodicStr + LogImplVars::makeChangedPeriodic(p);
+                periodicStrOriginalLinePrefix = periodicStr + LogImplVars::makeChangedPeriodic(p);
+                return true;
             }
         } else {            
             LogImplVars::PeriodicStruct p;
 
-            periodicStrSecondLine = periodicStr + LogImplVars::makeChangedPeriodic(p);
+            periodicStrOriginalLinePrefix = periodicStr + LogImplVars::makeChangedPeriodic(p);
 
             p.content = s;
             p.lastPeriod = now;
             vars.periodics[periodic.name] = p;
-            to_return = true;
+            return true;
         }
-        return to_return;
+    } else if (periodic.isAutoPeriodic) {
+        const time_point now = ::now();
+        std::lock_guard<std::mutex> lock(vars.mutAutoPeriodics);
+        std::map<std::string, LogImplVars::PeriodicStruct> &pMap = vars.autoPeriodics[periodic.name];
+
+        const size_t currNum = pMap.size();
+        if (pMap.find(s) == pMap.end()) {
+            LogImplVars::PeriodicStruct p;
+            p.content = s;
+            p.lastPeriod = now;
+            p.iteration = currNum;
+            const std::string periodicStr = "\'" + LogImplVars::makeNameAutoPeriodic(periodic.name, p) + "\': ";
+
+            pMap.emplace(s, p);
+            periodicStrOriginalLinePrefix = periodicStr;
+            return true;
+        } else {
+            LogImplVars::PeriodicStruct &p = pMap.at(s);
+
+            const milliseconds interval = p.calcInterval(now);
+            p.periods.push_back(interval);
+            p.lastPeriod = now;
+            if (p.periods.size() >= p.count) {
+                const std::string periodicStr = "\'" + LogImplVars::makeNameAutoPeriodic(periodic.name, p) + "\': ";
+
+                periodicStrFirstLine = periodicStr;
+                periodicStrFirstLine += LogImplVars::makeStrPeriodic(p);
+                p.periods.clear();
+            }
+            return false;
+        }
+    } else {
+        throwErr("Ups");
     }
 }
 
@@ -214,25 +272,24 @@ void Log_::finalize() noexcept {
     try {
         const std::string &clearStr = ssCout.str();
 
-        std::string firstLine;
         std::string periodicStrFirstLine;
-        std::string periodicStrSecondLine;
-        const bool isPrintSecondLine = processPeriodic(clearStr, firstLine, periodicStrFirstLine, periodicStrSecondLine);
+        std::string periodicStrOriginalLinePrefix;
+        const bool isPrintOriginalLine = processPeriodic(clearStr, periodicStrFirstLine, periodicStrOriginalLinePrefix);
 
         const std::string &toCoutStr = clearStr;
         const std::string ssLogStr = ssLog.str();
         const std::string &toLogStrFirstLine = ssLogStr + periodicStrFirstLine;
-        const std::string &toLogStrSecondLine = ssLogStr + periodicStrSecondLine;
+        const std::string &toLogStrOriginalLine = ssLogStr + periodicStrOriginalLinePrefix;
 
         std::lock_guard<std::mutex> lock(vars.mutGlobal);
         std::cout << toCoutStr << std::endl;
-        if (!firstLine.empty()) {
-            vars.__log_file__ << toLogStrFirstLine << firstLine << std::endl;
-            vars.__log_file2__ << toLogStrFirstLine << firstLine << std::endl;
+        if (!periodicStrFirstLine.empty()) {
+            vars.__log_file__ << toLogStrFirstLine << std::endl;
+            vars.__log_file2__ << toLogStrFirstLine << std::endl;
         }
-        if (isPrintSecondLine) {
-            vars.__log_file__ << toLogStrSecondLine << toCoutStr << std::endl;
-            vars.__log_file2__ << toLogStrSecondLine << toCoutStr << std::endl;
+        if (isPrintOriginalLine) {
+            vars.__log_file__ << toLogStrOriginalLine << toCoutStr << std::endl;
+            vars.__log_file2__ << toLogStrOriginalLine << toCoutStr << std::endl;
         }
     } catch (...) {
         std::cerr << "Error";
