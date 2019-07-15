@@ -411,7 +411,14 @@ BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     wrapOperation([&, this](){
-        emit transactionsManager->calcBalance(address, currency, Transactions::CalcBalanceCallback([currency, address, makeFunc](const BalanceInfo &balance) {
+
+        //////////////////
+            QString cur = "tmh";
+            if (currency.contains("mhc", Qt::CaseInsensitive))
+                cur = "mhc";
+        //////////////////
+
+        emit transactionsManager->calcBalance(address, cur, Transactions::CalcBalanceCallback([currency, address, makeFunc](const BalanceInfo &balance) {
             LOG << "calc balance ok " << currency << " " << address << " " << QString(balance.calcBalance().getDecimal()) << " " << balance.countTxs << " " << balance.savedTxs;
             makeFunc.func(TypedException(), address, currency, balanceToJson(balance));
         }, makeFunc.error, signalFunc));

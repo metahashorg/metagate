@@ -10,7 +10,7 @@
 namespace transactions {
 
 const quint32 BNModule = 6;
-const QString TorrentTypeMainNet = QStringLiteral("torrent-main");
+const QString TorrentTypeMainNet = QStringLiteral("torrent_main");
 const QString TorrentTypeDevNet = QStringLiteral("torrent");
 
 
