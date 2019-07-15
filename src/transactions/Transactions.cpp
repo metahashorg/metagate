@@ -130,8 +130,11 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
     transactionGuard.commit();
 
     BigNumber sumch = (balance.received - balance.spent) - (curBalance.received - curBalance.spent);
-    // check 0?
-    emit showNotification(tr("Balance for address %1 changed").arg(address), QStringLiteral("%1 %2").arg(sumch.getFracDecimal(BNModule)).arg(currency));
+    QString value = sumch.getFracDecimal(BNModule);
+    if (sumch.isNegative())
+        value.prepend(QStringLiteral("-"));
+    value += QStringLiteral(" ") + currency.toUpper();
+    emit showNotification(tr("Balance for address %1 changed").arg(address), value);
 
     BalanceInfo balanceCopy = balance;
     balanceCopy.savedTxs = std::min(confirmedCountTxsInThisLoop, balance.countTxs);
