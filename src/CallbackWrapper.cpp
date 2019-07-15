@@ -9,7 +9,9 @@
 namespace callbackCall {
 
 Called::~Called() {
+    std::unique_lock<std::mutex> lock(mut);
     if (!calledFunc && !calledError) {
+        lock.unlock();
         LOG << "Warn. CallbackWrapper not called";
     }
 }
