@@ -148,7 +148,7 @@ public:
     ~Transactions() override;
 
     void setJS(JavascriptWrapper &jst) {
-        js = &jst;
+        mainJavascriptWrapper = &jst;
     }
 
 protected:
@@ -232,6 +232,9 @@ public slots:
 
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
+    void onMthWalletCreated(const QString &name);
+
+
 private slots:
 
     void onFindTxOnTorrentEvent();
@@ -268,10 +271,12 @@ private:
 
     void removeAddress(const QString &address, const QString &currency);
 
+    void addTrackedForCurrentLogin();
+
 private:
 
     NsLookup &nsLookup;
-    JavascriptWrapper *js = nullptr;
+    JavascriptWrapper *mainJavascriptWrapper = nullptr;
 
     TransactionsJavascript &javascriptWrapper;
 

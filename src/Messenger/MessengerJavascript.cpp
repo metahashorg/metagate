@@ -900,7 +900,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onMthWalletCreated(const QString wallet) {
+void MessengerJavascript::onMthWalletCreated(const QString &wallet)
+{
+    Q_UNUSED(wallet);
 BEGIN_SLOT_WRAPPER
     setPathsImpl();
 END_SLOT_WRAPPER

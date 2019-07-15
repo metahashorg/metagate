@@ -36,7 +36,7 @@ public:
 public slots:
     void onLogined(bool isInit, const QString login);
 
-    void onMthWalletCreated(QString name);
+    void onMthWalletCreated(const QString &name);
 
 signals:
 

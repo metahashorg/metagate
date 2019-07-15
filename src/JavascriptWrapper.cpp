@@ -189,6 +189,8 @@ JavascriptWrapper::JavascriptWrapper(
     Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList);
     Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsListMHC, this, &JavascriptWrapper::onCreateWatchWalletsListMHC);
 
+    Q_CONNECT(this, &JavascriptWrapper::mthWalletCreated, &transactionsManager, &transactions::Transactions::onMthWalletCreated);
+
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(WalletsListCallback, "WalletsListCallback");
@@ -387,8 +389,7 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
         client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), exception.toString());
         }));
-        // TODO remove? Using at messanger
-        //emit mthWalletCreated(address);
+        emit mthWalletCreated(address);
     });
 
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));

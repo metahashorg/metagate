@@ -602,7 +602,12 @@ END_SLOT_WRAPPER
 void Transactions::onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getPaymentsForCurrency(currency, from, count, asc);
+    //////////////////
+        QString cur = "tmh";
+        if (currency.contains("mhc", Qt::CaseInsensitive))
+            cur = "mhc";
+    //////////////////
+        return db.getPaymentsForCurrency(cur, from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -720,35 +725,47 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onLogined(bool isInit, const QString login)
+void Transactions::addTrackedForCurrentLogin()
 {
-    //using GetAllWalletsCurrencyCallback = CallbackWrapper<void()>;
-
-BEGIN_SLOT_WRAPPER
-    currentGroup = login;
-    const auto errorCallback = [](const TypedException &exception){
+    if (!mainJavascriptWrapper)
+        return;
+    const auto errorCallback = [](const TypedException &) {
 
     };
 
-    if (js) {
-        emit js->getListWallets(JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletsListCallback([this, login](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
-            auto transactionGuard = db.beginTransaction();
-            for (const Wallet::WalletInfo &wallet: walletAddresses) {
-                qDebug() << "!!! " << wallet.address;
-                db.addTracked("mhc", wallet.address, "", TorrentTypeMainNet, login);
-            }
-            transactionGuard.commit();
-        }, errorCallback, signalFunc));
-        emit js->getListWallets(JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletsListCallback([this, login](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
-            Q_UNUSED(hwid);
-            auto transactionGuard = db.beginTransaction();
-            for (const Wallet::WalletInfo &wallet: walletAddresses) {
-                qDebug() << "!!! " << wallet.address;
-                db.addTracked("tmh", wallet.address, "", TorrentTypeDevNet, login);
-            }
-            transactionGuard.commit();
-        }, errorCallback, signalFunc));
-    }
+    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletsListCallback([this](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+        auto transactionGuard = db.beginTransaction();
+        for (const Wallet::WalletInfo &wallet: walletAddresses) {
+            qDebug() << "!!! " << wallet.address;
+            db.addTracked("mhc", wallet.address, "", TorrentTypeMainNet, userName);
+        }
+        transactionGuard.commit();
+    }, errorCallback, signalFunc));
+    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletsListCallback([this](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+        Q_UNUSED(hwid);
+        auto transactionGuard = db.beginTransaction();
+        for (const Wallet::WalletInfo &wallet: walletAddresses) {
+            qDebug() << "!!! " << wallet.address;
+            db.addTracked("tmh", wallet.address, "", TorrentTypeDevNet, userName);
+        }
+        transactionGuard.commit();
+    }, errorCallback, signalFunc));
+}
+
+void Transactions::onLogined(bool isInit, const QString login)
+{
+    Q_UNUSED(isInit);
+BEGIN_SLOT_WRAPPER
+    currentGroup = login;
+    addTrackedForCurrentLogin();
+END_SLOT_WRAPPER
+}
+
+void Transactions::onMthWalletCreated(const QString &name)
+{
+    Q_UNUSED(name);
+BEGIN_SLOT_WRAPPER
+    addTrackedForCurrentLogin();
 END_SLOT_WRAPPER
 }
 
