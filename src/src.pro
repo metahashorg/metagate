@@ -110,7 +110,8 @@ SOURCES += main.cpp mainwindow.cpp \
     NsLookup/Workers/RefreshNodeWorker.cpp \
     NsLookup/Workers/FindEmptyNodesWorker.cpp \
     NsLookup/Workers/PrintNodesWorker.cpp \
-    NsLookup/Workers/MiddleWorker.cpp
+    NsLookup/Workers/MiddleWorker.cpp \
+    CallbackWrapper.cpp
 
 unix: SOURCES += machine_uid_unix.cpp
 SOURCES +=  proxy/http_parser.c
