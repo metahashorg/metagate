@@ -30,6 +30,15 @@ namespace transactions {
 static const uint64_t ADD_TO_COUNT_TXS = 10;
 static const uint64_t MAX_TXS_IN_RESPONSE = 2000;
 
+// Small hack to convert different currencies names
+QString Transactions::convertCurrency(const QString &currency) const
+{
+
+    if (currency.contains(QStringLiteral("mhc"), Qt::CaseInsensitive))
+        return QStringLiteral("mhc");
+    return QStringLiteral("tmh");
+}
+
 Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, QObject *parent)
     : TimerClass(5s, parent)
     , nsLookup(nsLookup)
@@ -573,7 +582,13 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback) {
+void Transactions::onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback)
+{
+    Q_UNUSED(address);
+    Q_UNUSED(currency);
+    Q_UNUSED(fromTx);
+    Q_UNUSED(count);
+    Q_UNUSED(asc);
 BEGIN_SLOT_WRAPPER
     // TODO
     runAndEmitCallback([&, this] {
@@ -585,12 +600,17 @@ END_SLOT_WRAPPER
 void Transactions::onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getPaymentsForAddress(address, currency, from, count, asc);
+        return db.getPaymentsForAddress(address, convertCurrency(currency), from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback) {
+void Transactions::onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback)
+{
+    Q_UNUSED(currency);
+    Q_UNUSED(fromTx);
+    Q_UNUSED(count);
+    Q_UNUSED(asc);
 BEGIN_SLOT_WRAPPER
     // TODO
     runAndEmitCallback([&, this] {
@@ -602,12 +622,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-    //////////////////
-        QString cur = "tmh";
-        if (currency.contains("mhc", Qt::CaseInsensitive))
-            cur = "mhc";
-    //////////////////
-        return db.getPaymentsForCurrency(cur, from, count, asc);
+        return db.getPaymentsForCurrency(convertCurrency(currency), from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -615,7 +630,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getForgingPaymentsForAddress(address, currency, from, count, asc);
+        return db.getForgingPaymentsForAddress(address, convertCurrency(currency), from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -623,7 +638,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getDelegatePaymentsForAddress(address, to, currency, from, count, asc);
+        return db.getDelegatePaymentsForAddress(address, to, convertCurrency(currency), from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -631,7 +646,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetDelegateTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getDelegatePaymentsForAddress(address, currency, from, count, asc);
+        return db.getDelegatePaymentsForAddress(address, convertCurrency(currency), from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -639,7 +654,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getLastForgingTransaction(address, currency);
+        return db.getLastForgingTransaction(address, convertCurrency(currency));
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -647,7 +662,7 @@ END_SLOT_WRAPPER
 void Transactions::onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        BalanceInfo balance = getBalance(address, currency);
+        BalanceInfo balance = getBalance(address, convertCurrency(currency));
         balance.savedTxs = balance.countTxs;
         return balance;
     }, callback);

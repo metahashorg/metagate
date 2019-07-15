@@ -273,6 +273,8 @@ private:
 
     void addTrackedForCurrentLogin();
 
+    QString convertCurrency(const QString &currency) const;
+
 private:
 
     NsLookup &nsLookup;
