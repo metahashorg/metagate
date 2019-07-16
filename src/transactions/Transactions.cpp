@@ -132,7 +132,9 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
     BigNumber sumch = (balance.received - balance.spent) - (curBalance.received - curBalance.spent);
     QString value = sumch.getFracDecimal(BNModule);
     if (sumch.isNegative())
-        value.prepend(QStringLiteral("-"));
+        value.prepend(tr("Out") + QStringLiteral(" "));
+    else if (!sumch.isZero())
+        value.prepend(tr("In") + QStringLiteral(" "));
     value += QStringLiteral(" ") + currency.toUpper();
     emit showNotification(tr("Balance for address %1 changed").arg(address), value);
 
