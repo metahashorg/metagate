@@ -2,28 +2,58 @@
 #define CALLBACKWRAPPER_H
 
 #include <functional>
+#include <memory>
+#include <mutex>
 
-#include <QObject>
+struct TypedException;
 
-#include "TypedException.h"
+namespace callbackCall {
+
+class Called {
+public:
+
+    ~Called();
+
+    void setCalledFunc();
+
+    void setCalledError();
+
+private:
+
+    bool calledFunc = false;
+    bool calledError = false;
+
+    std::mutex mut;
+};
+
+using SignalFunc = std::function<void(const std::function<void()> &callback)>;
+
+using ErrorCallback = std::function<void(const TypedException &exception)>;
+
+void wrapErrorImpl(const std::function<void()> &callback, const ErrorCallback &errorCallback);
+
+bool isSetExceptionImpl(const TypedException &exception);
+
+void emitErrorFuncImpl(const SignalFunc &signalFunc, const std::function<void(const TypedException &exception)> &errorCallback, const TypedException &e);
+
+void emitCallbackFuncImpl(const SignalFunc &signalFunc, const std::function<void()> &callback);
+
+}
 
 template<typename Callback>
 class CallbackWrapper {
 public:
 
-    using SignalFunc = std::function<void(const std::function<void()> &callback)>;
+    using SignalFunc = callbackCall::SignalFunc;
 
-    using ErrorCallback = std::function<void(const TypedException &exception)>;
+    using ErrorCallback = callbackCall::ErrorCallback;
 
 private:
 
     static std::function<Callback> makeWrapCallback(bool isWrapError, const std::function<Callback> &callback, const ErrorCallback &errorCallback) {
         if (isWrapError) {
             return [callback, errorCallback](auto ...args) {
-                const TypedException exception = apiVrapper2(std::bind(callback, args...));
-                if (exception.isSet()) {
-                    errorCallback(exception);
-                }
+                callbackCall::wrapErrorImpl(std::bind(callback, args...), errorCallback);
             };
         } else {
             return callback;
@@ -54,16 +84,18 @@ public:
 
     template<typename ...Args>
     void emitCallback(Args ...args) const {
-        emit signal(std::bind(callback, std::forward<Args>(args)...));
+        called->setCalledFunc();
+        callbackCall::emitCallbackFuncImpl(signal, std::bind(callback, std::forward<Args>(args)...));
     }
 
     void emitException(const TypedException &exception) const {
-        emit signal(std::bind(errorCallback, exception));
+        called->setCalledError();
+        callbackCall::emitErrorFuncImpl(signal, errorCallback, exception);
     }
 
     template<typename ...Args>
     void emitFunc(const TypedException &exception, Args ...args) const {
-        if (exception.isSet()) {
+        if (callbackCall::isSetExceptionImpl(exception)) {
             emitException(exception);
         } else {
             emitCallback(std::forward<Args>(args)...);
@@ -82,6 +114,8 @@ private:
     ErrorCallback errorCallback;
 
     SignalFunc signal;
+
+    std::shared_ptr<callbackCall::Called> called = std::make_shared<callbackCall::Called>();
 
 };
 

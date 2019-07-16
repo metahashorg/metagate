@@ -283,7 +283,11 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
             const BalanceInfo &serverBalance = bestAnswers[i].second;
             const std::vector<QString> &pendingTxs = addressesAndUnconfirmedTxs[i].second;
 
-            CHECK(!bestServer.isEmpty(), "Best server with txs not found. Error: " + std::get<SimpleClient::ServerException>(responses[0]).toString());
+            if (bestServer.isEmpty()) {
+                LOG << PeriodicLog::makeAuto("t_err") << "Best server with txs not found. Error: " << std::get<SimpleClient::ServerException>(responses[0]).toString();
+                return;
+            }
+
             const uint64_t countAll = calcCountTxs(address, currency);
             const uint64_t countInServer = serverBalance.countTxs;
             LOG << PeriodicLog::make("t_" + address.right(4).toStdString()) << "Automatic get txs " << address << " " << currency << " " << countAll << " " << countInServer;
@@ -407,8 +411,11 @@ void Transactions::processCheckTxs(const QString &address, const QString &curren
                 }
             }
         }
-        CHECK(!maxServer.isEmpty(), "Best server with txs not found. Error: " + std::get<SimpleClient::ServerException>(responses[0]).toString());
-        processCheckTxsInternal(address, currency, maxServer, lastTx, maxBlockNumber);
+        if (maxServer.isEmpty()) {
+            LOG << PeriodicLog::makeAuto("t_err2") << "Best server with txs not found. Error: " << std::get<SimpleClient::ServerException>(responses[0]).toString();
+        } else {
+            processCheckTxsInternal(address, currency, maxServer, lastTx, maxBlockNumber);
+        }
     };
 
     const QString countBlocksRequest = makeGetCountBlocksRequest();
@@ -448,7 +455,7 @@ void Transactions::timerMethod() {
         if (servStructs.find(currentCurrency) != servStructs.end()) {
             nsLookup.getRandomServers(currentType, 3, 3, NsLookup::GetServersCallback([this, batch, currentCurrency, currentType, servStruct=servStructs.at(currentCurrency)](const std::vector<QString> &servers) {
                 if (servers.empty()) {
-                    LOG << "Warn: servers empty: " << currentType;
+                    LOG << PeriodicLog::makeAuto("t_s0") << "Warn: servers empty: " << currentType;
                     return;
                 }
                 processAddressMth(batch, currentCurrency, servers, servStruct);
