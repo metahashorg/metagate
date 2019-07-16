@@ -131,6 +131,9 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
 
     BigNumber sumch = (balance.received - balance.spent) - (curBalance.received - curBalance.spent);
     QString value = sumch.getFracDecimal(BNModule);
+    // remove '-' if present
+    if (value.front() == QChar('-'))
+        value = value.right(value.size() - 1);
     if (sumch.isNegative())
         value.prepend(tr("Out") + QStringLiteral(" "));
     else if (!sumch.isZero())
