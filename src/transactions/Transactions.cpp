@@ -724,7 +724,6 @@ END_SLOT_WRAPPER
 
 void Transactions::addTrackedForCurrentLogin()
 {
-    ///??????????
     if (!mainJavascriptWrapper)
         return;
     const auto errorCallback = [](const TypedException &) {
@@ -733,6 +732,7 @@ void Transactions::addTrackedForCurrentLogin()
 
     emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletsListCallback([this](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
         auto transactionGuard = db.beginTransaction();
+        db.removeTrackedForGroup("mhc", userName);
         for (const Wallet::WalletInfo &wallet: walletAddresses) {
             db.addTracked("mhc", wallet.address, "", TorrentTypeMainNet, userName);
         }
@@ -741,6 +741,7 @@ void Transactions::addTrackedForCurrentLogin()
     emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletsListCallback([this](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
         Q_UNUSED(hwid);
         auto transactionGuard = db.beginTransaction();
+        db.removeTrackedForGroup("tmh", userName);
         for (const Wallet::WalletInfo &wallet: walletAddresses) {
             db.addTracked("tmh", wallet.address, "", TorrentTypeDevNet, userName);
         }

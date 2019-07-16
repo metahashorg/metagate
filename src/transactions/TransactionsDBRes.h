@@ -166,6 +166,8 @@ static const QString removePaymentsForCurrencyQuery = "DELETE FROM payments %1";
 
 static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked %1";
 
+static const QString removeTrackedForGroupQuery = "DELETE FROM tracked WHERE tgroup = :tgroup AND currency = :currency";
+
 static const QString removePaymentsCurrencyWhere = "WHERE currency = :currency";
 
 };

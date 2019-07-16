@@ -56,6 +56,8 @@ public:
 
     std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);
 
+    void removeTrackedForGroup(const QString &currency, const QString &tgroup);
+
     void removePaymentsForCurrency(const QString &currency);
 
     void setBalance(const QString &currency, const QString &address, const BalanceInfo &balance);
