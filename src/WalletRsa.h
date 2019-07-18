@@ -11,11 +11,11 @@
 class WalletRsa {
 public:
 
-    WalletRsa(const QString &folder, const std::string &addr);
+    WalletRsa(const QString &folder, bool isMhc, const std::string &addr);
 
     static WalletRsa fromPublicKey(const std::string &publicKey);
 
-    static void createRsaKey(const QString &folder, const std::string &addr, const std::string &password);
+    static void createRsaKey(const QString &folder, bool isMhc, const std::string &addr, const std::string &password);
 
     /*
        Возвращает публичный ключ в base16
@@ -28,11 +28,11 @@ public:
 
     std::string decryptMessage(const std::string &encryptedMessageHex) const;
 
-    static QString genFolderRsa(const QString &folder);
+    static QString genFolderRsa(const QString &folder, bool isMhc);
 
     static bool validateKeyName(const QString &privKey, const QString &pubkey, const QString &address);
 
-    static std::vector<QString> getPathsKeys(const QString &folder, const QString &address);
+    static std::vector<QString> getPathsKeys(const QString &folder, bool isMhc, const QString &address);
 
 private:
 
@@ -40,7 +40,7 @@ private:
 
 private:
 
-    static std::string getPublicRsaKey(const QString &folder, const std::string &addr);
+    static std::string getPublicRsaKey(const QString &folder, bool isMhc, const std::string &addr);
 
 private:
 

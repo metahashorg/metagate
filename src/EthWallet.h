@@ -11,6 +11,10 @@ public:
 
     const static std::string PREFIX_ONE_KEY;
 
+private:
+
+    const static QString FOLDER;
+
 public:
 
     EthWallet(
@@ -27,6 +31,8 @@ public:
         std::string value,
         std::string data
     );
+
+    static QString subfolder();
 
     std::string getAddress() const;
 

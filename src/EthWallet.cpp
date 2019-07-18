@@ -15,8 +15,14 @@
 
 const std::string EthWallet::PREFIX_ONE_KEY = "eth:";
 
+const static QString FOLDER = "eth/";
+
+QString EthWallet::subfolder() {
+    return ::FOLDER;
+}
+
 QString EthWallet::getFullPath(const QString &folder, const std::string &address) {
-    return QDir(folder).filePath(QString::fromStdString(address).toLower());
+    return makePath(folder, ::FOLDER, QString::fromStdString(address).toLower());
 }
 
 EthWallet::EthWallet(const std::string &fileData, const std::string &address, const std::string &password, bool /*tmp*/)
@@ -79,7 +85,7 @@ std::string EthWallet::genPrivateKey(const QString &folder, const std::string &p
 std::vector<std::pair<QString, QString>> EthWallet::getAllWalletsInFolder(const QString &folder) {
     std::vector<std::pair<QString, QString>> result;
 
-    const QDir dir(folder);
+    const QDir dir(makePath(folder, ::FOLDER));
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         try {

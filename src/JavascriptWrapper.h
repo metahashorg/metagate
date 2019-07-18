@@ -316,53 +316,53 @@ private slots:
 
 private:
 
-    void createRsaKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult);
+    void createRsaKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult);
 
-    void getRsaPublicKeyMTHS(QString requestId, QString address, QString walletPath, QString jsNameResult);
+    void getRsaPublicKeyMTHS(QString requestId, QString address, bool isMhc, QString jsNameResult);
 
-    void copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, QString walletPath, QString jsNameResult);
+    void copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, bool isMhc, QString jsNameResult);
 
-    void copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, QString walletPath, QString jsNameResult);
+    void copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, bool isMhc, QString jsNameResult);
 
 private:
 
     void setPathsImpl(QString newPatch, QString newUserName);
 
-    void saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, QString walletPath, QString jsNameResult);
+    void saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, bool isMhc, QString jsNameResult);
 
-    void getRawPrivKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult);
+    void getRawPrivKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult);
 
-    void createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult);
+    void createWalletMTHS(QString requestId, QString password, bool isMhc, QString jsNameResult);
 
-    void createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth);
+    void createWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc);
 
-    void createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, QString walletPath, QString jsNameResult);
+    void createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, bool isMhc, QString jsNameResult);
 
-    void removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth);
+    void removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc);
 
-    void checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult);
+    void checkWalletMTHSExists(QString requestId, QString address, bool isMhc, QString jsNameResult);
 
-    void checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult);
+    void checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, bool isMhc, QString jsNameResult);
 
-    void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh);
+    void getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString jsNameResult, bool isMhc);
 
-    void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult);
+    void savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, bool isMhc, QString jsNameResult);
 
-    QString getAllMTHSWalletsJson(QString walletPath, QString name);
+    QString getAllMTHSWalletsJson(bool isMhc, QString name);
 
-    QString getAllMTHSWalletsInfoJson(QString walletPath, QString name);
+    QString getAllMTHSWalletsInfoJson(bool isMhc, QString name);
 
-    QString getAllMTHSWalletsAndPathsJson(QString walletPath, QString name);
+    QString getAllMTHSWalletsAndPathsJson(bool isMhc, QString name);
 
-    void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult);
+    void signMessageMTHS(QString requestId, QString keyName, QString text, QString password, bool isMhc, QString jsNameResult);
 
-    void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult);
+    void signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, bool isMhc, QString jsNameResult);
 
-    void signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, QString walletPath, QString jsNameResult);
+    void signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, bool isMhc, QString jsNameResult);
 
-    void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult);
+    void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, bool isMhc, QString jsNameResult);
 
-    void signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction);
+    void signMessageMTHSWithTxManager(const QString &requestId, bool isMhc, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction);
 
     void createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce);
 
@@ -413,16 +413,6 @@ private:
     QString utmData;
 
     QString walletPath;
-
-    QString walletPathMth;
-
-    QString walletPathOldTmh;
-
-    QString walletPathTmh;
-
-    QString walletPathEth;
-
-    QString walletPathBtc;
 
     QString userName;
 

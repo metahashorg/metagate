@@ -112,8 +112,9 @@ void tst_Metahash::testCreateMth() {
     QFETCH(std::string, passwd);
     std::string tmp;
     std::string address;
-    Wallet::createWallet("./", passwd, tmp, address);
-    Wallet wallet("./", address, passwd);
+    createFolder("./mhc");
+    Wallet::createWallet("./", true, passwd, tmp, address);
+    Wallet wallet("./", true, address, passwd);
 }
 
 void tst_Metahash::testCreateFromRawMth_data() {
@@ -140,9 +141,10 @@ void tst_Metahash::testCreateFromRawMth() {
     QFETCH(std::string, answer);
     std::string tmp;
     std::string address;
-    Wallet::createWalletFromRaw("./", rawkey, passwd, tmp, address);
+    createFolder("./mhc");
+    Wallet::createWalletFromRaw("./", true, rawkey, passwd, tmp, address);
     QCOMPARE(address, answer);
-    Wallet wallet("./", address, passwd);
+    Wallet wallet("./", true, address, passwd);
     const std::string rawPrivate = wallet.getNotProtectedKeyHex();
     QCOMPARE(rawkey, rawPrivate);
 }
@@ -160,20 +162,21 @@ void tst_Metahash::testCreateRawMth() {
     QFETCH(std::string, passwd);
     std::string tmp;
     std::string address;
-    Wallet::createWallet("./", passwd, tmp, address);
-    Wallet wallet("./", address, passwd);
+    createFolder("./mhc");
+    Wallet::createWallet("./", true, passwd, tmp, address);
+    Wallet wallet("./", true, address, passwd);
 
     const std::string privKey = wallet.getNotProtectedKeyHex();
     std::string address2;
-    Wallet::createWalletFromRaw("./", privKey, passwd, tmp, address2);
+    Wallet::createWalletFromRaw("./", true, privKey, passwd, tmp, address2);
     QCOMPARE(address2, address);
-    Wallet wallet2("./", address, passwd);
+    Wallet wallet2("./", true, address, passwd);
 }
 
 void tst_Metahash::testNotCreateMth() {
     std::string tmp;
     std::string address;
-    QVERIFY_EXCEPTION_THROWN(Wallet::createWallet("./", "", tmp, address), TypedException);
+    QVERIFY_EXCEPTION_THROWN(Wallet::createWallet("./", true, "", tmp, address), TypedException);
 }
 
 void tst_Metahash::testMthSignTransaction_data() {
@@ -196,8 +199,9 @@ void tst_Metahash::testMthSignTransaction() {
     QFETCH(std::string, message);
     std::string tmp;
     std::string address;
-    Wallet::createWallet("./", "123", tmp, address);
-    Wallet wallet("./", address, "123");
+    createFolder("./mhc");
+    Wallet::createWallet("./", true, "123", tmp, address);
+    Wallet wallet("./", true, address, "123");
     std::string pubkey;
     const std::string result = wallet.sign(message, pubkey);
     const bool res = Wallet::verify(message, result, pubkey);

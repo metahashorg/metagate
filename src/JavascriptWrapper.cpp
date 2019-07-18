@@ -51,12 +51,6 @@ using namespace std::placeholders;
 
 SET_LOG_NAMESPACE("JSW");
 
-const static QString WALLET_PREV_PATH = ".metahash_wallets/";
-const static QString WALLET_PATH_ETH = "eth/";
-const static QString WALLET_PATH_BTC = "btc/";
-const static QString WALLET_PATH_TMH_OLD = "mth/";
-const static QString WALLET_PATH_TMH = "tmh/";
-
 const QString JavascriptWrapper::defaultUsername = "_unregistered";
 
 static QString makeCommandLineMessageForWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
@@ -208,22 +202,19 @@ void JavascriptWrapper::onGetListWallets(const WalletCurrency &type, const Walle
 BEGIN_SLOT_WRAPPER
     std::vector<Wallet::WalletInfo> result;
     const TypedException &exception = apiVrapper2([&]{
+        CHECK(!walletPath.isEmpty(), "Wallet path not set");
         if (type == WalletCurrency::Tmh) {
-            CHECK(!walletPathTmh.isEmpty(), "Wallet path not set");
-            result = Wallet::getAllWalletsInfoInFolder(walletPathTmh);
+            result = Wallet::getAllWalletsInfoInFolder(walletPath, false);
         } else if (type == WalletCurrency::Mth) {
-            CHECK(!walletPathMth.isEmpty(), "Wallet path not set");
-            result = Wallet::getAllWalletsInfoInFolder(walletPathMth);
+            result = Wallet::getAllWalletsInfoInFolder(walletPath, true);
         } else if (type == WalletCurrency::Btc) {
-            CHECK(!walletPathBtc.isEmpty(), "Wallet path not set");
-            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPathBtc);
+            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
                 return Wallet::WalletInfo(pair.first, pair.second, Wallet::Type::Key);
             });
         } else if (type == WalletCurrency::Eth) {
-            CHECK(!walletPathEth.isEmpty(), "Wallet path not set");
-            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPathEth);
+            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
             result.reserve(res.size());
             std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
                 return Wallet::WalletInfo(pair.first, pair.second, Wallet::Type::Key);
@@ -265,14 +256,14 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::onCreateWatchWalletsList(const QString &requestId, const QStringList &addresses)
 {
 BEGIN_SLOT_WRAPPER
-    createWatchWalletsListMTHS(requestId, addresses, walletPathTmh, "createWatchWalletsListResultJs");
+    createWatchWalletsListMTHS(requestId, addresses, false, "createWatchWalletsListResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::onCreateWatchWalletsListMHC(const QString &requestId, const QStringList &addresses)
 {
 BEGIN_SLOT_WRAPPER
-    createWatchWalletsListMTHS(requestId, addresses, walletPathMth, "createWatchWalletsListMHCResultJs");
+    createWatchWalletsListMTHS(requestId, addresses, true, "createWatchWalletsListMHCResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -292,11 +283,11 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
     const QString newUserName = userName;
     if (force || newUserName != sendedUserName) {
         std::vector<QString> keysTmh;
-        CHECK(!walletPathTmh.isEmpty() && !walletPathMth.isEmpty(), "Wallet paths is empty");
-        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPathTmh, true);
+        CHECK(!walletPath.isEmpty(), "Wallet paths is empty");
+        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPath, false, true);
         std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
         std::vector<QString> keysMth;
-        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPathMth, true);
+        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPath, true, true);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
         const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);
@@ -330,7 +321,7 @@ END_SLOT_WRAPPER
 /// METAHASH ///
 ////////////////
 
-void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, bool isMhc, QString jsNameResult) {
     LOG << "Create wallet mths " << requestId << " " << walletPath;
 
     Opt<QString> walletFullPath;
@@ -345,10 +336,10 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         std::string pKey;
         std::string addr;
-        Wallet::createWallet(walletPath, password.normalized(QString::NormalizationForm_C).toStdString(), pKey, addr);
+        Wallet::createWallet(walletPath, isMhc, password.normalized(QString::NormalizationForm_C).toStdString(), pKey, addr);
 
         pKey.clear();
-        Wallet wallet(walletPath, addr, password.normalized(QString::NormalizationForm_C).toStdString());
+        Wallet wallet(walletPath, isMhc, addr, password.normalized(QString::NormalizationForm_C).toStdString());
         signature = wallet.sign(exampleMessage.get(), pKey);
         publicKey = pKey;
         address = addr;
@@ -365,17 +356,17 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, QS
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
 }
 
-void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth)
+void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc)
 {
     LOG << "Create wallet mths watch " << requestId << address;
     Opt<QString> walletFullPath;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet::createWalletWatch(walletPath, address.toStdString());
+        Wallet::createWalletWatch(walletPath, isMhc, address.toStdString());
 
         LOG << "Create wallet watch ok " << requestId << " " << address;
 
-        Wallet wallet(walletPath, address.toStdString());
+        Wallet wallet(walletPath, isMhc, address.toStdString());
 
         walletFullPath = wallet.getFullPath();
 
@@ -383,7 +374,7 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 
         const QString serverName = Uploader::getServerName();
 
-        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMth ? "4" : "1") + ", \"flag\": true}]}";
+        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": true}]}";
 
         client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), exception.toString());
@@ -394,17 +385,17 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
 }
 
-void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, QString walletPath, QString jsNameResult)
+void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, bool isMhc, QString jsNameResult)
 {
     LOG << "Create watch wallets list mths " << requestId << "(" << addresses.join(",") << ")";
     std::vector<std::pair<QString, QString>> created;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         for (const QString &addr : addresses) {
-            if (Wallet::isWalletExists(walletPath, addr.toStdString()))
+            if (Wallet::isWalletExists(walletPath, isMhc, addr.toStdString()))
                 continue;
-            Wallet::createWalletWatch(walletPath, addr.toStdString());
-            Wallet wallet(walletPath, addr.toStdString());
+            Wallet::createWalletWatch(walletPath, isMhc, addr.toStdString());
+            Wallet wallet(walletPath, isMhc, addr.toStdString());
             const QString walletFullPath = wallet.getFullPath();
             LOG << "Create wallet watch ok " << requestId << " " << addr <<  walletFullPath;
             created.emplace_back(std::pair<QString, QString>(addr, walletFullPath));
@@ -418,13 +409,13 @@ void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, con
     }
 }
 
-void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString walletPath, QString jsNameResult, bool isMth)
+void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc)
 {
     LOG << "Remove wallet mths watch " << requestId << address;
     Opt<QString> walletFullPath;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet::removeWalletWatch(walletPath, address.toStdString());
+        Wallet::removeWalletWatch(walletPath, isMhc, address.toStdString());
 
         LOG << "Remove wallet watch ok " << requestId << " " << address;
 
@@ -432,7 +423,7 @@ void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address
 
         const QString serverName = Uploader::getServerName();
 
-        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMth ? "4" : "1") + ", \"flag\": false}]}";
+        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": false}]}";
 
         client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), exception.toString());
@@ -445,18 +436,18 @@ void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>(address));
 }
 
-void JavascriptWrapper::checkWalletMTHSExists(QString requestId, QString address, QString walletPath, QString jsNameResult)
+void JavascriptWrapper::checkWalletMTHSExists(QString requestId, QString address, bool isMhc, QString jsNameResult)
 {
     Opt<bool> res;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        res = Wallet::isWalletExists(walletPath, address.toStdString());
+        res = Wallet::isWalletExists(walletPath, isMhc, address.toStdString());
     });
 
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), res);
 }
 
-void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, bool isMhc, QString jsNameResult) {
     LOG << "Check wallet password " << requestId << " " << keyName << " " << walletPath;
 
     Opt<QString> result("Not ok");
@@ -465,7 +456,7 @@ void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyNa
 
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
         std::string tmp;
         const std::string signature = wallet.sign(exampleMessage, tmp);
 
@@ -479,160 +470,160 @@ void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyNa
 
 void JavascriptWrapper::createWallet(QString requestId, QString password) {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHS(requestId, password, walletPathTmh, "createWalletResultJs");
+    createWalletMTHS(requestId, password, false, "createWalletResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::createWalletWatch(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHSWatch(requestId, address, walletPathTmh, "createWalletWatchResultJs", false);
+    createWalletMTHSWatch(requestId, address, "createWalletWatchResultJs", false);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::checkWalletExists(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    checkWalletMTHSExists(requestId, address, walletPathTmh, "checkWalletExistsResultJs");
+    checkWalletMTHSExists(requestId, address, false, "checkWalletExistsResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::checkWalletPassword(QString requestId, QString keyName, QString password) {
 BEGIN_SLOT_WRAPPER
-    checkWalletPasswordMTHS(requestId, keyName, password, walletPathTmh, "checkWalletPasswordResultJs");
+    checkWalletPasswordMTHS(requestId, keyName, password, false, "checkWalletPasswordResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::removeWalletWatch(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    removeWalletMTHSWatch(requestId, address, walletPathTmh, "removeWalletWatchResultJs", false);
+    removeWalletMTHSWatch(requestId, address, "removeWalletWatchResultJs", false);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::createWalletMHC(QString requestId, QString password) {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHS(requestId, password, walletPathMth, "createWalletMHCResultJs");
+    createWalletMTHS(requestId, password, true, "createWalletMHCResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::createWalletWatchMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    createWalletMTHSWatch(requestId, address, walletPathMth, "createWalletWatchMHCResultJs", true);
+    createWalletMTHSWatch(requestId, address, "createWalletWatchMHCResultJs", true);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::checkWalletExistsMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    checkWalletMTHSExists(requestId, address, walletPathMth, "checkWalletExistsMHCResultJs");
+    checkWalletMTHSExists(requestId, address, true, "checkWalletExistsMHCResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::checkWalletPasswordMHC(QString requestId, QString keyName, QString password) {
 BEGIN_SLOT_WRAPPER
-    checkWalletPasswordMTHS(requestId, keyName, password, walletPathMth, "checkWalletPasswordMHCResultJs");
+    checkWalletPasswordMTHS(requestId, keyName, password, true, "checkWalletPasswordMHCResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::removeWalletWatchMHC(QString requestId, QString address)
 {
 BEGIN_SLOT_WRAPPER
-    removeWalletMTHSWatch(requestId, address, walletPathMth, "removeWalletWatchMHCResultJs", true);
+    removeWalletMTHSWatch(requestId, address, "removeWalletWatchMHCResultJs", true);
 END_SLOT_WRAPPER
 }
 
 QString JavascriptWrapper::getAllWalletsJson() {
-    return getAllMTHSWalletsJson(walletPathTmh, "tmh");
+    return getAllMTHSWalletsJson(false, "tmh");
 }
 
 QString JavascriptWrapper::getAllWalletsInfoJson()
 {
-    return getAllMTHSWalletsInfoJson(walletPathTmh, "tmh");
+    return getAllMTHSWalletsInfoJson(false, "tmh");
 }
 
 QString JavascriptWrapper::getAllMHCWalletsJson() {
-    return getAllMTHSWalletsJson(walletPathMth, "mhc");
+    return getAllMTHSWalletsJson(true, "mhc");
 }
 
 QString JavascriptWrapper::getAllMHCWalletsInfoJson()
 {
-    return getAllMTHSWalletsInfoJson(walletPathMth, "mhc");
+    return getAllMTHSWalletsInfoJson(true, "mhc");
 }
 
 QString JavascriptWrapper::getAllWalletsAndPathsJson() {
-    return getAllMTHSWalletsAndPathsJson(walletPathTmh, "tmh");
+    return getAllMTHSWalletsAndPathsJson(false, "tmh");
 }
 
 QString JavascriptWrapper::getAllMHCWalletsAndPathsJson() {
-    return getAllMTHSWalletsAndPathsJson(walletPathMth, "mhc");
+    return getAllMTHSWalletsAndPathsJson(true, "mhc");
 }
 
 void JavascriptWrapper::signMessage(QString requestId, QString keyName, QString text, QString password) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, text, password, walletPathTmh, "signMessageResultJs");
+    signMessageMTHS(requestId, keyName, text, password, false, "signMessageResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathTmh, "signMessageV2ResultJs");
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, false, "signMessageV2ResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, walletPathTmh, "signMessageV3ResultJs");
+    signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, false, "signMessageV3ResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
-    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, true, paramsJson, walletPathTmh, "signMessageDelegateResultJs");
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, true, paramsJson, false, "signMessageDelegateResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
-    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, false, paramsJson, walletPathTmh, "signMessageUnDelegateResultJs");
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, false, paramsJson, false, "signMessageUnDelegateResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageMHCDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
-    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, true, paramsJson, walletPathMth, "signMessageDelegateMhcResultJs");
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, true, paramsJson, true, "signMessageDelegateMhcResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageMHCUnDelegate(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
-    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, false, paramsJson, walletPathMth, "signMessageUnDelegateMhcResultJs");
+    signMessageDelegateMTHS(requestId, keyName, password, toAddress, value, fee, nonce, valueDelegate, false, paramsJson, true, "signMessageUnDelegateMhcResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageMHC(QString requestId, QString keyName, QString text, QString password) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, text, password, walletPathMth, "signMessageMHCResultJs");
+    signMessageMTHS(requestId, keyName, text, password, true, "signMessageMHCResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageMHCV2(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, walletPathMth, "signMessageMHCV2ResultJs");
+    signMessageMTHS(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, true, "signMessageMHCV2ResultJs");
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::signMessageMHCV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson) {
 BEGIN_SLOT_WRAPPER
-    signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, walletPathMth, "signMessageMHCV3ResultJs");
+    signMessageMTHSV3(requestId, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, true, "signMessageMHCV3ResultJs");
 END_SLOT_WRAPPER
 }
 
-QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath, QString name) {
+QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(bool isMhc, QString name) {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
+        const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath, isMhc);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
         LOG << PeriodicLog::make("w2_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
@@ -645,10 +636,10 @@ QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(QString walletPath, QSt
     }
 }
 
-QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath, QString name) {
+QString JavascriptWrapper::getAllMTHSWalletsJson(bool isMhc, QString name) {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath);
+        const std::vector<std::pair<QString, QString>> result = Wallet::getAllWalletsInFolder(walletPath, isMhc);
         const QString jsonStr = makeJsonWallets(result);
         LOG << PeriodicLog::make("w_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
@@ -661,11 +652,11 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(QString walletPath, QString nam
     }
 }
 
-QString JavascriptWrapper::getAllMTHSWalletsInfoJson(QString walletPath, QString name)
+QString JavascriptWrapper::getAllMTHSWalletsInfoJson(bool isMhc, QString name)
 {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<Wallet::WalletInfo> result = Wallet::getAllWalletsInfoInFolder(walletPath);
+        const std::vector<Wallet::WalletInfo> result = Wallet::getAllWalletsInfoInFolder(walletPath, isMhc);
         const QString jsonStr = makeJsonWalletsInfo(result);
         LOG << PeriodicLog::make("w3_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
@@ -700,15 +691,15 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString text, QString password, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << " " << keyName << " " << text;
+void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString text, QString password, bool isMhc, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << isMhc << " " << text;
 
     const std::string textStr = text.toStdString();
     Opt<std::string> signature;
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
         std::string pubKey;
         signature = wallet.sign(textStr, pubKey);
         publicKey = pubKey;
@@ -717,8 +708,8 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), signature, publicKey);
 }
 
-void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, bool isMhc, QString jsNameResult) {
+    LOG << "Sign message " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
     if (fee.isEmpty()) {
         fee = "0";
@@ -729,7 +720,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     Opt<std::string> signature2;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+        Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
         std::string publicKey;
         std::string tx;
         std::string signature;
@@ -759,7 +750,7 @@ void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsN
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
 }
 
-void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, const QString &walletPath, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction) {
+void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, bool isMhc, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction) {
     const TypedException exception = apiVrapper2([&, this]() {
         const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
@@ -771,7 +762,7 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
 
         const bool isNonce = !nonce.isEmpty();
         if (!isNonce) {
-            Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+            Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
             emit transactionsManager.getNonce(requestId, QString::fromStdString(wallet.getAddress()), sendParams, transactions::Transactions::GetNonceCallback([jsNameResult, requestId, signTransaction, keyName](size_t nonce, const QString &serverError) {
                 LOG << "Nonce getted " << keyName << " " << nonce << " " << serverError;
                 signTransaction(nonce);
@@ -789,8 +780,8 @@ void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, c
     }
 }
 
-void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, QString walletPath, QString jsNameResult) {
-    LOG << "Sign messagev3 " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, bool isMhc, QString jsNameResult) {
+    LOG << "Sign messagev3 " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
     const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
@@ -798,8 +789,8 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
         fee = "0";
     }
 
-    const auto signTransaction = [this, requestId, walletPath, keyName, password, toAddress, value, fee, dataHex, sendParams, jsNameResult](size_t nonce) {
-        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+    const auto signTransaction = [this, requestId, walletPath=this->walletPath, isMhc, keyName, password, toAddress, value, fee, dataHex, sendParams, jsNameResult](size_t nonce) {
+        Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
         std::string publicKey;
         std::string tx;
         std::string signature;
@@ -817,11 +808,11 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
             makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
         }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
     };
-    signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
+    signMessageMTHSWithTxManager(requestId, isMhc, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }
 
-void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, QString walletPath, QString jsNameResult) {
-    LOG << "Sign message delegate " << requestId << " " << keyName << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate;
+void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, bool isMhc, QString jsNameResult) {
+    LOG << "Sign message delegate " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate;
 
     const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
@@ -829,8 +820,8 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
         fee = "0";
     }
 
-    const auto signTransaction = [this, requestId, walletPath, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams, jsNameResult, keyName](size_t nonce) {
-        Wallet wallet(walletPath, keyName.toStdString(), password.toStdString());
+    const auto signTransaction = [this, requestId, walletPath=this->walletPath, isMhc, password, toAddress, value, fee, valueDelegate, isDelegate, sendParams, jsNameResult, keyName](size_t nonce) {
+        Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
 
         bool isValid;
         const uint64_t delegValue = valueDelegate.toULongLong(&isValid);
@@ -854,15 +845,15 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
             makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Not ok"));
         }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
     };
-    signMessageMTHSWithTxManager(requestId, walletPath, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
+    signMessageMTHSWithTxManager(requestId, isMhc, jsNameResult, nonce, keyName, password, paramsJson, signTransaction);
 }
 
-void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString walletPath, QString jsNameResult, bool isTmh) {
+void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString jsNameResult, bool isMhc) {
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        const std::string privKey = Wallet::getPrivateKey(walletPath, keyName.toStdString(), isCompact);
+        const std::string privKey = Wallet::getPrivateKey(walletPath, isMhc, keyName.toStdString(), isCompact);
 
         result = QString::fromStdString(privKey);
 
@@ -875,18 +866,18 @@ void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName,
 void JavascriptWrapper::getOnePrivateKey(QString requestId, QString keyName, bool isCompact) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getOnePrivateKeyResultJs";
-    getOnePrivateKeyMTHS(requestId, keyName, isCompact, walletPathTmh, JS_NAME_RESULT, true);
+    getOnePrivateKeyMTHS(requestId, keyName, isCompact, JS_NAME_RESULT, false);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::getOnePrivateKeyMHC(QString requestId, QString keyName, bool isCompact) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getOnePrivateKeyMHCResultJs";
-    getOnePrivateKeyMTHS(requestId, keyName, isCompact, walletPathMth, JS_NAME_RESULT, false);
+    getOnePrivateKeyMTHS(requestId, keyName, isCompact, JS_NAME_RESULT, true);
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, bool isMhc, QString jsNameResult) {
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&]() {
         std::string key = privateKey.toStdString();
@@ -900,7 +891,7 @@ void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey
 
         LOG << "Save private key";
 
-        Wallet::savePrivateKey(walletPath, key, password.toStdString());
+        Wallet::savePrivateKey(walletPath, isMhc, key, password.toStdString());
         result = "ok";
     });
 
@@ -913,23 +904,23 @@ void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey
 void JavascriptWrapper::savePrivateKey(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyResultJs";
-    savePrivateKeyMTHS(requestId, privateKey, password, walletPathTmh, JS_NAME_RESULT);
+    savePrivateKeyMTHS(requestId, privateKey, password, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::savePrivateKeyMHC(QString requestId, QString privateKey, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyMHCResultJs";
-    savePrivateKeyMTHS(requestId, privateKey, password, walletPathMth, JS_NAME_RESULT);
+    savePrivateKeyMTHS(requestId, privateKey, password, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, bool isMhc, QString jsNameResult) {
     std::string pubkey;
     Opt<std::string> address;
     const TypedException exception = apiVrapper2([&]() {
         std::string addr;
-        Wallet::createWalletFromRaw(walletPath, rawPrivKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
+        Wallet::createWalletFromRaw(walletPath, isMhc, rawPrivKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
         address = addr;
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), address);
@@ -938,21 +929,21 @@ void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey
 void JavascriptWrapper::saveRawPrivKey(QString requestId, QString rawPrivKey, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "saveRawPrivkeyResultJs";
-    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, walletPathTmh, JS_NAME_RESULT);
+    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::saveRawPrivKeyMHC(QString requestId, QString rawPrivKey, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "saveRawPrivkeyMHCResultJs";
-    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, walletPathMth, JS_NAME_RESULT);
+    saveRawPrivKeyMTHS(requestId, rawPrivKey, password, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::getRawPrivKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::getRawPrivKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult) {
     Opt<std::string> result;
     const TypedException exception = apiVrapper2([&]() {
-        Wallet wallet(walletPath, address.toStdString(), password.toStdString());
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
         result = wallet.getNotProtectedKeyHex();
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
@@ -961,14 +952,14 @@ void JavascriptWrapper::getRawPrivKeyMTHS(QString requestId, QString address, QS
 void JavascriptWrapper::getRawPrivKey(QString requestId, QString address, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getRawPrivkeyResultJs";
-    getRawPrivKeyMTHS(requestId, address, password, walletPathTmh, JS_NAME_RESULT);
+    getRawPrivKeyMTHS(requestId, address, password, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::getRawPrivKeyMHC(QString requestId, QString address, QString password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getRawPrivkeyMHCResultJs";
-    getRawPrivKeyMTHS(requestId, address, password, walletPathMth, JS_NAME_RESULT);
+    getRawPrivKeyMTHS(requestId, address, password, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -986,34 +977,34 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::createRsaKeyMTHS(QString requestId, QString address, QString password, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::createRsaKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult) {
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa::createRsaKey(walletPath, address.toStdString(), password.toStdString());
-        WalletRsa wallet(walletPath, address.toStdString());
+        WalletRsa::createRsaKey(walletPath, isMhc, address.toStdString(), password.toStdString());
+        WalletRsa wallet(walletPath, isMhc, address.toStdString());
         publicKey = wallet.getPublikKey();
     });
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), publicKey);
 }
 
-void JavascriptWrapper::getRsaPublicKeyMTHS(QString requestId, QString address, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::getRsaPublicKeyMTHS(QString requestId, QString address, bool isMhc, QString jsNameResult) {
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa wallet(walletPath, address.toStdString());
+        WalletRsa wallet(walletPath, isMhc, address.toStdString());
         publicKey = wallet.getPublikKey();
     });
 
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), publicKey);
 }
 
-void JavascriptWrapper::copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, bool isMhc, QString jsNameResult) {
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
         CHECK(WalletRsa::validateKeyName(pathPriv, pathPub, address), "Not rsa key");
-        const QString newFolder = WalletRsa::genFolderRsa(walletPath);
+        const QString newFolder = WalletRsa::genFolderRsa(walletPath, isMhc);
         copyToDirectoryFile(pathPub, newFolder, false);
         copyToDirectoryFile(pathPriv, newFolder, false);
     });
@@ -1021,11 +1012,11 @@ void JavascriptWrapper::copyRsaKeyMTHS(QString requestId, QString address, QStri
     makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Ok"));
 }
 
-void JavascriptWrapper::copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, QString walletPath, QString jsNameResult) {
+void JavascriptWrapper::copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, bool isMhc, QString jsNameResult) {
     Opt<std::string> publicKey;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<QString> files = WalletRsa::getPathsKeys(walletPath, address);
+        const std::vector<QString> files = WalletRsa::getPathsKeys(walletPath, isMhc, address);
         for (const QString &file: files) {
             CHECK(isExistFile(file), "Key not found");
             copyToDirectoryFile(file, path, false);
@@ -1040,7 +1031,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Create rsa key tmh " << address;
 
     const QString JS_NAME_RESULT = "createRsaKeyResultJs";
-    createRsaKeyMTHS(requestId, address, password, walletPathTmh, JS_NAME_RESULT);
+    createRsaKeyMTHS(requestId, address, password, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1049,7 +1040,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Get rsa key tmh " << address;
 
     const QString JS_NAME_RESULT = "getRsaPublicKeyResultJs";
-    getRsaPublicKeyMTHS(requestId, address, walletPathTmh, JS_NAME_RESULT);
+    getRsaPublicKeyMTHS(requestId, address, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1058,7 +1049,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Create rsa key mhc " << address;
 
     const QString JS_NAME_RESULT = "createRsaKeyMHCResultJs";
-    createRsaKeyMTHS(requestId, address, password, walletPathMth, JS_NAME_RESULT);
+    createRsaKeyMTHS(requestId, address, password, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1067,7 +1058,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Get rsa key mhc " << address;
 
     const QString JS_NAME_RESULT = "getRsaPublicKeyMHCResultJs";
-    getRsaPublicKeyMTHS(requestId, address, walletPathMth, JS_NAME_RESULT);
+    getRsaPublicKeyMTHS(requestId, address, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1076,7 +1067,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "copy rsa key tmh " << address;
 
     const QString JS_NAME_RESULT = "copyRsaKeyResultJs";
-    copyRsaKeyMTHS(requestId, address, pathPub, pathPriv, walletPathTmh, JS_NAME_RESULT);
+    copyRsaKeyMTHS(requestId, address, pathPub, pathPriv, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1085,7 +1076,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "copy rsa key mhc " << address;
 
     const QString JS_NAME_RESULT = "copyRsaKeyMHCResultJs";
-    copyRsaKeyMTHS(requestId, address, pathPub, pathPriv, walletPathMth, JS_NAME_RESULT);
+    copyRsaKeyMTHS(requestId, address, pathPub, pathPriv, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1094,7 +1085,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "copy rsa key to folder tmh " << address << " " << path;
 
     const QString JS_NAME_RESULT = "copyRsaKeyToFolderResultJs";
-    copyRsaKeyToFolderMTHS(requestId, address, path, walletPathTmh, JS_NAME_RESULT);
+    copyRsaKeyToFolderMTHS(requestId, address, path, false, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1103,7 +1094,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "copy rsa key to folder mhc " << address << " " << path;
 
     const QString JS_NAME_RESULT = "copyRsaKeyToFolderMHCResultJs";
-    copyRsaKeyToFolderMTHS(requestId, address, path, walletPathMth, JS_NAME_RESULT);
+    copyRsaKeyToFolderMTHS(requestId, address, path, true, JS_NAME_RESULT);
 END_SLOT_WRAPPER
 }
 
@@ -1114,7 +1105,6 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "encryptMessageResultJs";
     Opt<std::string> answer;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
         const WalletRsa wallet = WalletRsa::fromPublicKey(publicKey.toStdString());
         answer = wallet.encrypt(message.toStdString());
     });
@@ -1130,8 +1120,8 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "decryptMessageResultJs";
     Opt<std::string> message;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathMth.isNull() && !walletPathMth.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa wallet(walletPathMth, addr.toStdString());
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        WalletRsa wallet(walletPath, true, addr.toStdString());
         wallet.unlock(password.toStdString());
         message = wallet.decryptMessage(encryptedMessageHex.toStdString());
     });
@@ -1152,10 +1142,10 @@ BEGIN_SLOT_WRAPPER
     Opt<std::string> address;
     QString fullPath;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
-        address = EthWallet::genPrivateKey(walletPathEth, password.normalized(QString::NormalizationForm_C).toStdString());
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        address = EthWallet::genPrivateKey(walletPath, password.normalized(QString::NormalizationForm_C).toStdString());
 
-        fullPath = EthWallet::getFullPath(walletPathEth, address.get());
+        fullPath = EthWallet::getFullPath(walletPath, address.get());
         LOG << "Create eth wallet ok " << requestId << " " << address.get();
     });
 
@@ -1171,8 +1161,8 @@ BEGIN_SLOT_WRAPPER
 
     Opt<std::string> result;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
-        EthWallet wallet(walletPathEth, address.toStdString(), password.toStdString());
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        EthWallet wallet(walletPath, address.toStdString(), password.toStdString());
         result = wallet.SignTransaction(
             nonce.toStdString(),
             gasPrice.toStdString(),
@@ -1232,8 +1222,8 @@ END_SLOT_WRAPPER
 
 QString JavascriptWrapper::getAllEthWalletsJson() {
     try {
-        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPathEth);
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
         LOG << PeriodicLog::make("w_eth") << "get eth wallets json " << jsonStr;
         return jsonStr;
@@ -1254,8 +1244,8 @@ QString JavascriptWrapper::getAllEthWalletsJson() {
 
 QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
     try {
-        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPathEth);
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<std::pair<QString, QString>> result = EthWallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
         LOG << PeriodicLog::make("w2_eth") << "get eth wallets json " << jsonStr;
         return jsonStr;
@@ -1282,9 +1272,9 @@ BEGIN_SLOT_WRAPPER
 
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        const std::string privKey = EthWallet::getOneKey(walletPathEth, keyName.toStdString());
+        const std::string privKey = EthWallet::getOneKey(walletPath, keyName.toStdString());
 
         result = QString::fromStdString(privKey);
     });
@@ -1303,11 +1293,11 @@ BEGIN_SLOT_WRAPPER
         if (key.compare(0, EthWallet::PREFIX_ONE_KEY.size(), EthWallet::PREFIX_ONE_KEY) == 0) {
             key = key.substr(EthWallet::PREFIX_ONE_KEY.size());
         }
-        CHECK(!walletPathEth.isNull() && !walletPathEth.isEmpty(), "Incorrect path to wallet: empty");
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key eth";
 
-        EthWallet::savePrivateKey(walletPathEth, privateKey.toStdString(), password.toStdString());
+        EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
         result = "ok";
     });
 
@@ -1331,10 +1321,10 @@ BEGIN_SLOT_WRAPPER
     Opt<std::string> address;
     QString fullPath;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
-        address = BtcWallet::genPrivateKey(walletPathBtc, password).first;
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        address = BtcWallet::genPrivateKey(walletPath, password).first;
 
-        fullPath = BtcWallet::getFullPath(walletPathBtc, address.get());
+        fullPath = BtcWallet::getFullPath(walletPath, address.get());
         LOG << "Create btc wallet ok " << requestId << " " << address.get();
     });
 
@@ -1400,8 +1390,8 @@ BEGIN_SLOT_WRAPPER
             btcInputs.emplace_back(input);
         }
 
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
-        BtcWallet wallet(walletPathBtc, address.toStdString(), password);
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        BtcWallet wallet(walletPath, address.toStdString(), password);
         size_t estimateComissionInSatoshiInt = 0;
         if (!estimateComissionInSatoshi.isEmpty()) {
             CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
@@ -1455,8 +1445,8 @@ BEGIN_SLOT_WRAPPER
         btcInputs = BtcWallet::reduceInputs(btcInputs, usedUtxos);
         LOG << "Used utxos: " << usedUtxos.size();
 
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
-        BtcWallet wallet(walletPathBtc, address.toStdString(), password);
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        BtcWallet wallet(walletPath, address.toStdString(), password);
         size_t estimateComissionInSatoshiInt = 0;
         if (!estimateComissionInSatoshi.isEmpty()) {
             CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
@@ -1489,8 +1479,8 @@ END_SLOT_WRAPPER
 
 QString JavascriptWrapper::getAllBtcWalletsJson() {
     try {
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPathBtc);
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWallets(result);
         LOG << PeriodicLog::make("w_btc") << "get btc wallets json " << jsonStr;
         return jsonStr;
@@ -1505,8 +1495,8 @@ QString JavascriptWrapper::getAllBtcWalletsJson() {
 
 QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
     try {
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPathBtc);
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<std::pair<QString, QString>> result = BtcWallet::getAllWalletsInFolder(walletPath);
         const QString jsonStr = makeJsonWalletsAndPaths(result);
         LOG << PeriodicLog::make("w2_btc") << "get btc wallets json " << jsonStr;
         return jsonStr;
@@ -1527,9 +1517,9 @@ BEGIN_SLOT_WRAPPER
 
     Opt<QString> result;
     const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        const std::string privKey = BtcWallet::getOneKey(walletPathBtc, keyName.toStdString());
+        const std::string privKey = BtcWallet::getOneKey(walletPath, keyName.toStdString());
 
         result = QString::fromStdString(privKey);
     });
@@ -1549,11 +1539,11 @@ BEGIN_SLOT_WRAPPER
             key = key.substr(BtcWallet::PREFIX_ONE_KEY.size());
         }
 
-        CHECK(!walletPathBtc.isNull() && !walletPathBtc.isEmpty(), "Incorrect path to wallet: empty");
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
         LOG << "Save private key btc";
 
-        BtcWallet::savePrivateKey(walletPathBtc, privateKey.toStdString(), password);
+        BtcWallet::savePrivateKey(walletPath, privateKey.toStdString(), password);
         result = "ok";
     });
 
@@ -1615,7 +1605,7 @@ END_SLOT_WRAPPER
 }
 
 bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
-    LOG << "Migrate keys to path " << newPath;
+    /*LOG << "Migrate keys to path " << newPath;
 
     const QString prevPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PREV_PATH);
 
@@ -1623,7 +1613,7 @@ bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
     copyRecursively(makePath(prevPath, WALLET_PATH_BTC), makePath(newPath, WALLET_PATH_BTC), false);
     copyRecursively(makePath(prevPath, Wallet::WALLET_PATH_MTH), makePath(newPath, Wallet::WALLET_PATH_MTH), false);
     copyRecursively(makePath(prevPath, WALLET_PATH_TMH), makePath(newPath, WALLET_PATH_TMH), false);
-    copyRecursively(prevPath, makePath(newPath, WALLET_PATH_TMH), false);
+    copyRecursively(prevPath, makePath(newPath, WALLET_PATH_TMH), false);*/
 
     return true;
 }
@@ -1644,26 +1634,19 @@ void JavascriptWrapper::setPathsImpl(QString newPatch, QString newUserName) {
     }
     folderWalletsInfos.clear();
 
-    auto setPathToWallet = [this](QString &curPath, const QString &suffix, const QString &name) {
-        curPath = makePath(walletPath, suffix);
+    auto setPathToWallet = [this](const QString &suffix, const QString &name) {
+        const QString curPath = makePath(walletPath, suffix);
         createFolder(curPath);
         folderWalletsInfos.emplace_back(curPath, name);
         fileSystemWatcher.addPath(curPath);
     };
 
-    setPathToWallet(walletPathEth, WALLET_PATH_ETH, "eth");
-    setPathToWallet(walletPathBtc, WALLET_PATH_BTC, "btc");
-    setPathToWallet(walletPathMth, Wallet::WALLET_PATH_MTH, "mhc");
-    setPathToWallet(walletPathTmh, WALLET_PATH_TMH, "tmh");
+    setPathToWallet(EthWallet::subfolder(), "eth");
+    setPathToWallet(BtcWallet::subfolder(), "btc");
+    setPathToWallet(Wallet::chooseSubfolder(true), "mhc");
+    setPathToWallet(Wallet::chooseSubfolder(false), "tmh");
 
-    walletPathOldTmh = makePath(walletPath, WALLET_PATH_TMH_OLD);
     LOG << "Wallets path " << walletPath;
-
-    QDir oldTmhPath(walletPathOldTmh);
-    if (oldTmhPath.exists()) {
-        copyRecursively(walletPathOldTmh, walletPathTmh, true);
-        oldTmhPath.removeRecursively();
-    }
 
     sendAppInfoToWss(newUserName, false);
 }

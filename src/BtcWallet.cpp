@@ -10,16 +10,22 @@
 
 const std::string BtcWallet::PREFIX_ONE_KEY = "btc:";
 
+const static QString FOLDER = "btc/";
+
 const static std::string WIF_AND_ADDRESS_DELIMITER = " ";
+
+QString BtcWallet::subfolder() {
+    return FOLDER;
+}
 
 static QString convertAddressToFileName(const std::string &address) {
     return QString::fromStdString(address.substr(0, address.size() - 3) + "---").toLower();
 }
 
 QString BtcWallet::getFullPath(const QString &folder, const std::string &address) {
-    QString pathToFile = makePath(folder, QString::fromStdString(address).toLower());
+    QString pathToFile = makePath(folder, FOLDER, QString::fromStdString(address).toLower());
     if (!QFile(pathToFile).exists()) {
-        pathToFile = makePath(folder, convertAddressToFileName(address));
+        pathToFile = makePath(folder, FOLDER, convertAddressToFileName(address));
     }
     return pathToFile;
 }
@@ -74,7 +80,7 @@ std::pair<std::string, std::string> BtcWallet::genPrivateKey(const QString &fold
         CHECK_TYPED(wif.substr(0, 2) != "6P", TypeErrors::PRIVATE_KEY_ERROR, "Incorrect encrypted wif " + wif);
     }
 
-    const QString fileName = QDir(folder).filePath(convertAddressToFileName(addressBase58));
+    const QString fileName = makePath(folder, FOLDER, convertAddressToFileName(addressBase58));
     const std::string fileData = wif + WIF_AND_ADDRESS_DELIMITER + addressBase58;
     BtcWallet checkWallet(fileData, password);
     CHECK_TYPED(!checkWallet.getAddress().empty(), TypeErrors::PRIVATE_KEY_ERROR, "dont check private key");
@@ -289,7 +295,7 @@ std::string BtcWallet::calcHashNotWitness(const std::string &txHex) {
 std::vector<std::pair<QString, QString>> BtcWallet::getAllWalletsInFolder(const QString &folder) {
     std::vector<std::pair<QString, QString>> result;
 
-    const QDir dir(folder);
+    const QDir dir(makePath(folder, FOLDER));
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         try {
@@ -323,7 +329,7 @@ void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, c
     const std::string &addressBase58 = pair.second;
     const std::string &encodedWif = pair.first;
     decryptWif(encodedWif, password);
-    const QString pathToFile = QDir(folder).filePath(convertAddressToFileName(addressBase58));
+    const QString pathToFile = makePath(folder, FOLDER, convertAddressToFileName(addressBase58));
     writeToFile(pathToFile, data, true);
 }
 

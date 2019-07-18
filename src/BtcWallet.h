@@ -32,6 +32,8 @@ public:
 
 public:
 
+    static QString subfolder();
+
     static QString getFullPath(const QString &folder, const std::string &address);
 
     static std::pair<std::string, std::string> genPrivateKey(const QString &folder, const QString &password);

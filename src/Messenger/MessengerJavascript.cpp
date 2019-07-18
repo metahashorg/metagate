@@ -46,7 +46,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     Q_CONNECT(&jsWrapper, &JavascriptWrapper::mthWalletCreated, this, &MessengerJavascript::onMthWalletCreated);
 
     walletPath = getWalletPath();
-    mthWalletType = Wallet::WALLET_PATH_MTH;
+    isMhc = true;
     defaultUserName = JavascriptWrapper::defaultUsername;
 
     emit authManager.reEmit();
@@ -780,33 +780,32 @@ END_SLOT_WRAPPER
 void MessengerJavascript::setPathsImpl() {
     CHECK(messenger != nullptr, "Messenger not set");
 
-    const QString walletPathFull = makePath(walletPath, mthWalletType);
-    CHECK(!walletPathFull.isNull() && !walletPathFull.isEmpty(), "Incorrect path to wallet: empty");
+    CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-    LOG << "Set messenger javascript path " << walletPathFull;
+    LOG << "Set messenger javascript path " << walletPath << " " << isMhc;
 
-    const std::vector<std::pair<QString, QString>> vectors = Wallet::getAllWalletsInFolder(walletPathFull);
+    const std::vector<std::pair<QString, QString>> vectors = Wallet::getAllWalletsInFolder(walletPath, isMhc);
     std::vector<QString> addresses;
     addresses.reserve(vectors.size());
     std::transform(vectors.begin(), vectors.end(), std::back_inserter(addresses), [](const auto &pair) {
         return pair.first;
     });
 
-    emit messenger->addAllAddressesInFolder(walletPathFull, addresses, Messenger::AddAllWalletsInFolderCallback([](){
+    emit messenger->addAllAddressesInFolder(makePath(walletPath, Wallet::chooseSubfolder(isMhc)), addresses, Messenger::AddAllWalletsInFolderCallback([](){
         LOG << "addresses added";
     }, [](const TypedException &exception) {
         LOG << "addresses added exception " << exception.numError << " " << exception.description;
     }, signalFunc));
 }
 
-void MessengerJavascript::setMhcType(bool isMhc) {
+void MessengerJavascript::setMhcType(bool isMhc_) {
 BEGIN_SLOT_WRAPPER
     LOG << "Set mhc type: " << (isMhc ? "Mhc" : "Tmh");
     const QString JS_NAME_RESULT = "msgSetWalletTypeResultJs";
-    const QString newMthWalletType = isMhc ? Wallet::WALLET_PATH_MTH : Wallet::WALLET_PATH_TMH;
+    const bool newIsMhc = isMhc_;
     const TypedException &exception = apiVrapper2([&, this]{
-        if (newMthWalletType != mthWalletType) {
-            mthWalletType = newMthWalletType;
+        if (newIsMhc != isMhc) {
+            isMhc = newIsMhc;
             setPathsImpl();
         }
     });
@@ -822,12 +821,11 @@ BEGIN_SLOT_WRAPPER
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address));
 
-    const QString walletPathFull = makePath(walletPath, mthWalletType);
-    LOG << "Unlock wallet " << address << " Wallet path " << walletPathFull << " timeout " << timeSeconds;
+    LOG << "Unlock wallet " << address << " Wallet path " << walletPath << " " << isMhc << " timeout " << timeSeconds;
     wrapOperation([&, this](){
-        CHECK_TYPED(!walletPathFull.isEmpty(), TypeErrors::MESSENGER_NOT_CONFIGURED, "Wallet path not set");
+        CHECK_TYPED(!walletPath.isEmpty(), TypeErrors::MESSENGER_NOT_CONFIGURED, "Wallet path not set");
 
-        emit cryptoManager.unlockWallet(walletPathFull, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, makeFunc]() {
+        emit cryptoManager.unlockWallet(walletPath, isMhc, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, makeFunc]() {
             emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([this, address, makeFunc]() {
                 LOG << "Unlock wallet ok " << address;
                 makeFunc.func(TypedException(), address);

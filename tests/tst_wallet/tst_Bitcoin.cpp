@@ -68,6 +68,7 @@ void tst_Bitcoin::testCreateBtc_data() {
 
 void tst_Bitcoin::testCreateBtc() {
     QFETCH(QString, passwd);
+    createFolder("./btc");
     const std::string address = BtcWallet::genPrivateKey("./", passwd).first;
     BtcWallet wallet("./", address, passwd);
     QCOMPARE(address, wallet.getAddress());

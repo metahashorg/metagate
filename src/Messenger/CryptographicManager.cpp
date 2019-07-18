@@ -88,9 +88,9 @@ void CryptographicManager::lockWalletImpl() {
     walletRsa = nullptr;
 }
 
-void CryptographicManager::unlockWalletImpl(const QString &folder, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_) {
-    wallet = std::make_unique<Wallet>(folder, address, password);
-    walletRsa = std::make_unique<WalletRsa>(folder, address);
+void CryptographicManager::unlockWalletImpl(const QString &folder, bool isMhc, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_) {
+    wallet = std::make_unique<Wallet>(folder, isMhc, address, password);
+    walletRsa = std::make_unique<WalletRsa>(folder, isMhc, address);
     walletRsa->unlock(passwordRsa);
 
     time = time_;
@@ -226,10 +226,10 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void CryptographicManager::onUnlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper) {
+void CryptographicManager::onUnlockWallet(const QString &folder, bool isMhc, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&] {
-        unlockWalletImpl(folder, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), time_);
+        unlockWalletImpl(folder, isMhc, address.toStdString(), password.toStdString(), passwordRsa.toStdString(), time_);
     }, callbackWrapper);
 END_SLOT_WRAPPER
 }

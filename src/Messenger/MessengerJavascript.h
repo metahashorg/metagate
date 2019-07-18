@@ -149,7 +149,7 @@ private:
 
     QString walletPath;
 
-    QString mthWalletType;
+    bool isMhc;
 
     QString defaultUserName;
 

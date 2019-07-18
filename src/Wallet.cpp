@@ -28,8 +28,9 @@
 
 const std::string Wallet::PREFIX_ONE_KEY_MTH = "mth:";
 const std::string Wallet::PREFIX_ONE_KEY_TMH = "tmh:";
-const QString Wallet::WALLET_PATH_MTH = "mhc/";
-const QString Wallet::WALLET_PATH_TMH = "tmh/";
+
+const static QString WALLET_PATH_MTH = "mhc/";
+const static QString WALLET_PATH_TMH = "tmh/";
 
 const static QString FILE_METAHASH_PRIV_KEY_SUFFIX(".ec.priv");
 const static QString FILE_METAHASH_WATCH_SUFFIX(".watch");
@@ -40,12 +41,20 @@ const std::string PRIV_KEY_SUFFIX = "\n-----END EC PRIVATE KEY-----";
 const std::string COMPACT_FORMAT = "f:";
 const std::string CURRENT_COMPACT_FORMAT = "1";
 
-QString Wallet::makeFullWalletPath(const QString &folder, const std::string &addr) {
-    return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_PRIV_KEY_SUFFIX));
+QString Wallet::chooseSubfolder(bool isMhc) {
+    if (isMhc) {
+        return WALLET_PATH_MTH;
+    } else {
+        return WALLET_PATH_TMH;
+    }
 }
 
-QString Wallet::makeFullWalletWatchPath(const QString &folder, const std::string &addr) {
-    return QDir::cleanPath(QDir(folder).filePath(QString::fromStdString(addr) + FILE_METAHASH_WATCH_SUFFIX));
+QString Wallet::makeFullWalletPath(const QString &folder, bool isMhc, const std::string &addr) {
+    return QDir::cleanPath(makePath(folder, chooseSubfolder(isMhc), QString::fromStdString(addr) + FILE_METAHASH_PRIV_KEY_SUFFIX));
+}
+
+QString Wallet::makeFullWalletWatchPath(const QString &folder, bool isMhc, const std::string &addr) {
+    return QDir::cleanPath(makePath(folder, chooseSubfolder(isMhc), QString::fromStdString(addr) + FILE_METAHASH_WATCH_SUFFIX));
 }
 
 static std::string getPublicKey(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privateKey) {
@@ -259,13 +268,13 @@ static std::string createAddressFromPrivate(const CryptoPP::ECDSA<CryptoPP::ECP,
     return hexAddr;
 }
 
-void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr) {
+void Wallet::savePrivateKey(const QString &folder, bool isMhc, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr) {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
 
     publicKey = getPublicKey(privKey);
     const std::string hexAddr = createAddressFromPrivate(privKey);
 
-    const QString filePath = makeFullWalletPath(folder, hexAddr);
+    const QString filePath = makeFullWalletPath(folder, isMhc, hexAddr);
 #ifdef TARGET_WINDOWS
     auto fileNameCStr = filePath.toStdWString();
 #else
@@ -290,7 +299,7 @@ void Wallet::savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoP
     addr = hexAddr;
 }
 
-void Wallet::createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr){
+void Wallet::createWallet(const QString &folder, bool isMhc, const std::string &password, std::string &publicKey, std::string &addr){
     CryptoPP::AutoSeededRandomPool prng;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
@@ -298,10 +307,10 @@ void Wallet::createWallet(const QString &folder, const std::string &password, st
     const bool resultCreatePrivate = privateKey.Validate(prng, 3);
     CHECK_TYPED(resultCreatePrivate, TypeErrors::DONT_CREATE_KEY, "dont create private key");
 
-    savePrivateKey(folder, privateKey, password, publicKey, addr);
+    savePrivateKey(folder, isMhc, privateKey, password, publicKey, addr);
 }
 
-void Wallet::createWalletFromRaw(const QString &folder, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr) {
+void Wallet::createWalletFromRaw(const QString &folder, bool isMhc, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr) {
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     CHECK_TYPED(isHex(rawPrivateHex), TypeErrors::INCORRECT_USER_DATA, "Raw private key invalid");
@@ -309,37 +318,37 @@ void Wallet::createWalletFromRaw(const QString &folder, const std::string &rawPr
     CryptoPP::StringSource ss(rawPrivkey, true);
     privateKey.BERDecodePrivateKey(ss, true, rawPrivkey.size());
 
-    savePrivateKey(folder, privateKey, password, publicKey, addr);
+    savePrivateKey(folder, isMhc, privateKey, password, publicKey, addr);
 }
 
-void Wallet::createWalletWatch(const QString &folder, const std::string &addr)
+void Wallet::createWalletWatch(const QString &folder, bool isMhc, const std::string &addr)
 {
     //if (isWalletExists(folder, addr))
     //    return;
-    saveWalletWatch(folder, addr);
+    saveWalletWatch(folder, isMhc, addr);
 }
 
-void Wallet::removeWalletWatch(const QString &folder, const std::string &addr)
+void Wallet::removeWalletWatch(const QString &folder, bool isMhc, const std::string &addr)
 {
-    const QString filePath = makeFullWalletWatchPath(folder, addr);
+    const QString filePath = makeFullWalletWatchPath(folder, isMhc, addr);
     removeFile(filePath);
 }
 
-bool Wallet::isWalletExists(const QString &folder, const std::string &addr)
+bool Wallet::isWalletExists(const QString &folder, bool isMhc, const std::string &addr)
 {
-    QString filePath = makeFullWalletPath(folder, addr);
+    QString filePath = makeFullWalletPath(folder, isMhc, addr);
     if (isExistFile(filePath))
         return true;
-    filePath = makeFullWalletWatchPath(folder, addr);
+    filePath = makeFullWalletWatchPath(folder, isMhc, addr);
     if (isExistFile(filePath))
         return true;
     return false;
 }
 
-std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder, bool all) {
+std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QString &folder, bool isMhc, bool all) {
     std::vector<std::pair<QString, QString>> result;
 
-    const QDir dir(folder);
+    const QDir dir(makePath(folder, chooseSubfolder(isMhc)));
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         if (file.endsWith(FILE_METAHASH_PRIV_KEY_SUFFIX)) {
@@ -347,25 +356,25 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
             if (address.size() != 52 || !isHex(address)) {
                 continue;
             }
-            result.emplace_back(QString::fromStdString(address), makeFullWalletPath(folder, address));
+            result.emplace_back(QString::fromStdString(address), makeFullWalletPath(folder, isMhc, address));
         }
         if (file.endsWith(FILE_METAHASH_WATCH_SUFFIX) && all) {
             const std::string address = file.split(FILE_METAHASH_WATCH_SUFFIX).first().toStdString();
             if (address.size() != 52 || !isHex(address)) {
                 continue;
             }
-            result.emplace_back(QString::fromStdString(address), makeFullWalletWatchPath(folder, address));
+            result.emplace_back(QString::fromStdString(address), makeFullWalletWatchPath(folder, isMhc, address));
         }
     }
 
     return result;
 }
 
-std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString &folder)
+std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString &folder, bool isMhc)
 {
     std::vector<Wallet::WalletInfo> result;
 
-    const QDir dir(folder);
+    const QDir dir(makePath(folder, chooseSubfolder(isMhc)));
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
         Wallet::WalletInfo info;
@@ -376,7 +385,7 @@ std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString 
                 continue;
             }
             info.type = Type::Key;
-            info.path = makeFullWalletPath(folder, address);
+            info.path = makeFullWalletPath(folder, isMhc, address);
             result.emplace_back(info);
         }
         if (file.endsWith(FILE_METAHASH_WATCH_SUFFIX)) {
@@ -386,7 +395,7 @@ std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString 
                 continue;
             }
             info.type = Type::Watch;
-            info.path = makeFullWalletPath(folder, address);
+            info.path = makeFullWalletPath(folder, isMhc, address); // ??? Watch?
             result.emplace_back(info);
         }
     }
@@ -394,13 +403,12 @@ std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString 
     return result;
 }
 
-Wallet::Wallet(const QString &folder, const std::string &name, const std::string &password)
+Wallet::Wallet(const QString &folder, bool isMhc, const std::string &name, const std::string &password)
     : type(Type::Key)
-    , folder(folder)
     , name(name)
 {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
-    fullPath = makeFullWalletPath(folder, name);
+    fullPath = makeFullWalletPath(folder, isMhc, name);
     try {
 #ifdef TARGET_WINDOWS
         auto fileNameCStr = fullPath.toStdWString();
@@ -427,13 +435,12 @@ Wallet::Wallet(const QString &folder, const std::string &name, const std::string
     CHECK_TYPED(hexAddr == name, TypeErrors::PRIVATE_KEY_ERROR, "Private key error: incorrect address. Possibly renamed wallet ." + hexAddr + "." + name + ".");
 }
 
-Wallet::Wallet(const QString &folder, const std::string &name)
+Wallet::Wallet(const QString &folder, bool isMhc, const std::string &name)
     : type(Type::Watch)
-    , folder(folder)
     , name(name)
 {
     CHECK_TYPED(!name.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty name");
-    fullPath = makeFullWalletWatchPath(folder, name);
+    fullPath = makeFullWalletWatchPath(folder, isMhc, name);
 }
 
 std::string Wallet::sign(const std::string &message, std::string &publicKey) const {
@@ -533,8 +540,8 @@ std::string Wallet::calcHash(const std::string &txHex, const std::string &signHe
     return toHex(doubleSha(rawTx));
 }
 
-std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr, bool isCompact) {
-    const QString fullPath = makeFullWalletPath(folder, addr);
+std::string Wallet::getPrivateKey(const QString &folder, bool isMhc, const std::string &addr, bool isCompact) {
+    const QString fullPath = makeFullWalletPath(folder, isMhc, addr);
     std::string privKey = readFile(fullPath);
 
     if (isCompact) {
@@ -552,7 +559,7 @@ std::string Wallet::getPrivateKey(const QString &folder, const std::string &addr
     return privKey;
 }
 
-void Wallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
+void Wallet::savePrivateKey(const QString &folder, bool isMhc, const std::string &data, const std::string &password) {
     std::string result = data;
     if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
         result = result.substr(COMPACT_FORMAT.size());
@@ -579,14 +586,14 @@ void Wallet::savePrivateKey(const QString &folder, const std::string &data, cons
     const std::string pubKeyBinary = fromHex(pubKeyElements);
     const std::string hexAddr = createAddress(pubKeyBinary);
 
-    const QString filePath = makeFullWalletPath(folder, hexAddr);
+    const QString filePath = makeFullWalletPath(folder, isMhc, hexAddr);
     writeToFile(filePath, result, true);
 }
 
-void Wallet::saveWalletWatch(const QString &folder, const std::string &addr)
+void Wallet::saveWalletWatch(const QString &folder, bool isMhc, const std::string &addr)
 {
     std::string result; // Empty file data
-    const QString filePath = makeFullWalletWatchPath(folder, addr);
+    const QString filePath = makeFullWalletWatchPath(folder, isMhc, addr);
     writeToFile(filePath, result, true);
 }
 

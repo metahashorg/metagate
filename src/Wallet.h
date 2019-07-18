@@ -14,10 +14,6 @@ public:
 
     const static std::string PREFIX_ONE_KEY_TMH;
 
-    const static QString WALLET_PATH_MTH;
-
-    const static QString WALLET_PATH_TMH;
-
     enum class Type {
         Key,
         Watch
@@ -39,29 +35,31 @@ public:
 
 public:
 
-    static void createWallet(const QString &folder, const std::string &password, std::string &publicKey, std::string &addr);
+    static QString chooseSubfolder(bool isMhc);
 
-    static void createWalletFromRaw(const QString &folder, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr);
+    static void createWallet(const QString &folder, bool isMhc, const std::string &password, std::string &publicKey, std::string &addr);
 
-    static void createWalletWatch(const QString &folder, const std::string &addr);
+    static void createWalletFromRaw(const QString &folder, bool isMhc, const std::string &rawPrivateHex, const std::string &password, std::string &publicKey, std::string &addr);
 
-    static void removeWalletWatch(const QString &folder, const std::string &addr);
+    static void createWalletWatch(const QString &folder, bool isMhc, const std::string &addr);
 
-    static bool isWalletExists(const QString &folder, const std::string &addr);
+    static void removeWalletWatch(const QString &folder, bool isMhc, const std::string &addr);
 
-    static QString makeFullWalletPath(const QString &folder, const std::string &addr);
+    static bool isWalletExists(const QString &folder, bool isMhc, const std::string &addr);
 
-    static QString makeFullWalletWatchPath(const QString &folder, const std::string &addr);
+    static QString makeFullWalletPath(const QString &folder, bool isMhc, const std::string &addr);
 
-    static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder, bool all = false);
+    static QString makeFullWalletWatchPath(const QString &folder, bool isMhc, const std::string &addr);
 
-    static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder);
+    static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder, bool isMhc, bool all = false);
 
-    static std::string getPrivateKey(const QString &folder, const std::string &addr, bool isCompact);
+    static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder, bool isMhc);
 
-    static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
+    static std::string getPrivateKey(const QString &folder, bool isMhc, const std::string &addr, bool isCompact);
 
-    static void saveWalletWatch(const QString &folder, const std::string &addr);
+    static void savePrivateKey(const QString &folder, bool isMhc, const std::string &data, const std::string &password);
+
+    static void saveWalletWatch(const QString &folder, bool isMhc, const std::string &addr);
 
     static void checkAddress(const std::string &address, bool isCheckHash=true);
 
@@ -69,9 +67,9 @@ public:
 
 public:
 
-    Wallet(const QString &folder, const std::string &name, const std::string &password);
+    Wallet(const QString &folder, bool isMhc, const std::string &name, const std::string &password);
 
-    Wallet(const QString &folder, const std::string &name);
+    Wallet(const QString &folder, bool isMhc, const std::string &name);
 
     std::string sign(const std::string &message, std::string &publicKey) const;
 
@@ -101,13 +99,12 @@ public:
 
 private:
 
-    static void savePrivateKey(const QString &folder, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr);
+    static void savePrivateKey(const QString &folder, bool isMhc, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr);
 
 private:
     Wallet::Type type;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
-    QString folder;
     std::string name;
 
     QString fullPath;
