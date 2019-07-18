@@ -87,7 +87,7 @@ signals:
 
 public slots:
 
-    void onLogined(bool isInit, const QString login);
+    void onLogined(bool isInit, const QString &login, const QString &token);
 
 signals:
 
@@ -395,8 +395,6 @@ private:
     NsLookup &nsLookup;
 
     transactions::Transactions &transactionsManager;
-
-    auth::Auth &auth;
 
     NetwrokTesting &networkTesting;
 

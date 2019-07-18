@@ -156,7 +156,6 @@ JavascriptWrapper::JavascriptWrapper(
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
-    , auth(authManager)
     , networkTesting(networkTesting)
     , utilsManager(utilsManager)
     , applicationVersion(applicationVersion)
@@ -176,7 +175,7 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_CONNECT(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss);
 
-    Q_CONNECT(&authManager, &auth::Auth::logined, this, &JavascriptWrapper::onLogined);
+    Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
 
     Q_CONNECT(this, &JavascriptWrapper::getListWallets, this, &JavascriptWrapper::onGetListWallets);
     Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList);
@@ -237,16 +236,11 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-void JavascriptWrapper::onLogined(bool /*isInit*/, const QString login) {
+void JavascriptWrapper::onLogined(bool /*isInit*/, const QString &login, const QString &token_) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(walletDefaultPath, login), login);
-
-        auth.getLoginInfo(auth::Auth::LoginInfoCallback([this](const auth::LoginInfo &info) {
-            token = info.token;
-        }, [](const TypedException &e) {
-            LOG << "Error: " << e.description;
-        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
+        token = token_;
     } else {
         setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
     }

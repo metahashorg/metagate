@@ -53,7 +53,10 @@ protected:
     void finishMethod() override;
 
 signals:
+
     void logined(bool isInit, const QString &login);
+
+    void logined2(bool isInit, const QString &login, const QString &token);
 
     void checkTokenFinished(const TypedException &error);
 

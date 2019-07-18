@@ -72,6 +72,7 @@ BEGIN_SLOT_WRAPPER
                writeLoginInfo();
                isInitialize = true;
                emit logined(isInitialize, info.login);
+               emit logined2(isInitialize, info.login, info.token);
            });
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
@@ -93,6 +94,7 @@ void Auth::logoutImpl() {
     writeLoginInfo();
     isInitialize = true;
     emit logined(isInitialize, "");
+    emit logined2(isInitialize, "", "");
 }
 
 void Auth::onCheck() {
@@ -211,6 +213,7 @@ void Auth::forceRefreshInternal() {
                     writeLoginInfo();
                     isInitialize = true;
                     emit logined(isInitialize, info.login);
+                    emit logined2(isInitialize, info.login, info.token);
                 }
             });
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
@@ -271,6 +274,7 @@ void Auth::onReEmit() {
 BEGIN_SLOT_WRAPPER
     LOG << "Auth Reemit";
     emit logined(isInitialize, info.login);
+    emit logined2(isInitialize, info.login, info.token);
 END_SLOT_WRAPPER
 }
 
