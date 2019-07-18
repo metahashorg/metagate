@@ -129,20 +129,21 @@ void Transactions::newBalance(const QString &address, const QString &currency, u
     db.setBalance(currency, address, balance);
     transactionGuard.commit();
 
-    BigNumber sumch = (balance.received - balance.spent) - (curBalance.received - curBalance.spent);
-    QString value = sumch.getFracDecimal(BNModule);
-    // remove '-' if present
-    if (value.front() == QChar('-'))
-        value = value.right(value.size() - 1);
-    if (sumch.isNegative())
-        value.prepend(tr("Out") + QStringLiteral(" "));
-    else if (!sumch.isZero())
-        value.prepend(tr("In") + QStringLiteral(" "));
-    value += QStringLiteral(" ") + currency.toUpper();
-    emit showNotification(tr("Balance for address %1 changed").arg(address), value);
-
     BalanceInfo balanceCopy = balance;
     balanceCopy.savedTxs = std::min(confirmedCountTxsInThisLoop, balance.countTxs);
+    if (balanceCopy.savedTxs == balance.countTxs) {
+        BigNumber sumch = (balance.received - balance.spent) - (curBalance.received - curBalance.spent);
+        QString value = sumch.getFracDecimal(BNModule);
+        // remove '-' if present
+        if (value.front() == QChar('-'))
+            value = value.right(value.size() - 1);
+        if (sumch.isNegative())
+            value.prepend(tr("Out") + QStringLiteral(" "));
+        else if (!sumch.isZero())
+            value.prepend(tr("In") + QStringLiteral(" "));
+        value += QStringLiteral(" ") + currency.toUpper();
+        emit showNotification(tr("Balance for address %1 changed").arg(address), value);
+    }
     emit javascriptWrapper.newBalanceSig(address, currency, balanceCopy);
     updateBalanceTime(currency, servStruct);
 }
@@ -736,36 +737,52 @@ END_SLOT_WRAPPER
 
 void Transactions::addTrackedForCurrentLogin()
 {
-    if (!mainJavascriptWrapper)
+    if (!mainJavascriptWrapper) {
         return;
-    const auto errorCallback = [](const TypedException &) {
-
+    }
+    const auto errorCallback = [](const TypedException &e) {
+        LOG << "Error: " << e.description;
     };
 
-    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletsListCallback([this](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](const QString &currency, const QString &type, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+        const QString uName = userName.isEmpty() ? "empty" : userName;
+        if (uName != currentGroup) {
+            // TODO придумать, как перезапросить список кошельков
+            return;
+        }
         auto transactionGuard = db.beginTransaction();
-        db.removeTrackedForGroup("mhc", userName);
+        db.removeTrackedForGroup(currency, currentGroup);
         for (const Wallet::WalletInfo &wallet: walletAddresses) {
-            db.addTracked("mhc", wallet.address, "", TorrentTypeMainNet, userName);
+            db.addTracked(currency, wallet.address, "", type, currentGroup);
         }
         transactionGuard.commit();
-    }, errorCallback, signalFunc));
-    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletsListCallback([this](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+    };
+
+    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletsListCallback([processWallets](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
         Q_UNUSED(hwid);
-        auto transactionGuard = db.beginTransaction();
-        db.removeTrackedForGroup("tmh", userName);
-        for (const Wallet::WalletInfo &wallet: walletAddresses) {
-            db.addTracked("tmh", wallet.address, "", TorrentTypeDevNet, userName);
-        }
-        transactionGuard.commit();
+        processWallets("mhc", TorrentTypeMainNet, userName, walletAddresses);
+    }, errorCallback, signalFunc));
+    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletsListCallback([processWallets](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+        Q_UNUSED(hwid);
+        processWallets("tmh", TorrentTypeDevNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
 }
 
-void Transactions::onLogined(bool isInit, const QString login)
-{
-    Q_UNUSED(isInit);
+void Transactions::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
-    currentGroup = login;
+    if (!isInit) {
+        return;
+    }
+    QString newGroup;
+    if (login.isEmpty()) {
+        newGroup = "_unregistered";
+    } else {
+        newGroup = login;
+    }
+    /*if (newGroup == currentGroup) {
+        return;
+    }*/
+    currentGroup = newGroup;
     addTrackedForCurrentLogin();
 END_SLOT_WRAPPER
 }
