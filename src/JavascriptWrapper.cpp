@@ -33,12 +33,12 @@ using namespace std::placeholders;
 #include "Log.h"
 #include "utilites/utils.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "utilites/platform.h"
 #include "Paths.h"
-#include "makeJsFunc.h"
+#include "qt_utilites/makeJsFunc.h"
 #include "utilites/qrcoder.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "Module.h"
 

@@ -8,7 +8,8 @@
 
 #include "TypedException.h"
 #include "check.h"
-#include "CallbackWrapper.h"
+
+#include "qt_utilites/CallbackWrapper.h"
 
 #include <QString>
 #include <QThread>

@@ -2,8 +2,8 @@
 
 #include "Log.h"
 #include "check.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 #include "WalletNames.h"
 
@@ -11,7 +11,7 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
-#include "WrapperJavascriptImpl.h"
+#include "qt_utilites/WrapperJavascriptImpl.h"
 
 using namespace std::placeholders;
 

@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-#include "CallbackWrapper.h"
-#include "ManagerWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include "client.h"
 

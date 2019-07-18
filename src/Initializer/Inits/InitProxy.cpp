@@ -11,9 +11,9 @@ using namespace std::placeholders;
 
 #include "check.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Log.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "proxy/Proxy.h"
 #include "proxy/ProxyJavascript.h"

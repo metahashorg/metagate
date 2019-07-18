@@ -6,8 +6,8 @@
 #include <QNetworkReply>
 
 #include "mainwindow.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 #include "check.h"
 
 SET_LOG_NAMESPACE("MW");

@@ -4,14 +4,14 @@
 #include <QObject>
 #include <QVariant>
 
-#include "TimerClass.h"
+#include "qt_utilites/TimerClass.h"
 #include "WebSocketClient.h"
 
 #include "utilites/RequestId.h"
 #include "Message.h"
 
-#include "CallbackWrapper.h"
-#include "ManagerWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include <map>
 #include <set>

@@ -4,8 +4,8 @@
 
 #include "check.h"
 #include "Paths.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 #include <QSettings>
 

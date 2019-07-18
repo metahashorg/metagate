@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-#include "TimerClass.h"
-#include "CallbackWrapper.h"
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
 
 #include "Message.h"
 

@@ -8,8 +8,8 @@
 #include <QSettings>
 
 #include "Log.h"
-#include "QRegister.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
 
 #include "JavascriptWrapper.h"
@@ -23,7 +23,7 @@
 #include "Wallet.h"
 #include "WalletNamesDbStorage.h"
 #include "WalletNamesMessages.h"
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 using namespace std::placeholders;
 

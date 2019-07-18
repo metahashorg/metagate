@@ -1,10 +1,10 @@
 #include "UtilsJavascript.h"
 
-#include "WrapperJavascriptImpl.h"
+#include "qt_utilites/WrapperJavascriptImpl.h"
 
 #include "Utils/UtilsManager.h"
 
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 
 SET_LOG_NAMESPACE("UTIL");
 

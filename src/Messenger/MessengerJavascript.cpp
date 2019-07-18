@@ -2,11 +2,11 @@
 
 #include "check.h"
 #include "Log.h"
-#include "makeJsFunc.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/makeJsFunc.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "utilites/utils.h"
 #include "Paths.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "CryptographicManager.h"
 #include "Messenger.h"
@@ -21,7 +21,7 @@
 #include "transactions/Transactions.h"
 #include "JavascriptWrapper.h"
 
-#include "WrapperJavascriptImpl.h"
+#include "qt_utilites/WrapperJavascriptImpl.h"
 
 using namespace std::placeholders;
 

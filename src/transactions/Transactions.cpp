@@ -6,16 +6,16 @@ using namespace std::placeholders;
 #include <QSettings>
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "mainwindow.h"
 #include "auth/Auth.h"
 #include "JavascriptWrapper.h"
 #include "Wallet.h"
 #include "NsLookup/NsLookup.h"
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"

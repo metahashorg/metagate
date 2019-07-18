@@ -5,8 +5,8 @@
 #include "Log.h"
 #include "check.h"
 #include "duration.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 UdpSocketClient::UdpSocketClient(QObject *parent)
     : QObject(parent)

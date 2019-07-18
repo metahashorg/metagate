@@ -6,7 +6,7 @@
 #include <map>
 #include <QtWebSockets/QWebSocket>
 
-#include "TimerClass.h"
+#include "qt_utilites/TimerClass.h"
 
 struct TypedException;
 

@@ -3,8 +3,8 @@
 #include "NsLookup/NsLookup.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 

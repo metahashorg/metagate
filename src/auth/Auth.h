@@ -1,10 +1,11 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "TimerClass.h"
 #include "client.h"
-#include "CallbackWrapper.h"
-#include "ManagerWrapper.h"
+
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 struct TypedException;
 

@@ -1,12 +1,12 @@
 #include "Messenger.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Log.h"
-#include "makeJsFunc.h"
+#include "qt_utilites/makeJsFunc.h"
 #include "Paths.h"
 #include "utilites/utils.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "mainwindow.h"
 #include "MessengerMessages.h"
@@ -14,7 +14,7 @@
 #include "CryptographicManager.h"
 #include "MessengerDBStorage.h"
 
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 #include <functional>
 using namespace std::placeholders;

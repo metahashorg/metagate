@@ -1,9 +1,8 @@
 #ifndef NETWROKTESTING_H
 #define NETWROKTESTING_H
 
-#include "TimerClass.h"
-
-#include "CallbackWrapper.h"
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
 
 class NetwrokTesting : public QObject, public TimerClass {
     Q_OBJECT

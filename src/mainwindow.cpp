@@ -33,9 +33,9 @@
 #include "duration.h"
 #include "Log.h"
 #include "utilites/utils.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "mhurlschemehandler.h"
 

@@ -7,7 +7,7 @@
 
 #include "http_parser.h"
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 
 SET_LOG_NAMESPACE("PRX");
 

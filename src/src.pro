@@ -44,7 +44,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Paths.cpp \
     RunGuard.cpp \
     Messenger/Messenger.cpp \
-    TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
     Messenger/MessengerJavascript.cpp \
     Messenger/CryptographicManager.cpp \
@@ -76,7 +75,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitUploader.cpp \
     Module.cpp \
     proxy/WebSocketSender.cpp \
-    QRegister.cpp \
     Initializer/Inits/InitProxy.cpp \
     Initializer/Inits/InitMessenger.cpp \
     UdpSocketClient.cpp \
@@ -87,12 +85,9 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitWalletsNames.cpp \
     NetwrokTesting.cpp \
     WalletNames/WalletNamesMessages.cpp \
-    WrapperJavascript.cpp \
     Utils/UtilsJavascript.cpp \
     Initializer/Inits/InitUtils.cpp \
     Utils/UtilsManager.cpp \
-    CallbackCallWrapper.cpp \
-    ManagerWrapper.cpp \
     NsLookup/TaskManager.cpp \
     NsLookup/NslWorker.cpp \
     NsLookup/Workers/FullWorker.cpp \
@@ -102,7 +97,6 @@ SOURCES += main.cpp mainwindow.cpp \
     NsLookup/Workers/FindEmptyNodesWorker.cpp \
     NsLookup/Workers/PrintNodesWorker.cpp \
     NsLookup/Workers/MiddleWorker.cpp \
-    CallbackWrapper.cpp \
     utilites/BigNumber.cpp \
     utilites/machine_uid.cpp \
     utilites/machine_uid_unix.cpp \
@@ -112,7 +106,13 @@ SOURCES += main.cpp mainwindow.cpp \
     utilites/utils.cpp \
     utilites/VersionWrapper.cpp \
     Log.cpp \
-    TypedException.cpp
+    TypedException.cpp \
+    qt_utilites/CallbackCallWrapper.cpp \
+    qt_utilites/CallbackWrapper.cpp \
+    qt_utilites/ManagerWrapper.cpp \
+    qt_utilites/QRegister.cpp \
+    qt_utilites/TimerClass.cpp \
+    qt_utilites/WrapperJavascript.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
@@ -148,13 +148,10 @@ HEADERS += mainwindow.h \
     WebSocketClient.h \
     JavascriptWrapper.h \
     PagesMappings.h \
-    SlotWrapper.h \
     mhurlschemehandler.h \
     Paths.h \
     RunGuard.h \
-    makeJsFunc.h \
     Messenger/Messenger.h \
-    TimerClass.h \
     Messenger/MessengerMessages.h \
     Messenger/MessengerJavascript.h \
     Messenger/Message.h \
@@ -187,9 +184,7 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitUploader.h \
     Module.h \
     Messenger/CryptographicManager.h \
-    CallbackWrapper.h \
     proxy/WebSocketSender.h \
-    QRegister.h \
     Initializer/Inits/InitProxy.h \
     Initializer/Inits/InitMessenger.h \
     UdpSocketClient.h \
@@ -202,14 +197,9 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitWalletsNames.h \
     NetwrokTesting.h \
     WalletNames/WalletNamesMessages.h \
-    WrapperJavascript.h \
-    WrapperJavascriptImpl.h \
     Utils/UtilsJavascript.h \
     Initializer/Inits/InitUtils.h \
     Utils/UtilsManager.h \
-    CallbackCallWrapper.h \
-    ManagerWrapper.h \
-    ManagerWrapperImpl.h \
     NsLookup/TaskManager.h \
     NsLookup/NslWorker.h \
     NsLookup/Workers/FullWorker.h \
@@ -232,7 +222,17 @@ HEADERS += mainwindow.h \
     check.h \
     Log.h \
     duration.h \
-    TypedException.h
+    TypedException.h \
+    qt_utilites/CallbackCallWrapper.h \
+    qt_utilites/CallbackWrapper.h \
+    qt_utilites/makeJsFunc.h \
+    qt_utilites/ManagerWrapper.h \
+    qt_utilites/ManagerWrapperImpl.h \
+    qt_utilites/QRegister.h \
+    qt_utilites/SlotWrapper.h \
+    qt_utilites/TimerClass.h \
+    qt_utilites/WrapperJavascript.h \
+    qt_utilites/WrapperJavascriptImpl.h
 
 FORMS += mainwindow.ui
 

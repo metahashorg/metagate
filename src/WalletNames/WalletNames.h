@@ -3,9 +3,9 @@
 
 #include <functional>
 
-#include "TimerClass.h"
-#include "CallbackWrapper.h"
-#include "ManagerWrapper.h"
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include "utilites/RequestId.h"
 

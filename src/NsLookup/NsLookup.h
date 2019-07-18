@@ -11,13 +11,13 @@
 
 #include "duration.h"
 
-#include "TimerClass.h"
+#include "qt_utilites/TimerClass.h"
 #include "client.h"
 
 #include "UdpSocketClient.h"
 
-#include "CallbackWrapper.h"
-#include "ManagerWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include "TaskManager.h"
 

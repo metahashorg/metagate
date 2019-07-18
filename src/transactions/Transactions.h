@@ -11,10 +11,10 @@
 
 #include "client.h"
 #include "HttpClient.h"
-#include "TimerClass.h"
+#include "qt_utilites/TimerClass.h"
 
-#include "CallbackWrapper.h"
-#include "ManagerWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include "Transaction.h"
 

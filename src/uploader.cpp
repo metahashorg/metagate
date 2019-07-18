@@ -20,10 +20,12 @@
 #include "utilites/VersionWrapper.h"
 #include "Log.h"
 #include "utilites/utils.h"
-#include "SlotWrapper.h"
-#include "Paths.h"
-#include "QRegister.h"
 #include "utilites/machine_uid.h"
+
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
+
+#include "Paths.h"
 
 using namespace std::placeholders;
 

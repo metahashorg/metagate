@@ -10,7 +10,7 @@
 
 #include "client.h"
 
-#include "CallbackWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
 
 #include "Wallet.h"
 

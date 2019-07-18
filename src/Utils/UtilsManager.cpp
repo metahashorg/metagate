@@ -1,10 +1,10 @@
 #include "UtilsManager.h"
 
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "utilites/utils.h"
 #include "utilites/qrcoder.h"
 

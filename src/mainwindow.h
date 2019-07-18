@@ -11,7 +11,7 @@
 #include "uploader.h"
 
 #include "PagesMappings.h"
-#include "CallbackWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
 
 class QSystemTrayIcon;
 class WebSocketClient;

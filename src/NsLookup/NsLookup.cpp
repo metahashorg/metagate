@@ -15,10 +15,10 @@
 #include "utilites/utils.h"
 #include "duration.h"
 #include "Log.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
-#include "QRegister.h"
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/QRegister.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 #include "utilites/algorithms.h"
 

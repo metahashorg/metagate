@@ -5,8 +5,8 @@ using namespace std::placeholders;
 
 #include "check.h"
 #include "Log.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 #include <QThread>
 

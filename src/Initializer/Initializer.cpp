@@ -3,13 +3,13 @@
 #include <QSettings>
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 #include "InitializerJavascript.h"
 #include "InitInterface.h"
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 SET_LOG_NAMESPACE("INIT");
 

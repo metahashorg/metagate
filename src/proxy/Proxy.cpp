@@ -9,9 +9,9 @@
 #include "UPnPRouter.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
-#include "QRegister.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("PRX");
 

@@ -11,8 +11,8 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "check.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 

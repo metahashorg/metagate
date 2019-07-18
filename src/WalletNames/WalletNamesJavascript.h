@@ -5,7 +5,7 @@
 
 #include <QObject>
 
-#include "WrapperJavascript.h"
+#include "qt_utilites/WrapperJavascript.h"
 
 namespace wallet_names {
 

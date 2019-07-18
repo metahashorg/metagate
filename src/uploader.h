@@ -11,7 +11,7 @@
 
 #include "utilites/VersionWrapper.h"
 
-#include "TimerClass.h"
+#include "qt_utilites/TimerClass.h"
 
 class MainWindow;
 struct TypedException;

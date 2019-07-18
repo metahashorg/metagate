@@ -4,11 +4,11 @@
 #include "WalletRsa.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "TypedException.h"
 #include "utilites/utils.h"
-#include "QRegister.h"
-#include "ManagerWrapperImpl.h"
+#include "qt_utilites/QRegister.h"
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 SET_LOG_NAMESPACE("MSG");
 
