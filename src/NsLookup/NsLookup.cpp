@@ -20,7 +20,7 @@
 #include "QRegister.h"
 #include "ManagerWrapperImpl.h"
 
-#include "algorithms.h"
+#include "utilites/algorithms.h"
 
 #include "NslWorker.h"
 #include "Workers/FullWorker.h"

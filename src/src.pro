@@ -154,7 +154,6 @@ HEADERS += mainwindow.h \
     dns/resourcerecord.h \
     WebSocketClient.h \
     JavascriptWrapper.h \
-    algorithms.h \
     PagesMappings.h \
     SlotWrapper.h \
     mhurlschemehandler.h \
@@ -231,7 +230,8 @@ HEADERS += mainwindow.h \
     NsLookup/Workers/RefreshNodeWorker.h \
     NsLookup/Workers/FindEmptyNodesWorker.h \
     NsLookup/Workers/PrintNodesWorker.h \
-    NsLookup/Workers/MiddleWorker.h
+    NsLookup/Workers/MiddleWorker.h \
+    utilites/algorithms.h
 
 FORMS += mainwindow.ui
 

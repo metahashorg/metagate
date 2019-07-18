@@ -3,7 +3,7 @@
 #include "Log.h"
 #include "check.h"
 #include "utils.h"
-#include "algorithms.h"
+#include "utilites/algorithms.h"
 
 #include <QUrl>
 
