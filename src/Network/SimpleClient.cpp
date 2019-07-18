@@ -1,4 +1,4 @@
-#include "client.h"
+#include "SimpleClient.h"
 
 #include <iostream>
 #include <memory>

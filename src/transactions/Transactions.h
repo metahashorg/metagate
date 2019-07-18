@@ -9,8 +9,8 @@
 #include <map>
 #include <set>
 
-#include "client.h"
-#include "HttpClient.h"
+#include "Network/SimpleClient.h"
+#include "Network/HttpClient.h"
 #include "qt_utilites/TimerClass.h"
 
 #include "qt_utilites/CallbackWrapper.h"

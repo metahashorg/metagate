@@ -6,7 +6,7 @@
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/ManagerWrapper.h"
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 
 struct TypedException;
 

@@ -14,7 +14,6 @@ QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp mainwindow.cpp \
     Wallet.cpp \
-    client.cpp \
     uploader.cpp \
     EthWallet.cpp \
     ethtx/scrypt/crypto_scrypt-nosse.cpp \
@@ -37,7 +36,6 @@ SOURCES += main.cpp mainwindow.cpp \
     dns/datatransformer.cpp \
     dns/dnspacket.cpp \
     dns/resourcerecord.cpp \
-    WebSocketClient.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
@@ -54,7 +52,6 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/TransactionsMessages.cpp \
     transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
-    HttpClient.cpp \
     proxy/UPnPDevices.cpp \
     proxy/UPnPRouter.cpp \
     proxy/ProxyServer.cpp \
@@ -77,13 +74,11 @@ SOURCES += main.cpp mainwindow.cpp \
     proxy/WebSocketSender.cpp \
     Initializer/Inits/InitProxy.cpp \
     Initializer/Inits/InitMessenger.cpp \
-    UdpSocketClient.cpp \
     MhPayEventHandler.cpp \
     WalletNames/WalletNamesDbStorage.cpp \
     WalletNames/WalletNames.cpp \
     WalletNames/WalletNamesJavascript.cpp \
     Initializer/Inits/InitWalletsNames.cpp \
-    NetwrokTesting.cpp \
     WalletNames/WalletNamesMessages.cpp \
     Utils/UtilsJavascript.cpp \
     Initializer/Inits/InitUtils.cpp \
@@ -112,14 +107,18 @@ SOURCES += main.cpp mainwindow.cpp \
     qt_utilites/ManagerWrapper.cpp \
     qt_utilites/QRegister.cpp \
     qt_utilites/TimerClass.cpp \
-    qt_utilites/WrapperJavascript.cpp
+    qt_utilites/WrapperJavascript.cpp \
+    Network/SimpleClient.cpp \
+    Network/HttpClient.cpp \
+    Network/NetwrokTesting.cpp \
+    Network/UdpSocketClient.cpp \
+    Network/WebSocketClient.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
     Wallet.h \
-    client.h \
     uploader.h \
     EthWallet.h \
     ethtx/scrypt/libscrypt.h \
@@ -145,7 +144,6 @@ HEADERS += mainwindow.h \
     dns/datatransformer.h \
     dns/dnspacket.h \
     dns/resourcerecord.h \
-    WebSocketClient.h \
     JavascriptWrapper.h \
     PagesMappings.h \
     mhurlschemehandler.h \
@@ -163,7 +161,6 @@ HEADERS += mainwindow.h \
     transactions/Transaction.h \
     transactions/TransactionsDBStorage.h \
     transactions/TransactionsJavascript.h \
-    HttpClient.h \
     proxy/UPnPDevices.h \
     proxy/UPnPRouter.h \
     proxy/ProxyServer.h \
@@ -187,7 +184,6 @@ HEADERS += mainwindow.h \
     proxy/WebSocketSender.h \
     Initializer/Inits/InitProxy.h \
     Initializer/Inits/InitMessenger.h \
-    UdpSocketClient.h \
     MhPayEventHandler.h \
     WalletNames/WalletNamesDbStorage.h \
     WalletNames/WalletNamesDbRes.h \
@@ -195,7 +191,6 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNames.h \
     WalletNames/WalletNamesJavascript.h \
     Initializer/Inits/InitWalletsNames.h \
-    NetwrokTesting.h \
     WalletNames/WalletNamesMessages.h \
     Utils/UtilsJavascript.h \
     Initializer/Inits/InitUtils.h \
@@ -232,7 +227,12 @@ HEADERS += mainwindow.h \
     qt_utilites/SlotWrapper.h \
     qt_utilites/TimerClass.h \
     qt_utilites/WrapperJavascript.h \
-    qt_utilites/WrapperJavascriptImpl.h
+    qt_utilites/WrapperJavascriptImpl.h \
+    Network/SimpleClient.h \
+    Network/HttpClient.h \
+    Network/NetwrokTesting.h \
+    Network/UdpSocketClient.h \
+    Network/WebSocketClient.h
 
 FORMS += mainwindow.ui
 

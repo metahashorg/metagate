@@ -24,7 +24,7 @@ using namespace std::placeholders;
 #include "mainwindow.h"
 
 #include "NsLookup/NsLookup.h"
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 
 #include "utilites/unzip.h"
 #include "check.h"
@@ -47,7 +47,7 @@ using namespace std::placeholders;
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
 #include "Utils/UtilsManager.h"
-#include "NetwrokTesting.h"
+#include "Network/NetwrokTesting.h"
 
 SET_LOG_NAMESPACE("JSW");
 

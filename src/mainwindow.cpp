@@ -24,7 +24,7 @@
 
 #include "ui_mainwindow.h"
 
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 #include "JavascriptWrapper.h"
 
 #include "uploader.h"

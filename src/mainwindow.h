@@ -7,7 +7,7 @@
 #include <QMainWindow>
 #include <QWebChannel>
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 #include "uploader.h"
 
 #include "PagesMappings.h"

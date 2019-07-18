@@ -11,8 +11,8 @@
 
 #include "WalletInfo.h"
 
-#include "WebSocketClient.h"
-#include "client.h"
+#include "Network/WebSocketClient.h"
+#include "Network/SimpleClient.h"
 
 class JavascriptWrapper;
 

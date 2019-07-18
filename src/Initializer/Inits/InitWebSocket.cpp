@@ -1,6 +1,6 @@
 #include "InitWebSocket.h"
 
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 
 #include "check.h"
 #include "Paths.h"

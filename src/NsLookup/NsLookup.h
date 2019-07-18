@@ -12,9 +12,9 @@
 #include "duration.h"
 
 #include "qt_utilites/TimerClass.h"
-#include "client.h"
+#include "Network/SimpleClient.h"
 
-#include "UdpSocketClient.h"
+#include "Network/UdpSocketClient.h"
 
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/ManagerWrapper.h"

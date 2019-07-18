@@ -8,7 +8,7 @@
 
 #include "uploader.h"
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 
 #include "qt_utilites/CallbackWrapper.h"
 

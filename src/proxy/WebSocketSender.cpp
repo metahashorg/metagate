@@ -1,6 +1,6 @@
 #include "WebSocketSender.h"
 
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 #include "Proxy.h"
 
 #include <vector>

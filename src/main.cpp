@@ -27,7 +27,7 @@
 #include "StopApplication.h"
 #include "TypedException.h"
 #include "Paths.h"
-#include "NetwrokTesting.h"
+#include "Network/NetwrokTesting.h"
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"

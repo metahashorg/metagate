@@ -1,7 +1,7 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 
 #include "qt_utilites/TimerClass.h"
 #include "qt_utilites/CallbackWrapper.h"

@@ -7,7 +7,7 @@
 #include <QString>
 #include <QObject>
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 
 #include "utilites/VersionWrapper.h"
 

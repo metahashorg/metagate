@@ -5,7 +5,7 @@
 #include <QVariant>
 
 #include "qt_utilites/TimerClass.h"
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 
 #include "utilites/RequestId.h"
 #include "Message.h"
