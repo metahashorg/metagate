@@ -21,7 +21,7 @@ public slots:
 
     Q_INVOKABLE void openFolderDialog(const QString &beginPath, const QString &caption);
 
-    Q_INVOKABLE void saveFileFromUrl(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath);
+    Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath);
 
     Q_INVOKABLE void printUrl(const QString &url, const QString &printWindowCaption, const QString &text);
 

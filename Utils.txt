@@ -12,7 +12,7 @@ caption # name of the dialog box
 # After the operation is completed, it calls function
 utilsOpenFolderDialogJs(dir, errorNum, errorMessage)
 
-Q_INVOKABLE void saveFileFromUrl(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath);
+Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath);
 # Shows file save dialog, then downloads the file and saves it.
 # After the operation is completed, it calls function
 # Отличие от аналогичной функции в mainWindows в том, что вместо относительного пути fileName нужно задавать абсолютный путь filePath

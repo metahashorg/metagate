@@ -49,7 +49,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::saveFileFromUrl(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath) {
+void UtilsJavascript::saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "utilsSaveFileFromUrlJs";
 
