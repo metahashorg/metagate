@@ -9,7 +9,7 @@
 #include "ethtx/const.h"
 #include "ethtx/cert.h"
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 #include "Log.h"
 

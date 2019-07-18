@@ -10,7 +10,7 @@
 #include "Wallet.h"
 #include "EthWallet.h"
 #include "BtcWallet.h"
-#include "utils.h"
+#include "utilites/utils.h"
 
 #include "btctx/Base58.h"
 

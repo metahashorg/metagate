@@ -5,7 +5,7 @@
 #include "EthWallet.h"
 #include "btctx/wif.h"
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 
 #include "openssl_wrapper/openssl_wrapper.h"

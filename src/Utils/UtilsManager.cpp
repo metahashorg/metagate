@@ -5,8 +5,8 @@
 #include "QRegister.h"
 #include "check.h"
 #include "SlotWrapper.h"
-#include "utils.h"
-#include "qrcoder.h"
+#include "utilites/utils.h"
+#include "utilites/qrcoder.h"
 
 #include <QDesktopServices>
 #include <QUrl>

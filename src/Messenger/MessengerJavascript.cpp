@@ -4,7 +4,7 @@
 #include "Log.h"
 #include "makeJsFunc.h"
 #include "SlotWrapper.h"
-#include "utils.h"
+#include "utilites/utils.h"
 #include "Paths.h"
 #include "QRegister.h"
 

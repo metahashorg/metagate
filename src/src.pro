@@ -15,8 +15,6 @@ QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 SOURCES += main.cpp mainwindow.cpp \
     Wallet.cpp \
     client.cpp \
-    machine_uid_win.cpp \
-    unzip.cpp \
     uploader.cpp \
     EthWallet.cpp \
     ethtx/scrypt/crypto_scrypt-nosse.cpp \
@@ -31,12 +29,9 @@ SOURCES += main.cpp mainwindow.cpp \
     btctx/btctx.cpp \
     btctx/wif.cpp \
     BtcWallet.cpp \
-    VersionWrapper.cpp \
     StopApplication.cpp \
     tests.cpp \
-    Log.cpp \
     openssl_wrapper/openssl_wrapper.cpp \
-    utils.cpp \
     ethtx/utils2.cpp \
     NsLookup/NsLookup.cpp \
     dns/datatransformer.cpp \
@@ -47,9 +42,7 @@ SOURCES += main.cpp mainwindow.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
     Paths.cpp \
-    BigNumber.cpp \
     RunGuard.cpp \
-    qrcoder.cpp \
     Messenger/Messenger.cpp \
     TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
@@ -57,7 +50,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/CryptographicManager.cpp \
     dbstorage.cpp \
     WalletRsa.cpp \
-    TypedException.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
     transactions/TransactionsMessages.cpp \
@@ -72,7 +64,6 @@ SOURCES += main.cpp mainwindow.cpp \
     proxy/ProxyJavascript.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
-    machine_uid.cpp \
     Initializer/Initializer.cpp \
     Initializer/InitializerJavascript.cpp \
     Initializer/InitInterface.cpp \
@@ -111,17 +102,24 @@ SOURCES += main.cpp mainwindow.cpp \
     NsLookup/Workers/FindEmptyNodesWorker.cpp \
     NsLookup/Workers/PrintNodesWorker.cpp \
     NsLookup/Workers/MiddleWorker.cpp \
-    CallbackWrapper.cpp
+    CallbackWrapper.cpp \
+    utilites/BigNumber.cpp \
+    utilites/machine_uid.cpp \
+    utilites/machine_uid_unix.cpp \
+    utilites/machine_uid_win.cpp \
+    utilites/qrcoder.cpp \
+    utilites/unzip.cpp \
+    utilites/utils.cpp \
+    utilites/VersionWrapper.cpp \
+    Log.cpp \
+    TypedException.cpp
 
-unix: SOURCES += machine_uid_unix.cpp
+unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
     Wallet.h \
-    check.h \
-    machine_uid.h \
     client.h \
-    unzip.h \
     uploader.h \
     EthWallet.h \
     ethtx/scrypt/libscrypt.h \
@@ -138,15 +136,10 @@ HEADERS += mainwindow.h \
     btctx/Base58.h \
     btctx/btctx.h \
     btctx/wif.h \
-    platform.h \
-    VersionWrapper.h \
     BtcWallet.h \
     StopApplication.h \
     tests.h \
-    Log.h \
-    TypedException.h \
     openssl_wrapper/openssl_wrapper.h \
-    utils.h \
     ethtx/utils2.h \
     NsLookup/NsLookup.h \
     dns/datatransformer.h \
@@ -158,16 +151,13 @@ HEADERS += mainwindow.h \
     SlotWrapper.h \
     mhurlschemehandler.h \
     Paths.h \
-    BigNumber.h \
     RunGuard.h \
     makeJsFunc.h \
-    qrcoder.h \
     Messenger/Messenger.h \
     TimerClass.h \
     Messenger/MessengerMessages.h \
     Messenger/MessengerJavascript.h \
     Messenger/Message.h \
-    RequestId.h \
     dbstorage.h \
     WalletRsa.h \
     Messenger/MessengerDBStorage.h \
@@ -177,7 +167,6 @@ HEADERS += mainwindow.h \
     transactions/TransactionsDBStorage.h \
     transactions/TransactionsJavascript.h \
     HttpClient.h \
-    duration.h \
     proxy/UPnPDevices.h \
     proxy/UPnPRouter.h \
     proxy/ProxyServer.h \
@@ -231,7 +220,19 @@ HEADERS += mainwindow.h \
     NsLookup/Workers/FindEmptyNodesWorker.h \
     NsLookup/Workers/PrintNodesWorker.h \
     NsLookup/Workers/MiddleWorker.h \
-    utilites/algorithms.h
+    utilites/algorithms.h \
+    utilites/BigNumber.h \
+    utilites/machine_uid.h \
+    utilites/platform.h \
+    utilites/qrcoder.h \
+    utilites/RequestId.h \
+    utilites/unzip.h \
+    utilites/utils.h \
+    utilites/VersionWrapper.h \
+    check.h \
+    Log.h \
+    duration.h \
+    TypedException.h
 
 FORMS += mainwindow.ui
 

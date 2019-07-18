@@ -15,7 +15,7 @@
 
 #include "ManagerWrapperImpl.h"
 
-#include "machine_uid.h"
+#include "utilites/machine_uid.h"
 
 SET_LOG_NAMESPACE("AUTH");
 

@@ -6,7 +6,7 @@
 #include "check.h"
 #include "SlotWrapper.h"
 #include "TypedException.h"
-#include "utils.h"
+#include "utilites/utils.h"
 #include "QRegister.h"
 #include "ManagerWrapperImpl.h"
 

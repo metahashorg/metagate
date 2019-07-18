@@ -5,7 +5,7 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 
 namespace wallet_names {

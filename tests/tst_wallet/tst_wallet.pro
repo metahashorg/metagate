@@ -26,7 +26,7 @@ SOURCES += \
     ../../src/btctx/wif.cpp \
     ../../src/BtcWallet.cpp \
     ../../src/openssl_wrapper/openssl_wrapper.cpp \
-    ../../src/utils.cpp \
+    ../../src/utilites/utils.cpp \
     ../../src/ethtx/utils2.cpp \
     ../LogMock.cpp \
     tst_Metahash.cpp \

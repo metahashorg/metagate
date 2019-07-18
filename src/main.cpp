@@ -18,10 +18,10 @@
 
 #include "check.h"
 #include "Log.h"
-#include "platform.h"
+#include "utilites/platform.h"
 #include "tests.h"
 
-#include "machine_uid.h"
+#include "utilites/machine_uid.h"
 #include "openssl_wrapper/openssl_wrapper.h"
 
 #include "StopApplication.h"

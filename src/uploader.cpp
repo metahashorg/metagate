@@ -15,15 +15,15 @@
 
 #include "check.h"
 #include "duration.h"
-#include "unzip.h"
-#include "platform.h"
-#include "VersionWrapper.h"
+#include "utilites/unzip.h"
+#include "utilites/platform.h"
+#include "utilites/VersionWrapper.h"
 #include "Log.h"
-#include "utils.h"
+#include "utilites/utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
 #include "QRegister.h"
-#include "machine_uid.h"
+#include "utilites/machine_uid.h"
 
 using namespace std::placeholders;
 

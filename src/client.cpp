@@ -6,6 +6,7 @@ using namespace std::placeholders;
 
 #include "check.h"
 #include "Log.h"
+
 #include "SlotWrapper.h"
 #include "QRegister.h"
 

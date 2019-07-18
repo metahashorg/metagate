@@ -1,7 +1,7 @@
 #include "WalletRsa.h"
 
 #include "check.h"
-#include "utils.h"
+#include "utilites/utils.h"
 
 #include "openssl_wrapper/openssl_wrapper.h"
 

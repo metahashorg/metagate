@@ -20,7 +20,6 @@ SOURCES += \
 HEADERS += \
     tst_walletnamesdbstorage.h \
     ../../src/dbstorage.h \
-    ../../src/BigNumber.h \
     ../../src/Log.h \
     ../../src/WalletNames/WalletNamesDbStorage.h
 

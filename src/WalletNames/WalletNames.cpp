@@ -16,10 +16,10 @@
 
 #include "auth/Auth.h"
 
-#include "machine_uid.h"
+#include "utilites/machine_uid.h"
 
 #include "uploader.h"
-#include "platform.h"
+#include "utilites/platform.h"
 #include "Wallet.h"
 #include "WalletNamesDbStorage.h"
 #include "WalletNamesMessages.h"

@@ -32,7 +32,7 @@
 #include "StopApplication.h"
 #include "duration.h"
 #include "Log.h"
-#include "utils.h"
+#include "utilites/utils.h"
 #include "SlotWrapper.h"
 #include "Paths.h"
 #include "QRegister.h"
@@ -48,7 +48,7 @@
 #include "WalletNames/WalletNamesJavascript.h"
 #include "Utils/UtilsJavascript.h"
 
-#include "machine_uid.h"
+#include "utilites/machine_uid.h"
 
 SET_LOG_NAMESPACE("MW");
 

@@ -23,7 +23,7 @@
 
 #include "check.h"
 #include "Log.h"
-#include "utils.h"
+#include "utilites/utils.h"
 #include "TypedException.h"
 
 const std::string Wallet::PREFIX_ONE_KEY_MTH = "mth:";

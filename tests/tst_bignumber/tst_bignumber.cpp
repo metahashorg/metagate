@@ -2,7 +2,7 @@
 
 #include <QTest>
 
-#include "BigNumber.h"
+#include "utilites/BigNumber.h"
 
 tst_BigNumber::tst_BigNumber(QObject *parent)
     : QObject(parent)

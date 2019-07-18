@@ -7,7 +7,7 @@
 #include "CallbackWrapper.h"
 #include "ManagerWrapper.h"
 
-#include "RequestId.h"
+#include "utilites/RequestId.h"
 
 #include "WalletInfo.h"
 

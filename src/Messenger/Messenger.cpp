@@ -5,7 +5,7 @@
 #include "Log.h"
 #include "makeJsFunc.h"
 #include "Paths.h"
-#include "utils.h"
+#include "utilites/utils.h"
 #include "QRegister.h"
 
 #include "mainwindow.h"
