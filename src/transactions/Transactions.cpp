@@ -775,7 +775,7 @@ BEGIN_SLOT_WRAPPER
     }
     QString newGroup;
     if (login.isEmpty()) {
-        newGroup = "_unregistered";
+        newGroup = JavascriptWrapper::defaultUsername;
     } else {
         newGroup = login;
     }
