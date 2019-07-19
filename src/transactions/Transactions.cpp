@@ -758,10 +758,10 @@ void Transactions::addTrackedForCurrentLogin() {
         transactionGuard.commit();
     };
 
-    emit wallets.getListWallets(wallets::Wallets::WalletCurrency::Mth, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    emit wallets.getListWallets(wallets::WalletCurrency::Mth, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         processWallets("mhc", TorrentTypeMainNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
-    emit wallets.getListWallets(wallets::Wallets::WalletCurrency::Tmh, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    emit wallets.getListWallets(wallets::WalletCurrency::Tmh, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         processWallets("tmh", TorrentTypeDevNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
 }

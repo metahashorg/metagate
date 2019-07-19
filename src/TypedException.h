@@ -44,6 +44,8 @@ enum TypeErrors {
 
     INITIALIZER_TIMEOUT_ERROR = 400,
     
+    EVENT_WATCHER_TIMEOUT = 500,
+
     OTHER_ERROR = 1000
 };
 

@@ -116,7 +116,9 @@ SOURCES += main.cpp mainwindow.cpp \
     Wallets/Wallets.cpp \
     Wallets/WalletsJavascript.cpp \
     Wallets/WalletInfo.cpp \
-    Initializer/Inits/InitWallets.cpp
+    Initializer/Inits/InitWallets.cpp \
+    qt_utilites/EventWatcher.cpp \
+    Wallets/GetActualWalletsEvent.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
@@ -240,7 +242,9 @@ HEADERS += mainwindow.h \
     Wallets/Wallets.h \
     Wallets/WalletsJavascript.h \
     Wallets/WalletInfo.h \
-    Initializer/Inits/InitWallets.h
+    Initializer/Inits/InitWallets.h \
+    qt_utilites/EventWatcher.h \
+    Wallets/GetActualWalletsEvent.h
 
 FORMS += mainwindow.ui
 

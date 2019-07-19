@@ -20,6 +20,10 @@ struct WalletInfo {
     WalletInfo(const QString &address, const QString &path, Type type);
 };
 
+enum class WalletCurrency {
+    Mth, Tmh, Btc, Eth
+};
+
 } // namespace wallets
 
 #endif // WALLETS_WALLETINFO_H

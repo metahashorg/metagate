@@ -18,12 +18,14 @@ public:
 
     void setCalledError();
 
+    bool isCalled() const noexcept;
+
 private:
 
     bool calledFunc = false;
     bool calledError = false;
 
-    std::mutex mut;
+    mutable std::mutex mut;
 };
 
 using SignalFunc = std::function<void(const std::function<void()> &callback)>;
@@ -52,8 +54,8 @@ private:
 
     static std::function<Callback> makeWrapCallback(bool isWrapError, const std::function<Callback> &callback, const ErrorCallback &errorCallback) {
         if (isWrapError) {
-            return [callback, errorCallback](auto ...args) {
-                callbackCall::wrapErrorImpl(std::bind(callback, args...), errorCallback);
+            return [callback, errorCallback](auto&& ...args) {
+                callbackCall::wrapErrorImpl(std::bind(callback, std::forward<decltype(args)>(args)...), errorCallback);
             };
         } else {
             return callback;
@@ -83,7 +85,7 @@ public:
     {}
 
     template<typename ...Args>
-    void emitCallback(Args ...args) const {
+    void emitCallback(Args&& ...args) const {
         called->setCalledFunc();
         callbackCall::emitCallbackFuncImpl(signal, std::bind(callback, std::forward<Args>(args)...));
     }
@@ -94,7 +96,7 @@ public:
     }
 
     template<typename ...Args>
-    void emitFunc(const TypedException &exception, Args ...args) const {
+    void emitFunc(const TypedException &exception, Args&& ...args) const {
         if (callbackCall::isSetExceptionImpl(exception)) {
             emitException(exception);
         } else {
@@ -103,7 +105,7 @@ public:
     }
 
     template<typename ...Args>
-    void operator() (const TypedException &exception, Args ...args) const {
+    void operator() (const TypedException &exception, Args&& ...args) const {
         emitFunc(exception, std::forward<Args>(args)...);
     }
 

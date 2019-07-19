@@ -18,6 +18,8 @@
 
 #include "auth/Auth.h"
 
+#include "GetActualWalletsEvent.h"
+
 SET_LOG_NAMESPACE("WLTS");
 
 namespace wallets {
@@ -32,9 +34,12 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &Wallets::onDirChanged);
 
     Q_CONNECT(this, &Wallets::getListWallets, this, &Wallets::onGetListWallets);
+    Q_CONNECT(this, &Wallets::getListWallets2, this, &Wallets::onGetListWallets2);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
-    Q_REG(Wallets::WalletCurrency, "Wallets::WalletCurrency");
+    Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
+
+    emit auth.reEmit();
 
     fileSystemWatcher.moveToThread(TimerClass::getThread());
     moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
@@ -75,12 +80,28 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void Wallets::onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        if (expectedUsername == userName) {
+            emit getListWallets(type, callback);
+        } else {
+            std::unique_ptr<GetActualWalletsEvent> event = std::make_unique<GetActualWalletsEvent>(TimerClass::getThread(), *this, expectedUsername, type, callback);
+
+            Q_CONNECT(this, &Wallets::usernameChanged, event.get(), &GetActualWalletsEvent::changedUserName);
+
+            eventWatcher.addEvent("getListWallet", std::move(event), 3s);
+        }
+    }, callback);
+END_SLOT_WRAPPER
+}
+
 void Wallets::startMethod() {
 
 }
 
 void Wallets::timerMethod() {
-
+    eventWatcher.checkEvents();
 }
 
 void Wallets::finishMethod() {
@@ -116,6 +137,8 @@ void Wallets::setPathsImpl(QString newPatch, QString newUserName) {
     setPathToWallet(Wallet::chooseSubfolder(false), "tmh");
 
     LOG << "Wallets path " << walletPath;
+
+    emit usernameChanged(userName);
 }
 
 void Wallets::onLogined(bool /*isInit*/, const QString &login, const QString &token_) {

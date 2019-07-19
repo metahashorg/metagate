@@ -173,28 +173,28 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-static wallets::Wallets::WalletCurrency strToWalletCurrency(const QString &currency) {
+static wallets::WalletCurrency strToWalletCurrency(const QString &currency) {
     if (currency == WALLET_CURRENCY_TMH) {
-        return wallets::Wallets::WalletCurrency::Tmh;
+        return wallets::WalletCurrency::Tmh;
     } else if (currency == WALLET_CURRENCY_MTH) {
-        return wallets::Wallets::WalletCurrency::Mth;
+        return wallets::WalletCurrency::Mth;
     } else if (currency == WALLET_CURRENCY_BTC) {
-        return wallets::Wallets::WalletCurrency::Btc;
+        return wallets::WalletCurrency::Btc;
     } else if (currency == WALLET_CURRENCY_ETH) {
-        return wallets::Wallets::WalletCurrency::Eth;
+        return wallets::WalletCurrency::Eth;
     } else {
         throwErr(("Incorrect type: " + currency).toStdString());
     }
 }
 
-static QString walletCurrencyToStr(const wallets::Wallets::WalletCurrency &type) {
-    if (type == wallets::Wallets::WalletCurrency::Tmh) {
+static QString walletCurrencyToStr(const wallets::WalletCurrency &type) {
+    if (type == wallets::WalletCurrency::Tmh) {
         return WALLET_CURRENCY_TMH;
-    } else if (type == wallets::Wallets::WalletCurrency::Mth) {
+    } else if (type == wallets::WalletCurrency::Mth) {
         return WALLET_CURRENCY_MTH;
-    } else if (type == wallets::Wallets::WalletCurrency::Btc) {
+    } else if (type == wallets::WalletCurrency::Btc) {
         return WALLET_CURRENCY_BTC;
-    } else if (type == wallets::Wallets::WalletCurrency::Eth) {
+    } else if (type == wallets::WalletCurrency::Eth) {
         return WALLET_CURRENCY_ETH;
     } else {
         throwErr("Incorrect type");
@@ -214,7 +214,7 @@ static WalletInfo::Info::Type convertTypes(const wallets::WalletInfo::Type &type
 void WalletNames::onGetAllWalletsCurrency(const QString &currency, const GetAllWalletsCurrencyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
-        const auto processWallets = [this](const wallets::Wallets::WalletCurrency &currency, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+        const auto processWallets = [this](const wallets::WalletCurrency &currency, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
             const QString currencyStr = walletCurrencyToStr(currency);
 
             std::vector<WalletInfo> otherWallets = db.getWalletsCurrency(currencyStr, userName);
@@ -238,14 +238,14 @@ BEGIN_SLOT_WRAPPER
         };
 
         if (currency != "all") {
-            const wallets::Wallets::WalletCurrency c = strToWalletCurrency(currency);
+            const wallets::WalletCurrency c = strToWalletCurrency(currency);
             emit wallets.getListWallets(c, wallets::Wallets::WalletsListCallback([c, callback, processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
                 const auto pair = processWallets(c, userName, walletAddresses);
 
                 callback.emitFunc(TypedException(), pair.first, pair.second);
             }, callback, signalFunc));
         } else {
-            const std::vector<wallets::Wallets::WalletCurrency> currencys = {wallets::Wallets::WalletCurrency::Tmh, wallets::Wallets::WalletCurrency::Mth, wallets::Wallets::WalletCurrency::Btc, wallets::Wallets::WalletCurrency::Eth};
+            const std::vector<wallets::WalletCurrency> currencys = {wallets::WalletCurrency::Tmh, wallets::WalletCurrency::Mth, wallets::WalletCurrency::Btc, wallets::WalletCurrency::Eth};
             std::vector<std::vector<wallets::WalletInfo>> result;
             emit wallets.getListWallets(currencys[0], wallets::Wallets::WalletsListCallback([this, currencys, callback, processWallets, result](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
                 result.emplace_back(walletAddresses);
@@ -264,7 +264,7 @@ BEGIN_SLOT_WRAPPER
 
                             CHECK(result.size() == currencys.size(), "Incorrect result");
                             for (size_t i = 0; i < currencys.size(); i++) {
-                                const wallets::Wallets::WalletCurrency currency = currencys[i];
+                                const wallets::WalletCurrency currency = currencys[i];
                                 const std::vector<wallets::WalletInfo> &wallets = result[i];
 
                                 const auto pair = processWallets(currency, userName, wallets);
@@ -303,7 +303,7 @@ void WalletNames::processWalletsList(const std::vector<WalletInfo> &wallets) {
 }
 
 void WalletNames::sendAllWallets() {
-    const auto processWallets = [this](const wallets::Wallets::WalletCurrency &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](const wallets::WalletCurrency &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         const QString typeStr = walletCurrencyToStr(type);
 
         std::vector<WalletInfo> thisWallets;
@@ -320,8 +320,8 @@ void WalletNames::sendAllWallets() {
 
     LOG << "Send all wallets";
 
-    const std::vector<wallets::Wallets::WalletCurrency> types = {wallets::Wallets::WalletCurrency::Tmh, wallets::Wallets::WalletCurrency::Mth, wallets::Wallets::WalletCurrency::Btc, wallets::Wallets::WalletCurrency::Eth};
-    for (const wallets::Wallets::WalletCurrency type: types) {
+    const std::vector<wallets::WalletCurrency> types = {wallets::WalletCurrency::Tmh, wallets::WalletCurrency::Mth, wallets::WalletCurrency::Btc, wallets::WalletCurrency::Eth};
+    for (const wallets::WalletCurrency type: types) {
         emit wallets.getListWallets(type, wallets::Wallets::WalletsListCallback([this, type, processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
             const std::vector<WalletInfo> wallets = processWallets(type, userName, walletAddresses);
             const QString message = makeSetWalletsMessage(wallets, id.get(), token, hwid);

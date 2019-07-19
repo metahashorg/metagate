@@ -9,11 +9,15 @@
 namespace callbackCall {
 
 Called::~Called() {
-    std::unique_lock<std::mutex> lock(mut);
-    if (!calledFunc && !calledError) {
-        lock.unlock();
+    if (!isCalled()) {
         LOG << "Warn. CallbackWrapper not called";
     }
+}
+
+
+bool Called::isCalled() const noexcept {
+    std::lock_guard<std::mutex> lock(mut);
+    return calledFunc || calledError;
 }
 
 void Called::setCalledFunc() {
@@ -47,6 +51,7 @@ void emitErrorFuncImpl(const SignalFunc &signalFunc, const ErrorCallback &errorC
 
 void emitCallbackFuncImpl(const SignalFunc &signalFunc, const std::function<void()> &callback) {
     CHECK(signalFunc, "Callback wrapper not initialized");
+    CHECK(callback, "Callback wrapper not initialized");
     emit signalFunc(callback);
 }
 

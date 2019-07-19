@@ -9,8 +9,11 @@
 #include "WalletInfo.h"
 
 #include <QDir>
-
 #include <QFileSystemWatcher>
+
+#include <vector>
+
+#include "qt_utilites/EventWatcher.h"
 
 namespace auth {
 class Auth;
@@ -20,12 +23,6 @@ namespace wallets {
 
 class Wallets: public ManagerWrapper, public TimerClass {
     Q_OBJECT
-public:
-
-    enum class WalletCurrency {
-        Mth, Tmh, Btc, Eth
-    };
-
 public:
 
     using WalletsListCallback = CallbackWrapper<void(const QString &userName, const std::vector<WalletInfo> &walletAddresses)>;
@@ -44,11 +41,19 @@ public:
 
 signals:
 
-    void getListWallets(const Wallets::WalletCurrency &type, const WalletsListCallback &callback);
+    void usernameChanged(const QString &newUserName);
+
+signals:
+
+    void getListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
+
+    void getListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
 
 private slots:
 
-    void onGetListWallets(const Wallets::WalletCurrency &type, const WalletsListCallback &callback);
+    void onGetListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
+
+    void onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
 
 private slots:
 
@@ -91,6 +96,8 @@ private:
     std::vector<FolderWalletInfo> folderWalletsInfos;
 
     QFileSystemWatcher fileSystemWatcher;
+
+    EventWatcher eventWatcher;
 
 };
 
