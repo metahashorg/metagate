@@ -17,6 +17,10 @@ namespace transactions {
 class Transactions;
 }
 
+namespace wallets {
+class Wallets;
+}
+
 class JavascriptWrapper;
 
 namespace messenger {
@@ -29,7 +33,7 @@ class MessengerJavascript: public WrapperJavascript {
     Q_OBJECT
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, wallets::Wallets &wallets, QObject *parent = nullptr);
 
     void setMessenger(Messenger &m);
 
@@ -147,11 +151,13 @@ private:
 
     transactions::Transactions &txManager;
 
+    wallets::Wallets &wallets;
+
     QString walletPath;
 
-    bool isMhc;
+    QString currentUserName;
 
-    QString defaultUserName;
+    bool isMhc;
 
 };
 

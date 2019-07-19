@@ -20,6 +20,7 @@
 #include "auth/Auth.h"
 #include "transactions/Transactions.h"
 #include "JavascriptWrapper.h"
+#include "Wallets/Wallets.h"
 
 #include "qt_utilites/WrapperJavascriptImpl.h"
 
@@ -29,11 +30,12 @@ SET_LOG_NAMESPACE("MSG");
 
 namespace messenger {
 
-MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent)
+MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, wallets::Wallets &wallets, QObject *parent)
     : WrapperJavascript(false, LOG_FILE)
     , authManager(authManager)
     , cryptoManager(cryptoManager)
     , txManager(txManager)
+    , wallets(wallets)
 {
     Q_CONNECT(this, &MessengerJavascript::newMessegesSig, this, &MessengerJavascript::onNewMesseges);
     Q_CONNECT(this, &MessengerJavascript::addedToChannelSig, this, &MessengerJavascript::onAddedToChannel);
@@ -47,7 +49,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
 
     walletPath = getWalletPath();
     isMhc = true;
-    defaultUserName = JavascriptWrapper::defaultUsername;
+    currentUserName = wallets::Wallets::defaultUsername;
 
     emit authManager.reEmit();
 }
@@ -784,15 +786,20 @@ void MessengerJavascript::setPathsImpl() {
 
     LOG << "Set messenger javascript path " << walletPath << " " << isMhc;
 
-    const std::vector<std::pair<QString, QString>> vectors = Wallet::getAllWalletsInFolder(walletPath, isMhc);
-    std::vector<QString> addresses;
-    addresses.reserve(vectors.size());
-    std::transform(vectors.begin(), vectors.end(), std::back_inserter(addresses), [](const auto &pair) {
-        return pair.first;
-    });
+    emit wallets.getListWallets2(isMhc ? wallets::WalletCurrency::Mth : wallets::WalletCurrency::Tmh, currentUserName, wallets::Wallets::WalletsListCallback([this](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses){
+        CHECK(currentUserName == userName, "User name changed while getted wallets");
 
-    emit messenger->addAllAddressesInFolder(makePath(walletPath, Wallet::chooseSubfolder(isMhc)), addresses, Messenger::AddAllWalletsInFolderCallback([](){
-        LOG << "addresses added";
+        std::vector<QString> addresses;
+        addresses.reserve(walletAddresses.size());
+        std::transform(walletAddresses.begin(), walletAddresses.end(), std::back_inserter(addresses), [](const wallets::WalletInfo &pair) {
+            return pair.address;
+        });
+
+        emit messenger->addAllAddressesInFolder(makePath(walletPath, Wallet::chooseSubfolder(isMhc)), addresses, Messenger::AddAllWalletsInFolderCallback([](){
+            LOG << "addresses added";
+        }, [](const TypedException &exception) {
+            LOG << "addresses added exception " << exception.numError << " " << exception.description;
+        }, signalFunc));
     }, [](const TypedException &exception) {
         LOG << "addresses added exception " << exception.numError << " " << exception.description;
     }, signalFunc));
@@ -885,12 +892,12 @@ END_SLOT_WRAPPER
 
 void MessengerJavascript::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
-    QString newWalletPath;
     if (!login.isEmpty()) {
-        newWalletPath = makePath(getWalletPath(), login);
+        currentUserName = login;
     } else {
-        newWalletPath = makePath(getWalletPath(), defaultUserName);
+        currentUserName = wallets::Wallets::defaultUsername;
     }
+    const QString newWalletPath = makePath(getWalletPath(), currentUserName);
     if (newWalletPath != walletPath) {
         walletPath = newWalletPath;
         setPathsImpl();

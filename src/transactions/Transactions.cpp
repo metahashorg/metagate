@@ -33,10 +33,12 @@ namespace transactions {
 static const uint64_t ADD_TO_COUNT_TXS = 10;
 static const uint64_t MAX_TXS_IN_RESPONSE = 2000;
 
-// Small hack to convert different currencies names
-QString Transactions::convertCurrency(const QString &currency) const
-{
+static QString makeGroupName(const QString &userName) {
+    return userName;
+}
 
+// Small hack to convert different currencies names
+QString Transactions::convertCurrency(const QString &currency) const {
     if (currency.contains(QStringLiteral("mhc"), Qt::CaseInsensitive))
         return QStringLiteral("mhc");
     return QStringLiteral("tmh");
@@ -443,7 +445,7 @@ void Transactions::timerMethod() {
     }
 
     if (addressesInfos.empty()) {
-        addressesInfos = getAddressesInfos(currentGroup);
+        addressesInfos = getAddressesInfos(makeGroupName(currentUserName));
         std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
             return first.type < second.type;
         });
@@ -525,7 +527,7 @@ void Transactions::timerMethod() {
 }
 
 void Transactions::fetchBalanceAddress(const QString &address) {
-    const std::vector<AddressInfo> infos = getAddressesInfos(currentGroup);
+    const std::vector<AddressInfo> infos = getAddressesInfos(makeGroupName(currentUserName));
     std::vector<AddressInfo> addressInfos;
     std::copy_if(infos.begin(), infos.end(), std::back_inserter(addressInfos), [&address](const AddressInfo &info) {
         return info.address == address;
@@ -745,23 +747,19 @@ void Transactions::addTrackedForCurrentLogin() {
     };
 
     const auto processWallets = [this](const QString &currency, const QString &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
-        const QString uName = userName.isEmpty() ? "empty" : userName;
-        if (uName != currentGroup) {
-            // TODO придумать, как перезапросить список кошельков
-            return;
-        }
+        CHECK(makeGroupName(currentUserName) == userName, "Current group already changed");
         auto transactionGuard = db.beginTransaction();
-        db.removeTrackedForGroup(currency, currentGroup);
+        db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
         for (const wallets::WalletInfo &wallet: walletAddresses) {
-            db.addTracked(currency, wallet.address, "", type, currentGroup);
+            db.addTracked(currency, wallet.address, "", type, makeGroupName(currentUserName));
         }
         transactionGuard.commit();
     };
 
-    emit wallets.getListWallets(wallets::WalletCurrency::Mth, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    emit wallets.getListWallets2(wallets::WalletCurrency::Mth, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         processWallets("mhc", TorrentTypeMainNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
-    emit wallets.getListWallets(wallets::WalletCurrency::Tmh, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    emit wallets.getListWallets2(wallets::WalletCurrency::Tmh, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         processWallets("tmh", TorrentTypeDevNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
 }
@@ -771,16 +769,16 @@ BEGIN_SLOT_WRAPPER
     if (!isInit) {
         return;
     }
-    QString newGroup;
+    QString newUserName;
     if (login.isEmpty()) {
-        newGroup = JavascriptWrapper::defaultUsername;
+        newUserName = wallets::Wallets::defaultUsername;
     } else {
-        newGroup = login;
+        newUserName = login;
     }
-    /*if (newGroup == currentGroup) {
+    if (newUserName == currentUserName) {
         return;
-    }*/
-    currentGroup = newGroup;
+    }
+    currentUserName = newUserName;
     addTrackedForCurrentLogin();
 END_SLOT_WRAPPER
 }

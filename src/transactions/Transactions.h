@@ -234,7 +234,6 @@ public slots:
 
     void onMthWalletCreated(const QString &name);
 
-
 private slots:
 
     void onFindTxOnTorrentEvent();
@@ -289,7 +288,7 @@ private:
 
     HttpSimpleClient tcpClient;
 
-    QString currentGroup;
+    QString currentUserName;
 
     QTimer timerSendTx;
 

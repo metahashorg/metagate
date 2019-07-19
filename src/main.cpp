@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
         //addModule(proxy::Proxy::moduleName());
         //const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(mainWindow);
 
-        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, jsWrapper);
+        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, jsWrapper, wallets);
 
         const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient, wallets);
 
