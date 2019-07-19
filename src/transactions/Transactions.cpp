@@ -295,7 +295,7 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
 
             const uint64_t countAll = calcCountTxs(address, currency);
             const uint64_t countInServer = serverBalance.countTxs;
-            LOG << PeriodicLog::make("t_" + address.right(4).toStdString()) << "Automatic get txs " << address << " " << currency << " " << countAll << " " << countInServer;
+            LOG << PeriodicLog::make(std::string("t_") + currency[0].toLatin1() + "," + address.right(4).toStdString()) << "Automatic get txs " << address << " " << currency << " " << countAll << " " << countInServer;
             if (countAll < countInServer) {
                 processCheckTxsOneServer(address, currency, bestServer);
 
@@ -773,7 +773,7 @@ BEGIN_SLOT_WRAPPER
     }
     QString newGroup;
     if (login.isEmpty()) {
-        newGroup = "_unregistered";
+        newGroup = JavascriptWrapper::defaultUsername;
     } else {
         newGroup = login;
     }
