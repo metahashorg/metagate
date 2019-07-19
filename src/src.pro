@@ -112,7 +112,11 @@ SOURCES += main.cpp mainwindow.cpp \
     Wallets/BtcWallet.cpp \
     Wallets/EthWallet.cpp \
     Wallets/Wallet.cpp \
-    Wallets/WalletRsa.cpp
+    Wallets/WalletRsa.cpp \
+    Wallets/Wallets.cpp \
+    Wallets/WalletsJavascript.cpp \
+    Wallets/WalletInfo.cpp \
+    Initializer/Inits/InitWallets.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
@@ -232,7 +236,11 @@ HEADERS += mainwindow.h \
     Wallets/BtcWallet.h \
     Wallets/EthWallet.h \
     Wallets/Wallet.h \
-    Wallets/WalletRsa.h
+    Wallets/WalletRsa.h \
+    Wallets/Wallets.h \
+    Wallets/WalletsJavascript.h \
+    Wallets/WalletInfo.h \
+    Initializer/Inits/InitWallets.h
 
 FORMS += mainwindow.ui
 

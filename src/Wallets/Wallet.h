@@ -7,31 +7,14 @@
 
 #include <cryptopp/eccrypto.h>
 
+#include "WalletInfo.h"
+
 class Wallet {
 public:
 
     const static std::string PREFIX_ONE_KEY_MTH;
 
     const static std::string PREFIX_ONE_KEY_TMH;
-
-    enum class Type {
-        Key,
-        Watch
-    };
-
-    struct WalletInfo {
-        QString address;
-        QString path;
-        Type type;
-
-        WalletInfo() = default;
-
-        WalletInfo(const QString &address, const QString &path, Type type)
-            : address(address)
-            , path(path)
-            , type(type)
-        {}
-    };
 
 public:
 
@@ -53,7 +36,7 @@ public:
 
     static std::vector<std::pair<QString, QString>> getAllWalletsInFolder(const QString &folder, bool isMhc, bool all = false);
 
-    static std::vector<WalletInfo> getAllWalletsInfoInFolder(const QString &folder, bool isMhc);
+    static std::vector<wallets::WalletInfo> getAllWalletsInfoInFolder(const QString &folder, bool isMhc);
 
     static std::string getPrivateKey(const QString &folder, bool isMhc, const std::string &addr, bool isCompact);
 
@@ -102,7 +85,7 @@ private:
     static void savePrivateKey(const QString &folder, bool isMhc, const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey, const std::string &password, std::string &publicKey, std::string &addr);
 
 private:
-    Wallet::Type type;
+    wallets::WalletInfo::Type type;
     CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey privateKey;
 
     std::string name;

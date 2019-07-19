@@ -24,6 +24,10 @@ struct TypedException;
 class JavascriptWrapper;
 class MainWindow;
 
+namespace wallets {
+class Wallets;
+}
+
 namespace auth {
 class Auth;
 }
@@ -143,13 +147,9 @@ public:
 
 public:
 
-    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, QObject *parent = nullptr);
+    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent = nullptr);
 
     ~Transactions() override;
-
-    void setJS(JavascriptWrapper &jst) {
-        mainJavascriptWrapper = &jst;
-    }
 
 protected:
 
@@ -278,7 +278,8 @@ private:
 private:
 
     NsLookup &nsLookup;
-    JavascriptWrapper *mainJavascriptWrapper = nullptr;
+
+    wallets::Wallets &wallets;
 
     TransactionsJavascript &javascriptWrapper;
 

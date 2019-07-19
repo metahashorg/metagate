@@ -28,6 +28,7 @@ SOURCES += \
     ../../src/Wallets/openssl_wrapper/openssl_wrapper.cpp \
     ../../src/utilites/utils.cpp \
     ../../src/Wallets/ethtx/utils2.cpp \
+    ../../src/Wallets/WalletInfo.cpp \
     ../LogMock.cpp \
     tst_Metahash.cpp \
     tst_Bitcoin.cpp \

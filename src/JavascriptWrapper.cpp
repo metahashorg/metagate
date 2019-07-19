@@ -44,6 +44,8 @@ using namespace std::placeholders;
 
 #include "utilites/machine_uid.h"
 
+#include "Wallets/WalletInfo.h"
+
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
 #include "Utils/UtilsManager.h"
@@ -109,15 +111,15 @@ static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &w
     return json.toJson(QJsonDocument::Compact);
 }
 
-static QString makeJsonWalletsInfo(const std::vector<Wallet::WalletInfo> &wallets)
+static QString makeJsonWalletsInfo(const std::vector<wallets::WalletInfo> &wallets)
 {
     QJsonArray jsonArray;
     for (const auto &r: wallets) {
         QJsonObject val;
         val.insert("address", r.address);
-        if (r.type == Wallet::Type::Key)
+        if (r.type == wallets::WalletInfo::Type::Key)
             val.insert("type", 1);
-        else if (r.type == Wallet::Type::Watch)
+        else if (r.type == wallets::WalletInfo::Type::Watch)
             val.insert("type", 2);
         else
             val.insert("type", -1);
@@ -160,7 +162,6 @@ JavascriptWrapper::JavascriptWrapper(
     , utilsManager(utilsManager)
     , applicationVersion(applicationVersion)
 {
-    transactionsManager.setJS(*this);
     hardwareId = QString::fromStdString(::getMachineUid());
     utmData = QString::fromLatin1(getUtmData());
 
@@ -177,7 +178,6 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
 
-    Q_CONNECT(this, &JavascriptWrapper::getListWallets, this, &JavascriptWrapper::onGetListWallets);
     Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList);
     Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsListMHC, this, &JavascriptWrapper::onCreateWatchWalletsListMHC);
 
@@ -185,7 +185,6 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
-    Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(JavascriptWrapper::WalletCurrency, "JavascriptWrapper::WalletCurrency");
 
     emit authManager.reEmit();
@@ -195,35 +194,6 @@ void JavascriptWrapper::mvToThread(QThread *thread) {
     moveToThread(thread);
     client.moveToThread(thread);
     fileSystemWatcher.moveToThread(thread);
-}
-
-void JavascriptWrapper::onGetListWallets(const WalletCurrency &type, const WalletsListCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    std::vector<Wallet::WalletInfo> result;
-    const TypedException &exception = apiVrapper2([&]{
-        CHECK(!walletPath.isEmpty(), "Wallet path not set");
-        if (type == WalletCurrency::Tmh) {
-            result = Wallet::getAllWalletsInfoInFolder(walletPath, false);
-        } else if (type == WalletCurrency::Mth) {
-            result = Wallet::getAllWalletsInfoInFolder(walletPath, true);
-        } else if (type == WalletCurrency::Btc) {
-            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
-                return Wallet::WalletInfo(pair.first, pair.second, Wallet::Type::Key);
-            });
-        } else if (type == WalletCurrency::Eth) {
-            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
-                return Wallet::WalletInfo(pair.first, pair.second, Wallet::Type::Key);
-            });
-        } else {
-            throwErr("Incorrect type");
-        }
-    });
-    callback.emitFunc(exception, hardwareId, userName, result);
-END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
@@ -636,7 +606,7 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(bool isMhc, QString name) {
 QString JavascriptWrapper::getAllMTHSWalletsInfoJson(bool isMhc, QString name) {
     try {
         CHECK(!walletPath.isNull() && !walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<Wallet::WalletInfo> result = Wallet::getAllWalletsInfoInFolder(walletPath, isMhc);
+        const std::vector<wallets::WalletInfo> result = Wallet::getAllWalletsInfoInFolder(walletPath, isMhc);
         const QString jsonStr = makeJsonWalletsInfo(result);
         LOG << PeriodicLog::make("w3_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;

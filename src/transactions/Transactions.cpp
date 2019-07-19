@@ -21,6 +21,9 @@ using namespace std::placeholders;
 #include "TransactionsJavascript.h"
 #include "TransactionsDBStorage.h"
 
+#include "Wallets/Wallets.h"
+#include "Wallets/WalletInfo.h"
+
 #include <memory>
 
 SET_LOG_NAMESPACE("TXS");
@@ -39,9 +42,10 @@ QString Transactions::convertCurrency(const QString &currency) const
     return QStringLiteral("tmh");
 }
 
-Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, QObject *parent)
+Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent)
     : TimerClass(5s, parent)
     , nsLookup(nsLookup)
+    , wallets(wallets)
     , javascriptWrapper(javascriptWrapper)
     , db(db)
 {
@@ -735,16 +739,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::addTrackedForCurrentLogin()
-{
-    if (!mainJavascriptWrapper) {
-        return;
-    }
+void Transactions::addTrackedForCurrentLogin() {
     const auto errorCallback = [](const TypedException &e) {
         LOG << "Error: " << e.description;
     };
 
-    const auto processWallets = [this](const QString &currency, const QString &type, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](const QString &currency, const QString &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         const QString uName = userName.isEmpty() ? "empty" : userName;
         if (uName != currentGroup) {
             // TODO придумать, как перезапросить список кошельков
@@ -752,18 +752,16 @@ void Transactions::addTrackedForCurrentLogin()
         }
         auto transactionGuard = db.beginTransaction();
         db.removeTrackedForGroup(currency, currentGroup);
-        for (const Wallet::WalletInfo &wallet: walletAddresses) {
+        for (const wallets::WalletInfo &wallet: walletAddresses) {
             db.addTracked(currency, wallet.address, "", type, currentGroup);
         }
         transactionGuard.commit();
     };
 
-    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletsListCallback([processWallets](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
-        Q_UNUSED(hwid);
+    emit wallets.getListWallets(wallets::Wallets::WalletCurrency::Mth, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         processWallets("mhc", TorrentTypeMainNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
-    emit mainJavascriptWrapper->getListWallets(JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletsListCallback([processWallets](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
-        Q_UNUSED(hwid);
+    emit wallets.getListWallets(wallets::Wallets::WalletCurrency::Tmh, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         processWallets("tmh", TorrentTypeDevNet, userName, walletAddresses);
     }, errorCallback, signalFunc));
 }

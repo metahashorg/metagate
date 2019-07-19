@@ -42,8 +42,6 @@ public:
 
     using ReturnCallback = std::function<void()>;
 
-    using WalletsListCallback = CallbackWrapper<void(const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses)>;
-
 public:
 
     enum class WalletCurrency {
@@ -91,16 +89,12 @@ public slots:
 
 signals:
 
-    void getListWallets(const JavascriptWrapper::WalletCurrency &type, const WalletsListCallback &callback);
-
     void createWatchWalletsList(const QString &requestId, const QStringList &addresses);
 
     void createWatchWalletsListMHC(const QString &requestId, const QStringList &addresses);
 
 
 private slots:
-
-    void onGetListWallets(const JavascriptWrapper::WalletCurrency &type, const WalletsListCallback &callback);
 
     void onCreateWatchWalletsList(const QString &requestId, const QStringList &addresses);
 

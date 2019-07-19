@@ -20,6 +20,10 @@ namespace auth {
 class Auth;
 }
 
+namespace wallets {
+class Wallets;
+}
+
 namespace wallet_names {
 
 class WalletNamesDbStorage;
@@ -38,7 +42,7 @@ public:
 
 public:
 
-    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client);
+    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets);
 
     ~WalletNames() override;
 
@@ -107,6 +111,8 @@ private:
     auth::Auth &authManager;
 
     WebSocketClient &client;
+
+    wallets::Wallets &wallets;
 
     QString token;
 

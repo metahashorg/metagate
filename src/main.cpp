@@ -42,6 +42,7 @@
 #include "Initializer/Inits/InitMessenger.h"
 #include "Initializer/Inits/InitWalletsNames.h"
 #include "Initializer/Inits/InitUtils.h"
+#include "Initializer/Inits/InitWallets.h"
 
 #include "Module.h"
 #include "proxy/Proxy.h"
@@ -188,9 +189,11 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
 
+        const std::shared_future<InitWallets::Return> wallets = initManager.addInit<InitWallets>(mainWindow, auth);
+
         const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup>();
 
-        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup, auth);
+        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup, auth, wallets);
 
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
@@ -203,7 +206,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, jsWrapper);
 
-        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient);
+        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient, wallets);
 
         initManager.complete();
 

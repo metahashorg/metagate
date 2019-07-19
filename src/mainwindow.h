@@ -45,6 +45,10 @@ namespace utils {
 class UtilsJavascript;
 }
 
+namespace wallets {
+class WalletsJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -86,6 +90,8 @@ public:
 
     using SetUtilsJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetWalletsJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
@@ -119,6 +125,8 @@ signals:
 
     void setUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
 
+    void setWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
+
     void initFinished();
 
     void processExternalUrl(const QUrl &url);
@@ -147,6 +155,8 @@ private slots:
     void onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 
     void onSetUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
+
+    void onSetWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
 
     void onInitFinished();
 

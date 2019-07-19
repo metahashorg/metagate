@@ -370,21 +370,20 @@ std::vector<std::pair<QString, QString>> Wallet::getAllWalletsInFolder(const QSt
     return result;
 }
 
-std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString &folder, bool isMhc)
-{
-    std::vector<Wallet::WalletInfo> result;
+std::vector<wallets::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString &folder, bool isMhc) {
+    std::vector<wallets::WalletInfo> result;
 
     const QDir dir(makePath(folder, chooseSubfolder(isMhc)));
     const QStringList allFiles = dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
     for (const QString &file: allFiles) {
-        Wallet::WalletInfo info;
+        wallets::WalletInfo info;
         if (file.endsWith(FILE_METAHASH_PRIV_KEY_SUFFIX)) {
             info.address = file.split(FILE_METAHASH_PRIV_KEY_SUFFIX).first();
             const std::string address = info.address.toStdString();
             if (address.size() != 52 || !isHex(address)) {
                 continue;
             }
-            info.type = Type::Key;
+            info.type = wallets::WalletInfo::Type::Key;
             info.path = makeFullWalletPath(folder, isMhc, address);
             result.emplace_back(info);
         }
@@ -394,7 +393,7 @@ std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString 
             if (address.size() != 52 || !isHex(address)) {
                 continue;
             }
-            info.type = Type::Watch;
+            info.type = wallets::WalletInfo::Type::Watch;
             info.path = makeFullWalletPath(folder, isMhc, address); // ??? Watch?
             result.emplace_back(info);
         }
@@ -404,7 +403,7 @@ std::vector<Wallet::WalletInfo> Wallet::getAllWalletsInfoInFolder(const QString 
 }
 
 Wallet::Wallet(const QString &folder, bool isMhc, const std::string &name, const std::string &password)
-    : type(Type::Key)
+    : type(wallets::WalletInfo::Type::Key)
     , name(name)
 {
     CHECK_TYPED(!password.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty password");
@@ -436,7 +435,7 @@ Wallet::Wallet(const QString &folder, bool isMhc, const std::string &name, const
 }
 
 Wallet::Wallet(const QString &folder, bool isMhc, const std::string &name)
-    : type(Type::Watch)
+    : type(wallets::WalletInfo::Type::Watch)
     , name(name)
 {
     CHECK_TYPED(!name.empty(), TypeErrors::INCORRECT_USER_DATA, "Empty name");
@@ -444,7 +443,7 @@ Wallet::Wallet(const QString &folder, bool isMhc, const std::string &name)
 }
 
 std::string Wallet::sign(const std::string &message, std::string &publicKey) const {
-    CHECK(type == Type::Key, "Possible for wallet with key");
+    CHECK(type == wallets::WalletInfo::Type::Key, "Possible for wallet with key");
     try {
         CryptoPP::AutoSeededRandomPool prng;
         CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::Signer signer(privateKey);
@@ -515,7 +514,7 @@ std::string Wallet::genTx(const std::string &toAddress, uint64_t value, uint64_t
 }
 
 void Wallet::sign(const std::string &toAddress, uint64_t value, uint64_t fee, uint64_t nonce, const std::string &data, std::string &txHex, std::string &signature, std::string &publicKey, bool isCheckHash) {
-    CHECK(type == Type::Key, "Possible for wallet with key");
+    CHECK(type == wallets::WalletInfo::Type::Key, "Possible for wallet with key");
     const std::string txBinary = genTx(toAddress, value, fee, nonce, data, isCheckHash);
     signature = sign(txBinary, publicKey);
     txHex = toHex(txBinary);
@@ -598,7 +597,7 @@ void Wallet::saveWalletWatch(const QString &folder, bool isMhc, const std::strin
 }
 
 std::string Wallet::getNotProtectedKeyHex() const {
-    CHECK(type == Type::Key, "Possible for wallet with key");
+    CHECK(type == wallets::WalletInfo::Type::Key, "Possible for wallet with key");
     if (privateKey.GetGroupParameters() == CryptoPP::ASN1::secp256k1()) {
         return ::getPrivateKeyK1(privateKey);
     } else if (privateKey.GetGroupParameters() == CryptoPP::ASN1::secp256r1()) {

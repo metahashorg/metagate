@@ -25,6 +25,9 @@
 #include "WalletNamesMessages.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
 
+#include "Wallets/WalletInfo.h"
+#include "Wallets/Wallets.h"
+
 using namespace std::placeholders;
 
 SET_LOG_NAMESPACE("WNS");
@@ -36,12 +39,13 @@ const QString WALLET_CURRENCY_MTH = "mth";
 const QString WALLET_CURRENCY_BTC = "btc";
 const QString WALLET_CURRENCY_ETH = "eth";
 
-WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client)
+WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets)
     : TimerClass(5min, nullptr)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
     , authManager(authManager)
     , client(client)
+    , wallets(wallets)
 {
     serverName = Uploader::getServerName();
 
@@ -169,38 +173,38 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-static JavascriptWrapper::WalletCurrency strToWalletCurrency(const QString &currency) {
+static wallets::Wallets::WalletCurrency strToWalletCurrency(const QString &currency) {
     if (currency == WALLET_CURRENCY_TMH) {
-        return JavascriptWrapper::WalletCurrency::Tmh;
+        return wallets::Wallets::WalletCurrency::Tmh;
     } else if (currency == WALLET_CURRENCY_MTH) {
-        return JavascriptWrapper::WalletCurrency::Mth;
+        return wallets::Wallets::WalletCurrency::Mth;
     } else if (currency == WALLET_CURRENCY_BTC) {
-        return JavascriptWrapper::WalletCurrency::Btc;
+        return wallets::Wallets::WalletCurrency::Btc;
     } else if (currency == WALLET_CURRENCY_ETH) {
-        return JavascriptWrapper::WalletCurrency::Eth;
+        return wallets::Wallets::WalletCurrency::Eth;
     } else {
         throwErr(("Incorrect type: " + currency).toStdString());
     }
 }
 
-static QString walletCurrencyToStr(const JavascriptWrapper::WalletCurrency &type) {
-    if (type == JavascriptWrapper::WalletCurrency::Tmh) {
+static QString walletCurrencyToStr(const wallets::Wallets::WalletCurrency &type) {
+    if (type == wallets::Wallets::WalletCurrency::Tmh) {
         return WALLET_CURRENCY_TMH;
-    } else if (type == JavascriptWrapper::WalletCurrency::Mth) {
+    } else if (type == wallets::Wallets::WalletCurrency::Mth) {
         return WALLET_CURRENCY_MTH;
-    } else if (type == JavascriptWrapper::WalletCurrency::Btc) {
+    } else if (type == wallets::Wallets::WalletCurrency::Btc) {
         return WALLET_CURRENCY_BTC;
-    } else if (type == JavascriptWrapper::WalletCurrency::Eth) {
+    } else if (type == wallets::Wallets::WalletCurrency::Eth) {
         return WALLET_CURRENCY_ETH;
     } else {
         throwErr("Incorrect type");
     }
 }
 
-static WalletInfo::Info::Type convertTypes(const Wallet::Type &type) {
-    if (type == Wallet::Type::Key) {
+static WalletInfo::Info::Type convertTypes(const wallets::WalletInfo::Type &type) {
+    if (type == wallets::WalletInfo::Type::Key) {
         return WalletInfo::Info::Type::Key;
-    } else if (type == Wallet::Type::Watch) {
+    } else if (type == wallets::WalletInfo::Type::Watch) {
         return WalletInfo::Info::Type::Watch;
     } else {
         throwErr("Unknown type");
@@ -210,19 +214,19 @@ static WalletInfo::Info::Type convertTypes(const Wallet::Type &type) {
 void WalletNames::onGetAllWalletsCurrency(const QString &currency, const GetAllWalletsCurrencyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
-        const auto processWallets = [this](const JavascriptWrapper::WalletCurrency &currency, const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+        const auto processWallets = [this](const wallets::Wallets::WalletCurrency &currency, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
             const QString currencyStr = walletCurrencyToStr(currency);
 
             std::vector<WalletInfo> otherWallets = db.getWalletsCurrency(currencyStr, userName);
             std::set<QString> walletAddressesSet;
-            std::transform(walletAddresses.begin(), walletAddresses.end(), std::inserter(walletAddressesSet, walletAddressesSet.begin()), std::mem_fn(&Wallet::WalletInfo::address));
+            std::transform(walletAddresses.begin(), walletAddresses.end(), std::inserter(walletAddressesSet, walletAddressesSet.begin()), std::mem_fn(&wallets::WalletInfo::address));
             otherWallets.erase(std::remove_if(otherWallets.begin(), otherWallets.end(), [&walletAddressesSet](const WalletInfo &info) {
                 return walletAddressesSet.find(info.address) != walletAddressesSet.end();
             }), otherWallets.end());
 
             std::vector<WalletInfo> thisWallets;
             thisWallets.reserve(walletAddresses.size());
-            for (const Wallet::WalletInfo &wallet: walletAddresses) {
+            for (const wallets::WalletInfo &wallet: walletAddresses) {
                 WalletInfo info = db.getWalletInfo(wallet.address);
                 info.address = wallet.address; // На случай, если вернулся пустой результат
                 info.infos.emplace_back(userName, hwid, currencyStr, convertTypes(wallet.type));
@@ -234,22 +238,25 @@ BEGIN_SLOT_WRAPPER
         };
 
         if (currency != "all") {
-            const JavascriptWrapper::WalletCurrency c = strToWalletCurrency(currency);
-            emit javascriptWrapper.getListWallets(c, JavascriptWrapper::WalletsListCallback([c, callback, processWallets](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
-                const auto pair = processWallets(c, hwid, userName, walletAddresses);
+            const wallets::Wallets::WalletCurrency c = strToWalletCurrency(currency);
+            emit wallets.getListWallets(c, wallets::Wallets::WalletsListCallback([c, callback, processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+                const auto pair = processWallets(c, userName, walletAddresses);
 
                 callback.emitFunc(TypedException(), pair.first, pair.second);
             }, callback, signalFunc));
         } else {
-            const std::vector<JavascriptWrapper::WalletCurrency> currencys = {JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletCurrency::Btc, JavascriptWrapper::WalletCurrency::Eth};
-            std::vector<std::vector<Wallet::WalletInfo>> result;
-            emit javascriptWrapper.getListWallets(currencys[0], JavascriptWrapper::WalletsListCallback([this, currencys, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) mutable {
+            const std::vector<wallets::Wallets::WalletCurrency> currencys = {wallets::Wallets::WalletCurrency::Tmh, wallets::Wallets::WalletCurrency::Mth, wallets::Wallets::WalletCurrency::Btc, wallets::Wallets::WalletCurrency::Eth};
+            std::vector<std::vector<wallets::WalletInfo>> result;
+            emit wallets.getListWallets(currencys[0], wallets::Wallets::WalletsListCallback([this, currencys, callback, processWallets, result](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
                 result.emplace_back(walletAddresses);
-                emit javascriptWrapper.getListWallets(currencys[1], JavascriptWrapper::WalletsListCallback([this, currencys, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) mutable {
+                emit wallets.getListWallets(currencys[1], wallets::Wallets::WalletsListCallback([this, currencys, callback, processWallets, result, u=userName](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
+                    CHECK(u == userName, "Username changed while get wallets");
                     result.emplace_back(walletAddresses);
-                    emit javascriptWrapper.getListWallets(currencys[2], JavascriptWrapper::WalletsListCallback([this, currencys, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) mutable {
+                    emit wallets.getListWallets(currencys[2], wallets::Wallets::WalletsListCallback([this, currencys, callback, processWallets, result, u=userName](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
+                        CHECK(u == userName, "Username changed while get wallets");
                         result.emplace_back(walletAddresses);
-                        emit javascriptWrapper.getListWallets(currencys[3], JavascriptWrapper::WalletsListCallback([currencys, callback, processWallets, result](const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) mutable {
+                        emit wallets.getListWallets(currencys[3], wallets::Wallets::WalletsListCallback([currencys, callback, processWallets, result, u=userName](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
+                            CHECK(u == userName, "Username changed while get wallets");
                             result.emplace_back(walletAddresses);
 
                             std::vector<WalletInfo> allOtherWallets;
@@ -257,10 +264,10 @@ BEGIN_SLOT_WRAPPER
 
                             CHECK(result.size() == currencys.size(), "Incorrect result");
                             for (size_t i = 0; i < currencys.size(); i++) {
-                                const JavascriptWrapper::WalletCurrency currency = currencys[i];
-                                const std::vector<Wallet::WalletInfo> &wallets = result[i];
+                                const wallets::Wallets::WalletCurrency currency = currencys[i];
+                                const std::vector<wallets::WalletInfo> &wallets = result[i];
 
-                                const auto pair = processWallets(currency, hwid, userName, wallets);
+                                const auto pair = processWallets(currency, userName, wallets);
 
                                 allOtherWallets.insert(allOtherWallets.end(), pair.second.begin(), pair.second.end());
                                 allThisWallets.insert(allThisWallets.end(), pair.first.begin(), pair.first.end());
@@ -296,12 +303,12 @@ void WalletNames::processWalletsList(const std::vector<WalletInfo> &wallets) {
 }
 
 void WalletNames::sendAllWallets() {
-    const auto processWallets = [this](const JavascriptWrapper::WalletCurrency &type, const QString &hwid, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](const wallets::Wallets::WalletCurrency &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         const QString typeStr = walletCurrencyToStr(type);
 
         std::vector<WalletInfo> thisWallets;
         thisWallets.reserve(walletAddresses.size());
-        for (const Wallet::WalletInfo &wallet: walletAddresses) {
+        for (const wallets::WalletInfo &wallet: walletAddresses) {
             WalletInfo info = db.getWalletInfo(wallet.address);
             info.address = wallet.address; // На случай, если вернулся пустой результат
             info.infos.emplace_back(userName, hwid, typeStr, convertTypes(wallet.type));
@@ -313,10 +320,10 @@ void WalletNames::sendAllWallets() {
 
     LOG << "Send all wallets";
 
-    const std::vector<JavascriptWrapper::WalletCurrency> types = {JavascriptWrapper::WalletCurrency::Tmh, JavascriptWrapper::WalletCurrency::Mth, JavascriptWrapper::WalletCurrency::Btc, JavascriptWrapper::WalletCurrency::Eth};
-    for (const JavascriptWrapper::WalletCurrency type: types) {
-        emit javascriptWrapper.getListWallets(type, JavascriptWrapper::WalletsListCallback([this, type, processWallets](const QString &hw, const QString &userName, const std::vector<Wallet::WalletInfo> &walletAddresses) mutable {
-            const std::vector<WalletInfo> wallets = processWallets(type, hw, userName, walletAddresses);
+    const std::vector<wallets::Wallets::WalletCurrency> types = {wallets::Wallets::WalletCurrency::Tmh, wallets::Wallets::WalletCurrency::Mth, wallets::Wallets::WalletCurrency::Btc, wallets::Wallets::WalletCurrency::Eth};
+    for (const wallets::Wallets::WalletCurrency type: types) {
+        emit wallets.getListWallets(type, wallets::Wallets::WalletsListCallback([this, type, processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) mutable {
+            const std::vector<WalletInfo> wallets = processWallets(type, userName, walletAddresses);
             const QString message = makeSetWalletsMessage(wallets, id.get(), token, hwid);
             client.sendMessage(message);
         }, [](const TypedException &e) {
