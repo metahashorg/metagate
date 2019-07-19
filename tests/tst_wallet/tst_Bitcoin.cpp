@@ -2,13 +2,13 @@
 
 #include <QTest>
 
-#include "BtcWallet.h"
-#include "btctx/wif.h"
+#include "Wallets/BtcWallet.h"
+#include "Wallets/btctx/wif.h"
 
 #include "utilites/utils.h"
 #include "check.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 Q_DECLARE_METATYPE(std::string)
 

@@ -9,8 +9,8 @@
 #include "check.h"
 
 #include "wif.h"
-#include "ethtx/utils2.h"
-#include "ethtx/const.h"
+#include "../ethtx/utils2.h"
+#include "../ethtx/const.h"
 
 secp256k1_context const* getCtx();
 

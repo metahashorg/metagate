@@ -16,10 +16,10 @@ using namespace std::placeholders;
 #include <QMessageBox>
 #include <QFile>
 
-#include "Wallet.h"
-#include "WalletRsa.h"
-#include "EthWallet.h"
-#include "BtcWallet.h"
+#include "Wallets/Wallet.h"
+#include "Wallets/WalletRsa.h"
+#include "Wallets/EthWallet.h"
+#include "Wallets/BtcWallet.h"
 
 #include "mainwindow.h"
 

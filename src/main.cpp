@@ -22,7 +22,7 @@
 #include "tests.h"
 
 #include "utilites/machine_uid.h"
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 #include "StopApplication.h"
 #include "TypedException.h"
@@ -45,8 +45,6 @@
 
 #include "Module.h"
 #include "proxy/Proxy.h"
-
-#include "WalletRsa.h"
 
 #include "MhPayEventHandler.h"
 #include <QDebug>

@@ -17,9 +17,9 @@
 #include "check.h"
 
 #include "Base58.h"
-#include "ethtx/cert.h"
-#include "ethtx/const.h"
-#include "ethtx/utils2.h"
+#include "../ethtx/cert.h"
+#include "../ethtx/const.h"
+#include "../ethtx/utils2.h"
 
 secp256k1_context const* getCtx();
 

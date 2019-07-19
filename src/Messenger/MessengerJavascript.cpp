@@ -15,7 +15,7 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
-#include "Wallet.h"
+#include "Wallets/Wallet.h"
 
 #include "auth/Auth.h"
 #include "transactions/Transactions.h"

@@ -1,7 +1,7 @@
 #include "CryptographicManager.h"
 
-#include "Wallet.h"
-#include "WalletRsa.h"
+#include "Wallets/Wallet.h"
+#include "Wallets/WalletRsa.h"
 
 #include "check.h"
 #include "qt_utilites/SlotWrapper.h"

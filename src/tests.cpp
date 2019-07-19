@@ -7,18 +7,18 @@
 #include <QFile>
 #include <QTextStream>
 
-#include "Wallet.h"
-#include "EthWallet.h"
-#include "BtcWallet.h"
+#include "Wallets/Wallet.h"
+#include "Wallets/EthWallet.h"
+#include "Wallets/BtcWallet.h"
 #include "utilites/utils.h"
 
-#include "btctx/Base58.h"
+#include "Wallets/btctx/Base58.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
-#include "ethtx/utils2.h"
+#include "Wallets/ethtx/utils2.h"
 
-#include "btctx/wif.h"
+#include "Wallets/btctx/wif.h"
 
 void testCreateWallet() {
     QString password = "1";

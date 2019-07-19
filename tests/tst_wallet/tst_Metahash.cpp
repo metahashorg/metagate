@@ -2,12 +2,12 @@
 
 #include <QTest>
 
-#include "Wallet.h"
+#include "Wallets/Wallet.h"
 
 #include "utilites/utils.h"
 #include "check.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 Q_DECLARE_METATYPE(std::string)
 

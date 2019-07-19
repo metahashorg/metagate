@@ -20,7 +20,7 @@
 
 #include "uploader.h"
 #include "utilites/platform.h"
-#include "Wallet.h"
+#include "Wallets/Wallet.h"
 #include "WalletNamesDbStorage.h"
 #include "WalletNamesMessages.h"
 #include "qt_utilites/ManagerWrapperImpl.h"

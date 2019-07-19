@@ -13,7 +13,7 @@ using namespace std::placeholders;
 #include "mainwindow.h"
 #include "auth/Auth.h"
 #include "JavascriptWrapper.h"
-#include "Wallet.h"
+#include "Wallets/Wallet.h"
 #include "NsLookup/NsLookup.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
 

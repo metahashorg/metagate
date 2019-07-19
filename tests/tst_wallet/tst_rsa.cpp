@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "utilites/utils.h"
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 #include "check.h"
 

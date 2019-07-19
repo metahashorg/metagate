@@ -9,7 +9,7 @@
 #include <QFileInfo>
 #include <QDir>
 
-#include "btctx/Base58.h"
+#include "../Wallets/btctx/Base58.h"
 
 #include "check.h"
 

@@ -12,7 +12,7 @@
 
 #include "qt_utilites/CallbackWrapper.h"
 
-#include "Wallet.h"
+#include "Wallets/Wallet.h"
 
 class NsLookup;
 class WebSocketClient;

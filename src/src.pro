@@ -13,25 +13,22 @@ DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp mainwindow.cpp \
-    Wallet.cpp \
     uploader.cpp \
-    EthWallet.cpp \
-    ethtx/scrypt/crypto_scrypt-nosse.cpp \
-    ethtx/scrypt/sha256.cpp \
-    ethtx/cert.cpp \
-    ethtx/rlp.cpp \
-    ethtx/ethtx.cpp \
-    ethtx/cert2.cpp \
-    ethtx/scrypt/crypto_scrypt_saltgen.cpp \
-    ethtx/crossguid/Guid.cpp \
-    btctx/Base58.cpp \
-    btctx/btctx.cpp \
-    btctx/wif.cpp \
-    BtcWallet.cpp \
+    Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
+    Wallets/ethtx/scrypt/sha256.cpp \
+    Wallets/ethtx/cert.cpp \
+    Wallets/ethtx/rlp.cpp \
+    Wallets/ethtx/ethtx.cpp \
+    Wallets/ethtx/cert2.cpp \
+    Wallets/ethtx/scrypt/crypto_scrypt_saltgen.cpp \
+    Wallets/ethtx/crossguid/Guid.cpp \
+    Wallets/btctx/Base58.cpp \
+    Wallets/btctx/btctx.cpp \
+    Wallets/btctx/wif.cpp \
     StopApplication.cpp \
     tests.cpp \
-    openssl_wrapper/openssl_wrapper.cpp \
-    ethtx/utils2.cpp \
+    Wallets/openssl_wrapper/openssl_wrapper.cpp \
+    Wallets/ethtx/utils2.cpp \
     NsLookup/NsLookup.cpp \
     dns/datatransformer.cpp \
     dns/dnspacket.cpp \
@@ -46,7 +43,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Messenger/MessengerJavascript.cpp \
     Messenger/CryptographicManager.cpp \
     dbstorage.cpp \
-    WalletRsa.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
     transactions/TransactionsMessages.cpp \
@@ -112,34 +108,35 @@ SOURCES += main.cpp mainwindow.cpp \
     Network/HttpClient.cpp \
     Network/NetwrokTesting.cpp \
     Network/UdpSocketClient.cpp \
-    Network/WebSocketClient.cpp
+    Network/WebSocketClient.cpp \
+    Wallets/BtcWallet.cpp \
+    Wallets/EthWallet.cpp \
+    Wallets/Wallet.cpp \
+    Wallets/WalletRsa.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
-    Wallet.h \
     uploader.h \
-    EthWallet.h \
-    ethtx/scrypt/libscrypt.h \
-    ethtx/scrypt/sha256.h \
-    ethtx/scrypt/sysendian.h \
-    ethtx/cert.h \
-    ethtx/const.h \
-    ethtx/rlp.h \
-    ethtx/ethtx.h \
-    ethtx/crossguid/Guid.hpp \
-    btctx/Base58.h \
-    btctx/btctx.h \
-    btctx/wif.h \
-    btctx/Base58.h \
-    btctx/btctx.h \
-    btctx/wif.h \
-    BtcWallet.h \
+    Wallets/ethtx/scrypt/libscrypt.h \
+    Wallets/ethtx/scrypt/sha256.h \
+    Wallets/ethtx/scrypt/sysendian.h \
+    Wallets/ethtx/cert.h \
+    Wallets/ethtx/const.h \
+    Wallets/ethtx/rlp.h \
+    Wallets/ethtx/ethtx.h \
+    Wallets/ethtx/crossguid/Guid.hpp \
+    Wallets/btctx/Base58.h \
+    Wallets/btctx/btctx.h \
+    Wallets/btctx/wif.h \
+    Wallets/btctx/Base58.h \
+    Wallets/btctx/btctx.h \
+    Wallets/btctx/wif.h \
     StopApplication.h \
     tests.h \
-    openssl_wrapper/openssl_wrapper.h \
-    ethtx/utils2.h \
+    Wallets/openssl_wrapper/openssl_wrapper.h \
+    Wallets/ethtx/utils2.h \
     NsLookup/NsLookup.h \
     dns/datatransformer.h \
     dns/dnspacket.h \
@@ -154,7 +151,6 @@ HEADERS += mainwindow.h \
     Messenger/MessengerJavascript.h \
     Messenger/Message.h \
     dbstorage.h \
-    WalletRsa.h \
     Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
@@ -232,7 +228,11 @@ HEADERS += mainwindow.h \
     Network/HttpClient.h \
     Network/NetwrokTesting.h \
     Network/UdpSocketClient.h \
-    Network/WebSocketClient.h
+    Network/WebSocketClient.h \
+    Wallets/BtcWallet.h \
+    Wallets/EthWallet.h \
+    Wallets/Wallet.h \
+    Wallets/WalletRsa.h
 
 FORMS += mainwindow.ui
 
