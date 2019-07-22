@@ -319,7 +319,7 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, bo
 
 void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc)
 {
-    LOG << "Create wallet mths watch " << requestId << address;
+    LOG << "Create wallet mths watch " << requestId << " " << address;
     Opt<QString> walletFullPath;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
@@ -348,7 +348,7 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 
 void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, bool isMhc, QString jsNameResult)
 {
-    LOG << "Create watch wallets list mths " << requestId << "(" << addresses.join(",") << ")";
+    LOG << "Create watch wallets list mths " << requestId << " " << "(" << addresses.join(",") << ")";
     std::vector<std::pair<QString, QString>> created;
     const TypedException exception = apiVrapper2([&, this]() {
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
@@ -371,7 +371,7 @@ void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, con
 }
 
 void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc) {
-    LOG << "Remove wallet mths watch " << requestId << address;
+    LOG << "Remove wallet mths watch " << requestId << " " << address;
     Opt<QString> walletFullPath;
     const TypedException exception = apiVrapper2([&]() {
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
