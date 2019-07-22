@@ -1,5 +1,10 @@
 Wallets регестрируется в javascript по имени wallets 
 
-createWatchWalletsList2ResultJs(isMhc, result, errorNum, errorMessage)
+walletsCreateWatchWalletsListResultJs(isMhc, result, errorNum, errorMessage)
 Возвращается при создании watch кошельков
 Аналог createWatchWalletsListMHCResultJs и createWatchWalletsListResultJs
+
+Q_INVOKABLE void createWallet(bool isMhc, QString password);
+# Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address. 
+# javascript is called after completion of this function
+walletsCreateWalletResultJs(fullKeyPath, publickey, address, exampleMessage, signature, errorNum, errorMessage)

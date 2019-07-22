@@ -45,6 +45,7 @@ using namespace std::placeholders;
 #include "utilites/machine_uid.h"
 
 #include "Wallets/WalletInfo.h"
+#include "Wallets/Wallets.h"
 
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
@@ -150,6 +151,7 @@ JavascriptWrapper::JavascriptWrapper(
     auth::Auth &authManager,
     NetwrokTesting &networkTesting,
     utils::Utils &utilsManager,
+    wallets::Wallets &wallets,
     const QString &applicationVersion,
     QObject */*parent*/
 )
@@ -160,6 +162,7 @@ JavascriptWrapper::JavascriptWrapper(
     , transactionsManager(transactionsManager)
     , networkTesting(networkTesting)
     , utilsManager(utilsManager)
+    , wallets(wallets)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -178,11 +181,11 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
 
-    Q_CONNECT(this, &JavascriptWrapper::mthWalletCreated, &transactionsManager, &transactions::Transactions::onMthWalletCreated);
-
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(JavascriptWrapper::WalletCurrency, "JavascriptWrapper::WalletCurrency");
+
+    signalFunc = std::bind(&JavascriptWrapper::callbackCall, this, _1);
 
     emit authManager.reEmit();
 }
@@ -269,37 +272,13 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, bool isMhc, QString jsNameResult) {
     LOG << "Create wallet mths " << requestId << " " << walletPath;
-
-    Opt<QString> walletFullPath;
-    Opt<std::string> publicKey;
-    Opt<std::string> address;
-    Opt<std::string> exampleMessage;
-    Opt<std::string> signature;
-
-    const TypedException exception = apiVrapper2([&, this](){
-        exampleMessage = "Example message " + std::to_string(rand());
-
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        std::string pKey;
-        std::string addr;
-        Wallet::createWallet(walletPath, isMhc, password.normalized(QString::NormalizationForm_C).toStdString(), pKey, addr);
-
-        pKey.clear();
-        Wallet wallet(walletPath, isMhc, addr, password.normalized(QString::NormalizationForm_C).toStdString());
-        signature = wallet.sign(exampleMessage.get(), pKey);
-        publicKey = pKey;
-        address = addr;
-
-        LOG << "Create wallet ok " << requestId << " " << addr;
-
-        walletFullPath = wallet.getFullPath();
-
+    wallets.createWallet(isMhc, password, wallets::Wallets::CreateWalletCallback([this, jsNameResult, requestId](const QString &fullPath, const std::string &pubkey, const std::string &address, const std::string &exampleMessage, const std::string &sign) {
         sendAppInfoToWss(userName, true);
-
-        emit mthWalletCreated(QString::fromStdString(addr));
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), publicKey, address, exampleMessage, signature);
+        LOG << "Create wallet mths ok " << requestId << " " << walletPath << " " << address;
+        makeAndRunJsFuncParams(jsNameResult, fullPath, TypedException(), Opt<QString>(requestId), Opt<std::string>(pubkey), Opt<std::string>(address), Opt<std::string>(exampleMessage), Opt<std::string>(sign));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, "", e, Opt<QString>(requestId), Opt<std::string>(""), Opt<std::string>(""), Opt<std::string>(""), Opt<std::string>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc)
@@ -325,7 +304,6 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
         client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
             CHECK(!exception.isSet(), exception.toString());
         }));
-        emit mthWalletCreated(address);
     });
 
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));

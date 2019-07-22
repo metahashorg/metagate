@@ -71,6 +71,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
 
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletAdded, this, &Transactions::onMthWalletCreated);
+
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
     Q_REG(GetTxsCallback, "GetTxsCallback");
     Q_REG(CalcBalanceCallback, "CalcBalanceCallback");
@@ -783,8 +785,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onMthWalletCreated(const QString &name)
+void Transactions::onMthWalletCreated(bool isMhc, const QString &name)
 {
+    Q_UNUSED(isMhc);
     Q_UNUSED(name);
 BEGIN_SLOT_WRAPPER
     addTrackedForCurrentLogin();

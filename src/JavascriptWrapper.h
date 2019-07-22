@@ -32,6 +32,10 @@ namespace utils {
 class Utils;
 }
 
+namespace wallets {
+class Wallets;
+}
+
 template<bool isLastArg, typename... Args>
 struct JsFunc;
 
@@ -57,6 +61,7 @@ public:
         auth::Auth &authManager,
         NetwrokTesting &networkTesting,
         utils::Utils &utilsManager,
+        wallets::Wallets &wallets,
         const QString &applicationVersion,
         QObject *parent = nullptr
     );
@@ -80,8 +85,6 @@ signals:
     void lineEditReturnPressedSig(QString text);
 
     void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
-
-    void mthWalletCreated(const QString &name);
 
 public slots:
 
@@ -379,6 +382,8 @@ private:
 
     utils::Utils &utilsManager;
 
+    wallets::Wallets &wallets;
+
     const QString applicationVersion;
 
     QString sendedUserName;
@@ -412,6 +417,8 @@ private:
     QFileSystemWatcher fileSystemWatcher;
 
     bool isForgingActive = true;
+
+    std::function<void(const std::function<void()> &callback)> signalFunc;
 
 };
 

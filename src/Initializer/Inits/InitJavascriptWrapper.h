@@ -31,6 +31,11 @@ class Utils;
 class UtilsJavascript;
 }
 
+namespace wallets {
+class Wallets;
+class WalletsJavascript;
+}
+
 namespace initializer {
 
 class InitializerJavascript;
@@ -58,6 +63,7 @@ public:
         std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
         std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
+        std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
         const QString &versionString,
         NetwrokTesting &nettest
     );

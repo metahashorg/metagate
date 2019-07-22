@@ -29,6 +29,8 @@ public:
 
     using CreateWatchCallback = CallbackWrapper<void(const std::vector<std::pair<QString, QString>> &created)>;
 
+    using CreateWalletCallback = CallbackWrapper<void(const QString &fullPath, const std::string &pubkey, const std::string &address, const std::string &exampleMessage, const std::string &sign)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
@@ -47,6 +49,8 @@ signals:
 
     void watchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
 
+    void mhcWalletAdded(bool isMhc, const QString &address);
+
 signals:
 
     void getListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
@@ -62,6 +66,14 @@ private slots:
     void onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
 
     void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchCallback &callback);
+
+signals:
+
+    void createWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
+
+private slots:
+
+    void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
 
 private slots:
 

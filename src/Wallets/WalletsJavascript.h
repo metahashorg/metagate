@@ -17,6 +17,10 @@ private slots:
 
     void onWatchWalletsCreated(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
 
+public:
+
+    Q_INVOKABLE void createWallet(bool isMhc, QString password);
+
 private:
 
     Wallets &wallets;

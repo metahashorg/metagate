@@ -45,7 +45,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     Q_CONNECT(this, &MessengerJavascript::collocutorAddedPubkeySig, this, &MessengerJavascript::onCollocutorAddedPubkey);
 
     Q_CONNECT(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined);
-    Q_CONNECT(&jsWrapper, &JavascriptWrapper::mthWalletCreated, this, &MessengerJavascript::onMthWalletCreated);
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletAdded, this, &MessengerJavascript::onMthWalletCreated);
 
     walletPath = getWalletPath();
     isMhc = true;
@@ -905,8 +905,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onMthWalletCreated(const QString &wallet)
+void MessengerJavascript::onMthWalletCreated(bool isMhc, const QString &wallet)
 {
+    Q_UNUSED(isMhc);
     Q_UNUSED(wallet);
 BEGIN_SLOT_WRAPPER
     setPathsImpl();

@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
-        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, QString::fromStdString(versionString), std::ref(nettesting));
+        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, QString::fromStdString(versionString), std::ref(nettesting));
 
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow, auth);
 

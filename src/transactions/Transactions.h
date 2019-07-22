@@ -232,7 +232,7 @@ public slots:
 
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
-    void onMthWalletCreated(const QString &name);
+    void onMthWalletCreated(bool isMhc, const QString &name);
 
 private slots:
 
