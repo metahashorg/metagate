@@ -37,12 +37,16 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::getListWallets2, this, &Wallets::onGetListWallets2);
     Q_CONNECT(this, &Wallets::createWatchWalletsList, this, &Wallets::onCreateWatchWalletsList);
     Q_CONNECT(this, &Wallets::createWallet, this, &Wallets::onCreateWallet);
+    Q_CONNECT(this, &Wallets::createWatchWallet, this, &Wallets::onCreateWatchWallet);
+    Q_CONNECT(this, &Wallets::removeWatchWallet, this, &Wallets::onRemoveWatchWallet);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
     Q_REG2(std::vector<QString>, "std::vector<QString>", false);
-    Q_REG(CreateWatchCallback, "CreateWatchCallback");
+    Q_REG(CreateWatchsCallback, "CreateWatchsCallback");
     Q_REG(CreateWalletCallback, "CreateWalletCallback");
+    Q_REG(CreateWatchWalletCallback, "CreateWatchWalletCallback");
+    Q_REG(RemoveWatchWalletCallback, "RemoveWatchWalletCallback");
 
     emit auth.reEmit();
 
@@ -101,7 +105,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Wallets::onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchCallback &callback) {
+void Wallets::onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         std::vector<std::pair<QString, QString>> created;
@@ -139,9 +143,37 @@ BEGIN_SLOT_WRAPPER
 
         const QString walletFullPath = wallet.getFullPath();
 
-        emit mhcWalletAdded(isMhc, QString::fromStdString(addr));
+        emit mhcWalletCreated(isMhc, QString::fromStdString(addr));
 
         return std::make_tuple(walletFullPath, pKey, addr, exampleMessage, signature);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCreateWatchWallet(bool isMhc, const QString &address, const CreateWatchWalletCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet::createWalletWatch(walletPath, isMhc, address.toStdString());
+
+        Wallet wallet(walletPath, isMhc, address.toStdString());
+
+        const QString walletFullPath = wallet.getFullPath();
+
+        emit mhcWatchWalletCreated(isMhc, address);
+
+        return walletFullPath;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onRemoveWatchWallet(bool isMhc, const QString &address, const RemoveWatchWalletCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet::removeWalletWatch(walletPath, isMhc, address.toStdString());
+
+        emit mhcWatchWalletRemoved(isMhc, address);
     }, callback);
 END_SLOT_WRAPPER
 }

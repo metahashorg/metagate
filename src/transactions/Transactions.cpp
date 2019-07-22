@@ -71,7 +71,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
 
-    Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletAdded, this, &Transactions::onMthWalletCreated);
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletCreated, this, &Transactions::onMthWalletCreated);
 
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
     Q_REG(GetTxsCallback, "GetTxsCallback");

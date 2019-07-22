@@ -61,6 +61,9 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     Q_CONNECT(this, &WalletNames::getWalletName, this, &WalletNames::onGetWalletName);
     Q_CONNECT(this, &WalletNames::getAllWalletsCurrency, this, &WalletNames::onGetAllWalletsCurrency);
 
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletCreated, this, &WalletNames::onMhcWatchWalletCreated);
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletRemoved, this, &WalletNames::onMhcWatchWalletRemoved);
+
     Q_REG(WalletNames::Callback, "WalletNames::Callback");
     Q_REG(AddWalletsNamesCallback, "AddWalletsNamesCallback");
     Q_REG(SaveWalletNameCallback, "SaveWalletNameCallback");
@@ -125,10 +128,10 @@ void WalletNames::getAllWalletsApps() {
             }
         }
 
-        emit this->wallets.createWatchWalletsList(false, tmhs, wallets::Wallets::CreateWatchCallback([](const std::vector<std::pair<QString, QString>> &){}, [](const TypedException &e) {
+        emit this->wallets.createWatchWalletsList(false, tmhs, wallets::Wallets::CreateWatchsCallback([](const std::vector<std::pair<QString, QString>> &){}, [](const TypedException &e) {
             LOG << "Error while create watch wallets: " << e.description;
         }, signalFunc));
-        emit this->wallets.createWatchWalletsList(true, mhcs, wallets::Wallets::CreateWatchCallback([](const std::vector<std::pair<QString, QString>> &){}, [](const TypedException &e) {
+        emit this->wallets.createWatchWalletsList(true, mhcs, wallets::Wallets::CreateWatchsCallback([](const std::vector<std::pair<QString, QString>> &){}, [](const TypedException &e) {
             LOG << "Error while create watch wallets: " << e.description;
         }, signalFunc));
 
@@ -375,6 +378,26 @@ BEGIN_SLOT_WRAPPER
             LOG << "Error: " << e.description;
         }, signalFunc));
     }
+END_SLOT_WRAPPER
+}
+
+void WalletNames::onMhcWatchWalletCreated(bool isMhc, const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeCreateWatchWalletMessage(id.get(), token, hwid, address, isMhc);
+
+    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), exception.toString());
+    }));
+END_SLOT_WRAPPER
+}
+
+void WalletNames::onMhcWatchWalletRemoved(bool isMhc, const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString message = makeRemoveWatchWalletMessage(id.get(), token, hwid, address, isMhc);
+
+    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
+        CHECK(!exception.isSet(), exception.toString());
+    }));
 END_SLOT_WRAPPER
 }
 

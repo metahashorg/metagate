@@ -86,6 +86,12 @@ private slots:
 
     void onLogined(bool isInit, const QString login);
 
+private slots:
+
+    void onMhcWatchWalletCreated(bool isMhc, const QString &address);
+
+    void onMhcWatchWalletRemoved(bool isMhc, const QString &address);
+
 private:
 
     void processWalletsList(const std::vector<WalletInfo> &wallets);

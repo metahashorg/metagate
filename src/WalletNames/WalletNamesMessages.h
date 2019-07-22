@@ -18,6 +18,10 @@ QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hw
 
 QString makeGetWalletsAppsMessage(size_t id, const QString &token, const QString &hwid);
 
+QString makeCreateWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc);
+
+QString makeRemoveWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc);
+
 enum METHOD: int {
     RENAME = 0, SET_WALLETS = 1, GET_WALLETS = 2,
     NOT_SET = 1000,

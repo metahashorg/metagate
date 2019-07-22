@@ -43,7 +43,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::createWallet(bool isMhc, QString password) {
+void WalletsJavascript::createWallet(bool isMhc, const QString &password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "walletsCreateWalletResultJs";
 
@@ -55,6 +55,40 @@ BEGIN_SLOT_WRAPPER
         emit wallets.createWallet(isMhc, password, wallets::Wallets::CreateWalletCallback([makeFunc, isMhc](const QString &fullPath, const std::string &pubkey, const std::string &address, const std::string &exampleMessage, const std::string &sign){
             LOG << "Create wallet ok " << isMhc << " " << address;
             makeFunc.func(TypedException(), fullPath, pubkey, address, exampleMessage, sign);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::createWalletWatch(bool isMhc, const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCreateWatchWalletResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+
+    LOG << "Create wallet watch " << isMhc << " " << address;
+
+    wrapOperation([&, this](){
+        emit wallets.createWatchWallet(isMhc, address, wallets::Wallets::CreateWatchWalletCallback([makeFunc, isMhc, address](const QString &fullPath){
+            LOG << "Create wallet watch ok " << isMhc << " " << address;
+            makeFunc.func(TypedException(), fullPath, address);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::removeWalletWatch(bool isMhc, const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsRemoveWatchWalletResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    LOG << "Remove wallet watch " << isMhc << " " << address;
+
+    wrapOperation([&, this](){
+        emit wallets.removeWatchWallet(isMhc, address, wallets::Wallets::RemoveWatchWalletCallback([makeFunc, isMhc, address](){
+            LOG << "Remove wallet watch ok " << isMhc << " " << address;
+            makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER

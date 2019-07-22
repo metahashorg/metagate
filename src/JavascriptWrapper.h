@@ -298,6 +298,8 @@ private slots:
 
     void onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
+    void onWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
+
 private:
 
     void createRsaKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult);

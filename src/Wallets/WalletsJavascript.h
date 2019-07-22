@@ -19,7 +19,11 @@ private slots:
 
 public:
 
-    Q_INVOKABLE void createWallet(bool isMhc, QString password);
+    Q_INVOKABLE void createWallet(bool isMhc, const QString &password);
+
+    Q_INVOKABLE void createWalletWatch(bool isMhc, const QString &address);
+
+    Q_INVOKABLE void removeWalletWatch(bool isMhc, const QString &address);
 
 private:
 

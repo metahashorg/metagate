@@ -181,6 +181,8 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
 
+    Q_CONNECT(&wallets, &wallets::Wallets::watchWalletsAdded, this, &JavascriptWrapper::onWatchWalletsAdded);
+
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
     Q_REG(JavascriptWrapper::WalletCurrency, "JavascriptWrapper::WalletCurrency");
@@ -188,6 +190,12 @@ JavascriptWrapper::JavascriptWrapper(
     signalFunc = std::bind(&JavascriptWrapper::callbackCall, this, _1);
 
     emit authManager.reEmit();
+}
+
+void JavascriptWrapper::onWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created) {
+BEGIN_SLOT_WRAPPER
+    sendAppInfoToWss(userName, true);
+END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::mvToThread(QThread *thread) {
@@ -284,55 +292,24 @@ void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, bo
 void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc)
 {
     LOG << "Create wallet mths watch " << requestId << " " << address;
-    Opt<QString> walletFullPath;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet::createWalletWatch(walletPath, isMhc, address.toStdString());
-
-        LOG << "Create wallet watch ok " << requestId << " " << address;
-
-        Wallet wallet(walletPath, isMhc, address.toStdString());
-
-        walletFullPath = wallet.getFullPath();
-
+    wallets.createWatchWallet(isMhc, address, wallets::Wallets::CreateWatchWalletCallback([this, jsNameResult, requestId, address](const QString &fullPath) {
         sendAppInfoToWss(userName, true);
-
-        const QString serverName = Uploader::getServerName();
-
-        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": true}]}";
-
-        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
-            CHECK(!exception.isSet(), exception.toString());
-        }));
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
+        LOG << "Create wallet mths watch ok " << requestId << " " << walletPath << " " << address;
+        makeAndRunJsFuncParams(jsNameResult, fullPath, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, "", e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc) {
     LOG << "Remove wallet mths watch " << requestId << " " << address;
-    Opt<QString> walletFullPath;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        Wallet::removeWalletWatch(walletPath, isMhc, address.toStdString());
-
-        LOG << "Remove wallet watch ok " << requestId << " " << address;
-
+    wallets.removeWatchWallet(isMhc, address, wallets::Wallets::RemoveWatchWalletCallback([this, jsNameResult, requestId, address]() {
         sendAppInfoToWss(userName, true);
-
-        const QString serverName = Uploader::getServerName();
-
-        const QString setSingMessage = "{\"id\":1, \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hardwareId + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": false}]}";
-
-        client.sendMessagePost(serverName, setSingMessage, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
-            CHECK(!exception.isSet(), exception.toString());
-        }));
-
-        // TODO remove? Using at messanger
-        //emit mthWalletCreated(address);
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>(address));
+        LOG << "Remove wallet mths watch ok " << requestId << " " << address;
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, "", e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::checkWalletMTHSExists(QString requestId, QString address, bool isMhc, QString jsNameResult) {

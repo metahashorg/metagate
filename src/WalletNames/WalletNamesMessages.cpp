@@ -117,6 +117,14 @@ QString makeGetWalletsAppsMessage(size_t id, const QString &token, const QString
             .arg(token).arg(hwid);
 }
 
+QString makeCreateWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc) {
+    return "{\"id\":" + QString::number(id) + ", \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hwid + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": true}]}";
+}
+
+QString makeRemoveWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc) {
+    return "{\"id\":" + QString::number(id) + ", \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hwid + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": false}]}";
+}
+
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {
     ResponseType result;
     QString type;

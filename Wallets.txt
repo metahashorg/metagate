@@ -8,3 +8,13 @@ Q_INVOKABLE void createWallet(bool isMhc, QString password);
 # Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address. 
 # javascript is called after completion of this function
 walletsCreateWalletResultJs(fullKeyPath, publickey, address, exampleMessage, signature, errorNum, errorMessage)
+
+Q_INVOKABLE void createWalletWatch(bool isMhc, const QString &address);
+# Creates Metahash watch wallet with address, puts this file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+walletsCreateWatchWalletResultJs(fullKeyPath, address, errorNum, errorMessage)
+
+Q_INVOKABLE removeWalletWatch(bool isMhc, const QString &address)
+# Removes Metahash watch wallet with address, file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+walletsRemoveWatchWalletResultJs(address, errorNum, errorMessage)

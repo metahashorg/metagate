@@ -45,7 +45,7 @@ MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicM
     Q_CONNECT(this, &MessengerJavascript::collocutorAddedPubkeySig, this, &MessengerJavascript::onCollocutorAddedPubkey);
 
     Q_CONNECT(&authManager, &auth::Auth::logined, this, &MessengerJavascript::onLogined);
-    Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletAdded, this, &MessengerJavascript::onMthWalletCreated);
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletCreated, this, &MessengerJavascript::onMthWalletCreated);
 
     walletPath = getWalletPath();
     isMhc = true;

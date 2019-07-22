@@ -27,9 +27,13 @@ public:
 
     using WalletsListCallback = CallbackWrapper<void(const QString &userName, const std::vector<WalletInfo> &walletAddresses)>;
 
-    using CreateWatchCallback = CallbackWrapper<void(const std::vector<std::pair<QString, QString>> &created)>;
+    using CreateWatchsCallback = CallbackWrapper<void(const std::vector<std::pair<QString, QString>> &created)>;
 
     using CreateWalletCallback = CallbackWrapper<void(const QString &fullPath, const std::string &pubkey, const std::string &address, const std::string &exampleMessage, const std::string &sign)>;
+
+    using CreateWatchWalletCallback = CallbackWrapper<void(const QString &fullPath)>;
+
+    using RemoveWatchWalletCallback = CallbackWrapper<void()>;
 
 public:
 
@@ -49,7 +53,11 @@ signals:
 
     void watchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
 
-    void mhcWalletAdded(bool isMhc, const QString &address);
+    void mhcWalletCreated(bool isMhc, const QString &address);
+
+    void mhcWatchWalletCreated(bool isMhc, const QString &address);
+
+    void mhcWatchWalletRemoved(bool isMhc, const QString &address);
 
 signals:
 
@@ -57,7 +65,7 @@ signals:
 
     void getListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
 
-    void createWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchCallback &callback);
+    void createWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
 
 private slots:
 
@@ -65,15 +73,23 @@ private slots:
 
     void onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
 
-    void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchCallback &callback);
+    void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
 
 signals:
 
     void createWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
 
+    void createWatchWallet(bool isMhc, const QString &address, const CreateWatchWalletCallback &callback);
+
+    void removeWatchWallet(bool isMhc, const QString &address, const RemoveWatchWalletCallback &callback);
+
 private slots:
 
     void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
+
+    void onCreateWatchWallet(bool isMhc, const QString &address, const CreateWatchWalletCallback &callback);
+
+    void onRemoveWatchWallet(bool isMhc, const QString &address, const RemoveWatchWalletCallback &callback);
 
 private slots:
 
