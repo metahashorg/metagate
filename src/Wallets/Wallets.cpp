@@ -35,9 +35,12 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
 
     Q_CONNECT(this, &Wallets::getListWallets, this, &Wallets::onGetListWallets);
     Q_CONNECT(this, &Wallets::getListWallets2, this, &Wallets::onGetListWallets2);
+    Q_CONNECT(this, &Wallets::createWatchWalletsList, this, &Wallets::onCreateWatchWalletsList);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
+    Q_REG2(std::vector<QString>, "std::vector<QString>", false);
+    Q_REG(CreateWatchCallback, "CreateWatchCallback");
 
     emit auth.reEmit();
 
@@ -92,6 +95,28 @@ BEGIN_SLOT_WRAPPER
 
             eventWatcher.addEvent("getListWallet", std::move(event), 3s);
         }
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        std::vector<std::pair<QString, QString>> created;
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        for (const QString &addr : addresses) {
+            if (Wallet::isWalletExists(walletPath, isMhc, addr.toStdString())) {
+                continue;
+            }
+            Wallet::createWalletWatch(walletPath, isMhc, addr.toStdString());
+            Wallet wallet(walletPath, isMhc, addr.toStdString());
+            const QString walletFullPath = wallet.getFullPath();
+            created.emplace_back(std::make_pair(addr, walletFullPath));
+        }
+
+        emit watchWalletsAdded(isMhc, created);
+
+        return created;
     }, callback);
 END_SLOT_WRAPPER
 }

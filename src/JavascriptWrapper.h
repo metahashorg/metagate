@@ -87,19 +87,6 @@ public slots:
 
     void onLogined(bool isInit, const QString &login, const QString &token);
 
-signals:
-
-    void createWatchWalletsList(const QString &requestId, const QStringList &addresses);
-
-    void createWatchWalletsListMHC(const QString &requestId, const QStringList &addresses);
-
-
-private slots:
-
-    void onCreateWatchWalletsList(const QString &requestId, const QStringList &addresses);
-
-    void onCreateWatchWalletsListMHC(const QString &requestId, const QStringList &addresses);
-
 public slots:
 
     Q_INVOKABLE void createWallet(QString requestId, QString password);
@@ -329,8 +316,6 @@ private:
     void createWalletMTHS(QString requestId, QString password, bool isMhc, QString jsNameResult);
 
     void createWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc);
-
-    void createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, bool isMhc, QString jsNameResult);
 
     void removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc);
 

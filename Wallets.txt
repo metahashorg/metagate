@@ -1,1 +1,5 @@
- 
+Wallets регестрируется в javascript по имени wallets 
+
+createWatchWalletsList2ResultJs(isMhc, result, errorNum, errorMessage)
+Возвращается при создании watch кошельков
+Аналог createWatchWalletsListMHCResultJs и createWatchWalletsListResultJs

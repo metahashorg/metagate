@@ -112,21 +112,25 @@ void WalletNames::getAllWalletsApps() {
     const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const std::vector<WalletInfo> wallets = parseAddressListResponse(QString::fromStdString(result));
-        QStringList tmhs;
-        QStringList mhcs;
+        std::vector<QString> tmhs;
+        std::vector<QString> mhcs;
         for (const WalletInfo &wallet: wallets) {
             if (wallet.currentInfo.type != WalletInfo::Info::Type::Watch) {
                 continue;
             }
             if (wallet.currentInfo.currency == WALLET_CURRENCY_TMH) {
-                tmhs.append(wallet.address);
+                tmhs.emplace_back(wallet.address);
             } else if (wallet.currentInfo.currency == WALLET_CURRENCY_MTH) {
-                mhcs.append(wallet.address);
+                mhcs.emplace_back(wallet.address);
             }
         }
 
-        emit javascriptWrapper.createWatchWalletsList(QStringLiteral(""), tmhs);
-        emit javascriptWrapper.createWatchWalletsListMHC(QStringLiteral(""), mhcs);
+        emit this->wallets.createWatchWalletsList(false, tmhs, wallets::Wallets::CreateWatchCallback([](const std::vector<std::pair<QString, QString>> &){}, [](const TypedException &e) {
+            LOG << "Error while create watch wallets: " << e.description;
+        }, signalFunc));
+        emit this->wallets.createWatchWalletsList(true, mhcs, wallets::Wallets::CreateWatchCallback([](const std::vector<std::pair<QString, QString>> &){}, [](const TypedException &e) {
+            LOG << "Error while create watch wallets: " << e.description;
+        }, signalFunc));
 
         processWalletsList(wallets);
     };

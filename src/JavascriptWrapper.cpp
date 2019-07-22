@@ -178,9 +178,6 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
 
-    Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsList, this, &JavascriptWrapper::onCreateWatchWalletsList);
-    Q_CONNECT(this, &JavascriptWrapper::createWatchWalletsListMHC, this, &JavascriptWrapper::onCreateWatchWalletsListMHC);
-
     Q_CONNECT(this, &JavascriptWrapper::mthWalletCreated, &transactionsManager, &transactions::Transactions::onMthWalletCreated);
 
     Q_REG2(TypedException, "TypedException", false);
@@ -214,18 +211,6 @@ BEGIN_SLOT_WRAPPER
     } else {
         setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
     }
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::onCreateWatchWalletsList(const QString &requestId, const QStringList &addresses) {
-BEGIN_SLOT_WRAPPER
-    createWatchWalletsListMTHS(requestId, addresses, false, "createWatchWalletsListResultJs");
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::onCreateWatchWalletsListMHC(const QString &requestId, const QStringList &addresses) {
-BEGIN_SLOT_WRAPPER
-    createWatchWalletsListMTHS(requestId, addresses, true, "createWatchWalletsListMHCResultJs");
 END_SLOT_WRAPPER
 }
 
@@ -344,30 +329,6 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
     });
 
     makeAndRunJsFuncParams(jsNameResult, walletFullPath.getWithoutCheck(), exception, Opt<QString>(requestId), Opt<QString>(address));
-}
-
-void JavascriptWrapper::createWatchWalletsListMTHS(const QString &requestId, const QStringList &addresses, bool isMhc, QString jsNameResult)
-{
-    LOG << "Create watch wallets list mths " << requestId << " " << "(" << addresses.join(",") << ")";
-    std::vector<std::pair<QString, QString>> created;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        for (const QString &addr : addresses) {
-            if (Wallet::isWalletExists(walletPath, isMhc, addr.toStdString()))
-                continue;
-            Wallet::createWalletWatch(walletPath, isMhc, addr.toStdString());
-            Wallet wallet(walletPath, isMhc, addr.toStdString());
-            const QString walletFullPath = wallet.getFullPath();
-            LOG << "Create wallet watch ok " << requestId << " " << addr <<  walletFullPath;
-            created.emplace_back(std::pair<QString, QString>(addr, walletFullPath));
-        }
-        if (!created.empty())
-            sendAppInfoToWss(userName, true);
-    });
-    if (!created.empty()) {
-        const QString json = makeJsonWallets(created);
-        makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>(json));
-    }
 }
 
 void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc) {
