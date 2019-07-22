@@ -25,6 +25,14 @@ public:
 
     Q_INVOKABLE void removeWalletWatch(bool isMhc, const QString &address);
 
+    Q_INVOKABLE void checkWalletExist(bool isMhc, const QString &address);
+
+    Q_INVOKABLE void checkWalletPassword(bool isMhc, const QString &address, const QString &password);
+
+    Q_INVOKABLE void checkWalletAddress(const QString &address);
+
+    Q_INVOKABLE void createContractAddress(const QString &address, int nonce);
+
 private:
 
     Wallets &wallets;

@@ -39,6 +39,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::createWallet, this, &Wallets::onCreateWallet);
     Q_CONNECT(this, &Wallets::createWatchWallet, this, &Wallets::onCreateWatchWallet);
     Q_CONNECT(this, &Wallets::removeWatchWallet, this, &Wallets::onRemoveWatchWallet);
+    Q_CONNECT(this, &Wallets::checkWalletExist, this, &Wallets::onCheckWalletExist);
+    Q_CONNECT(this, &Wallets::checkWalletPassword, this, &Wallets::onCheckWalletPassword);
+    Q_CONNECT(this, &Wallets::checkAddress, this, &Wallets::onCheckAddress);
+    Q_CONNECT(this, &Wallets::createContractAddress, this, &Wallets::onCreateContractAddress);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -47,6 +51,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(CreateWalletCallback, "CreateWalletCallback");
     Q_REG(CreateWatchWalletCallback, "CreateWatchWalletCallback");
     Q_REG(RemoveWatchWalletCallback, "RemoveWatchWalletCallback");
+    Q_REG(CheckWalletExistCallback, "CheckWalletExistCallback");
+    Q_REG(CheckWalletPasswordCallback, "CheckWalletPasswordCallback");
+    Q_REG(CheckAddressCallback, "CheckAddressCallback");
+    Q_REG(CreateContractAddressCallback, "CreateContractAddressCallback");
 
     emit auth.reEmit();
 
@@ -174,6 +182,54 @@ BEGIN_SLOT_WRAPPER
         Wallet::removeWalletWatch(walletPath, isMhc, address.toStdString());
 
         emit mhcWatchWalletRemoved(isMhc, address);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCheckWalletExist(bool isMhc, const QString &address, const CheckWalletExistCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        return Wallet::isWalletExists(walletPath, isMhc, address.toStdString());
+    }, callback, false);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCheckWalletPassword(bool isMhc, const QString &address, const QString &password, const CheckWalletPasswordCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        const std::string exampleMessage = "Example message " + std::to_string(rand());
+
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+        std::string tmp;
+        const std::string signature = wallet.sign(exampleMessage, tmp);
+
+        return true;
+    }, callback, false);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCheckAddress(const QString &address, const CheckAddressCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        try {
+            Wallet::checkAddress(address.toStdString());
+            return true;
+        } catch (const Exception &e) {
+            return false;
+        } catch (...) {
+            throw;
+        }
+    }, callback, false);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCreateContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
     }, callback);
 END_SLOT_WRAPPER
 }

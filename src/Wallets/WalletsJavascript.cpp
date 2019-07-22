@@ -94,4 +94,66 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::checkWalletExist(bool isMhc, const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCheckWalletExistResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<bool>(false));
+
+    wrapOperation([&, this](){
+        emit wallets.checkWalletExist(isMhc, address, wallets::Wallets::CheckWalletExistCallback([makeFunc, address](bool isExist){
+            makeFunc.func(TypedException(), address, isExist);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::checkWalletPassword(bool isMhc, const QString &address, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCheckWalletPasswordResultJs";
+
+    LOG << "Check wallet password " << address << " " << isMhc;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.checkWalletPassword(isMhc, address, password, wallets::Wallets::CheckWalletPasswordCallback([makeFunc, address, isMhc](bool result){
+            LOG << "Check wallet password ok " << address << " " << isMhc;
+            makeFunc.func(TypedException(), address, result ? "Ok" : "Not ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::checkWalletAddress(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCheckWalletAddressResultJs";
+
+    LOG << "Check wallet address " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.checkAddress(address, wallets::Wallets::CheckAddressCallback([makeFunc, address](bool result){
+            LOG << "Check wallet address ok " << address;
+            makeFunc.func(TypedException(), address, result ? "Ok" : "Not ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::createContractAddress(const QString &address, int nonce) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCreateContractAddressResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.createContractAddress(address, nonce, wallets::Wallets::CreateContractAddressCallback([makeFunc, address](const QString &result){
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 } // namespace wallets

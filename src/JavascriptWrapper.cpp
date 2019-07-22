@@ -308,39 +308,27 @@ void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address
         LOG << "Remove wallet mths watch ok " << requestId << " " << address;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
     }, [this, jsNameResult, requestId](const TypedException &e) {
-        makeAndRunJsFuncParams(jsNameResult, "", e, Opt<QString>(requestId), Opt<QString>(""));
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
     }, signalFunc));
 }
 
 void JavascriptWrapper::checkWalletMTHSExists(QString requestId, QString address, bool isMhc, QString jsNameResult) {
-    Opt<bool> res;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        res = Wallet::isWalletExists(walletPath, isMhc, address.toStdString());
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), res);
+    wallets.checkWalletExist(isMhc, address, wallets::Wallets::CheckWalletExistCallback([this, jsNameResult, requestId, address](bool isExist) {
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<bool>(isExist));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<bool>(false));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::checkWalletPasswordMTHS(QString requestId, QString keyName, QString password, bool isMhc, QString jsNameResult) {
     LOG << "Check wallet password " << requestId << " " << keyName << " " << walletPath;
 
-    Opt<QString> result("Not ok");
-    const TypedException exception = apiVrapper2([&](){
-        const std::string exampleMessage = "Example message " + std::to_string(rand());
-
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
-        Wallet wallet(walletPath, isMhc, keyName.toStdString(), password.toStdString());
-        std::string tmp;
-        const std::string signature = wallet.sign(exampleMessage, tmp);
-
+    wallets.checkWalletPassword(isMhc, keyName, password, wallets::Wallets::CheckWalletPasswordCallback([this, jsNameResult, requestId, keyName](bool result) {
         LOG << "Check wallet password ok " << requestId << " " << keyName;
-
-        result = "Ok";
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "Ok" : "Not ok"));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>("Not ok"));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::createWallet(QString requestId, QString password) {
@@ -539,21 +527,13 @@ void JavascriptWrapper::checkAddress(QString requestId, QString address) {
 BEGIN_SLOT_WRAPPER
     LOG << "Check address " << address;
     const QString JS_NAME_RESULT = "checkAddressResultJs";
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        try {
-            Wallet::checkAddress(address.toStdString());
-        } catch (const Exception &e) {
-            result = "not valid";
-            return;
-        } catch (...) {
-            throw;
-        }
 
-        result = "ok";
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    wallets.checkAddress(address, wallets::Wallets::CheckAddressCallback([this, JS_NAME_RESULT, requestId, address](bool result) {
+        LOG << "Check address ok " << requestId << " " << address;
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "not valid"));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -609,11 +589,11 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 }
 
 void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce) {
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        result = QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
-    });
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+    wallets.createContractAddress(address, nonce, wallets::Wallets::CreateContractAddressCallback([this, jsNameResult, requestId, address](const QString &result) {
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::signMessageMTHSWithTxManager(const QString &requestId, bool isMhc, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction) {

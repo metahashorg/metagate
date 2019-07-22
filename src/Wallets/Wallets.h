@@ -35,6 +35,14 @@ public:
 
     using RemoveWatchWalletCallback = CallbackWrapper<void()>;
 
+    using CheckWalletExistCallback = CallbackWrapper<void(bool isExist)>;
+
+    using CheckWalletPasswordCallback = CallbackWrapper<void(bool success)>;
+
+    using CheckAddressCallback = CallbackWrapper<void(bool success)>;
+
+    using CreateContractAddressCallback = CallbackWrapper<void(const QString &address)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
@@ -75,6 +83,10 @@ private slots:
 
     void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
 
+///////////
+/// MHC ///
+///////////
+
 signals:
 
     void createWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
@@ -83,6 +95,14 @@ signals:
 
     void removeWatchWallet(bool isMhc, const QString &address, const RemoveWatchWalletCallback &callback);
 
+    void checkWalletExist(bool isMhc, const QString &address, const CheckWalletExistCallback &callback);
+
+    void checkWalletPassword(bool isMhc, const QString &address, const QString &password, const CheckWalletPasswordCallback &callback);
+
+    void checkAddress(const QString &address, const CheckAddressCallback &callback);
+
+    void createContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
+
 private slots:
 
     void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
@@ -90,6 +110,14 @@ private slots:
     void onCreateWatchWallet(bool isMhc, const QString &address, const CreateWatchWalletCallback &callback);
 
     void onRemoveWatchWallet(bool isMhc, const QString &address, const RemoveWatchWalletCallback &callback);
+
+    void onCheckWalletExist(bool isMhc, const QString &address, const CheckWalletExistCallback &callback);
+
+    void onCheckWalletPassword(bool isMhc, const QString &address, const QString &password, const CheckWalletPasswordCallback &callback);
+
+    void onCheckAddress(const QString &address, const CheckAddressCallback &callback);
+
+    void onCreateContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
 
 private slots:
 

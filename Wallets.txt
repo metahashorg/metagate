@@ -18,3 +18,22 @@ Q_INVOKABLE removeWalletWatch(bool isMhc, const QString &address)
 # Removes Metahash watch wallet with address, file wallet to ~/.metahash_wallets/ named address with .watch suffix.
 # javascript is called after completion of this function
 walletsRemoveWatchWalletResultJs(address, errorNum, errorMessage)
+
+Q_INVOKABLE void checkWalletExist(bool isMhc, const QString &address);
+# Checks is wallet (any type) with address exists.
+# javascript is called after completion of this function res: true/false
+walletsCheckWalletExistResultJs(address, res, errorNum, errorMessage)
+
+Q_INVOKABLE checkWalletPassword(bool isMhc, const QString &address, const QString &password)
+# Проверяет правильность пароля от данного кошелька
+# javascript is called after completion of this function
+walletsCheckWalletPasswordResultJs(requestid, address, "Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void checkAddress(QString address);
+# To check the address for correctness. The result will return to the function:
+walletsCheckWalletAddressResultJs(address, "Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE createContractAddress(const QString &address, int nonce)
+# Creates v8 contract address based on address and nonce
+# javascript is called after completion of this function 
+walletsCreateContractAddressResultJs(result, errorNum, errorMessage)
