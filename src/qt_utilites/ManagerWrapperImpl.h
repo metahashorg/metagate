@@ -96,6 +96,7 @@ void runAndEmitCallback(const F &f, const Callback &callback) {
 
 template<typename F, typename Callback>
 void runAndEmitErrorCallback(const F &f, const Callback &callback) {
+    static_assert(std::is_void<decltype(f())>::value, "Not void");
     const TypedException exception = apiVrapper2(f);
     if (exception.isSet()) {
         callback.emitException(exception);
