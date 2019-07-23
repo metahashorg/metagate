@@ -18,6 +18,8 @@
 
 #include "auth/Auth.h"
 
+#include "transactions/Transactions.h"
+
 #include "GetActualWalletsEvent.h"
 
 SET_LOG_NAMESPACE("WLTS");
@@ -45,6 +47,8 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::createContractAddress, this, &Wallets::onCreateContractAddress);
     Q_CONNECT(this, &Wallets::signMessage, this, &Wallets::onSignMessage);
     Q_CONNECT(this, &Wallets::signMessage2, this, &Wallets::onSignMessage2);
+    Q_CONNECT(this, &Wallets::signAndSendMessage, this, &Wallets::onSignAndSendMessage);
+    Q_CONNECT(this, &Wallets::signAndSendMessageDelegate, this, &Wallets::onSignAndSendMessageDelegate);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -59,6 +63,8 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(CreateContractAddressCallback, "CreateContractAddressCallback");
     Q_REG(SignMessageCallback, "SignMessageCallback");
     Q_REG(SignMessage2Callback, "SignMessage2Callback");
+    Q_REG(GettedNonceCallback, "GettedNonceCallback");
+    Q_REG(SignAndSendMessageCallback, "SignAndSendMessageCallback");
 
     emit auth.reEmit();
 
@@ -68,6 +74,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
 
 Wallets::~Wallets() {
     TimerClass::exit();
+}
+
+void Wallets::setTransactions(transactions::Transactions *txs) {
+    this->txs = txs;
 }
 
 void Wallets::onGetListWallets(const WalletCurrency &type, const WalletsListCallback &callback) {
@@ -278,6 +288,100 @@ BEGIN_SLOT_WRAPPER
         const QString signature2 = QString::fromStdString(signature);
 
         return std::make_tuple(signature2, publicKey2, tx2);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::findNonceAndProcessWithTxManager(bool isMhc, const QString &address, const QString &nonce, const QString &paramsJson, const GettedNonceCallback &callback) {
+    const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
+
+    const bool isNonce = !nonce.isEmpty();
+    if (!isNonce) {
+        CHECK(txs != nullptr, "Transactions manager not setted");
+        emit txs->getNonce(address, sendParams, transactions::Transactions::GetNonceCallback([callback, address](size_t nonce, const QString &serverError) {
+            LOG << "Nonce getted " << address << " " << nonce << " " << serverError;
+            callback.emitCallback(nonce);
+        }, callback, signalFunc));
+    } else {
+        bool isParseNonce = false;
+        const size_t nonceInt = nonce.toULongLong(&isParseNonce);
+        CHECK_TYPED(isParseNonce, TypeErrors::INCORRECT_USER_DATA, "Nonce incorrect " + nonce.toStdString());
+        callback.emitCallback(nonceInt);
+    }
+}
+
+void Wallets::onSignAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const SignAndSendMessageCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
+
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString()); // Проверяем пароль кошелька
+
+        QString realFee = fee;
+        if (realFee.isEmpty()) {
+            realFee = "0";
+        }
+
+        const auto signTransaction = [this, walletPath=this->walletPath, isMhc, address, password, toAddress, value, realFee, dataHex, sendParams, callback](size_t nonce) {
+            Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+            std::string publicKey;
+            std::string tx;
+            std::string signature;
+            bool tmp;
+            const uint64_t valueInt = value.toULongLong(&tmp, 10);
+            CHECK(tmp, "Value not valid");
+            const uint64_t feeInt = realFee.toULongLong(&tmp, 10);
+            CHECK(tmp, "Fee not valid");
+            wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex.toStdString(), tx, signature, publicKey);
+
+            CHECK(txs != nullptr, "Transactions manager not setted");
+            emit txs->sendTransaction("", toAddress, value, nonce, dataHex, realFee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([address, callback](){
+                callback.emitCallback(true);
+            }, callback, signalFunc));
+        };
+
+        findNonceAndProcessWithTxManager(isMhc, address, nonce, paramsJson, GettedNonceCallback(signTransaction, callback, signalFunc));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSignAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const SignAndSendMessageCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
+
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString()); // Проверяем пароль кошелька
+
+        QString realFee = fee;
+        if (realFee.isEmpty()) {
+            realFee = "0";
+        }
+
+        const auto signTransaction = [this, walletPath=this->walletPath, isMhc, address, password, toAddress, value, realFee, valueDelegate, isDelegate, sendParams, callback](size_t nonce) {
+            Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+
+            bool isValid;
+            const uint64_t delegValue = valueDelegate.toULongLong(&isValid);
+            CHECK(isValid, "delegate value not valid");
+            const std::string dataHex = Wallet::genDataDelegateHex(isDelegate, delegValue);
+
+            std::string publicKey;
+            std::string tx;
+            std::string signature;
+            bool tmp;
+            const uint64_t valueInt = value.toULongLong(&tmp, 10);
+            CHECK(tmp, "Value not valid");
+            const uint64_t feeInt = realFee.toULongLong(&tmp, 10);
+            CHECK(tmp, "Fee not valid");
+            wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex, tx, signature, publicKey, false);
+
+            CHECK(txs != nullptr, "Transactions manager not setted");
+            emit txs->sendTransaction("", toAddress, value, nonce, QString::fromStdString(dataHex), realFee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([address, callback](){
+                callback.emitCallback(true);
+            }, callback, signalFunc));
+        };
+
+        findNonceAndProcessWithTxManager(isMhc, address, nonce, paramsJson, GettedNonceCallback(signTransaction, callback, signalFunc));
     }, callback);
 END_SLOT_WRAPPER
 }

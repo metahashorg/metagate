@@ -346,8 +346,6 @@ private:
 
     void signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, bool isMhc, QString jsNameResult);
 
-    void signMessageMTHSWithTxManager(const QString &requestId, bool isMhc, const QString jsNameResult, const QString &nonce, const QString &keyName, const QString &password, const QString &paramsJson, const std::function<void(size_t nonce)> &signTransaction);
-
     void createV8AddressImpl(QString requestId, const QString jsNameResult, QString address, int nonce);
 
     template<typename... Args>

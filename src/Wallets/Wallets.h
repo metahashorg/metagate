@@ -19,6 +19,10 @@ namespace auth {
 class Auth;
 }
 
+namespace transactions {
+class Transactions;
+}
+
 namespace wallets {
 
 class Wallets: public ManagerWrapper, public TimerClass {
@@ -47,11 +51,17 @@ public:
 
     using SignMessage2Callback = CallbackWrapper<void(const QString &signature, const QString &pubkey, const QString &tx)>;
 
+    using GettedNonceCallback = CallbackWrapper<void(size_t nonce)>;
+
+    using SignAndSendMessageCallback = CallbackWrapper<void(bool success)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
 
     ~Wallets() override;
+
+    void setTransactions(transactions::Transactions *txs);
 
 public:
 
@@ -111,6 +121,10 @@ signals:
 
     void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
 
+    void signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const SignAndSendMessageCallback &callback);
+
+    void signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const SignAndSendMessageCallback &callback);
+
 private slots:
 
     void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
@@ -130,6 +144,10 @@ private slots:
     void onSignMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const SignMessageCallback &callback);
 
     void onSignMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
+
+    void onSignAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const SignAndSendMessageCallback &callback);
+
+    void onSignAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const SignAndSendMessageCallback &callback);
 
 private slots:
 
@@ -163,6 +181,10 @@ private:
 
 private:
 
+    void findNonceAndProcessWithTxManager(bool isMhc, const QString &address, const QString &nonce, const QString &paramsJson, const GettedNonceCallback &callback);
+
+private:
+
     QString walletPath;
 
     QString userName;
@@ -174,6 +196,8 @@ private:
     QFileSystemWatcher fileSystemWatcher;
 
     EventWatcher eventWatcher;
+
+    transactions::Transactions *txs = nullptr;
 
 };
 

@@ -51,6 +51,8 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     , javascriptWrapper(javascriptWrapper)
     , db(db)
 {
+    wallets.setTransactions(this);
+
     Q_CONNECT(this, &Transactions::showNotification, &mainWin, &MainWindow::showNotification);
     Q_CONNECT(&authManager, &auth::Auth::logined, this, &Transactions::onLogined);
     Q_CONNECT(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses);
@@ -844,10 +846,10 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback) {
+void Transactions::onGetNonce(const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&, this]{
-        nsLookup.getRandomServers(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet, NsLookup::GetServersCallback([this, requestId, from, callback](const std::vector<QString> &servers) {
+        nsLookup.getRandomServers(sendParams.typeGet, sendParams.countServersGet, sendParams.countServersGet, NsLookup::GetServersCallback([this, from, callback](const std::vector<QString> &servers) {
             CHECK(!servers.empty(), "Not enough servers");
 
             struct NonceStruct {
@@ -864,7 +866,7 @@ BEGIN_SLOT_WRAPPER
 
             std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
 
-            const auto getBalanceCallback = [this, nonceStruct, requestId, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
+            const auto getBalanceCallback = [this, nonceStruct, from, callback](const QString &server, const std::string &response, const SimpleClient::ServerException &exception) {
                 nonceStruct->count--;
 
                 if (!exception.isSet()) {

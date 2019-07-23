@@ -215,7 +215,7 @@ BEGIN_SLOT_WRAPPER
 
         const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
         emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, fee, sendParams, makeFunc](const QString &pubkeyRsa){
-            emit txManager.getNonce("1", address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc](size_t nonce, const QString &server) {
+            emit txManager.getNonce(address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc](size_t nonce, const QString &server) {
                 LOG << "Get nonce ok " << nonce;
                 emit cryptoManager.signTransaction(address, address, 0, fee, nonce, pubkeyRsa, CryptographicManager::SignTransactionCallback([this, address, pubkeyRsa, nonce, fee, sendParams, makeFunc](const QString &transaction, const QString &pubkey, const QString &sign){
                     LOG << "Sign Transaction size " << transaction.size();

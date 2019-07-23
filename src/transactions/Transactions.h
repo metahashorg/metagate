@@ -186,7 +186,7 @@ signals:
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+    void getNonce(const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
 
     void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
@@ -222,7 +222,7 @@ public slots:
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+    void onGetNonce(const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
 
     void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 

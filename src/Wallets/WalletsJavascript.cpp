@@ -183,8 +183,50 @@ BEGIN_SLOT_WRAPPER
 
     wrapOperation([&, this](){
         emit wallets.signMessage2(isMhc, address, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey, const QString &tx){
-            LOG << "Sign message ok " << isMhc << " " << address;
+            LOG << "Sign message2 ok " << isMhc << " " << address;
             makeFunc.func(TypedException(), signature, pubkey, tx);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSignAndSendMessageResultJs";
+
+    LOG << "Sign message3 " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.signAndSendMessage(isMhc, address, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success){
+            LOG << "Sign message3 ok " << isMhc << " " << address;
+            if (success) {
+                makeFunc.func(TypedException(), "Ok");
+            } else {
+                makeFunc.func(TypedException(), "Not ok");
+            }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSignAndSendMessageDelegateResultJs";
+
+    LOG << "Sign message delegate " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.signAndSendMessageDelegate(isMhc, address, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success){
+            LOG << "Sign message delegate ok " << isMhc << " " << address;
+            if (success) {
+                makeFunc.func(TypedException(), "Ok");
+            } else {
+                makeFunc.func(TypedException(), "Not ok");
+            }
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER
