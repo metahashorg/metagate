@@ -156,4 +156,38 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::signMessage(bool isMhc, const QString &address, const QString &text, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSignMessageResultJs";
+
+    LOG << "Sign message " << isMhc << " " << address << " " << text;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.signMessage(isMhc, address, text, password, wallets::Wallets::SignMessageCallback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey){
+            LOG << "Sign message ok " << isMhc << " " << address;
+            makeFunc.func(TypedException(), signature, pubkey);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSignMessage2ResultJs";
+
+    LOG << "Sign message2 " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.signMessage2(isMhc, address, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey, const QString &tx){
+            LOG << "Sign message ok " << isMhc << " " << address;
+            makeFunc.func(TypedException(), signature, pubkey, tx);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 } // namespace wallets

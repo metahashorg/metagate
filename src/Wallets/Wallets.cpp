@@ -43,6 +43,8 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::checkWalletPassword, this, &Wallets::onCheckWalletPassword);
     Q_CONNECT(this, &Wallets::checkAddress, this, &Wallets::onCheckAddress);
     Q_CONNECT(this, &Wallets::createContractAddress, this, &Wallets::onCreateContractAddress);
+    Q_CONNECT(this, &Wallets::signMessage, this, &Wallets::onSignMessage);
+    Q_CONNECT(this, &Wallets::signMessage2, this, &Wallets::onSignMessage2);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -55,6 +57,8 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(CheckWalletPasswordCallback, "CheckWalletPasswordCallback");
     Q_REG(CheckAddressCallback, "CheckAddressCallback");
     Q_REG(CreateContractAddressCallback, "CreateContractAddressCallback");
+    Q_REG(SignMessageCallback, "SignMessageCallback");
+    Q_REG(SignMessage2Callback, "SignMessage2Callback");
 
     emit auth.reEmit();
 
@@ -230,6 +234,50 @@ void Wallets::onCreateContractAddress(const QString &address, int nonce, const C
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         return QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSignMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const SignMessageCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+        std::string pubKey;
+        const QString signature = QString::fromStdString(wallet.sign(text.toStdString(), pubKey));
+        const QString publicKey = QString::fromStdString(pubKey);
+        return std::make_tuple(signature, publicKey);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSignMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        QString realFee = fee;
+        if (realFee.isEmpty()) {
+            realFee = "0";
+        }
+
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+        std::string publicKey;
+        std::string tx;
+        std::string signature;
+        bool tmp;
+        const uint64_t valueInt = value.toULongLong(&tmp, 10);
+        CHECK(tmp, "Value not valid");
+        const uint64_t feeInt = realFee.toULongLong(&tmp, 10);
+        CHECK(tmp, "Fee not valid");
+        const uint64_t nonceInt = nonce.toULongLong(&tmp, 10);
+        CHECK(tmp, "Nonce not valid");
+        wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonceInt, dataHex.toStdString(), tx, signature, publicKey);
+        const QString publicKey2 = QString::fromStdString(publicKey);
+        const QString tx2 = QString::fromStdString(tx);
+        const QString signature2 = QString::fromStdString(signature);
+
+        return std::make_tuple(signature2, publicKey2, tx2);
     }, callback);
 END_SLOT_WRAPPER
 }

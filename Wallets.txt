@@ -37,3 +37,14 @@ Q_INVOKABLE createContractAddress(const QString &address, int nonce)
 # Creates v8 contract address based on address and nonce
 # javascript is called after completion of this function 
 walletsCreateContractAddressResultJs(result, errorNum, errorMessage)
+
+Q_INVOKABLE signMessage(bool isMhc, const QString &address, const QString &text, const QString &password)
+# Message's signing.
+# javascript is called after completion of this function 
+walletsSignMessageResultJs(signature, publicKey, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex)
+# signs the transaction in a new binary format
+# value, fee, nonce - a string with decimal number
+# Result returns to 
+walletsSignMessage2ResultJs(signature, publicKey, txHex, errorNum, errorMessage)

@@ -43,6 +43,10 @@ public:
 
     using CreateContractAddressCallback = CallbackWrapper<void(const QString &address)>;
 
+    using SignMessageCallback = CallbackWrapper<void(const QString &signature, const QString &pubkey)>;
+
+    using SignMessage2Callback = CallbackWrapper<void(const QString &signature, const QString &pubkey, const QString &tx)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
@@ -103,6 +107,10 @@ signals:
 
     void createContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
 
+    void signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const SignMessageCallback &callback);
+
+    void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
+
 private slots:
 
     void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
@@ -118,6 +126,10 @@ private slots:
     void onCheckAddress(const QString &address, const CheckAddressCallback &callback);
 
     void onCreateContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
+
+    void onSignMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const SignMessageCallback &callback);
+
+    void onSignMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
 
 private slots:
 
