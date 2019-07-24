@@ -844,17 +844,13 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "createWalletEthResultJs";
 
     LOG << "Create wallet eth " << requestId;
-    Opt<std::string> address;
-    QString fullPath;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        address = EthWallet::genPrivateKey(walletPath, password.normalized(QString::NormalizationForm_C).toStdString());
 
-        fullPath = EthWallet::getFullPath(walletPath, address.get());
-        LOG << "Create eth wallet ok " << requestId << " " << address.get();
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, fullPath, exception, Opt<QString>(requestId), address);
+    wallets.createEthKey(password, wallets::Wallets::CreateEthKeyCallback([this, JS_NAME_RESULT, requestId](const QString &address, const QString &fullPath) {
+        LOG << "Create eth key ok " << address;
+        makeAndRunJsFuncParams(JS_NAME_RESULT, fullPath, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, "", e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -864,21 +860,12 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Sign message eth " << address << " " << nonce << " " << gasPrice << " " << gasLimit << " " << to << " " << value << " " << data;
 
-    Opt<std::string> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        EthWallet wallet(walletPath, address.toStdString(), password.toStdString());
-        result = wallet.SignTransaction(
-            nonce.toStdString(),
-            gasPrice.toStdString(),
-            gasLimit.toStdString(),
-            to.toStdString(),
-            value.toStdString(),
-            data.toStdString()
-        );
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    wallets.signMessageEth(address, password, nonce, gasPrice, gasLimit, to, value, data, wallets::Wallets::SignMessageEthCallback([this, JS_NAME_RESULT, requestId](const QString &result) {
+        LOG << "Sign message eth ok ";
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -886,21 +873,12 @@ void JavascriptWrapper::checkAddressEth(QString requestId, QString address) {
 BEGIN_SLOT_WRAPPER
     LOG << "Check address eth " << address;
     const QString JS_NAME_RESULT = "checkAddressEthResultJs";
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        try {
-            EthWallet::checkAddress(address.toStdString());
-        } catch (const Exception &e) {
-            result = "not valid";
-            return;
-        } catch (...) {
-            throw;
-        }
 
-        result = "ok";
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    wallets.checkAddressEth(address, wallets::Wallets::CheckAddressCallback([this, JS_NAME_RESULT, requestId](bool result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "not valid"));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -975,16 +953,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get one private key eth " << keyName;
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
-        const std::string privKey = EthWallet::getOneKey(walletPath, keyName.toStdString());
-
-        result = QString::fromStdString(privKey);
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    wallets.getOnePrivateKeyEth(keyName, wallets::Wallets::GetPrivateKeyCallback([this, JS_NAME_RESULT, requestId, keyName](const QString &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -992,24 +965,12 @@ void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey,
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyEthResultJs";
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        std::string key = privateKey.toStdString();
-        if (key.compare(0, EthWallet::PREFIX_ONE_KEY.size(), EthWallet::PREFIX_ONE_KEY) == 0) {
-            key = key.substr(EthWallet::PREFIX_ONE_KEY.size());
-        }
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
+    wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, JS_NAME_RESULT, requestId](bool result) {
         LOG << "Save private key eth";
-
-        EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
-        result = "ok";
-    });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        result = "Not ok";
-    }
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "Not ok"));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 

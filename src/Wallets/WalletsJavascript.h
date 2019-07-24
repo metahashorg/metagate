@@ -17,6 +17,10 @@ private slots:
 
     void onWatchWalletsCreated(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
 
+///////////
+/// MHC ///
+///////////
+
 public:
 
     Q_INVOKABLE void createWallet(bool isMhc, const QString &password);
@@ -49,6 +53,10 @@ public:
 
     Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password);
 
+///////////
+/// RSA ///
+///////////
+
 public:
 
     Q_INVOKABLE void createRsaKey(bool isMhc, const QString &address, const QString &password);
@@ -58,6 +66,22 @@ public:
     Q_INVOKABLE void copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv);
 
     Q_INVOKABLE void copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path);
+
+////////////////
+/// ETHEREUM ///
+////////////////
+
+public:
+
+    Q_INVOKABLE void createEthKey(const QString &password);
+
+    Q_INVOKABLE void signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data);
+
+    Q_INVOKABLE void checkAddressEth(const QString &address);
+
+    Q_INVOKABLE void savePrivateKeyEth(const QString &privateKey, const QString &password);
+
+    Q_INVOKABLE void getOnePrivateKeyEth(const QString &address);
 
 private:
 

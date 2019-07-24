@@ -57,6 +57,11 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::getRsaPublicKey, this, &Wallets::onGetRsaPublicKey);
     Q_CONNECT(this, &Wallets::copyRsaKey, this, &Wallets::onCopyRsaKey);
     Q_CONNECT(this, &Wallets::copyRsaKeyToFolder, this, &Wallets::onCopyRsaKeyToFolder);
+    Q_CONNECT(this, &Wallets::createEthKey, this, &Wallets::onCreateEthKey);
+    Q_CONNECT(this, &Wallets::signMessageEth, this, &Wallets::onSignMessageEth);
+    Q_CONNECT(this, &Wallets::checkAddressEth, this, &Wallets::onCheckAddressEth);
+    Q_CONNECT(this, &Wallets::savePrivateKeyEth, this, &Wallets::onSavePrivateKeyEth);
+    Q_CONNECT(this, &Wallets::getOnePrivateKeyEth, this, &Wallets::onGetOnePrivateKeyEth);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -80,6 +85,8 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(CreateRsaKeyCallback, "CreateRsaKeyCallback");
     Q_REG(GetRsaPublicKeyCallback, "GetRsaPublicKeyCallback");
     Q_REG(CopyRsaKeyCallback, "CopyRsaKeyCallback");
+    Q_REG(CreateEthKeyCallback, "CreateEthKeyCallback");
+    Q_REG(SignMessageEthCallback, "SignMessageEthCallback");
 
     emit auth.reEmit();
 
@@ -511,6 +518,79 @@ BEGIN_SLOT_WRAPPER
         }
 
         return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+////////////////
+/// ETHEREUM ///
+////////////////
+
+void Wallets::onCreateEthKey(const QString &password, const CreateEthKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const QString address = QString::fromStdString(EthWallet::genPrivateKey(walletPath, password.normalized(QString::NormalizationForm_C).toStdString()));
+
+        const QString fullPath = EthWallet::getFullPath(walletPath, address.toStdString());
+        return std::make_tuple(address, fullPath);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSignMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data, const SignMessageEthCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        EthWallet wallet(walletPath, address.toStdString(), password.toStdString());
+        return QString::fromStdString(wallet.SignTransaction(
+            nonce.toStdString(),
+            gasPrice.toStdString(),
+            gasLimit.toStdString(),
+            to.toStdString(),
+            value.toStdString(),
+            data.toStdString()
+        ));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCheckAddressEth(const QString &address, const CheckAddressCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        try {
+            EthWallet::checkAddress(address.toStdString());
+            return true;
+        } catch (const Exception &e) {
+            return false;
+        } catch (...) {
+            throw;
+        }
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSavePrivateKeyEth(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        std::string key = privateKey.toStdString();
+        if (key.compare(0, EthWallet::PREFIX_ONE_KEY.size(), EthWallet::PREFIX_ONE_KEY) == 0) {
+            key = key.substr(EthWallet::PREFIX_ONE_KEY.size());
+        }
+
+        EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetOnePrivateKeyEth(const QString &address, const GetPrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        return QString::fromStdString(EthWallet::getOneKey(walletPath, address.toStdString()));
     }, callback);
 END_SLOT_WRAPPER
 }

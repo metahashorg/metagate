@@ -69,6 +69,10 @@ public:
 
     using CopyRsaKeyCallback = CallbackWrapper<void(bool success)>;
 
+    using CreateEthKeyCallback = CallbackWrapper<void(const QString &address, const QString &fullPath)>;
+
+    using SignMessageEthCallback = CallbackWrapper<void(const QString &result)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
@@ -202,6 +206,34 @@ private slots:
     void onCopyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv, const CopyRsaKeyCallback &callback);
 
     void onCopyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path, const CopyRsaKeyCallback &callback);
+
+////////////////
+/// ETHEREUM ///
+////////////////
+
+signals:
+
+    void createEthKey(const QString &password, const CreateEthKeyCallback &callback);
+
+    void signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data, const SignMessageEthCallback &callback);
+
+    void checkAddressEth(const QString &address, const CheckAddressCallback &callback);
+
+    void savePrivateKeyEth(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
+
+    void getOnePrivateKeyEth(const QString &address, const GetPrivateKeyCallback &callback);
+
+private slots:
+
+    void onCreateEthKey(const QString &password, const CreateEthKeyCallback &callback);
+
+    void onSignMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data, const SignMessageEthCallback &callback);
+
+    void onCheckAddressEth(const QString &address, const CheckAddressCallback &callback);
+
+    void onSavePrivateKeyEth(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
+
+    void onGetOnePrivateKeyEth(const QString &address, const GetPrivateKeyCallback &callback);
 
 private slots:
 

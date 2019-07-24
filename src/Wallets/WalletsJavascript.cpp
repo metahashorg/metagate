@@ -32,6 +32,10 @@ WalletsJavascript::WalletsJavascript(Wallets &wallets, QObject *parent)
     Q_CONNECT(&wallets, &Wallets::watchWalletsAdded, this, &WalletsJavascript::onWatchWalletsCreated);
 }
 
+///////////
+/// MHC ///
+///////////
+
 void WalletsJavascript::onWatchWalletsCreated(bool isMhc, const std::vector<std::pair<QString, QString>> &created) {
 BEGIN_SLOT_WRAPPER
     makeAndRunJsFuncParams("walletsCreateWatchWalletsListResultJs", TypedException(), isMhc, makeJsonWallets(created));
@@ -304,6 +308,10 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+///////////
+/// RSA ///
+///////////
+
 void WalletsJavascript::createRsaKey(bool isMhc, const QString &address, const QString &password) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "walletsCreateRsaKeyResultJs";
@@ -374,6 +382,92 @@ BEGIN_SLOT_WRAPPER
             } else {
                 makeFunc.func(TypedException(), "Not ok");
             }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+////////////////
+/// ETHEREUM ///
+////////////////
+
+void WalletsJavascript::createEthKey(const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCreateEthKeyResultJs";
+
+    LOG << "Create eth key ";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.createEthKey(password, wallets::Wallets::CreateEthKeyCallback([makeFunc](const QString &address, const QString &fullPath){
+            LOG << "Create eth key ok " << address;
+            makeFunc.func(TypedException(), address, fullPath);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSignMessageEthResultJs";
+
+    LOG << "Sign message eth " << address << " " << nonce << " " << gasPrice << " " << gasLimit << " " << to << " " << value << " " << data;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.signMessageEth(address, password, nonce, gasPrice, gasLimit, to, value, data, wallets::Wallets::SignMessageEthCallback([makeFunc](const QString &result){
+            LOG << "Sign message eth ok ";
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::checkAddressEth(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCheckAddressEthResultJs";
+
+    LOG << "Check address eth " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.checkAddressEth(address, wallets::Wallets::CheckAddressCallback([makeFunc](bool success){
+            makeFunc.func(TypedException(), success ? "Ok" : "Not ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::savePrivateKeyEth(const QString &privateKey, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSavePrivateKeyEthResultJs";
+
+    LOG << "Save private eth key ";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success){
+            makeFunc.func(TypedException(), success ? "Ok" : "Not ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::getOnePrivateKeyEth(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsGetOnePrivateKeyEthResultJs";
+
+    LOG << "Get private key eth " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.getOnePrivateKeyEth(address, wallets::Wallets::GetPrivateKeyCallback([makeFunc](const QString &result){
+            makeFunc.func(TypedException(), result);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER

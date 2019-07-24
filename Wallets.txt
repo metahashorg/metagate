@@ -113,3 +113,38 @@ Q_INVOKABLE void copyRsaKeyToFolder(bool isMhc, const QString &address, const QS
 # Копирует rsa ключи в указанный каталог.
 # javascript is called after completion of this function 
 walletsCopyRsaKeyToFolderResultJs(requestId, "Ok", errorNum, errorMessage)
+
+
+
+ETHEREUM
+
+
+
+Q_INVOKABLE void createEthKey(const QString &password)
+# Generates Ethereum wallet, puts the file to ~/.metahash_wallets/eth/
+# javascript is called after completion of this function 
+walletsCreateEthKeyResultJs(address, fullKeyPath, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data)
+# Generates the signed Ethereum transaction
+# Parameters:
+  # address — address of the account
+  # password — password of the account
+  Further parameters are hexadecimal values prefixed with 0x
+# When transferring tokens, "to" should be the token address, "value" == 0x0 (commonly), recipient and amount of tokens must be encoded in the data parameter
+# Usually data parameter is equal to 0x
+# javascript is called after completion of this function 
+walletsSignMessageEthResultJs(result, errorNum, errorMessage)
+
+Q_INVOKABLE void checkAddressEth(const QString &address)
+# To check the address for correctness. The result will return to the function:
+walletsCheckAddressEthResultJs("Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyEth(const QString &privateKey, const QString &password)
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+walletsSavePrivateKeyEthResultJs("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void getOnePrivateKeyEth(const QString &address)
+# Returns private key to the function
+walletsGetOnePrivateKeyEthResultJs(key, errorNum, errorMessage)
