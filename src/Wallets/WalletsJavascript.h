@@ -49,6 +49,16 @@ public:
 
     Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password);
 
+public:
+
+    Q_INVOKABLE void createRsaKey(bool isMhc, const QString &address, const QString &password);
+
+    Q_INVOKABLE void getRsaPublicKey(bool isMhc, const QString &address);
+
+    Q_INVOKABLE void copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv);
+
+    Q_INVOKABLE void copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path);
+
 private:
 
     Wallets &wallets;

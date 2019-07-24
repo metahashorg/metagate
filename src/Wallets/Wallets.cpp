@@ -53,6 +53,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::savePrivateKey, this, &Wallets::onSavePrivateKey);
     Q_CONNECT(this, &Wallets::saveRawPrivateKey, this, &Wallets::onSaveRawPrivateKey);
     Q_CONNECT(this, &Wallets::getRawPrivateKey, this, &Wallets::onGetRawPrivateKey);
+    Q_CONNECT(this, &Wallets::createRsaKey, this, &Wallets::onCreateRsaKey);
+    Q_CONNECT(this, &Wallets::getRsaPublicKey, this, &Wallets::onGetRsaPublicKey);
+    Q_CONNECT(this, &Wallets::copyRsaKey, this, &Wallets::onCopyRsaKey);
+    Q_CONNECT(this, &Wallets::copyRsaKeyToFolder, this, &Wallets::onCopyRsaKeyToFolder);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -73,6 +77,9 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(SavePrivateKeyCallback, "SavePrivateKeyCallback");
     Q_REG(SaveRawPrivateKeyCallback, "SaveRawPrivateKeyCallback");
     Q_REG(GetRawPrivateKeyCallback, "GetRawPrivateKeyCallback");
+    Q_REG(CreateRsaKeyCallback, "CreateRsaKeyCallback");
+    Q_REG(GetRsaPublicKeyCallback, "GetRsaPublicKeyCallback");
+    Q_REG(CopyRsaKeyCallback, "CopyRsaKeyCallback");
 
     emit auth.reEmit();
 
@@ -134,6 +141,10 @@ BEGIN_SLOT_WRAPPER
     }, callback);
 END_SLOT_WRAPPER
 }
+
+///////////
+/// MTH ///
+///////////
 
 void Wallets::onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback) {
 BEGIN_SLOT_WRAPPER
@@ -321,6 +332,7 @@ void Wallets::findNonceAndProcessWithTxManager(bool isMhc, const QString &addres
 void Wallets::onSignAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const SignAndSendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
         Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString()); // Проверяем пароль кошелька
@@ -356,6 +368,7 @@ END_SLOT_WRAPPER
 void Wallets::onSignAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const SignAndSendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
 
         Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString()); // Проверяем пароль кошелька
@@ -407,6 +420,7 @@ END_SLOT_WRAPPER
 void Wallets::onSavePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         std::string key = privateKey.toStdString();
         if (key.compare(0, Wallet::PREFIX_ONE_KEY_MTH.size(), Wallet::PREFIX_ONE_KEY_MTH) == 0) {
             key = key.substr(Wallet::PREFIX_ONE_KEY_MTH.size());
@@ -428,6 +442,7 @@ END_SLOT_WRAPPER
 void Wallets::onSaveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const SaveRawPrivateKeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         std::string addr;
         std::string pubkey;
         Wallet::createWalletFromRaw(walletPath, isMhc, rawPrivateKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
@@ -440,11 +455,69 @@ END_SLOT_WRAPPER
 void Wallets::onGetRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
         return QString::fromStdString(wallet.getNotProtectedKeyHex());
     }, callback);
 END_SLOT_WRAPPER
 }
+
+///////////
+/// RSA ///
+///////////
+
+void Wallets::onCreateRsaKey(bool isMhc, const QString &address, const QString &password, const CreateRsaKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        WalletRsa::createRsaKey(walletPath, isMhc, address.toStdString(), password.toStdString());
+        WalletRsa wallet(walletPath, isMhc, address.toStdString());
+        return QString::fromStdString(wallet.getPublikKey());
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetRsaPublicKey(bool isMhc, const QString &address, const GetRsaPublicKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        WalletRsa wallet(walletPath, isMhc, address.toStdString());
+        return QString::fromStdString(wallet.getPublikKey());
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCopyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv, const CopyRsaKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        CHECK(WalletRsa::validateKeyName(pathPriv, pathPub, address), "Not rsa key");
+        const QString newFolder = WalletRsa::genFolderRsa(walletPath, isMhc);
+        copyToDirectoryFile(pathPub, newFolder, false);
+        copyToDirectoryFile(pathPriv, newFolder, false);
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCopyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path, const CopyRsaKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::vector<QString> files = WalletRsa::getPathsKeys(walletPath, isMhc, address);
+        for (const QString &file: files) {
+            CHECK(isExistFile(file), "Key not found");
+            copyToDirectoryFile(file, path, false);
+        }
+
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+///////////////
+/// METHODS ///
+///////////////
 
 void Wallets::startMethod() {
 

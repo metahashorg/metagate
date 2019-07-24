@@ -63,6 +63,12 @@ public:
 
     using GetRawPrivateKeyCallback = CallbackWrapper<void(const QString &result)>;
 
+    using CreateRsaKeyCallback = CallbackWrapper<void(const QString &pubkey)>;
+
+    using GetRsaPublicKeyCallback = CallbackWrapper<void(const QString &pubkey)>;
+
+    using CopyRsaKeyCallback = CallbackWrapper<void(bool success)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
@@ -172,6 +178,30 @@ private slots:
     void onSaveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const SaveRawPrivateKeyCallback &callback);
 
     void onGetRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback);
+
+///////////
+/// RSA ///
+///////////
+
+signals:
+
+    void createRsaKey(bool isMhc, const QString &address, const QString &password, const CreateRsaKeyCallback &callback);
+
+    void getRsaPublicKey(bool isMhc, const QString &address, const GetRsaPublicKeyCallback &callback);
+
+    void copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv, const CopyRsaKeyCallback &callback);
+
+    void copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path, const CopyRsaKeyCallback &callback);
+
+private slots:
+
+    void onCreateRsaKey(bool isMhc, const QString &address, const QString &password, const CreateRsaKeyCallback &callback);
+
+    void onGetRsaPublicKey(bool isMhc, const QString &address, const GetRsaPublicKeyCallback &callback);
+
+    void onCopyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv, const CopyRsaKeyCallback &callback);
+
+    void onCopyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path, const CopyRsaKeyCallback &callback);
 
 private slots:
 

@@ -696,52 +696,39 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::createRsaKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult) {
-    Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa::createRsaKey(walletPath, isMhc, address.toStdString(), password.toStdString());
-        WalletRsa wallet(walletPath, isMhc, address.toStdString());
-        publicKey = wallet.getPublikKey();
-    });
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), publicKey);
+    wallets.createRsaKey(isMhc, address, password, wallets::Wallets::GetRawPrivateKeyCallback([this, jsNameResult, requestId, address](const QString &pubkey) {
+        LOG << "Create rsa key " << address;
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(pubkey));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::getRsaPublicKeyMTHS(QString requestId, QString address, bool isMhc, QString jsNameResult) {
-    Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        WalletRsa wallet(walletPath, isMhc, address.toStdString());
-        publicKey = wallet.getPublikKey();
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), publicKey);
+    wallets.getRsaPublicKey(isMhc, address, wallets::Wallets::GetRsaPublicKeyCallback([this, jsNameResult, requestId, address](const QString &pubkey) {
+        LOG << "Get rsa public key " << address;
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(pubkey));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, bool isMhc, QString jsNameResult) {
-    Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        CHECK(WalletRsa::validateKeyName(pathPriv, pathPub, address), "Not rsa key");
-        const QString newFolder = WalletRsa::genFolderRsa(walletPath, isMhc);
-        copyToDirectoryFile(pathPub, newFolder, false);
-        copyToDirectoryFile(pathPriv, newFolder, false);
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Ok"));
+    wallets.copyRsaKey(isMhc, address, pathPub, pathPriv, wallets::Wallets::CopyRsaKeyCallback([this, jsNameResult, requestId, address](bool result) {
+        LOG << "Copy rsa key " << address;
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>("Not ok"));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, bool isMhc, QString jsNameResult) {
-    Opt<std::string> publicKey;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        const std::vector<QString> files = WalletRsa::getPathsKeys(walletPath, isMhc, address);
-        for (const QString &file: files) {
-            CHECK(isExistFile(file), "Key not found");
-            copyToDirectoryFile(file, path, false);
-        }
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), Opt<QString>("Ok"));
+    wallets.copyRsaKeyToFolder(isMhc, address, path, wallets::Wallets::CopyRsaKeyCallback([this, jsNameResult, requestId, address](bool result) {
+        LOG << "Copy rsa key to folder " << address;
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>("Not ok"));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::createRsaKey(QString requestId, QString address, QString password) {

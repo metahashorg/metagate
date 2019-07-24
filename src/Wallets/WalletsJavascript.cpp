@@ -304,4 +304,79 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::createRsaKey(bool isMhc, const QString &address, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCreateRsaKeyResultJs";
+
+    LOG << "Create rsa key " << isMhc << " " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.createRsaKey(isMhc, address, password, wallets::Wallets::CreateRsaKeyCallback([makeFunc](const QString &publicKey){
+            LOG << "Create rsa key ok ";
+            makeFunc.func(TypedException(), publicKey);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::getRsaPublicKey(bool isMhc, const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsGetRsaPublicKeyResultJs";
+
+    LOG << "Get rsa public key " << isMhc << " " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.getRsaPublicKey(isMhc, address, wallets::Wallets::GetRsaPublicKeyCallback([makeFunc](const QString &publicKey){
+            makeFunc.func(TypedException(), publicKey);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCopyRsaKeyResultJs";
+
+    LOG << "Copy rsa key " << isMhc << " " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.copyRsaKey(isMhc, address, pathPub, pathPriv, wallets::Wallets::CopyRsaKeyCallback([makeFunc](bool success){
+            LOG << "Copy rsa key ok";
+            if (success) {
+                makeFunc.func(TypedException(), "Ok");
+            } else {
+                makeFunc.func(TypedException(), "Not ok");
+            }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCopyRsaKeyToFolderResultJs";
+
+    LOG << "Copy rsa key to folder " << isMhc << " " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.copyRsaKeyToFolder(isMhc, address, path, wallets::Wallets::CopyRsaKeyCallback([makeFunc](bool success){
+            LOG << "Copy rsa key to folder ok";
+            if (success) {
+                makeFunc.func(TypedException(), "Ok");
+            } else {
+                makeFunc.func(TypedException(), "Not ok");
+            }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 } // namespace wallets
