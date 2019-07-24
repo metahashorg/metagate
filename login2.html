@@ -46,6 +46,13 @@
         });
     }
     
+    function getTxsFilter() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxsFilters(document.createWalletForm.address.value, document.createWalletForm.currency.value, '[{"name": "isSuccess", "value": true}, {"name": "isTest", "value": true}]', parseInt(document.createWalletForm.fromTx.value), parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
     function getAllTxs2() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.transactions;
@@ -169,6 +176,7 @@
             <input type="button" value="getAllTxs" onclick="getAllTxs()"><br>
             <input type="button" value="getTxs2" onclick="getTxs2()"><br>
             <input type="button" value="getAllTxs2" onclick="getAllTxs2()"><br>
+            <input type="button" value="getTxsFilter" onclick="getTxsFilter()"><br>
             <input type="button" value="calcBalance" onclick="calcBalance()"><br>
             <input type="button" value="getTxFromServer" onclick="getTxFromServer()"><br>
             <input type="button" value="getLastUpdate" onclick="getLastUpdate()"><br>

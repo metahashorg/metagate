@@ -12,6 +12,7 @@
 #include "qt_utilites/QRegister.h"
 
 #include "Transactions.h"
+#include "TransactionsFilter.h"
 
 #include "qt_utilites/WrapperJavascriptImpl.h"
 
@@ -319,6 +320,65 @@ BEGIN_SLOT_WRAPPER
         emit transactionsManager->getTxsAll2(currency, from, count, asc, Transactions::GetTxsCallback([currency, makeFunc](const std::vector<Transaction> &txs) {
             LOG << "get txs2 address ok " << currency << " " << txs.size();
             makeFunc.func(TypedException(), currency, txsToJson(txs));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+static Filters jsonToFilters(const QString &filtersJson) {
+    Filters filters;
+
+    const auto boolToType = [](bool b) {
+        if (b) {
+            return FilterType::True;
+        } else {
+            return FilterType::False;
+        }
+    };
+
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(filtersJson.toUtf8());
+    CHECK(jsonResponse.isArray(), "Incorrect json ");
+    const QJsonArray &json1 = jsonResponse.array();
+    for (const QJsonValue &val: json1) {
+        CHECK(val.isObject(), "Incorrect json");
+        const QJsonObject filterJson = val.toObject();
+        CHECK(filterJson.contains("name") && filterJson.value("name").isString(), "name field not found");
+        const QString name = filterJson.value("name").toString();
+        CHECK(filterJson.contains("value") && filterJson.value("value").isBool(), "value field not found");
+        const bool value = filterJson.value("value").toBool();
+
+        if (name == "isInput") {
+            filters.isInput = boolToType(value);
+        } else if (name == "isOutput") {
+            filters.isOutput = boolToType(value);
+        } else if (name == "isDelegate") {
+            filters.isDelegate = boolToType(value);
+        } else if (name == "isForging") {
+            filters.isForging = boolToType(value);
+        } else if (name == "isSuccess") {
+            filters.isSuccess = boolToType(value);
+        } else if (name == "isTesting") {
+            filters.isTesting = boolToType(value);
+        }
+    }
+
+    return filters;
+};
+
+void TransactionsJavascript::getTxsFilters(QString address, QString currency, QString filtersJson, int from, int count, bool asc) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetTxsFiltersJs";
+
+    LOG << "get txs filters address " << address << " " << currency << " " << from << " " << count << " " << asc << " " << filtersJson;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
+
+    wrapOperation([&, this](){
+        emit transactionsManager->getTxsFilters(address, currency, jsonToFilters(filtersJson), from, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
+            LOG << "get txs filters address ok " << address << " " << currency << " " << txs.size();
+            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER

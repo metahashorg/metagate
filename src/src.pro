@@ -232,7 +232,8 @@ HEADERS += mainwindow.h \
     Network/HttpClient.h \
     Network/NetwrokTesting.h \
     Network/UdpSocketClient.h \
-    Network/WebSocketClient.h
+    Network/WebSocketClient.h \
+    transactions/TransactionsFilter.h
 
 FORMS += mainwindow.ui
 
