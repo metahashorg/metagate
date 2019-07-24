@@ -590,18 +590,12 @@ void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyNa
 }
 
 void JavascriptWrapper::getOnePrivateKeyMTHS(QString requestId, QString keyName, bool isCompact, QString jsNameResult, bool isMhc) {
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
-        const std::string privKey = Wallet::getPrivateKey(walletPath, isMhc, keyName.toStdString(), isCompact);
-
-        result = QString::fromStdString(privKey);
-
+    wallets.getOnePrivateKey(isMhc, keyName, isCompact, wallets::Wallets::GetPrivateKeyCallback([this, jsNameResult, requestId, keyName](const QString &result) {
         LOG << "Getted private key " << keyName;
-    });
-
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::getOnePrivateKey(QString requestId, QString keyName, bool isCompact) {
@@ -619,27 +613,12 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, bool isMhc, QString jsNameResult) {
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        std::string key = privateKey.toStdString();
-        if (key.compare(0, Wallet::PREFIX_ONE_KEY_MTH.size(), Wallet::PREFIX_ONE_KEY_MTH) == 0) {
-            key = key.substr(Wallet::PREFIX_ONE_KEY_MTH.size());
-        } else if (key.compare(0, Wallet::PREFIX_ONE_KEY_TMH.size(), Wallet::PREFIX_ONE_KEY_TMH) == 0) {
-            key = key.substr(Wallet::PREFIX_ONE_KEY_TMH.size());
-        }
-
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
+    wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, jsNameResult, requestId](bool success) {
         LOG << "Save private key";
-
-        Wallet::savePrivateKey(walletPath, isMhc, key, password.toStdString());
-        result = "ok";
-    });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        result = "Not ok";
-    }
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("ok"));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>("Not ok"));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::savePrivateKey(QString requestId, QString privateKey, QString password) {
@@ -657,14 +636,12 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::saveRawPrivKeyMTHS(QString requestId, QString rawPrivKey, QString password, bool isMhc, QString jsNameResult) {
-    std::string pubkey;
-    Opt<std::string> address;
-    const TypedException exception = apiVrapper2([&]() {
-        std::string addr;
-        Wallet::createWalletFromRaw(walletPath, isMhc, rawPrivKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
-        address = addr;
-    });
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), address);
+    wallets.saveRawPrivateKey(isMhc, rawPrivKey, password, wallets::Wallets::SaveRawPrivateKeyCallback([this, jsNameResult, requestId](const QString &address) {
+        LOG << "Save raw private key " << address;
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::saveRawPrivKey(QString requestId, QString rawPrivKey, QString password) {
@@ -682,12 +659,12 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::getRawPrivKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult) {
-    Opt<std::string> result;
-    const TypedException exception = apiVrapper2([&]() {
-        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
-        result = wallet.getNotProtectedKeyHex();
-    });
-    makeAndRunJsFuncParams(jsNameResult, exception, Opt<QString>(requestId), result);
+    wallets.getRawPrivateKey(isMhc, address, password, wallets::Wallets::GetRawPrivateKeyCallback([this, jsNameResult, requestId](const QString &result) {
+        LOG << "Get raw private key ";
+        makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [this, jsNameResult, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 }
 
 void JavascriptWrapper::getRawPrivKey(QString requestId, QString address, QString password) {

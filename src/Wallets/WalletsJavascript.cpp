@@ -232,4 +232,76 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::getOnePrivateKey(bool isMhc, const QString &address, bool isCompact) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsGetOnePrivateKeyResultJs";
+
+    LOG << "Get private key " << isMhc << " " << address << " " << isCompact;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.getOnePrivateKey(isMhc, address, isCompact, wallets::Wallets::GetPrivateKeyCallback([makeFunc, address](const QString &result){
+            LOG << "Get private key ok " << address;
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::savePrivateKey(bool isMhc, const QString &privateKey, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSavePrivateKeyResultJs";
+
+    LOG << "Save private key ";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool result){
+            LOG << "Save private key ok ";
+            if (result) {
+                makeFunc.func(TypedException(), "ok");
+            } else {
+                makeFunc.func(TypedException(), "Not ok");
+            }
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSaveRawPrivateKeyResultJs";
+
+    LOG << "Save raw private key ";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.saveRawPrivateKey(isMhc, rawPrivateKey, password, wallets::Wallets::SaveRawPrivateKeyCallback([makeFunc](const QString &address){
+            LOG << "Save raw private key ok " << address;
+            makeFunc.func(TypedException(), address);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::getRawPrivateKey(bool isMhc, const QString &address, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsGetRawPrivateKeyResultJs";
+
+    LOG << "Get raw private key " << isMhc << " " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.getRawPrivateKey(isMhc, address, password, wallets::Wallets::GetRawPrivateKeyCallback([makeFunc](const QString &result){
+            LOG << "Get raw private key ok ";
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 } // namespace wallets

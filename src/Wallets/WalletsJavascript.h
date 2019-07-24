@@ -41,6 +41,14 @@ public:
 
     Q_INVOKABLE void signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson);
 
+    Q_INVOKABLE void getOnePrivateKey(bool isMhc, const QString &address, bool isCompact);
+
+    Q_INVOKABLE void savePrivateKey(bool isMhc, const QString &privateKey, const QString &password);
+
+    Q_INVOKABLE void saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password);
+
+    Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password);
+
 private:
 
     Wallets &wallets;

@@ -63,3 +63,24 @@ paramsJson - json of {"countServersSend": 3, "countServersGet": 3, "typeSend": "
 # Result returns to 
 walletsSignAndSendMessageDelegateResultJs("Ok/Not ok", errorNum, errorMessage)
 # If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
+
+Q_INVOKABLE void getOnePrivateKey(bool isMhc, const QString &address, bool isCompact);
+# Returns private key to the function
+walletsGetOnePrivateKeyResultJs(key, errorNum, errorMessage)
+# The isCompact parameter is used if you need a more compact format.
+
+Q_INVOKABLE void savePrivateKey(bool isMhc, const QString &privateKey, const QString &password);
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+walletsSavePrivateKeyResultJs("ok", errorNum, errorMessage)
+
+Q_INVOKABLE void saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password)
+# Saves private key
+# rawPrivKey - unencrypted private key
+# javascript is called after completion of this function 
+walletsSaveRawPrivateKeyResultJs(address, errorNum, errorMessage)
+
+Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password)
+# Returns unencrypted  private key
+# javascript is called after completion of this function 
+walletsGetRawPrivateKeyResultJs(result, errorNum, errorMessage)

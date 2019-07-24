@@ -49,6 +49,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::signMessage2, this, &Wallets::onSignMessage2);
     Q_CONNECT(this, &Wallets::signAndSendMessage, this, &Wallets::onSignAndSendMessage);
     Q_CONNECT(this, &Wallets::signAndSendMessageDelegate, this, &Wallets::onSignAndSendMessageDelegate);
+    Q_CONNECT(this, &Wallets::getOnePrivateKey, this, &Wallets::onGetOnePrivateKey);
+    Q_CONNECT(this, &Wallets::savePrivateKey, this, &Wallets::onSavePrivateKey);
+    Q_CONNECT(this, &Wallets::saveRawPrivateKey, this, &Wallets::onSaveRawPrivateKey);
+    Q_CONNECT(this, &Wallets::getRawPrivateKey, this, &Wallets::onGetRawPrivateKey);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -61,10 +65,14 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(CheckWalletPasswordCallback, "CheckWalletPasswordCallback");
     Q_REG(CheckAddressCallback, "CheckAddressCallback");
     Q_REG(CreateContractAddressCallback, "CreateContractAddressCallback");
-    Q_REG(SignMessageCallback, "SignMessageCallback");
+    Q_REG(wallets::Wallets::SignMessageCallback, "wallets::Wallets::SignMessageCallback");
     Q_REG(SignMessage2Callback, "SignMessage2Callback");
     Q_REG(GettedNonceCallback, "GettedNonceCallback");
     Q_REG(SignAndSendMessageCallback, "SignAndSendMessageCallback");
+    Q_REG(GetPrivateKeyCallback, "GetPrivateKeyCallback");
+    Q_REG(SavePrivateKeyCallback, "SavePrivateKeyCallback");
+    Q_REG(SaveRawPrivateKeyCallback, "SaveRawPrivateKeyCallback");
+    Q_REG(GetRawPrivateKeyCallback, "GetRawPrivateKeyCallback");
 
     emit auth.reEmit();
 
@@ -382,6 +390,58 @@ BEGIN_SLOT_WRAPPER
         };
 
         findNonceAndProcessWithTxManager(isMhc, address, nonce, paramsJson, GettedNonceCallback(signTransaction, callback, signalFunc));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetOnePrivateKey(bool isMhc, const QString &address, bool isCompact, const GetPrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        return QString::fromStdString(Wallet::getPrivateKey(walletPath, isMhc, address.toStdString(), isCompact));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSavePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        std::string key = privateKey.toStdString();
+        if (key.compare(0, Wallet::PREFIX_ONE_KEY_MTH.size(), Wallet::PREFIX_ONE_KEY_MTH) == 0) {
+            key = key.substr(Wallet::PREFIX_ONE_KEY_MTH.size());
+        } else if (key.compare(0, Wallet::PREFIX_ONE_KEY_TMH.size(), Wallet::PREFIX_ONE_KEY_TMH) == 0) {
+            key = key.substr(Wallet::PREFIX_ONE_KEY_TMH.size());
+        }
+
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        LOG << "Save private key";
+
+        Wallet::savePrivateKey(walletPath, isMhc, key, password.toStdString());
+
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSaveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const SaveRawPrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        std::string addr;
+        std::string pubkey;
+        Wallet::createWalletFromRaw(walletPath, isMhc, rawPrivateKey.toStdString(), password.normalized(QString::NormalizationForm_C).toStdString(), pubkey, addr);
+
+        return QString::fromStdString(addr);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+        return QString::fromStdString(wallet.getNotProtectedKeyHex());
     }, callback);
 END_SLOT_WRAPPER
 }

@@ -55,6 +55,14 @@ public:
 
     using SignAndSendMessageCallback = CallbackWrapper<void(bool success)>;
 
+    using GetPrivateKeyCallback = CallbackWrapper<void(const QString &result)>;
+
+    using SavePrivateKeyCallback = CallbackWrapper<void(bool success)>;
+
+    using SaveRawPrivateKeyCallback = CallbackWrapper<void(const QString &address)>;
+
+    using GetRawPrivateKeyCallback = CallbackWrapper<void(const QString &result)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
@@ -117,13 +125,21 @@ signals:
 
     void createContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
 
-    void signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const SignMessageCallback &callback);
+    void signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const wallets::Wallets::SignMessageCallback &callback);
 
     void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
 
     void signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const SignAndSendMessageCallback &callback);
 
     void signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const SignAndSendMessageCallback &callback);
+
+    void getOnePrivateKey(bool isMhc, const QString &address, bool isCompact, const GetPrivateKeyCallback &callback);
+
+    void savePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
+
+    void saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const SaveRawPrivateKeyCallback &callback);
+
+    void getRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback);
 
 private slots:
 
@@ -141,13 +157,21 @@ private slots:
 
     void onCreateContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
 
-    void onSignMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const SignMessageCallback &callback);
+    void onSignMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const wallets::Wallets::SignMessageCallback &callback);
 
     void onSignMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
 
     void onSignAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const SignAndSendMessageCallback &callback);
 
     void onSignAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const SignAndSendMessageCallback &callback);
+
+    void onGetOnePrivateKey(bool isMhc, const QString &address, bool isCompact, const GetPrivateKeyCallback &callback);
+
+    void onSavePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
+
+    void onSaveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const SaveRawPrivateKeyCallback &callback);
+
+    void onGetRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback);
 
 private slots:
 
