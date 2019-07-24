@@ -443,10 +443,11 @@ void Transactions::timerMethod() {
     if (addressesInfos.empty()) {
         addressesInfos = getAddressesInfos(currentGroup);
         std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
-            return first.type < second.type;
+            return std::make_pair(first.type, first.currency) < std::make_pair(second.type, second.currency);
         });
         posInAddressInfos = 0;
     }
+
     LOG << PeriodicLog::make("f_bln") << "Try fetch balance " << addressesInfos.size();
     QString currentType;
     QString currentCurrency;
