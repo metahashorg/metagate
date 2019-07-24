@@ -59,6 +59,16 @@ count == -1 выдать все
 Результат вернется в функцию
 txsGetTxsAll2Js(address, currency, result, errorNum, errorMessage)
 
+Q_INVOKABLE getTxsFilters(QString address, QString currency, QString filtersJson, int from, int count, bool asc)
+Получение транзакций в порядке возрастания или убывания
+asc порядок сортировки
+Выдаются транзакции, начиная с порядкового номера from (в зависимости от сортировки) и количеством count
+count == -1 выдать все
+filtersJson - json вида [{"name": "isInput", "value": true}]
+Поля isInput isOutput isDelegate isForging isSuccess isTesting
+Результат вернется в функцию
+txsGetTxsFiltersJs(address, currency, result, errorNum, errorMessage)
+
 Q_INVOKABLE void calcBalance(QString address, QString currency);
 Получение баланса
 Результат вернется в функцию

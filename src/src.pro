@@ -244,7 +244,8 @@ HEADERS += mainwindow.h \
     Wallets/WalletInfo.h \
     Initializer/Inits/InitWallets.h \
     qt_utilites/EventWatcher.h \
-    Wallets/GetActualWalletsEvent.h
+    Wallets/GetActualWalletsEvent.h \
+    transactions/TransactionsFilter.h
 
 FORMS += mainwindow.ui
 

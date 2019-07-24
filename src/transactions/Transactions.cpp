@@ -60,6 +60,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_CONNECT(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup);
     Q_CONNECT(this, &Transactions::getTxs, this, &Transactions::onGetTxs);
     Q_CONNECT(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2);
+    Q_CONNECT(this, &Transactions::getTxsFilters, this, &Transactions::onGetTxsFilters);
     Q_CONNECT(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll);
     Q_CONNECT(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2);
     Q_CONNECT(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs);
@@ -90,6 +91,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_REG2(seconds, "seconds", false);
     Q_REG(DelegateStatus, "DelegateStatus");
     Q_REG(SendParameters, "SendParameters");
+    Q_REG(Filters, "Filters");
 
     Q_REG(std::vector<AddressInfo>, "std::vector<AddressInfo>");
 
@@ -451,10 +453,11 @@ void Transactions::timerMethod() {
     if (addressesInfos.empty()) {
         addressesInfos = getAddressesInfos(makeGroupName(currentUserName));
         std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
-            return first.type < second.type;
+            return std::make_pair(first.type, first.currency) < std::make_pair(second.type, second.currency);
         });
         posInAddressInfos = 0;
     }
+
     LOG << PeriodicLog::make("f_bln") << "Try fetch balance " << addressesInfos.size();
     QString currentType;
     QString currentCurrency;
@@ -606,6 +609,14 @@ void Transactions::onGetTxs2(const QString &address, const QString &currency, in
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         return db.getPaymentsForAddress(address, convertCurrency(currency), from, count, asc);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Transactions::onGetTxsFilters(const QString &address, const QString &currency, const Filters &filter, int from, int count, bool asc, const GetTxsCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this] {
+        return db.getPaymentsForAddressFilter(address, convertCurrency(currency), filter, from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }

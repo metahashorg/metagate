@@ -66,6 +66,8 @@ public slots:
 
     Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
 
+    Q_INVOKABLE void getTxsFilters(QString address, QString currency, QString filtersJson, int from, int count, bool asc);
+
     Q_INVOKABLE void getForgingTxsAll(QString address, QString currency, int from, int count, bool asc);
 
     Q_INVOKABLE void getDelegateTxsAll(QString address, QString currency, QString to, int from, int count, bool asc);

@@ -6,6 +6,8 @@
 #include "utilites/BigNumber.h"
 #include <vector>
 
+#include "TransactionsFilter.h"
+
 namespace transactions {
 
 class TransactionsDBStorage : public DBStorage
@@ -25,6 +27,9 @@ public:
     void addPayments(const std::vector<Transaction> &transactions);
 
     std::vector<Transaction> getPaymentsForAddress(const QString &address, const QString &currency,
+                                              qint64 offset, qint64 count, bool asc);
+
+    std::vector<Transaction> getPaymentsForAddressFilter(const QString &address, const QString &currency, const Filters &filters,
                                               qint64 offset, qint64 count, bool asc);
 
     std::vector<Transaction> getPaymentsForCurrency(const QString &currency,

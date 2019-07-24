@@ -92,8 +92,9 @@ static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, 
 static const QString selectBalance = "SELECT * FROM balance "
                                                     "WHERE address = :address AND  currency = :currency ";
 
-static const QString selectPaymentsForDest = "SELECT * FROM payments "
+static const QString selectPaymentsForDestFilter = "SELECT * FROM payments "
                                                     "WHERE address = :address AND  currency = :currency "
+                                                    "%filter% "
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 
@@ -106,28 +107,6 @@ static const QString selectPaymentsForDestPending = "SELECT * FROM payments "
                                                         "WHERE address = :address AND  currency = :currency  "
                                                         "AND status = 1 "
                                                         "ORDER BY ts %1, txid %1";
-
-static const QString selectForgingPaymentsForDest = "SELECT * FROM payments "
-                                                    "WHERE address = :address AND  currency = :currency "
-                                                    "AND type = %2 "
-                                                    "ORDER BY ts %1, txid %1 "
-                                                    "LIMIT :count OFFSET :offset";
-
-static const QString selectDelegatePaymentsForDest = "SELECT * FROM payments "
-                                                    "WHERE address = :address AND  currency = :currency "
-                                                    "AND ufrom = :address AND uto = :to "
-                                                    "AND type = %2 "
-                                                    "AND status = %3 "
-                                                    "ORDER BY ts %1, txid %1 "
-                                                    "LIMIT :count OFFSET :offset";
-
-static const QString selectDelegatePayments = "SELECT * FROM payments "
-                                                    "WHERE address = :address AND  currency = :currency "
-                                                    "AND ufrom = :address "
-                                                    "AND type = %2 "
-                                                    "AND status = %3 "
-                                                    "ORDER BY ts %1, txid %1 "
-                                                    "LIMIT :count OFFSET :offset";
 
 static const QString selectLastTransaction = "SELECT * FROM payments "
                                                             "WHERE address = :address AND  currency = :currency "

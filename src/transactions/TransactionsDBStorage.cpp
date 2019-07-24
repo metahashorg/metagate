@@ -11,6 +11,43 @@ SET_LOG_NAMESPACE("TXS");
 
 namespace transactions {
 
+static void addFilter(QString &request, const Filters &filters) {
+    QString filter;
+    if (filters.isDelegate == FilterType::False) {
+        filter += " AND isSetDelegate = 0 ";
+    } else if (filters.isDelegate == FilterType::True) {
+        filter += " AND isSetDelegate = 1 ";
+    }
+    if (filters.isForging == FilterType::False) {
+        filter += " AND type != " + QString::number(Transaction::Type::FORGING) + " ";
+    } else if (filters.isForging == FilterType::True) {
+        filter += " AND type = " + QString::number(Transaction::Type::FORGING) + " ";
+    }
+    if (filters.isInput == FilterType::False) {
+        filter += " AND ufrom != :from ";
+    } else if (filters.isInput == FilterType::True) {
+        filter += " AND ufrom = :from ";
+    }
+    if (filters.isOutput == FilterType::False) {
+        filter += " AND uto != :to ";
+    } else if (filters.isOutput == FilterType::True) {
+        filter += " AND uto = :to ";
+    }
+    if (filters.isTesting == FilterType::False) {
+        filter += " AND intStatus != " + QString::number(STATUS_TESTING) + " ";
+    } else if (filters.isTesting == FilterType::True) {
+        filter += " AND intStatus = " + QString::number(STATUS_TESTING) + " ";
+    }
+    if (filters.isSuccess == FilterType::False) {
+        filter += " AND status != " + QString::number(Transaction::Status::OK) + " ";
+    } else if (filters.isTesting == FilterType::True) {
+        filter += " AND status = " + QString::number(Transaction::Status::OK) + " ";
+    }
+
+    request.replace("%filter%", filter);
+    (void)filter;
+}
+
 TransactionsDBStorage::TransactionsDBStorage(const QString &path)
     : DBStorage(path, databaseName)
 {
@@ -77,9 +114,30 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddress(const QStr
 {
     std::vector<Transaction> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+    QString q = selectPaymentsForDestFilter.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"));
+    addFilter(q, Filters());
+    CHECK(query.prepare(q),
           query.lastError().text().toStdString());
     query.bindValue(":address", address);
+    query.bindValue(":currency", currency);
+    query.bindValue(":offset", offset);
+    query.bindValue(":count", count);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    createPaymentsList(query, res);
+    return res;
+}
+
+std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddressFilter(const QString &address, const QString &currency, const Filters &filters,
+                                                     qint64 offset, qint64 count, bool asc) {
+    std::vector<Transaction> res;
+    QSqlQuery query(database());
+    QString q = selectPaymentsForDestFilter.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"));
+    addFilter(q, filters);
+    CHECK(query.prepare(q),
+          query.lastError().text().toStdString());
+    query.bindValue(":address", address);
+    query.bindValue(":from", address);
+    query.bindValue(":to", address);
     query.bindValue(":currency", currency);
     query.bindValue(":offset", offset);
     query.bindValue(":count", count);
@@ -120,7 +178,11 @@ std::vector<transactions::Transaction> transactions::TransactionsDBStorage::getF
 {
     std::vector<Transaction> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectForgingPaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")).arg(Transaction::FORGING)),
+    QString q = selectPaymentsForDestFilter.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"));
+    Filters filter;
+    filter.isForging = FilterType::True;
+    addFilter(q, filter);
+    CHECK(query.prepare(q),
           query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);
@@ -134,9 +196,17 @@ std::vector<transactions::Transaction> transactions::TransactionsDBStorage::getF
 std::vector<Transaction> TransactionsDBStorage::getDelegatePaymentsForAddress(const QString &address, const QString &to, const QString &currency, qint64 offset, qint64 count, bool asc) {
     std::vector<Transaction> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectDelegatePaymentsForDest.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")).arg(Transaction::DELEGATE).arg(Transaction::Status::OK)),
+    QString q = selectPaymentsForDestFilter.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"));
+    Filters filter;
+    filter.isDelegate = FilterType::True;
+    filter.isSuccess = FilterType::True;
+    filter.isInput = FilterType::True;
+    filter.isOutput = FilterType::True;
+    addFilter(q, filter);
+    CHECK(query.prepare(q),
           query.lastError().text().toStdString());
     query.bindValue(":address", address);
+    query.bindValue(":from", address);
     query.bindValue(":to", to);
     query.bindValue(":currency", currency);
     query.bindValue(":offset", offset);
@@ -149,9 +219,16 @@ std::vector<Transaction> TransactionsDBStorage::getDelegatePaymentsForAddress(co
 std::vector<Transaction> TransactionsDBStorage::getDelegatePaymentsForAddress(const QString &address, const QString &currency, qint64 offset, qint64 count, bool asc) {
     std::vector<Transaction> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectDelegatePayments.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")).arg(Transaction::DELEGATE).arg(Transaction::Status::OK)),
+    QString q = selectPaymentsForDestFilter.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"));
+    Filters filter;
+    filter.isDelegate = FilterType::True;
+    filter.isSuccess = FilterType::True;
+    filter.isInput = FilterType::True;
+    addFilter(q, filter);
+    CHECK(query.prepare(q),
           query.lastError().text().toStdString());
     query.bindValue(":address", address);
+    query.bindValue(":from", address);
     query.bindValue(":currency", currency);
     query.bindValue(":offset", offset);
     query.bindValue(":count", count);

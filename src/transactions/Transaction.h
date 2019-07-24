@@ -13,7 +13,7 @@ const quint32 BNModule = 6;
 const QString TorrentTypeMainNet = QStringLiteral("torrent_main");
 const QString TorrentTypeDevNet = QStringLiteral("torrent");
 
-
+const int STATUS_TESTING = 0x1101;
 
 enum class DelegateStatus {
     NOT_FOUND, PENDING, ERROR, DELEGATE, UNDELEGATE
