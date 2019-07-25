@@ -28,6 +28,7 @@ void GetActualWalletsEvent::changedUserName(const QString &newUsername) {
         return;
     }
     emit wallets.getListWallets(currency, callback);
+    callback.reset();
     removeLater();
 }
 

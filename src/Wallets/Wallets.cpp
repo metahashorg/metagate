@@ -35,8 +35,8 @@ const QString Wallets::defaultUsername = "_unregistered";
 
 Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     : TimerClass(5s, parent)
-    , utils(utils)
     , walletDefaultPath(getWalletPath())
+    , utils(utils)
 {
     Q_CONNECT(&auth, &auth::Auth::logined2, this, &Wallets::onLogined);
     Q_CONNECT(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &Wallets::onDirChanged);
@@ -140,7 +140,7 @@ BEGIN_SLOT_WRAPPER
             Wallet::createWalletWatch(walletPath, isMhc, addr.toStdString());
             Wallet wallet(walletPath, isMhc, addr.toStdString());
             const QString walletFullPath = wallet.getFullPath();
-            created.emplace_back(std::make_pair(addr, walletFullPath));
+            created.emplace_back(addr, walletFullPath);
         }
 
         emit watchWalletsAdded(isMhc, created);
@@ -293,9 +293,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Wallets::findNonceAndProcessWithTxManager(bool isMhc, const QString &address, const QString &nonce, const QString &paramsJson, const GettedNonceCallback &callback) {
-    const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
-
+void Wallets::findNonceAndProcessWithTxManager(const QString &address, const QString &nonce, const transactions::SendParameters &sendParams, const GettedNonceCallback &callback) {
     const bool isNonce = !nonce.isEmpty();
     if (!isNonce) {
         CHECK(txs != nullptr, "Transactions manager not setted");
@@ -344,7 +342,7 @@ BEGIN_SLOT_WRAPPER
             }, callback, signalFunc));
         };
 
-        findNonceAndProcessWithTxManager(isMhc, address, nonce, paramsJson, GettedNonceCallback(signTransaction, callback, signalFunc));
+        findNonceAndProcessWithTxManager(address, nonce, sendParams, GettedNonceCallback(signTransaction, callback, signalFunc));
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -388,7 +386,7 @@ BEGIN_SLOT_WRAPPER
             }, callback, signalFunc));
         };
 
-        findNonceAndProcessWithTxManager(isMhc, address, nonce, paramsJson, GettedNonceCallback(signTransaction, callback, signalFunc));
+        findNonceAndProcessWithTxManager(address, nonce, sendParams, GettedNonceCallback(signTransaction, callback, signalFunc));
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -407,6 +405,7 @@ void Wallets::onSavePrivateKey(bool isMhc, const QString &privateKey, const QStr
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
         std::string key = privateKey.toStdString();
         if (key.compare(0, Wallet::PREFIX_ONE_KEY_MTH.size(), Wallet::PREFIX_ONE_KEY_MTH) == 0) {
             key = key.substr(Wallet::PREFIX_ONE_KEY_MTH.size());
@@ -415,8 +414,6 @@ BEGIN_SLOT_WRAPPER
         }
 
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
-        LOG << "Save private key";
 
         Wallet::savePrivateKey(walletPath, isMhc, key, password.toStdString());
 
@@ -495,7 +492,6 @@ BEGIN_SLOT_WRAPPER
             CHECK(isExistFile(file), "Key not found");
             copyToDirectoryFile(file, path, false);
         }
-
         return true;
     }, callback);
 END_SLOT_WRAPPER
@@ -541,7 +537,7 @@ BEGIN_SLOT_WRAPPER
         try {
             EthWallet::checkAddress(address.toStdString());
             return true;
-        } catch (const Exception &e) {
+        } catch (const Exception &) {
             return false;
         } catch (...) {
             throw;
@@ -596,7 +592,7 @@ BEGIN_SLOT_WRAPPER
         try {
             BtcWallet::checkAddress(address.toStdString());
             return true;
-        } catch (const Exception &e) {
+        } catch (const Exception &) {
             return false;
         } catch (...) {
             throw;

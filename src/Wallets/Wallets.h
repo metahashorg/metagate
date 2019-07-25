@@ -22,6 +22,7 @@ class Auth;
 
 namespace transactions {
 class Transactions;
+struct SendParameters;
 }
 
 namespace utils {
@@ -336,7 +337,7 @@ private:
 
 private:
 
-    void findNonceAndProcessWithTxManager(bool isMhc, const QString &address, const QString &nonce, const QString &paramsJson, const GettedNonceCallback &callback);
+    void findNonceAndProcessWithTxManager(const QString &address, const QString &nonce, const transactions::SendParameters &sendParams, const GettedNonceCallback &callback);
 
 private:
 

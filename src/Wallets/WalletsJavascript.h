@@ -13,10 +13,6 @@ public:
 
     explicit WalletsJavascript(Wallets &wallets, QObject *parent = nullptr);
 
-private slots:
-
-    void onWatchWalletsCreated(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
-
 ///////////
 /// MHC ///
 ///////////
@@ -52,6 +48,10 @@ public:
     Q_INVOKABLE void saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password);
 
     Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password);
+
+private slots:
+
+    void onWatchWalletsCreated(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
 
 ///////////
 /// RSA ///

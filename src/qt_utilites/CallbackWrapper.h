@@ -109,6 +109,12 @@ public:
         emitFunc(exception, std::forward<Args>(args)...);
     }
 
+    void reset() {
+        callback = nullptr;
+        errorCallback = nullptr;
+        signal = nullptr;
+    }
+
 private:
 
     std::function<Callback> callback;
