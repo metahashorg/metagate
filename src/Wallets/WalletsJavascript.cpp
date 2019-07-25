@@ -595,4 +595,63 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+//////////////
+/// COMMON ///
+//////////////
+
+void WalletsJavascript::getWalletFolders() {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsGetWalletFoldersResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.getWalletFolders(wallets::Wallets::GetWalletFoldersCallback([makeFunc](const QString &defaultFolder, const QString &folder, const QString &userName){
+            LOG << "Get wallet folders " << folder << " " << userName;
+            makeFunc.func(TypedException(), defaultFolder, folder, userName);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::backupKeys(const QString &caption) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsBackupKeysResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    LOG << "Backup keys";
+
+    wrapOperation([&, this](){
+        emit wallets.backupKeys(caption, wallets::Wallets::BackupKeysCallback([makeFunc](const QString &fileName){
+            LOG << "Backup keys to file " << fileName;
+            makeFunc.func(TypedException(), fileName);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::restoreKeys(const QString &caption) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsRestoreKeysResultJs";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    LOG << "Restore keys";
+
+    wrapOperation([&, this](){
+        emit wallets.restoreKeys(caption, wallets::Wallets::RestoreKeysCallback([makeFunc](const QString &fileName){
+            LOG << "Restore keys from file " << fileName;
+            makeFunc.func(TypedException(), fileName);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::openWalletPathInStandartExplorer() {
+BEGIN_SLOT_WRAPPER
+    emit wallets.openWalletPathInStandartExplorer();
+END_SLOT_WRAPPER
+}
+
 } // namespace wallets

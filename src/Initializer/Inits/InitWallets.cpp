@@ -47,9 +47,9 @@ void InitWallets::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitWallets::Return InitWallets::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth) {
+InitWallets::Return InitWallets::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils) {
     const TypedException exception = apiVrapper2([&, this] {
-        manager = std::make_unique<wallets::Wallets>(*auth.get().first);
+        manager = std::make_unique<wallets::Wallets>(*auth.get().first, *utils.get().first);
         manager->start();
         javascript = std::make_unique<wallets::WalletsJavascript>(*manager);
         javascript->moveToThread(mainThread);

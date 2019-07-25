@@ -24,6 +24,10 @@ namespace transactions {
 class Transactions;
 }
 
+namespace utils {
+class Utils;
+}
+
 struct BtcInput;
 
 namespace wallets {
@@ -80,9 +84,15 @@ public:
 
     using SignMessageBtcCallback = CallbackWrapper<void(const QString &result, const QString &hash, const std::set<std::string> &usedUtxos)>;
 
+    using GetWalletFoldersCallback = CallbackWrapper<void(const QString &defaultFolder, const QString &folder, const QString &userName)>;
+
+    using BackupKeysCallback = CallbackWrapper<void(const QString &fileName)>;
+
+    using RestoreKeysCallback = CallbackWrapper<void(const QString &fileName)>;
+
 public:
 
-    explicit Wallets(auth::Auth &auth, QObject *parent = nullptr);
+    explicit Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent = nullptr);
 
     ~Wallets() override;
 
@@ -105,22 +115,6 @@ signals:
     void mhcWatchWalletCreated(bool isMhc, const QString &address);
 
     void mhcWatchWalletRemoved(bool isMhc, const QString &address);
-
-signals:
-
-    void getListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
-
-    void getListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
-
-    void createWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
-
-private slots:
-
-    void onGetListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
-
-    void onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
-
-    void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
 
 ///////////
 /// MHC ///
@@ -158,6 +152,8 @@ signals:
 
     void getRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback);
 
+    void createWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
+
 private slots:
 
     void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
@@ -189,6 +185,8 @@ private slots:
     void onSaveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const SaveRawPrivateKeyCallback &callback);
 
     void onGetRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback);
+
+    void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
 
 ///////////
 /// RSA ///
@@ -270,6 +268,38 @@ private slots:
 
     void onGetOnePrivateKeyBtc(const QString &address, const GetPrivateKeyCallback &callback);
 
+//////////////
+/// COMMON ///
+//////////////
+
+signals:
+
+    void getListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
+
+    void getListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
+
+    void getWalletFolders(const GetWalletFoldersCallback &callback);
+
+    void backupKeys(const QString &caption, const BackupKeysCallback &callback);
+
+    void restoreKeys(const QString &caption, const RestoreKeysCallback &callback);
+
+    void openWalletPathInStandartExplorer();
+
+private slots:
+
+    void onGetListWallets(const wallets::WalletCurrency &type, const WalletsListCallback &callback);
+
+    void onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback);
+
+    void onGetWalletFolders(const GetWalletFoldersCallback &callback);
+
+    void onBackupKeys(const QString &caption, const BackupKeysCallback &callback);
+
+    void onRestoreKeys(const QString &caption, const RestoreKeysCallback &callback);
+
+    void onOpenWalletPathInStandartExplorer();
+
 ///////////////
 /// METHODS ///
 ///////////////
@@ -309,6 +339,8 @@ private:
     void findNonceAndProcessWithTxManager(bool isMhc, const QString &address, const QString &nonce, const QString &paramsJson, const GettedNonceCallback &callback);
 
 private:
+
+    utils::Utils &utils;
 
     QString walletPath;
 

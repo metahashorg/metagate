@@ -1,5 +1,7 @@
 #include "Wallets.h"
 
+#include <QStandardPaths>
+
 #include "qt_utilites/SlotWrapper.h"
 #include "qt_utilites/QRegister.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
@@ -8,6 +10,7 @@
 #include "check.h"
 
 #include "utilites/utils.h"
+#include "utilites/unzip.h"
 
 #include "Wallet.h"
 #include "BtcWallet.h"
@@ -20,6 +23,8 @@
 
 #include "transactions/Transactions.h"
 
+#include "Utils/UtilsManager.h"
+
 #include "GetActualWalletsEvent.h"
 
 SET_LOG_NAMESPACE("WLTS");
@@ -28,8 +33,9 @@ namespace wallets {
 
 const QString Wallets::defaultUsername = "_unregistered";
 
-Wallets::Wallets(auth::Auth &auth, QObject *parent)
+Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     : TimerClass(5s, parent)
+    , utils(utils)
     , walletDefaultPath(getWalletPath())
 {
     Q_CONNECT(&auth, &auth::Auth::logined2, this, &Wallets::onLogined);
@@ -67,6 +73,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::signMessageBtcUsedUtxos, this, &Wallets::onSignMessageBtcUsedUtxos);
     Q_CONNECT(this, &Wallets::savePrivateKeyBtc, this, &Wallets::onSavePrivateKeyBtc);
     Q_CONNECT(this, &Wallets::getOnePrivateKeyBtc, this, &Wallets::onGetOnePrivateKeyBtc);
+    Q_CONNECT(this, &Wallets::getWalletFolders, this, &Wallets::onGetWalletFolders);
+    Q_CONNECT(this, &Wallets::backupKeys, this, &Wallets::onBackupKeys);
+    Q_CONNECT(this, &Wallets::restoreKeys, this, &Wallets::onRestoreKeys);
+    Q_CONNECT(this, &Wallets::openWalletPathInStandartExplorer, this, &Wallets::onOpenWalletPathInStandartExplorer);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -96,6 +106,9 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(SignMessageBtcCallback, "SignMessageBtcCallback");
     Q_REG2(std::set<std::string>, "std::set<std::string>", false);
     Q_REG2(std::vector<BtcInput>, "std::vector<BtcInput>", false);
+    Q_REG(GetWalletFoldersCallback, "GetWalletFoldersCallback");
+    Q_REG(BackupKeysCallback, "BackupKeysCallback");
+    Q_REG(RestoreKeysCallback, "RestoreKeysCallback");
 
     emit auth.reEmit();
 
@@ -109,53 +122,6 @@ Wallets::~Wallets() {
 
 void Wallets::setTransactions(transactions::Transactions *txs) {
     this->txs = txs;
-}
-
-void Wallets::onGetListWallets(const WalletCurrency &type, const WalletsListCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    runAndEmitCallback([&]{
-        CHECK(!walletPath.isEmpty(), "Wallet path not set");
-        if (type == WalletCurrency::Tmh) {
-            return std::make_tuple(userName, Wallet::getAllWalletsInfoInFolder(walletPath, false));
-        } else if (type == WalletCurrency::Mth) {
-            return std::make_tuple(userName, Wallet::getAllWalletsInfoInFolder(walletPath, true));
-        } else if (type == WalletCurrency::Btc) {
-            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
-            std::vector<WalletInfo> result;
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
-                return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
-            });
-            return std::make_tuple(userName, result);
-        } else if (type == WalletCurrency::Eth) {
-            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
-            std::vector<WalletInfo> result;
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
-                return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
-            });
-            return std::make_tuple(userName, result);
-        } else {
-            throwErr("Incorrect type");
-        }
-    }, callback);
-END_SLOT_WRAPPER
-}
-
-void Wallets::onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    runAndEmitErrorCallback([&]{
-        if (expectedUsername == userName) {
-            emit getListWallets(type, callback);
-        } else {
-            std::unique_ptr<GetActualWalletsEvent> event = std::make_unique<GetActualWalletsEvent>(TimerClass::getThread(), *this, expectedUsername, type, callback);
-
-            Q_CONNECT(this, &Wallets::usernameChanged, event.get(), &GetActualWalletsEvent::changedUserName);
-
-            eventWatcher.addEvent("getListWallet", std::move(event), 3s);
-        }
-    }, callback);
-END_SLOT_WRAPPER
 }
 
 ///////////
@@ -688,6 +654,113 @@ BEGIN_SLOT_WRAPPER
 
         return QString::fromStdString(privKey);
     }, callback);
+END_SLOT_WRAPPER
+}
+
+//////////////
+/// COMMON ///
+//////////////
+
+void Wallets::onGetListWallets(const WalletCurrency &type, const WalletsListCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Wallet path not set");
+        if (type == WalletCurrency::Tmh) {
+            return std::make_tuple(userName, Wallet::getAllWalletsInfoInFolder(walletPath, false));
+        } else if (type == WalletCurrency::Mth) {
+            return std::make_tuple(userName, Wallet::getAllWalletsInfoInFolder(walletPath, true));
+        } else if (type == WalletCurrency::Btc) {
+            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
+            std::vector<WalletInfo> result;
+            result.reserve(res.size());
+            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
+                return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
+            });
+            return std::make_tuple(userName, result);
+        } else if (type == WalletCurrency::Eth) {
+            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
+            std::vector<WalletInfo> result;
+            result.reserve(res.size());
+            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
+                return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
+            });
+            return std::make_tuple(userName, result);
+        } else {
+            throwErr("Incorrect type");
+        }
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        if (expectedUsername == userName) {
+            emit getListWallets(type, callback);
+        } else {
+            std::unique_ptr<GetActualWalletsEvent> event = std::make_unique<GetActualWalletsEvent>(TimerClass::getThread(), *this, expectedUsername, type, callback);
+
+            Q_CONNECT(this, &Wallets::usernameChanged, event.get(), &GetActualWalletsEvent::changedUserName);
+
+            eventWatcher.addEvent("getListWallet", std::move(event), 3s);
+        }
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetWalletFolders(const GetWalletFoldersCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return std::make_tuple(walletDefaultPath, walletPath, userName);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onBackupKeys(const QString &caption, const BackupKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
+        emit utils.saveFileDialog(caption, beginPath, utils::Utils::ChooseFileCallback([walletPath=this->walletPath, callback](const QString &fileName) {
+            if (!fileName.isEmpty()) {
+                ::backupKeys(walletPath, fileName);
+                callback.emitCallback(fileName);
+            } else {
+                callback.emitCallback("");
+            }
+        }, callback, signalFunc));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onRestoreKeys(const QString &caption, const RestoreKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
+        emit utils.loadFileDialog(caption, beginPath, "*.zip;;*.*", utils::Utils::ChooseFileCallback([this, walletPath=this->walletPath, caption, callback](const QString &fileName) {
+            if (fileName.isEmpty()) {
+                callback.emitCallback("");
+                return;
+            }
+            const std::string text = checkBackupFile(fileName);
+            emit utils.question(caption, "Restore backup " + QString::fromStdString(text) + "?", utils::Utils::QuestionCallback([this, walletPath=walletPath, fileName, callback](bool result) {
+                if (result) {
+                    ::restoreKeys(fileName, walletPath);
+                    callback.emitCallback(fileName);
+                } else {
+                    callback.emitCallback("");
+                }
+            }, callback, signalFunc));
+        }, callback, signalFunc));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onOpenWalletPathInStandartExplorer() {
+BEGIN_SLOT_WRAPPER
+    CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+    emit utils.openFolderInStandartExplored(walletPath);
 END_SLOT_WRAPPER
 }
 

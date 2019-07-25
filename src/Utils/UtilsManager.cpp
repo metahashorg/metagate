@@ -14,6 +14,7 @@
 #include <QPrinter>
 #include <QPrintDialog>
 #include <QPainter>
+#include <QMessageBox>
 
 SET_LOG_NAMESPACE("UTIL");
 
@@ -28,6 +29,10 @@ Utils::Utils(QObject *parent) {
     Q_CONNECT(this, &Utils::qrEncode, this, &Utils::onQrEncode);
     Q_CONNECT(this, &Utils::qrDecode, this, &Utils::onQrDecode);
     Q_CONNECT(this, &Utils::javascriptLog, this, &Utils::onJavascriptLog);
+    Q_CONNECT(this, &Utils::saveFileDialog, this, &Utils::onSaveFileDialog);
+    Q_CONNECT(this, &Utils::loadFileDialog, this, &Utils::onLoadFileDialog);
+    Q_CONNECT(this, &Utils::question, this, &Utils::onQuestion);
+    Q_CONNECT(this, &Utils::openFolderInStandartExplored, this, &Utils::onOpenFolderInStandartExplored);
 
     Q_REG(OpenInBrowserCallback, "OpenInBrowserCallback");
     Q_REG(OpenFolderDialogCallback, "OpenFolderDialogCallback");
@@ -36,6 +41,8 @@ Utils::Utils(QObject *parent) {
     Q_REG(ChooseFileAndLoadCallback, "ChooseFileAndLoadCallback");
     Q_REG(QrEncodeCallback, "QrEncodeCallback");
     Q_REG(QrDecodeCallback, "QrDecodeCallback");
+    Q_REG(ChooseFileCallback, "ChooseFileCallback");
+    Q_REG(QuestionCallback, "QuestionCallback");
 
     client.setParent(this);
     Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Utils::callbackCall);
@@ -79,7 +86,7 @@ BEGIN_SLOT_WRAPPER
             CHECK(!exception.isSet(), "Error load image: " + exception.description);
             writeToFileBinary(file, response, false);
             if (openAfterSave) {
-                openFolderInStandartExplored(QFileInfo(file).dir().path());
+                openFolderInStandartExploredImpl(QFileInfo(file).dir().path());
             }
         });
     }, callback);
@@ -166,7 +173,38 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Utils::openFolderInStandartExplored(const QString &folder) {
+void Utils::onSaveFileDialog(const QString &caption, const QString &beginPath, const ChooseFileCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return QFileDialog::getSaveFileName(widget_, caption, beginPath);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Utils::onLoadFileDialog(const QString &caption, const QString &beginPath, const QString &mask, const ChooseFileCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return QFileDialog::getOpenFileName(widget_, caption, beginPath, mask);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Utils::onQuestion(const QString &caption, const QString &text, const QuestionCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        const QMessageBox::StandardButton reply = QMessageBox::question(widget_, caption, text, QMessageBox::Yes|QMessageBox::No);
+        return reply == QMessageBox::Yes;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Utils::onOpenFolderInStandartExplored(const QString &folder) {
+BEGIN_SLOT_WRAPPER
+    openFolderInStandartExploredImpl(folder);
+END_SLOT_WRAPPER
+}
+
+void Utils::openFolderInStandartExploredImpl(const QString &folder) {
     QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
 }
 

@@ -99,6 +99,20 @@ public:
 
     Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address);
 
+//////////////
+/// COMMON ///
+//////////////
+
+public:
+
+    Q_INVOKABLE void getWalletFolders();
+
+    Q_INVOKABLE void backupKeys(const QString &caption);
+
+    Q_INVOKABLE void restoreKeys(const QString &caption);
+
+    Q_INVOKABLE void openWalletPathInStandartExplorer();
+
 private:
 
     Wallets &wallets;

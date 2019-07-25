@@ -30,6 +30,10 @@ public:
 
     using QrDecodeCallback = CallbackWrapper<void(const QString &resultHex)>;
 
+    using ChooseFileCallback = CallbackWrapper<void(const QString &file)>;
+
+    using QuestionCallback = CallbackWrapper<void(bool result)>;
+
 public:
     explicit Utils(QObject *parent = nullptr);
 
@@ -57,6 +61,14 @@ signals:
 
     void javascriptLog(const QString &message);
 
+    void saveFileDialog(const QString &caption, const QString &beginPath, const ChooseFileCallback &callback);
+
+    void loadFileDialog(const QString &caption, const QString &beginPath, const QString &mask, const ChooseFileCallback &callback);
+
+    void question(const QString &caption, const QString &text, const QuestionCallback &callback);
+
+    void openFolderInStandartExplored(const QString &folder);
+
 private slots:
 
     void onOpenInBrowser(const QString &url, const OpenInBrowserCallback &callback);
@@ -75,9 +87,17 @@ private slots:
 
     void onJavascriptLog(const QString &message);
 
+    void onSaveFileDialog(const QString &caption, const QString &beginPath, const ChooseFileCallback &callback);
+
+    void onLoadFileDialog(const QString &caption, const QString &beginPath, const QString &mask, const ChooseFileCallback &callback);
+
+    void onQuestion(const QString &caption, const QString &text, const QuestionCallback &callback);
+
+    void onOpenFolderInStandartExplored(const QString &folder);
+
 private:
 
-    void openFolderInStandartExplored(const QString &folder);
+    void openFolderInStandartExploredImpl(const QString &folder);
 
 public slots:
 

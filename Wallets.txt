@@ -183,3 +183,28 @@ walletsSavePrivateKeyBtcResultJs("Ok", errorNum, errorMessage)
 Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address)
 # Returns private key to the function
 walletsGetOnePrivateKeyBtcResultJs(key, errorNum, errorMessage)
+
+
+
+COMMON
+
+
+
+Q_INVOKABLE void getWalletFolders();
+# Function calls javascript
+walletsGetWalletFoldersResultJs(walletDefaultPath, walletCurrentPath, userName, errorNum, errorMessage)
+
+Q_INVOKABLE QString backupKeys(QString caption);
+# Backs up keys to the file. Before backup, user is shown a dialog box providing ability to select a path.
+caption # name of the dialog 
+# Function calls javascript
+walletsBackupKeysResultJs(fileName, errorNum, errorMessage)
+
+Q_INVOKABLE QString restoreKeys(QString caption);
+# Recovers keys from a file. Before recovery, user is shown a dialog box providing ability to select backup file.
+caption # name of the dialog
+# Function calls javascript
+walletsRestoreKeysResultJs(fileName, errorNum, errorMessage)
+
+Q_INVOKABLE void openWalletPathInStandartExplorer();
+# Open directory containing keys in standard explorer.

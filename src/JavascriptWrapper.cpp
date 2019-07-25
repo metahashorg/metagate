@@ -1216,7 +1216,12 @@ void JavascriptWrapper::getWalletFolders() {
 BEGIN_SLOT_WRAPPER
     LOG << "getWalletFolders ";
     const QString JS_NAME_RESULT = "walletFoldersJs";
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(walletDefaultPath), Opt<QString>(walletPath), Opt<QString>(userName));
+
+    wallets.getWalletFolders(wallets::Wallets::GetWalletFoldersCallback([this, JS_NAME_RESULT](const QString &defaultFolder, const QString &folder, const QString &userName) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(defaultFolder), Opt<QString>(folder), Opt<QString>(userName));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(""), Opt<QString>(""), Opt<QString>(""));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1358,7 +1363,7 @@ void JavascriptWrapper::openFolderInStandartExplored(const QString &folder) {
 
 void JavascriptWrapper::openWalletPathInStandartExplorer() {
 BEGIN_SLOT_WRAPPER
-    openFolderInStandartExplored(walletPath);
+    emit wallets.openWalletPathInStandartExplorer();
 END_SLOT_WRAPPER
 }
 
