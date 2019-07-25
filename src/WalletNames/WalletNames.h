@@ -84,13 +84,13 @@ private slots:
 
     void onWssMessageReceived(QString message);
 
-    void onLogined(bool isInit, const QString login);
+    void onLogined(bool isInit, const QString &login, const QString &token);
 
 private slots:
 
-    void onMhcWatchWalletCreated(bool isMhc, const QString &address);
+    void onMhcWatchWalletCreated(bool isMhc, const QString &address, const QString &username);
 
-    void onMhcWatchWalletRemoved(bool isMhc, const QString &address);
+    void onMhcWatchWalletRemoved(bool isMhc, const QString &address, const QString &username);
 
 private:
 
@@ -114,13 +114,13 @@ private:
 
     JavascriptWrapper &javascriptWrapper;
 
-    auth::Auth &authManager;
-
     WebSocketClient &client;
 
     wallets::Wallets &wallets;
 
     QString token;
+
+    QString userName;
 
     QString hwid;
 

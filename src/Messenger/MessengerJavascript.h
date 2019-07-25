@@ -40,7 +40,7 @@ public:
 public slots:
     void onLogined(bool isInit, const QString login);
 
-    void onMthWalletCreated(bool isMhc, const QString &name);
+    void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
 
 signals:
 
@@ -152,8 +152,6 @@ private:
     transactions::Transactions &txManager;
 
     wallets::Wallets &wallets;
-
-    QString walletPath;
 
     QString currentUserName;
 

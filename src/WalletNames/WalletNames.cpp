@@ -43,7 +43,6 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     : TimerClass(5min, nullptr)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
-    , authManager(authManager)
     , client(client)
     , wallets(wallets)
 {
@@ -54,7 +53,7 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
     Q_CONNECT(&client, &WebSocketClient::messageReceived, this, &WalletNames::onWssMessageReceived);
-    Q_CONNECT(&authManager, &auth::Auth::logined, this, &WalletNames::onLogined);
+    Q_CONNECT(&authManager, &auth::Auth::logined2, this, &WalletNames::onLogined);
 
     Q_CONNECT(this, &WalletNames::addOrUpdateWallets, this, &WalletNames::onAddOrUpdateWallets);
     Q_CONNECT(this, &WalletNames::saveWalletName, this, &WalletNames::onSaveWalletName);
@@ -75,6 +74,8 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascript
     httpClient.setParent(this);
     Q_CONNECT(&httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall);
     httpClient.moveToThread(TimerClass::getThread());
+
+    hwid = QString::fromStdString(getMachineUid());
 
     moveToThread(TimerClass::getThread()); // TODO вызывать в TimerClass
 }
@@ -221,8 +222,12 @@ static WalletInfo::Info::Type convertTypes(const wallets::WalletInfo::Type &type
 void WalletNames::onGetAllWalletsCurrency(const QString &currency, const GetAllWalletsCurrencyCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
-        const auto processWallets = [this](const wallets::WalletCurrency &currency, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+        const auto processWallets = [this](const wallets::WalletCurrency &currency, QString userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
             const QString currencyStr = walletCurrencyToStr(currency);
+
+            if (userName.isEmpty()) {
+                userName = "_unregistered";
+            }
 
             std::vector<WalletInfo> otherWallets = db.getWalletsCurrency(currencyStr, userName);
             std::set<QString> walletAddressesSet;
@@ -310,7 +315,7 @@ void WalletNames::processWalletsList(const std::vector<WalletInfo> &wallets) {
 }
 
 void WalletNames::sendAllWallets() {
-    const auto processWallets = [this](const wallets::WalletCurrency &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](const wallets::WalletCurrency &type, QString userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         const QString typeStr = walletCurrencyToStr(type);
 
         std::vector<WalletInfo> thisWallets;
@@ -318,6 +323,9 @@ void WalletNames::sendAllWallets() {
         for (const wallets::WalletInfo &wallet: walletAddresses) {
             WalletInfo info = db.getWalletInfo(wallet.address);
             info.address = wallet.address; // На случай, если вернулся пустой результат
+            if (userName.isEmpty()) {
+                userName = "_unregistered";
+            }
             info.infos.emplace_back(userName, hwid, typeStr, convertTypes(wallet.type));
             thisWallets.emplace_back(info);
         }
@@ -365,24 +373,22 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletNames::onLogined(bool isInit, const QString login) {
+void WalletNames::onLogined(bool isInit, const QString &login, const QString &token_) {
 BEGIN_SLOT_WRAPPER
-    if (isInit) {
-        authManager.getLoginInfo(auth::Auth::LoginInfoCallback([this](const auth::LoginInfo &info) {
-            token = info.token;
-            hwid = QString::fromStdString(getMachineUid());
+    userName = login;
+    token = token_;
 
-            //getAllWallets();
-            getAllWalletsApps();
-        }, [](const TypedException &e) {
-            LOG << "Error: " << e.description;
-        }, signalFunc));
+    if (isInit) {
+        getAllWalletsApps();
     }
 END_SLOT_WRAPPER
 }
 
-void WalletNames::onMhcWatchWalletCreated(bool isMhc, const QString &address) {
+void WalletNames::onMhcWatchWalletCreated(bool isMhc, const QString &address, const QString &username) {
 BEGIN_SLOT_WRAPPER
+    if (userName != username) {
+        return;
+    }
     const QString message = makeCreateWatchWalletMessage(id.get(), token, hwid, address, isMhc);
 
     httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
@@ -391,8 +397,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletNames::onMhcWatchWalletRemoved(bool isMhc, const QString &address) {
+void WalletNames::onMhcWatchWalletRemoved(bool isMhc, const QString &address, const QString &username) {
 BEGIN_SLOT_WRAPPER
+    if (userName != username) {
+        return;
+    }
     const QString message = makeRemoveWatchWalletMessage(id.get(), token, hwid, address, isMhc);
 
     httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {

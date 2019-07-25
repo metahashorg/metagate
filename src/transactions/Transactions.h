@@ -237,7 +237,7 @@ public slots:
 
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
-    void onMthWalletCreated(bool isMhc, const QString &name);
+    void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
 
 private slots:
 

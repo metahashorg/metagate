@@ -31,8 +31,6 @@ SET_LOG_NAMESPACE("WLTS");
 
 namespace wallets {
 
-const QString Wallets::defaultUsername = "_unregistered";
-
 Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     : TimerClass(5s, parent)
     , walletDefaultPath(getWalletPath())
@@ -143,7 +141,7 @@ BEGIN_SLOT_WRAPPER
             created.emplace_back(addr, walletFullPath);
         }
 
-        emit watchWalletsAdded(isMhc, created);
+        emit watchWalletsAdded(isMhc, created, userName);
 
         return created;
     }, callback);
@@ -166,7 +164,7 @@ BEGIN_SLOT_WRAPPER
 
         const QString walletFullPath = wallet.getFullPath();
 
-        emit mhcWalletCreated(isMhc, QString::fromStdString(addr));
+        emit mhcWalletCreated(isMhc, QString::fromStdString(addr), userName);
 
         return std::make_tuple(walletFullPath, pKey, addr, exampleMessage, signature);
     }, callback);
@@ -183,7 +181,7 @@ BEGIN_SLOT_WRAPPER
 
         const QString walletFullPath = wallet.getFullPath();
 
-        emit mhcWatchWalletCreated(isMhc, address);
+        emit mhcWatchWalletCreated(isMhc, address, userName);
 
         return walletFullPath;
     }, callback);
@@ -196,7 +194,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet::removeWalletWatch(walletPath, isMhc, address.toStdString());
 
-        emit mhcWatchWalletRemoved(isMhc, address);
+        emit mhcWatchWalletRemoved(isMhc, address, userName);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -821,7 +819,7 @@ BEGIN_SLOT_WRAPPER
         setPathsImpl(makePath(walletDefaultPath, login), login);
         token = token_;
     } else {
-        setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
+        setPathsImpl(makePath(walletDefaultPath, "_unregistered"), "");
     }
 END_SLOT_WRAPPER
 }

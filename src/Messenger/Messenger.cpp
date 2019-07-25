@@ -960,7 +960,6 @@ BEGIN_SLOT_WRAPPER
             const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(address);
             getMessagesFromAddressFromWss(address, currCounter + 1, -1, true);
         }
-        //
     }, callback);
 END_SLOT_WRAPPER
 }

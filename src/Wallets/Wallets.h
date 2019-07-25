@@ -103,19 +103,17 @@ public:
 
     const QString walletDefaultPath;
 
-    const static QString defaultUsername;
-
 signals:
 
     void usernameChanged(const QString &newUserName);
 
-    void watchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
+    void watchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created, const QString &username);
 
-    void mhcWalletCreated(bool isMhc, const QString &address);
+    void mhcWalletCreated(bool isMhc, const QString &address, const QString &username);
 
-    void mhcWatchWalletCreated(bool isMhc, const QString &address);
+    void mhcWatchWalletCreated(bool isMhc, const QString &address, const QString &username);
 
-    void mhcWatchWalletRemoved(bool isMhc, const QString &address);
+    void mhcWatchWalletRemoved(bool isMhc, const QString &address, const QString &username);
 
 ///////////
 /// MHC ///

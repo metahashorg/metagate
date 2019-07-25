@@ -34,6 +34,9 @@ static const uint64_t ADD_TO_COUNT_TXS = 10;
 static const uint64_t MAX_TXS_IN_RESPONSE = 2000;
 
 static QString makeGroupName(const QString &userName) {
+    if (userName.isEmpty()) {
+        return "_unregistered";
+    }
     return userName;
 }
 
@@ -75,6 +78,7 @@ Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascrip
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
 
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletCreated, this, &Transactions::onMthWalletCreated);
+    Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletCreated, this, &Transactions::onMthWalletCreated);
 
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
     Q_REG(GetTxsCallback, "GetTxsCallback");
@@ -784,26 +788,17 @@ BEGIN_SLOT_WRAPPER
     if (!isInit) {
         return;
     }
-    QString newUserName;
-    if (login.isEmpty()) {
-        newUserName = wallets::Wallets::defaultUsername;
-    } else {
-        newUserName = login;
-    }
-    if (newUserName == currentUserName) {
+    if (login == currentUserName) {
         return;
     }
-    currentUserName = newUserName;
+    currentUserName = login;
     addTrackedForCurrentLogin();
 END_SLOT_WRAPPER
 }
 
-void Transactions::onMthWalletCreated(bool isMhc, const QString &name)
-{
-    Q_UNUSED(isMhc);
-    Q_UNUSED(name);
+void Transactions::onMthWalletCreated(bool isMhc, const QString &address, const QString &userName) {
 BEGIN_SLOT_WRAPPER
-    addTrackedForCurrentLogin();
+    db.addTracked(isMhc ? "mhc" : "tmh", address, "", isMhc ? TorrentTypeMainNet : TorrentTypeDevNet, makeGroupName(userName));
 END_SLOT_WRAPPER
 }
 
