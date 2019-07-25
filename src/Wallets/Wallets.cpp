@@ -139,6 +139,8 @@ BEGIN_SLOT_WRAPPER
             Wallet wallet(walletPath, isMhc, addr.toStdString());
             const QString walletFullPath = wallet.getFullPath();
             created.emplace_back(addr, walletFullPath);
+
+            walletsList[isMhc ? WalletCurrency::Mth : WalletCurrency::Tmh][addr] = WalletInfo(addr, walletFullPath, WalletInfo::Type::Watch);
         }
 
         emit watchWalletsAdded(isMhc, created, userName);
@@ -164,6 +166,8 @@ BEGIN_SLOT_WRAPPER
 
         const QString walletFullPath = wallet.getFullPath();
 
+        walletsList[isMhc ? WalletCurrency::Mth : WalletCurrency::Tmh][QString::fromStdString(addr)] = WalletInfo(QString::fromStdString(addr), walletFullPath, WalletInfo::Type::Key);
+
         emit mhcWalletCreated(isMhc, QString::fromStdString(addr), userName);
 
         return std::make_tuple(walletFullPath, pKey, addr, exampleMessage, signature);
@@ -181,6 +185,8 @@ BEGIN_SLOT_WRAPPER
 
         const QString walletFullPath = wallet.getFullPath();
 
+        walletsList[isMhc ? WalletCurrency::Mth : WalletCurrency::Tmh][address] = WalletInfo(address, walletFullPath, WalletInfo::Type::Watch);
+
         emit mhcWatchWalletCreated(isMhc, address, userName);
 
         return walletFullPath;
@@ -193,6 +199,8 @@ BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         Wallet::removeWalletWatch(walletPath, isMhc, address.toStdString());
+
+        walletsList[isMhc ? WalletCurrency::Mth : WalletCurrency::Tmh].erase(address);
 
         emit mhcWatchWalletRemoved(isMhc, address, userName);
     }, callback);
@@ -506,6 +514,9 @@ BEGIN_SLOT_WRAPPER
         const QString address = QString::fromStdString(EthWallet::genPrivateKey(walletPath, password.normalized(QString::NormalizationForm_C).toStdString()));
 
         const QString fullPath = EthWallet::getFullPath(walletPath, address.toStdString());
+
+        walletsList[WalletCurrency::Eth][address] = WalletInfo(address, fullPath, WalletInfo::Type::Key);
+
         return std::make_tuple(address, fullPath);
     }, callback);
 END_SLOT_WRAPPER
@@ -579,6 +590,9 @@ BEGIN_SLOT_WRAPPER
         const std::string address = BtcWallet::genPrivateKey(walletPath, password).first;
 
         const QString fullPath = BtcWallet::getFullPath(walletPath, address);
+
+        walletsList[WalletCurrency::Btc][QString::fromStdString(address)] = WalletInfo(QString::fromStdString(address), fullPath, WalletInfo::Type::Key);
+
         return std::make_tuple(QString::fromStdString(address), fullPath);
     }, callback);
 END_SLOT_WRAPPER
@@ -663,29 +677,16 @@ void Wallets::onGetListWallets(const WalletCurrency &type, const WalletsListCall
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         CHECK(!walletPath.isEmpty(), "Wallet path not set");
-        if (type == WalletCurrency::Tmh) {
-            return std::make_tuple(userName, Wallet::getAllWalletsInfoInFolder(walletPath, false));
-        } else if (type == WalletCurrency::Mth) {
-            return std::make_tuple(userName, Wallet::getAllWalletsInfoInFolder(walletPath, true));
-        } else if (type == WalletCurrency::Btc) {
-            const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
-            std::vector<WalletInfo> result;
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
-                return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
-            });
-            return std::make_tuple(userName, result);
-        } else if (type == WalletCurrency::Eth) {
-            const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
-            std::vector<WalletInfo> result;
-            result.reserve(res.size());
-            std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
-                return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
-            });
-            return std::make_tuple(userName, result);
-        } else {
-            throwErr("Incorrect type");
+        const auto found = walletsList.find(type);
+        if (found == walletsList.end()) {
+            throwErr("Incorrect type or not found wallets");
         }
+        std::vector<WalletInfo> result;
+        result.reserve(found->second.size());
+        std::transform(found->second.begin(), found->second.end(), std::back_inserter(result), [](const auto &pair) {
+            return pair.second;
+        });
+        return std::make_tuple(userName, result);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -780,6 +781,41 @@ void Wallets::finishMethod() {
 
 }
 
+std::vector<WalletInfo> Wallets::readAllWallets(const WalletCurrency &type) {
+    CHECK(!walletPath.isEmpty(), "Wallet path not set");
+    if (type == WalletCurrency::Tmh) {
+        return Wallet::getAllWalletsInfoInFolder(walletPath, false);
+    } else if (type == WalletCurrency::Mth) {
+        return Wallet::getAllWalletsInfoInFolder(walletPath, true);
+    } else if (type == WalletCurrency::Btc) {
+        const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
+        std::vector<WalletInfo> result;
+        result.reserve(res.size());
+        std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
+            return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
+        });
+        return result;
+    } else if (type == WalletCurrency::Eth) {
+        const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
+        std::vector<WalletInfo> result;
+        result.reserve(res.size());
+        std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
+            return WalletInfo(pair.first, pair.second, WalletInfo::Type::Key);
+        });
+        return result;
+    } else {
+        throwErr("Incorrect type");
+    }
+}
+
+static std::map<QString, WalletInfo> walletsToMap(const std::vector<WalletInfo> &wallets) {
+    std::map<QString, WalletInfo> wallets2;
+    std::transform(wallets.begin(), wallets.end(), std::inserter(wallets2, wallets2.begin()), [](const WalletInfo &info) {
+        return std::make_pair(info.address, info);
+    });
+    return wallets2;
+}
+
 void Wallets::setPathsImpl(QString newPatch, QString newUserName) {
     userName = newUserName;
 
@@ -796,17 +832,22 @@ void Wallets::setPathsImpl(QString newPatch, QString newUserName) {
     }
     folderWalletsInfos.clear();
 
-    const auto setPathToWallet = [this](const QString &suffix, const QString &name) {
+    const auto setPathToWallet = [this](const QString &suffix, const QString &name, const WalletCurrency &type) {
         const QString curPath = makePath(walletPath, suffix);
         createFolder(curPath);
         folderWalletsInfos.emplace_back(curPath, name);
         fileSystemWatcher.addPath(curPath);
+
+        const std::vector<WalletInfo> wallets = readAllWallets(type);
+        walletsList[type] = walletsToMap(wallets);
     };
 
-    setPathToWallet(EthWallet::subfolder(), "eth");
-    setPathToWallet(BtcWallet::subfolder(), "btc");
-    setPathToWallet(Wallet::chooseSubfolder(true), "mhc");
-    setPathToWallet(Wallet::chooseSubfolder(false), "tmh");
+    walletsList.clear();
+
+    setPathToWallet(EthWallet::subfolder(), "eth", WalletCurrency::Eth);
+    setPathToWallet(BtcWallet::subfolder(), "btc", WalletCurrency::Btc);
+    setPathToWallet(Wallet::chooseSubfolder(true), "mhc", WalletCurrency::Mth);
+    setPathToWallet(Wallet::chooseSubfolder(false), "tmh", WalletCurrency::Tmh);
 
     LOG << "Wallets path " << walletPath;
 
@@ -826,6 +867,49 @@ END_SLOT_WRAPPER
 
 void Wallets::onDirChanged(const QString &dir) {
 BEGIN_SLOT_WRAPPER
+    const QDir changedPath = dir;
+    WalletCurrency currency;
+    if (changedPath == QDir(makePath(walletPath, EthWallet::subfolder()))) {
+        currency = WalletCurrency::Eth;
+    } else if (changedPath == QDir(makePath(walletPath, BtcWallet::subfolder()))) {
+        currency = WalletCurrency::Btc;
+    } else if (changedPath == QDir(makePath(walletPath, Wallet::chooseSubfolder(true)))) {
+        currency = WalletCurrency::Mth;
+    } else if (changedPath == QDir(makePath(walletPath, Wallet::chooseSubfolder(false)))) {
+        currency = WalletCurrency::Tmh;
+    } else {
+        return;
+    }
+
+    const std::vector<WalletInfo> currentWallets = readAllWallets(currency);
+    const std::map<QString, WalletInfo> currentWallets2 = walletsToMap(currentWallets);
+
+    const auto &walletsL = walletsList[currency];
+    for (const auto &pair: currentWallets2) {
+        if (walletsL.find(pair.first) == walletsL.end()) {
+            if (currency == WalletCurrency::Mth || currency == WalletCurrency::Tmh) {
+                const bool isMhc = currency == WalletCurrency::Mth;
+                if (pair.second.type == WalletInfo::Type::Watch) {
+                    emit mhcWatchWalletCreated(isMhc, pair.first, userName);
+                } else {
+                    emit mhcWalletCreated(isMhc, pair.first, userName);
+                }
+            }
+        }
+    }
+
+    for (const auto &pair: walletsL) {
+        if (currentWallets2.find(pair.first) == currentWallets2.end()) {
+            if (currency == WalletCurrency::Mth || currency == WalletCurrency::Tmh) {
+                const bool isMhc = currency == WalletCurrency::Mth;
+                if (pair.second.type == WalletInfo::Type::Watch) {
+                    emit mhcWatchWalletRemoved(isMhc, pair.first, userName);
+                }
+            }
+        }
+    }
+
+    walletsList[currency] = currentWallets2;
 END_SLOT_WRAPPER
 }
 

@@ -333,6 +333,8 @@ private:
 
     void setPathsImpl(QString newPatch, QString newUserName);
 
+    std::vector<WalletInfo> readAllWallets(const WalletCurrency &type);
+
 private:
 
     void findNonceAndProcessWithTxManager(const QString &address, const QString &nonce, const transactions::SendParameters &sendParams, const GettedNonceCallback &callback);
@@ -354,6 +356,8 @@ private:
     EventWatcher eventWatcher;
 
     transactions::Transactions *txs = nullptr;
+
+    std::map<WalletCurrency, std::map<QString, WalletInfo>> walletsList;
 
 };
 
