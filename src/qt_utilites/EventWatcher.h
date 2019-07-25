@@ -6,9 +6,9 @@
 #include <memory>
 #include <string>
 
-#include "duration.h"
+#include "TypedException.h"
 
-class TypedException;
+#include "duration.h"
 
 class WatchedEvent {
     friend class EventWatcher;

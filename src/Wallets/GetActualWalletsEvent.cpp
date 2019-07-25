@@ -2,6 +2,7 @@
 
 #include "Log.h"
 #include "check.h"
+#include "TypedException.h"
 
 #include "Wallets.h"
 

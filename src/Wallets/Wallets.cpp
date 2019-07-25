@@ -324,8 +324,10 @@ BEGIN_SLOT_WRAPPER
             realFee = "0";
         }
 
-        const auto signTransaction = [this, walletPath=this->walletPath, isMhc, address, password, toAddress, value, realFee, dataHex, sendParams, callback](size_t nonce) {
-            Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+        const QString walletPathCopy = walletPath;
+
+        const auto signTransaction = [this, walletPathCopy, isMhc, address, password, toAddress, value, realFee, dataHex, sendParams, callback](size_t nonce) {
+            Wallet wallet(walletPathCopy, isMhc, address.toStdString(), password.toStdString());
             std::string publicKey;
             std::string tx;
             std::string signature;
@@ -360,8 +362,10 @@ BEGIN_SLOT_WRAPPER
             realFee = "0";
         }
 
-        const auto signTransaction = [this, walletPath=this->walletPath, isMhc, address, password, toAddress, value, realFee, valueDelegate, isDelegate, sendParams, callback](size_t nonce) {
-            Wallet wallet(walletPath, isMhc, address.toStdString(), password.toStdString());
+        const QString walletPathCopy = walletPath;
+
+        const auto signTransaction = [this, walletPathCopy, isMhc, address, password, toAddress, value, realFee, valueDelegate, isDelegate, sendParams, callback](size_t nonce) {
+            Wallet wallet(walletPathCopy, isMhc, address.toStdString(), password.toStdString());
 
             bool isValid;
             const uint64_t delegValue = valueDelegate.toULongLong(&isValid);
@@ -721,9 +725,10 @@ BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
-        emit utils.saveFileDialog(caption, beginPath, utils::Utils::ChooseFileCallback([walletPath=this->walletPath, callback](const QString &fileName) {
+        const QString walletPathCopy = walletPath;
+        emit utils.saveFileDialog(caption, beginPath, utils::Utils::ChooseFileCallback([walletPathCopy, callback](const QString &fileName) {
             if (!fileName.isEmpty()) {
-                ::backupKeys(walletPath, fileName);
+                ::backupKeys(walletPathCopy, fileName);
                 callback.emitCallback(fileName);
             } else {
                 callback.emitCallback("");
@@ -737,16 +742,17 @@ void Wallets::onRestoreKeys(const QString &caption, const RestoreKeysCallback &c
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const QString walletPathCopy = walletPath;
         const QString beginPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), "backup.zip");
-        emit utils.loadFileDialog(caption, beginPath, "*.zip;;*.*", utils::Utils::ChooseFileCallback([this, walletPath=this->walletPath, caption, callback](const QString &fileName) {
+        emit utils.loadFileDialog(caption, beginPath, "*.zip;;*.*", utils::Utils::ChooseFileCallback([this, walletPathCopy, caption, callback](const QString &fileName) {
             if (fileName.isEmpty()) {
                 callback.emitCallback("");
                 return;
             }
             const std::string text = checkBackupFile(fileName);
-            emit utils.question(caption, "Restore backup " + QString::fromStdString(text) + "?", utils::Utils::QuestionCallback([this, walletPath=walletPath, fileName, callback](bool result) {
+            emit utils.question(caption, "Restore backup " + QString::fromStdString(text) + "?", utils::Utils::QuestionCallback([this, walletPathCopy, fileName, callback](bool result) {
                 if (result) {
-                    ::restoreKeys(fileName, walletPath);
+                    ::restoreKeys(fileName, walletPathCopy);
                     callback.emitCallback(fileName);
                 } else {
                     callback.emitCallback("");

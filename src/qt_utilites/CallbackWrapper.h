@@ -36,7 +36,7 @@ void wrapErrorImpl(const std::function<void()> &callback, const ErrorCallback &e
 
 bool isSetExceptionImpl(const TypedException &exception);
 
-void emitErrorFuncImpl(const SignalFunc &signalFunc, const std::function<void(const TypedException &exception)> &errorCallback, const TypedException &e);
+void emitErrorFuncImpl(const SignalFunc &signalFunc, const ErrorCallback &errorCallback, const TypedException &e);
 
 void emitCallbackFuncImpl(const SignalFunc &signalFunc, const std::function<void()> &callback);
 
