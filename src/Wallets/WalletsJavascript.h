@@ -83,6 +83,22 @@ public:
 
     Q_INVOKABLE void getOnePrivateKeyEth(const QString &address);
 
+///////////
+/// BTC ///
+///////////
+
+public:
+
+    Q_INVOKABLE void createBtcKey(const QString &password);
+
+    Q_INVOKABLE void checkAddressBtc(const QString &address);
+
+    Q_INVOKABLE void signMessageBtcUsedUtxos(const QString &address, const QString &password, const QString &jsonInputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const QString &jsonUsedUtxos);
+
+    Q_INVOKABLE void savePrivateKeyBtc(const QString &privateKey, const QString &password);
+
+    Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address);
+
 private:
 
     Wallets &wallets;

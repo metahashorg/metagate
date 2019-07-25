@@ -148,3 +148,38 @@ walletsSavePrivateKeyEthResultJs("Ok", errorNum, errorMessage)
 Q_INVOKABLE void getOnePrivateKeyEth(const QString &address)
 # Returns private key to the function
 walletsGetOnePrivateKeyEthResultJs(key, errorNum, errorMessage)
+
+
+
+BITCOIN
+
+
+
+Q_INVOKABLE void createBtcKey(const QString &password)
+# Generates Bitcoin wallet, puts file to ~/.metahash_wallets/btc/
+# javascript is called after completion of this function 
+walletsCreateBtcKeyResultJs(address, fullKeyPath, errorNum, errorMessage)
+
+Q_INVOKABLE void checkAddressBtc(const QString &address)
+# To check the address for correctness. The result will return to the function:
+walletsCheckAddressBtcResultJs("Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageBtcUsedUtxos(QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos)
+# Generating Bitcoin transaction
+# Parameters:
+  # jsonInputs - utxos in the format [{"tx_hash": "string", "tx_index": figure, "scriptPubKey": "string", "value": "figure in the string in decimal format"}]
+  # value - is needed for sending. Possible variants: "all" or decimal number
+  # fees - Possible variants: "auto" or decimal number
+  # estimateComissionInSatoshi if there was "auto", here must be specified a decimal number
+  # jsonUsedUtxos performed transactions. Empty array or value from the previous function call result
+# javascript is called after completion of this function 
+walletsSignMessageBtcResultJs(transaction, jsonUsedUtxos, transactionHash, errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyBtc(const QString &privateKey, const QString &password)
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+walletsSavePrivateKeyBtcResultJs("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address)
+# Returns private key to the function
+walletsGetOnePrivateKeyBtcResultJs(key, errorNum, errorMessage)

@@ -956,7 +956,7 @@ BEGIN_SLOT_WRAPPER
     wallets.getOnePrivateKeyEth(keyName, wallets::Wallets::GetPrivateKeyCallback([this, JS_NAME_RESULT, requestId, keyName](const QString &result) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
     }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
     }, signalFunc));
 END_SLOT_WRAPPER
 }
@@ -984,17 +984,12 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Create wallet btc " << requestId;
 
-    Opt<std::string> address;
-    QString fullPath;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        address = BtcWallet::genPrivateKey(walletPath, password).first;
-
-        fullPath = BtcWallet::getFullPath(walletPath, address.get());
-        LOG << "Create btc wallet ok " << requestId << " " << address.get();
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, fullPath, exception, Opt<QString>(requestId), address);
+    wallets.createBtcKey(password, wallets::Wallets::CreateBtcKeyCallback([this, JS_NAME_RESULT, requestId](const QString &address, const QString &fullPath) {
+        LOG << "Create btc wallet ok " << requestId << " " << address;
+        makeAndRunJsFuncParams(JS_NAME_RESULT, fullPath, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, "", e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1008,21 +1003,11 @@ void JavascriptWrapper::checkAddressBtc(QString requestId, QString address) {
 BEGIN_SLOT_WRAPPER
     LOG << "Check address btc " << address;
     const QString JS_NAME_RESULT = "checkAddressBtcResultJs";
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        try {
-            BtcWallet::checkAddress(address.toStdString());
-        } catch (const Exception &e) {
-            result = "not valid";
-            return;
-        } catch (...) {
-            throw;
-        }
-
-        result = "ok";
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    wallets.checkAddressBtc(address, wallets::Wallets::CheckAddressCallback([this, JS_NAME_RESULT, requestId](bool result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "not valid"));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1033,59 +1018,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Sign message btc " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
 
-    Opt<std::string> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        std::vector<BtcInput> btcInputs;
-
+    const TypedException exception = apiVrapper2([&]{
         const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
         CHECK(document.isArray(), "jsonInputs not array");
         const QJsonArray root = document.array();
-        for (const auto &jsonObj2: root) {
-            const QJsonObject jsonObj = jsonObj2.toObject();
-            BtcInput input;
-            CHECK(jsonObj.contains("value") && jsonObj.value("value").isString(), "value field not found");
-            bool isValid;
-            input.outBalance = jsonObj.value("value").toString().toULongLong(&isValid);
-            CHECK(isValid, "Out balance not valid");
-            CHECK(jsonObj.contains("scriptPubKey") && jsonObj.value("scriptPubKey").isString(), "scriptPubKey field not found");
-            input.scriptPubkey = jsonObj.value("scriptPubKey").toString().toStdString();
-            CHECK(jsonObj.contains("tx_index") && jsonObj.value("tx_index").isDouble(), "tx_index field not found");
-            input.spendoutnum = jsonObj.value("tx_index").toInt();
-            CHECK(jsonObj.contains("tx_hash") && jsonObj.value("tx_hash").isString(), "tx_hash field not found");
-            input.spendtxid = jsonObj.value("tx_hash").toString().toStdString();
-            btcInputs.emplace_back(input);
-        }
-
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        BtcWallet wallet(walletPath, address.toStdString(), password);
-        size_t estimateComissionInSatoshiInt = 0;
-        if (!estimateComissionInSatoshi.isEmpty()) {
-            CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
-            estimateComissionInSatoshiInt = std::stoull(estimateComissionInSatoshi.toStdString());
-        }
-        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
-        result = resultPair.first;
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "signMessageBtcUsedUtxosResultJs";
-
-    LOG << "Sign message btc utxos " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
-
-    Opt<QJsonDocument> jsonUtxos;
-    Opt<std::string> transactionHash;
-    Opt<std::string> result;
-    const TypedException exception = apiVrapper2([&, this]() {
         std::vector<BtcInput> btcInputs;
-
-        const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
-        CHECK(document.isArray(), "jsonInputs not array");
-        const QJsonArray root = document.array();
         for (const auto &jsonObj2: root) {
             const QJsonObject jsonObj = jsonObj2.toObject();
             BtcInput input;
@@ -1100,6 +1037,26 @@ BEGIN_SLOT_WRAPPER
             btcInputs.emplace_back(input);
         }
 
+        wallets.signMessageBtcUsedUtxos(address, password, btcInputs, toAddress, value, estimateComissionInSatoshi, fees, std::set<std::string>(), wallets::Wallets::SignMessageBtcCallback([this, JS_NAME_RESULT, requestId](const QString &result, const QString &hash, const std::set<std::string> &usedUtxos) {
+            LOG << "Sign message btc ok";
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+        }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
+        }, signalFunc));
+    });
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), Opt<QString>(""));
+    }
+END_SLOT_WRAPPER
+}
+
+void JavascriptWrapper::signMessageBtcPswdUsedUtxos(QString requestId, QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "signMessageBtcUsedUtxosResultJs";
+
+    LOG << "Sign message btc utxos " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
+
+    const TypedException exception = apiVrapper2([&]{
         std::set<std::string> usedUtxos;
         const QJsonDocument documentUsed = QJsonDocument::fromJson(jsonUsedUtxos.toUtf8());
         CHECK(documentUsed.isArray(), "jsonInputs not array");
@@ -1108,31 +1065,42 @@ BEGIN_SLOT_WRAPPER
             CHECK(jsonUsedUtxo.isString(), "value field not found");
             usedUtxos.insert(jsonUsedUtxo.toString().toStdString());
         }
-        btcInputs = BtcWallet::reduceInputs(btcInputs, usedUtxos);
         LOG << "Used utxos: " << usedUtxos.size();
 
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-        BtcWallet wallet(walletPath, address.toStdString(), password);
-        size_t estimateComissionInSatoshiInt = 0;
-        if (!estimateComissionInSatoshi.isEmpty()) {
-            CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
-            estimateComissionInSatoshiInt = std::stoull(estimateComissionInSatoshi.toStdString());
+        const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
+        CHECK(document.isArray(), "jsonInputs not array");
+        const QJsonArray root = document.array();
+        std::vector<BtcInput> btcInputs;
+        for (const auto &jsonObj2: root) {
+            const QJsonObject jsonObj = jsonObj2.toObject();
+            BtcInput input;
+            CHECK(jsonObj.contains("value") && jsonObj.value("value").isString(), "value field not found");
+            input.outBalance = std::stoull(jsonObj.value("value").toString().toStdString());
+            CHECK(jsonObj.contains("scriptPubKey") && jsonObj.value("scriptPubKey").isString(), "scriptPubKey field not found");
+            input.scriptPubkey = jsonObj.value("scriptPubKey").toString().toStdString();
+            CHECK(jsonObj.contains("tx_index") && jsonObj.value("tx_index").isDouble(), "tx_index field not found");
+            input.spendoutnum = jsonObj.value("tx_index").toInt();
+            CHECK(jsonObj.contains("tx_hash") && jsonObj.value("tx_hash").isString(), "tx_hash field not found");
+            input.spendtxid = jsonObj.value("tx_hash").toString().toStdString();
+            btcInputs.emplace_back(input);
         }
-        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
-        result = resultPair.first;
-        const std::set<std::string> &thisUsedTxs = resultPair.second;
-        usedUtxos.insert(thisUsedTxs.begin(), thisUsedTxs.end());
 
-        QJsonArray jsonArrayUtxos;
-        for (const std::string &r: usedUtxos) {
-            jsonArrayUtxos.push_back(QString::fromStdString(r));
-        }
-        jsonUtxos = QJsonDocument(jsonArrayUtxos);
+        wallets.signMessageBtcUsedUtxos(address, password, btcInputs, toAddress, value, estimateComissionInSatoshi, fees, usedUtxos, wallets::Wallets::SignMessageBtcCallback([this, JS_NAME_RESULT, requestId](const QString &result, const QString &hash, const std::set<std::string> &usedUtxos) {
+            LOG << "Sign message btc utxos ok";
+            QJsonArray jsonArrayUtxos;
+            for (const std::string &r: usedUtxos) {
+                jsonArrayUtxos.push_back(QString::fromStdString(r));
+            }
+            const QJsonDocument jsonUtxos = QJsonDocument(jsonArrayUtxos);
 
-        transactionHash = BtcWallet::calcHashNotWitness(result.get());
+            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result), Opt<QJsonDocument>(jsonUtxos), Opt<QString>(hash));
+        }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+            makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""), Opt<QJsonDocument>(QJsonDocument()), Opt<QString>(""));
+        }, signalFunc));
     });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result, jsonUtxos, transactionHash);
+    if (exception.isSet()) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), Opt<QString>(""), Opt<QJsonDocument>(QJsonDocument()), Opt<QString>(""));
+    }
 END_SLOT_WRAPPER
 }
 
@@ -1181,16 +1149,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get one private key btc " << keyName;
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
-        const std::string privKey = BtcWallet::getOneKey(walletPath, keyName.toStdString());
-
-        result = QString::fromStdString(privKey);
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+    wallets.getOnePrivateKeyBtc(keyName, wallets::Wallets::GetPrivateKeyCallback([this, JS_NAME_RESULT, requestId, keyName](const QString &result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>(""));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1198,25 +1161,12 @@ void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey,
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyBtcResultJs";
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&, this]() {
-        std::string key = privateKey.toStdString();
-        if (key.compare(0, BtcWallet::PREFIX_ONE_KEY.size(), BtcWallet::PREFIX_ONE_KEY) == 0) {
-            key = key.substr(BtcWallet::PREFIX_ONE_KEY.size());
-        }
-
-        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
-
+    wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, JS_NAME_RESULT, requestId](bool result) {
         LOG << "Save private key btc";
-
-        BtcWallet::savePrivateKey(walletPath, privateKey.toStdString(), password);
-        result = "ok";
-    });
-
-    if (exception.numError != TypeErrors::NOT_ERROR) {
-        result = "Not ok";
-    }
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "Not ok"));
+    }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<QString>("not valid"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 

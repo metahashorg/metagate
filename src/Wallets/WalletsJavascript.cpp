@@ -8,9 +8,11 @@
 #include "qt_utilites/WrapperJavascriptImpl.h"
 
 #include "Wallets.h"
+#include "BtcWallet.h"
 
-#include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
 
 SET_LOG_NAMESPACE("WLTS");
 
@@ -467,6 +469,126 @@ BEGIN_SLOT_WRAPPER
 
     wrapOperation([&, this](){
         emit wallets.getOnePrivateKeyEth(address, wallets::Wallets::GetPrivateKeyCallback([makeFunc](const QString &result){
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+///////////
+/// BTC ///
+///////////
+
+void WalletsJavascript::createBtcKey(const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCreateBtcKeyResultJs";
+
+    LOG << "Create btc key ";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.createBtcKey(password, wallets::Wallets::CreateBtcKeyCallback([makeFunc](const QString &address, const QString &fullPath){
+            LOG << "Create btc key ok " << address;
+            makeFunc.func(TypedException(), address, fullPath);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::checkAddressBtc(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsCheckAddressBtcResultJs";
+
+    LOG << "Check address btc " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.checkAddressBtc(address, wallets::Wallets::CheckAddressCallback([makeFunc](bool success){
+            makeFunc.func(TypedException(), success ? "Ok" : "Not ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::signMessageBtcUsedUtxos(const QString &address, const QString &password, const QString &jsonInputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const QString &jsonUsedUtxos) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSignMessageBtcResultJs";
+
+    LOG << "Sign message btc utxos " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QJsonDocument>(QJsonDocument()), JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        std::set<std::string> usedUtxos;
+        const QJsonDocument documentUsed = QJsonDocument::fromJson(jsonUsedUtxos.toUtf8());
+        CHECK(documentUsed.isArray(), "jsonInputs not array");
+        const QJsonArray rootUsed = documentUsed.array();
+        for (const auto &jsonUsedUtxo: rootUsed) {
+            CHECK(jsonUsedUtxo.isString(), "value field not found");
+            usedUtxos.insert(jsonUsedUtxo.toString().toStdString());
+        }
+        LOG << "Used utxos: " << usedUtxos.size();
+
+        const QJsonDocument document = QJsonDocument::fromJson(jsonInputs.toUtf8());
+        CHECK(document.isArray(), "jsonInputs not array");
+        const QJsonArray root = document.array();
+        std::vector<BtcInput> btcInputs;
+        for (const auto &jsonObj2: root) {
+            const QJsonObject jsonObj = jsonObj2.toObject();
+            BtcInput input;
+            CHECK(jsonObj.contains("value") && jsonObj.value("value").isString(), "value field not found");
+            input.outBalance = std::stoull(jsonObj.value("value").toString().toStdString());
+            CHECK(jsonObj.contains("scriptPubKey") && jsonObj.value("scriptPubKey").isString(), "scriptPubKey field not found");
+            input.scriptPubkey = jsonObj.value("scriptPubKey").toString().toStdString();
+            CHECK(jsonObj.contains("tx_index") && jsonObj.value("tx_index").isDouble(), "tx_index field not found");
+            input.spendoutnum = jsonObj.value("tx_index").toInt();
+            CHECK(jsonObj.contains("tx_hash") && jsonObj.value("tx_hash").isString(), "tx_hash field not found");
+            input.spendtxid = jsonObj.value("tx_hash").toString().toStdString();
+            btcInputs.emplace_back(input);
+        }
+
+        emit wallets.signMessageBtcUsedUtxos(address, password, btcInputs, toAddress, value, estimateComissionInSatoshi, fees, usedUtxos, wallets::Wallets::SignMessageBtcCallback([makeFunc](const QString &result, const QString &hash, const std::set<std::string> &usedUtxos){
+            LOG << "Sign message btc ok ";
+            QJsonArray jsonArrayUtxos;
+            for (const std::string &r: usedUtxos) {
+                jsonArrayUtxos.push_back(QString::fromStdString(r));
+            }
+            const QJsonDocument jsonUtxos = QJsonDocument(jsonArrayUtxos);
+
+            makeFunc.func(TypedException(), result, jsonUtxos, hash);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::savePrivateKeyBtc(const QString &privateKey, const QString &password) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsSavePrivateKeyBtcResultJs";
+
+    LOG << "Save private btc key ";
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success){
+            makeFunc.func(TypedException(), success ? "Ok" : "Not ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::getOnePrivateKeyBtc(const QString &address) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsGetOnePrivateKeyBtcResultJs";
+
+    LOG << "Get private key btc " << address;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.getOnePrivateKeyBtc(address, wallets::Wallets::GetPrivateKeyCallback([makeFunc](const QString &result){
             makeFunc.func(TypedException(), result);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);

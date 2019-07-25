@@ -62,6 +62,11 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_CONNECT(this, &Wallets::checkAddressEth, this, &Wallets::onCheckAddressEth);
     Q_CONNECT(this, &Wallets::savePrivateKeyEth, this, &Wallets::onSavePrivateKeyEth);
     Q_CONNECT(this, &Wallets::getOnePrivateKeyEth, this, &Wallets::onGetOnePrivateKeyEth);
+    Q_CONNECT(this, &Wallets::createBtcKey, this, &Wallets::onCreateBtcKey);
+    Q_CONNECT(this, &Wallets::checkAddressBtc, this, &Wallets::onCheckAddressBtc);
+    Q_CONNECT(this, &Wallets::signMessageBtcUsedUtxos, this, &Wallets::onSignMessageBtcUsedUtxos);
+    Q_CONNECT(this, &Wallets::savePrivateKeyBtc, this, &Wallets::onSavePrivateKeyBtc);
+    Q_CONNECT(this, &Wallets::getOnePrivateKeyBtc, this, &Wallets::onGetOnePrivateKeyBtc);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -87,6 +92,10 @@ Wallets::Wallets(auth::Auth &auth, QObject *parent)
     Q_REG(CopyRsaKeyCallback, "CopyRsaKeyCallback");
     Q_REG(CreateEthKeyCallback, "CreateEthKeyCallback");
     Q_REG(SignMessageEthCallback, "SignMessageEthCallback");
+    Q_REG(CreateBtcKeyCallback, "CreateBtcKeyCallback");
+    Q_REG(SignMessageBtcCallback, "SignMessageBtcCallback");
+    Q_REG2(std::set<std::string>, "std::set<std::string>", false);
+    Q_REG2(std::vector<BtcInput>, "std::vector<BtcInput>", false);
 
     emit auth.reEmit();
 
@@ -591,6 +600,93 @@ BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         return QString::fromStdString(EthWallet::getOneKey(walletPath, address.toStdString()));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+///////////
+/// BTC ///
+///////////
+
+void Wallets::onCreateBtcKey(const QString &password, const CreateBtcKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::string address = BtcWallet::genPrivateKey(walletPath, password).first;
+
+        const QString fullPath = BtcWallet::getFullPath(walletPath, address);
+        return std::make_tuple(QString::fromStdString(address), fullPath);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCheckAddressBtc(const QString &address, const CheckAddressCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        try {
+            BtcWallet::checkAddress(address.toStdString());
+            return true;
+        } catch (const Exception &e) {
+            return false;
+        } catch (...) {
+            throw;
+        }
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSignMessageBtcUsedUtxos(const QString &address, const QString &password, const std::vector<BtcInput> &inputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const std::set<std::string> &usedUtxos, const SignMessageBtcCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        std::vector<BtcInput> btcInputs = BtcWallet::reduceInputs(inputs, usedUtxos);
+
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        BtcWallet wallet(walletPath, address.toStdString(), password);
+        size_t estimateComissionInSatoshiInt = 0;
+        if (!estimateComissionInSatoshi.isEmpty()) {
+            CHECK(isDecimal(estimateComissionInSatoshi.toStdString()), "Not hex number value");
+            estimateComissionInSatoshiInt = std::stoull(estimateComissionInSatoshi.toStdString());
+        }
+        const auto resultPair = wallet.buildTransaction(btcInputs, estimateComissionInSatoshiInt, value.toStdString(), fees.toStdString(), toAddress.toStdString());
+        const std::string result = resultPair.first;
+        const std::set<std::string> &thisUsedTxs = resultPair.second;
+
+        std::set<std::string> newUtxos = usedUtxos;
+        newUtxos.insert(thisUsedTxs.begin(), thisUsedTxs.end());
+
+        const std::string transactionHash = BtcWallet::calcHashNotWitness(result);
+
+        return std::make_tuple(QString::fromStdString(result), QString::fromStdString(transactionHash), newUtxos);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onSavePrivateKeyBtc(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        std::string key = privateKey.toStdString();
+        if (key.compare(0, BtcWallet::PREFIX_ONE_KEY.size(), BtcWallet::PREFIX_ONE_KEY) == 0) {
+            key = key.substr(BtcWallet::PREFIX_ONE_KEY.size());
+        }
+
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+
+        BtcWallet::savePrivateKey(walletPath, privateKey.toStdString(), password);
+
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onGetOnePrivateKeyBtc(const QString &address, const GetPrivateKeyCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const std::string privKey = BtcWallet::getOneKey(walletPath, address.toStdString());
+
+        return QString::fromStdString(privKey);
     }, callback);
 END_SLOT_WRAPPER
 }

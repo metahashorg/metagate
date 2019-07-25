@@ -12,6 +12,7 @@
 #include <QFileSystemWatcher>
 
 #include <vector>
+#include <set>
 
 #include "qt_utilites/EventWatcher.h"
 
@@ -22,6 +23,8 @@ class Auth;
 namespace transactions {
 class Transactions;
 }
+
+struct BtcInput;
 
 namespace wallets {
 
@@ -72,6 +75,10 @@ public:
     using CreateEthKeyCallback = CallbackWrapper<void(const QString &address, const QString &fullPath)>;
 
     using SignMessageEthCallback = CallbackWrapper<void(const QString &result)>;
+
+    using CreateBtcKeyCallback = CallbackWrapper<void(const QString &address, const QString &fullPath)>;
+
+    using SignMessageBtcCallback = CallbackWrapper<void(const QString &result, const QString &hash, const std::set<std::string> &usedUtxos)>;
 
 public:
 
@@ -234,6 +241,38 @@ private slots:
     void onSavePrivateKeyEth(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
 
     void onGetOnePrivateKeyEth(const QString &address, const GetPrivateKeyCallback &callback);
+
+///////////
+/// BTC ///
+///////////
+
+signals:
+
+    void createBtcKey(const QString &password, const CreateBtcKeyCallback &callback);
+
+    void checkAddressBtc(const QString &address, const CheckAddressCallback &callback);
+
+    void signMessageBtcUsedUtxos(const QString &address, const QString &password, const std::vector<BtcInput> &inputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const std::set<std::string> &usedUtxos, const SignMessageBtcCallback &callback);
+
+    void savePrivateKeyBtc(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
+
+    void getOnePrivateKeyBtc(const QString &address, const GetPrivateKeyCallback &callback);
+
+private slots:
+
+    void onCreateBtcKey(const QString &password, const CreateBtcKeyCallback &callback);
+
+    void onCheckAddressBtc(const QString &address, const CheckAddressCallback &callback);
+
+    void onSignMessageBtcUsedUtxos(const QString &address, const QString &password, const std::vector<BtcInput> &inputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const std::set<std::string> &usedUtxos, const SignMessageBtcCallback &callback);
+
+    void onSavePrivateKeyBtc(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
+
+    void onGetOnePrivateKeyBtc(const QString &address, const GetPrivateKeyCallback &callback);
+
+///////////////
+/// METHODS ///
+///////////////
 
 private slots:
 
