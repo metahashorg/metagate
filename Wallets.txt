@@ -63,7 +63,7 @@ walletsSignAndSendMessageResultJs("Ok/Not ok", errorNum, errorMessage)
 Q_INVOKABLE signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson)
 # signs the transaction in a new binary format with delegate data
 # if nonce empty, then calc nonce
-paramsJson - json of {"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6} type
+paramsJson - json of {"currency": "currency", "countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6} type
 # Result returns to 
 walletsSignAndSendMessageDelegateResultJs("Ok/Not ok", errorNum, errorMessage)
 # If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.

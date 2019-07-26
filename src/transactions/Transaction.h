@@ -107,6 +107,7 @@ struct SendParameters {
     size_t countServersGet;
     QString typeSend;
     QString typeGet;
+    QString currency;
     seconds timeout;
 };
 

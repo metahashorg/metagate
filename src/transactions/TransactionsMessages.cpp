@@ -302,6 +302,9 @@ SendParameters parseSendParamsInternal(const QString &paramsJson) {
     result.typeGet = docParams.value("typeGet").toString();
     CHECK_TYPED(docParams.contains("timeout_sec") && docParams.value("timeout_sec").isDouble(), TypeErrors::INCORRECT_USER_DATA, "timeout_sec not found in params");
     result.timeout = seconds(docParams.value("timeout_sec").toInt());
+    if (docParams.contains("currency") && docParams.value("currency").isString()) {
+        result.currency = docParams.value("currency").toString();
+    }
     return result;
 }
 
