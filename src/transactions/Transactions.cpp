@@ -117,8 +117,15 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     timerSendTx.setInterval(milliseconds(100).count());
     Q_CONNECT(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent);
 
-    db.addToCurrency(true, "mhc");
-    db.addToCurrency(false, "tmh");
+    const int size = settings.beginReadArray("transactions_currency");
+    for (int i = 0; i < size; i++) {
+        settings.setArrayIndex(i);
+        const bool isMhc = settings.value("isMhc").toBool();
+        const QString currency = settings.value("currency").toString();
+
+        db.addToCurrency(isMhc, currency);
+    }
+    settings.endArray();
 
     javascriptWrapper.setTransactions(*this);
 
