@@ -305,6 +305,8 @@ private:
 
     QString currentUserName;
 
+    bool isUserNameSetted = false;
+
     QTimer timerSendTx;
 
     std::map<TransactionHash, SendedTransactionWatcher> sendTxWathcers;
