@@ -44,9 +44,7 @@ static QString makeGroupName(const QString &userName) {
 
 // Small hack to convert different currencies names
 QString Transactions::convertCurrency(const QString &currency) const {
-    if (currency.contains(QStringLiteral("mhc"), Qt::CaseInsensitive))
-        return QStringLiteral("mhc");
-    return QStringLiteral("tmh");
+    return currency.toLower();
 }
 
 Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastructureNsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent)
@@ -79,6 +77,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_CONNECT(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance);
     Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
+    Q_CONNECT(this, &Transactions::addCurrencyConformity, this, &Transactions::onAddCurrencyConformity);
 
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletCreated, this, &Transactions::onMthWalletCreated);
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletCreated, this, &Transactions::onMthWalletCreated);
@@ -93,6 +92,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_REG(GetNonceCallback, "GetNonceCallback");
     Q_REG(SendTransactionCallback, "SendTransactionCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
+    Q_REG(AddCurrencyConformity, "AddCurrencyConformity");
 
     Q_REG2(size_t, "size_t", false);
     Q_REG2(seconds, "seconds", false);
@@ -116,6 +116,9 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     timerSendTx.moveToThread(TimerClass::getThread());
     timerSendTx.setInterval(milliseconds(100).count());
     Q_CONNECT(&timerSendTx, &QTimer::timeout, this, &Transactions::onFindTxOnTorrentEvent);
+
+    db.addToCurrency(true, "mhc");
+    db.addToCurrency(false, "tmh");
 
     javascriptWrapper.setTransactions(*this);
 
@@ -763,21 +766,30 @@ void Transactions::addTrackedForCurrentLogin() {
         LOG << "Error: " << e.description;
     };
 
-    const auto processWallets = [this](const QString &currency, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](bool isMhc, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         CHECK(currentUserName == userName, "Current group already changed");
+
+        const std::map<bool, std::set<QString>> currencyList = db.getAllCurrencys();
+        const auto found = currencyList.find(isMhc);
+        if (found == currencyList.end()) {
+            return;
+        }
+
         auto transactionGuard = db.beginTransaction();
-        db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
-        for (const wallets::WalletInfo &wallet: walletAddresses) {
-            db.addTracked(currency, wallet.address, makeGroupName(currentUserName));
+        for (const QString &currency: found->second) {
+            db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
+            for (const wallets::WalletInfo &wallet: walletAddresses) {
+                db.addTracked(currency, wallet.address, makeGroupName(currentUserName));
+            }
         }
         transactionGuard.commit();
     };
 
     emit wallets.getListWallets2(wallets::WalletCurrency::Mth, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
-        processWallets("mhc", userName, walletAddresses);
+        processWallets(true, userName, walletAddresses);
     }, errorCallback, signalFunc));
     emit wallets.getListWallets2(wallets::WalletCurrency::Tmh, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
-        processWallets("tmh", userName, walletAddresses);
+        processWallets(false, userName, walletAddresses);
     }, errorCallback, signalFunc));
 }
 
@@ -796,7 +808,14 @@ END_SLOT_WRAPPER
 
 void Transactions::onMthWalletCreated(bool isMhc, const QString &address, const QString &userName) {
 BEGIN_SLOT_WRAPPER
-    db.addTracked(isMhc ? "mhc" : "tmh", address, makeGroupName(userName));
+    const std::map<bool, std::set<QString>> currencyList = db.getAllCurrencys();
+    const auto found = currencyList.find(isMhc);
+    if (found == currencyList.end()) {
+        return;
+    }
+    for (const QString &currency: found->second) {
+        db.addTracked(currency, address, makeGroupName(userName));
+    }
 END_SLOT_WRAPPER
 }
 
@@ -950,6 +969,35 @@ BEGIN_SLOT_WRAPPER
             result = found->second;
         }
         return std::make_tuple(result, now);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Transactions::onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&, this]{
+        const auto process = [this, callback](const QString &currency, const std::vector<wallets::WalletInfo> &walletAddresses) {
+            auto transactionGuard = db.beginTransaction();
+            db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
+            for (const wallets::WalletInfo &wallet: walletAddresses) {
+                db.addTracked(currency, wallet.address, makeGroupName(currentUserName));
+            }
+            transactionGuard.commit();
+
+            callback.emitCallback();
+        };
+
+        if (isMhc) {
+            emit wallets.getListWallets2(wallets::WalletCurrency::Mth, currentUserName, wallets::Wallets::WalletsListCallback([this, process, currency](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+                CHECK(currentUserName == userName, "Username changed while requested");
+                process(currency, walletAddresses);
+            }, callback, signalFunc));
+        } else {
+            emit wallets.getListWallets2(wallets::WalletCurrency::Tmh, currentUserName, wallets::Wallets::WalletsListCallback([this, process, currency](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+                CHECK(currentUserName == userName, "Username changed while requested");
+                process(currency, walletAddresses);
+            }, callback, signalFunc));
+        }
     }, callback);
 END_SLOT_WRAPPER
 }

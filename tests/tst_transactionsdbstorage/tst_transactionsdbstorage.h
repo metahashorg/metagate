@@ -21,6 +21,8 @@ private slots:
 
     void tstBalance();
 
+    void tstCurrency();
+
 private:
 };
 

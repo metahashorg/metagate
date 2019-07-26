@@ -428,11 +428,34 @@ void TransactionsDBStorage::removeBalance(const QString &currency, const QString
     CHECK(queryDelete.exec(), queryDelete.lastError().text().toStdString());
 }
 
-void TransactionsDBStorage::createDatabase()
-{
+void TransactionsDBStorage::addToCurrency(bool isMhc, const QString &currency) {
+    QSqlQuery queryDelete(database());
+    CHECK(queryDelete.prepare(insertToCurrency), queryDelete.lastError().text().toStdString());
+    queryDelete.bindValue(":currency", currency);
+    queryDelete.bindValue(":isMhc", isMhc);
+    CHECK(queryDelete.exec(), queryDelete.lastError().text().toStdString());
+}
+
+std::map<bool, std::set<QString>> TransactionsDBStorage::getAllCurrencys() {
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectAllCurrency), query.lastError().text().toStdString());
+    CHECK(query.exec(), query.lastError().text().toStdString());
+
+    std::map<bool, std::set<QString>> result;
+
+    while (query.next()) {
+        const bool isMhc = query.value("isMhc").toBool();
+        const QString currency = query.value("currency").toString();
+        result[isMhc].emplace(currency);
+    }
+    return result;
+}
+
+void TransactionsDBStorage::createDatabase() {
     createTable(QStringLiteral("payments"), createPaymentsTable);
     createTable(QStringLiteral("tracked"), createTrackedTable);
     createTable(QStringLiteral("balance"), createBalanceTable);
+    createTable(QStringLiteral("currency"), createCurrencyTable);
     createIndex(createPaymentsIndex1);
     createIndex(createPaymentsIndex2);
     createIndex(createPaymentsIndex3);
@@ -445,6 +468,7 @@ void TransactionsDBStorage::createDatabase()
     createIndex(createBalanceUniqueIndex);
     createIndex(createPaymentsUniqueIndex);
     createIndex(createTrackedUniqueIndex);
+    createIndex(createCurrencyUniqueIndex);
 }
 
 void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transaction &trans) const

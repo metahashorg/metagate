@@ -350,4 +350,21 @@ void tst_TransactionsDBStorage::testBlockNumer() {
     QCOMPARE(tt, 2);
 }
 
+void tst_TransactionsDBStorage::tstCurrency() {
+    if (QFile::exists(transactions::databaseFileName))
+        QFile::remove(transactions::databaseFileName);
+    transactions::TransactionsDBStorage db;
+    db.init();
+
+    db.addToCurrency(true, "curr1");
+    db.addToCurrency(true, "curr1");
+    db.addToCurrency(true, "curr2");
+    db.addToCurrency(false, "curr1");
+    db.addToCurrency(false, "curr3");
+
+    const auto res = db.getAllCurrencys();
+    QCOMPARE(res.at(true).size(), 2);
+    QCOMPARE(res.at(false).size(), 2);
+}
+
 QTEST_MAIN(tst_TransactionsDBStorage)

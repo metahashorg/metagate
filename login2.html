@@ -133,6 +133,13 @@
         });
     }
         
+    function addCurrencyC() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.addCurrencyConformity(true, "tmh") ;
+        });
+    }
+        
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -172,8 +179,6 @@
             <input type="button" value="register" onclick="registerAddress()"><br>
             <input type="button" value="setGroup" onclick="setGroup()"><br>
             <input type="button" value="getGroup" onclick="getGroup()"><br>
-            <input type="button" value="getTxs" onclick="getTxs()"><br>
-            <input type="button" value="getAllTxs" onclick="getAllTxs()"><br>
             <input type="button" value="getTxs2" onclick="getTxs2()"><br>
             <input type="button" value="getAllTxs2" onclick="getAllTxs2()"><br>
             <input type="button" value="getTxsFilter" onclick="getTxsFilter()"><br>
@@ -185,6 +190,7 @@
             <input type="button" value="sendTxAutoCalcNonce" onclick="sendTx2()"><br>
             <input type="button" value="sendTxData" onclick="sendTxData()"><br>
             <input type="button" value="statusDelegate" onclick="statusDelegate()"><br>
+            <input type="button" value="addCurrencyC" onclick="addCurrencyC()"><br>
             <input type="button" value="clearDb" onclick="clearDb()"><br>
             </FORM>
         </left>

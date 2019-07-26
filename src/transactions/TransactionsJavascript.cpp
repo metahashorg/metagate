@@ -513,6 +513,25 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void TransactionsJavascript::addCurrencyConformity(bool isMhc, QString currency) {
+BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsAddCurrencyConformityResultJs";
+
+    LOG << "Add currency conformity " << currency << " " << isMhc;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+
+    wrapOperation([&, this](){
+        emit transactionsManager->addCurrencyConformity(isMhc, currency, Transactions::AddCurrencyConformity([currency, makeFunc]() {
+            LOG << "Add currency conformity ok";
+            makeFunc.func(TypedException(), "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 void TransactionsJavascript::clearDb(QString currency) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");

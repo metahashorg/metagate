@@ -5,5 +5,6 @@
         <file>payments_3to4.sql</file>
         <file>wallet_names_1to2.sql</file>
         <file>payments_4to5.sql</file>
+        <file>payments_5to6.sql</file>
     </qresource>
 </RCC>

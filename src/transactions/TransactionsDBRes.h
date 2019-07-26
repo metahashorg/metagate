@@ -76,6 +76,15 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "tgroup TEXT "
                                                 ")";
 
+static const QString createCurrencyTable = "CREATE TABLE currency ( "
+                                                "id INTEGER PRIMARY KEY NOT NULL, "
+                                                "isMhc BOOLEAN NOT NULL, "
+                                                "currency VARCHAR(100) NOT NULL "
+                                                ")";
+
+static const QString createCurrencyUniqueIndex = "CREATE UNIQUE INDEX currencyUniqueIdx ON currency ( "
+                                                    "isMhc, currency) ";
+
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency) ";
 
@@ -146,6 +155,11 @@ static const QString removeTrackedForCurrencyQuery = "DELETE FROM tracked %1";
 static const QString removeTrackedForGroupQuery = "DELETE FROM tracked WHERE tgroup = :tgroup AND currency = :currency";
 
 static const QString removePaymentsCurrencyWhere = "WHERE currency = :currency";
+
+static const QString insertToCurrency = "INSERT OR IGNORE INTO currency (isMhc, currency) "
+                                        "VALUES (:isMhc, :currency)";
+
+static const QString selectAllCurrency = "SELECT * FROM currency";
 
 };
 

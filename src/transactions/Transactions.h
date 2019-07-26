@@ -148,6 +148,8 @@ public:
 
     using ClearDbCallback = CallbackWrapper<void()>;
 
+    using AddCurrencyConformity = CallbackWrapper<void()>;
+
 public:
 
     explicit Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastructureNsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent = nullptr);
@@ -201,6 +203,8 @@ signals:
 
     void clearDb(const QString &currency, const ClearDbCallback &callback);
 
+    void addCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -240,6 +244,8 @@ public slots:
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
     void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
+
+    void onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
 
 private slots:
 

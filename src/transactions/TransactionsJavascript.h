@@ -82,6 +82,8 @@ public slots:
 
     Q_INVOKABLE void getLastUpdatedBalance(QString currency);
 
+    Q_INVOKABLE void addCurrencyConformity(bool isMhc, QString currency);
+
     Q_INVOKABLE void clearDb(QString currency);
 
 private:

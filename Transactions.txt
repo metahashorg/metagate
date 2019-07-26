@@ -122,6 +122,11 @@ Q_INVOKABLE void getLastForgingTx(QString address, QString currency)
 Результат вернется в функцию
 txsGetLastForgingTxJs(address, currency, result, errorNum, errorMessage)
 
+Q_INVOKABLE addCurrencyConformity(bool isMhc, QString currency)
+Добавить соответствие между папкой и currency
+Результат вернется в функцию
+txsAddCurrencyConformityResultJs("Ok/Not ok", errorNum, errorMessage)
+
 
 
 txsNewBalanceJs(address, currency, balanceJson, errorNum, errorMessage)

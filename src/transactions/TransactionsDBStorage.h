@@ -4,7 +4,9 @@
 #include "dbstorage.h"
 #include "Transaction.h"
 #include "utilites/BigNumber.h"
+
 #include <vector>
+#include <set>
 
 #include "TransactionsFilter.h"
 
@@ -70,6 +72,10 @@ public:
     BalanceInfo getBalance(const QString &currency, const QString &address);
 
     void removeBalance(const QString &currency, const QString &address);
+
+    void addToCurrency(bool isMhc, const QString &currency);
+
+    std::map<bool, std::set<QString>> getAllCurrencys();
 
 protected:
     virtual void createDatabase() final;
