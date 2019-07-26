@@ -979,6 +979,8 @@ END_SLOT_WRAPPER
 void Transactions::onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&, this]{
+        db.addToCurrency(isMhc, currency);
+
         const auto process = [this, callback](const QString &currency, const std::vector<wallets::WalletInfo> &walletAddresses) {
             auto transactionGuard = db.beginTransaction();
             db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
