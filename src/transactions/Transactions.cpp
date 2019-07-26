@@ -766,7 +766,7 @@ void Transactions::addTrackedForCurrentLogin() {
     };
 
     const auto processWallets = [this](const QString &currency, const QString &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
-        CHECK(makeGroupName(currentUserName) == userName, "Current group already changed");
+        CHECK(currentUserName == userName, "Current group already changed");
         auto transactionGuard = db.beginTransaction();
         db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
         for (const wallets::WalletInfo &wallet: walletAddresses) {
