@@ -20,6 +20,8 @@
 #include "TransactionsFilter.h"
 
 class NsLookup;
+class InfrastructureNsLookup;
+
 struct TypedException;
 
 class JavascriptWrapper;
@@ -148,7 +150,7 @@ public:
 
 public:
 
-    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent = nullptr);
+    explicit Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastructureNsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent = nullptr);
 
     ~Transactions() override;
 
@@ -282,6 +284,8 @@ private:
 private:
 
     NsLookup &nsLookup;
+
+    InfrastructureNsLookup &infrastructureNsLookup;
 
     wallets::Wallets &wallets;
 

@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = MetaGate
 
 DEFINES += VERSION_STRING=\\\"1.19.7\\\"
-DEFINES += VERSION_SETTINGS=\\\"10.4\\\"
+DEFINES += VERSION_SETTINGS=\\\"10.5\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -118,7 +118,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Wallets/WalletInfo.cpp \
     Initializer/Inits/InitWallets.cpp \
     qt_utilites/EventWatcher.cpp \
-    Wallets/GetActualWalletsEvent.cpp
+    Wallets/GetActualWalletsEvent.cpp \
+    NsLookup/InfrastructureNsLookup.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
@@ -245,7 +246,8 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitWallets.h \
     qt_utilites/EventWatcher.h \
     Wallets/GetActualWalletsEvent.h \
-    transactions/TransactionsFilter.h
+    transactions/TransactionsFilter.h \
+    NsLookup/InfrastructureNsLookup.h
 
 FORMS += mainwindow.ui
 

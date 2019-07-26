@@ -9,6 +9,8 @@
 #include <future>
 
 class NsLookup;
+class InfrastructureNsLookup;
+
 struct TypedException;
 
 namespace initializer {
@@ -19,7 +21,7 @@ class InitNsLookup: public InitInterface {
     Q_OBJECT
 public:
 
-    using Return = NsLookup*;
+    using Return = std::pair<NsLookup*, InfrastructureNsLookup*>;
 
 public:
 
@@ -56,6 +58,7 @@ private slots:
 private:
 
     std::unique_ptr<NsLookup> nsLookup;
+    std::unique_ptr<InfrastructureNsLookup> infrastructureNsLookup;
 
 };
 

@@ -13,6 +13,7 @@ struct TypedException;
 class JavascriptWrapper;
 class MainWindow;
 class NsLookup;
+class InfrastructureNsLookup;
 class WebSocketClient;
 class NetwrokTesting;
 
@@ -58,7 +59,7 @@ public:
 
     Return initialize(
         std::shared_future<WebSocketClient*> wssClient,
-        std::shared_future<NsLookup*> nsLookup,
+        std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
         std::shared_future<MainWindow*> mainWindow,
         std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,

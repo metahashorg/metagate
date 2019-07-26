@@ -1,6 +1,7 @@
 ﻿#include "InitNsLookup.h"
 
 #include "NsLookup/NsLookup.h"
+#include "NsLookup/InfrastructureNsLookup.h"
 
 #include "check.h"
 #include "qt_utilites/SlotWrapper.h"
@@ -27,6 +28,7 @@ InitNsLookup::~InitNsLookup() = default;
 
 void InitNsLookup::completeImpl() {
     CHECK(nsLookup != nullptr, "nsLookup not initialized");
+    CHECK(infrastructureNsLookup != nullptr, "nsLookup not initialized");
 }
 
 void InitNsLookup::sendInitSuccess(const TypedException &exception) {
@@ -44,12 +46,15 @@ InitNsLookup::Return InitNsLookup::initialize() {
         nsLookup = std::make_unique<NsLookup>();
         Q_CONNECT(nsLookup.get(), &NsLookup::serversFlushed, this, &InitNsLookup::serversFlushed);
         nsLookup->start();
+
+        infrastructureNsLookup = std::make_unique<InfrastructureNsLookup>(*nsLookup);
+        infrastructureNsLookup->moveToThread(mainThread);
     });
     sendInitSuccess(exception);
     if (exception.isSet()) {
         throw exception;
     }
-    return nsLookup.get();
+    return std::make_pair(nsLookup.get(), infrastructureNsLookup.get());
 }
 
 }

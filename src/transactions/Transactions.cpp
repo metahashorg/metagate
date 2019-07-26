@@ -47,9 +47,10 @@ QString Transactions::convertCurrency(const QString &currency) const {
     return QStringLiteral("tmh");
 }
 
-Transactions::Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent)
+Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastructureNsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent)
     : TimerClass(5s, parent)
     , nsLookup(nsLookup)
+    , infrastructureNsLookup(infrastructureNsLookup)
     , wallets(wallets)
     , javascriptWrapper(javascriptWrapper)
     , db(db)
