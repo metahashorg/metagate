@@ -155,6 +155,8 @@ private:
 
     QString currentUserName;
 
+    bool isUserNameSetted = false;
+
     bool isMhc;
 
 };

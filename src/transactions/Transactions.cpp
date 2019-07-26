@@ -789,8 +789,11 @@ BEGIN_SLOT_WRAPPER
         return;
     }
     if (login == currentUserName) {
-        return;
+        if (!login.isEmpty() || isUserNameSetted) {
+            return;
+        }
     }
+    isUserNameSetted = true;
     currentUserName = login;
     addTrackedForCurrentLogin();
 END_SLOT_WRAPPER

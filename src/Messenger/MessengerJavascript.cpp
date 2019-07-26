@@ -896,10 +896,14 @@ END_SLOT_WRAPPER
 
 void MessengerJavascript::onLogined(bool isInit, const QString login) {
 BEGIN_SLOT_WRAPPER
-    if (login != currentUserName) {
-        currentUserName = login;
-        setPathsImpl();
+    if (login == currentUserName) {
+        if (!login.isEmpty() || isUserNameSetted) {
+            return;
+        }
     }
+    isUserNameSetted = true;
+    currentUserName = login;
+    setPathsImpl();
 END_SLOT_WRAPPER
 }
 
