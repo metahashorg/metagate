@@ -460,23 +460,22 @@ void Transactions::timerMethod() {
     if (addressesInfos.empty()) {
         addressesInfos = getAddressesInfos(makeGroupName(currentUserName));
         std::sort(addressesInfos.begin(), addressesInfos.end(), [](const AddressInfo &first, const AddressInfo &second) {
-            return std::make_pair(first.type, first.currency) < std::make_pair(second.type, second.currency);
+            return first.currency < second.currency;
         });
         posInAddressInfos = 0;
     }
 
     LOG << PeriodicLog::make("f_bln") << "Try fetch balance " << addressesInfos.size();
-    QString currentType;
     QString currentCurrency;
     std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
     std::vector<std::pair<QString, std::vector<QString>>> batch;
     size_t countParallelRequests = 0;
 
-    const auto processBatch = [this, &batch, &countParallelRequests, &servStructs](const QString &currentCurrency, const QString &currentType) {
+    const auto processBatch = [this, &batch, &countParallelRequests, &servStructs](const QString &currentCurrency) {
         if (servStructs.find(currentCurrency) != servStructs.end()) {
-            infrastructureNsLookup.getTorrents(currentCurrency, 3, 3, InfrastructureNsLookup::GetServersCallback([this, batch, currentCurrency, currentType, servStruct=servStructs.at(currentCurrency)](const std::vector<QString> &servers) {
+            infrastructureNsLookup.getTorrents(currentCurrency, 3, 3, InfrastructureNsLookup::GetServersCallback([this, batch, currentCurrency, servStruct=servStructs.at(currentCurrency)](const std::vector<QString> &servers) {
                 if (servers.empty()) {
-                    LOG << PeriodicLog::makeAuto("t_s0") << "Warn: servers empty: " << currentType;
+                    LOG << PeriodicLog::makeAuto("t_s0") << "Warn: servers empty: " << currentCurrency;
                     return;
                 }
                 processAddressMth(batch, currentCurrency, servers, servStruct);
@@ -494,19 +493,15 @@ void Transactions::timerMethod() {
     const time_point now = ::now();
     while (posInAddressInfos < addressesInfos.size()) {
         const AddressInfo &addr = addressesInfos[posInAddressInfos];
-        if ((!currentCurrency.isEmpty() && (addr.currency != currentCurrency || addr.type != currentType)) || batch.size() >= MAXIMUM_ADDRESSES_IN_BATCH) {
-            processBatch(currentCurrency, currentType);
+        if ((!currentCurrency.isEmpty() && (addr.currency != currentCurrency)) || batch.size() >= MAXIMUM_ADDRESSES_IN_BATCH) {
+            processBatch(currentCurrency);
             if (countParallelRequests >= COUNT_PARALLEL_REQUESTS) {
                 break;
             }
             currentCurrency = addr.currency;
-            currentType = addr.type;
         }
         if (currentCurrency.isEmpty()) {
             currentCurrency = addr.currency;
-        }
-        if (currentType.isEmpty()) {
-            currentType = addr.type;
         }
 
         const auto found = servStructs.find(addr.currency);
@@ -530,7 +525,7 @@ void Transactions::timerMethod() {
 
         posInAddressInfos++;
     }
-    processBatch(currentCurrency, currentType);
+    processBatch(currentCurrency);
 
     if (now - lastCheckTxsTime >= CHECK_TXS_PERIOD && posInAddressInfos >= addressesInfos.size()) {
         LOG << "All txs checked";
@@ -551,7 +546,7 @@ void Transactions::fetchBalanceAddress(const QString &address) {
     for (const AddressInfo &addr: addressInfos) {
         infrastructureNsLookup.getTorrents(addr.currency, 3, 3, InfrastructureNsLookup::GetServersCallback([this, addr](const std::vector<QString> &servers) {
             if (servers.empty()) {
-                LOG << "Warn: servers empty: " << addr.type;
+                LOG << "Warn: servers empty: " << addr.currency;
                 return;
             }
 
@@ -768,21 +763,21 @@ void Transactions::addTrackedForCurrentLogin() {
         LOG << "Error: " << e.description;
     };
 
-    const auto processWallets = [this](const QString &currency, const QString &type, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
+    const auto processWallets = [this](const QString &currency, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         CHECK(makeGroupName(currentUserName) == userName, "Current group already changed");
         auto transactionGuard = db.beginTransaction();
         db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
         for (const wallets::WalletInfo &wallet: walletAddresses) {
-            db.addTracked(currency, wallet.address, "", type, makeGroupName(currentUserName));
+            db.addTracked(currency, wallet.address, makeGroupName(currentUserName));
         }
         transactionGuard.commit();
     };
 
     emit wallets.getListWallets2(wallets::WalletCurrency::Mth, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
-        processWallets("mhc", TorrentTypeMainNet, userName, walletAddresses);
+        processWallets("mhc", userName, walletAddresses);
     }, errorCallback, signalFunc));
     emit wallets.getListWallets2(wallets::WalletCurrency::Tmh, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
-        processWallets("tmh", TorrentTypeDevNet, userName, walletAddresses);
+        processWallets("tmh", userName, walletAddresses);
     }, errorCallback, signalFunc));
 }
 
@@ -801,7 +796,7 @@ END_SLOT_WRAPPER
 
 void Transactions::onMthWalletCreated(bool isMhc, const QString &address, const QString &userName) {
 BEGIN_SLOT_WRAPPER
-    db.addTracked(isMhc ? "mhc" : "tmh", address, "", isMhc ? TorrentTypeMainNet : TorrentTypeDevNet, makeGroupName(userName));
+    db.addTracked(isMhc ? "mhc" : "tmh", address, makeGroupName(userName));
 END_SLOT_WRAPPER
 }
 

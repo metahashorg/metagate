@@ -56,7 +56,7 @@ public:
 
     qint64 getIsSetDelegatePaymentsCountForAddress(const QString &address, const QString &currency, Transaction::Status status = Transaction::OK);
 
-    void addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup);
+    void addTracked(const QString &currency, const QString &address, const QString &tgroup);
     void addTracked(const AddressInfo &info);
 
     std::vector<AddressInfo> getTrackedForGroup(const QString &tgroup);

@@ -317,25 +317,21 @@ void tst_TransactionsDBStorage::testAddressInfos()
     transactions::TransactionsDBStorage db;
     db.init();
 
-    db.addTracked(transactions::AddressInfo("mh", "address1", "type1", "group1", "name1"));
-    db.addTracked(transactions::AddressInfo("mh", "address1", "type1", "group1", "name1"));
-    db.addTracked(transactions::AddressInfo("mh2", "address2", "type2", "group2", "name2"));
-    db.addTracked(transactions::AddressInfo("mh3", "address3", "type3", "group1", "name3"));
+    db.addTracked(transactions::AddressInfo("mh", "address1", "group1"));
+    db.addTracked(transactions::AddressInfo("mh", "address1", "group1"));
+    db.addTracked(transactions::AddressInfo("mh2", "address2", "group2"));
+    db.addTracked(transactions::AddressInfo("mh3", "address3", "group1"));
 
     const std::vector<transactions::AddressInfo> trackeds = db.getTrackedForGroup("group1");
     QCOMPARE(trackeds.size(), 2);
     for (const transactions::AddressInfo &info: trackeds) {
         if (info.address == "address1") {
             QCOMPARE(info.address, "address1");
-            QCOMPARE(info.type, "type1");
             QCOMPARE(info.group, "group1");
-            QCOMPARE(info.name, "name1");
             QCOMPARE(info.currency, "mh");
         } else {
             QCOMPARE(info.address, "address3");
-            QCOMPARE(info.type, "type3");
             QCOMPARE(info.group, "group1");
-            QCOMPARE(info.name, "name3");
             QCOMPARE(info.currency, "mh3");
         }
     }

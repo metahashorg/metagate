@@ -10,8 +10,6 @@
 namespace transactions {
 
 const quint32 BNModule = 6;
-const QString TorrentTypeMainNet = QStringLiteral("torrent_main");
-const QString TorrentTypeDevNet = QStringLiteral("torrent");
 
 const int STATUS_TESTING = 0x1101;
 
@@ -80,18 +78,14 @@ struct BalanceInfo {
 struct AddressInfo {
     QString currency;
     QString address;
-    QString type;
     QString group;
-    QString name = "";
 
     BalanceInfo balance;
 
-    AddressInfo(const QString &currency, const QString &address, const QString &type, const QString &group, const QString &name)
+    AddressInfo(const QString &currency, const QString &address, const QString &group)
         : currency(currency)
         , address(address)
-        , type(type)
         , group(group)
-        , name(name)
     {}
 
     AddressInfo() = default;

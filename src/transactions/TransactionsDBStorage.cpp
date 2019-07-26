@@ -313,21 +313,19 @@ qint64 TransactionsDBStorage::getPaymentsCountForAddress(const QString &address,
     return 0;
 }
 
-void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &name, const QString &type, const QString &tgroup)
+void TransactionsDBStorage::addTracked(const QString &currency, const QString &address, const QString &tgroup)
 {
     QSqlQuery query(database());
     CHECK(query.prepare(insertTracked), query.lastError().text().toStdString());
     query.bindValue(":currency", currency);
     query.bindValue(":address", address);
-    query.bindValue(":name", name);
-    query.bindValue(":type", type);
     query.bindValue(":tgroup", tgroup);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
 void TransactionsDBStorage::addTracked(const AddressInfo &info)
 {
-    addTracked(info.currency, info.address, info.name, info.type, info.group);
+    addTracked(info.currency, info.address, info.group);
 }
 
 std::vector<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString &tgroup)
@@ -340,9 +338,7 @@ std::vector<AddressInfo> TransactionsDBStorage::getTrackedForGroup(const QString
     while (query.next()) {
         AddressInfo info(query.value("currency").toString(),
                          query.value("address").toString(),
-                         query.value("type").toString(),
-                         tgroup,
-                         query.value("name").toString()
+                         tgroup
                          );
         res.push_back(info);
     }

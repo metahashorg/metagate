@@ -7,7 +7,7 @@ namespace transactions {
 
 static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
-static const int databaseVersion = 5;
+static const int databaseVersion = 6;
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -73,8 +73,6 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
                                                 "address TEXT, "
                                                 "currency VARCHAR(100), "
-                                                "name TEXT, "
-                                                "type TEXT, "
                                                 "tgroup TEXT "
                                                 ")";
 
@@ -134,10 +132,10 @@ static const QString deletePaymentsForAddress = "DELETE FROM payments "
 static const QString selectPaymentsCountForAddress2 = "SELECT COUNT(DISTINCT txid || ',' || blockNumber || ',' || ind) AS count FROM payments "
                                                     "WHERE address = :address AND currency = :currency ";
 
-static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, address, name, type, tgroup) "
-                                            "VALUES (:currency, :address, :name, :type, :tgroup)";
+static const QString insertTracked = "INSERT OR IGNORE INTO tracked (currency, address, tgroup) "
+                                            "VALUES (:currency, :address, :tgroup)";
 
-static const QString  selectTrackedForGroup = "SELECT currency, address, name, type FROM tracked "
+static const QString  selectTrackedForGroup = "SELECT currency, address FROM tracked "
                                                 "WHERE tgroup = :tgroup "
                                                 "ORDER BY address ASC";
 

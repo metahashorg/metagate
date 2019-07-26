@@ -124,8 +124,6 @@ static QJsonDocument addressInfoToJson(const std::vector<AddressInfo> &infos) {
         txJson.insert("address", info.address);
         txJson.insert("currency", info.currency);
         txJson.insert("group", info.group);
-        txJson.insert("type", info.type);
-        txJson.insert("name", info.name);
 
         txJson.insert("balance", balanceToJson1(info.balance));
 
@@ -160,7 +158,7 @@ BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency));
 
     wrapOperation([&, this](){
-        AddressInfo info(currency, address, type, group, name);
+        AddressInfo info(currency, address, group);
         emit transactionsManager->registerAddresses({info}, Transactions::RegisterAddressCallback([address, currency, makeFunc]() {
             LOG << "Register address ok " << address << " " << currency;
             makeFunc.func(TypedException(), address, currency);
@@ -187,12 +185,8 @@ BEGIN_SLOT_WRAPPER
         addressInfo.address = addressJson.value("address").toString();
         CHECK(addressJson.contains("currency") && addressJson.value("currency").isString(), "Incorrect json: currency field not found");
         addressInfo.currency = addressJson.value("currency").toString();
-        CHECK(addressJson.contains("type") && addressJson.value("type").isString(), "Incorrect json: type field not found");
-        addressInfo.type = addressJson.value("type").toString();
         CHECK(addressJson.contains("group") && addressJson.value("group").isString(), "Incorrect json: group field not found");
         addressInfo.group = addressJson.value("group").toString();
-        CHECK(addressJson.contains("name") && addressJson.value("name").isString(), "Incorrect json: name field not found");
-        addressInfo.name = addressJson.value("name").toString();
 
         infos.emplace_back(addressInfo);
     }
