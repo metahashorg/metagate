@@ -14,9 +14,10 @@
 
 SET_LOG_NAMESPACE("NSL");
 
-InfrastructureNsLookup::Nodes::Nodes(const QString &torrent, const QString &proxy)
+InfrastructureNsLookup::Nodes::Nodes(const QString &torrent, const QString &proxy, const QString &contractTorrent)
     : torrent(torrent)
     , proxy(proxy)
+    , contractTorrent(contractTorrent)
 {}
 
 InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *parent)
@@ -24,6 +25,7 @@ InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *pare
 {
     Q_CONNECT(this, &InfrastructureNsLookup::getTorrents, this, &InfrastructureNsLookup::onGetTorrents);
     Q_CONNECT(this, &InfrastructureNsLookup::getProxy, this, &InfrastructureNsLookup::onGetProxy);
+    Q_CONNECT(this, &InfrastructureNsLookup::getContractTorrent, this, &InfrastructureNsLookup::onGetContractTorrent);
 
     Q_REG(InfrastructureNsLookup::GetServersCallback, "InfrastructureNsLookup::GetServersCallback");
 
@@ -32,7 +34,7 @@ InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *pare
     for (int i = 0; i < size; i++) {
         settings.setArrayIndex(i);
         const QString currency = settings.value("currency").toString();
-        const Nodes nodes(settings.value("torrent").toString(), settings.value("proxy").toString());
+        const Nodes nodes(settings.value("torrent").toString(), settings.value("proxy").toString(), settings.value("contract_torrent", "").toString());
         infrastructure.emplace(currency, nodes);
     }
     LOG << "infrastructure size " << infrastructure.size();
@@ -47,7 +49,12 @@ void InfrastructureNsLookup::getServers(const QString &currency, const Member &m
             callback.emitCallback(std::vector<QString>());
             return;
         }
-        emit nsLookup.getRandomServers(member(found->second), limit, count, callback);
+        const QString type = member(found->second);
+        if (type.isEmpty()) {
+            callback.emitCallback(std::vector<QString>());
+            return;
+        }
+        emit nsLookup.getRandomServers(type, limit, count, callback);
     }, callback);
 }
 
@@ -60,5 +67,11 @@ END_SLOT_WRAPPER
 void InfrastructureNsLookup::onGetProxy(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback) {
 BEGIN_SLOT_WRAPPER
     getServers(currency, std::mem_fn(&Nodes::proxy), limit, count, callback);
+END_SLOT_WRAPPER
+}
+
+void InfrastructureNsLookup::onGetContractTorrent(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    getServers(currency, std::mem_fn(&Nodes::contractTorrent), limit, count, callback);
 END_SLOT_WRAPPER
 }

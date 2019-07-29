@@ -165,7 +165,7 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddressPending(con
 {
     std::vector<Transaction> res;
     QSqlQuery query(database());
-    CHECK(query.prepare(selectPaymentsForDestPending.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
+    CHECK(query.prepare(selectPaymentsForDestPending.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC")).arg(Transaction::Status::PENDING).arg(Transaction::Status::MODULE_NOT_SET)),
           query.lastError().text().toStdString());
     query.bindValue(":address", address);
     query.bindValue(":currency", currency);

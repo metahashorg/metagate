@@ -101,6 +101,8 @@ static QJsonObject txToJson(const Transaction &tx) {
         typeStr = "delegate";
     } else if (tx.type == Transaction::FORGING) {
         typeStr = "forging";
+    } else if (tx.type == Transaction::CONTRACT) {
+        typeStr = "contract";
     } else {
         throwErr("Incorrect transaction type " + std::to_string(tx.type));
     }

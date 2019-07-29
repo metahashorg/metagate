@@ -36,7 +36,7 @@ void tst_TransactionsDBStorage::testDB1()
 
     db.addPayment("mh", "gfklklkltrkjtrtritrdf134", "address100", 5, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "33", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::FORGING, 12332, "3453", 1);
     db.addPayment("mh", "wuklklkltrkjtrtritrdf215", "address100", 5, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11232, "", 1);
-    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", 6, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11455, "", 1);
+    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", 6, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::MODULE_NOT_SET, transactions::Transaction::SIMPLE, 11455, "", 1);
     db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", 7, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
     db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", 7, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
     {

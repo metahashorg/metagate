@@ -112,7 +112,7 @@ static const QString selectPaymentsForCurrency = "SELECT * FROM payments "
 
 static const QString selectPaymentsForDestPending = "SELECT * FROM payments "
                                                         "WHERE address = :address AND  currency = :currency  "
-                                                        "AND status = 1 "
+                                                        "AND (status = %2 OR status = %3) "
                                                         "ORDER BY ts %1, txid %1";
 
 static const QString selectLastTransaction = "SELECT * FROM payments "

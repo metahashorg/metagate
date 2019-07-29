@@ -18,8 +18,9 @@ private:
     struct Nodes {
         QString torrent;
         QString proxy;
+        QString contractTorrent;
 
-        Nodes(const QString &torrent, const QString &proxy);
+        Nodes(const QString &torrent, const QString &proxy, const QString &contractTorrent);
     };
 
 public:
@@ -36,11 +37,15 @@ signals:
 
     void getProxy(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback);
 
+    void getContractTorrent(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback);
+
 private slots:
 
     void onGetTorrents(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback);
 
     void onGetProxy(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback);
+
+    void onGetContractTorrent(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback);
 
 private:
 

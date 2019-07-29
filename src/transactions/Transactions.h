@@ -261,9 +261,11 @@ private:
 
     void processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber);
 
-    void processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
+    void processAddressMth(const std::vector<QString> &addresses, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
     void processPendings();
+
+    void processPendings(const QString &address, const QString &currency, const std::vector<Transaction> &txsPending, const std::vector<QString> &serversContract, const std::vector<QString> &serversSimple);
 
     uint64_t calcCountTxs(const QString &address, const QString &currency) const;
 

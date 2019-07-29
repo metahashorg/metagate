@@ -23,7 +23,7 @@ struct Transaction {
     };
 
     enum Type {
-        SIMPLE = 0, FORGING = 1, DELEGATE = 2
+        SIMPLE = 0, FORGING = 1, DELEGATE = 2, CONTRACT = 3
     };
 
     DBStorage::DbId id = -1;

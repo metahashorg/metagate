@@ -216,14 +216,8 @@ void Transactions::processPendings() {
     }
 }
 
-void Transactions::processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct) {
-    if (servers.empty()) {
-        return;
-    }
-    if (addressesAndUnconfirmedTxs.empty()) {
-        return;
-    }
-    const auto processPendingTx = [this, currency](const QString &address, const std::string &response, const SimpleClient::ServerException &exception) {
+void Transactions::processPendings(const QString &address, const QString &currency, const std::vector<Transaction> &txsPending, const std::vector<QString> &serversContract, const std::vector<QString> &serversSimple) {
+    const auto processPendingTx = [this, currency, address](const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
         const Transaction tx = parseGetTxResponse(QString::fromStdString(response), address, currency);
         if (tx.status != Transaction::PENDING) {
@@ -232,6 +226,37 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
             emit javascriptWrapper.transactionStatusChanged2Sig(tx.tx, tx);
         }
     };
+
+    if (!txsPending.empty()) {
+        LOG << PeriodicLog::make("pt_" + address.right(4).toStdString()) << "Pending txs: " << txsPending.size();
+    }
+
+    for (const Transaction &tx: txsPending) {
+        std::vector<QString> servers;
+        if (tx.type == Transaction::Type::CONTRACT) {
+            servers = serversContract;
+        } else {
+            if (tx.status == Transaction::Status::MODULE_NOT_SET) {
+                continue;
+            }
+            servers = serversSimple;
+        }
+
+        if (servers.empty()) {
+            continue;
+        }
+        const QString message = makeGetTxRequest(tx.tx);
+        client.sendMessagePost(servers[0], message, std::bind(processPendingTx, _1, _2), timeout);
+    }
+}
+
+void Transactions::processAddressMth(const std::vector<QString> &addresses, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct) {
+    if (servers.empty()) {
+        return;
+    }
+    if (addresses.empty()) {
+        return;
+    }
 
     const auto getBlockHeaderCallback = [this, currency, servStruct](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, std::vector<Transaction> txs, const std::string &response, const SimpleClient::ServerException &exception) {
         CHECK(!exception.isSet(), "Server error: " + exception.toString());
@@ -277,11 +302,11 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
         client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server, _1, _2), timeout);
     };
 
-    const auto getBalanceCallback = [this, servStruct, addressesAndUnconfirmedTxs, currency, getHistoryCallback, processPendingTx](const std::vector<QUrl> &servers, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
+    const auto getBalanceCallback = [this, servStruct, addresses, currency, getHistoryCallback](const std::vector<QUrl> &servers, const std::vector<std::tuple<std::string, SimpleClient::ServerException>> &responses) {
         CHECK(!servers.empty(), "Incorrect response size");
         CHECK(servers.size() == responses.size(), "Incorrect response size");
 
-        std::vector<std::pair<QUrl, BalanceInfo>> bestAnswers(addressesAndUnconfirmedTxs.size());
+        std::vector<std::pair<QUrl, BalanceInfo>> bestAnswers(addresses.size());
         for (size_t i = 0; i < responses.size(); i++) {
             const auto &responsePair = responses[i];
             const auto &exception = std::get<SimpleClient::ServerException>(responsePair);
@@ -289,10 +314,10 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
             const QUrl &server = servers[i];
             if (!exception.isSet()) {
                 const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(response));
-                CHECK(balancesResponse.size() == addressesAndUnconfirmedTxs.size(), "Incorrect balances response");
+                CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
                 for (size_t j = 0; j < balancesResponse.size(); j++) {
                     const BalanceInfo &balanceResponse = balancesResponse[j];
-                    const QString &address = addressesAndUnconfirmedTxs[j].first;
+                    const QString &address = addresses[j];
                     CHECK(balanceResponse.address == address, "Incorrect response: address not equal. Expected " + address.toStdString() + ". Received " + balanceResponse.address.toStdString());
                     if (balanceResponse.currBlockNum > bestAnswers[j].second.currBlockNum) {
                         bestAnswers[j].second = balanceResponse;
@@ -306,12 +331,11 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
             }
         }
 
-        CHECK(bestAnswers.size() == addressesAndUnconfirmedTxs.size(), "Ups");
+        CHECK(bestAnswers.size() == addresses.size(), "Ups");
         for (size_t i = 0; i < bestAnswers.size(); i++) {
             const QUrl &bestServer = bestAnswers[i].first;
-            const QString &address = addressesAndUnconfirmedTxs[i].first;
+            const QString &address = addresses[i];
             const BalanceInfo &serverBalance = bestAnswers[i].second;
-            const std::vector<QString> &pendingTxs = addressesAndUnconfirmedTxs[i].second;
 
             if (bestServer.isEmpty()) {
                 LOG << PeriodicLog::makeAuto("t_err") << "Best server with txs not found. Error: " << std::get<SimpleClient::ServerException>(responses[0]).toString();
@@ -340,23 +364,9 @@ void Transactions::processAddressMth(const std::vector<std::pair<QString, std::v
                     updateBalanceTime(currency, servStruct);
                 }
             }
-
-            if (!pendingTxs.empty()) {
-                LOG << PeriodicLog::make("pt_" + address.right(4).toStdString()) << "Pending txs: " << pendingTxs.size();
-            }
-
-            for (const QString &txHash: pendingTxs) {
-                const QString message = makeGetTxRequest(txHash);
-                client.sendMessagePost(bestServer, message, std::bind(processPendingTx, address, _1, _2), timeout);
-            }
         }
     };
 
-    std::vector<QString> addresses;
-    addresses.reserve(addressesAndUnconfirmedTxs.size());
-    std::transform(addressesAndUnconfirmedTxs.begin(), addressesAndUnconfirmedTxs.end(), std::back_inserter(addresses), [](const auto &pair) {
-        return pair.first;
-    });
     const QString requestBalance = makeGetBalancesRequest(addresses);
     const std::vector<QUrl> urls(servers.begin(), servers.end());
     client.sendMessagesPost(addresses[0].toStdString(), urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
@@ -478,12 +488,21 @@ void Transactions::timerMethod() {
     LOG << PeriodicLog::make("f_bln") << "Try fetch balance " << addressesInfos.size();
     QString currentCurrency;
     std::map<QString, std::shared_ptr<ServersStruct>> servStructs;
-    std::vector<std::pair<QString, std::vector<QString>>> batch;
+    std::vector<QString> batch;
     size_t countParallelRequests = 0;
 
     const auto processBatch = [this, &batch, &countParallelRequests, &servStructs](const QString &currentCurrency) {
         if (servStructs.find(currentCurrency) != servStructs.end()) {
             infrastructureNsLookup.getTorrents(currentCurrency, 3, 3, InfrastructureNsLookup::GetServersCallback([this, batch, currentCurrency, servStruct=servStructs.at(currentCurrency)](const std::vector<QString> &servers) {
+                infrastructureNsLookup.getContractTorrent(currentCurrency, 3, 3, InfrastructureNsLookup::GetServersCallback([this, batch, currentCurrency, serversSimple=servers](const std::vector<QString> &serversContract) {
+                    for (const QString &address: batch) {
+                        const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(address, currentCurrency, true);
+                        processPendings(address, currentCurrency, pendingTxs, serversContract, serversSimple);
+                    }
+                }, [](const TypedException &error) {
+                    LOG << "Error while get servers: " << error.description;
+                }, signalFunc));
+
                 if (servers.empty()) {
                     LOG << PeriodicLog::makeAuto("t_s0") << "Warn: servers empty: " << currentCurrency;
                     return;
@@ -526,12 +545,8 @@ void Transactions::timerMethod() {
                 LOG << "Error while get servers: " << error.description;
             }, signalFunc));
         }
-        const std::vector<Transaction> pendingTxs = db.getPaymentsForAddressPending(addr.address, addr.currency, true);
-        std::vector<QString> pendingTxsStrs;
-        pendingTxsStrs.reserve(pendingTxs.size());
-        std::transform(pendingTxs.begin(), pendingTxs.end(), std::back_inserter(pendingTxsStrs), std::mem_fn(&Transaction::tx));
 
-        batch.emplace_back(addr.address, pendingTxsStrs);
+        batch.emplace_back(addr.address);
 
         posInAddressInfos++;
     }
@@ -560,8 +575,8 @@ void Transactions::fetchBalanceAddress(const QString &address) {
                 return;
             }
 
-            std::vector<std::pair<QString, std::vector<QString>>> batch;
-            batch.emplace_back(addr.address, std::vector<QString>());
+            std::vector<QString> batch;
+            batch.emplace_back(addr.address);
             processAddressMth(batch, addr.currency, servers, nullptr);
         }, [](const TypedException &e) {
             LOG << "Error while get servers: " << e.description;
