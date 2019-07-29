@@ -69,7 +69,7 @@ filtersJson - json вида [{"name": "isInput", "value": true}]
 Результат вернется в функцию
 txsGetTxsFiltersJs(address, currency, result, errorNum, errorMessage)
 
-Q_INVOKABLE void calcBalance(QString address, QString currency);
+Q_INVOKABLE void calcBalance(const QString &address, const QString &currency, const QString &callback);
 Получение баланса
 Результат вернется в функцию
 txsCalcBalanceResultJs(address, currency, result, errorNum, errorMessage)

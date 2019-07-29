@@ -76,7 +76,7 @@ public slots:
 
     Q_INVOKABLE void getLastForgingTx(QString address, QString currency);
 
-    Q_INVOKABLE void calcBalance(QString address, QString currency);
+    Q_INVOKABLE void calcBalance(const QString &address, const QString &currency, const QString &callback);
 
     Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 

@@ -456,15 +456,15 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::calcBalance(QString address, QString currency) {
+void TransactionsJavascript::calcBalance(const QString &address, const QString &currency, const QString &callback) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
-    const QString JS_NAME_RESULT = "txsCalcBalanceResultJs";
+    const QString JS_NAME_RESULT = "txsCalcBalanceResultJs"; // TODO deprecated
 
     LOG << "calc balance address " << currency << " " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(chooseCallback(callback, JS_NAME_RESULT), JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     wrapOperation([&, this](){
         emit transactionsManager->calcBalance(address, currency, Transactions::CalcBalanceCallback([currency, address, makeFunc](const BalanceInfo &balance) {

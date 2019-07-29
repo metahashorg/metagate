@@ -20,4 +20,12 @@ void WrapperJavascript::makeAndRunJsFuncParams(const QString &function, const Ty
     runJs(res);
 }
 
+inline QString chooseCallback(const QString &callback, const QString &defaultCallback) {
+    if (!callback.isEmpty()) {
+        return callback;
+    } else {
+        return defaultCallback;
+    }
+}
+
 #endif // WRAPPERJAVASCRIPTIMPL_H
