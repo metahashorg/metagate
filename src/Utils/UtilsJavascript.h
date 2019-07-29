@@ -17,19 +17,19 @@ public:
 
 public slots:
 
-    Q_INVOKABLE void qtOpenInBrowser(const QString &url);
+    Q_INVOKABLE void qtOpenInBrowser(const QString &url, const QString &callback);
 
-    Q_INVOKABLE void openFolderDialog(const QString &beginPath, const QString &caption);
+    Q_INVOKABLE void openFolderDialog(const QString &beginPath, const QString &caption, const QString &callback);
 
-    Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath);
+    Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath, const QString &callback);
 
-    Q_INVOKABLE void printUrl(const QString &url, const QString &printWindowCaption, const QString &text);
+    Q_INVOKABLE void printUrl(const QString &url, const QString &printWindowCaption, const QString &text, const QString &callback);
 
-    Q_INVOKABLE void chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath);
+    Q_INVOKABLE void chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath, const QString &callback);
 
-    Q_INVOKABLE void qrEncode(const QString &textHex);
+    Q_INVOKABLE void qrEncode(const QString &textHex, const QString &callback);
 
-    Q_INVOKABLE void qrDecode(const QString &imageBase64);
+    Q_INVOKABLE void qrDecode(const QString &imageBase64, const QString &callback);
 
     Q_INVOKABLE void javascriptLog(const QString &message);
 

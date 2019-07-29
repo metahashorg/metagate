@@ -17,11 +17,9 @@ UtilsJavascript::UtilsJavascript(Utils &manager)
 
 }
 
-void UtilsJavascript::qtOpenInBrowser(const QString &url) {
+void UtilsJavascript::qtOpenInBrowser(const QString &url, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsOpenInBrowserJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     LOG << "Open another url " << url;
 
@@ -33,11 +31,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::openFolderDialog(const QString &beginPath, const QString &caption) {
+void UtilsJavascript::openFolderDialog(const QString &beginPath, const QString &caption, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsOpenFolderDialogJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     LOG << "Open folder dialog " << beginPath << " " << caption;
 
@@ -49,11 +45,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath) {
+void UtilsJavascript::saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsSaveFileFromUrlJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     LOG << "Save file from url " << saveFileWindowCaption << " " << filePath << " " << openAfterSave;
 
@@ -65,11 +59,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::printUrl(const QString &url, const QString &printWindowCaption, const QString &text) {
+void UtilsJavascript::printUrl(const QString &url, const QString &printWindowCaption, const QString &text, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsPrintUrlJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     LOG << "Print file from url " << printWindowCaption;
 
@@ -81,11 +73,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath) {
+void UtilsJavascript::chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsChooseFileAndLoad2UrlJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<std::string>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<std::string>(""));
 
     LOG << "Choose file " << filePath;
 
@@ -97,11 +87,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::qrEncode(const QString &textHex) {
+void UtilsJavascript::qrEncode(const QString &textHex, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsQrEncodeJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     LOG << "Qr encode ";
 
@@ -113,11 +101,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::qrDecode(const QString &imageBase64) {
+void UtilsJavascript::qrDecode(const QString &imageBase64, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "utilsQrDecodeJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     LOG << "Qr decode ";
 

@@ -49,11 +49,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::createWallet(bool isMhc, const QString &password) {
+void WalletsJavascript::createWallet(bool isMhc, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCreateWalletResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<std::string>(""), JsTypeReturn<std::string>(""), JsTypeReturn<std::string>(""), JsTypeReturn<std::string>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<std::string>(""), JsTypeReturn<std::string>(""), JsTypeReturn<std::string>(""), JsTypeReturn<std::string>(""));
 
     LOG << "Create wallet " << isMhc;
 
@@ -66,11 +64,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::createWalletWatch(bool isMhc, const QString &address) {
+void WalletsJavascript::createWalletWatch(bool isMhc, const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCreateWatchWalletResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     LOG << "Create wallet watch " << isMhc << " " << address;
 
@@ -83,11 +79,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::removeWalletWatch(bool isMhc, const QString &address) {
+void WalletsJavascript::removeWalletWatch(bool isMhc, const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsRemoveWatchWalletResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     LOG << "Remove wallet watch " << isMhc << " " << address;
 
@@ -100,11 +94,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::checkWalletExist(bool isMhc, const QString &address) {
+void WalletsJavascript::checkWalletExist(bool isMhc, const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCheckWalletExistResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<bool>(false));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<bool>(false));
 
     wrapOperation([&, this](){
         emit wallets.checkWalletExist(isMhc, address, wallets::Wallets::CheckWalletExistCallback([makeFunc, address](bool isExist){
@@ -114,13 +106,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::checkWalletPassword(bool isMhc, const QString &address, const QString &password) {
+void WalletsJavascript::checkWalletPassword(bool isMhc, const QString &address, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCheckWalletPasswordResultJs";
-
     LOG << "Check wallet password " << address << " " << isMhc;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.checkWalletPassword(isMhc, address, password, wallets::Wallets::CheckWalletPasswordCallback([makeFunc, address, isMhc](bool result){
@@ -131,13 +121,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::checkWalletAddress(const QString &address) {
+void WalletsJavascript::checkWalletAddress(const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCheckWalletAddressResultJs";
-
     LOG << "Check wallet address " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.checkAddress(address, wallets::Wallets::CheckAddressCallback([makeFunc, address](bool result){
@@ -148,11 +136,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::createContractAddress(const QString &address, int nonce) {
+void WalletsJavascript::createContractAddress(const QString &address, int nonce, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCreateContractAddressResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.createContractAddress(address, nonce, wallets::Wallets::CreateContractAddressCallback([makeFunc, address](const QString &result){
@@ -162,13 +148,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::signMessage(bool isMhc, const QString &address, const QString &text, const QString &password) {
+void WalletsJavascript::signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSignMessageResultJs";
-
     LOG << "Sign message " << isMhc << " " << address << " " << text;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.signMessage(isMhc, address, text, password, wallets::Wallets::SignMessageCallback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey){
@@ -179,13 +163,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex) {
+void WalletsJavascript::signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSignMessage2ResultJs";
-
     LOG << "Sign message2 " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.signMessage2(isMhc, address, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey, const QString &tx){
@@ -196,13 +178,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson) {
+void WalletsJavascript::signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSignAndSendMessageResultJs";
-
     LOG << "Sign message3 " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.signAndSendMessage(isMhc, address, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success){
@@ -217,13 +197,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson) {
+void WalletsJavascript::signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSignAndSendMessageDelegateResultJs";
-
     LOG << "Sign message delegate " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.signAndSendMessageDelegate(isMhc, address, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success){
@@ -238,13 +216,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::getOnePrivateKey(bool isMhc, const QString &address, bool isCompact) {
+void WalletsJavascript::getOnePrivateKey(bool isMhc, const QString &address, bool isCompact, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsGetOnePrivateKeyResultJs";
-
     LOG << "Get private key " << isMhc << " " << address << " " << isCompact;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.getOnePrivateKey(isMhc, address, isCompact, wallets::Wallets::GetPrivateKeyCallback([makeFunc, address](const QString &result){
@@ -255,13 +231,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::savePrivateKey(bool isMhc, const QString &privateKey, const QString &password) {
+void WalletsJavascript::savePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSavePrivateKeyResultJs";
-
     LOG << "Save private key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool result){
@@ -276,13 +250,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password) {
+void WalletsJavascript::saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSaveRawPrivateKeyResultJs";
-
     LOG << "Save raw private key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.saveRawPrivateKey(isMhc, rawPrivateKey, password, wallets::Wallets::SaveRawPrivateKeyCallback([makeFunc](const QString &address){
@@ -293,13 +265,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::getRawPrivateKey(bool isMhc, const QString &address, const QString &password) {
+void WalletsJavascript::getRawPrivateKey(bool isMhc, const QString &address, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsGetRawPrivateKeyResultJs";
-
     LOG << "Get raw private key " << isMhc << " " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.getRawPrivateKey(isMhc, address, password, wallets::Wallets::GetRawPrivateKeyCallback([makeFunc](const QString &result){
@@ -314,13 +284,11 @@ END_SLOT_WRAPPER
 /// RSA ///
 ///////////
 
-void WalletsJavascript::createRsaKey(bool isMhc, const QString &address, const QString &password) {
+void WalletsJavascript::createRsaKey(bool isMhc, const QString &address, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCreateRsaKeyResultJs";
-
     LOG << "Create rsa key " << isMhc << " " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.createRsaKey(isMhc, address, password, wallets::Wallets::CreateRsaKeyCallback([makeFunc](const QString &publicKey){
@@ -331,13 +299,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::getRsaPublicKey(bool isMhc, const QString &address) {
+void WalletsJavascript::getRsaPublicKey(bool isMhc, const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsGetRsaPublicKeyResultJs";
-
     LOG << "Get rsa public key " << isMhc << " " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.getRsaPublicKey(isMhc, address, wallets::Wallets::GetRsaPublicKeyCallback([makeFunc](const QString &publicKey){
@@ -347,13 +313,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv) {
+void WalletsJavascript::copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCopyRsaKeyResultJs";
-
     LOG << "Copy rsa key " << isMhc << " " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.copyRsaKey(isMhc, address, pathPub, pathPriv, wallets::Wallets::CopyRsaKeyCallback([makeFunc](bool success){
@@ -368,13 +332,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path) {
+void WalletsJavascript::copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCopyRsaKeyToFolderResultJs";
-
     LOG << "Copy rsa key to folder " << isMhc << " " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.copyRsaKeyToFolder(isMhc, address, path, wallets::Wallets::CopyRsaKeyCallback([makeFunc](bool success){
@@ -393,13 +355,11 @@ END_SLOT_WRAPPER
 /// ETHEREUM ///
 ////////////////
 
-void WalletsJavascript::createEthKey(const QString &password) {
+void WalletsJavascript::createEthKey(const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCreateEthKeyResultJs";
-
     LOG << "Create eth key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.createEthKey(password, wallets::Wallets::CreateEthKeyCallback([makeFunc](const QString &address, const QString &fullPath){
@@ -410,13 +370,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data) {
+void WalletsJavascript::signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSignMessageEthResultJs";
-
     LOG << "Sign message eth " << address << " " << nonce << " " << gasPrice << " " << gasLimit << " " << to << " " << value << " " << data;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.signMessageEth(address, password, nonce, gasPrice, gasLimit, to, value, data, wallets::Wallets::SignMessageEthCallback([makeFunc](const QString &result){
@@ -427,13 +385,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::checkAddressEth(const QString &address) {
+void WalletsJavascript::checkAddressEth(const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCheckAddressEthResultJs";
-
     LOG << "Check address eth " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.checkAddressEth(address, wallets::Wallets::CheckAddressCallback([makeFunc](bool success){
@@ -443,13 +399,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::savePrivateKeyEth(const QString &privateKey, const QString &password) {
+void WalletsJavascript::savePrivateKeyEth(const QString &privateKey, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSavePrivateKeyEthResultJs";
-
     LOG << "Save private eth key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success){
@@ -459,13 +413,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::getOnePrivateKeyEth(const QString &address) {
+void WalletsJavascript::getOnePrivateKeyEth(const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsGetOnePrivateKeyEthResultJs";
-
     LOG << "Get private key eth " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.getOnePrivateKeyEth(address, wallets::Wallets::GetPrivateKeyCallback([makeFunc](const QString &result){
@@ -479,13 +431,11 @@ END_SLOT_WRAPPER
 /// BTC ///
 ///////////
 
-void WalletsJavascript::createBtcKey(const QString &password) {
+void WalletsJavascript::createBtcKey(const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCreateBtcKeyResultJs";
-
     LOG << "Create btc key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.createBtcKey(password, wallets::Wallets::CreateBtcKeyCallback([makeFunc](const QString &address, const QString &fullPath){
@@ -496,13 +446,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::checkAddressBtc(const QString &address) {
+void WalletsJavascript::checkAddressBtc(const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsCheckAddressBtcResultJs";
-
     LOG << "Check address btc " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.checkAddressBtc(address, wallets::Wallets::CheckAddressCallback([makeFunc](bool success){
@@ -512,13 +460,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::signMessageBtcUsedUtxos(const QString &address, const QString &password, const QString &jsonInputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const QString &jsonUsedUtxos) {
+void WalletsJavascript::signMessageBtcUsedUtxos(const QString &address, const QString &password, const QString &jsonInputs, const QString &toAddress, const QString &value, const QString &estimateComissionInSatoshi, const QString &fees, const QString &jsonUsedUtxos, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSignMessageBtcResultJs";
-
     LOG << "Sign message btc utxos " << address << " " << toAddress << " " << value << " " << estimateComissionInSatoshi << " " << fees;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QJsonDocument>(QJsonDocument()), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QJsonDocument>(QJsonDocument()), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         std::set<std::string> usedUtxos;
@@ -563,13 +509,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::savePrivateKeyBtc(const QString &privateKey, const QString &password) {
+void WalletsJavascript::savePrivateKeyBtc(const QString &privateKey, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsSavePrivateKeyBtcResultJs";
-
     LOG << "Save private btc key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
         emit wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success){
@@ -579,13 +523,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::getOnePrivateKeyBtc(const QString &address) {
+void WalletsJavascript::getOnePrivateKeyBtc(const QString &address, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsGetOnePrivateKeyBtcResultJs";
-
     LOG << "Get private key btc " << address;
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.getOnePrivateKeyBtc(address, wallets::Wallets::GetPrivateKeyCallback([makeFunc](const QString &result){
@@ -599,11 +541,9 @@ END_SLOT_WRAPPER
 /// COMMON ///
 //////////////
 
-void WalletsJavascript::getWalletFolders() {
+void WalletsJavascript::getWalletFolders(const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsGetWalletFoldersResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
         emit wallets.getWalletFolders(wallets::Wallets::GetWalletFoldersCallback([makeFunc](const QString &defaultFolder, const QString &folder, const QString &userName){
@@ -614,11 +554,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::backupKeys(const QString &caption) {
+void WalletsJavascript::backupKeys(const QString &caption, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsBackupKeysResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     LOG << "Backup keys";
 
@@ -631,11 +569,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletsJavascript::restoreKeys(const QString &caption) {
+void WalletsJavascript::restoreKeys(const QString &caption, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "walletsRestoreKeysResultJs";
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(""));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     LOG << "Restore keys";
 

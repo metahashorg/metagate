@@ -1,38 +1,38 @@
 utils регестрируется в javascript по имени utils
  
-Q_INVOKABLE void qtOpenInBrowser(const QString &url);
+Q_INVOKABLE void qtOpenInBrowser(const QString &url, const QString &callback);
 # Opens link in default browser
 # After the operation is completed, it calls function
-utilsOpenInBrowserJs("Ok", errorNum, errorMessage)
+callback("Ok", errorNum, errorMessage)
 
-Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption);
+Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption, const QString &callback);
 # Shows to user the dialog box providing the ability to select a directory. 
 beginPath # initial directory location
 caption # name of the dialog box
 # After the operation is completed, it calls function
-utilsOpenFolderDialogJs(dir, errorNum, errorMessage)
+callback(dir, errorNum, errorMessage)
 
-Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath);
+Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath, const QString &callback);
 # Shows file save dialog, then downloads the file and saves it.
 # After the operation is completed, it calls function
 # Отличие от аналогичной функции в mainWindows в том, что вместо относительного пути fileName нужно задавать абсолютный путь filePath
-utilsSaveFileFromUrlJs("Ok", errorNum, errorMessage)
+callback("Ok", errorNum, errorMessage)
 
-Q_INVOKABLE void chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath);
+Q_INVOKABLE void chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath, const QString &callback);
 # Shows the file selection dialog, then encodes the selected file in base64 and sends it to the function
 # Отличие от аналогичной функции в mainWindows в том, что вместо относительного пути fileName нужно задавать абсолютный путь filePath
-utilsChooseFileAndLoad2UrlJs(result, errorNum, errorMessage)
+callback(result, errorNum, errorMessage)
 
-Q_INVOKABLE void onQrEncode(const QString &textHex);
+Q_INVOKABLE void onQrEncode(const QString &textHex, const QString &callback);
 # Encodes text to qr code
 # Result returns to the function:
-utilsQrEncodeJs(result, errorNum, errorMessage);
+callback(result, errorNum, errorMessage);
 # where result is a png image in base64
 
-Q_INVOKABLE void qrDecode(const QString &imageBase64);
+Q_INVOKABLE void qrDecode(const QString &imageBase64, const QString &callback);
 # Decodes text from qr code
 # Result returns to the function:
-utilsQrDecodeJs(requestId, result);
+callback(requestId, result);
 # where result is a text in base16
 
 Q_INVOKABLE void javascriptLog(const QString &message);
