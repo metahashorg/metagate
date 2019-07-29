@@ -835,7 +835,7 @@ BEGIN_SLOT_WRAPPER
 
             CHECK_TYPED(!walletPath.isEmpty(), TypeErrors::MESSENGER_NOT_CONFIGURED, "Wallet path not set");
 
-            emit cryptoManager.unlockWallet(makePath(walletPath, Wallet::chooseSubfolder(isMhc)), isMhc, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, makeFunc]() {
+            emit cryptoManager.unlockWallet(walletPath, isMhc, address, password, passwordRsa, seconds(timeSeconds), CryptographicManager::UnlockWalletCallback([this, address, makeFunc]() {
                 emit messenger->decryptMessages(address, Messenger::DecryptUserMessagesCallback([address, makeFunc]() {
                     LOG << "Unlock wallet ok " << address;
                     makeFunc.func(TypedException(), address);
