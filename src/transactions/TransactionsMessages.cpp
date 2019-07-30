@@ -106,7 +106,7 @@ QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t fromT
     if (!isCnt) {
         return "{\"id\":1,\"params\":{\"address\": \"" + address + "\"},\"method\":\"fetch-history\", \"pretty\": false}";
     } else {
-        return "{\"id\":1,\"params\":{\"address\": \"" + address + "\", \"beginTx\": " + QString::fromStdString(std::to_string(fromTx)) + ", \"countTxs\": " + QString::fromStdString(std::to_string(cnt)) + "},\"method\":\"fetch-history\", \"pretty\": false}";
+        return "{\"id\":1,\"params\":{\"address\": \"" + address + "\", \"beginTx\": " + QString::number(fromTx) + ", \"countTxs\": " + QString::number(cnt) + "},\"method\":\"fetch-history\", \"pretty\": false}";
     }
 }
 
@@ -127,22 +127,15 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
     CHECK(txJson.contains("data") && txJson.value("data").isString(), "Incorrect json: data field not found");
     res.data = txJson.value("data").toString();
     res.timestamp = getIntOrString(txJson, "timestamp").toULongLong();
-    if (txJson.contains("realFee")) {
-        res.fee = getIntOrString(txJson, "realFee");
-    } else if (txJson.contains("fee")) {
-        res.fee = getIntOrString(txJson, "fee");
-    }
-    if (res.fee.isEmpty() || res.fee.isNull()) {
-        res.fee = "0";
-    }
+    res.fee = getIntOrString(txJson, "realFee");
     CHECK(txJson.contains("nonce") && txJson.value("nonce").isDouble(), "Incorrect json: nonce field not found");
     res.nonce = getIntOrString(txJson, "nonce").toLong();
-    if (txJson.contains("isDelegate") && txJson.value("isDelegate").isBool()) {
-        res.isSetDelegate = true;
-        res.isDelegate = txJson.value("isDelegate").toBool();
-        res.delegateValue = getIntOrString(txJson, "delegate");
-        if (txJson.contains("delegateHash") && txJson.value("delegateHash").isString()) {
-            res.delegateHash = txJson.value("delegateHash").toString();
+    if (txJson.contains("delegate_info") && txJson.value("delegate_info").isObject()) {
+        const auto &delegateJson = txJson.value("delegate_info").toObject();
+        res.isDelegate = delegateJson.value("isDelegate").toBool();
+        res.delegateValue = getIntOrString(delegateJson, "delegate");
+        if (delegateJson.contains("delegateHash") && delegateJson.value("delegateHash").isString()) {
+            res.delegateHash = delegateJson.value("delegateHash").toString();
         }
         res.type = Transaction::DELEGATE;
     }

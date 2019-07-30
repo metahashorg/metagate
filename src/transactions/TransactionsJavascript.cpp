@@ -72,7 +72,7 @@ static QJsonObject txToJson(const Transaction &tx) {
     txJson.insert("blockNumber", QString::fromStdString(std::to_string(tx.blockNumber)));
     txJson.insert("blockIndex", QString::fromStdString(std::to_string(tx.blockIndex)));
     txJson.insert("intStatus", tx.intStatus);
-    if (tx.isSetDelegate) {
+    if (tx.type == Transaction::Type::DELEGATE) {
         txJson.insert("isDelegate", tx.isDelegate);
         txJson.insert("delegate_value", tx.delegateValue);
         if (!tx.delegateHash.isEmpty()) {

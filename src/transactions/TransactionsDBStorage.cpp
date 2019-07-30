@@ -14,9 +14,9 @@ namespace transactions {
 static void addFilter(QString &request, const Filters &filters) {
     QString filter;
     if (filters.isDelegate == FilterType::False) {
-        filter += " AND isSetDelegate = 0 ";
+        filter += " AND type != " + QString::number(Transaction::Type::DELEGATE) + " ";
     } else if (filters.isDelegate == FilterType::True) {
-        filter += " AND isSetDelegate = 1 ";
+        filter += " AND type = " + QString::number(Transaction::Type::DELEGATE) + " ";
     }
     if (filters.isForging == FilterType::False) {
         filter += " AND type != " + QString::number(Transaction::Type::FORGING) + " ";
@@ -62,7 +62,7 @@ int TransactionsDBStorage::currentVersion() const
 void TransactionsDBStorage::addPayment(const QString &currency, const QString &txid, const QString &address, qint64 index,
                                        const QString &ufrom, const QString &uto, const QString &value,
                                        quint64 ts, const QString &data, const QString &fee, qint64 nonce,
-                                       bool isSetDelegate, bool isDelegate, const QString &delegateValue, const QString &delegateHash,
+                                       bool isDelegate, const QString &delegateValue, const QString &delegateHash,
                                        Transaction::Status status, Transaction::Type type, qint64 blockNumber, const QString &blockHash, int intStatus)
 {
     QSqlQuery query(database());
@@ -78,7 +78,6 @@ void TransactionsDBStorage::addPayment(const QString &currency, const QString &t
     query.bindValue(":data", data);
     query.bindValue(":fee", fee);
     query.bindValue(":nonce", nonce);
-    query.bindValue(":isSetDelegate", isSetDelegate);
     query.bindValue(":isDelegate", isDelegate);
     query.bindValue(":delegateValue", delegateValue);
     query.bindValue(":delegateHash", delegateHash);
@@ -96,7 +95,7 @@ void TransactionsDBStorage::addPayment(const Transaction &trans)
     addPayment(trans.currency, trans.tx, trans.address, trans.blockIndex,
                trans.from, trans.to, trans.value,
                trans.timestamp, trans.data, trans.fee, trans.nonce,
-               trans.isSetDelegate, trans.isDelegate, trans.delegateValue, trans.delegateHash,
+               trans.isDelegate, trans.delegateValue, trans.delegateHash,
                trans.status, trans.type, trans.blockNumber, trans.blockHash, trans.intStatus);
 }
 
@@ -281,7 +280,6 @@ void TransactionsDBStorage::updatePayment(const QString &address, const QString 
     query.bindValue(":data", trans.data);
     query.bindValue(":fee", trans.fee);
     query.bindValue(":nonce", static_cast<qint64>(trans.nonce));
-    query.bindValue(":isSetDelegate", trans.isSetDelegate);
     query.bindValue(":isDelegate", trans.isDelegate);
     query.bindValue(":delegateValue", trans.delegateValue);
     query.bindValue(":delegateHash", trans.delegateHash);
@@ -484,7 +482,6 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.timestamp = static_cast<quint64>(query.value("ts").toLongLong());
     trans.fee = query.value("fee").toString();
     trans.nonce = query.value("nonce").toLongLong();
-    trans.isSetDelegate = query.value("isSetDelegate").toBool();
     trans.isDelegate = query.value("isDelegate").toBool();
     trans.delegateValue = query.value("delegateValue").toString();
     trans.delegateHash = query.value("delegateHash").toString();

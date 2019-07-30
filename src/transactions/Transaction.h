@@ -42,7 +42,6 @@ struct Transaction {
     QString blockHash = "";
     int intStatus = 0;
 
-    bool isSetDelegate = false; // TODO после введения type стало избыточным полем. Удалить
     bool isDelegate;
     QString delegateValue;
     QString delegateHash;

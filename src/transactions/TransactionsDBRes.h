@@ -21,7 +21,6 @@ static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "data TEXT, "
                                                 "fee TEXT, "
                                                 "nonce INTEGER, "
-                                                "isSetDelegate BOOLEAN, "
                                                 "isDelegate BOOLEAN, "
                                                 "delegateValue TEXT, "
                                                 "delegateHash TEXT, "
@@ -93,8 +92,8 @@ static const QString deleteBalance = "DELETE FROM balance WHERE address = :addre
 static const QString insertBalance = "INSERT OR IGNORE INTO balance (currency, address, received, spent, countReceived, countSpent, countTxs, currBlockNum, countDelegated, delegate, undelegate, delegated, undelegated, reserved, forged) "
                                         "VALUES (:currency, :address, :received, :spent, :countReceived, :countSpent, :countTxs, :currBlockNum, :countDelegated, :delegate, :undelegate, :delegated, :undelegated, :reserved, :forged)";
 
-static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, ind, ufrom, uto, value, ts, data, fee, nonce, isSetDelegate, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash, intStatus) "
-                                        "VALUES (:currency, :txid, :address, :ind, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isSetDelegate, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash, :intStatus)";
+static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, ind, ufrom, uto, value, ts, data, fee, nonce, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash, intStatus) "
+                                        "VALUES (:currency, :txid, :address, :ind, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash, :intStatus)";
 
 static const QString selectBalance = "SELECT * FROM balance "
                                                     "WHERE address = :address AND  currency = :currency ";
@@ -129,7 +128,7 @@ static const QString selectLastForgingTransaction = "SELECT * FROM payments "
 static const QString updatePaymentForAddress = "UPDATE payments "
                                                     "SET ufrom = :ufrom, uto = :uto, "
                                                     "    value = :value, ts = :ts, data = :data, fee = :fee, nonce = :nonce, "
-                                                    "    isSetDelegate = :isSetDelegate, isDelegate = :isDelegate, "
+                                                    "    isDelegate = :isDelegate, "
                                                     "    delegateValue = :delegateValue, delegateHash = :delegateHash, "
                                                     "    status = :status, type = :type, blockHash = :blockHash, intStatus = :intStatus "
                                                     "WHERE currency = :currency AND txid = :txid "

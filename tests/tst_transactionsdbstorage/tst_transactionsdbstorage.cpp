@@ -16,29 +16,29 @@ void tst_TransactionsDBStorage::testDB1()
         QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 0, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", 0, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "3242", 2);
-    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", 1, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11114, "", 1);
-    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11115, "324521354", 2);
-    db.addPayment("mh", "gfklklklrttrrrduidgjkg", "address100", 3, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "15434900", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 11116, "", 1);
-    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11117, "", 1);
-    db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11118, "", 1);
-    db.addPayment("mh", "gtrgklklrddfgiduidgjkg", "address100", 5, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1334430", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11119, "", 1);
-    db.addPayment("mh", "gfklklklti5o0rruidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh2", "gfklklklti5o0rruidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 0, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", 0, "user7", "user2", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "3242", 2);
+    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", 1, "user7", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11114, "", 1);
+    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11115, "324521354", 2);
+    db.addPayment("mh", "gfklklklrttrrrduidgjkg", "address100", 3, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "15434900", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 11116, "", 1);
+    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11117, "", 1);
+    db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11118, "", 1);
+    db.addPayment("mh", "gtrgklklrddfgiduidgjkg", "address100", 5, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, "1334430", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11119, "", 1);
+    db.addPayment("mh", "gfklklklti5o0rruidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh2", "gfklklklti5o0rruidgjkg", "address100", 4, "user7", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
 
-    db.addPayment("mh", "gfklklkltrkjtrtritrdf1", "address100", 3, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111141, "34543", 1);
-    db.addPayment("mh", "wuklklkltrkjtrtritrdf1", "address100", 4, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111122, "34243", 1);
-    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf1", "address100", 2, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111112, "", 1);
+    db.addPayment("mh", "gfklklkltrkjtrtritrdf1", "address100", 3, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111141, "34543", 1);
+    db.addPayment("mh", "wuklklkltrkjtrtritrdf1", "address100", 4, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111122, "34243", 1);
+    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf1", "address100", 2, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111112, "", 1);
 
-    db.addPayment("mh", "gfklklkltrkjtrtritrdf12", "address100", 3, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 1111222, "2345324", 1);
-    db.addPayment("mh", "wuklklkltrе1tritrdf11", "address100", 4, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111120, "", 1);
+    db.addPayment("mh", "gfklklkltrkjtrtritrdf12", "address100", 3, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 1111222, "2345324", 1);
+    db.addPayment("mh", "wuklklkltrе1tritrdf11", "address100", 4, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, "100", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 111120, "", 1);
 
-    db.addPayment("mh", "gfklklkltrkjtrtritrdf134", "address100", 5, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, true, "33", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::FORGING, 12332, "3453", 1);
-    db.addPayment("mh", "wuklklkltrkjtrtritrdf215", "address100", 5, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11232, "", 1);
-    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", 6, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, true, false, "100", "jkgh", transactions::Transaction::MODULE_NOT_SET, transactions::Transaction::SIMPLE, 11455, "", 1);
-    db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", 7, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
-    db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", 7, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
+    db.addPayment("mh", "gfklklkltrkjtrtritrdf134", "address100", 5, "user7", "user2", "1334", 568869453456, "nvcmnjkdfjkgf", "100", 8896865, true, "33", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::FORGING, 12332, "3453", 1);
+    db.addPayment("mh", "wuklklkltrkjtrtritrdf215", "address100", 5, "user7", "user2", "1334", 564869453456, "nvcmnjkdfjkgf", "100", 8896865, false, "1", "jkgh", transactions::Transaction::PENDING, transactions::Transaction::SIMPLE, 11232, "", 1);
+    db.addPayment("mh", "fkfkgkgktrkjtrtritrdf611", "address100", 6, "user7", "user2", "1334", 545869453456, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::MODULE_NOT_SET, transactions::Transaction::SIMPLE, 11455, "", 1);
+    db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", 7, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
+    db.addPayment("mh3", "gfklklklti5o0rruidgjkg", "address100", 7, "address100", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1069590", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 111142, "", 1);
     {
         const transactions::Transaction tx1 = db.getLastTransaction("address100", "mh");
         QCOMPARE(tx1.blockNumber, 1111222);
@@ -51,7 +51,7 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh2"), 1);
     QCOMPARE(db.getPaymentsCountForAddress("address100", "mh3"), 1);
 
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 4, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 4, "user7", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
 
     std::vector<transactions::Transaction> res = db.getPaymentsForAddressPending("address100", "mh", true);
     transactions::Transaction trans = res.at(0);
@@ -68,7 +68,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(res.at(0).nonce, 8896865);
     QCOMPARE(res.at(0).blockIndex, 2);
     QCOMPARE(res.at(0).isDelegate, false);
-    QCOMPARE(res.at(0).isSetDelegate, true);
     QCOMPARE(res.at(0).delegateValue, QStringLiteral("100"));
     QCOMPARE(res.at(0).status, transactions::Transaction::PENDING);
     QCOMPARE(res.at(0).delegateHash, QStringLiteral("jkgh"));
@@ -83,7 +82,6 @@ void tst_TransactionsDBStorage::testDB1()
     trans.data = "a5";
     trans.fee = "a6";
     trans.nonce = 7;
-    trans.isSetDelegate = false;
     trans.isDelegate = true;
     trans.delegateValue = "a8";
     trans.delegateHash = "a9";
@@ -111,7 +109,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(trans.fee, QStringLiteral("a6"));
     QCOMPARE(trans.nonce, 7);
     QCOMPARE(trans.isDelegate, true);
-    QCOMPARE(trans.isSetDelegate, false);
     QCOMPARE(trans.delegateValue, QStringLiteral("a8"));
     QCOMPARE(trans.status, transactions::Transaction::ERROR);
     QCOMPARE(trans.delegateHash, QStringLiteral("a9"));
@@ -133,7 +130,6 @@ void tst_TransactionsDBStorage::testDB1()
     QCOMPARE(trans.fee, QStringLiteral("100"));
     QCOMPARE(trans.nonce, 8896865);
     QCOMPARE(trans.isDelegate, true);
-    QCOMPARE(trans.isSetDelegate, true);
     QCOMPARE(trans.delegateValue, QStringLiteral("15434900"));
     QCOMPARE(trans.status, transactions::Transaction::OK);
     QCOMPARE(trans.delegateHash, QStringLiteral("jkgh"));
@@ -151,15 +147,15 @@ void tst_TransactionsDBStorage::tstFilterDelegate() {
         QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 11, "address100", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", 11, "address100", "user1", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "3242", 2);
-    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", 11, "address100", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11114, "", 1);
-    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11115, "324521354", 2);
-    db.addPayment("mh", "gfklklklrttrrrduidgjkg", "address100", 2, "user7", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "15434900", "jkgh", transactions::Transaction::OK, transactions::Transaction::FORGING, 11116, "", 1);
-    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 2, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::ERROR, transactions::Transaction::DELEGATE, 11117, "", 1);
-    db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", 2, "user1", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11118, "", 1);
-    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 2, "user1", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11119, "", 1);
-    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "address100", "user2", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11120, "324521354", 2);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 11, "address100", "user1", "1000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklklgfkfhg", "address100", 11, "address100", "user1", "1334", 568869454456, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "3242", 2);
+    db.addPayment("mh", "gfklklkltjjkguieriufhg", "address100", 11, "address100", "user1", "100", 568869445334, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11114, "", 1);
+    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11115, "324521354", 2);
+    db.addPayment("mh", "gfklklklrttrrrduidgjkg", "address100", 2, "user7", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "15434900", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11116, "", 1);
+    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 2, "address100", "user1", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1435400", "jkgh", transactions::Transaction::ERROR, transactions::Transaction::DELEGATE, 11117, "", 1);
+    db.addPayment("mh", "gfklklklrddfgiduidgjkg", "address100", 2, "user1", "user3", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, "1054030", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11118, "", 1);
+    db.addPayment("mh", "gfklklklruuiuifdidgjkg", "address100", 2, "user1", "address100", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, true, "1435400", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11119, "", 1);
+    db.addPayment("mh", "gfklkl545uuiuiduidgjkg", "address100", 2, "address100", "user2", "2340", 568869455856, "nvcmnjkdfjkgf", "100", 8896865, false, "1004040", "jkgh", transactions::Transaction::OK, transactions::Transaction::DELEGATE, 11120, "324521354", 2);
 
     const auto res = db.getDelegatePaymentsForAddress("address100", "user1", "mh", 0, -1, true);
     QCOMPARE(res.size(), 2);
@@ -248,16 +244,16 @@ void tst_TransactionsDBStorage::testBigNumSum()
         QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrkgklgfmjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455887, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklblgfmjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455888, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", 2, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
 
-    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgssjgfhg", "address100", false, "user7", "user1", "9000000000000000000", 568869455889, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
 }
 
 void tst_TransactionsDBStorage::testGetPayments()
@@ -268,8 +264,8 @@ void tst_TransactionsDBStorage::testGetPayments()
     db.init();
     auto transactionGuard = db.beginTransaction();
     for (int n = 0; n < 100; n++) {
-        db.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", 3, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "kghkghk", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-        db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address20", 3, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "gffkl", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+        db.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", 3, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "kghkghk", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+        db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address20", 3, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "gffkl", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
     }
     transactionGuard.commit();
     std::vector<transactions::Transaction> res = db.getPaymentsForAddress("address100", "mh", 55, 10, true);
@@ -343,8 +339,8 @@ void tst_TransactionsDBStorage::testBlockNumer() {
     transactions::TransactionsDBStorage db;
     db.init();
 
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
-    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+    db.addPayment("mh", "gfklklkltrklklgfmjgfhg", "address100", 1, "user7", "user1", "9000000000000000000", 568869455886, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "jkgh", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11113, "", 1);
 
     long long tt = db.getPaymentsCountForAddress("address100", "mh");
     QCOMPARE(tt, 2);
