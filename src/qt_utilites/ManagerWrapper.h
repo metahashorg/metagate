@@ -3,7 +3,9 @@
 
 #include "CallbackCallWrapper.h"
 
-class ManagerWrapper: public CallbackCallWrapper{
+#include "utilites/OopUtils.h"
+
+class ManagerWrapper: public CallbackCallWrapper, public no_copyable, public no_moveable{
     Q_OBJECT
 public:
     ManagerWrapper();

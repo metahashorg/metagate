@@ -7,9 +7,11 @@
 
 #include "CallbackCallWrapper.h"
 
+#include "utilites/OopUtils.h"
+
 struct TypedException;
 
-class WrapperJavascript : public CallbackCallWrapper {
+class WrapperJavascript : public CallbackCallWrapper, public no_copyable, public no_moveable {
     Q_OBJECT
 protected:
 
