@@ -30,9 +30,9 @@ SOURCES += main.cpp mainwindow.cpp \
     Wallets/openssl_wrapper/openssl_wrapper.cpp \
     Wallets/ethtx/utils2.cpp \
     NsLookup/NsLookup.cpp \
-    dns/datatransformer.cpp \
-    dns/dnspacket.cpp \
-    dns/resourcerecord.cpp \
+    NsLookup/dns/datatransformer.cpp \
+    NsLookup/dns/dnspacket.cpp \
+    NsLookup/dns/resourcerecord.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
@@ -145,9 +145,9 @@ HEADERS += mainwindow.h \
     Wallets/openssl_wrapper/openssl_wrapper.h \
     Wallets/ethtx/utils2.h \
     NsLookup/NsLookup.h \
-    dns/datatransformer.h \
-    dns/dnspacket.h \
-    dns/resourcerecord.h \
+    NsLookup/dns/datatransformer.h \
+    NsLookup/dns/dnspacket.h \
+    NsLookup/dns/resourcerecord.h \
     JavascriptWrapper.h \
     PagesMappings.h \
     mhurlschemehandler.h \
