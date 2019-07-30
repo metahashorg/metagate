@@ -66,8 +66,12 @@ TimerClass::TimerClass(const milliseconds &timerPeriod, QObject *parent)
     : impl(this, timerPeriod, parent)
 {}
 
-void TimerClass::exit() {
-    impl.exit();
+void TimerClass::exit() noexcept {
+    try {
+        impl.exit();
+    } catch (...) {
+        LOG << "Error while exit TimerClass";
+    }
 }
 
 TimerClass::~TimerClass() = default;

@@ -50,7 +50,7 @@ public:
 
     TimerClass(const milliseconds &timerPeriod, QObject *parent);
 
-    void exit();
+    void exit() noexcept;
 
     virtual ~TimerClass();
 
