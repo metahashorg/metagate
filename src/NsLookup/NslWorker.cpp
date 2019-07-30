@@ -70,6 +70,7 @@ bool NslWorker::checkSpentRecord(const seconds &timeExpire) const {
 void NslWorker::finishWork(WorkerGuard workerGuard) {
     CHECK(workerGuard != nullptr, "Incorrect workerGuard");
     finished = true;
+    manager.resetCurrentWork();
 }
 
 std::shared_ptr<NslWorker> makeWorker(TaskManager &taskManager, NsLookup &nsLookup, const Task &task) {

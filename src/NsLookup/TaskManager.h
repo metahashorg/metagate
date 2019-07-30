@@ -57,6 +57,8 @@ protected:
 
     bool findSpentTask(const std::string &type, const std::string &subtype, TaskRecord &result);
 
+    void resetCurrentWork();
+
 private:
 
     std::weak_ptr<NslWorker> currentWorker;

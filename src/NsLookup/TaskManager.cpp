@@ -61,6 +61,7 @@ bool TaskManager::isCurrentWork() const {
 
 void TaskManager::runWork(std::shared_ptr<NslWorker> worker) {
     CHECK(worker != nullptr, "Incorrect worker");
+    CHECK(!isCurrentWork(), "Worker already run");
     currentWorker = worker;
     worker->runWork(worker);
 }
@@ -80,6 +81,10 @@ bool TaskManager::findSpentTask(const std::string &type, const std::string &subt
         result = *found;
         return true;
     }
+}
+
+void TaskManager::resetCurrentWork() {
+    currentWorker.reset();
 }
 
 } // namespace nslookup

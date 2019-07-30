@@ -214,12 +214,13 @@ void NsLookup::process() {
         return;
     }
 
-    if (taskManager.isTaskReady()) {
+    while (taskManager.isTaskReady()) {
         const Task task = taskManager.popTask();
         const std::shared_ptr<NslWorker> worker = makeWorker(taskManager, *this, task);
         if (worker->isActual()) {
             updateNumber++;
             taskManager.runWork(worker);
+            break;
         }
     }
 }
