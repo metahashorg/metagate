@@ -106,6 +106,7 @@ static const QString selectPaymentsForDestFilter = "SELECT * FROM payments "
 
 static const QString selectPaymentsForCurrency = "SELECT * FROM payments "
                                                     "WHERE currency = :currency "
+                                                    "AND address in (SELECT address FROM tracked WHERE currency = :currency AND tgroup = :tgroup)"
                                                     "ORDER BY ts %1, txid %1 "
                                                     "LIMIT :count OFFSET :offset";
 

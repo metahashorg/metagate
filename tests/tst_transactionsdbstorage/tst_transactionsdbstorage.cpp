@@ -262,10 +262,15 @@ void tst_TransactionsDBStorage::testGetPayments()
         QFile::remove(transactions::databaseFileName);
     transactions::TransactionsDBStorage db;
     db.init();
+    db.addTracked("mh", "address100", "g1");
+    db.addTracked("mh", "address20", "g1");
+    db.addTracked("mh", "address300", "g1");
+    db.addTracked("mh", "address400", "g2");
     auto transactionGuard = db.beginTransaction();
     for (int n = 0; n < 100; n++) {
         db.addPayment("mh", QString("gfklklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address100", 3, "user7", "user1", "9000000000000000000", 1000 + 2 * n, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "kghkghk", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
         db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address20", 3, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "gffkl", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
+        db.addPayment("mh", QString("ggrlklkltrklklgfmjgfhg%1").arg(QString::number(n)), "address400", 3, "user7", "user1", "1000000000000000000", 1000 + 2 * n + 1, "nvcmnjkdfjkgf", "100", 8896865, false, "100", "gffkl", transactions::Transaction::OK, transactions::Transaction::SIMPLE, 11112, "", 1);
     }
     transactionGuard.commit();
     std::vector<transactions::Transaction> res = db.getPaymentsForAddress("address100", "mh", 55, 10, true);
@@ -279,7 +284,7 @@ void tst_TransactionsDBStorage::testGetPayments()
     }
 
 
-    res = db.getPaymentsForCurrency("mh", 55, 10, false);
+    res = db.getPaymentsForCurrency("g1", "mh", 55, 10, false);
 
     r = 0;
     for (auto it = res.begin(); it != res.end (); ++it) {
@@ -292,7 +297,7 @@ void tst_TransactionsDBStorage::testGetPayments()
         r++;
     }
 
-    res = db.getPaymentsForCurrency("mh", 55, 10, true);
+    res = db.getPaymentsForCurrency("g1", "mh", 55, 10, true);
 
     r = 0;
     for (auto it = res.begin(); it != res.end (); ++it) {

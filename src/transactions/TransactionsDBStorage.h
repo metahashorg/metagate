@@ -34,7 +34,7 @@ public:
     std::vector<Transaction> getPaymentsForAddressFilter(const QString &address, const QString &currency, const Filters &filters,
                                               qint64 offset, qint64 count, bool asc);
 
-    std::vector<Transaction> getPaymentsForCurrency(const QString &currency,
+    std::vector<Transaction> getPaymentsForCurrency(const QString &group, const QString &currency,
                                                   qint64 offset, qint64 count, bool asc) const;
 
     std::vector<Transaction> getPaymentsForAddressPending(const QString &address, const QString &currency,

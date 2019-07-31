@@ -634,7 +634,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        return db.getPaymentsForCurrency(convertCurrency(currency), from, count, asc);
+        return db.getPaymentsForCurrency(makeGroupName(currentUserName), convertCurrency(currency), from, count, asc);
     }, callback);
 END_SLOT_WRAPPER
 }

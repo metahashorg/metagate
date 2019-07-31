@@ -37,7 +37,7 @@ txsGetTxs2Js(address, currency, result, errorNum, errorMessage)
 Параметры isDelegate и delegate_value, delegate_hash - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
 type == simple, delegate, forging
 
-Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
+Q_INVOKABLE void getTxsAll2(QString group, QString currency, int from, int count, bool asc);
 Получение транзакций по всем адресам currency
 count == -1 выдать все
 Результат вернется в функцию
