@@ -62,10 +62,8 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_CONNECT(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses);
     Q_CONNECT(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses);
     Q_CONNECT(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup);
-    Q_CONNECT(this, &Transactions::getTxs, this, &Transactions::onGetTxs);
     Q_CONNECT(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2);
     Q_CONNECT(this, &Transactions::getTxsFilters, this, &Transactions::onGetTxsFilters);
-    Q_CONNECT(this, &Transactions::getTxsAll, this, &Transactions::onGetTxsAll);
     Q_CONNECT(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2);
     Q_CONNECT(this, &Transactions::getForgingTxs, this, &Transactions::onGetForgingTxs);
     Q_CONNECT(this, &Transactions::getDelegateTxs, this, &Transactions::onGetDelegateTxs);
@@ -617,21 +615,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback)
-{
-    Q_UNUSED(address);
-    Q_UNUSED(currency);
-    Q_UNUSED(fromTx);
-    Q_UNUSED(count);
-    Q_UNUSED(asc);
-BEGIN_SLOT_WRAPPER
-    // TODO
-    runAndEmitCallback([&, this] {
-        return std::vector<Transaction>();
-    }, callback);
-END_SLOT_WRAPPER
-}
-
 void Transactions::onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
@@ -644,20 +627,6 @@ void Transactions::onGetTxsFilters(const QString &address, const QString &curren
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         return db.getPaymentsForAddressFilter(address, convertCurrency(currency), filter, from, count, asc);
-    }, callback);
-END_SLOT_WRAPPER
-}
-
-void Transactions::onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback)
-{
-    Q_UNUSED(currency);
-    Q_UNUSED(fromTx);
-    Q_UNUSED(count);
-    Q_UNUSED(asc);
-BEGIN_SLOT_WRAPPER
-    // TODO
-    runAndEmitCallback([&, this] {
-        return std::vector<Transaction>();
     }, callback);
 END_SLOT_WRAPPER
 }
