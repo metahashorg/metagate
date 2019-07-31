@@ -375,7 +375,9 @@ void Messenger::timerMethod() {
 }
 
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId) {
-    CHECK(!messages.empty(), "Empty messages");
+    //CHECK(!messages.empty(), "Empty messages");
+    if (messages.empty())
+        return;
 
     std::vector<Message> msgs;
     msgs.reserve(messages.size());
