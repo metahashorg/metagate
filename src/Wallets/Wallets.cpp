@@ -107,6 +107,7 @@ Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     Q_REG(GetWalletFoldersCallback, "GetWalletFoldersCallback");
     Q_REG(BackupKeysCallback, "BackupKeysCallback");
     Q_REG(RestoreKeysCallback, "RestoreKeysCallback");
+    Q_REG2(WalletsList, "WalletsList", false);
 
     emit auth.reEmit();
 
@@ -129,7 +130,7 @@ void Wallets::setTransactions(transactions::Transactions *txs) {
 void Wallets::onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
-        std::vector<std::pair<QString, QString>> created;
+        WalletsList created;
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
         for (const QString &addr : addresses) {
             if (Wallet::isWalletExists(walletPath, isMhc, addr.toStdString())) {
@@ -788,7 +789,7 @@ std::vector<WalletInfo> Wallets::readAllWallets(const WalletCurrency &type) {
     } else if (type == WalletCurrency::Mth) {
         return Wallet::getAllWalletsInfoInFolder(walletPath, true);
     } else if (type == WalletCurrency::Btc) {
-        const std::vector<std::pair<QString, QString>> res = BtcWallet::getAllWalletsInFolder(walletPath);
+        const WalletsList res = BtcWallet::getAllWalletsInFolder(walletPath);
         std::vector<WalletInfo> result;
         result.reserve(res.size());
         std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {
@@ -796,7 +797,7 @@ std::vector<WalletInfo> Wallets::readAllWallets(const WalletCurrency &type) {
         });
         return result;
     } else if (type == WalletCurrency::Eth) {
-        const std::vector<std::pair<QString, QString>> res = EthWallet::getAllWalletsInFolder(walletPath);
+        const WalletsList res = EthWallet::getAllWalletsInFolder(walletPath);
         std::vector<WalletInfo> result;
         result.reserve(res.size());
         std::transform(res.begin(), res.end(), std::back_inserter(result), [](const auto &pair) {

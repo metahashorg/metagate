@@ -37,9 +37,11 @@ class Wallets: public ManagerWrapper, public TimerClass {
     Q_OBJECT
 public:
 
+    using WalletsList = std::vector<std::pair<QString, QString>>;
+
     using WalletsListCallback = CallbackWrapper<void(const QString &userName, const std::vector<WalletInfo> &walletAddresses)>;
 
-    using CreateWatchsCallback = CallbackWrapper<void(const std::vector<std::pair<QString, QString>> &created)>;
+    using CreateWatchsCallback = CallbackWrapper<void(const WalletsList &created)>;
 
     using CreateWalletCallback = CallbackWrapper<void(const QString &fullPath, const std::string &pubkey, const std::string &address, const std::string &exampleMessage, const std::string &sign)>;
 
@@ -107,7 +109,7 @@ signals:
 
     void usernameChanged(const QString &newUserName);
 
-    void watchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created, const QString &username);
+    void watchWalletsAdded(bool isMhc, const WalletsList &created, const QString &username);
 
     void mhcWalletCreated(bool isMhc, const QString &address, const QString &username);
 

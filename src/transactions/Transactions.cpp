@@ -599,7 +599,7 @@ END_SLOT_WRAPPER
 void Transactions::onGetAddresses(const QString &group, const GetAddressesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        std::vector<AddressInfo> result = getAddressesInfos(group);
+        std::vector<AddressInfo> result = getAddressesInfos(makeGroupName(currentUserName));
         for (AddressInfo &info: result) {
             info.balance = getBalance(info.address, info.currency);
             info.balance.savedTxs = info.balance.countTxs;
