@@ -51,6 +51,8 @@ public:
 
         const static int BAD_REQUEST_ERROR;
 
+        const static int TIMEOUT_REQUEST_ERROR;
+
         int code = 0;
     };
 
@@ -58,7 +60,6 @@ public:
         std::string response;
         ServerException exception;
         milliseconds time;
-        bool isTimeout = false;
     };
 
 public:

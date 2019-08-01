@@ -18,6 +18,8 @@ using namespace std::placeholders;
 
 const int SimpleClient::ServerException::BAD_REQUEST_ERROR = QNetworkReply::ProtocolInvalidOperationError;
 
+const int SimpleClient::ServerException::TIMEOUT_REQUEST_ERROR = QNetworkReply::TimeoutError;
+
 template<class Callback>
 class CallbackWrapImpl {
 public:
@@ -138,7 +140,6 @@ BEGIN_SLOT_WRAPPER
     const time_point timeEnd = ::now();
     for (auto &iter: requests) {
         Request &request = iter.second;
-        auto &reply = *request.reply;
 
         if (request.isSetTimeout) {
             const milliseconds &timeout = request.timeout;
@@ -274,7 +275,6 @@ BEGIN_SLOT_WRAPPER
         Response resp;
         resp.time = duration;
         if (request.isTimeout) {
-            resp.isTimeout = request.isTimeout;
             resp.exception = ServerException(reply->url().toString().toStdString(), QNetworkReply::TimeoutError, "Timeout", errorStr);
         } else {
             resp.exception = ServerException(reply->url().toString().toStdString(), reply->error(), reply->errorString().toStdString(), errorStr);

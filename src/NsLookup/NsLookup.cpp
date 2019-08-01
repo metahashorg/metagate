@@ -341,7 +341,7 @@ static NodeInfo parseNodeInfo(const QString &address, const SimpleClient::Respon
         info.ping = MAX_PING.count();
         info.isTimeout = true;
     }
-    if (response.isTimeout) {
+    if (response.exception.isTimeout()) {
         info.ping = MAX_PING.count();
         info.isTimeout = true;
     }
