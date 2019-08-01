@@ -149,18 +149,18 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::registerAddress(QString address, QString currency, QString type, QString group, QString name) {
+void TransactionsJavascript::registerAddress(QString address, QString currency) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
     const QString JS_NAME_RESULT = "txsRegisterAddressJs";
 
-    LOG << "Register address " << address << " " << currency << " " << type << " " << group;
+    LOG << "Register address " << address << " " << currency;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency));
 
     wrapOperation([&, this](){
-        AddressInfo info(currency, address, group);
+        AddressInfo info(currency, address, QStringLiteral(""));
         emit transactionsManager->registerAddresses({info}, Transactions::RegisterAddressCallback([address, currency, makeFunc]() {
             LOG << "Register address ok " << address << " " << currency;
             makeFunc.func(TypedException(), address, currency);
@@ -169,77 +169,21 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::registerAddresses(QString addressesJson) {
-BEGIN_SLOT_WRAPPER
-    CHECK(transactionsManager != nullptr, "transactions not set");
-
-    const QString JS_NAME_RESULT = "txsRegisterAddressesJs";
-    std::vector<AddressInfo> infos;
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(addressesJson.toUtf8());
-    CHECK(jsonResponse.isArray(), "Incorrect json ");
-    const QJsonArray &jsonArr = jsonResponse.array();
-    for (const QJsonValue &jsonVal: jsonArr) {
-        CHECK(jsonVal.isObject(), "Incorrect json");
-        const QJsonObject &addressJson = jsonVal.toObject();
-
-        AddressInfo addressInfo;
-        CHECK(addressJson.contains("address") && addressJson.value("address").isString(), "Incorrect json: address field not found");
-        addressInfo.address = addressJson.value("address").toString();
-        CHECK(addressJson.contains("currency") && addressJson.value("currency").isString(), "Incorrect json: currency field not found");
-        addressInfo.currency = addressJson.value("currency").toString();
-        CHECK(addressJson.contains("group") && addressJson.value("group").isString(), "Incorrect json: group field not found");
-        addressInfo.group = addressJson.value("group").toString();
-
-        infos.emplace_back(addressInfo);
-    }
-
-    LOG << "Register addresses " << infos.size();
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
-
-    wrapOperation([&, this](){
-        emit transactionsManager->registerAddresses(infos, Transactions::RegisterAddressCallback([makeFunc]() {
-            LOG << "Register addresses ok";
-            makeFunc.func(TypedException(), "Ok");
-        }, makeFunc.error, signalFunc));
-    }, makeFunc.error);
-END_SLOT_WRAPPER
-}
-
-void TransactionsJavascript::getAddresses(QString group) {
+void TransactionsJavascript::getAddresses() {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");
 
     const QString JS_NAME_RESULT = "txsGetAddressesResultJs";
 
-    LOG << "Get addresses " << group;
+    LOG << "Get addresses ";
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
     wrapOperation([&, this](){
-        emit transactionsManager->getAddresses(group, Transactions::GetAddressesCallback([makeFunc](const std::vector<AddressInfo> &infos) {
+        emit transactionsManager->getAddresses(Transactions::GetAddressesCallback([makeFunc](const std::vector<AddressInfo> &infos) {
             LOG << "Get addresses ok " << infos.size();
             const QJsonDocument &result = addressInfoToJson(infos);
             makeFunc.func(TypedException(), result);
-        }, makeFunc.error, signalFunc));
-    }, makeFunc.error);
-END_SLOT_WRAPPER
-}
-
-void TransactionsJavascript::setCurrentGroup(QString group) {
-BEGIN_SLOT_WRAPPER
-    CHECK(transactionsManager != nullptr, "transactions not set");
-
-    const QString JS_NAME_RESULT = "txsSetCurrentGroupResultJs";
-
-    LOG << "Set group " << group;
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
-
-    wrapOperation([&, this](){
-        emit transactionsManager->setCurrentGroup(group, Transactions::SetCurrentGroupCallback([makeFunc, group]() {
-            LOG << "Set group ok " << group;
-            makeFunc.func(TypedException(), "Ok");
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER

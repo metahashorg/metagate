@@ -61,7 +61,6 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_CONNECT(&authManager, &auth::Auth::logined, this, &Transactions::onLogined);
     Q_CONNECT(this, &Transactions::registerAddresses, this, &Transactions::onRegisterAddresses);
     Q_CONNECT(this, &Transactions::getAddresses, this, &Transactions::onGetAddresses);
-    Q_CONNECT(this, &Transactions::setCurrentGroup, this, &Transactions::onSetCurrentGroup);
     Q_CONNECT(this, &Transactions::getTxs2, this, &Transactions::onGetTxs2);
     Q_CONNECT(this, &Transactions::getTxsFilters, this, &Transactions::onGetTxsFilters);
     Q_CONNECT(this, &Transactions::getTxsAll2, this, &Transactions::onGetTxsAll2);
@@ -83,7 +82,6 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
     Q_REG(GetTxsCallback, "GetTxsCallback");
     Q_REG(CalcBalanceCallback, "CalcBalanceCallback");
-    Q_REG(SetCurrentGroupCallback, "SetCurrentGroupCallback");
     Q_REG(GetAddressesCallback, "GetAddressesCallback");
     Q_REG(GetTxCallback, "GetTxCallback");
     Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
@@ -587,14 +585,14 @@ BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         auto transactionGuard = db.beginTransaction();
         for (const AddressInfo &address: addresses) {
-            db.addTracked(address);
+            db.addTracked(address.currency, address.address, makeGroupName(currentUserName));
         }
         transactionGuard.commit();
     }, callback);
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetAddresses(const QString &group, const GetAddressesCallback &callback) {
+void Transactions::onGetAddresses(const GetAddressesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         std::vector<AddressInfo> result = getAddressesInfos(makeGroupName(currentUserName));
@@ -603,14 +601,6 @@ BEGIN_SLOT_WRAPPER
             info.balance.savedTxs = info.balance.countTxs;
         }
         return result;
-    }, callback);
-END_SLOT_WRAPPER
-}
-
-void Transactions::onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    runAndEmitCallback([&, this]{
-        //currentGroup = group;
     }, callback);
 END_SLOT_WRAPPER
 }

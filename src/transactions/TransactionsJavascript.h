@@ -50,13 +50,9 @@ private slots:
 
 public slots:
 
-    Q_INVOKABLE void registerAddress(QString address, QString currency, QString type, QString group, QString name);
+    Q_INVOKABLE void registerAddress(QString address, QString currency);
 
-    Q_INVOKABLE void registerAddresses(QString addressesJson);
-
-    Q_INVOKABLE void getAddresses(QString group);
-
-    Q_INVOKABLE void setCurrentGroup(QString group);
+    Q_INVOKABLE void getAddresses();
 
     Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 

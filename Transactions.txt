@@ -1,29 +1,17 @@
 Transactions регестрируется в javascript по имени transactions 
 
-Q_INVOKABLE void registerAddress(QString address, QString currency, QString type, QString group, QString name);
+Q_INVOKABLE void registerAddress(QString address, QString currency);
 Зарегестрировать адрес для отслеживания
-type - для mth валют это "torrent" или "torrent_main"
 Результат вернется в функцию
 txsRegisterAddressJs(address, currency, errorNum, errorMessage)
 
-Q_INVOKABLE void registerAddresses(QString addressesJson);
-Зарегестрировать адреса для отслеживания
-addressesJson - json массив вида [{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\"}]
-Результат вернется в функцию
-txsRegisterAddressesJs("Ok", errorNum, errorMessage)
-
-Q_INVOKABLE void getAddresses(QString group);
-Получает список всех зарегестрированных адресов
+Q_INVOKABLE void getAddresses();
+Получает список всех отслеживаемых адресов
 Результат вернется в функцию
 txsGetAddressesResultJs(result, errorNum, errorMessage)
 где result - json массив вида
 [{\"address\":\"address\",\"currency\":\"currency\",\"type\":\"type\",\"group\":\"group\", \"name\":\"name\",\"balance\":{\"countReceived\":\"1\",\"countSpent\":\"0\",\"currBlock\":\"0\",\"received\":\"4000000000\",\"spent\":\"0\", \"countDelegated\": 0,\"delegate\":\"4000000000\",\"undelegate\":\"0\",\"delegated\":\"4000000000\",\"undelegated\":\"0\",\"balance\":\"10\", \"forged\": \"1000\"}}]
 Полный формат баланса см в calcBalance
-
-Q_INVOKABLE void setCurrentGroup(QString group);
-Устанавливает группу, по которой будет идти автоматическое отслеживание изменений
-Результат вернется в функцию
-txsSetCurrentGroupResultJs("Ok", errorNum, errorMessage)
 
 Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 Получение транзакций в порядке возрастания или убывания

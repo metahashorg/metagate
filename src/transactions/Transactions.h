@@ -134,8 +134,6 @@ public:
 
     using CalcBalanceCallback = CallbackWrapper<void(const BalanceInfo &txs)>;
 
-    using SetCurrentGroupCallback = CallbackWrapper<void()>;
-
     using GetAddressesCallback = CallbackWrapper<void(const std::vector<AddressInfo> &result)>;
 
     using GetTxCallback = CallbackWrapper<void(const Transaction &txs)>;
@@ -169,9 +167,7 @@ signals:
 
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
-    void getAddresses(const QString &group, const GetAddressesCallback &callback);
-
-    void setCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
+    void getAddresses(const GetAddressesCallback &callback);
 
     void getTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
@@ -205,9 +201,7 @@ public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
-    void onGetAddresses(const QString &group, const GetAddressesCallback &callback);
-
-    void onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
+    void onGetAddresses(const GetAddressesCallback &callback);
 
     void onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
