@@ -24,7 +24,7 @@ const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribut
 
 const int SimpleClient::ServerException::BAD_REQUEST_ERROR = QNetworkReply::ProtocolInvalidOperationError;
 
-template<class Callback, typename ...Args>
+template<class Callback>
 class CallbackWrapImpl {
 public:
 
@@ -42,10 +42,10 @@ public:
         std::fill(filled.begin(), filled.end(), false);
     }
 
-    void process(size_t index, const Args& ...args) {
+    void process(size_t index, const SimpleClient::Response &response) {
         CHECK(!emitted, "Already emitted " + printedName);
         CHECK(!filled[index], "callback already called " + std::to_string(index) + ". " + printedName);
-        this->args[index] = std::tuple<Args...>(args...);
+        this->args[index] = response;
         filled[index] = true;
 
         const size_t count = calcSettedCount();
@@ -78,7 +78,7 @@ private:
 
     const Callback callback;
 
-    std::vector<std::tuple<Args...>> args;
+    std::vector<SimpleClient::Response> args;
 
     std::vector<bool> filled;
 
@@ -224,9 +224,9 @@ void SimpleClient::sendMessageInternal(
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     addRequestId(request, requestId);
+    const time_point time = ::now();
+    addBeginTime(request, time);
     if (isTimeout) {
-        const time_point time = ::now();
-        addBeginTime(request, time);
         addTimeout(request, timeout);
     }
     if (isClearCache) {
@@ -264,7 +264,7 @@ void SimpleClient::sendMessagesPost(const std::string printedName, const std::ve
         callback({});
         return;
     }
-    const auto callbackImpl = std::make_shared<CallbackWrapImpl<ClientCallbacks, std::string, ServerException>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, urls.size());
+    const auto callbackImpl = std::make_shared<CallbackWrapImpl<ClientCallbacks>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, urls.size());
     size_t index = 0;
     for (const QUrl &address: urls) {
         const auto callbackNew = CallbackWrapPtr<std::decay_t<decltype(*callbackImpl)>>(callbackImpl, index);
@@ -285,24 +285,6 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
     sendMessageGet(url, callback, true, timeout);
 }
 
-void SimpleClient::ping(const QString &address, const PingCallback &callback, milliseconds timeout) {
-    sendMessageInternal(false, pingCallbacks_, address, "", PingCallbackInternal(std::bind(callback, address, _1, _2)), true, timeout, false, &SimpleClient::onPingReceived, true);
-}
-
-void SimpleClient::pings(const std::string printedName, const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout) {
-    if (addresses.empty()) {
-        callback({});
-        return;
-    }
-    const auto callbackImpl = std::make_shared<CallbackWrapImpl<PingsCallback, QString, milliseconds, std::string>>(printedName, std::bind(&SimpleClient::callbackCall, this, _1), callback, addresses.size());
-    size_t index = 0;
-    for (const QString &address: addresses) {
-        const auto callbackNew = CallbackWrapPtr<std::decay_t<decltype(*callbackImpl)>>(callbackImpl, index);
-        ping(address, PingCallback(callbackNew), timeout);
-        index++;
-    }
-}
-
 template<class Callbacks, typename... Message>
 void SimpleClient::runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages) {
     const auto foundCallback = callbacks.find(id);
@@ -313,7 +295,7 @@ void SimpleClient::runCallback(Callbacks &callbacks, const std::string &id, Mess
     requests.erase(id);
 }
 
-void SimpleClient::onPingReceived() {
+void SimpleClient::onTextMessageReceived() {
 BEGIN_SLOT_WRAPPER
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
@@ -322,37 +304,25 @@ BEGIN_SLOT_WRAPPER
     const time_point timeEnd = ::now();
     const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
 
-    std::string response;
-    if (reply->isReadable()) {
-        QByteArray content = reply->readAll();
-        response = std::string(content.data(), content.size());
-    }
-
-    runCallback(pingCallbacks_, requestId, duration, response);
-
-    reply->deleteLater();
-END_SLOT_WRAPPER
-}
-
-void SimpleClient::onTextMessageReceived() {
-BEGIN_SLOT_WRAPPER
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-
-    const std::string requestId = getRequestId(*reply);
-
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray content;
         if (reply->isReadable()) {
             content = reply->readAll();
         }
-        runCallback(callbacks_, requestId, std::string(content.data(), content.size()), ServerException());
+        Response resp;
+        resp.response = std::string(content.data(), content.size());
+        resp.time = duration;
+        runCallback(callbacks_, requestId, resp);
     } else {
         std::string errorStr;
         if (reply->isReadable()) {
             errorStr = QString(reply->readAll()).toStdString();
         }
 
-        runCallback(callbacks_, requestId, "", ServerException(reply->url().toString().toStdString(), reply->error(), reply->errorString().toStdString(), errorStr));
+        Response resp;
+        resp.time = duration;
+        resp.exception = ServerException(reply->url().toString().toStdString(), reply->error(), reply->errorString().toStdString(), errorStr);
+        runCallback(callbacks_, requestId, resp);
     }
 
     reply->deleteLater();

@@ -62,13 +62,13 @@ Auth::~Auth() {
 void Auth::onLogin(const QString &login, const QString &password) {
 BEGIN_SLOT_WRAPPER
     const QString request = makeLoginRequest(login, password);
-    tcpClient.sendMessagePost(authUrl, request, [this, login](const std::string &response, const SimpleClient::ServerException &error) {
-       if (error.isSet()) {
-           QString content = QString::fromStdString(error.content);
-           emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description));
+    tcpClient.sendMessagePost(authUrl, request, [this, login](const SimpleClient::Response &response) {
+       if (response.exception.isSet()) {
+           QString content = QString::fromStdString(response.exception.content);
+           emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description));
        } else {
            const TypedException exception = apiVrapper2([&] {
-               info = parseLoginResponse(QString::fromStdString(response), login);
+               info = parseLoginResponse(QString::fromStdString(response.response), login);
                writeLoginInfo();
                isInitialize = true;
                emit logined(isInitialize, info.login);
@@ -188,22 +188,22 @@ void Auth::forceRefreshInternal() {
 
     std::shared_ptr<GuardRefresh> guard = std::make_shared<GuardRefresh>(guardRefresh);
 
-    tcpClient.sendMessagePost(authUrl, request, [this, token, guard](const std::string &response, const SimpleClient::ServerException &error) {
+    tcpClient.sendMessagePost(authUrl, request, [this, token, guard](const SimpleClient::Response &response) {
         guard->unlock();
 
         if (info.token != token) {
             return;
         }
-        if (error.isSet() && error.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
+        if (response.exception.isSet() && response.exception.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
             LOG << "Refresh token failed";
             logoutImpl();
-            QString content = QString::fromStdString(error.content);
-            const TypedException except(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : error.description);
+            QString content = QString::fromStdString(response.exception.content);
+            const TypedException except(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description);
             emit javascriptWrapper.sendLoginInfoResponseSig(info, except);
             emit checkTokenFinished(except);
-        } else if (!error.isSet()) {
+        } else if (!response.exception.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response), info.login, info.isTest);
+                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response.response), info.login, info.isTest);
                 if (!newLogin.isAuth) {
                     LOG << "Refresh token failed";
                     logoutImpl();
@@ -219,7 +219,7 @@ void Auth::forceRefreshInternal() {
             emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
             emit checkTokenFinished(exception);
         } else {
-            CHECK(!error.isSet(), error.description);
+            CHECK(!response.exception.isSet(), response.exception.description);
         }
     }, timeout, true);
 }
@@ -245,16 +245,16 @@ bool Auth::checkToken() {
     info.prevCheck = now;
     const QString request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
-    tcpClient.sendMessagePost(authUrl, request, [this, token](const std::string &response, const SimpleClient::ServerException &error) {
+    tcpClient.sendMessagePost(authUrl, request, [this, token](const SimpleClient::Response &response) {
         if (info.token != token) {
             return;
         }
 
-        if (error.isSet() && error.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
+        if (response.exception.isSet() && response.exception.code == SimpleClient::ServerException::BAD_REQUEST_ERROR) {
             forceRefreshInternal();
-        } else if (!error.isSet()) {
+        } else if (!response.exception.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                const bool res = parseCheckTokenResponse(QString::fromStdString(response));
+                const bool res = parseCheckTokenResponse(QString::fromStdString(response.response));
                 if (!res) {
                     forceRefreshInternal();
                 }
@@ -264,7 +264,7 @@ bool Auth::checkToken() {
                 emit checkTokenFinished(exception);
             }
         } else {
-            CHECK(!error.isSet(), error.description);
+            CHECK(!response.exception.isSet(), response.exception.description);
         }
     }, timeout);
     return false;

@@ -192,9 +192,9 @@ void Uploader::uploadEvent() {
         return;
     }
 
-    const auto callbackGetHtmls = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
-        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
+    const auto callbackGetHtmls = [this](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const auto &dataJson = root.value("data").toObject();
@@ -220,27 +220,27 @@ void Uploader::uploadEvent() {
             return;
         }
 
-        const auto interfaceGetCallback = [this, version, hash, folderServer](const std::string &result, const SimpleClient::ServerException &exception) {
+        const auto interfaceGetCallback = [this, version, hash, folderServer](const SimpleClient::Response &response) {
             versionHtmlForUpdate = "";
-            CHECK(!exception.isSet(), "Server error: " + exception.toString());
+            CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
             if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
                 return;
             }
 
             QCryptographicHash hashAlg(QCryptographicHash::Md5);
-            hashAlg.addData(result.data(), result.size());
+            hashAlg.addData(response.response.data(), response.response.size());
             const QString hashStr(hashAlg.result().toHex());
-            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash + ", response size " + QString::number(result.size())).toStdString());
+            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash + ", response size " + QString::number(response.response.size())).toStdString());
 
             removeOlderFolders(makePath(currentBeginPath, mainWindow.getCurrentHtmls().folderName), mainWindow.getCurrentHtmls().lastVersion);
 
             const QString archiveFilePath = makePath(currentBeginPath, version + ".zip");
-            writeToFileBinary(archiveFilePath, result, false);
+            writeToFileBinary(archiveFilePath, response.response, false);
 
             const QString extractedPath = makePath(currentBeginPath, folderServer, version);
             extractDir(archiveFilePath, extractedPath);
-            LOG << "Extracted " << extractedPath << "." << "Size: " << result.size();
+            LOG << "Extracted " << extractedPath << "." << "Size: " << response.response.size();
             removeFile(archiveFilePath);
 
             Uploader::setLastVersion(currentBeginPath, folderServer, version);
@@ -269,10 +269,10 @@ void Uploader::uploadEvent() {
     );
     id++;
 
-    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
+    const auto callbackAppVersion = [this](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
-        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const auto &dataJson = root.value("data").toObject();
@@ -294,15 +294,15 @@ void Uploader::uploadEvent() {
             return;
         }
 
-        const auto autoupdateGetCallback = [this, version, reference](const std::string &result, const SimpleClient::ServerException &exception) {
+        const auto autoupdateGetCallback = [this, version, reference](const SimpleClient::Response &response) {
             versionForUpdate.clear();
             LOG << "autoupdater callback";
-            CHECK(!exception.isSet(), "Server error: " + exception.toString());
+            CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
             clearAutoupdatersPath();
             const QString autoupdaterPath = getAutoupdaterPath();
             const QString archiveFilePath = makePath(autoupdaterPath, version + ".zip");
-            writeToFileBinary(archiveFilePath, result, false);
+            writeToFileBinary(archiveFilePath, response.response, false);
 
             extractDir(archiveFilePath, getTmpAutoupdaterPath());
             LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();

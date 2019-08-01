@@ -328,22 +328,22 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node,
     }
 }
 
-static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message, size_t updateNumber) {
+static NodeInfo parseNodeInfo(const QString &address, const SimpleClient::Response &response, size_t updateNumber) {
     NodeInfo info;
     info.address = address;
-    info.ping = time.count();
+    info.ping = response.time.count();
+    if (info.ping >= MAX_PING.count()) {
+        info.isTimeout = true;
+    }
     info.countUpdated = updateNumber;
 
-    if (message.empty()) {
+    if (response.response.empty() && response.exception.content.empty()) {
         info.ping = MAX_PING.count();
         info.isTimeout = true;
-    } else {
-        QJsonParseError parseError;
-        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
-        if (parseError.error != QJsonParseError::NoError) {
-            info.ping = MAX_PING.count();
-            info.isTimeout = true;
-        }
+    }
+    if (response.isTimeout) {
+        info.ping = MAX_PING.count();
+        info.isTimeout = true;
     }
 
     return info;
@@ -358,13 +358,15 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
     const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
 
     CHECK(countSteps != 0, "Incorrect countSteps");
-    std::vector<QString> requests(ipsIter, ipsIter + countSteps);
+    std::vector<QUrl> currentIps(ipsIter, ipsIter + countSteps);
 
-    client.pings(node.node.str().toStdString(), requests, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+    client.sendMessagesPost(node.node.str().toStdString(), currentIps, "", [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, currentIps, ipsIter, countSteps](const std::vector<SimpleClient::Response> &results) {
         const TypedException exception = apiVrapper2([&]{
-            CHECK(requestsSize == results.size(), "Incorrect results");
-            for (const auto &result: results) {
-                allNodesForTypesNew[node.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
+            CHECK(currentIps.size() == results.size(), "Incorrect results");
+            for (size_t i = 0; i < results.size(); i++) {
+                const SimpleClient::Response &result = results[i];
+                const QUrl &ip = currentIps[i];
+                allNodesForTypesNew[node.node].emplace_back(parseNodeInfo(ip.toString(), result, updateNumber));
             }
         });
 
@@ -396,22 +398,23 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
             break;
         }
     }
-    std::vector<QString> requests;
+    std::vector<QUrl> currentIps;
     for (const size_t posInIpsTemp: processVectPos) {
         const QString &address = allNodesForTypes[node.node][posInIpsTemp].address;
-        requests.emplace_back(address);
+        currentIps.emplace_back(address);
     }
     if (processVectPos.empty()) {
         continueResolve();
     }
-    client.pings(node.node.str().toStdString(), requests, [this, continueResolve, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
+    client.sendMessagesPost(node.node.str().toStdString(), currentIps, "", [this, continueResolve, node, currentIps, processVectPos](const std::vector<SimpleClient::Response> &results) {
         const TypedException exception = apiVrapper2([&]{
             CHECK(processVectPos.size() == results.size(), "Incorrect result");
             for (size_t i = 0; i < results.size(); i++) {
                 const auto &result = results[i];
                 const size_t index = processVectPos[i];
+                const QString address = currentIps[i].toString();
                 NodeInfo &info = allNodesForTypes[node.node][index];
-                NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
+                NodeInfo newInfo = parseNodeInfo(address, result, updateNumber);
                 CHECK(info.address == newInfo.address, "Incorrect address");
                 if (!newInfo.isTimeout) {
                     newInfo.ping = info.ping;

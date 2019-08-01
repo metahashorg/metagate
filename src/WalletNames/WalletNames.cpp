@@ -113,9 +113,9 @@ void WalletNames::getAllWalletsApps() {
         return;
     }
     LOG << "Sync wallets";
-    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
-        const std::vector<WalletInfo> wallets = parseAddressListResponse(QString::fromStdString(result));
+    const auto callbackAppVersion = [this](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
+        const std::vector<WalletInfo> wallets = parseAddressListResponse(QString::fromStdString(response.response));
         std::vector<QString> tmhs;
         std::vector<QString> mhcs;
         for (const WalletInfo &wallet: wallets) {
@@ -166,8 +166,8 @@ BEGIN_SLOT_WRAPPER
         emit client.sendMessage(message);
 
         const QString message2 = makeRenameMessageHttp(address, name, WALLET_CURRENCY_MTH, id.get(), token, hwid);
-        emit httpClient.sendMessagePost(serverName, message2, [](const std::string &result, const SimpleClient::ServerException &exception) {
-            CHECK(!exception.isSet(), "Server error: " + exception.toString());
+        emit httpClient.sendMessagePost(serverName, message2, [](const SimpleClient::Response &response) {
+            CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
         });
     }, callback);
 END_SLOT_WRAPPER
@@ -391,8 +391,8 @@ BEGIN_SLOT_WRAPPER
     }
     const QString message = makeCreateWatchWalletMessage(id.get(), token, hwid, address, isMhc);
 
-    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), exception.toString());
+    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), response.exception.toString());
     }));
 END_SLOT_WRAPPER
 }
@@ -404,8 +404,8 @@ BEGIN_SLOT_WRAPPER
     }
     const QString message = makeRemoveWatchWalletMessage(id.get(), token, hwid, address, isMhc);
 
-    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const std::string &/*result*/, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), exception.toString());
+    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), response.exception.toString());
     }));
 END_SLOT_WRAPPER
 }
