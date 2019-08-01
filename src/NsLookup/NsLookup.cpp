@@ -405,6 +405,7 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
     }
     if (processVectPos.empty()) {
         continueResolve();
+        return;
     }
     client.sendMessagesPost(node.node.str().toStdString(), currentIps, "", [this, continueResolve, node, currentIps, processVectPos](const std::vector<SimpleClient::Response> &results) {
         const TypedException exception = apiVrapper2([&]{
