@@ -25,19 +25,6 @@ Q_INVOKABLE void setCurrentGroup(QString group);
 Результат вернется в функцию
 txsSetCurrentGroupResultJs("Ok", errorNum, errorMessage)
 
-Q_INVOKABLE void getTxs(QString address, QString currency, QString fromTx, int count, bool asc);
-Пока не работает
-Получение транзакций
-fromTx транзакция, с которой продолжать поиск. Если пустая, то с первой (или с последней, в зависимости от параметра asc) транзакции
-asc порядок сортировки
-count == -1 выдать все
-Результат вернется в функцию
-txsGetTxsJs(address, currency, result, errorNum, errorMessage)
-где result - json массив вида
-[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\", \"isDelegate\": true, \"delegate_value\": \"500\", \"blockNumber\":\"0\", \"delegate_hash\":\"546450\",\"type\":\"type\",\"intStatus\":10}]
-Параметры isDelegate и delegate_value, delegate_hash - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
-type == simple, delegate, forging
-
 Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 Получение транзакций в порядке возрастания или убывания
 asc порядок сортировки
@@ -45,15 +32,12 @@ asc порядок сортировки
 count == -1 выдать все
 Результат вернется в функцию
 txsGetTxs2Js(address, currency, result, errorNum, errorMessage)
+где result - json массив вида
+[{\"id\":\"id\",\"from\":\"0x00\",\"to\":\"0x00\",\"value\":\"1\",\"data\":\"0x345534\",\"timestamp\":\"00\",\"fee\":\"1\",\"nonce\":\"1\", \"isDelegate\": true, \"delegate_value\": \"500\", \"blockNumber\":\"0\", \"delegate_hash\":\"546450\",\"type\":\"type\",\"intStatus\":10}]
+Параметры isDelegate и delegate_value, delegate_hash - опциональные, если их нет, значит это не транзакция делегации. Если isDelegate == false, значит это транзакция undelegate
+type == simple, delegate, forging
 
-Q_INVOKABLE void getTxsAll(QString currency, QString fromTx, int count, bool asc);
-Пока не работает
-count == -1 выдать все
-Получение транзакций по всем адресам currency
-Результат вернется в функцию
-txsGetTxsAllJs(address, currency, result, errorNum, errorMessage)
-
-Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
+Q_INVOKABLE void getTxsAll2(QString group, QString currency, int from, int count, bool asc);
 Получение транзакций по всем адресам currency
 count == -1 выдать все
 Результат вернется в функцию

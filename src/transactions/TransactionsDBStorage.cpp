@@ -145,7 +145,7 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForAddressFilter(cons
     return res;
 }
 
-std::vector<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QString &currency,
+std::vector<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QString &group, const QString &currency,
                                                                        qint64 offset, qint64 count, bool asc) const
 {
     std::vector<Transaction> res;
@@ -153,6 +153,7 @@ std::vector<Transaction> TransactionsDBStorage::getPaymentsForCurrency(const QSt
     CHECK(query.prepare(selectPaymentsForCurrency.arg(asc ? QStringLiteral("ASC") : QStringLiteral("DESC"))),
           query.lastError().text().toStdString());
     query.bindValue(":currency", currency);
+    query.bindValue(":tgroup", group);
     query.bindValue(":offset", offset);
     query.bindValue(":count", count);
     CHECK(query.exec(), query.lastError().text().toStdString());

@@ -245,44 +245,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void TransactionsJavascript::getTxs(QString address, QString currency, QString fromTx, int count, bool asc) {
-BEGIN_SLOT_WRAPPER
-    CHECK(transactionsManager != nullptr, "transactions not set");
-
-    const QString JS_NAME_RESULT = "txsGetTxsJs";
-
-    LOG << "get txs address " << address << " " << currency << " " << fromTx << " " << count << " " << asc;
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
-
-    wrapOperation([&, this](){
-        emit transactionsManager->getTxs(address, currency, fromTx, count, asc, Transactions::GetTxsCallback([address, currency, makeFunc](const std::vector<Transaction> &txs) {
-            LOG << "get txs address ok " << address << " " << currency << " " << txs.size();
-            makeFunc.func(TypedException(), address, currency, txsToJson(txs));
-        }, makeFunc.error, signalFunc));
-    }, makeFunc.error);
-END_SLOT_WRAPPER
-}
-
-void TransactionsJavascript::getTxsAll(QString currency, QString fromTx, int count, bool asc) {
-BEGIN_SLOT_WRAPPER
-    CHECK(transactionsManager != nullptr, "transactions not set");
-
-    const QString JS_NAME_RESULT = "txsGetTxsAllJs";
-
-    LOG << "get txs address " << currency << " " << fromTx << " " << count << " " << asc;
-
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
-
-    wrapOperation([&, this](){
-        emit transactionsManager->getTxsAll(currency, fromTx, count, asc, Transactions::GetTxsCallback([currency, makeFunc](const std::vector<Transaction> &txs) {
-            LOG << "get txs address ok " << currency << " " << txs.size();
-            makeFunc.func(TypedException(), currency, txsToJson(txs));
-        }, makeFunc.error, signalFunc));
-    }, makeFunc.error);
-END_SLOT_WRAPPER
-}
-
 void TransactionsJavascript::getTxs2(QString address, QString currency, int from, int count, bool asc) {
 BEGIN_SLOT_WRAPPER
     CHECK(transactionsManager != nullptr, "transactions not set");

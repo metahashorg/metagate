@@ -173,13 +173,9 @@ signals:
 
     void setCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
-    void getTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
-
     void getTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void getTxsFilters(const QString &address, const QString &currency, const Filters &filter, int from, int count, bool asc, const GetTxsCallback &callback);
-
-    void getTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
 
     void getTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
@@ -213,13 +209,9 @@ public slots:
 
     void onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
-    void onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
-
     void onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onGetTxsFilters(const QString &address, const QString &currency, const Filters &filter, int from, int count, bool asc, const GetTxsCallback &callback);
-
-    void onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
 
     void onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
