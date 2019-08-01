@@ -93,47 +93,53 @@ Q_SIGNALS:
     void closed();
 
 private Q_SLOTS:
-    void onTextMessageReceived();
+    void onTextMessageReceived(size_t id);
 
     void onTimerEvent();
 
 private:
 
-    using TextMessageReceived = void (SimpleClient::*)();
+    struct Request {
+        ClientCallback callback;
+        QNetworkReply* reply = nullptr;
+        bool isSetTimeout = false;
+        milliseconds timeout;
+        time_point beginTime;
+        bool isTimeout = false;
+    };
+
+private:
 
     template<typename Callback>
     void sendMessageInternal(
         bool isPost,
-        std::unordered_map<std::string, Callback> &callbacks,
         const QUrl &url,
         const QString &message,
         const Callback &callback,
         bool isTimeout,
         milliseconds timeout,
         bool isClearCache,
-        TextMessageReceived onTextMessageReceived,
         bool isQueuedConnection
     );
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
-    template<class Callbacks, typename... Message>
-    void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);
+    template<typename... Message>
+    void runCallback(size_t id, Message&&... messages);
 
     void startTimer1();
 
 private:
     QNetworkAccessManager *manager;
-    std::unordered_map<std::string, ClientCallback> callbacks_;
 
-    std::unordered_map<std::string, QNetworkReply*> requests;
+    std::unordered_map<size_t, Request> requests;
 
     QTimer* timer = nullptr;
 
     QThread *thread1 = nullptr;
 
-    int id = 0;
+    size_t id = 0;
 };
 
 #endif // CLIENT_H

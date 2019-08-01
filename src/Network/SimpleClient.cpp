@@ -16,12 +16,6 @@ using namespace std::placeholders;
 #include <QNetworkReply>
 #include <QThread>
 
-QT_USE_NAMESPACE
-
-const static QNetworkRequest::Attribute REQUEST_ID_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 0);
-const static QNetworkRequest::Attribute TIME_BEGIN_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 1);
-const static QNetworkRequest::Attribute TIMOUT_FIELD = QNetworkRequest::Attribute(QNetworkRequest::User + 2);
-
 const int SimpleClient::ServerException::BAD_REQUEST_ERROR = QNetworkReply::ProtocolInvalidOperationError;
 
 template<class Callback>
@@ -138,67 +132,28 @@ void SimpleClient::startTimer1() {
     }
 }
 
-static void addRequestId(QNetworkRequest &request, const std::string &id) {
-    request.setAttribute(REQUEST_ID_FIELD, QString::fromStdString(id));
-}
-
-static bool isRequestId(const QNetworkReply &reply) {
-    return reply.request().attribute(REQUEST_ID_FIELD).userType() == QMetaType::QString;
-}
-
-static std::string getRequestId(const QNetworkReply &reply) {
-    CHECK(isRequestId(reply), "Request id field not set"); // Эта ошибка обычно обозначает, что с url что-то не то
-    return reply.request().attribute(REQUEST_ID_FIELD).toString().toStdString();
-}
-
-static void addBeginTime(QNetworkRequest &request, time_point tp) {
-    request.setAttribute(TIME_BEGIN_FIELD, QString::fromStdString(std::to_string(timePointToInt(tp))));
-}
-
-static bool isBeginTime(const QNetworkReply &reply) {
-    return reply.request().attribute(TIME_BEGIN_FIELD).userType() == QMetaType::QString;
-}
-
-static time_point getBeginTime(const QNetworkReply &reply) {
-    CHECK(isBeginTime(reply), "begin time field not set");
-    const size_t timeBegin = std::stoull(reply.request().attribute(TIME_BEGIN_FIELD).toString().toStdString());
-    const time_point timeBeginTp = intToTimePoint(timeBegin);
-    return timeBeginTp;
-}
-
-static void addTimeout(QNetworkRequest &request, milliseconds timeout) {
-    request.setAttribute(TIMOUT_FIELD, QString::fromStdString(std::to_string(timeout.count())));
-}
-
-static bool isTimeout(const QNetworkReply &reply) {
-    return reply.request().attribute(TIMOUT_FIELD).userType() == QMetaType::QString;
-}
-
-static milliseconds getTimeout(const QNetworkReply &reply) {
-    CHECK(isTimeout(reply), "Timeout field not set");
-    return milliseconds(std::stol(reply.request().attribute(TIMOUT_FIELD).toString().toStdString()));
-}
-
 void SimpleClient::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
-    std::vector<std::reference_wrapper<QNetworkReply>> toDelete;
+    std::vector<std::reference_wrapper<Request>> toDelete;
     const time_point timeEnd = ::now();
     for (auto &iter: requests) {
-        auto &reply = *iter.second;
+        Request &request = iter.second;
+        auto &reply = *request.reply;
 
-        if (isTimeout(reply)) {
-            const milliseconds timeout = getTimeout(reply);
-            const time_point timeBegin = getBeginTime(reply);
+        if (request.isSetTimeout) {
+            const milliseconds &timeout = request.timeout;
+            const time_point &timeBegin = request.beginTime;
             const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
             if (duration >= timeout) {
                 LOG << PeriodicLog::make("cl_tm") << "Timeout request";
-                toDelete.emplace_back(reply);
+                toDelete.emplace_back(request);
             }
         }
     }
 
-    for (QNetworkReply& reply: toDelete) {
-        reply.abort();
+    for (Request& reply: toDelete) {
+        reply.isTimeout = true;
+        reply.reply->abort();
     }
 END_SLOT_WRAPPER
 }
@@ -206,29 +161,26 @@ END_SLOT_WRAPPER
 template<typename Callback>
 void SimpleClient::sendMessageInternal(
     bool isPost,
-    std::unordered_map<std::string, Callback> &callbacks,
     const QUrl &url,
     const QString &message,
     const Callback &callback,
     bool isTimeout,
     milliseconds timeout,
     bool isClearCache,
-    TextMessageReceived onTextMessageReceived,
     bool isQueuedConnection
 ) {
-    const std::string requestId = std::to_string(id++);
+    const size_t requestId = id++;
 
     startTimer1();
 
-    callbacks[requestId] = callback;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    addRequestId(request, requestId);
     const time_point time = ::now();
-    addBeginTime(request, time);
-    if (isTimeout) {
-        addTimeout(request, timeout);
-    }
+    Request r;
+    r.beginTime = time;
+    r.isSetTimeout = isTimeout;
+    r.timeout = timeout;
+    r.callback = callback;
     if (isClearCache) {
         manager->clearAccessCache();
         manager->clearConnectionCache();
@@ -239,16 +191,17 @@ void SimpleClient::sendMessageInternal(
     } else {
         reply = manager->get(request);
     }
+    r.reply = reply;
     Qt::ConnectionType connType = Qt::AutoConnection;
     if (isQueuedConnection) {
         connType = Qt::QueuedConnection;
     }
-    Q_CONNECT2(reply, &QNetworkReply::finished, this, onTextMessageReceived, connType);
-    requests[requestId] = reply;
+    Q_CONNECT2(reply, &QNetworkReply::finished, this, std::bind(&SimpleClient::onTextMessageReceived, this, requestId), connType);
+    requests[requestId] = r;
 }
 
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache) {
-    sendMessageInternal(true, callbacks_, url, message, callback, isTimeout, timeout, isClearCache, &SimpleClient::onTextMessageReceived, false);
+    sendMessageInternal(true, url, message, callback, isTimeout, timeout, isClearCache, false);
 }
 
 void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
@@ -274,7 +227,7 @@ void SimpleClient::sendMessagesPost(const std::string printedName, const std::ve
 }
 
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout) {
-    sendMessageInternal(false, callbacks_, url, "", callback, isTimeout, timeout, false, &SimpleClient::onTextMessageReceived, false);
+    sendMessageInternal(false, url, "", callback, isTimeout, timeout, false, false);
 }
 
 void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callback) {
@@ -285,22 +238,21 @@ void SimpleClient::sendMessageGet(const QUrl &url, const ClientCallback &callbac
     sendMessageGet(url, callback, true, timeout);
 }
 
-template<class Callbacks, typename... Message>
-void SimpleClient::runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages) {
-    const auto foundCallback = callbacks.find(id);
-    CHECK(foundCallback != callbacks.end(), "not found callback on id " + id);
-    const auto callback = std::bind(foundCallback->second, std::forward<Message>(messages)...);
+template<typename... Message>
+void SimpleClient::runCallback(size_t id, Message&&... messages) {
+    const auto foundCallback = requests.find(id);
+    CHECK(foundCallback != requests.end(), "not found callback on id " + std::to_string(id));
+    const auto callback = std::bind(foundCallback->second.callback, std::forward<Message>(messages)...);
     emit callbackCall(callback);
-    callbacks.erase(foundCallback);
-    requests.erase(id);
+    requests.erase(foundCallback);
 }
 
-void SimpleClient::onTextMessageReceived() {
+void SimpleClient::onTextMessageReceived(size_t id) {
 BEGIN_SLOT_WRAPPER
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
-    const std::string requestId = getRequestId(*reply);
-    const time_point timeBegin = getBeginTime(*reply);
+    const Request &request = requests.at(id);
+    const time_point timeBegin = request.beginTime;
     const time_point timeEnd = ::now();
     const milliseconds duration = std::chrono::duration_cast<milliseconds>(timeEnd - timeBegin);
 
@@ -312,7 +264,7 @@ BEGIN_SLOT_WRAPPER
         Response resp;
         resp.response = std::string(content.data(), content.size());
         resp.time = duration;
-        runCallback(callbacks_, requestId, resp);
+        runCallback(id, resp);
     } else {
         std::string errorStr;
         if (reply->isReadable()) {
@@ -321,8 +273,13 @@ BEGIN_SLOT_WRAPPER
 
         Response resp;
         resp.time = duration;
-        resp.exception = ServerException(reply->url().toString().toStdString(), reply->error(), reply->errorString().toStdString(), errorStr);
-        runCallback(callbacks_, requestId, resp);
+        if (request.isTimeout) {
+            resp.isTimeout = request.isTimeout;
+            resp.exception = ServerException(reply->url().toString().toStdString(), QNetworkReply::TimeoutError, "Timeout", errorStr);
+        } else {
+            resp.exception = ServerException(reply->url().toString().toStdString(), reply->error(), reply->errorString().toStdString(), errorStr);
+        }
+        runCallback(id, resp);
     }
 
     reply->deleteLater();
