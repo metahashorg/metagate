@@ -93,6 +93,10 @@ public:
 
     using RestoreKeysCallback = CallbackWrapper<void(const QString &fileName)>;
 
+    using ImportKeysCallback = CallbackWrapper<void(int count)>;
+
+    using CalkKeysCallback = CallbackWrapper<void(const std::vector<QString> &addresses)>;
+
 public:
 
     explicit Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent = nullptr);
@@ -157,6 +161,10 @@ signals:
 
     void createWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
 
+    void importKeys(bool isMhc, const QString &path, const ImportKeysCallback &callback);
+
+    void calkKeys(bool isMhc, const QString &path, const CalkKeysCallback &callback);
+
 private slots:
 
     void onCreateWallet(bool isMhc, const QString &password, const CreateWalletCallback &callback);
@@ -190,6 +198,10 @@ private slots:
     void onGetRawPrivateKey(bool isMhc, const QString &address, const QString &password, const GetRawPrivateKeyCallback &callback);
 
     void onCreateWatchWalletsList(bool isMhc, const std::vector<QString> &addresses, const CreateWatchsCallback &callback);
+
+    void onImportKeys(bool isMhc, const QString &path, const ImportKeysCallback &callback);
+
+    void onCalkKeys(bool isMhc, const QString &path, const CalkKeysCallback &callback);
 
 ///////////
 /// RSA ///
@@ -231,6 +243,10 @@ signals:
 
     void getOnePrivateKeyEth(const QString &address, const GetPrivateKeyCallback &callback);
 
+    void importKeysEth(const QString &path, const ImportKeysCallback &callback);
+
+    void calkKeysEth(const QString &path, const CalkKeysCallback &callback);
+
 private slots:
 
     void onCreateEthKey(const QString &password, const CreateEthKeyCallback &callback);
@@ -242,6 +258,10 @@ private slots:
     void onSavePrivateKeyEth(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
 
     void onGetOnePrivateKeyEth(const QString &address, const GetPrivateKeyCallback &callback);
+
+    void onImportKeysEth(const QString &path, const ImportKeysCallback &callback);
+
+    void onCalkKeysEth(const QString &path, const CalkKeysCallback &callback);
 
 ///////////
 /// BTC ///
@@ -259,6 +279,10 @@ signals:
 
     void getOnePrivateKeyBtc(const QString &address, const GetPrivateKeyCallback &callback);
 
+    void importKeysBtc(const QString &path, const ImportKeysCallback &callback);
+
+    void calkKeysBtc(const QString &path, const CalkKeysCallback &callback);
+
 private slots:
 
     void onCreateBtcKey(const QString &password, const CreateBtcKeyCallback &callback);
@@ -270,6 +294,10 @@ private slots:
     void onSavePrivateKeyBtc(const QString &privateKey, const QString &password, const SavePrivateKeyCallback &callback);
 
     void onGetOnePrivateKeyBtc(const QString &address, const GetPrivateKeyCallback &callback);
+
+    void onImportKeysBtc(const QString &path, const ImportKeysCallback &callback);
+
+    void onCalkKeysBtc(const QString &path, const CalkKeysCallback &callback);
 
 //////////////
 /// COMMON ///
@@ -338,6 +366,8 @@ private:
     void setPathsImpl(QString newPatch, QString newUserName);
 
     std::vector<WalletInfo> readAllWallets(const WalletCurrency &type);
+
+    int importKeysImpl(const QString &path, const std::function<bool(const QString &filePath)> &checkFileName, const std::function<void(const QString &path)> &processFile);
 
 private:
 

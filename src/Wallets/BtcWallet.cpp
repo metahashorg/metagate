@@ -336,3 +336,21 @@ void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, c
 void BtcWallet::checkAddress(const std::string &address) {
     checkAddressBase56(address);
 }
+
+bool BtcWallet::isCorrectFilenameWallet(const QString &filePath) {
+    const QString fileName = getFileName(filePath);
+    try {
+        const std::string wifAndAddress = readFile(filePath);
+        checkAddress(getWifAndAddress(wifAndAddress, true).second);
+        return true;
+    } catch (const Exception &) {
+        return false;
+    } catch (const TypedException &) {
+        return false;
+    }
+}
+
+std::string BtcWallet::getAddress(const QString &filePath) {
+    const std::string wifAndAddress = readFile(filePath);
+    return getWifAndAddress(wifAndAddress, true).second;
+}

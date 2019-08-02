@@ -66,6 +66,10 @@ public:
 
     static void checkAddress(const std::string &address);
 
+    static bool isCorrectFilenameWallet(const QString &filePath);
+
+    static std::string getAddress(const QString &filePath);
+
 private:
 
     BtcWallet(const std::string &fileData, const QString &password);

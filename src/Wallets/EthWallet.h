@@ -54,6 +54,8 @@ public:
 
     static void savePrivateKey(const QString &folder, const std::string &data, const std::string &password);
 
+    static bool isCorrectFilenameWallet(const QString &filePath);
+
 private:
 
     EthWallet(const std::string &fileData, const std::string &address, const std::string &password, bool tmp);

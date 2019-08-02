@@ -49,6 +49,10 @@ public:
 
     Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password, const QString &callback);
 
+    Q_INVOKABLE void importKeys(bool isMhc, const QString &path, const QString &callback);
+
+    Q_INVOKABLE void calkKeys(bool isMhc, const QString &path, const QString &callback);
+
 private slots:
 
     void onWatchWalletsCreated(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
@@ -83,6 +87,10 @@ public:
 
     Q_INVOKABLE void getOnePrivateKeyEth(const QString &address, const QString &callback);
 
+    Q_INVOKABLE void importKeysEth(const QString &path, const QString &callback);
+
+    Q_INVOKABLE void calkKeysEth(const QString &path, const QString &callback);
+
 ///////////
 /// BTC ///
 ///////////
@@ -98,6 +106,10 @@ public:
     Q_INVOKABLE void savePrivateKeyBtc(const QString &privateKey, const QString &password, const QString &callback);
 
     Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address, const QString &callback);
+
+    Q_INVOKABLE void importKeysBtc(const QString &path, const QString &callback);
+
+    Q_INVOKABLE void calkKeysBtc(const QString &path, const QString &callback);
 
 //////////////
 /// COMMON ///

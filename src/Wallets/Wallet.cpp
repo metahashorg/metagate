@@ -260,6 +260,22 @@ std::string Wallet::createV8Address(const std::string &addr, int nonce) {
     return "0x" + toHex(address);
 }
 
+bool Wallet::isCorrectFilenameWallet(const QString &filePath) {
+    const QString fileName = getBaseName(filePath);
+    const QString extension = "." + getExtension(filePath);
+    if (extension != FILE_METAHASH_PRIV_KEY_SUFFIX && extension != FILE_METAHASH_WATCH_SUFFIX) {
+        return false;
+    }
+    try {
+        checkAddress(fileName.toStdString(), true);
+        return true;
+    } catch (const Exception &) {
+        return false;
+    } catch (const TypedException &) {
+        return false;
+    }
+}
+
 static std::string createAddressFromPrivate(const CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>::PrivateKey &privKey) {
     const std::string pubKeyElements = getPublicKeyElements(privKey);
     const std::string pubKeyBinary = fromHex(pubKeyElements);

@@ -48,6 +48,8 @@ public:
 
     static std::string createV8Address(const std::string &address, int nonce);
 
+    static bool isCorrectFilenameWallet(const QString &filePath);
+
 public:
 
     Wallet(const QString &folder, bool isMhc, const std::string &name, const std::string &password);
