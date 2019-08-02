@@ -117,6 +117,8 @@ signals:
 
     void mhcWatchWalletRemoved(bool isMhc, const QString &address, const QString &username);
 
+    void dirChanged(const QString &absolutePath, const QString &nameCurrency);
+
 ///////////
 /// MHC ///
 ///////////

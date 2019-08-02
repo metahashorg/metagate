@@ -911,6 +911,13 @@ BEGIN_SLOT_WRAPPER
     }
 
     walletsList[currency] = currentWallets2;
+
+    const QDir d(dir);
+    for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
+        if (folderInfo.walletPath == d) {
+            emit dirChanged(d.absolutePath(), folderInfo.nameWallet);
+        }
+    }
 END_SLOT_WRAPPER
 }
 

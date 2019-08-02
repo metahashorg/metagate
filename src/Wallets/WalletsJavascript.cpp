@@ -32,6 +32,7 @@ WalletsJavascript::WalletsJavascript(Wallets &wallets, QObject *parent)
     , wallets(wallets)
 {
     Q_CONNECT(&wallets, &Wallets::watchWalletsAdded, this, &WalletsJavascript::onWatchWalletsCreated);
+    Q_CONNECT(&wallets, &Wallets::dirChanged, this, &WalletsJavascript::onDirChanged);
 }
 
 ///////////
@@ -587,6 +588,14 @@ END_SLOT_WRAPPER
 void WalletsJavascript::openWalletPathInStandartExplorer() {
 BEGIN_SLOT_WRAPPER
     emit wallets.openWalletPathInStandartExplorer();
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::onDirChanged(const QString &absolutePath, const QString &nameCurrency) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsDirectoryChangedResultJs";
+    LOG << "folder changed " << nameCurrency << " " << absolutePath;
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), absolutePath, nameCurrency);
 END_SLOT_WRAPPER
 }
 

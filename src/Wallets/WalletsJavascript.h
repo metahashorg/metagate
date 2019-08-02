@@ -113,6 +113,10 @@ public:
 
     Q_INVOKABLE void openWalletPathInStandartExplorer();
 
+private slots:
+
+    void onDirChanged(const QString &absolutePath, const QString &nameCurrency);
+
 private:
 
     Wallets &wallets;
