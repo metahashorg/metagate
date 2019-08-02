@@ -20,9 +20,7 @@ InfrastructureNsLookup::Nodes::Nodes(const QString &torrent, const QString &prox
     , contractTorrent(contractTorrent)
 {}
 
-InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *parent)
-    : nsLookup(nsLookup)
-{
+InfrastructureNsLookup::InfrastructureNsLookup(QObject *parent) {
     Q_CONNECT(this, &InfrastructureNsLookup::getTorrents, this, &InfrastructureNsLookup::onGetTorrents);
     Q_CONNECT(this, &InfrastructureNsLookup::getProxy, this, &InfrastructureNsLookup::onGetProxy);
     Q_CONNECT(this, &InfrastructureNsLookup::getContractTorrent, this, &InfrastructureNsLookup::onGetContractTorrent);
@@ -41,6 +39,10 @@ InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *pare
     settings.endArray();
 }
 
+void InfrastructureNsLookup::setNsLookup(NsLookup *nsl) {
+    nsLookup = nsl;
+}
+
 template<typename Member>
 void InfrastructureNsLookup::getServers(const QString &currency, const Member &member, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback) {
     runAndEmitErrorCallback([&]{
@@ -54,7 +56,8 @@ void InfrastructureNsLookup::getServers(const QString &currency, const Member &m
             callback.emitCallback(std::vector<QString>());
             return;
         }
-        emit nsLookup.getRandomServers(type, limit, count, callback);
+        CHECK(nsLookup != nullptr, "NsLookup not set");
+        emit nsLookup->getRandomServers(type, limit, count, callback);
     }, callback);
 }
 

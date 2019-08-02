@@ -62,8 +62,9 @@ static QString getAddressWithoutHttp(const QString &address) {
     return QUrl(address).host() + ":" + QString::fromStdString(std::to_string(QUrl(address).port()));
 }
 
-NsLookup::NsLookup(QObject *parent)
+NsLookup::NsLookup(InfrastructureNsLookup &infrastructureNsl, QObject *parent)
     : TimerClass(1s, nullptr)
+    , infrastructureNsl(infrastructureNsl)
 {
     Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
     Q_CONNECT(this, &NsLookup::rejectServer, this, &NsLookup::onRejectServer);

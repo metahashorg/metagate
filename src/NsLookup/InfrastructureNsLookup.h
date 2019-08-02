@@ -29,7 +29,9 @@ public:
 
 public:
 
-    explicit InfrastructureNsLookup(NsLookup &nsLookup, QObject *parent = nullptr);
+    explicit InfrastructureNsLookup(QObject *parent = nullptr);
+
+    void setNsLookup(NsLookup *nsl);
 
 signals:
 
@@ -54,7 +56,7 @@ private:
 
 private:
 
-    NsLookup &nsLookup;
+    NsLookup *nsLookup;
 
     std::map<QString, Nodes> infrastructure;
 

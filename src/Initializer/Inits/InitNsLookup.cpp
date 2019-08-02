@@ -43,12 +43,13 @@ END_SLOT_WRAPPER
 
 InitNsLookup::Return InitNsLookup::initialize() {
     const TypedException exception = apiVrapper2([&, this] {
-        nsLookup = std::make_unique<NsLookup>();
-        Q_CONNECT(nsLookup.get(), &NsLookup::serversFlushed, this, &InitNsLookup::serversFlushed);
-        nsLookup->start();
-
-        infrastructureNsLookup = std::make_unique<InfrastructureNsLookup>(*nsLookup);
+        infrastructureNsLookup = std::make_unique<InfrastructureNsLookup>();
         infrastructureNsLookup->moveToThread(mainThread);
+
+        nsLookup = std::make_unique<NsLookup>(*infrastructureNsLookup);
+        Q_CONNECT(nsLookup.get(), &NsLookup::serversFlushed, this, &InitNsLookup::serversFlushed);
+        infrastructureNsLookup->setNsLookup(nsLookup.get());
+        nsLookup->start();
     });
     sendInitSuccess(exception);
     if (exception.isSet()) {

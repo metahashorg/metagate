@@ -35,6 +35,8 @@ class PrintNodesWorker;
 class MiddleWorker;
 }
 
+class InfrastructureNsLookup;
+
 class NsLookup : public ManagerWrapper, public TimerClass {
 friend class nslookup::FullWorker;
 friend class nslookup::SimpleWorker;
@@ -58,7 +60,7 @@ public:
     using GetServersCallback = CallbackWrapper<void(const std::vector<QString> &servers)>;
 
 public:
-    explicit NsLookup(QObject *parent = nullptr);
+    explicit NsLookup(InfrastructureNsLookup &infrastructureNsl, QObject *parent = nullptr);
 
     ~NsLookup() override;
 
@@ -171,6 +173,8 @@ private:
     size_t countWorkedNodes(const std::vector<NodeInfo> &nodes) const;
 
 private:
+
+    InfrastructureNsLookup &infrastructureNsl;
 
     UdpSocketClient udpClient;
 
