@@ -307,6 +307,8 @@ private:
 
     time_point lastCheckTxsTime;
 
+    std::vector<AddressInfo> trackedAddresses;
+
     std::vector<AddressInfo> addressesInfos;
 
     size_t posInAddressInfos;

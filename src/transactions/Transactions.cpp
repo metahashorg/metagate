@@ -369,7 +369,7 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
 }
 
 std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
-    return db.getTrackedForGroup(group);
+    return trackedAddresses;
 }
 
 BalanceInfo Transactions::getBalance(const QString &address, const QString &currency) {
@@ -583,11 +583,9 @@ void Transactions::fetchBalanceAddress(const QString &address) {
 void Transactions::onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
-        auto transactionGuard = db.beginTransaction();
         for (const AddressInfo &address: addresses) {
-            db.addTracked(address.currency, address.address, makeGroupName(currentUserName));
+            trackedAddresses.emplace_back(address);
         }
-        transactionGuard.commit();
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -747,6 +745,8 @@ void Transactions::addTrackedForCurrentLogin() {
         LOG << "Error: " << e.description;
     };
 
+    trackedAddresses.clear();
+
     const auto processWallets = [this](bool isMhc, const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
         CHECK(currentUserName == userName, "Current group already changed");
 
@@ -756,14 +756,12 @@ void Transactions::addTrackedForCurrentLogin() {
             return;
         }
 
-        auto transactionGuard = db.beginTransaction();
         for (const QString &currency: found->second) {
-            db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
             for (const wallets::WalletInfo &wallet: walletAddresses) {
-                db.addTracked(currency, wallet.address, makeGroupName(currentUserName));
+                AddressInfo info(currency, wallet.address, makeGroupName(currentUserName));
+                trackedAddresses.emplace_back(info);
             }
         }
-        transactionGuard.commit();
     };
 
     emit wallets.getListWallets2(wallets::WalletCurrency::Mth, currentUserName, wallets::Wallets::WalletsListCallback([processWallets](const QString &userName, const std::vector<wallets::WalletInfo> &walletAddresses) {
@@ -798,7 +796,8 @@ BEGIN_SLOT_WRAPPER
         return;
     }
     for (const QString &currency: found->second) {
-        db.addTracked(currency, address, makeGroupName(userName));
+        AddressInfo info(currency, address, makeGroupName(currentUserName));
+        trackedAddresses.emplace_back(info);
     }
 END_SLOT_WRAPPER
 }
@@ -963,12 +962,11 @@ BEGIN_SLOT_WRAPPER
         db.addToCurrency(isMhc, currency);
 
         const auto process = [this, callback](const QString &currency, const std::vector<wallets::WalletInfo> &walletAddresses) {
-            auto transactionGuard = db.beginTransaction();
-            db.removeTrackedForGroup(currency, makeGroupName(currentUserName));
+            trackedAddresses.clear();
             for (const wallets::WalletInfo &wallet: walletAddresses) {
-                db.addTracked(currency, wallet.address, makeGroupName(currentUserName));
+                AddressInfo info(currency, wallet.address, makeGroupName(currentUserName));
+                trackedAddresses.emplace_back();
             }
-            transactionGuard.commit();
 
             callback.emitCallback();
         };
