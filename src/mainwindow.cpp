@@ -588,9 +588,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
         const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\", \"net\": \"" + netDns + "\"}}";
-        client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const std::string &result, const SimpleClient::ServerException &exception) {
-            CHECK(!exception.isSet(), "Dns error " + exception.toString());
-            pagesMappings.addMappingsMh(QString::fromStdString(result));
+        client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const SimpleClient::Response &response) {
+            CHECK(!response.exception.isSet(), "Dns error " + response.exception.toString());
+            pagesMappings.addMappingsMh(QString::fromStdString(response.response));
             const PageInfo pageInfo = pagesMappings.find(text);
             doProcessCommand(pageInfo);
         }, 2s);

@@ -25,7 +25,7 @@ public slots:
 
     Q_INVOKABLE void printUrl(const QString &url, const QString &printWindowCaption, const QString &text, const QString &callback);
 
-    Q_INVOKABLE void chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath, const QString &callback);
+    Q_INVOKABLE void chooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &callback);
 
     Q_INVOKABLE void qrEncode(const QString &textHex, const QString &callback);
 

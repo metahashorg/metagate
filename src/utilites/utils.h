@@ -58,6 +58,16 @@ void removeFolder(const QString &folder);
 
 bool isPathEquals(const QString &path1, const QString &path2);
 
+QString getFileName(const QString &filePath);
+
+QString getBaseName(const QString &filePath);
+
+QString getExtension(const QString &filePath);
+
+bool isDirectory(const QString &path);
+
+QStringList getFilesForDir(const QString &path);
+
 inline QString makePath(const QString &arg) {
     return arg;
 }

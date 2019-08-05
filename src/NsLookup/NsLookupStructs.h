@@ -78,4 +78,12 @@ struct NodeTypeStatus {
     {}
 };
 
+struct NodeResponse {
+    bool isSuccess;
+
+    NodeResponse(bool isSuccess)
+        : isSuccess(isSuccess)
+    {}
+};
+
 #endif // NSLOOKUPSTRUCTS_H

@@ -27,11 +27,21 @@ static QString makeJsonWallets(const std::vector<std::pair<QString, QString>> &w
     return json.toJson(QJsonDocument::Compact);
 }
 
+static QJsonDocument makeWalletsList(const std::vector<QString> &wallets) {
+    QJsonArray jsonArray;
+    for (const auto &r: wallets) {
+        jsonArray.push_back(r);
+    }
+    QJsonDocument json(jsonArray);
+    return json;
+}
+
 WalletsJavascript::WalletsJavascript(Wallets &wallets, QObject *parent)
     : WrapperJavascript(false, LOG_FILE)
     , wallets(wallets)
 {
     Q_CONNECT(&wallets, &Wallets::watchWalletsAdded, this, &WalletsJavascript::onWatchWalletsCreated);
+    Q_CONNECT(&wallets, &Wallets::dirChanged, this, &WalletsJavascript::onDirChanged);
 }
 
 ///////////
@@ -280,6 +290,36 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::importKeys(bool isMhc, const QString &path, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Import keys from path " << isMhc << " " << path;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<int>(0));
+
+    wrapOperation([&, this](){
+        emit wallets.importKeys(isMhc, path, wallets::Wallets::ImportKeysCallback([makeFunc](int result){
+            LOG << "Import keys from path ok " << result;
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::calkKeys(bool isMhc, const QString &path, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Calc keys from path " << isMhc << " " << path;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QJsonDocument>(QJsonDocument()));
+
+    wrapOperation([&, this](){
+        emit wallets.calkKeys(isMhc, path, wallets::Wallets::CalkKeysCallback([makeFunc](const std::vector<QString> &wallets){
+            LOG << "Calc keys from path ok " << wallets.size();
+            makeFunc.func(TypedException(), makeWalletsList(wallets));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 ///////////
 /// RSA ///
 ///////////
@@ -427,6 +467,36 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::importKeysEth(const QString &path, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Import keys eth from path " << " " << path;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<int>(0));
+
+    wrapOperation([&, this](){
+        emit wallets.importKeysEth(path, wallets::Wallets::ImportKeysCallback([makeFunc](int result){
+            LOG << "Import keys eth from path ok " << result;
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::calkKeysEth(const QString &path, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Calc keys eth from path " << " " << path;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QJsonDocument>(QJsonDocument()));
+
+    wrapOperation([&, this](){
+        emit wallets.calkKeysEth(path, wallets::Wallets::CalkKeysCallback([makeFunc](const std::vector<QString> &wallets){
+            LOG << "Calc keys eth from path ok " << wallets.size();
+            makeFunc.func(TypedException(), makeWalletsList(wallets));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 ///////////
 /// BTC ///
 ///////////
@@ -537,6 +607,36 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::importKeysBtc(const QString &path, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Import keys btc from path " << " " << path;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<int>(0));
+
+    wrapOperation([&, this](){
+        emit wallets.importKeysBtc(path, wallets::Wallets::ImportKeysCallback([makeFunc](int result){
+            LOG << "Import keys btc from path ok " << result;
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::calkKeysBtc(const QString &path, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Calc keys btc from path " << " " << path;
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QJsonDocument>(QJsonDocument()));
+
+    wrapOperation([&, this](){
+        emit wallets.calkKeysBtc(path, wallets::Wallets::CalkKeysCallback([makeFunc](const std::vector<QString> &wallets){
+            LOG << "Calc keys btc from path ok " << wallets.size();
+            makeFunc.func(TypedException(), makeWalletsList(wallets));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 //////////////
 /// COMMON ///
 //////////////
@@ -587,6 +687,14 @@ END_SLOT_WRAPPER
 void WalletsJavascript::openWalletPathInStandartExplorer() {
 BEGIN_SLOT_WRAPPER
     emit wallets.openWalletPathInStandartExplorer();
+END_SLOT_WRAPPER
+}
+
+void WalletsJavascript::onDirChanged(const QString &absolutePath, const QString &nameCurrency) {
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "walletsDirectoryChangedResultJs";
+    LOG << "folder changed " << nameCurrency << " " << absolutePath;
+    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), absolutePath, nameCurrency);
 END_SLOT_WRAPPER
 }
 

@@ -82,9 +82,9 @@ BEGIN_SLOT_WRAPPER
         const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
         CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
 
-        client.sendMessageGet(url, [this, file, openAfterSave](const std::string &response, const SimpleClient::ServerException &exception) {
-            CHECK(!exception.isSet(), "Error load image: " + exception.description);
-            writeToFileBinary(file, response, false);
+        client.sendMessageGet(url, [this, file, openAfterSave](const SimpleClient::Response &response) {
+            CHECK(!response.exception.isSet(), "Error load image: " + response.exception.description);
+            writeToFileBinary(file, response.response, false);
             if (openAfterSave) {
                 openFolderInStandartExploredImpl(QFileInfo(file).dir().path());
             }
@@ -96,11 +96,11 @@ END_SLOT_WRAPPER
 void Utils::onPrintUrl(const QString &url, const QString &printWindowCaption, const QString &text, const PrintUrlCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
-        client.sendMessageGet(url, [printWindowCaption, text](const std::string &response, const SimpleClient::ServerException &exception) {
-            CHECK(!exception.isSet(), "Error load image: " + exception.description);
+        client.sendMessageGet(url, [printWindowCaption, text](const SimpleClient::Response &response) {
+            CHECK(!response.exception.isSet(), "Error load image: " + response.exception.description);
 
             QImage image;
-            image.loadFromData((const unsigned char*)response.data(), (int)response.size());
+            image.loadFromData((const unsigned char*)response.response.data(), (int)response.response.size());
 
             QPrinter printer;
 
@@ -136,7 +136,7 @@ BEGIN_SLOT_WRAPPER
         const QString beginPath = filePath;
         const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
         const std::string fileData = readFileBinary(file);
-        return toBase64(fileData);
+        return std::make_tuple(file, toBase64(fileData));
     }, callback);
 END_SLOT_WRAPPER
 }

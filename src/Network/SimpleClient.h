@@ -20,7 +20,6 @@ class QNetworkReply;
    */
 class SimpleClient : public QObject {
     Q_OBJECT
-
 public:
 
     struct ServerException {
@@ -52,24 +51,24 @@ public:
 
         const static int BAD_REQUEST_ERROR;
 
+        const static int TIMEOUT_REQUEST_ERROR;
+
         int code = 0;
+    };
+
+    struct Response {
+        std::string response;
+        ServerException exception;
+        milliseconds time;
     };
 
 public:
 
-    using ClientCallback = std::function<void(const std::string &response, const ServerException &exception)>;
+    using ClientCallback = std::function<void(const Response &response)>;
 
-    using ClientCallbacks = std::function<void(const std::vector<std::tuple<std::string, ServerException>> &response)>;
-
-    using PingCallback = std::function<void(const QString &address, const milliseconds &time, const std::string &response)>;
-
-    using PingsCallback = std::function<void(const std::vector<std::tuple<QString, milliseconds, std::string>> &response)>;
+    using ClientCallbacks = std::function<void(const std::vector<Response> &response)>;
 
     using ReturnCallback = std::function<void()>;
-
-private:
-
-    using PingCallbackInternal = std::function<void(const milliseconds &time, const std::string &response)>;
 
 public:
 
@@ -83,10 +82,6 @@ public:
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
-    void ping(const QString &address, const PingCallback &callback, milliseconds timeout);
-
-    void pings(const std::string printedName, const std::vector<QString> &addresses, const PingsCallback &callback, milliseconds timeout);
-
     void setParent(QObject *obj);
 
     void moveToThread(QThread *thread);
@@ -99,50 +94,53 @@ Q_SIGNALS:
     void closed();
 
 private Q_SLOTS:
-    void onTextMessageReceived();
-
-    void onPingReceived();
+    void onTextMessageReceived(size_t id);
 
     void onTimerEvent();
 
 private:
 
-    using TextMessageReceived = void (SimpleClient::*)();
+    struct Request {
+        ClientCallback callback;
+        QNetworkReply* reply = nullptr;
+        bool isSetTimeout = false;
+        milliseconds timeout;
+        time_point beginTime;
+        bool isTimeout = false;
+    };
+
+private:
 
     template<typename Callback>
     void sendMessageInternal(
         bool isPost,
-        std::unordered_map<std::string, Callback> &callbacks,
         const QUrl &url,
         const QString &message,
         const Callback &callback,
         bool isTimeout,
         milliseconds timeout,
         bool isClearCache,
-        TextMessageReceived onTextMessageReceived,
         bool isQueuedConnection
     );
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
-    template<class Callbacks, typename... Message>
-    void runCallback(Callbacks &callbacks, const std::string &id, Message&&... messages);
+    template<typename... Message>
+    void runCallback(size_t id, Message&&... messages);
 
     void startTimer1();
 
 private:
     QNetworkAccessManager *manager;
-    std::unordered_map<std::string, ClientCallback> callbacks_;
-    std::unordered_map<std::string, PingCallbackInternal> pingCallbacks_;
 
-    std::unordered_map<std::string, QNetworkReply*> requests;
+    std::unordered_map<size_t, Request> requests;
 
     QTimer* timer = nullptr;
 
     QThread *thread1 = nullptr;
 
-    int id = 0;
+    size_t id = 0;
 };
 
 #endif // CLIENT_H

@@ -89,6 +89,17 @@ Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QStr
 # javascript is called after completion of this function 
 callback(result, errorNum, errorMessage)
 
+Q_INVOKABLE void importKeys(bool isMhc, const QString &path, const QString &callback);
+# Импортирует кошельки из папки path в каталог приложения
+# javascript is called after completion of this function 
+callback(countKeys, errorNum, errorMessage)
+
+Q_INVOKABLE void calkKeys(bool isMhc, const QString &path, const QString &callback);
+# Ищет кошельки из папки path
+# javascript is called after completion of this function 
+callback(wallets, errorNum, errorMessage)
+где wallets - json вида ["address1", "address2"]
+
 
 
 RSA
@@ -149,6 +160,17 @@ Q_INVOKABLE void getOnePrivateKeyEth(const QString &address, const QString &call
 # Returns private key to the function
 callback(key, errorNum, errorMessage)
 
+Q_INVOKABLE void importKeysEth(const QString &path, const QString &callback);
+# Импортирует кошельки из папки path в каталог приложения
+# javascript is called after completion of this function 
+callback(countKeys, errorNum, errorMessage)
+
+Q_INVOKABLE void calkKeysEth(const QString &path, const QString &callback);
+# Ищет кошельки из папки path
+# javascript is called after completion of this function 
+callback(wallets, errorNum, errorMessage)
+где wallets - json вида ["address1", "address2"]
+
 
 
 BITCOIN
@@ -183,6 +205,17 @@ callback("Ok", errorNum, errorMessage)
 Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address, const QString &callback)
 # Returns private key to the function
 callback(key, errorNum, errorMessage)
+
+Q_INVOKABLE void importKeysBtc(const QString &path, const QString &callback);
+# Импортирует кошельки из папки path в каталог приложения
+# javascript is called after completion of this function 
+callback(countKeys, errorNum, errorMessage)
+
+Q_INVOKABLE void calkKeysBtc(const QString &path, const QString &callback);
+# Ищет кошельки из папки path
+# javascript is called after completion of this function 
+callback(wallets, errorNum, errorMessage)
+где wallets - json вида ["address1", "address2"]
 
 
 

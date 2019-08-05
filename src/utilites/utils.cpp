@@ -221,3 +221,28 @@ bool isPathEquals(const QString &path1, const QString &path2) {
 
     return p1 == p2;
 }
+
+QString getFileName(const QString &filePath) {
+    QFileInfo fileInfo(filePath);
+    return fileInfo.fileName();
+}
+
+QString getBaseName(const QString &filePath) {
+    QFileInfo fileInfo(filePath);
+    return fileInfo.baseName();
+}
+
+QString getExtension(const QString &filePath) {
+    QFileInfo fileInfo(filePath);
+    return fileInfo.completeSuffix();
+}
+
+bool isDirectory(const QString &path) {
+    QFileInfo fileInfo(path);
+    return fileInfo.isDir();
+}
+
+QStringList getFilesForDir(const QString &path) {
+    const QDir dir(path);
+    return dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
+}

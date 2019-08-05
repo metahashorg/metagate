@@ -75,6 +75,12 @@ Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     Q_CONNECT(this, &Wallets::backupKeys, this, &Wallets::onBackupKeys);
     Q_CONNECT(this, &Wallets::restoreKeys, this, &Wallets::onRestoreKeys);
     Q_CONNECT(this, &Wallets::openWalletPathInStandartExplorer, this, &Wallets::onOpenWalletPathInStandartExplorer);
+    Q_CONNECT(this, &Wallets::importKeys, this, &Wallets::onImportKeys);
+    Q_CONNECT(this, &Wallets::calkKeys, this, &Wallets::onCalkKeys);
+    Q_CONNECT(this, &Wallets::importKeysEth, this, &Wallets::onImportKeysEth);
+    Q_CONNECT(this, &Wallets::calkKeysEth, this, &Wallets::onCalkKeysEth);
+    Q_CONNECT(this, &Wallets::importKeysBtc, this, &Wallets::onImportKeysBtc);
+    Q_CONNECT(this, &Wallets::calkKeysBtc, this, &Wallets::onCalkKeysBtc);
 
     Q_REG(WalletsListCallback, "WalletsListCallback");
     Q_REG(wallets::WalletCurrency, "wallets::WalletCurrency");
@@ -107,6 +113,8 @@ Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     Q_REG(GetWalletFoldersCallback, "GetWalletFoldersCallback");
     Q_REG(BackupKeysCallback, "BackupKeysCallback");
     Q_REG(RestoreKeysCallback, "RestoreKeysCallback");
+    Q_REG(ImportKeysCallback, "ImportKeysCallback");
+    Q_REG(CalkKeysCallback, "CalkKeysCallback");
     Q_REG2(WalletsList, "WalletsList", false);
 
     emit auth.reEmit();
@@ -452,6 +460,36 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void Wallets::onImportKeys(bool isMhc, const QString &path, const ImportKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const int result = importKeysImpl(path, [](const QString &filePath) {
+            return Wallet::isCorrectFilenameWallet(filePath);
+        }, [this, isMhc](const QString &fileName) {
+            copyToDirectoryFile(fileName, makePath(walletPath, Wallet::chooseSubfolder(isMhc)), true);
+        });
+        return result;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCalkKeys(bool isMhc, const QString &path, const CalkKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        std::vector<QString> result;
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        importKeysImpl(path, [](const QString &filePath) {
+            return Wallet::isCorrectFilenameWallet(filePath);
+        }, [&result](const QString &filePath) {
+            const QString fileName = getFileName(filePath);
+            result.emplace_back(fileName);
+        });
+        return result;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
 ///////////
 /// RSA ///
 ///////////
@@ -580,6 +618,36 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void Wallets::onImportKeysEth(const QString &path, const ImportKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const int result = importKeysImpl(path, [](const QString &filePath) {
+            return EthWallet::isCorrectFilenameWallet(filePath);
+        }, [this](const QString &fileName) {
+            copyToDirectoryFile(fileName, makePath(walletPath, EthWallet::subfolder()), true);
+        });
+        return result;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCalkKeysEth(const QString &path, const CalkKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        std::vector<QString> result;
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        importKeysImpl(path, [](const QString &filePath) {
+            return EthWallet::isCorrectFilenameWallet(filePath);
+        }, [&result](const QString &filePath) {
+            const QString fileName = getFileName(filePath);
+            result.emplace_back(fileName);
+        });
+        return result;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
 ///////////
 /// BTC ///
 ///////////
@@ -666,6 +734,36 @@ BEGIN_SLOT_WRAPPER
         const std::string privKey = BtcWallet::getOneKey(walletPath, address.toStdString());
 
         return QString::fromStdString(privKey);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onImportKeysBtc(const QString &path, const ImportKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        const int result = importKeysImpl(path, [](const QString &filePath) {
+            return BtcWallet::isCorrectFilenameWallet(filePath);
+        }, [this](const QString &fileName) {
+            copyToDirectoryFile(fileName, makePath(walletPath, BtcWallet::subfolder()), true);
+        });
+        return result;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCalkKeysBtc(const QString &path, const CalkKeysCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        std::vector<QString> result;
+        CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
+        importKeysImpl(path, [](const QString &filePath) {
+            return BtcWallet::isCorrectFilenameWallet(filePath);
+        }, [&result](const QString &filePath) {
+            const QString fileName = QString::fromStdString(BtcWallet::getAddress(filePath));
+            result.emplace_back(fileName);
+        });
+        return result;
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -809,6 +907,30 @@ std::vector<WalletInfo> Wallets::readAllWallets(const WalletCurrency &type) {
     }
 }
 
+int Wallets::importKeysImpl(const QString &path, const std::function<bool(const QString &filePath)> &checkFileName, const std::function<void(const QString &path)> &processFile) {
+    if (isDirectory(path)) {
+        const QStringList files = getFilesForDir(path);
+        int countSuccess = 0;
+        for (const QString &fileName: files) {
+            const QString filePath = makePath(path, fileName);
+            const bool isKey = checkFileName(filePath);
+            if (isKey) {
+                processFile(filePath);
+                countSuccess++;
+            }
+        }
+        return countSuccess;
+    } else {
+        const bool isKey = checkFileName(path);
+        if (!isKey) {
+            return 0;
+        } else {
+            processFile(path);
+            return 1;
+        }
+    }
+}
+
 static std::map<QString, WalletInfo> walletsToMap(const std::vector<WalletInfo> &wallets) {
     std::map<QString, WalletInfo> wallets2;
     std::transform(wallets.begin(), wallets.end(), std::inserter(wallets2, wallets2.begin()), [](const WalletInfo &info) {
@@ -911,6 +1033,13 @@ BEGIN_SLOT_WRAPPER
     }
 
     walletsList[currency] = currentWallets2;
+
+    const QDir d(dir);
+    for (const FolderWalletInfo &folderInfo: folderWalletsInfos) {
+        if (folderInfo.walletPath == d) {
+            emit dirChanged(d.absolutePath(), folderInfo.nameWallet);
+        }
+    }
 END_SLOT_WRAPPER
 }
 

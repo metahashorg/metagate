@@ -136,6 +136,18 @@ void EthWallet::savePrivateKey(const QString &folder, const std::string &data, c
     writeToFile(pathToFile, data, true);
 }
 
+bool EthWallet::isCorrectFilenameWallet(const QString &filePath) {
+    const QString fileName = getFileName(filePath);
+    try {
+        checkAddress(fileName.toStdString());
+        return true;
+    } catch (const Exception &) {
+        return false;
+    } catch (const TypedException &) {
+        return false;
+    }
+}
+
 void EthWallet::baseCheckAddress(const std::string &address) {
     CHECK_TYPED(address.size() == 42, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address size " + address);
     CHECK_TYPED(address.compare(0, 2, "0x") == 0, TypeErrors::INCORRECT_ADDRESS_OR_PUBLIC_KEY, "Incorrect address. 0x missed " + address);

@@ -20,14 +20,14 @@ InfrastructureNsLookup::Nodes::Nodes(const QString &torrent, const QString &prox
     , contractTorrent(contractTorrent)
 {}
 
-InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *parent)
-    : nsLookup(nsLookup)
-{
+InfrastructureNsLookup::InfrastructureNsLookup(QObject *parent) {
     Q_CONNECT(this, &InfrastructureNsLookup::getTorrents, this, &InfrastructureNsLookup::onGetTorrents);
     Q_CONNECT(this, &InfrastructureNsLookup::getProxy, this, &InfrastructureNsLookup::onGetProxy);
     Q_CONNECT(this, &InfrastructureNsLookup::getContractTorrent, this, &InfrastructureNsLookup::onGetContractTorrent);
+    Q_CONNECT(this, &InfrastructureNsLookup::getRequestFornode, this, &InfrastructureNsLookup::onGetRequestFornode);
 
     Q_REG(InfrastructureNsLookup::GetServersCallback, "InfrastructureNsLookup::GetServersCallback");
+    Q_REG(GetFormatRequestCallback, "GetFormatRequestCallback");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     const int size = settings.beginReadArray("infrastructure");
@@ -39,6 +39,10 @@ InfrastructureNsLookup::InfrastructureNsLookup(NsLookup &nsLookup, QObject *pare
     }
     LOG << "infrastructure size " << infrastructure.size();
     settings.endArray();
+}
+
+void InfrastructureNsLookup::setNsLookup(NsLookup *nsl) {
+    nsLookup = nsl;
 }
 
 template<typename Member>
@@ -54,7 +58,8 @@ void InfrastructureNsLookup::getServers(const QString &currency, const Member &m
             callback.emitCallback(std::vector<QString>());
             return;
         }
-        emit nsLookup.getRandomServers(type, limit, count, callback);
+        CHECK(nsLookup != nullptr, "NsLookup not set");
+        emit nsLookup->getRandomServers(type, limit, count, callback);
     }, callback);
 }
 
@@ -73,5 +78,41 @@ END_SLOT_WRAPPER
 void InfrastructureNsLookup::onGetContractTorrent(const QString &currency, size_t limit, size_t count, const InfrastructureNsLookup::GetServersCallback &callback) {
 BEGIN_SLOT_WRAPPER
     getServers(currency, std::mem_fn(&Nodes::contractTorrent), limit, count, callback);
+END_SLOT_WRAPPER
+}
+
+static NodeResponse proxyResponseParser(const std::string &response, const std::string &error) {
+    if (response.empty() && error.empty()) {
+        return NodeResponse(false);
+    } else {
+        return NodeResponse(true);
+    }
+}
+
+static NodeResponse torrentResponseParser(const std::string &response, const std::string &error) {
+    if (response.empty()) {
+        return NodeResponse(false);
+    } else {
+        if (response.front() == '{' && response.back() == '}') {
+            return NodeResponse(true);
+        } else {
+            return NodeResponse(false);
+        }
+    }
+}
+
+void InfrastructureNsLookup::onGetRequestFornode(const QString &type, const GetFormatRequestCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]() -> std::tuple<bool, QString, QString, std::function<NodeResponse(const std::string &response, const std::string &error)>>{
+        for (const auto &pair: infrastructure) {
+            const Nodes &node = pair.second;
+            if (type == node.proxy) {
+                return std::make_tuple(true, "", "", proxyResponseParser);
+            } else if (type == node.torrent || type == node.contractTorrent) {
+                return std::make_tuple(true, "/status", "", torrentResponseParser);
+            }
+        }
+        return std::make_tuple(false, "", "", nullptr);
+    }, callback);
 END_SLOT_WRAPPER
 }

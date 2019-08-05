@@ -30,6 +30,7 @@
 #include "Workers/FindEmptyNodesWorker.h"
 #include "Workers/PrintNodesWorker.h"
 #include "Workers/MiddleWorker.h"
+#include "InfrastructureNsLookup.h"
 
 SET_LOG_NAMESPACE("NSL");
 
@@ -62,8 +63,9 @@ static QString getAddressWithoutHttp(const QString &address) {
     return QUrl(address).host() + ":" + QString::fromStdString(std::to_string(QUrl(address).port()));
 }
 
-NsLookup::NsLookup(QObject *parent)
+NsLookup::NsLookup(InfrastructureNsLookup &infrastructureNsl, QObject *parent)
     : TimerClass(1s, nullptr)
+    , infrastructureNsl(infrastructureNsl)
 {
     Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
     Q_CONNECT(this, &NsLookup::rejectServer, this, &NsLookup::onRejectServer);
@@ -328,25 +330,29 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node,
     }
 }
 
-static NodeInfo parseNodeInfo(const QString &address, const milliseconds &time, const std::string &message, size_t updateNumber) {
+static NodeInfo preParseNodeInfo(const QString &address, const SimpleClient::Response &response, size_t updateNumber) {
     NodeInfo info;
     info.address = address;
-    info.ping = time.count();
+    info.ping = response.time.count();
+    if (info.ping >= MAX_PING.count()) {
+        info.isTimeout = true;
+    }
     info.countUpdated = updateNumber;
 
-    if (message.empty()) {
+    if (response.exception.isTimeout()) {
         info.ping = MAX_PING.count();
         info.isTimeout = true;
-    } else {
-        QJsonParseError parseError;
-        QJsonDocument::fromJson(QString::fromStdString(message).toUtf8(), &parseError);
-        if (parseError.error != QJsonParseError::NoError) {
-            info.ping = MAX_PING.count();
-            info.isTimeout = true;
-        }
     }
 
     return info;
+}
+
+static NodeResponse defaultResponseParser(const std::string &response, const std::string &error) {
+    if (response.empty() && error.empty()) {
+        return NodeResponse(false);
+    } else {
+        return NodeResponse(true);
+    }
 }
 
 void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const NodeType &node, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
@@ -358,21 +364,41 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
     const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
 
     CHECK(countSteps != 0, "Incorrect countSteps");
-    std::vector<QString> requests(ipsIter, ipsIter + countSteps);
+    std::vector<QString> currentIps(ipsIter, ipsIter + countSteps);
 
-    client.pings(node.node.str().toStdString(), requests, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, requestsSize=requests.size(), ipsIter, countSteps](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-        const TypedException exception = apiVrapper2([&]{
-            CHECK(requestsSize == results.size(), "Incorrect results");
-            for (const auto &result: results) {
-                allNodesForTypesNew[node.node].emplace_back(parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber));
-            }
+    emit infrastructureNsl.getRequestFornode(node.type, InfrastructureNsLookup::GetFormatRequestCallback([this, currentIps, &allNodesForTypesNew, &ipsTemp, continueResolve, node, ipsIter, countSteps](bool found, const QString &get, const QString &post, const std::function<NodeResponse(const std::string &response, const std::string &error)> &processResponse){
+        std::function<NodeResponse(const std::string &response, const std::string &error)> pResponse = found ? processResponse : defaultResponseParser;
+        std::vector<QUrl> getRequests;
+        getRequests.reserve(currentIps.size());
+        std::transform(currentIps.begin(), currentIps.end(), std::back_inserter(getRequests), [&get](const QString &ip) {
+            QUrl getRequest = ip;
+            getRequest.setPath(get);
+            return getRequest;
         });
+        client.sendMessagesPost(node.node.str().toStdString(), getRequests, post, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, currentIps, ipsIter, countSteps, pResponse](const std::vector<SimpleClient::Response> &results) {
+            const TypedException exception = apiVrapper2([&]{
+                CHECK(currentIps.size() == results.size(), "Incorrect results");
+                for (size_t i = 0; i < results.size(); i++) {
+                    const SimpleClient::Response &result = results[i];
+                    const QString &ip = currentIps[i];
+                    NodeInfo nodeInfo = preParseNodeInfo(ip, result, updateNumber);
+                    const NodeResponse r = pResponse(result.response, result.exception.content);
+                    if (!r.isSuccess) {
+                        nodeInfo.isTimeout = true;
+                        nodeInfo.ping = MAX_PING.count();
+                    }
+                    allNodesForTypesNew[node.node].emplace_back(nodeInfo);
+                }
+            });
 
-        if (exception.isSet()) {
-            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
-        }
-        continuePing(std::next(ipsIter, countSteps), node, allNodesForTypesNew, ipsTemp, continueResolve);
-    }, 2s);
+            if (exception.isSet()) {
+                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+            }
+            continuePing(std::next(ipsIter, countSteps), node, allNodesForTypesNew, ipsTemp, continueResolve);
+        }, 2s);
+    }, [](const TypedException &exception) {
+        LOG << "Error: " << exception.description;
+    }, signalFunc));
 }
 
 void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString> &ipsTemp, const std::function<void()> &continueResolve) {
@@ -396,36 +422,55 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
             break;
         }
     }
-    std::vector<QString> requests;
+    std::vector<QString> currentIps;
     for (const size_t posInIpsTemp: processVectPos) {
         const QString &address = allNodesForTypes[node.node][posInIpsTemp].address;
-        requests.emplace_back(address);
+        currentIps.emplace_back(address);
     }
     if (processVectPos.empty()) {
         continueResolve();
+        return;
     }
-    client.pings(node.node.str().toStdString(), requests, [this, continueResolve, node, processVectPos](const std::vector<std::tuple<QString, milliseconds, std::string>> &results) {
-        const TypedException exception = apiVrapper2([&]{
-            CHECK(processVectPos.size() == results.size(), "Incorrect result");
-            for (size_t i = 0; i < results.size(); i++) {
-                const auto &result = results[i];
-                const size_t index = processVectPos[i];
-                NodeInfo &info = allNodesForTypes[node.node][index];
-                NodeInfo newInfo = parseNodeInfo(std::get<0>(result), std::get<1>(result), std::get<2>(result), updateNumber);
-                CHECK(info.address == newInfo.address, "Incorrect address");
-                if (!newInfo.isTimeout) {
-                    newInfo.ping = info.ping;
-                }
-
-                info = newInfo;
-            }
+    emit infrastructureNsl.getRequestFornode(node.type, InfrastructureNsLookup::GetFormatRequestCallback([this, currentIps, continueResolve, node, processVectPos](bool found, const QString &get, const QString &post, const std::function<NodeResponse(const std::string &response, const std::string &error)> &processResponse){
+        std::function<NodeResponse(const std::string &response, const std::string &error)> pResponse = found ? processResponse : defaultResponseParser;
+        std::vector<QUrl> getRequests;
+        getRequests.reserve(currentIps.size());
+        std::transform(currentIps.begin(), currentIps.end(), std::back_inserter(getRequests), [&get](const QString &ip) {
+            QUrl getRequest = ip;
+            getRequest.setPath(get);
+            return getRequest;
         });
+        client.sendMessagesPost(node.node.str().toStdString(), getRequests, post, [this, continueResolve, node, currentIps, processVectPos, pResponse](const std::vector<SimpleClient::Response> &results) {
+            const TypedException exception = apiVrapper2([&]{
+                CHECK(processVectPos.size() == results.size(), "Incorrect result");
+                for (size_t i = 0; i < results.size(); i++) {
+                    const auto &result = results[i];
+                    const size_t index = processVectPos[i];
+                    const QString address = currentIps[i];
+                    NodeInfo &info = allNodesForTypes[node.node][index];
+                    NodeInfo newInfo = preParseNodeInfo(address, result, updateNumber);
+                    const NodeResponse nodeResponse = pResponse(result.response, result.exception.content);
+                    if (!nodeResponse.isSuccess) {
+                        newInfo.isTimeout = true;
+                        newInfo.ping = MAX_PING.count();
+                    }
+                    CHECK(info.address == newInfo.address, "Incorrect address");
+                    if (!newInfo.isTimeout) {
+                        newInfo.ping = info.ping;
+                    }
 
-        if (exception.isSet()) {
-            LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
-        }
-        continueResolve();
-    }, 2s);
+                    info = newInfo;
+                }
+            });
+
+            if (exception.isSet()) {
+                LOG << "Exception"; // Ошибка логгируется внутри apiVrapper2;
+            }
+            continueResolve();
+        }, 2s);
+    }, [](const TypedException &exception) {
+        LOG << "Error: " << exception.description;
+    }, signalFunc));
 }
 
 void NsLookup::finalizeRefreshIp(const NodeType::Node &node, const std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
