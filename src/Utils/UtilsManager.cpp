@@ -136,7 +136,7 @@ BEGIN_SLOT_WRAPPER
         const QString beginPath = filePath;
         const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
         const std::string fileData = readFileBinary(file);
-        return toBase64(fileData);
+        return std::make_tuple(file, toBase64(fileData));
     }, callback);
 END_SLOT_WRAPPER
 }

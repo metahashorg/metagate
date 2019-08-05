@@ -18,10 +18,10 @@ Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWin
 # Отличие от аналогичной функции в mainWindows в том, что вместо относительного пути fileName нужно задавать абсолютный путь filePath
 callback("Ok", errorNum, errorMessage)
 
-Q_INVOKABLE void chooseFileAndLoad2(const QString &openFileWindowCaption, const QString &filePath, const QString &callback);
+Q_INVOKABLE void chooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &callback);
 # Shows the file selection dialog, then encodes the selected file in base64 and sends it to the function
 # Отличие от аналогичной функции в mainWindows в том, что вместо относительного пути fileName нужно задавать абсолютный путь filePath
-callback(result, errorNum, errorMessage)
+callback(pathToFile, result, errorNum, errorMessage)
 
 Q_INVOKABLE void onQrEncode(const QString &textHex, const QString &callback);
 # Encodes text to qr code

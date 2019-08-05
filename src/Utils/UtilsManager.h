@@ -24,7 +24,7 @@ public:
 
     using PrintUrlCallback = CallbackWrapper<void()>;
 
-    using ChooseFileAndLoadCallback = CallbackWrapper<void(const std::string &resultBase64)>;
+    using ChooseFileAndLoadCallback = CallbackWrapper<void(const QString &pathToFile, const std::string &resultBase64)>;
 
     using QrEncodeCallback = CallbackWrapper<void(const QString &resultBase64)>;
 
