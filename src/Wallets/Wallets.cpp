@@ -152,7 +152,9 @@ BEGIN_SLOT_WRAPPER
             walletsList[isMhc ? WalletCurrency::Mth : WalletCurrency::Tmh][addr] = WalletInfo(addr, walletFullPath, WalletInfo::Type::Watch);
         }
 
-        emit watchWalletsAdded(isMhc, created, userName);
+        if (!created.empty()) {
+            emit watchWalletsAdded(isMhc, created, userName);
+        }
 
         return created;
     }, callback);
