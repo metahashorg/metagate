@@ -11,6 +11,20 @@
         });
     }
 
+    function qrDecode() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.utils;
+        mainWindow.qrDecode(document.createWalletForm.ff.value, "decoded") ;
+        });
+    }
+    
+    function qrEncode() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.utils;
+        mainWindow.qrEncode(document.createWalletForm.ff.value, "encoded") ;
+        });
+    }
+    
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -36,6 +50,8 @@
             <FORM name="createWalletForm">
             <input name="ff" type="text" value="https://en.cppreference.com/w/cpp/utility/apply" size="60"><label for="ff">ff</label><br>
             <input type="button" value="openInBrowser" onclick="openInBrowser()"><br>
+            <input type="button" value="qrDecode" onclick="qrDecode()"><br>
+            <input type="button" value="qrEncode" onclick="qrEncode()"><br>
             </FORM>
         </left>
     </p>
