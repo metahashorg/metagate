@@ -67,7 +67,7 @@ public:
 
     using GetPrivateKeyCallback = CallbackWrapper<void(const QString &result)>;
 
-    using SavePrivateKeyCallback = CallbackWrapper<void(bool success)>;
+    using SavePrivateKeyCallback = CallbackWrapper<void(bool success, const QString &address)>;
 
     using SaveRawPrivateKeyCallback = CallbackWrapper<void(const QString &address)>;
 

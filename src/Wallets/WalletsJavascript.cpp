@@ -245,16 +245,12 @@ void WalletsJavascript::savePrivateKey(bool isMhc, const QString &privateKey, co
 BEGIN_SLOT_WRAPPER
     LOG << "Save private key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool result){
-            LOG << "Save private key ok ";
-            if (result) {
-                makeFunc.func(TypedException(), "ok");
-            } else {
-                makeFunc.func(TypedException(), "Not ok");
-            }
+        emit wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool result, const QString &address){
+            LOG << "Save private key ok " << address;
+            makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER
@@ -443,11 +439,12 @@ void WalletsJavascript::savePrivateKeyEth(const QString &privateKey, const QStri
 BEGIN_SLOT_WRAPPER
     LOG << "Save private eth key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success){
-            makeFunc.func(TypedException(), success ? "Ok" : "Not ok");
+        emit wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success, const QString &address){
+            LOG << "Save private eth key ok " << address;
+            makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER
@@ -583,11 +580,12 @@ void WalletsJavascript::savePrivateKeyBtc(const QString &privateKey, const QStri
 BEGIN_SLOT_WRAPPER
     LOG << "Save private btc key ";
 
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success){
-            makeFunc.func(TypedException(), success ? "Ok" : "Not ok");
+        emit wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success, const QString &address){
+            LOG << "Save private btc key ok " << address;
+            makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER

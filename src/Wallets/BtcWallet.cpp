@@ -324,13 +324,14 @@ std::string BtcWallet::getOneKey(const QString &folder, const std::string &addre
     return readFile(filePath);
 }
 
-void BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
+std::string BtcWallet::savePrivateKey(const QString &folder, const std::string &data, const QString &password) {
     const auto pair = getWifAndAddress(data, true);
     const std::string &addressBase58 = pair.second;
     const std::string &encodedWif = pair.first;
     decryptWif(encodedWif, password);
     const QString pathToFile = makePath(folder, FOLDER, convertAddressToFileName(addressBase58));
     writeToFile(pathToFile, data, true);
+    return addressBase58;
 }
 
 void BtcWallet::checkAddress(const std::string &address) {

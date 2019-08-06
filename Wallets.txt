@@ -76,7 +76,7 @@ callback(key, errorNum, errorMessage)
 Q_INVOKABLE void savePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const QString &callback);
 # Tries to recognize a key type and saves it to the right place
 # After the operation is completed, it calls function
-callback("ok", errorNum, errorMessage)
+callback(address, errorNum, errorMessage)
 
 Q_INVOKABLE void saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const QString &callback)
 # Saves private key
@@ -154,7 +154,7 @@ callback("Ok"/"Not ok", errorNum, errorMessage)
 Q_INVOKABLE void savePrivateKeyEth(const QString &privateKey, const QString &password, const QString &callback)
 # Tries to recognize a key type and saves it to the right place
 # After the operation is completed, it calls function
-callback("Ok", errorNum, errorMessage)
+callback(address, errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKeyEth(const QString &address, const QString &callback)
 # Returns private key to the function
@@ -200,7 +200,7 @@ callback(transaction, jsonUsedUtxos, transactionHash, errorNum, errorMessage)
 Q_INVOKABLE void savePrivateKeyBtc(const QString &privateKey, const QString &password, const QString &callback)
 # Tries to recognize a key type and saves it to the right place
 # After the operation is completed, it calls function
-callback("Ok", errorNum, errorMessage)
+callback(address, errorNum, errorMessage)
 
 Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address, const QString &callback)
 # Returns private key to the function

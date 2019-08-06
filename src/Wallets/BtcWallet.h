@@ -62,7 +62,7 @@ public:
 
     static std::string getOneKey(const QString &folder, const std::string &address);
 
-    static void savePrivateKey(const QString &folder, const std::string &data, const QString &password);
+    static std::string savePrivateKey(const QString &folder, const std::string &data, const QString &password);
 
     static void checkAddress(const std::string &address);
 

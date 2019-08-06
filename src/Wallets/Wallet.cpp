@@ -574,7 +574,7 @@ std::string Wallet::getPrivateKey(const QString &folder, bool isMhc, const std::
     return privKey;
 }
 
-void Wallet::savePrivateKey(const QString &folder, bool isMhc, const std::string &data, const std::string &password) {
+std::string Wallet::savePrivateKey(const QString &folder, bool isMhc, const std::string &data, const std::string &password) {
     std::string result = data;
     if (result.compare(0, COMPACT_FORMAT.size(), COMPACT_FORMAT) == 0) {
         result = result.substr(COMPACT_FORMAT.size());
@@ -603,6 +603,7 @@ void Wallet::savePrivateKey(const QString &folder, bool isMhc, const std::string
 
     const QString filePath = makeFullWalletPath(folder, isMhc, hexAddr);
     writeToFile(filePath, result, true);
+    return hexAddr;
 }
 
 void Wallet::saveWalletWatch(const QString &folder, bool isMhc, const std::string &addr)
