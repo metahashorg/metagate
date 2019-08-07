@@ -5,12 +5,19 @@ Q_INVOKABLE void qtOpenInBrowser(const QString &url, const QString &callback);
 # After the operation is completed, it calls function
 callback("Ok", errorNum, errorMessage)
 
-Q_INVOKABLE QString openFolderDialog(QString beginPath, QString caption, const QString &callback);
+Q_INVOKABLE void openFolderDialog(QString beginPath, QString caption, const QString &callback);
 # Shows to user the dialog box providing the ability to select a directory. 
 beginPath # initial directory location
 caption # name of the dialog box
 # After the operation is completed, it calls function
 callback(dir, errorNum, errorMessage)
+
+Q_INVOKABLE void openFileDialog(const QString &beginPath, const QString &caption, const QString &filters, const QString &callback);
+# Shows to user the dialog box providing the ability to select a existing file. 
+beginPath # initial directory location
+caption # name of the dialog box
+# After the operation is completed, it calls function
+callback(file, errorNum, errorMessage)
 
 Q_INVOKABLE void saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath, const QString &callback);
 # Shows file save dialog, then downloads the file and saves it.

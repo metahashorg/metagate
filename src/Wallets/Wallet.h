@@ -40,7 +40,7 @@ public:
 
     static std::string getPrivateKey(const QString &folder, bool isMhc, const std::string &addr, bool isCompact);
 
-    static void savePrivateKey(const QString &folder, bool isMhc, const std::string &data, const std::string &password);
+    static std::string savePrivateKey(const QString &folder, bool isMhc, const std::string &data, const std::string &password);
 
     static void saveWalletWatch(const QString &folder, bool isMhc, const std::string &addr);
 

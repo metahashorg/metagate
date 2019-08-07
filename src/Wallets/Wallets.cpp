@@ -152,7 +152,9 @@ BEGIN_SLOT_WRAPPER
             walletsList[isMhc ? WalletCurrency::Mth : WalletCurrency::Tmh][addr] = WalletInfo(addr, walletFullPath, WalletInfo::Type::Watch);
         }
 
-        emit watchWalletsAdded(isMhc, created, userName);
+        if (!created.empty()) {
+            emit watchWalletsAdded(isMhc, created, userName);
+        }
 
         return created;
     }, callback);
@@ -430,9 +432,9 @@ BEGIN_SLOT_WRAPPER
 
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        Wallet::savePrivateKey(walletPath, isMhc, key, password.toStdString());
+        const std::string address = Wallet::savePrivateKey(walletPath, isMhc, key, password.toStdString());
 
-        return true;
+        return std::make_tuple(true, QString::fromStdString(address));
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -603,8 +605,8 @@ BEGIN_SLOT_WRAPPER
             key = key.substr(EthWallet::PREFIX_ONE_KEY.size());
         }
 
-        EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
-        return true;
+        const std::string address = EthWallet::savePrivateKey(walletPath, privateKey.toStdString(), password.toStdString());
+        return std::make_tuple(true, QString::fromStdString(address));
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -720,9 +722,9 @@ BEGIN_SLOT_WRAPPER
 
         CHECK(!walletPath.isEmpty(), "Incorrect path to wallet: empty");
 
-        BtcWallet::savePrivateKey(walletPath, privateKey.toStdString(), password);
+        const std::string address = BtcWallet::savePrivateKey(walletPath, privateKey.toStdString(), password);
 
-        return true;
+        return std::make_tuple(true, QString::fromStdString(address));
     }, callback);
 END_SLOT_WRAPPER
 }

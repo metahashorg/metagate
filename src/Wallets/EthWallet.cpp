@@ -127,13 +127,14 @@ std::string EthWallet::getOneKey(const QString &folder, const std::string &addre
     return readFile(pathToFile);
 }
 
-void EthWallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
+std::string EthWallet::savePrivateKey(const QString &folder, const std::string &data, const std::string &password) {
     std::vector<uint8_t> tmp(1000, 0);
     DecodeCert(data.c_str(), password, tmp.data()); // Проверяем пароль
     const std::string address = getAddressFromFile(data.c_str());
 
     const QString pathToFile = getFullPath(folder, address);
     writeToFile(pathToFile, data, true);
+    return address;
 }
 
 bool EthWallet::isCorrectFilenameWallet(const QString &filePath) {

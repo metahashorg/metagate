@@ -613,7 +613,7 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, bool isMhc, QString jsNameResult) {
-    wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, jsNameResult, requestId](bool success) {
+    wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, jsNameResult, requestId](bool success, const QString &/*address*/) {
         LOG << "Save private key";
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -965,7 +965,7 @@ void JavascriptWrapper::savePrivateKeyEth(QString requestId, QString privateKey,
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyEthResultJs";
 
-    wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, JS_NAME_RESULT, requestId](bool result) {
+    wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, JS_NAME_RESULT, requestId](bool result, const QString &/*address*/) {
         LOG << "Save private key eth";
         makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "Not ok"));
     }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
@@ -1161,7 +1161,7 @@ void JavascriptWrapper::savePrivateKeyBtc(QString requestId, QString privateKey,
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "savePrivateKeyBtcResultJs";
 
-    wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, JS_NAME_RESULT, requestId](bool result) {
+    wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, JS_NAME_RESULT, requestId](bool result, const QString &/*address*/) {
         LOG << "Save private key btc";
         makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result ? "ok" : "Not ok"));
     }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {

@@ -45,6 +45,20 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void UtilsJavascript::openFileDialog(const QString &beginPath, const QString &caption, const QString &filters, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
+
+    LOG << "Open file dialog " << beginPath << " " << caption << " " << filters;
+
+    wrapOperation([&, this](){
+        emit manager.loadFileDialog(caption, beginPath, filters, Utils::ChooseFileCallback([makeFunc](const QString &path){
+            makeFunc.func(TypedException(), path);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 void UtilsJavascript::saveFileFromUrl2(const QString &url, const QString &saveFileWindowCaption, bool openAfterSave, const QString &filePath, const QString &callback) {
 BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
