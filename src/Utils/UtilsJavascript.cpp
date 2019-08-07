@@ -52,7 +52,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "Open file dialog " << beginPath << " " << caption << " " << filters;
 
     wrapOperation([&, this](){
-        emit manager.openFileDialog(beginPath, caption, filters, Utils::OpenFileDialogCallback([makeFunc](const QString &path){
+        emit manager.loadFileDialog(caption, beginPath, filters, Utils::ChooseFileCallback([makeFunc](const QString &path){
             makeFunc.func(TypedException(), path);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
