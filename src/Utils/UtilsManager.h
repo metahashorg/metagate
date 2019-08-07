@@ -20,6 +20,8 @@ public:
 
     using OpenFolderDialogCallback = CallbackWrapper<void(const QString &folder)>;
 
+    using OpenFileDialogCallback = CallbackWrapper<void(const QString &file)>;
+
     using SaveFileFromUrlCallback = CallbackWrapper<void()>;
 
     using PrintUrlCallback = CallbackWrapper<void()>;
@@ -49,6 +51,8 @@ signals:
 
     void openFolderDialog(const QString &beginPath, const QString &caption, const OpenFolderDialogCallback &callback);
 
+    void openFileDialog(const QString &beginPath, const QString &caption, const QString &filters, const OpenFileDialogCallback &callback);
+
     void saveFileFromUrl(const QString &url, const QString &saveFileWindowCaption, const QString &filePath, bool openAfterSave, const SaveFileFromUrlCallback &callback);
 
     void printUrl(const QString &url, const QString &printWindowCaption, const QString &text, const PrintUrlCallback &callback);
@@ -74,6 +78,8 @@ private slots:
     void onOpenInBrowser(const QString &url, const OpenInBrowserCallback &callback);
 
     void onOpenFolderDialog(const QString &beginPath, const QString &caption, const OpenFolderDialogCallback &callback);
+
+    void onOpenFileDialog(const QString &beginPath, const QString &caption, const QString &filters, const OpenFileDialogCallback &callback);
 
     void onSaveFileFromUrl(const QString &url, const QString &saveFileWindowCaption, const QString &filePath, bool openAfterSave, const SaveFileFromUrlCallback &callback);
 

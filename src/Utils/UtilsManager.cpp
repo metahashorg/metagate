@@ -23,6 +23,7 @@ namespace utils {
 Utils::Utils(QObject *parent) {
     Q_CONNECT(this, &Utils::openInBrowser, this, &Utils::onOpenInBrowser);
     Q_CONNECT(this, &Utils::openFolderDialog, this, &Utils::onOpenFolderDialog);
+    Q_CONNECT(this, &Utils::openFileDialog, this, &Utils::onOpenFileDialog);
     Q_CONNECT(this, &Utils::saveFileFromUrl, this, &Utils::onSaveFileFromUrl);
     Q_CONNECT(this, &Utils::printUrl, this, &Utils::onPrintUrl);
     Q_CONNECT(this, &Utils::chooseFileAndLoad, this, &Utils::onChooseFileAndLoad);
@@ -36,6 +37,7 @@ Utils::Utils(QObject *parent) {
 
     Q_REG(OpenInBrowserCallback, "OpenInBrowserCallback");
     Q_REG(OpenFolderDialogCallback, "OpenFolderDialogCallback");
+    Q_REG(OpenFileDialogCallback, "OpenFileDialogCallback");
     Q_REG(SaveFileFromUrlCallback, "SaveFileFromUrlCallback");
     Q_REG(PrintUrlCallback, "PrintUrlCallback");
     Q_REG(ChooseFileAndLoadCallback, "ChooseFileAndLoadCallback");
@@ -71,6 +73,14 @@ void Utils::onOpenFolderDialog(const QString &beginPath, const QString &caption,
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         return QFileDialog::getExistingDirectory(widget_, caption, beginPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Utils::onOpenFileDialog(const QString &beginPath, const QString &caption, const QString &filters, const OpenFileDialogCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return QFileDialog::getOpenFileName(widget_, caption, beginPath, filters);
     }, callback);
 END_SLOT_WRAPPER
 }
