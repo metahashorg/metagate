@@ -87,14 +87,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void UtilsJavascript::chooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &callback) {
+void UtilsJavascript::chooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &filters, const QString &callback) {
 BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<std::string>(""));
 
     LOG << "Choose file " << filePath;
 
     wrapOperation([&, this](){
-        emit manager.chooseFileAndLoad(openFileWindowCaption, filePath, Utils::ChooseFileAndLoadCallback([makeFunc](const QString &pathToFile, const std::string &result){
+        emit manager.chooseFileAndLoad(openFileWindowCaption, filePath, filters, Utils::ChooseFileAndLoadCallback([makeFunc](const QString &pathToFile, const std::string &result){
             makeFunc.func(TypedException(), pathToFile, result);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);

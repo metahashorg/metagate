@@ -130,11 +130,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Utils::onChooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const ChooseFileAndLoadCallback &callback) {
+void Utils::onChooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &filters, const ChooseFileAndLoadCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         const QString beginPath = filePath;
-        const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath);
+        const QString file = QFileDialog::getOpenFileName(widget_, openFileWindowCaption, beginPath, filters);
         const std::string fileData = readFileBinary(file);
         return std::make_tuple(file, toBase64(fileData));
     }, callback);

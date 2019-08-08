@@ -1412,7 +1412,7 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "change file and load " << requestId;
 
-    emit utilsManager.chooseFileAndLoad(openFileWindowCaption, makePath(walletPath, fileName), utils::Utils::ChooseFileAndLoadCallback([requestId, this, JS_NAME_RESULT](const QString &pathToFile, const std::string &result){
+    emit utilsManager.chooseFileAndLoad(openFileWindowCaption, makePath(walletPath, fileName), "", utils::Utils::ChooseFileAndLoadCallback([requestId, this, JS_NAME_RESULT](const QString &pathToFile, const std::string &result){
         makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<std::string>(result));
     }, [requestId, this, JS_NAME_RESULT](const TypedException &e) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<std::string>(""));

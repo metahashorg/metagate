@@ -53,7 +53,7 @@ signals:
 
     void printUrl(const QString &url, const QString &printWindowCaption, const QString &text, const PrintUrlCallback &callback);
 
-    void chooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const ChooseFileAndLoadCallback &callback);
+    void chooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &filters, const ChooseFileAndLoadCallback &callback);
 
     void qrEncode(const QString &textHex, const QrEncodeCallback &callback);
 
@@ -79,7 +79,7 @@ private slots:
 
     void onPrintUrl(const QString &url, const QString &printWindowCaption, const QString &text, const PrintUrlCallback &callback);
 
-    void onChooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const ChooseFileAndLoadCallback &callback);
+    void onChooseFileAndLoad(const QString &openFileWindowCaption, const QString &filePath, const QString &filters, const ChooseFileAndLoadCallback &callback);
 
     void onQrEncode(const QString &textHex, const QrEncodeCallback &callback);
 
