@@ -365,8 +365,13 @@ private:
 private:
 
     bool isDecryptDataSave = false;
+
+    // Retrieved new messages after login
     int retrievedMissed = 0;
-    QSet<size_t> ids;
+    // Request ids for messages retrieve queries to count retrieved new messages
+    QSet<size_t> loginMessagesRetrieveReqs;
+
+    // Request ids for processing queries for current login to cancel for logout
     QSet<size_t> messageRetrieves;
 
     MessengerDBStorage &db;
