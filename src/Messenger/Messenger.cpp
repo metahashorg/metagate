@@ -376,20 +376,6 @@ void Messenger::timerMethod() {
 }
 
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId) {
-    bool showNotifies = true;
-    if (loginMessagesRetrieveReqs.contains(requestId)) {
-
-        loginMessagesRetrieveReqs.remove(requestId);
-        showNotifies = false;
-        retrievedMissed += messages.size();
-
-        if (loginMessagesRetrieveReqs.isEmpty()) {
-            emit showNotification(tr("Retrivied %1 messages").arg(retrievedMissed), QStringLiteral(""));
-        }
-    }
-    if (messages.empty())
-        return;
-
     std::vector<Message> msgs;
     msgs.reserve(messages.size());
     std::transform(messages.begin(), messages.end(), std::back_inserter(msgs), [address, isChannel](const NewMessageResponse &m) {
@@ -412,6 +398,23 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
 
         return message;
     });
+
+    bool showNotifies = true;
+    if (loginMessagesRetrieveReqs.contains(requestId)) {
+        loginMessagesRetrieveReqs.remove(requestId);
+        showNotifies = false;
+        for_each(msgs.begin(), msgs.end(), [this](const Message &m) {
+            if (m.isInput)
+                retrievedMissed++;
+        });
+
+        if (loginMessagesRetrieveReqs.isEmpty() && retrievedMissed != 0) {
+            emit showNotification(tr("Retrivied %1 messages").arg(retrievedMissed), QStringLiteral(""));
+        }
+    }
+    if (messages.empty())
+        return;
+
 
     const auto nextProcess = [this, isChannel, address, requestId, showNotifies](const std::vector<Message> &messages) {
         CHECK(!messages.empty(), "Empty messages");
