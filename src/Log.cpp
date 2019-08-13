@@ -34,7 +34,7 @@ public:
         std::string content;
         std::vector<milliseconds> periods;
         time_point lastPeriod;
-        int iteration = 0;
+        size_t iteration = 0;
         size_t count = 20;
 
         milliseconds calcInterval(const time_point &now) const {

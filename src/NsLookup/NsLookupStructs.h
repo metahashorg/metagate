@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#include "duration.h"
+
 struct NodeType {
     enum class SubType {
         none, torrent, proxy
@@ -36,7 +38,7 @@ struct NodeType {
 struct NodeInfo {
     QString address;
 
-    size_t ping;
+    milliseconds ping;
 
     size_t countUpdated = 1;
     bool isTimeout = false;

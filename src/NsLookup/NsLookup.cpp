@@ -63,7 +63,7 @@ static QString getAddressWithoutHttp(const QString &address) {
     return QUrl(address).host() + ":" + QString::fromStdString(std::to_string(QUrl(address).port()));
 }
 
-NsLookup::NsLookup(InfrastructureNsLookup &infrastructureNsl, QObject *parent)
+NsLookup::NsLookup(InfrastructureNsLookup &infrastructureNsl)
     : TimerClass(1s, nullptr)
     , infrastructureNsl(infrastructureNsl)
 {
@@ -166,7 +166,7 @@ std::vector<NodeTypeStatus> NsLookup::getNodesStatus() const {
 
     for (const auto &pair: allNodesForTypes) {
         const size_t countSuccess = countWorkedNodes(pair.second);
-        const auto bestResult = !pair.second.empty() ? pair.second[0].ping : 0;
+        const auto bestResult = !pair.second.empty() ? pair.second[0].ping.count() : 0;
         result.emplace_back(pair.first.str(), countSuccess, pair.second.size(), bestResult);
     }
 
@@ -333,14 +333,14 @@ void NsLookup::continueResolve(std::map<QString, NodeType>::const_iterator node,
 static NodeInfo preParseNodeInfo(const QString &address, const SimpleClient::Response &response, size_t updateNumber) {
     NodeInfo info;
     info.address = address;
-    info.ping = response.time.count();
-    if (info.ping >= MAX_PING.count()) {
+    info.ping = response.time;
+    if (info.ping >= MAX_PING) {
         info.isTimeout = true;
     }
     info.countUpdated = updateNumber;
 
     if (response.exception.isTimeout()) {
-        info.ping = MAX_PING.count();
+        info.ping = MAX_PING;
         info.isTimeout = true;
     }
 
@@ -361,7 +361,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
         return;
     }
 
-    const size_t countSteps = std::min(size_t(10), size_t(std::distance(ipsIter, ipsTemp.cend())));
+    const auto countSteps = std::min(long(10), std::distance(ipsIter, ipsTemp.cend()));
 
     CHECK(countSteps != 0, "Incorrect countSteps");
     std::vector<QString> currentIps(ipsIter, ipsIter + countSteps);
@@ -385,7 +385,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
                     const NodeResponse r = pResponse(result.response, result.exception.content);
                     if (!r.isSuccess) {
                         nodeInfo.isTimeout = true;
-                        nodeInfo.ping = MAX_PING.count();
+                        nodeInfo.ping = MAX_PING;
                     }
                     allNodesForTypesNew[node.node].emplace_back(nodeInfo);
                 }
@@ -410,10 +410,10 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
     std::vector<size_t> processVectPos;
     for (size_t i = 0; i < allNodesForTypes[node.node].size(); i++) {
         NodeInfo &element = allNodesForTypes[node.node][i];
-        if (element.ping == MAX_PING.count()) {
+        if (element.ping == MAX_PING) {
             element.isTimeout = true;
         } else if (std::find(ipsTemp.begin(), ipsTemp.end(), element.address) == ipsTemp.end()) {
-            element.ping = MAX_PING.count();
+            element.ping = MAX_PING;
             element.isTimeout = true;
         } else {
             processVectPos.emplace_back(i);
@@ -452,7 +452,7 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
                     const NodeResponse nodeResponse = pResponse(result.response, result.exception.content);
                     if (!nodeResponse.isSuccess) {
                         newInfo.isTimeout = true;
-                        newInfo.ping = MAX_PING.count();
+                        newInfo.ping = MAX_PING;
                     }
                     CHECK(info.address == newInfo.address, "Incorrect address");
                     if (!newInfo.isTimeout) {
@@ -600,7 +600,9 @@ system_time_point NsLookup::fillNodesFromFile(const QString &file, const std::ma
             std::string type;
             std::string address;
             int isTimeout;
-            ss >> type >> address >> info.ping >> isTimeout;
+            long timeMs;
+            ss >> type >> address >> timeMs >> isTimeout;
+            info.ping = milliseconds(timeMs);
             CHECK(!ss.fail(), "Incorrect file " + file.toStdString());
 
             info.address = QString::fromStdString(address);
@@ -635,7 +637,7 @@ void NsLookup::saveToFile(const QString &file, const system_time_point &tp, cons
             std::string content;
             content += nodeType.type.toStdString() + " ";
             content += node.address.toStdString() + " ";
-            content += std::to_string(node.ping) + " ";
+            content += std::to_string(node.ping.count()) + " ";
             content += (node.isTimeout ? "1" : "0") + std::string(" ");
             content += "\n";
             return content;

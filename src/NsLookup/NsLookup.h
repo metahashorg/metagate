@@ -60,7 +60,7 @@ public:
     using GetServersCallback = CallbackWrapper<void(const std::vector<QString> &servers)>;
 
 public:
-    explicit NsLookup(InfrastructureNsLookup &infrastructureNsl, QObject *parent = nullptr);
+    explicit NsLookup(InfrastructureNsLookup &infrastructureNsl);
 
     ~NsLookup() override;
 
