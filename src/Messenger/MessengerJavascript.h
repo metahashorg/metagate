@@ -21,8 +21,6 @@ namespace wallets {
 class Wallets;
 }
 
-class JavascriptWrapper;
-
 namespace messenger {
 
 class CryptographicManager;
@@ -33,7 +31,7 @@ class MessengerJavascript: public WrapperJavascript {
     Q_OBJECT
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, wallets::Wallets &wallets, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, wallets::Wallets &wallets);
 
     void setMessenger(Messenger &m);
 

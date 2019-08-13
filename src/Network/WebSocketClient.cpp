@@ -31,7 +31,7 @@ WebSocketClient::WebSocketClient(const QString &url, QObject *parent)
     Q_CONNECT(this, (QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::setHelloString)), this, (QOverload<const std::vector<QString>&, QString>::of(&WebSocketClient::onSetHelloString)));
     Q_CONNECT(this, &WebSocketClient::addHelloString, this, &WebSocketClient::onAddHelloString);
 
-    Q_CONNECT3(m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError error) {
+    Q_CONNECT3(m_webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), [this](QAbstractSocket::SocketError /*error*/) {
         LOG << "Wss Web socket error " << m_webSocket->errorString() << " " << m_url.toString();
     });
     Q_CONNECT(m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
@@ -84,7 +84,7 @@ void WebSocketClient::finishMethod() {
     m_webSocket->close();
 }
 
-void WebSocketClient::onPong(quint64 elapsedTime, const QByteArray &payload) {
+void WebSocketClient::onPong(quint64 /*elapsedTime*/, const QByteArray &/*payload*/) {
     LOG << "Wss check pong " << m_url.toString();
     prevPongTime = ::now();
 }

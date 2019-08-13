@@ -36,7 +36,7 @@ static QJsonDocument makeWalletsList(const std::vector<QString> &wallets) {
     return json;
 }
 
-WalletsJavascript::WalletsJavascript(Wallets &wallets, QObject *parent)
+WalletsJavascript::WalletsJavascript(Wallets &wallets)
     : WrapperJavascript(false, LOG_FILE)
     , wallets(wallets)
 {
@@ -248,7 +248,7 @@ BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool result, const QString &address){
+        emit wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool /*result*/, const QString &address){
             LOG << "Save private key ok " << address;
             makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
@@ -442,7 +442,7 @@ BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success, const QString &address){
+        emit wallets.savePrivateKeyEth(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool /*success*/, const QString &address){
             LOG << "Save private eth key ok " << address;
             makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));
@@ -583,7 +583,7 @@ BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool success, const QString &address){
+        emit wallets.savePrivateKeyBtc(privateKey, password, wallets::Wallets::SavePrivateKeyCallback([makeFunc](bool /*success*/, const QString &address){
             LOG << "Save private btc key ok " << address;
             makeFunc.func(TypedException(), address);
         }, makeFunc.error, signalFunc));

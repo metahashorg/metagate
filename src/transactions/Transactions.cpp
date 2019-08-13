@@ -594,7 +594,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetAddresses(const QString &group, const GetAddressesCallback &callback) {
+void Transactions::onGetAddresses(const QString &/*group*/, const GetAddressesCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&, this] {
         std::vector<AddressInfo> result = getAddressesInfos(makeGroupName(currentUserName));
@@ -607,9 +607,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback) {
+void Transactions::onSetCurrentGroup(const QString &/*group*/, const SetCurrentGroupCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    runAndEmitCallback([&, this]{
+    runAndEmitCallback([&]{
         //currentGroup = group;
     }, callback);
 END_SLOT_WRAPPER
@@ -895,7 +895,7 @@ BEGIN_SLOT_WRAPPER
 
             std::shared_ptr<NonceStruct> nonceStruct = std::make_shared<NonceStruct>(servers.size());
 
-            const auto getBalanceCallback = [this, nonceStruct, from, callback](const QString &server, const SimpleClient::Response &response) {
+            const auto getBalanceCallback = [nonceStruct, from, callback](const QString &server, const SimpleClient::Response &response) {
                 nonceStruct->count--;
 
                 if (!response.exception.isSet()) {
@@ -940,7 +940,7 @@ BEGIN_SLOT_WRAPPER
             CHECK(!servers.empty(), "Not enough servers");
             const QString &server = servers[0];
 
-            client.sendMessagePost(server, message, [this, callback](const SimpleClient::Response &response) mutable {
+            client.sendMessagePost(server, message, [callback](const SimpleClient::Response &response) mutable {
                 Transaction tx;
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!response.exception.isSet(), TypeErrors::CLIENT_ERROR, response.exception.description);

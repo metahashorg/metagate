@@ -476,7 +476,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Wallets::onCalkKeys(bool isMhc, const QString &path, const CalkKeysCallback &callback) {
+void Wallets::onCalkKeys(bool /*isMhc*/, const QString &path, const CalkKeysCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         std::vector<QString> result;
@@ -846,7 +846,7 @@ BEGIN_SLOT_WRAPPER
                 return;
             }
             const std::string text = checkBackupFile(fileName);
-            emit utils.question(caption, "Restore backup " + QString::fromStdString(text) + "?", utils::Utils::QuestionCallback([this, walletPathCopy, fileName, callback](bool result) {
+            emit utils.question(caption, "Restore backup " + QString::fromStdString(text) + "?", utils::Utils::QuestionCallback([walletPathCopy, fileName, callback](bool result) {
                 if (result) {
                     ::restoreKeys(fileName, walletPathCopy);
                     callback.emitCallback(fileName);

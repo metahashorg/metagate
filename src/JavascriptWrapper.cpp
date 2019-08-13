@@ -192,7 +192,7 @@ JavascriptWrapper::JavascriptWrapper(
     emit authManager.reEmit();
 }
 
-void JavascriptWrapper::onWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created) {
+void JavascriptWrapper::onWatchWalletsAdded(bool /*isMhc*/, const std::vector<std::pair<QString, QString>> &/*created*/) {
 BEGIN_SLOT_WRAPPER
     sendAppInfoToWss(userName, true);
 END_SLOT_WRAPPER
@@ -570,7 +570,7 @@ void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsN
 void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, bool isMhc, QString jsNameResult) {
     LOG << "Sign messagev3 " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
-    wallets.signAndSendMessage(isMhc, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool success) {
+    wallets.signAndSendMessage(isMhc, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool /*success*/) {
         LOG << "Sign messagev3 ok " << keyName;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -581,7 +581,7 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, bool isMhc, QString jsNameResult) {
     LOG << "Sign message delegate " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate;
 
-    wallets.signAndSendMessageDelegate(isMhc, keyName, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool success) {
+    wallets.signAndSendMessageDelegate(isMhc, keyName, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool /*success*/) {
         LOG << "Sign messagev delegate ok " << keyName;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -613,7 +613,7 @@ END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::savePrivateKeyMTHS(QString requestId, QString privateKey, QString password, bool isMhc, QString jsNameResult) {
-    wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, jsNameResult, requestId](bool success, const QString &/*address*/) {
+    wallets.savePrivateKey(isMhc, privateKey, password, wallets::Wallets::SavePrivateKeyCallback([this, jsNameResult, requestId](bool /*success*/, const QString &/*address*/) {
         LOG << "Save private key";
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -714,7 +714,7 @@ void JavascriptWrapper::getRsaPublicKeyMTHS(QString requestId, QString address, 
 }
 
 void JavascriptWrapper::copyRsaKeyMTHS(QString requestId, QString address, QString pathPub, QString pathPriv, bool isMhc, QString jsNameResult) {
-    wallets.copyRsaKey(isMhc, address, pathPub, pathPriv, wallets::Wallets::CopyRsaKeyCallback([this, jsNameResult, requestId, address](bool result) {
+    wallets.copyRsaKey(isMhc, address, pathPub, pathPriv, wallets::Wallets::CopyRsaKeyCallback([this, jsNameResult, requestId, address](bool /*result*/) {
         LOG << "Copy rsa key " << address;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -723,7 +723,7 @@ void JavascriptWrapper::copyRsaKeyMTHS(QString requestId, QString address, QStri
 }
 
 void JavascriptWrapper::copyRsaKeyToFolderMTHS(QString requestId, QString address, QString path, bool isMhc, QString jsNameResult) {
-    wallets.copyRsaKeyToFolder(isMhc, address, path, wallets::Wallets::CopyRsaKeyCallback([this, jsNameResult, requestId, address](bool result) {
+    wallets.copyRsaKeyToFolder(isMhc, address, path, wallets::Wallets::CopyRsaKeyCallback([this, jsNameResult, requestId, address](bool /*result*/) {
         LOG << "Copy rsa key to folder " << address;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -809,7 +809,7 @@ BEGIN_SLOT_WRAPPER
 
     const QString JS_NAME_RESULT = "encryptMessageResultJs";
     Opt<std::string> answer;
-    const TypedException exception = apiVrapper2([&, this]() {
+    const TypedException exception = apiVrapper2([&]() {
         const WalletRsa wallet = WalletRsa::fromPublicKey(publicKey.toStdString());
         answer = wallet.encrypt(message.toStdString());
     });
@@ -1037,7 +1037,7 @@ BEGIN_SLOT_WRAPPER
             btcInputs.emplace_back(input);
         }
 
-        wallets.signMessageBtcUsedUtxos(address, password, btcInputs, toAddress, value, estimateComissionInSatoshi, fees, std::set<std::string>(), wallets::Wallets::SignMessageBtcCallback([this, JS_NAME_RESULT, requestId](const QString &result, const QString &hash, const std::set<std::string> &usedUtxos) {
+        wallets.signMessageBtcUsedUtxos(address, password, btcInputs, toAddress, value, estimateComissionInSatoshi, fees, std::set<std::string>(), wallets::Wallets::SignMessageBtcCallback([this, JS_NAME_RESULT, requestId](const QString &result, const QString &/*hash*/, const std::set<std::string> &/*usedUtxos*/) {
             LOG << "Sign message btc ok";
             makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<QString>(result));
         }, [this, JS_NAME_RESULT, requestId](const TypedException &e) {
@@ -1208,7 +1208,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::qtOpenInBrowser(QString url) {
 BEGIN_SLOT_WRAPPER
     LOG << "Open another url " << url;
-    emit utilsManager.openInBrowser(url, utils::Utils::OpenInBrowserCallback([]{}, [](const TypedException &e) {}, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
+    emit utilsManager.openInBrowser(url, utils::Utils::OpenInBrowserCallback([]{}, [](const TypedException &/*e*/) {}, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1225,7 +1225,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-bool JavascriptWrapper::migrateKeysToPath(QString newPath) {
+bool JavascriptWrapper::migrateKeysToPath(QString /*newPath*/) {
     /*LOG << "Migrate keys to path " << newPath;
 
     const QString prevPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PREV_PATH);
@@ -1402,7 +1402,7 @@ void JavascriptWrapper::saveFileFromUrl(QString url, QString saveFileWindowCapti
 BEGIN_SLOT_WRAPPER
     LOG << "Save file from url";
     const QString beginPath = makePath(walletPath, fileName);
-    emit utilsManager.saveFileFromUrl(url, saveFileWindowCaption, beginPath, openAfterSave, utils::Utils::SaveFileFromUrlCallback([]{}, [](const TypedException &e) {}, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
+    emit utilsManager.saveFileFromUrl(url, saveFileWindowCaption, beginPath, openAfterSave, utils::Utils::SaveFileFromUrlCallback([]{}, [](const TypedException &/*e*/) {}, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1412,7 +1412,7 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "change file and load " << requestId;
 
-    emit utilsManager.chooseFileAndLoad(openFileWindowCaption, makePath(walletPath, fileName), "", utils::Utils::ChooseFileAndLoadCallback([requestId, this, JS_NAME_RESULT](const QString &pathToFile, const std::string &result){
+    emit utilsManager.chooseFileAndLoad(openFileWindowCaption, makePath(walletPath, fileName), "", utils::Utils::ChooseFileAndLoadCallback([requestId, this, JS_NAME_RESULT](const QString &/*pathToFile*/, const std::string &result){
         makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<std::string>(result));
     }, [requestId, this, JS_NAME_RESULT](const TypedException &e) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>(requestId), Opt<std::string>(""));

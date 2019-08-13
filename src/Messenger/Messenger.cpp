@@ -416,7 +416,7 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         return;
 
 
-    const auto nextProcess = [this, isChannel, address, requestId, showNotifies](const std::vector<Message> &messages) {
+    const auto nextProcess = [this, isChannel, address, showNotifies](const std::vector<Message> &messages) {
         CHECK(!messages.empty(), "Empty messages");
         const QString channel = isChannel ? messages.front().channel : "";
 

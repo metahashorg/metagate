@@ -20,7 +20,7 @@ InfrastructureNsLookup::Nodes::Nodes(const QString &torrent, const QString &prox
     , contractTorrent(contractTorrent)
 {}
 
-InfrastructureNsLookup::InfrastructureNsLookup(QObject *parent) {
+InfrastructureNsLookup::InfrastructureNsLookup() {
     Q_CONNECT(this, &InfrastructureNsLookup::getTorrents, this, &InfrastructureNsLookup::onGetTorrents);
     Q_CONNECT(this, &InfrastructureNsLookup::getProxy, this, &InfrastructureNsLookup::onGetProxy);
     Q_CONNECT(this, &InfrastructureNsLookup::getContractTorrent, this, &InfrastructureNsLookup::onGetContractTorrent);
@@ -89,7 +89,7 @@ static NodeResponse proxyResponseParser(const std::string &response, const std::
     }
 }
 
-static NodeResponse torrentResponseParser(const std::string &response, const std::string &error) {
+static NodeResponse torrentResponseParser(const std::string &response, const std::string &/*error*/) {
     if (response.empty()) {
         return NodeResponse(false);
     } else {

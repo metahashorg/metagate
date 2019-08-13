@@ -35,7 +35,7 @@ public:
     using QuestionCallback = CallbackWrapper<void(bool result)>;
 
 public:
-    explicit Utils(QObject *parent = nullptr);
+    explicit Utils();
 
     ~Utils() override;
 

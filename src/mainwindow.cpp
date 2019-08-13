@@ -883,7 +883,7 @@ void MainWindow::changeEvent(QEvent *event)
 #endif
 }
 
-void MainWindow::onLogined(bool isInit, const QString &login) {
+void MainWindow::onLogined(bool /*isInit*/, const QString &login) {
 BEGIN_SLOT_WRAPPER
     if (login.isEmpty()) {
         if (isInitFinished) {

@@ -33,7 +33,7 @@ public:
 
 public:
 
-    explicit InfrastructureNsLookup(QObject *parent = nullptr);
+    explicit InfrastructureNsLookup();
 
     void setNsLookup(NsLookup *nsl);
 

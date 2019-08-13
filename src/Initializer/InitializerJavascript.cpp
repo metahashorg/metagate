@@ -44,7 +44,7 @@ static QJsonDocument subTypesToJson(const std::vector<Initializer::StateType> &t
     return QJsonDocument(messagesJson);
 }
 
-InitializerJavascript::InitializerJavascript(QObject *parent)
+InitializerJavascript::InitializerJavascript()
     : WrapperJavascript(false, LOG_FILE)
 {
     Q_CONNECT(this, &InitializerJavascript::stateChangedSig, this, &InitializerJavascript::onStateChanged);

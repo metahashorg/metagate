@@ -152,7 +152,7 @@ void MHUrlSchemeHandler::processRequest(QWebEngineUrlRequestJob *job, MainWindow
     reply->setParent(job);
     Q_CONNECT(reply, &QNetworkReply::finished, this, &MHUrlSchemeHandler::onRequestFinished);
     if (isFirstRun) {
-        Q_CONNECT3(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), ([this, job, win, url, host, ip, excludesIps](QNetworkReply::NetworkError err) {
+        Q_CONNECT3(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), ([this, job, win, url, host, ip, excludesIps](QNetworkReply::NetworkError /*err*/) {
         BEGIN_SLOT_WRAPPER
             LOG << "Error request MHUrlSchemeHandler " << ip;
             std::set<QString> copyExcludes = excludesIps;

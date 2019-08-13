@@ -30,7 +30,7 @@ private:
 
 private slots:
 
-    void timerEvent();
+    void onTimerEvent();
 
 private:
 

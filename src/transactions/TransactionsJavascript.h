@@ -18,7 +18,7 @@ class TransactionsJavascript: public WrapperJavascript {
     Q_OBJECT
 public:
 
-    explicit TransactionsJavascript(QObject *parent = nullptr);
+    explicit TransactionsJavascript();
 
     void setTransactions(Transactions &trans) {
         transactionsManager = &trans;

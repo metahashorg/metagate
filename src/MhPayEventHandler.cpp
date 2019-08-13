@@ -19,7 +19,7 @@ MhPayEventHandler::MhPayEventHandler(RunGuard &runGuard)
     : runGuard(runGuard)
 {
     timer.setInterval(milliseconds(1s).count());
-    Q_CONNECT(&timer, &QTimer::timeout, this, &MhPayEventHandler::timerEvent);
+    Q_CONNECT(&timer, &QTimer::timeout, this, &MhPayEventHandler::onTimerEvent);
     timer.start();
 }
 
@@ -61,7 +61,7 @@ bool MhPayEventHandler::eventFilter(QObject *object, QEvent *event) {
     }
 }
 
-void MhPayEventHandler::timerEvent() {
+void MhPayEventHandler::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     const std::string commandLine = runGuard.getValueAndReset();
     if (commandLine.empty()) {

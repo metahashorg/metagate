@@ -16,7 +16,7 @@ class InitializerJavascript: public WrapperJavascript {
     Q_OBJECT
 
 public:
-    explicit InitializerJavascript(QObject *parent = nullptr);
+    explicit InitializerJavascript();
 
     void setInitializerManager(Initializer &initializer) {
         m_initializer = &initializer;

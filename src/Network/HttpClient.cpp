@@ -120,7 +120,7 @@ template<class Callbacks, typename... Message>
 void HttpSimpleClient::runCallback(Callbacks &callbacks, const int id, Message&&... messages)
 {
     const auto foundCallback = callbacks.find(id);
-    CHECK(foundCallback != callbacks.end(), "not found callback on id " + id);
+    CHECK(foundCallback != callbacks.end(), "not found callback on id " + std::to_string(id));
     const auto callback = std::bind(foundCallback->second, std::forward<Message>(messages)...);
     emit callbackCall(callback);
     callbacks.erase(foundCallback);

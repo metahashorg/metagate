@@ -41,7 +41,7 @@ static std::vector<WalletInfo> parseWalletNames(const QString &walletsJson) {
     return result;
 }
 
-WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames, QObject *parent)
+WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames)
     : WrapperJavascript(false, LOG_FILE)
     , manager(walletNames)
 {

@@ -22,7 +22,7 @@ SET_LOG_NAMESPACE("TXS");
 
 namespace transactions {
 
-TransactionsJavascript::TransactionsJavascript(QObject *parent)
+TransactionsJavascript::TransactionsJavascript()
     : WrapperJavascript(false, LOG_FILE)
 {
     Q_CONNECT(this, &TransactionsJavascript::newBalanceSig, this, &TransactionsJavascript::onNewBalance);

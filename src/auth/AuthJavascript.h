@@ -14,7 +14,7 @@ struct LoginInfo;
 class AuthJavascript: public WrapperJavascript {
     Q_OBJECT
 public:
-    explicit AuthJavascript(QObject *parent = nullptr);
+    explicit AuthJavascript();
 
     Auth *authManager() const {return m_authManager; }
 

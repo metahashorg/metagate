@@ -20,7 +20,7 @@ SET_LOG_NAMESPACE("UTIL");
 
 namespace utils {
 
-Utils::Utils(QObject *parent) {
+Utils::Utils() {
     Q_CONNECT(this, &Utils::openInBrowser, this, &Utils::onOpenInBrowser);
     Q_CONNECT(this, &Utils::openFolderDialog, this, &Utils::onOpenFolderDialog);
     Q_CONNECT(this, &Utils::saveFileFromUrl, this, &Utils::onSaveFileFromUrl);

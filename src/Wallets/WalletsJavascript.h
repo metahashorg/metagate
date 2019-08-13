@@ -11,7 +11,7 @@ class WalletsJavascript: public WrapperJavascript {
     Q_OBJECT
 public:
 
-    explicit WalletsJavascript(Wallets &wallets, QObject *parent = nullptr);
+    explicit WalletsJavascript(Wallets &wallets);
 
 ///////////
 /// MHC ///

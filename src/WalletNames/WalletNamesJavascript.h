@@ -16,7 +16,7 @@ class WalletNamesJavascript: public WrapperJavascript {
 
 public:
 
-    explicit WalletNamesJavascript(WalletNames& walletNames, QObject *parent = nullptr);
+    explicit WalletNamesJavascript(WalletNames& walletNames);
 
 public slots:
 

@@ -30,7 +30,7 @@ SET_LOG_NAMESPACE("MSG");
 
 namespace messenger {
 
-MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, wallets::Wallets &wallets, QObject *parent)
+MessengerJavascript::MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, wallets::Wallets &wallets)
     : WrapperJavascript(false, LOG_FILE)
     , authManager(authManager)
     , cryptoManager(cryptoManager)
@@ -213,7 +213,7 @@ BEGIN_SLOT_WRAPPER
 
         const transactions::SendParameters sendParams = transactions::parseSendParams(paramsJson);
         emit cryptoManager.getPubkeyRsa(address, CryptographicManager::GetPubkeyRsaCallback([this, address, fee, sendParams, makeFunc](const QString &pubkeyRsa){
-            emit txManager.getNonce(address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc](size_t nonce, const QString &server) {
+            emit txManager.getNonce(address, sendParams, transactions::Transactions::GetNonceCallback([this, address, fee, sendParams, pubkeyRsa, makeFunc](size_t nonce, const QString &/*server*/) {
                 LOG << "Get nonce ok " << nonce;
                 emit cryptoManager.signTransaction(address, address, 0, fee, nonce, pubkeyRsa, CryptographicManager::SignTransactionCallback([this, address, pubkeyRsa, nonce, fee, sendParams, makeFunc](const QString &transaction, const QString &pubkey, const QString &sign){
                     LOG << "Sign Transaction size " << transaction.size();
@@ -232,7 +232,7 @@ END_SLOT_WRAPPER
 void MessengerJavascript::doRegisterAddress(const QString &address, bool isNew, bool isForcibly, const std::function<void(const TypedException &exception, const QString &result)> &makeFunc, const std::function<void(const TypedException &exception)> &errorFunc) {
     if (isNew || isForcibly) {
         const std::vector<QString> messagesForSign = Messenger::stringsForSign();
-        emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &pubkey, const std::vector<QString> &sign){
+        emit cryptoManager.signMessages(address, messagesForSign, CryptographicManager::SignMessagesCallback([this, address, makeFunc, errorFunc](const QString &/*pubkey*/, const std::vector<QString> &sign){
             emit messenger->signedStrings(address, sign, Messenger::SignedStringsCallback([address, makeFunc](){
                 LOG << "Address registered " << address;
                 makeFunc(TypedException(), QString("Ok"));
@@ -308,7 +308,7 @@ BEGIN_SLOT_WRAPPER
     wrapOperation([&, this](){
         const QString messageToSign = Messenger::makeTextForGetPubkeyRequest(collocutor);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, isForcibly, makeFunc](const QString &pubkey, const QString &sign){
-            emit messenger->savePubkeyAddress(isForcibly, collocutor, pubkey, sign, Messenger::SavePubkeyCallback([this, address, collocutor, makeFunc](bool /*isNew*/) {
+            emit messenger->savePubkeyAddress(isForcibly, collocutor, pubkey, sign, Messenger::SavePubkeyCallback([address, collocutor, makeFunc](bool /*isNew*/) {
                 LOG << "Pubkey saved " << collocutor;
                 makeFunc.func(TypedException(), address, collocutor);
             }, [this, address, collocutor, makeFunc](const TypedException &exception) {
@@ -318,7 +318,7 @@ BEGIN_SLOT_WRAPPER
                 }
                 const QString messageToSign = Messenger::makeTextForWantToTalkRequest(collocutor);
                 emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc](const QString &pubkey, const QString &sign){
-                    emit messenger->wantToTalk(collocutor, pubkey, sign, Messenger::WantToTalkCallback([this, address, collocutor, makeFunc](){
+                    emit messenger->wantToTalk(collocutor, pubkey, sign, Messenger::WantToTalkCallback([address, collocutor, makeFunc](){
                         LOG << "Want to talk " << address << " " << collocutor;
                         makeFunc.func(TypedException(TypeErrors::MESSENGER_SERVER_ERROR_ADDRESS_NOT_FOUND, "Not found"), address, collocutor);
                     }, makeFunc.error, signalFunc));
@@ -387,7 +387,7 @@ BEGIN_SLOT_WRAPPER
                 emit cryptoManager.encryptDataPrivateKey(dataHex, address, CryptographicManager::EncryptMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, dataHex, encryptedDataToWss](const QString &encryptedDataToBd) {
                     const QString messageToSign = Messenger::makeTextForSendMessageRequest(collocutor, encryptedDataToWss, encryptedDataToBd, fee, timestamp);
                     emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, collocutor, makeFunc, fee, timestamp, dataHex, encryptedDataToWss, encryptedDataToBd](const QString &pubkey, const QString &sign) {
-                        emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, dataHex, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([this, makeFunc, address, collocutor]() {
+                        emit messenger->sendMessage(address, collocutor, false, "", encryptedDataToWss, dataHex, pubkey, sign, fee, timestamp, encryptedDataToBd, Messenger::SendMessageCallback([makeFunc, address, collocutor]() {
                             LOG << "Message sended " << address << " " << collocutor;
                             makeFunc.func(TypedException(), address, collocutor);
                         }, makeFunc.error, signalFunc));
@@ -410,7 +410,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "getLastMessageNumber " << address;
 
     wrapOperation([&, this](){
-        emit messenger->getLastMessage(address, false, "", Messenger::GetSavedPosCallback([this, makeFunc, address](const Message::Counter &pos) {
+        emit messenger->getLastMessage(address, false, "", Messenger::GetSavedPosCallback([makeFunc, address](const Message::Counter &pos) {
             LOG << "getLastMessageNumber ok " << address << " " << pos;
             makeFunc.func(TypedException(), address, pos);
         }, makeFunc.error, signalFunc));
@@ -429,7 +429,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "getSavedPos " << address << " " << collocutor;
 
     wrapOperation([&, this](){
-        emit messenger->getSavedPos(address, false, collocutor, Messenger::GetSavedPosCallback([this, makeFunc, address, collocutor](const Message::Counter &pos) {
+        emit messenger->getSavedPos(address, false, collocutor, Messenger::GetSavedPosCallback([makeFunc, address, collocutor](const Message::Counter &pos) {
             LOG << "getSavedPos ok " << address << " " << collocutor << " " << pos;
             makeFunc.func(TypedException(), address, collocutor, pos);
         }, makeFunc.error, signalFunc));
@@ -472,7 +472,7 @@ BEGIN_SLOT_WRAPPER
         bool isValid;
         const Message::Counter counter = counterStr.toLongLong(&isValid);
         CHECK(isValid, "counter field invalid");
-        emit messenger->savePos(address, false, collocutor, counter, Messenger::SavePosCallback([this, makeFunc, address, collocutor](){
+        emit messenger->savePos(address, false, collocutor, counter, Messenger::SavePosCallback([makeFunc, address, collocutor](){
             LOG << "savePos ok " << address << " " << collocutor;
             makeFunc.func(TypedException(), address, collocutor, "Ok");
         }, makeFunc.error, signalFunc));
@@ -494,7 +494,7 @@ BEGIN_SLOT_WRAPPER
         bool isValid;
         const Message::Counter fromI = from.toLongLong(&isValid);
         CHECK(isValid, "from field invalid");
-        emit messenger->getCountMessages(address, collocutor, fromI, Messenger::GetCountMessagesCallback([this, makeFunc, address, collocutor](const Message::Counter &count) {
+        emit messenger->getCountMessages(address, collocutor, fromI, Messenger::GetCountMessagesCallback([makeFunc, address, collocutor](const Message::Counter &count) {
             LOG << "getCountMessages ok " << address << " " << collocutor << " " << count;
             makeFunc.func(TypedException(), address, collocutor, count);
         }, makeFunc.error, signalFunc));
@@ -526,7 +526,7 @@ BEGIN_SLOT_WRAPPER
 
         const QString messageToSign = Messenger::makeTextForChannelCreateRequest(channelTitle, titleSha, feeI);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, channelTitle, titleSha, feeI, makeFunc, errorFunc](const QString &pubkey, const QString &sign) {
-            emit messenger->createChannel(address, channelTitle, titleSha, pubkey, sign, feeI, Messenger::CreateChannelCallback([this, makeFunc, address, channelTitle, titleSha]() {
+            emit messenger->createChannel(address, channelTitle, titleSha, pubkey, sign, feeI, Messenger::CreateChannelCallback([makeFunc, address, channelTitle, titleSha]() {
                 LOG << "channel created " << address << " " << channelTitle << " " << titleSha;
                 makeFunc(TypedException(), address, channelTitle, titleSha);
             }, errorFunc, signalFunc));
@@ -552,7 +552,7 @@ BEGIN_SLOT_WRAPPER
     wrapOperation([&, this](){
         const QString messageToSign = Messenger::makeTextForChannelAddWriterRequest(titleSha, writer);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc](const QString &pubkey, const QString &sign) {
-            emit messenger->addWriterToChannel(titleSha, writer, pubkey, sign, Messenger::AddWriterToChannelCallback([this, makeFunc, address, titleSha, writer]() {
+            emit messenger->addWriterToChannel(titleSha, writer, pubkey, sign, Messenger::AddWriterToChannelCallback([makeFunc, address, titleSha, writer]() {
                 LOG << "add writer ok " << address << " " << titleSha << " " << writer;
                 makeFunc.func(TypedException(), address, titleSha, writer);
             }, makeFunc.error, signalFunc));
@@ -574,7 +574,7 @@ BEGIN_SLOT_WRAPPER
     wrapOperation([&, this](){
         const QString messageToSign = Messenger::makeTextForChannelDelWriterRequest(titleSha, writer);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, writer, titleSha, makeFunc](const QString &pubkey, const QString &sign) {
-            emit messenger->delWriterFromChannel(titleSha, writer, pubkey, sign, Messenger::DelWriterToChannelCallback([this, makeFunc, address, titleSha, writer]() {
+            emit messenger->delWriterFromChannel(titleSha, writer, pubkey, sign, Messenger::DelWriterToChannelCallback([makeFunc, address, titleSha, writer]() {
                 LOG << "del writer ok " << address << " " << titleSha << " " << writer;
                 makeFunc.func(TypedException(), address, titleSha, writer);
             }, makeFunc.error, signalFunc));
@@ -603,7 +603,7 @@ BEGIN_SLOT_WRAPPER
 
         const QString messageToSign = Messenger::makeTextForSendToChannelRequest(titleSha, dataHex, fee, timestamp);
         emit cryptoManager.signMessage(address, messageToSign, CryptographicManager::SignMessageCallback([this, address, dataHex, titleSha, fee, timestamp, makeFunc](const QString &pubkey, const QString &sign) {
-            emit messenger->sendMessage(address, address, true, titleSha, dataHex, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([this, makeFunc, address, titleSha]() {
+            emit messenger->sendMessage(address, address, true, titleSha, dataHex, dataHex, pubkey, sign, fee, timestamp, dataHex, Messenger::SendMessageCallback([makeFunc, address, titleSha]() {
                 LOG << "sendMessageToChannel ok " << address << " " << titleSha;
                 makeFunc.func(TypedException(), address, titleSha);
             }, makeFunc.error, signalFunc));
@@ -623,7 +623,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "getChannelList " << " " << address;
 
     wrapOperation([&, this](){
-        emit messenger->getChannelList(address, Messenger::GetChannelListCallback([this, makeFunc, address](const std::vector<ChannelInfo> &channels) {
+        emit messenger->getChannelList(address, Messenger::GetChannelListCallback([makeFunc, address](const std::vector<ChannelInfo> &channels) {
             LOG << "getChannelList ok " << address << " " << channels.size();
             const QJsonDocument channelsJson = channelListToJson(channels);
             makeFunc.func(TypedException(), address, channelsJson);
@@ -643,7 +643,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "get last message channel " << " " << address << " " << titleSha;
 
     wrapOperation([&, this](){
-        emit messenger->getLastMessage(address, true, titleSha, Messenger::GetSavedPosCallback([this, makeFunc, address, titleSha](const Message::Counter &pos) {
+        emit messenger->getLastMessage(address, true, titleSha, Messenger::GetSavedPosCallback([makeFunc, address, titleSha](const Message::Counter &pos) {
             LOG << "get last message channel ok " << address << " " << pos;
             makeFunc.func(TypedException(), address, titleSha, pos);
         }, makeFunc.error, signalFunc));
@@ -662,7 +662,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "getSavedPosChannel " << address << " " << titleSha;
 
     wrapOperation([&, this](){
-        emit messenger->getSavedPos(address, true, titleSha, Messenger::GetSavedPosCallback([this, makeFunc, address, titleSha](const Message::Counter &pos) {
+        emit messenger->getSavedPos(address, true, titleSha, Messenger::GetSavedPosCallback([makeFunc, address, titleSha](const Message::Counter &pos) {
             LOG << "getSavedPosChannel ok " << address << " " << titleSha << " " << pos;
             makeFunc.func(TypedException(), address, titleSha, pos);
         }, makeFunc.error, signalFunc));
@@ -684,7 +684,7 @@ BEGIN_SLOT_WRAPPER
         bool isValid;
         const Message::Counter counter = counterStr.toLongLong(&isValid);
         CHECK(isValid, "counter field invalid");
-        emit messenger->savePos(address, true, titleSha, counter, Messenger::SavePosCallback([this, makeFunc, address, titleSha](){
+        emit messenger->savePos(address, true, titleSha, counter, Messenger::SavePosCallback([makeFunc, address, titleSha](){
             LOG << "savePosToChannel ok " << address << " " << titleSha;
             makeFunc.func(TypedException(), address, titleSha, "Ok");
         }, makeFunc.error, signalFunc));
@@ -864,7 +864,7 @@ BEGIN_SLOT_WRAPPER
     LOG << "lock wallets";
 
     wrapOperation([&, this](){
-        emit cryptoManager.lockWallet(CryptographicManager::LockWalletCallback([this, makeFunc]() {
+        emit cryptoManager.lockWallet(CryptographicManager::LockWalletCallback([makeFunc]() {
             makeFunc.func(TypedException());
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
@@ -879,7 +879,7 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Remaining time";
     wrapOperation([&, this](){
-        emit cryptoManager.remainingTime(CryptographicManager::RemainingTimeCallback([this, makeFunc](const QString &address, const seconds &elapsed) {
+        emit cryptoManager.remainingTime(CryptographicManager::RemainingTimeCallback([makeFunc](const QString &address, const seconds &elapsed) {
             makeFunc.func(TypedException(), address, elapsed.count());
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
@@ -894,7 +894,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MessengerJavascript::onLogined(bool isInit, const QString login) {
+void MessengerJavascript::onLogined(bool /*isInit*/, const QString login) {
 BEGIN_SLOT_WRAPPER
     if (login == currentUserName) {
         if (!login.isEmpty() || isUserNameSetted) {

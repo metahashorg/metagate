@@ -26,7 +26,7 @@ static QJsonDocument loginInfoToJson(const LoginInfo &info) {
     return QJsonDocument(obj);
 }
 
-AuthJavascript::AuthJavascript(QObject *parent)
+AuthJavascript::AuthJavascript()
     : WrapperJavascript(false, LOG_FILE)
 {
     Q_CONNECT(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig);
