@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <unordered_map>
 
 #include <QDateTime>
 #include <QString>
@@ -25,6 +26,9 @@ public:
     std::ofstream __log_file2__;
 
     std::mutex mutGlobal;
+
+    std::unordered_map<std::thread::id, size_t> threadIds;
+    std::mutex mutThreadIds;
 
     struct PeriodicStruct {
         std::string content;
@@ -157,7 +161,18 @@ void Log_::printHead() {
     const QDateTime now = QDateTime::currentDateTime();
     const std::string time = now.toString("MM.dd_hh:mm:ss").toStdString();
     const auto tId = std::this_thread::get_id();
-    ssLog << std::hex << std::noshowbase << tId << std::dec << " " << time;
+
+    std::unique_lock<std::mutex> lock(vars.mutThreadIds);
+    auto foundThreadId = vars.threadIds.find(tId);
+    if (foundThreadId == vars.threadIds.end()) {
+        const size_t size = vars.threadIds.size();
+        vars.threadIds.emplace(tId, size);
+        foundThreadId = vars.threadIds.find(tId);
+    }
+    const size_t threadId = foundThreadId->second;
+    lock.unlock();
+
+    ssLog << std::hex << std::noshowbase << std::setw(2) << std::setfill('0') << threadId << std::dec << " " << time;
 }
 
 void Log_::printAlias(const std::string &alias) {
