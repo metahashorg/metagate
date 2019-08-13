@@ -49,7 +49,8 @@ struct NodeInfo {
         } else if (second.isTimeout) {
             return true;
         } else {
-            return std::make_pair(-countUpdated, ping) < std::make_pair(-second.countUpdated, second.ping);
+            const auto max = std::numeric_limits<decltype(countUpdated)>::max();
+            return std::make_pair(max - countUpdated, ping) < std::make_pair(max - second.countUpdated, second.ping);
         }
     }
 };

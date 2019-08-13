@@ -361,7 +361,8 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
         return;
     }
 
-    const auto countSteps = std::min(long(10), std::distance(ipsIter, ipsTemp.cend()));
+    const auto distance = std::distance(ipsIter, ipsTemp.cend());
+    const auto countSteps = std::min(decltype(distance)(10), distance);
 
     CHECK(countSteps != 0, "Incorrect countSteps");
     std::vector<QString> currentIps(ipsIter, ipsIter + countSteps);
