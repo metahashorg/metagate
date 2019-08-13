@@ -214,8 +214,9 @@ void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Messag
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
     size_t requestId = id.get();
     messageRetrieves.insert(requestId);
-    if (missed)
-        ids.insert(requestId);
+    if (missed) {
+        loginMessagesRetrieveReqs.insert(requestId);
+    }
     const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, requestId);
     emit wssClient.sendMessage(message);
 }
@@ -375,10 +376,6 @@ void Messenger::timerMethod() {
 }
 
 void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId) {
-    //CHECK(!messages.empty(), "Empty messages");
-    if (messages.empty())
-        return;
-
     std::vector<Message> msgs;
     msgs.reserve(messages.size());
     std::transform(messages.begin(), messages.end(), std::back_inserter(msgs), [address, isChannel](const NewMessageResponse &m) {
@@ -402,7 +399,24 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         return message;
     });
 
-    const auto nextProcess = [this, isChannel, address, requestId](const std::vector<Message> &messages) {
+    bool showNotifies = true;
+    if (loginMessagesRetrieveReqs.contains(requestId)) {
+        loginMessagesRetrieveReqs.remove(requestId);
+        showNotifies = false;
+        for_each(msgs.begin(), msgs.end(), [this](const Message &m) {
+            if (m.isInput)
+                retrievedMissed++;
+        });
+
+        if (loginMessagesRetrieveReqs.isEmpty() && retrievedMissed != 0) {
+            emit showNotification(tr("Retrivied %1 messages").arg(retrievedMissed), QStringLiteral(""));
+        }
+    }
+    if (messages.empty())
+        return;
+
+
+    const auto nextProcess = [this, isChannel, address, requestId, showNotifies](const std::vector<Message> &messages) {
         CHECK(!messages.empty(), "Empty messages");
         const QString channel = isChannel ? messages.front().channel : "";
 
@@ -410,15 +424,6 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         CHECK(std::is_sorted(messages.begin(), messages.end()), "Messages not sorted");
         const Message::Counter minCounterInServer = messages.front().counter;
         const Message::Counter maxCounterInServer = messages.back().counter;
-
-        bool showNotifies = true;
-        if (ids.contains(requestId)) {
-            ids.remove(requestId);
-            showNotifies = false;
-            retrievedMissed += messages.size();
-            if (ids.isEmpty())
-                emit showNotification(tr("Retrivied %1 messages").arg(retrievedMissed), QStringLiteral(""));
-        }
 
         bool deffer = false;
         for (const Message &m: messages) {
@@ -953,7 +958,7 @@ BEGIN_SLOT_WRAPPER
         emit wssClient.sendMessage(messageGetMyChannels);
         // Get missed messages
         messageRetrieves.clear();
-        ids.clear();
+        loginMessagesRetrieveReqs.clear();
         retrievedMissed = 0;
         for (const QString &address: addresses) {
             const QString pubkeyHex = db.getUserPublicKey(address);
