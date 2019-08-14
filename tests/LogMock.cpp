@@ -32,7 +32,7 @@ Log_::Log_(const std::string &/*fileName*/) {
 
 }
 
-bool Log_::processPeriodic(const std::string &s, std::string &periodicStrFirstLine, std::string &periodicStrOriginalLinePrefix) {
+bool Log_::processPeriodic(const std::string &/*s*/, std::string &/*periodicStrFirstLine*/, std::string &/*periodicStrOriginalLinePrefix*/) {
     return true;
 }
 
