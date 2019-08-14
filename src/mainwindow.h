@@ -214,8 +214,6 @@ private slots:
 
     void onJsRun(QString jsString);
 
-    void onSetHasNativeToolbarVariable();
-
     void onSetCommandLineText(QString text);
 
     void onSetMappings(QString mapping);

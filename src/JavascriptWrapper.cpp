@@ -1348,12 +1348,6 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void JavascriptWrapper::setHasNativeToolbarVariable() {
-BEGIN_SLOT_WRAPPER
-    emit setHasNativeToolbarVariableSig();
-END_SLOT_WRAPPER
-}
-
 void JavascriptWrapper::lineEditReturnPressed(QString text) {
 BEGIN_SLOT_WRAPPER
     emit lineEditReturnPressedSig(text);

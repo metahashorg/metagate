@@ -233,7 +233,6 @@ BEGIN_SLOT_WRAPPER
         jsWrapper->setWidget(this);
         Q_CONNECT(jsWrapper, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("mainWindow"), jsWrapper);
-        Q_CONNECT(jsWrapper, &JavascriptWrapper::setHasNativeToolbarVariableSig, this, &MainWindow::onSetHasNativeToolbarVariable);
         Q_CONNECT(jsWrapper, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText);
         Q_CONNECT(jsWrapper, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings);
         Q_CONNECT(jsWrapper, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
@@ -761,12 +760,6 @@ END_SLOT_WRAPPER
 void MainWindow::onSetCommandLineText(QString text) {
 BEGIN_SLOT_WRAPPER
     addElementToHistoryAndCommandLine(text, true, true);
-END_SLOT_WRAPPER
-}
-
-void MainWindow::onSetHasNativeToolbarVariable() {
-BEGIN_SLOT_WRAPPER
-    ui->webView->page()->runJavaScript("window.hasNativeToolbar = true;");
 END_SLOT_WRAPPER
 }
 

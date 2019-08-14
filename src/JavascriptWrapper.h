@@ -256,8 +256,6 @@ public slots:
 
     Q_INVOKABLE void getMachineUid();
 
-    Q_INVOKABLE void setHasNativeToolbarVariable();
-
     Q_INVOKABLE void lineEditReturnPressed(QString text);
 
     Q_INVOKABLE void openWalletPathInStandartExplorer();
