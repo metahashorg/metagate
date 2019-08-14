@@ -15,6 +15,7 @@ using namespace std::placeholders;
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QFile>
+#include <QSettings>
 
 #include "Wallets/Wallet.h"
 #include "Wallets/WalletRsa.h"
@@ -248,6 +249,8 @@ void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
         const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPath, true, true);
         std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
 
+        QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+        const bool isForgingActive = settings.value("forging/enabled", true).toBool();
         const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);
         LOG << "Send MetaGate info to wss. Count keys " << keysTmh.size() << " " << keysMth.size() << ". " << userName;
         emit wssClient.sendMessage(message);
@@ -1504,7 +1507,10 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "setIsForgingActiveResultJs";
     LOG << "Set is forging active: " << isActive;
     const TypedException exception = apiVrapper2([&, this](){
-        isForgingActive = isActive;
+        QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+        settings.setValue("forging/enabled", isActive);
+        settings.sync();
+
         sendAppInfoToWss(userName, true);
     });
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
@@ -1514,6 +1520,8 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::getIsForgingActive() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getIsForgingActiveResultJs";
+    QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+    const bool isForgingActive = settings.value("forging/enabled", true).toBool();
     LOG << "Get is forging active: " << isForgingActive;
     makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<bool>(isForgingActive));
 END_SLOT_WRAPPER

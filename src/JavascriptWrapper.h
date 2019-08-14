@@ -416,8 +416,6 @@ private:
 
     QFileSystemWatcher fileSystemWatcher;
 
-    bool isForgingActive = true;
-
     std::function<void(const std::function<void()> &callback)> signalFunc;
 
 };
