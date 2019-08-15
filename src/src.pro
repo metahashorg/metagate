@@ -119,7 +119,11 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitWallets.cpp \
     qt_utilites/EventWatcher.cpp \
     Wallets/GetActualWalletsEvent.cpp \
-    NsLookup/InfrastructureNsLookup.cpp
+    NsLookup/InfrastructureNsLookup.cpp \
+    MetaGate/MetaGate.cpp \
+    MetaGate/MetaGateJavascript.cpp \
+    Initializer/Inits/InitMetaGate.cpp \
+    MetaGate/MetaGateMessages.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
@@ -247,7 +251,11 @@ HEADERS += mainwindow.h \
     qt_utilites/EventWatcher.h \
     Wallets/GetActualWalletsEvent.h \
     transactions/TransactionsFilter.h \
-    NsLookup/InfrastructureNsLookup.h
+    NsLookup/InfrastructureNsLookup.h \
+    MetaGate/MetaGate.h \
+    MetaGate/MetaGateJavascript.h \
+    Initializer/Inits/InitMetaGate.h \
+    MetaGate/MetaGateMessages.h
 
 FORMS += mainwindow.ui
 

@@ -49,6 +49,10 @@ namespace wallets {
 class WalletsJavascript;
 }
 
+namespace metagate {
+class MetaGateJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -92,6 +96,8 @@ public:
 
     using SetWalletsJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetMetaGateJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
@@ -127,6 +133,8 @@ signals:
 
     void setWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
 
+    void setMetaGateJavascript(metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
+
     void initFinished();
 
     void processExternalUrl(const QUrl &url);
@@ -157,6 +165,8 @@ private slots:
     void onSetUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
 
     void onSetWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
+
+    void onSetMetaGateJavascript(metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
 
     void onInitFinished();
 

@@ -390,8 +390,6 @@ private:
 
     QString token;
 
-    QString utmData;
-
     QString walletPath;
 
     QString userName;

@@ -48,6 +48,7 @@
 #include "WalletNames/WalletNamesJavascript.h"
 #include "Utils/UtilsJavascript.h"
 #include "Wallets/WalletsJavascript.h"
+#include "MetaGate/MetaGateJavascript.h"
 
 #include "utilites/machine_uid.h"
 
@@ -128,6 +129,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_CONNECT(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript);
     Q_CONNECT(this, &MainWindow::setUtilsJavascript, this, &MainWindow::onSetUtilsJavascript);
     Q_CONNECT(this, &MainWindow::setWalletsJavascript, this, &MainWindow::onSetWalletsJavascript);
+    Q_CONNECT(this, &MainWindow::setMetaGateJavascript, this, &MainWindow::onSetMetaGateJavascript);
     Q_CONNECT(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished);
     Q_CONNECT(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl);
     Q_CONNECT(this, &MainWindow::showNotification, this, &MainWindow::onShowNotification);
@@ -140,6 +142,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetWalletNamesJavascriptCallback, "SetWalletNamesJavascriptCallback");
     Q_REG(SetUtilsJavascriptCallback, "SetUtilsJavascriptCallback");
     Q_REG(SetWalletsJavascriptCallback, "SetWalletsJavascriptCallback");
+    Q_REG(SetMetaGateJavascriptCallback, "SetMetaGateJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
 
     shemeHandler = new MHUrlSchemeHandler(this);
@@ -318,6 +321,17 @@ BEGIN_SLOT_WRAPPER
         CHECK(javascript != nullptr, "Incorrect walletsJavascript");
         Q_CONNECT(javascript, &wallets::WalletsJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("wallets"), javascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetMetaGateJavascript(metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(javascript != nullptr, "Incorrect metagateJavascript");
+        Q_CONNECT(javascript, &metagate::MetaGateJavascript::jsRunSig, this, &MainWindow::onJsRun);
+        registerWebChannel(QString("metagate"), javascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER

@@ -43,6 +43,7 @@
 #include "Initializer/Inits/InitWalletsNames.h"
 #include "Initializer/Inits/InitUtils.h"
 #include "Initializer/Inits/InitWallets.h"
+#include "Initializer/Inits/InitMetaGate.h"
 
 #include "Module.h"
 #include "proxy/Proxy.h"
@@ -207,6 +208,8 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, wallets);
 
         const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient, wallets);
+
+        const std::shared_future<InitMetaGate::Return> metagate = initManager.addInit<InitMetaGate>(mainWindow);
 
         initManager.complete();
 

@@ -64,6 +64,8 @@ proxy proxy_started
 proxy proxy_completed. Полностью закончена инициализация и тестирование proxy
 wallet_names init. Критичный. Закончена загрузка модуля wallet_names. Можно совершать к нему запросы по javascript
 utils init. Критичный. Закончена загрузка модуля utils. Можно совершать к нему запросы по javascript
+wallets init. Критичный. Закончена загрузка модуля wallets. Можно совершать к нему запросы по javascript
+metagate init. Критичный. Закончена загрузка модуля metagate. Можно совершать к нему запросы по javascript
 
 Таким образом, для успешного вызова некоторых методов, нужно дожидаться группы событий, например
 nslookup init, nslookup flushed, jsWrapper init

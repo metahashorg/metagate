@@ -1,0 +1,1 @@
+metagate регестрируется в javascript по имени metagate
