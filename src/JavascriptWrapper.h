@@ -6,10 +6,6 @@
 #include <QFileSystemWatcher>
 #include <QDir>
 
-#include "uploader.h"
-
-#include "Network/SimpleClient.h"
-
 #include "qt_utilites/CallbackWrapper.h"
 
 #include "Wallets/Wallet.h"
@@ -363,31 +359,19 @@ private:
 
     NsLookup &nsLookup;
 
-    transactions::Transactions &transactionsManager;
-
-    NetwrokTesting &networkTesting;
-
     utils::Utils &utilsManager;
 
     wallets::Wallets &wallets;
 
     metagate::MetaGate &metagate;
 
-    const QString applicationVersion;
-
-    QString sendedUserName;
-
     QString hardwareId;
-
-    QString token;
 
     QString walletPath;
 
     QString userName;
 
     QWidget *widget_ = nullptr;
-
-    SimpleClient client;
 
     struct FolderWalletInfo {
         QDir walletPath;

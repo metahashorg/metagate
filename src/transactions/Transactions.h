@@ -24,7 +24,6 @@ class InfrastructureNsLookup;
 
 struct TypedException;
 
-class JavascriptWrapper;
 class MainWindow;
 
 namespace wallets {

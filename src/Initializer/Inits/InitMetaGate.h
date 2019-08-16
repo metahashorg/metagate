@@ -13,7 +13,6 @@ struct TypedException;
 
 class MainWindow;
 
-class JavascriptWrapper;
 class NsLookup;
 class InfrastructureNsLookup;
 class WebSocketClient;

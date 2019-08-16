@@ -4,8 +4,6 @@
 #include <functional>
 using namespace std::placeholders;
 
-#include <QApplication>
-
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValue>
@@ -25,11 +23,9 @@ using namespace std::placeholders;
 #include "mainwindow.h"
 
 #include "NsLookup/NsLookup.h"
-#include "Network/WebSocketClient.h"
 
 #include "utilites/unzip.h"
 #include "check.h"
-#include "StopApplication.h"
 #include "duration.h"
 #include "Log.h"
 #include "utilites/utils.h"
@@ -38,7 +34,6 @@ using namespace std::placeholders;
 #include "utilites/platform.h"
 #include "Paths.h"
 #include "qt_utilites/makeJsFunc.h"
-#include "utilites/qrcoder.h"
 #include "qt_utilites/QRegister.h"
 
 #include "Module.h"
@@ -50,10 +45,9 @@ using namespace std::placeholders;
 
 #include "MetaGate/MetaGate.h"
 
-#include "transactions/Transactions.h"
 #include "auth/Auth.h"
 #include "Utils/UtilsManager.h"
-#include "Network/NetwrokTesting.h"
+#include "Network/NetworkTestingTestResult.h"
 
 SET_LOG_NAMESPACE("JSW");
 
@@ -115,18 +109,14 @@ JavascriptWrapper::JavascriptWrapper(
     : walletDefaultPath(getWalletPath())
     , mainWindow(mainWindow)
     , nsLookup(nsLookup)
-    , transactionsManager(transactionsManager)
-    , networkTesting(networkTesting)
     , utilsManager(utilsManager)
     , wallets(wallets)
     , metagate(metagate)
-    , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 
     LOG << "Wallets default path " << walletDefaultPath;
 
-    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &JavascriptWrapper::onCallbackCall);
     Q_CONNECT(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall);
 
     Q_CONNECT(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged);
@@ -144,7 +134,6 @@ JavascriptWrapper::JavascriptWrapper(
 
 void JavascriptWrapper::mvToThread(QThread *thread) {
     moveToThread(thread);
-    client.moveToThread(thread);
     fileSystemWatcher.moveToThread(thread);
 }
 
@@ -158,11 +147,10 @@ void JavascriptWrapper::setWidget(QWidget *widget) {
     widget_ = widget;
 }
 
-void JavascriptWrapper::onLogined(bool /*isInit*/, const QString &login, const QString &token_) {
+void JavascriptWrapper::onLogined(bool /*isInit*/, const QString &login, const QString &/*token_*/) {
 BEGIN_SLOT_WRAPPER
     if (!login.isEmpty()) {
         setPathsImpl(makePath(walletDefaultPath, login), login);
-        token = token_;
     } else {
         setPathsImpl(makePath(walletDefaultPath, defaultUsername), defaultUsername);
     }

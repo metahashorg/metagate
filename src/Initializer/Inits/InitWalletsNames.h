@@ -11,8 +11,6 @@
 
 struct TypedException;
 
-class JavascriptWrapper;
-
 namespace wallet_names {
 class WalletNamesJavascript;
 class WalletNames;

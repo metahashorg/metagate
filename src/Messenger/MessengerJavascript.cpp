@@ -19,7 +19,6 @@
 
 #include "auth/Auth.h"
 #include "transactions/Transactions.h"
-#include "JavascriptWrapper.h"
 #include "Wallets/Wallets.h"
 
 #include "qt_utilites/WrapperJavascriptImpl.h"

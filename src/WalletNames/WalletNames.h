@@ -14,8 +14,6 @@
 #include "Network/WebSocketClient.h"
 #include "Network/SimpleClient.h"
 
-class JavascriptWrapper;
-
 namespace auth {
 class Auth;
 }

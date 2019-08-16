@@ -12,7 +12,6 @@ using namespace std::placeholders;
 
 #include "mainwindow.h"
 #include "auth/Auth.h"
-#include "JavascriptWrapper.h"
 #include "Wallets/Wallet.h"
 #include "NsLookup/NsLookup.h"
 #include "NsLookup/InfrastructureNsLookup.h"
