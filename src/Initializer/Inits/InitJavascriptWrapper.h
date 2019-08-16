@@ -37,6 +37,11 @@ class Wallets;
 class WalletsJavascript;
 }
 
+namespace metagate {
+class MetaGate;
+class MetaGateJavascript;
+}
+
 namespace initializer {
 
 class InitializerJavascript;
@@ -65,6 +70,7 @@ public:
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
         std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
         std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+        std::shared_future<std::pair<metagate::MetaGate*, metagate::MetaGateJavascript*>> metagate,
         const QString &versionString,
         NetwrokTesting &nettest
     );

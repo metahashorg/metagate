@@ -48,6 +48,8 @@ using namespace std::placeholders;
 #include "Wallets/WalletInfo.h"
 #include "Wallets/Wallets.h"
 
+#include "MetaGate/MetaGate.h"
+
 #include "transactions/Transactions.h"
 #include "auth/Auth.h"
 #include "Utils/UtilsManager.h"
@@ -106,17 +108,18 @@ JavascriptWrapper::JavascriptWrapper(
     NetwrokTesting &networkTesting,
     utils::Utils &utilsManager,
     wallets::Wallets &wallets,
+    metagate::MetaGate &metagate,
     const QString &applicationVersion,
     QObject */*parent*/
 )
     : walletDefaultPath(getWalletPath())
     , mainWindow(mainWindow)
-    , wssClient(wssClient)
     , nsLookup(nsLookup)
     , transactionsManager(transactionsManager)
     , networkTesting(networkTesting)
     , utilsManager(utilsManager)
     , wallets(wallets)
+    , metagate(metagate)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -127,8 +130,6 @@ JavascriptWrapper::JavascriptWrapper(
     Q_CONNECT(this, &JavascriptWrapper::callbackCall, this, &JavascriptWrapper::onCallbackCall);
 
     Q_CONNECT(&fileSystemWatcher, &QFileSystemWatcher::directoryChanged, this, &JavascriptWrapper::onDirChanged);
-
-    Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived);
 
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
 
@@ -1098,13 +1099,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Reload application ";
 
-    Opt<QString> result;
-    const TypedException exception = apiVrapper2([&]() {
-        updateAndRestart();
-        result = "Ok";
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
+    metagate.updateAndReloadApplication(metagate::MetaGate::UpdateAndReloadApplicationCallback([this, JS_NAME_RESULT](bool result) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>("Not ok"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1182,14 +1181,14 @@ QString JavascriptWrapper::openFolderDialog(QString beginPath, QString caption) 
 void JavascriptWrapper::exitApplication() {
 BEGIN_SLOT_WRAPPER
     LOG << "Exit";
-    QApplication::exit(SIMPLE_EXIT);
+    emit metagate.exitApplication();
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::restartBrowser() {
 BEGIN_SLOT_WRAPPER
     LOG << "Restart browser";
-    QApplication::exit(RESTART_BROWSER);
+    emit metagate.restartBrowser();
 END_SLOT_WRAPPER
 }
 
@@ -1248,7 +1247,7 @@ END_SLOT_WRAPPER
 
 void JavascriptWrapper::lineEditReturnPressed(QString text) {
 BEGIN_SLOT_WRAPPER
-    emit lineEditReturnPressedSig(text);
+    emit metagate.lineEditReturnPressed(text);
 END_SLOT_WRAPPER
 }
 
@@ -1349,10 +1348,11 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get app info";
 
-    const std::string versionString = VERSION_STRING;
-    const std::string gitCommit = GIT_CURRENT_SHA1;
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<bool>(isProductionSetup), Opt<std::string>(versionString), Opt<std::string>(gitCommit));
+    emit metagate.getAppInfo(metagate::MetaGate::GetAppInfoCallback([requestId, this, JS_NAME_RESULT](const QString &/*hardwareId*/, bool isProductionSetup, const QString &versionString, const QString &gitHash){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<bool>(isProductionSetup), Opt<QString>(versionString), Opt<QString>(gitHash));
+    }, [requestId, this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(requestId), Opt<bool>(true), Opt<QString>(""), Opt<QString>(""));
+    }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
 END_SLOT_WRAPPER
 }
 
@@ -1372,7 +1372,7 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::metaOnline() {
 BEGIN_SLOT_WRAPPER
     LOG << "Metaonline request";
-    emit wssClient.sendMessage("{\"app\":\"MetaOnline\"}");
+    emit metagate.metaOnline(metagate::MetaGate::MetaOnlineCallback([](bool){}, [](const TypedException &){}, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1380,8 +1380,12 @@ void JavascriptWrapper::clearNsLookup() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "clearNsLookupResultJs";
     LOG << "Clear ns lookup";
-    nsLookup.resetFile();
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+
+    emit metagate.clearNsLookup(metagate::MetaGate::ClearNsLookupCallback([this, JS_NAME_RESULT](bool){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>("Not Ok"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1389,8 +1393,12 @@ void JavascriptWrapper::sendMessageToWss(QString message) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "sendMessageToWssResultJs";
     LOG << "Send message to wss: " << message;
-    emit wssClient.sendMessage(message);
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+
+    emit metagate.sendMessageToWss(message, metagate::MetaGate::ClearNsLookupCallback([this, JS_NAME_RESULT](bool){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>("Not Ok"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
@@ -1398,31 +1406,31 @@ void JavascriptWrapper::setIsForgingActive(bool isActive) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "setIsForgingActiveResultJs";
     LOG << "Set is forging active: " << isActive;
-    const TypedException exception = apiVrapper2([&, this](){
-        QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
-        settings.setValue("forging/enabled", isActive);
-        settings.sync();
 
-        //sendAppInfoToWss(userName, true);
-    });
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
+    emit metagate.setForgingActive(isActive, metagate::MetaGate::ClearNsLookupCallback([this, JS_NAME_RESULT](bool){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>("Ok"));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QString>("Not Ok"));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::getIsForgingActive() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getIsForgingActiveResultJs";
-    QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
-    const bool isForgingActive = settings.value("forging/enabled", true).toBool();
-    LOG << "Get is forging active: " << isForgingActive;
-    makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<bool>(isForgingActive));
+
+    emit metagate.getForgingIsActive(metagate::MetaGate::GetForgingActiveCallback([this, JS_NAME_RESULT](bool result){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<bool>(result));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<bool>(false));
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 
-static QJsonDocument makeNetworkStatusResponse(const std::vector<NetwrokTesting::TestResult> &networkTestsResults, const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError) {
+static QJsonDocument makeNetworkStatusResponse(const std::vector<NetworkTestingTestResult> &networkTestsResults, const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError) {
     QJsonObject result;
     QJsonArray networkTestsJson;
-    for (const NetwrokTesting::TestResult &r: networkTestsResults) {
+    for (const NetworkTestingTestResult &r: networkTestsResults) {
         QJsonObject rJson;
         rJson.insert("node", r.host);
         rJson.insert("isTimeout", r.isTimeout);
@@ -1453,51 +1461,12 @@ static QJsonDocument makeNetworkStatusResponse(const std::vector<NetwrokTesting:
 void JavascriptWrapper::getNetworkStatus() {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "getNetworkStatusResultJs";
-    networkTesting.getTestResults(NetwrokTesting::GetTestResultsCallback([this, JS_NAME_RESULT](const std::vector<NetwrokTesting::TestResult> &networkTestsResults) {
-        nsLookup.getStatus(NsLookup::GetStatusCallback([this, JS_NAME_RESULT, networkTestsResults](const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError) {
-            makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QJsonDocument>(makeNetworkStatusResponse(networkTestsResults, nodeStatuses, dnsError)));
-        }, [](const TypedException &e) {
-            LOG << "Error: " << e.description;
-        }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
-    }, [](const TypedException &e) {
-        LOG << "Error: " << e.description;
-    }, std::bind(&JavascriptWrapper::callbackCall, this, _1)));
-END_SLOT_WRAPPER
-}
 
-void JavascriptWrapper::onWssMessageReceived(QString message) {
-BEGIN_SLOT_WRAPPER
-    const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
-    CHECK(document.isObject(), "Message not is object");
-    const QJsonObject root = document.object();
-    if (!root.contains("app") || !root.value("app").isString()) {
-        return;
-    }
-    const QString appType = root.value("app").toString();
-
-    if (appType == QStringLiteral("MetaOnline")) {
-        const QString JS_NAME_RESULT = "onlineResultJs";
-        Opt<QJsonDocument> result;
-        const TypedException exception = apiVrapper2([&](){
-            CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
-            const QJsonObject data = root.value("data").toObject();
-            LOG << "Meta online response: " << message;
-            result = QJsonDocument(data);
-        });
-
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    } else if (appType == QStringLiteral("InEvent")) {
-        LOG << "EVENT: " << message;
-        const QString event = root.value("event").toString();
-        if (event == QStringLiteral("showExchangePopUp")) {
-            const QString user = root.value("user").toString();
-            const QString type = root.value("type").toString();
-            if (user == userName) {
-                const QString JS_NAME_RESULT = "showExchangePopUpJs";
-                makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QString>(type));
-            }
-        }
-    }
+    emit metagate.getNetworkStatus(metagate::MetaGate::GetNetworkStatusCallback([this, JS_NAME_RESULT](const std::vector<NetworkTestingTestResult> &networkTestsResults, const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError){
+        makeAndRunJsFuncParams(JS_NAME_RESULT, TypedException(), Opt<QJsonDocument>(makeNetworkStatusResponse(networkTestsResults, nodeStatuses, dnsError)));
+    }, [this, JS_NAME_RESULT](const TypedException &e) {
+        makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QJsonDocument>());
+    }, signalFunc));
 END_SLOT_WRAPPER
 }
 

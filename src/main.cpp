@@ -198,8 +198,6 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
-        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, QString::fromStdString(versionString), std::ref(nettesting));
-
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow, auth);
 
         //addModule(proxy::Proxy::moduleName());
@@ -207,9 +205,11 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, wallets);
 
-        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient, wallets);
+        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, auth, webSocketClient, wallets);
 
         const std::shared_future<InitMetaGate::Return> metagate = initManager.addInit<InitMetaGate>(webSocketClient, nsLookup, mainWindow, auth, wallets, QString::fromStdString(versionString), std::ref(nettesting));
+
+        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, metagate, QString::fromStdString(versionString), std::ref(nettesting));
 
         initManager.complete();
 

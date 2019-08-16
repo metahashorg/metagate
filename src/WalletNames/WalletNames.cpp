@@ -12,8 +12,6 @@
 #include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
 
-#include "JavascriptWrapper.h"
-
 #include "auth/Auth.h"
 
 #include "utilites/machine_uid.h"
@@ -39,10 +37,9 @@ const QString WALLET_CURRENCY_MTH = "mth";
 const QString WALLET_CURRENCY_BTC = "btc";
 const QString WALLET_CURRENCY_ETH = "eth";
 
-WalletNames::WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets)
+WalletNames::WalletNames(WalletNamesDbStorage &db, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets)
     : TimerClass(5min, nullptr)
     , db(db)
-    , javascriptWrapper(javascriptWrapper)
     , client(client)
     , wallets(wallets)
 {

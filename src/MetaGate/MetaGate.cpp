@@ -11,26 +11,32 @@
 #include "utilites/machine_uid.h"
 #include "Paths.h"
 #include "utilites/platform.h"
+#include "StopApplication.h"
 
 #include "Wallets/Wallets.h"
 #include "auth/Auth.h"
 
 #include "Network/WebSocketClient.h"
+#include "Network/NetwrokTesting.h"
+#include "NsLookup/NsLookup.h"
 
 #include "mainwindow.h"
 
 #include <QDir>
 #include <QApplication>
 #include <QSettings>
+#include <QJsonDocument>
 
 SET_LOG_NAMESPACE("MG");
 
 namespace metagate {
 
-MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, WebSocketClient &wssClient, const QString &applicationVersion)
+MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion)
     : mainWindow(mainWindow)
     , wallets(wallets)
     , wssClient(wssClient)
+    , nsLookup(nsLookup)
+    , networkTesting(networkTesting)
     , applicationVersion(applicationVersion)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
@@ -45,9 +51,133 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
 
     Q_CONNECT(this, &MetaGate::sendCommandLineMessageToWss, this, &MetaGate::onSendCommandLineMessageToWss);
 
+    Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &MetaGate::onWssMessageReceived);
+
+    Q_CONNECT(this, &MetaGate::updateAndReloadApplication, this, &MetaGate::onUpdateAndReloadApplication);
+    Q_CONNECT(this, &MetaGate::exitApplication, this, &MetaGate::onExitApplication);
+    Q_CONNECT(this, &MetaGate::restartBrowser, this, &MetaGate::onRestartBrowser);
+    Q_CONNECT(this, &MetaGate::getAppInfo, this, &MetaGate::onGetAppInfo);
+    Q_CONNECT(this, &MetaGate::metaOnline, this, &MetaGate::onMetaOnline);
+    Q_CONNECT(this, &MetaGate::clearNsLookup, this, &MetaGate::onClearNsLookup);
+    Q_CONNECT(this, &MetaGate::lineEditReturnPressed, this, &MetaGate::onLineEditReturnPressed);
+    Q_CONNECT(this, &MetaGate::sendMessageToWss, this, &MetaGate::onSendMessageToWss);
+    Q_CONNECT(this, &MetaGate::setForgingActive, this, &MetaGate::onSetForgingActive);
+    Q_CONNECT(this, &MetaGate::getForgingIsActive, this, &MetaGate::onGetForgingIsActive);
+    Q_CONNECT(this, &MetaGate::getNetworkStatus, this, &MetaGate::onGetNetworkStatus);
+
+    Q_REG(UpdateAndReloadApplicationCallback, "UpdateAndReloadApplicationCallback");
+    Q_REG(GetAppInfoCallback, "GetAppInfoCallback");
+    Q_REG(MetaOnlineCallback, "MetaOnlineCallback");
+    Q_REG(ClearNsLookupCallback, "ClearNsLookupCallback");
+    Q_REG(SendMessageToWssCallback, "SendMessageToWssCallback");
+    Q_REG(SetForgingActiveCallback, "SetForgingActiveCallback");
+    Q_REG(GetForgingActiveCallback, "GetForgingActiveCallback");
+    Q_REG(GetNetworkStatusCallback, "GetNetworkStatusCallback");
+
     sendAppInfoToWss1();
 
     emit authManager.reEmit();
+}
+
+void MetaGate::onUpdateAndReloadApplication(const UpdateAndReloadApplicationCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        updateAndRestart();
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onExitApplication() {
+BEGIN_SLOT_WRAPPER
+    QApplication::exit(SIMPLE_EXIT);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onRestartBrowser() {
+BEGIN_SLOT_WRAPPER
+    QApplication::exit(RESTART_BROWSER);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onGetAppInfo(const GetAppInfoCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        const std::string versionString = VERSION_STRING;
+        const std::string gitCommit = GIT_CURRENT_SHA1;
+
+        return std::make_tuple(QString::fromStdString(getMachineUid()), isProductionSetup, QString::fromStdString(versionString), QString::fromStdString(gitCommit));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onLineEditReturnPressed(const QString &text) {
+BEGIN_SLOT_WRAPPER
+    emit lineEditReturnPressedSig(text);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onMetaOnline(const MetaOnlineCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        emit wssClient.sendMessage(metaOnlineMessage());
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onClearNsLookup(const ClearNsLookupCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this]{
+        nsLookup.resetFile();
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onSendMessageToWss(const QString &message, const SendMessageToWssCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this]{
+        emit wssClient.sendMessage(message);
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onSetForgingActive(bool isActive, const SetForgingActiveCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this]{
+        QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+        settings.setValue("forging/enabled", isActive);
+        settings.sync();
+
+        sendAppInfoToWss1();
+        return true;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onGetForgingIsActive(const GetForgingActiveCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+        const bool isForgingActive = settings.value("forging/enabled", true).toBool();
+
+        return isForgingActive;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onGetNetworkStatus(const GetNetworkStatusCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitErrorCallback([&]{
+        networkTesting.getTestResults(NetwrokTesting::GetTestResultsCallback([this, callback](const std::vector<NetworkTestingTestResult> &networkTestsResults) {
+            nsLookup.getStatus(NsLookup::GetStatusCallback([networkTestsResults, callback](const std::vector<NodeTypeStatus> &nodeStatuses, const DnsErrorDetails &dnsError) {
+                callback.emitCallback(networkTestsResults, nodeStatuses, dnsError);
+            }, callback, signalFunc));
+        }, callback, signalFunc));
+    }, callback);
+END_SLOT_WRAPPER
 }
 
 QByteArray MetaGate::getUtmData() {
@@ -127,7 +257,7 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MetaGate::onLogined(bool /*isInit*/, const QString &login, const QString &token_) {
+void MetaGate::onLogined(bool /*isInit*/, const QString &login, const QString &/*token_*/) {
 BEGIN_SLOT_WRAPPER
     sendAppInfoToWss2(login);
     currentUserName = login;
@@ -138,6 +268,26 @@ void MetaGate::onSendCommandLineMessageToWss(const QString &hardwareId, const QS
 BEGIN_SLOT_WRAPPER
     LOG << "Send command line " << line;
     emit wssClient.sendMessage(makeCommandLineMessageForWss(hardwareId, userId, focusCount, line, isEnter, isUserText));
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onWssMessageReceived(const QString &message) {
+BEGIN_SLOT_WRAPPER
+    const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
+    CHECK(document.isObject(), "Message not is object");
+
+    const QString metaOnlineResponse = parseMetaOnlineResponse(document);
+    if (!metaOnlineResponse.isEmpty()) {
+        emit this->metaOnlineResponse(metaOnlineResponse);
+        return;
+    }
+    const std::pair<QString, QString> showExchangeResponse = parseShowExchangePopupResponse(document);
+    if (!showExchangeResponse.first.isEmpty() && !showExchangeResponse.second.isEmpty()) {
+        if (showExchangeResponse.first == currentUserName) {
+            emit showExchangePopup(showExchangeResponse.second);
+        }
+        return;
+    }
 END_SLOT_WRAPPER
 }
 

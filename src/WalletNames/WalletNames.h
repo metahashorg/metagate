@@ -42,7 +42,7 @@ public:
 
 public:
 
-    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets);
+    WalletNames(WalletNamesDbStorage &db, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets);
 
     ~WalletNames() override;
 
@@ -111,8 +111,6 @@ private:
 private:
 
     WalletNamesDbStorage &db;
-
-    JavascriptWrapper &javascriptWrapper;
 
     WebSocketClient &client;
 

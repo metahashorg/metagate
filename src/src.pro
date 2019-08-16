@@ -255,7 +255,8 @@ HEADERS += mainwindow.h \
     MetaGate/MetaGate.h \
     MetaGate/MetaGateJavascript.h \
     Initializer/Inits/InitMetaGate.h \
-    MetaGate/MetaGateMessages.h
+    MetaGate/MetaGateMessages.h \
+    Network/NetworkTestingTestResult.h
 
 FORMS += mainwindow.ui
 

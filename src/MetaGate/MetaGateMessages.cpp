@@ -58,4 +58,41 @@ QString makeMessageApplicationForWss(const QString &hardwareId, const QString &u
     return json.toJson(QJsonDocument::Compact);
 }
 
+QString metaOnlineMessage() {
+    return "{\"app\":\"MetaOnline\"}";
+}
+
+QString parseMetaOnlineResponse(const QJsonDocument &response) {
+    const QJsonObject root = response.object();
+    if (!root.contains("app") || !root.value("app").isString()) {
+        return "";
+    }
+    const QString appType = root.value("app").toString();
+
+    if (appType == QStringLiteral("MetaOnline")) {
+        if (root.contains("data") && root.value("data").isObject()) {
+            const QJsonObject data = root.value("data").toObject();
+            return QJsonDocument(data).toJson(QJsonDocument::JsonFormat::Compact);
+        };
+    }
+    return "";
+}
+
+std::pair<QString, QString> parseShowExchangePopupResponse(const QJsonDocument &response) {
+    const QJsonObject root = response.object();
+    if (!root.contains("app") || !root.value("app").isString()) {
+        return std::make_pair("", "");
+    }
+    const QString appType = root.value("app").toString();
+    if (appType == QStringLiteral("InEvent")) {
+        const QString event = root.value("event").toString();
+        if (event == QStringLiteral("showExchangePopUp")) {
+            const QString user = root.value("user").toString();
+            const QString type = root.value("type").toString();
+            return std::make_pair(user, type);
+        }
+    }
+    return std::make_pair("", "");
+}
+
 } // namespace metagate

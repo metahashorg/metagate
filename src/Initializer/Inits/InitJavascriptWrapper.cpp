@@ -53,12 +53,13 @@ InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
     std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
     std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
     std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+    std::shared_future<std::pair<metagate::MetaGate*, metagate::MetaGateJavascript*>> metagate,
     const QString &versionString,
     NetwrokTesting &nettest
 ) {
     const TypedException exception = apiVrapper2([&, this] {
         MainWindow &mw = *mainWindow.get();
-        jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get().first, *transactions.get().second, *auth.get().first, nettest, *utils.get().first, *wallets.get().first, versionString);
+        jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get().first, *transactions.get().second, *auth.get().first, nettest, *utils.get().first, *wallets.get().first, *metagate.get().first, versionString);
         jsWrapper->mvToThread(mainThread);
         emit mw.setJavascriptWrapper(jsWrapper.get(), MainWindow::SetJavascriptWrapperCallback([this]() {
             sendInitSuccess(TypedException());

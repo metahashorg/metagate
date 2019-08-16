@@ -36,6 +36,10 @@ namespace wallets {
 class Wallets;
 }
 
+namespace metagate {
+class MetaGate;
+}
+
 template<bool isLastArg, typename... Args>
 struct JsFunc;
 
@@ -62,6 +66,7 @@ public:
         NetwrokTesting &networkTesting,
         utils::Utils &utilsManager,
         wallets::Wallets &wallets,
+        metagate::MetaGate &metagate,
         const QString &applicationVersion,
         QObject *parent = nullptr
     );
@@ -81,8 +86,6 @@ signals:
     void setCommandLineTextSig(QString text);
 
     void setMappingsSig(QString name);
-
-    void lineEditReturnPressedSig(QString text);
 
 public slots:
 
@@ -290,8 +293,6 @@ private slots:
 
     void onDirChanged(const QString &dir);
 
-    void onWssMessageReceived(QString message);
-
 private:
 
     void createRsaKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult);
@@ -360,8 +361,6 @@ private:
 
     MainWindow &mainWindow;
 
-    WebSocketClient &wssClient;
-
     NsLookup &nsLookup;
 
     transactions::Transactions &transactionsManager;
@@ -371,6 +370,8 @@ private:
     utils::Utils &utilsManager;
 
     wallets::Wallets &wallets;
+
+    metagate::MetaGate &metagate;
 
     const QString applicationVersion;
 

@@ -58,7 +58,7 @@ InitMetaGate::Return InitMetaGate::initialize(
     NetwrokTesting &nettest
 ) {
     const TypedException exception = apiVrapper2([&, this] {
-        managerMetagate = std::make_unique<metagate::MetaGate>(*mainWindow.get(), *auth.get().first, *wallets.get().first, *wssClient.get(), versionString);
+        managerMetagate = std::make_unique<metagate::MetaGate>(*mainWindow.get(), *auth.get().first, *wallets.get().first, *wssClient.get(), *nsLookup.get().first, nettest, versionString);
         managerMetagate->moveToThread(mainThread);
         javascript = std::make_unique<metagate::MetaGateJavascript>(*managerMetagate);
         javascript->moveToThread(mainThread);

@@ -1,1 +1,62 @@
 metagate регестрируется в javascript по имени metagate
+
+Q_INVOKABLE void updateAndReloadApplication(const QString &callback);
+# Restarts wallet installing updates
+# After the operation is completed, it calls function
+callback("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void exitApplication();
+# Stops the app.
+
+Q_INVOKABLE void restartBrowser();
+# restart browser
+
+Q_INVOKABLE void getAppInfo(const QString callback);
+# Returns version of application and other information. 
+# Result returns to the function:
+callback(machineUid, isProduction, version, gitCommit, errorNum, errorMessage);
+
+Q_INVOKABLE void lineEditReturnPressed(QString text);
+# Emulate text input to lineEdit.
+
+Q_INVOKABLE void metaOnline(const QString callback);
+# Request for statistics on being application online
+# Result returns to the function:
+callback("Ok", errorNum, errorMessage);
+
+Q_INVOKABLE void clearNsLookup(const QString callback);
+# Clean the file with the saved nsLoolup nodes. Reboot is required.
+# Result returns to the function:
+callback("Ok", errorNum, errorMessage);
+
+Q_INVOKABLE void sendMessageToWss(const QString &message, const QString &callback)
+# Послать сообщение в wss
+# Result returns to the function:
+callback("Ok", errorNum, errorMessage);
+# Отсутствие ошибки не говорит об успешной доставке сообщения
+
+Q_INVOKABLE void setForgingActive(bool isActive, const QString &callback)
+# Установить активным или нет форджинг
+# Result returns to the function:
+callback("Ok", errorNum, errorMessage);
+# Отсутствие ошибки не говорит об успешной доставке сообщения
+
+Q_INVOKABLE void getForgingIsActive(const QString &callback)
+# узнать активен или нет форджинг
+# Result returns to the function:
+callback(bool, errorNum, errorMessage);
+
+Q_INVOKABLE void getNetworkStatus(const QString &callback);
+# выдать инфу о сети
+# Result returns to the function:
+callback(result, errorNum, errorMessage);
+# где result json вида
+{\"dnsErrors\":{},\"dnsStats\":[{\"bestTime\":51,\"countAll\":21,\"countWorked\":0,\"node\":\"proxy.net-dev.metahashnetwork.com\"},{\"bestTime\":51,\"countAll\":5,\"countWorked\":0,\"node\":\"proxy.net-main.metahashnetwork.com\"},{\"bestTime\":99,\"countAll\":12,\"countWorked\":0,\"node\":\"tor.net-dev.metahashnetwork.com\"},{\"bestTime\":99,\"countAll\":9,\"countWorked\":0,\"node\":\"tor.net-main.metahashnetwork.com\"},{\"bestTime\":51,\"countAll\":1,\"countWorked\":0,\"node\":\"torv8.net-dev.metahashnetwork.com\"}],\"networkTests\":[{\"isTimeout\":false,\"node\":\"www.google.com:80\",\"timeMs\":99},{\"isTimeout\":false,\"node\":\"1.1.1.1:80\",\"timeMs\":48},{\"isTimeout\":false,\"node\":\"echo.metahash.io:7654\",\"timeMs\":110}]}
+
+
+
+
+onlineResultJs(jsonResult, errorNum, errorMessage);
+Возвращается при приходе ответа на metaOnline
+
+showExchangePopUpJs(type, errorNum, errorMessage);

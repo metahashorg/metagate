@@ -238,7 +238,6 @@ BEGIN_SLOT_WRAPPER
         registerWebChannel(QString("mainWindow"), jsWrapper1);
         Q_CONNECT(jsWrapper1, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText);
         Q_CONNECT(jsWrapper1, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings);
-        Q_CONNECT(jsWrapper1, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
         doConfigureMenu();
     });
     callback.emitFunc(exception);
@@ -333,6 +332,7 @@ BEGIN_SLOT_WRAPPER
         CHECK(manager != nullptr, "Incorrect metagate");
         metagate = manager;
         Q_CONNECT(javascript, &metagate::MetaGateJavascript::jsRunSig, this, &MainWindow::onJsRun);
+        Q_CONNECT(manager, &metagate::MetaGate::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
         registerWebChannel(QString("metagate"), javascript);
     });
     callback.emitFunc(exception);

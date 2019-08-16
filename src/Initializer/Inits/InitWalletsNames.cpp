@@ -50,12 +50,12 @@ void InitWalletsNames::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitWalletsNames::Return InitWalletsNames::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
+InitWalletsNames::Return InitWalletsNames::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<wallet_names::WalletNamesDbStorage>(getDbPath());
         database->init();
 
-        manager = std::make_unique<wallet_names::WalletNames>(*database, *(jsWrap.get()), *auth.get().first, *wssClient.get(), *wallets.get().first);
+        manager = std::make_unique<wallet_names::WalletNames>(*database, *auth.get().first, *wssClient.get(), *wallets.get().first);
         manager->start();
 
         javascript = std::make_unique<wallet_names::WalletNamesJavascript>(*manager);
