@@ -13,6 +13,7 @@
 #include "utilites/platform.h"
 
 #include "Wallets/Wallets.h"
+#include "auth/Auth.h"
 
 #include "Network/WebSocketClient.h"
 
@@ -26,7 +27,7 @@ SET_LOG_NAMESPACE("MG");
 
 namespace metagate {
 
-MetaGate::MetaGate(MainWindow &mainWindow, wallets::Wallets &wallets, WebSocketClient &wssClient, const QString &applicationVersion)
+MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, WebSocketClient &wssClient, const QString &applicationVersion)
     : mainWindow(mainWindow)
     , wallets(wallets)
     , wssClient(wssClient)
@@ -39,6 +40,14 @@ MetaGate::MetaGate(MainWindow &mainWindow, wallets::Wallets &wallets, WebSocketC
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletCreated, this, &MetaGate::onMhcWalletChanged);
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletRemoved, this, &MetaGate::onMhcWalletChanged);
     Q_CONNECT(&wallets, &wallets::Wallets::watchWalletsAdded, this, &MetaGate::onMhcWatchWalletsChanged);
+
+    Q_CONNECT(&authManager, &auth::Auth::logined2, this, &MetaGate::onLogined);
+
+    Q_CONNECT(this, &MetaGate::sendCommandLineMessageToWss, this, &MetaGate::onSendCommandLineMessageToWss);
+
+    sendAppInfoToWss1();
+
+    emit authManager.reEmit();
 }
 
 QByteArray MetaGate::getUtmData() {
@@ -115,6 +124,20 @@ BEGIN_SLOT_WRAPPER
         return;
     }
     sendAppInfoToWss1();
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onLogined(bool /*isInit*/, const QString &login, const QString &token_) {
+BEGIN_SLOT_WRAPPER
+    sendAppInfoToWss2(login);
+    currentUserName = login;
+END_SLOT_WRAPPER
+}
+
+void MetaGate::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
+BEGIN_SLOT_WRAPPER
+    LOG << "Send command line " << line;
+    emit wssClient.sendMessage(makeCommandLineMessageForWss(hardwareId, userId, focusCount, line, isEnter, isUserText));
 END_SLOT_WRAPPER
 }
 

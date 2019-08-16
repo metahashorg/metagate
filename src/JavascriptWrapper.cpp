@@ -130,11 +130,7 @@ JavascriptWrapper::JavascriptWrapper(
 
     Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &JavascriptWrapper::onWssMessageReceived);
 
-    Q_CONNECT(this, &JavascriptWrapper::sendCommandLineMessageToWssSig, this, &JavascriptWrapper::onSendCommandLineMessageToWss);
-
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &JavascriptWrapper::onLogined);
-
-    Q_CONNECT(&wallets, &wallets::Wallets::watchWalletsAdded, this, &JavascriptWrapper::onWatchWalletsAdded);
 
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(JavascriptWrapper::ReturnCallback, "JavascriptWrapper::ReturnCallback");
@@ -143,12 +139,6 @@ JavascriptWrapper::JavascriptWrapper(
     signalFunc = std::bind(&JavascriptWrapper::callbackCall, this, _1);
 
     emit authManager.reEmit();
-}
-
-void JavascriptWrapper::onWatchWalletsAdded(bool /*isMhc*/, const std::vector<std::pair<QString, QString>> &/*created*/) {
-BEGIN_SLOT_WRAPPER
-    sendAppInfoToWss(userName, true);
-END_SLOT_WRAPPER
 }
 
 void JavascriptWrapper::mvToThread(QThread *thread) {
@@ -190,45 +180,6 @@ void JavascriptWrapper::makeAndRunJsFuncParams(const QString &function, const Ty
     runJs(res);
 }
 
-void JavascriptWrapper::sendAppInfoToWss(QString userName, bool force) {
-    const QString newUserName = userName;
-    if (force || newUserName != sendedUserName) {
-        std::vector<QString> keysTmh;
-        CHECK(!walletPath.isEmpty(), "Wallet paths is empty");
-        const std::vector<std::pair<QString, QString>> keys1 = Wallet::getAllWalletsInFolder(walletPath, false, true);
-        std::transform(keys1.begin(), keys1.end(), std::back_inserter(keysTmh), [](const auto &pair) {return pair.first;});
-        std::vector<QString> keysMth;
-        const std::vector<std::pair<QString, QString>> keys2 = Wallet::getAllWalletsInFolder(walletPath, true, true);
-        std::transform(keys2.begin(), keys2.end(), std::back_inserter(keysMth), [](const auto &pair) {return pair.first;});
-
-        QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
-        const bool isForgingActive = settings.value("forging/enabled", true).toBool();
-        const QString message = makeMessageApplicationForWss(hardwareId, utmData, newUserName, applicationVersion, mainWindow.getCurrentHtmls().lastVersion, isForgingActive, keysTmh, keysMth);
-        LOG << "Send MetaGate info to wss. Count keys " << keysTmh.size() << " " << keysMth.size() << ". " << userName;
-        emit wssClient.sendMessage(message);
-        emit wssClient.setHelloString(message, "jsWrapper");
-        sendedUserName = newUserName;
-    }
-}
-
-QByteArray JavascriptWrapper::getUtmData() {
-    QDir dir(qApp->applicationDirPath());
-
-    QFile file(dir.filePath(QStringLiteral("installer.ins")));
-    if (!file.open(QIODevice::ReadOnly))
-        return QByteArray();
-    QByteArray data = file.read(1024);
-    file.close();
-    return data;
-}
-
-void JavascriptWrapper::onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText) {
-BEGIN_SLOT_WRAPPER
-    LOG << "Send command line " << line;
-    emit wssClient.sendMessage(makeCommandLineMessageForWss(hardwareId, userId, focusCount, line, isEnter, isUserText));
-END_SLOT_WRAPPER
-}
-
 ////////////////
 /// METAHASH ///
 ////////////////
@@ -236,7 +187,6 @@ END_SLOT_WRAPPER
 void JavascriptWrapper::createWalletMTHS(QString requestId, QString password, bool isMhc, QString jsNameResult) {
     LOG << "Create wallet mths " << requestId << " " << walletPath;
     wallets.createWallet(isMhc, password, wallets::Wallets::CreateWalletCallback([this, jsNameResult, requestId](const QString &fullPath, const std::string &pubkey, const std::string &address, const std::string &exampleMessage, const std::string &sign) {
-        sendAppInfoToWss(userName, true);
         LOG << "Create wallet mths ok " << requestId << " " << walletPath << " " << address;
         makeAndRunJsFuncParams(jsNameResult, fullPath, TypedException(), Opt<QString>(requestId), Opt<std::string>(pubkey), Opt<std::string>(address), Opt<std::string>(exampleMessage), Opt<std::string>(sign));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -248,7 +198,6 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 {
     LOG << "Create wallet mths watch " << requestId << " " << address;
     wallets.createWatchWallet(isMhc, address, wallets::Wallets::CreateWatchWalletCallback([this, jsNameResult, requestId, address](const QString &fullPath) {
-        sendAppInfoToWss(userName, true);
         LOG << "Create wallet mths watch ok " << requestId << " " << walletPath << " " << address;
         makeAndRunJsFuncParams(jsNameResult, fullPath, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -259,7 +208,6 @@ void JavascriptWrapper::createWalletMTHSWatch(QString requestId, QString address
 void JavascriptWrapper::removeWalletMTHSWatch(QString requestId, QString address, QString jsNameResult, bool isMhc) {
     LOG << "Remove wallet mths watch " << requestId << " " << address;
     wallets.removeWatchWallet(isMhc, address, wallets::Wallets::RemoveWatchWalletCallback([this, jsNameResult, requestId, address]() {
-        sendAppInfoToWss(userName, true);
         LOG << "Remove wallet mths watch ok " << requestId << " " << address;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(address));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -1223,8 +1171,6 @@ void JavascriptWrapper::setPathsImpl(QString newPatch, QString newUserName) {
     setPathToWallet(Wallet::chooseSubfolder(false), "tmh");
 
     LOG << "Wallets path " << walletPath;
-
-    sendAppInfoToWss(newUserName, false);
 }
 
 QString JavascriptWrapper::openFolderDialog(QString beginPath, QString caption) {
@@ -1457,7 +1403,7 @@ BEGIN_SLOT_WRAPPER
         settings.setValue("forging/enabled", isActive);
         settings.sync();
 
-        sendAppInfoToWss(userName, true);
+        //sendAppInfoToWss(userName, true);
     });
     makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>("Ok"));
 END_SLOT_WRAPPER

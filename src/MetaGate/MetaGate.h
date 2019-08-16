@@ -9,6 +9,10 @@ class Wallets;
 struct WalletInfo;
 }
 
+namespace auth {
+class Auth;
+}
+
 class WebSocketClient;
 class MainWindow;
 
@@ -18,7 +22,7 @@ class MetaGate: public ManagerWrapper {
     Q_OBJECT
 public:
 
-    MetaGate(MainWindow &mainWindow, wallets::Wallets &wallets, WebSocketClient &wssClient, const QString &applicationVersion);
+    MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, WebSocketClient &wssClient, const QString &applicationVersion);
 
 private:
 
@@ -35,6 +39,16 @@ private slots:
     void onMhcWalletChanged(bool isMhc, const QString &address, const QString &userName);
 
     void onMhcWatchWalletsChanged(bool isMhc, const std::vector<std::pair<QString, QString>> &created, const QString &username);
+
+    void onLogined(bool isInit, const QString &login, const QString &token);
+
+signals:
+
+    void sendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
+
+private slots:
+
+    void onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
 
 private:
 

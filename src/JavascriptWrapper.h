@@ -84,8 +84,6 @@ signals:
 
     void lineEditReturnPressedSig(QString text);
 
-    void sendCommandLineMessageToWssSig(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
-
 public slots:
 
     void onLogined(bool isInit, const QString &login, const QString &token);
@@ -294,10 +292,6 @@ private slots:
 
     void onWssMessageReceived(QString message);
 
-    void onSendCommandLineMessageToWss(const QString &hardwareId, const QString &userId, size_t focusCount, const QString &line, bool isEnter, bool isUserText);
-
-    void onWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created);
-
 private:
 
     void createRsaKeyMTHS(QString requestId, QString address, QString password, bool isMhc, QString jsNameResult);
@@ -355,10 +349,6 @@ private:
     void runJs(const QString &script);
 
     void openFolderInStandartExplored(const QString &folder);
-
-    void sendAppInfoToWss(QString userName, bool force);
-
-    QByteArray getUtmData();
 
 public:
 

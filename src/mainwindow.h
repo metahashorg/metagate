@@ -51,6 +51,7 @@ class WalletsJavascript;
 
 namespace metagate {
 class MetaGateJavascript;
+class MetaGate;
 }
 
 class EvFilter: public QObject {
@@ -133,7 +134,7 @@ signals:
 
     void setWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
 
-    void setMetaGateJavascript(metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
+    void setMetaGateJavascript(metagate::MetaGate *manager, metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
 
     void initFinished();
 
@@ -166,7 +167,7 @@ private slots:
 
     void onSetWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
 
-    void onSetMetaGateJavascript(metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
+    void onSetMetaGateJavascript(metagate::MetaGate *manager, metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
 
     void onInitFinished();
 
@@ -250,7 +251,7 @@ private:
 
     std::unique_ptr<QWebChannel> channel;
 
-    JavascriptWrapper *jsWrapper = nullptr;
+    metagate::MetaGate *metagate = nullptr;
 
     LastHtmlVersion last_htmls;
     mutable std::mutex mutLastHtmls;

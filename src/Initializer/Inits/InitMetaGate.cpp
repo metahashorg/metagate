@@ -40,7 +40,7 @@ END_SLOT_WRAPPER
 }
 
 void InitMetaGate::completeImpl() {
-    CHECK(manager != nullptr, "manager not initialized");
+    CHECK(managerMetagate != nullptr, "manager not initialized");
     CHECK(javascript != nullptr, "javascript not initialized");
 }
 
@@ -48,14 +48,22 @@ void InitMetaGate::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitMetaGate::Return InitMetaGate::initialize(std::shared_future<MainWindow*> mainWindow) {
+InitMetaGate::Return InitMetaGate::initialize(
+    std::shared_future<WebSocketClient*> wssClient,
+    std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
+    std::shared_future<MainWindow*> mainWindow,
+    std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
+    std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+    const QString &versionString,
+    NetwrokTesting &nettest
+) {
     const TypedException exception = apiVrapper2([&, this] {
-        manager = std::make_unique<metagate::MetaGate>();
-        manager->moveToThread(mainThread);
-        javascript = std::make_unique<metagate::MetaGateJavascript>(*manager);
+        managerMetagate = std::make_unique<metagate::MetaGate>(*mainWindow.get(), *auth.get().first, *wallets.get().first, *wssClient.get(), versionString);
+        managerMetagate->moveToThread(mainThread);
+        javascript = std::make_unique<metagate::MetaGateJavascript>(*managerMetagate);
         javascript->moveToThread(mainThread);
         MainWindow &mw = *mainWindow.get();
-        emit mw.setMetaGateJavascript(javascript.get(), MainWindow::SetMetaGateJavascriptCallback([this, mainWindow]() {
+        emit mw.setMetaGateJavascript(managerMetagate.get(), javascript.get(), MainWindow::SetMetaGateJavascriptCallback([this, mainWindow]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitMetaGate::sendInitSuccess, this, _1), std::bind(&InitMetaGate::callbackCall, this, _1)));
     });
@@ -64,7 +72,7 @@ InitMetaGate::Return InitMetaGate::initialize(std::shared_future<MainWindow*> ma
         sendInitSuccess(exception);
         throw exception;
     }
-    return std::make_pair(manager.get(), javascript.get());
+    return std::make_pair(managerMetagate.get(), javascript.get());
 }
 
 }

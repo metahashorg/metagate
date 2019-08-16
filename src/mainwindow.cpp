@@ -49,6 +49,7 @@
 #include "Utils/UtilsJavascript.h"
 #include "Wallets/WalletsJavascript.h"
 #include "MetaGate/MetaGateJavascript.h"
+#include "MetaGate/MetaGate.h"
 
 #include "utilites/machine_uid.h"
 
@@ -232,13 +233,12 @@ void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const Set
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(jsWrapper1 != nullptr, "Incorrect jsWrapper1");
-        jsWrapper = jsWrapper1;
-        jsWrapper->setWidget(this);
-        Q_CONNECT(jsWrapper, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun);
-        registerWebChannel(QString("mainWindow"), jsWrapper);
-        Q_CONNECT(jsWrapper, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText);
-        Q_CONNECT(jsWrapper, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings);
-        Q_CONNECT(jsWrapper, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
+        jsWrapper1->setWidget(this);
+        Q_CONNECT(jsWrapper1, &JavascriptWrapper::jsRunSig, this, &MainWindow::onJsRun);
+        registerWebChannel(QString("mainWindow"), jsWrapper1);
+        Q_CONNECT(jsWrapper1, &JavascriptWrapper::setCommandLineTextSig, this, &MainWindow::onSetCommandLineText);
+        Q_CONNECT(jsWrapper1, &JavascriptWrapper::setMappingsSig, this, &MainWindow::onSetMappings);
+        Q_CONNECT(jsWrapper1, &JavascriptWrapper::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
         doConfigureMenu();
     });
     callback.emitFunc(exception);
@@ -326,10 +326,12 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onSetMetaGateJavascript(metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback) {
+void MainWindow::onSetMetaGateJavascript(metagate::MetaGate *manager, metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback) {
 BEGIN_SLOT_WRAPPER
     const TypedException exception = apiVrapper2([&, this] {
         CHECK(javascript != nullptr, "Incorrect metagateJavascript");
+        CHECK(manager != nullptr, "Incorrect metagate");
+        metagate = manager;
         Q_CONNECT(javascript, &metagate::MetaGateJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("metagate"), javascript);
     });
@@ -378,21 +380,21 @@ END_SLOT_WRAPPER
 }
 
 void MainWindow::doConfigureMenu() {
-    CHECK(jsWrapper != nullptr, "jsWrapper not set");
+    CHECK(metagate != nullptr, "jsWrapper not set");
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this]{
         countFocusLineEditChanged++;
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
         lineEditUserChanged = true;
-        emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
+        emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::textChanged, [this](const QString &text){
         if (!lineEditUserChanged) {
-            emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
+            emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, false);
         }
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
-        emit jsWrapper->sendCommandLineMessageToWssSig(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
+        emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::editingFinished, [this](){

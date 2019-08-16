@@ -13,6 +13,22 @@ struct TypedException;
 
 class MainWindow;
 
+class JavascriptWrapper;
+class NsLookup;
+class InfrastructureNsLookup;
+class WebSocketClient;
+class NetwrokTesting;
+
+namespace auth {
+class Auth;
+class AuthJavascript;
+}
+
+namespace wallets {
+class Wallets;
+class WalletsJavascript;
+}
+
 namespace metagate {
 class MetaGate;
 class MetaGateJavascript;
@@ -38,7 +54,15 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow);
+    Return initialize(
+        std::shared_future<WebSocketClient*> wssClient,
+        std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
+        std::shared_future<MainWindow*> mainWindow,
+        std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
+        std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+        const QString &versionString,
+        NetwrokTesting &nettest
+    );
 
     static int countEvents() {
         return 1;
@@ -64,7 +88,7 @@ private slots:
 
 private:
 
-    std::unique_ptr<metagate::MetaGate> manager;
+    std::unique_ptr<metagate::MetaGate> managerMetagate;
     std::unique_ptr<metagate::MetaGateJavascript> javascript;
 
 };
