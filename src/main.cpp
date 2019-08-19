@@ -12,21 +12,22 @@
 #include <QGuiApplication>
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDateTime>
 
 #include "RunGuard.h"
 
 #include "check.h"
 #include "Log.h"
-#include "platform.h"
+#include "utilites/platform.h"
 #include "tests.h"
 
-#include "machine_uid.h"
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "utilites/machine_uid.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 #include "StopApplication.h"
 #include "TypedException.h"
 #include "Paths.h"
-#include "NetwrokTesting.h"
+#include "Network/NetwrokTesting.h"
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"
@@ -40,11 +41,11 @@
 #include "Initializer/Inits/InitProxy.h"
 #include "Initializer/Inits/InitMessenger.h"
 #include "Initializer/Inits/InitWalletsNames.h"
+#include "Initializer/Inits/InitUtils.h"
+#include "Initializer/Inits/InitWallets.h"
 
 #include "Module.h"
 #include "proxy/Proxy.h"
-
-#include "WalletRsa.h"
 
 #include "MhPayEventHandler.h"
 #include <QDebug>
@@ -64,6 +65,12 @@ static void crash_handler(int sig) {
     exit(1);
 }
 #endif
+
+static void printCurrentYear() {
+    const QDateTime nowYear = QDateTime::currentDateTime();
+    const std::string year = nowYear.toString("yyyy").toStdString();
+    LOG << "Current year: " << year;
+}
 
 int main(int argc, char *argv[]) {
 #ifndef _WIN32
@@ -164,6 +171,7 @@ int main(int argc, char *argv[]) {
         LOG << "Platform " << osName;
         LOG << "Machine uid " << getMachineUid();
         LOG << "Is virtual machine " << isVirtualMachine();
+        printCurrentYear();
 
         NetwrokTesting nettesting;
         nettesting.start();
@@ -177,24 +185,28 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
+        const std::shared_future<InitUtils::Return> utils = initManager.addInit<InitUtils>(mainWindow);
+
         const std::shared_future<InitAuth::Return> auth = initManager.addInit<InitAuth>(mainWindow);
+
+        const std::shared_future<InitWallets::Return> wallets = initManager.addInit<InitWallets>(mainWindow, auth, utils);
 
         const std::shared_future<InitNsLookup::Return> nsLookup = initManager.addInit<InitNsLookup>();
 
-        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup);
+        const std::shared_future<InitTransactions::Return> transactions = initManager.addInit<InitTransactions>(mainWindow, nsLookup, auth, wallets);
 
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
-        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, QString::fromStdString(versionString));
+        const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, QString::fromStdString(versionString), std::ref(nettesting));
 
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow, auth);
 
         //addModule(proxy::Proxy::moduleName());
         //const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(mainWindow);
 
-        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, jsWrapper);
+        const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, wallets);
 
-        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient);
+        const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, jsWrapper, auth, webSocketClient, wallets);
 
         initManager.complete();
 

@@ -12,7 +12,7 @@ INCLUDEPATH = ../../src
 
 SOURCES += \
     tst_bignumber.cpp \
-    ../../src/BigNumber.cpp
+    ../../src/utilites/BigNumber.cpp
 
 HEADERS += \
     tst_bignumber.h \

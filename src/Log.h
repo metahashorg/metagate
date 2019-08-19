@@ -10,24 +10,39 @@ class PeriodicLog {
     friend struct Log_;
 public:
 
-    static PeriodicLog make(const std::string &str);
+    static PeriodicLog make(const std::string &name);
+
+    static PeriodicLog makeAuto(const std::string &name);
 
 private:
 
     PeriodicLog();
 
-    PeriodicLog(const std::string &str);
+    PeriodicLog(const std::string &name, bool isAutoPeriodic);
 
     bool notSet() const;
 
 private:
 
-    std::string str;
+    std::string name;
+
+    bool isAutoPeriodic = false;
+
 };
 
 struct Log_ {
 
+    struct Alias {
+        std::string name;
+
+        Alias(const std::string &name)
+            : name(name)
+        {}
+    };
+
     Log_(const std::string &fileName);
+
+    Log_(const Alias &alias);
 
     template<typename T>
     Log_& operator <<(T t) {
@@ -35,13 +50,17 @@ struct Log_ {
         return *this;
     }
 
-    void finalize(std::ostream&(*pManip)(std::ostream&)) noexcept;
+    void finalize() noexcept;
 
     ~Log_() noexcept {
-        finalize(std::endl);
+        finalize();
     }
 
 private:
+
+    void printHead();
+
+    void printAlias(const std::string &alias);
 
     template<typename T>
     void print(const T &t) {
@@ -54,7 +73,9 @@ private:
 
     void print(const PeriodicLog &p);
 
-    bool processPeriodic(const std::string &s, std::string &addedStr);
+    void print(const bool &b);
+
+    bool processPeriodic(const std::string &s, std::string &periodicStrFirstLine, std::string &periodicStrOriginalLinePrefix);
 
     std::stringstream ssCout;
     std::stringstream ssLog;
@@ -71,9 +92,13 @@ struct AddFileNameAlias_ {
 
 };
 
-#define LOG Log_(std::string(__FILE__))
+#define LOG_FILE (std::string(__FILE__))
+
+#define LOG Log_(LOG_FILE)
 
 #define LOG2(file) Log_(file)
+
+#define LOG3(alias) Log_(Log_::Alias(alias))
 
 #define SET_LOG_NAMESPACE(name) \
     static AddFileNameAlias_ log_alias_(std::string(__FILE__), name);

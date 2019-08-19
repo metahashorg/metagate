@@ -12,8 +12,8 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "check.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -26,7 +26,7 @@ QString InitWalletsNames::stateName() {
 InitWalletsNames::InitWalletsNames(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitWalletsNames::callbackCall, this, &InitWalletsNames::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitWalletsNames::callbackCall, this, &InitWalletsNames::onCallbackCall);
     Q_REG(InitWalletsNames::Callback, "InitWalletsNames::Callback");
 
     registerStateType("init", "wallet names initialized", true, true);
@@ -50,12 +50,12 @@ void InitWalletsNames::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitWalletsNames::Return InitWalletsNames::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient) {
+InitWalletsNames::Return InitWalletsNames::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<wallet_names::WalletNamesDbStorage>(getDbPath());
         database->init();
 
-        manager = std::make_unique<wallet_names::WalletNames>(*database, *(jsWrap.get()), *auth.get().first, *wssClient.get());
+        manager = std::make_unique<wallet_names::WalletNames>(*database, *(jsWrap.get()), *auth.get().first, *wssClient.get(), *wallets.get().first);
         manager->start();
 
         javascript = std::make_unique<wallet_names::WalletNamesJavascript>(*manager);

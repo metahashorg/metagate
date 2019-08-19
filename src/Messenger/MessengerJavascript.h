@@ -7,7 +7,7 @@
 
 #include "Message.h"
 
-struct TypedException;
+#include "qt_utilites/WrapperJavascript.h"
 
 namespace auth {
 class Auth;
@@ -17,7 +17,9 @@ namespace transactions {
 class Transactions;
 }
 
-class JavascriptWrapper;
+namespace wallets {
+class Wallets;
+}
 
 namespace messenger {
 
@@ -25,31 +27,18 @@ class CryptographicManager;
 
 class Messenger;
 
-class MessengerJavascript : public QObject {
+class MessengerJavascript: public WrapperJavascript {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
 
 public:
-    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, JavascriptWrapper &jsWrapper, QObject *parent = nullptr);
+    explicit MessengerJavascript(auth::Auth &authManager, CryptographicManager &cryptoManager, transactions::Transactions &txManager, wallets::Wallets &wallets);
 
     void setMessenger(Messenger &m);
-
-signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const MessengerJavascript::Callback &callback);
 
 public slots:
     void onLogined(bool isInit, const QString login);
 
-    void onMthWalletCreated(QString name);
-
-public slots:
-
-    void onCallbackCall(const MessengerJavascript::Callback &callback);
+    void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
 
 signals:
 
@@ -152,13 +141,6 @@ private:
 
 private:
 
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
-
-private:
-
     auth::Auth &authManager;
 
     Messenger *messenger = nullptr;
@@ -167,13 +149,13 @@ private:
 
     transactions::Transactions &txManager;
 
-    QString walletPath;
+    wallets::Wallets &wallets;
 
-    QString mthWalletType;
+    QString currentUserName;
 
-    QString defaultUserName;
+    bool isUserNameSetted = false;
 
-    std::function<void(const std::function<void()> &callback)> signalFunc;
+    bool isMhc;
 
 };
 

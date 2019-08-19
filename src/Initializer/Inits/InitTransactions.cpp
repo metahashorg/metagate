@@ -11,8 +11,8 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "check.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -25,7 +25,7 @@ QString InitTransactions::stateName() {
 InitTransactions::InitTransactions(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitTransactions::callbackCall, this, &InitTransactions::onCallbackCall);
     Q_REG(InitTransactions::Callback, "InitTransactions::Callback");
 
     registerStateType("init", "transactions initialized", true, true);
@@ -49,13 +49,13 @@ void InitTransactions::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup) {
+InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<transactions::TransactionsDBStorage>(getDbPath());
         database->init();
         txJavascript = std::make_unique<transactions::TransactionsJavascript>();
         txJavascript->moveToThread(mainThread);
-        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get(), *txJavascript, *database);
+        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get().first, *nsLookup.get().second, *txJavascript, *database, *auth.get().first, *(mainWindow.get()), *wallets.get().first);
         txManager->start();
         MainWindow &mw = *mainWindow.get();
         emit mw.setTransactionsJavascript(txJavascript.get(), MainWindow::SetTransactionsJavascriptCallback([this, mainWindow]() {

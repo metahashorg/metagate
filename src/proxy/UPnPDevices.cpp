@@ -5,7 +5,8 @@
 #include <QNetworkDatagram>
 #include "check.h"
 #include "Log.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("PRX");
 
@@ -46,10 +47,8 @@ static bool UrlCompare(const QUrl &a, const QUrl & b)
 UPnPDevices::UPnPDevices(QObject *parent)
     : QObject(parent)
 {
-    CHECK(connect(&m_mcsocket, &QUdpSocket::readyRead,
-                     this, &UPnPDevices::onReadyRead), "onReadyRead is not connected");
-    CHECK(connect(&m_mcsocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),
-                     this, &UPnPDevices::onError), "onError is not connected");
+    Q_CONNECT(&m_mcsocket, &QUdpSocket::readyRead, this, &UPnPDevices::onReadyRead);
+    Q_CONNECT(&m_mcsocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &UPnPDevices::onError);
 
     CHECK(m_mcsocket.bind(QHostAddress::AnyIPv4, mcSearchPort, QUdpSocket::ShareAddress), "bind error");
     CHECK(m_mcsocket.joinMulticastGroup(QHostAddress(mcSearchHost)), "joinMulticastGroup error");
@@ -87,8 +86,8 @@ BEGIN_SLOT_WRAPPER
         QNetworkDatagram dgram = m_mcsocket.receiveDatagram();
         UPnPRouter *r = parseResponse(dgram.data());
         if (r) {
-            CHECK(connect(r, &UPnPRouter::xmlFileDownloaded,
-                             this, [r, this](bool success) {
+            Q_CONNECT4(r, &UPnPRouter::xmlFileDownloaded,
+                             this, ([r, this](bool success) {
                 updatingRouters.removeAll(r);
                 if (success) {
                           QUrl location = r->location();
@@ -101,7 +100,7 @@ BEGIN_SLOT_WRAPPER
                 } else {
                     r->deleteLater();
                 }
-            }), "");
+            }));
             r->downloadXMLFile();
             updatingRouters.append(r);
         }

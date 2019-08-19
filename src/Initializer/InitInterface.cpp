@@ -1,7 +1,8 @@
 #include "InitInterface.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 #include <functional>
 using namespace std::placeholders;
@@ -22,13 +23,13 @@ InitInterface::StateType::StateType(bool isCritical, const QString &message, boo
 {}
 
 InitInterface::InitInterface(const QString &type, QThread *mainThread, Initializer &manager, bool isTimerEnabled)
-    : type(type)
-    , mainThread(mainThread)
+    : mainThread(mainThread)
     , manager(manager)
+    , type(type)
     , isTimerEnabled(isTimerEnabled)
 {
     if (isTimerEnabled) {
-        CHECK(connect(&timer, &QTimer::timeout, this, &InitInterface::onTimerEvent), "not connect timeout");
+        Q_CONNECT(&timer, &QTimer::timeout, this, &InitInterface::onTimerEvent);
         timer.setInterval(milliseconds(1s).count());
         timer.moveToThread(mainThread);
         timer.start();

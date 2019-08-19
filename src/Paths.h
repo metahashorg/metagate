@@ -15,6 +15,8 @@ QString getPagesPath();
 
 QString getSettingsPath();
 
+QString getRuntimeSettingsPath();
+
 QString getStoragePath();
 
 QString getMacFilePath();

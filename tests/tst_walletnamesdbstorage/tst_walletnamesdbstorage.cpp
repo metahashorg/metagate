@@ -63,6 +63,7 @@ static void checkInfo(const WalletInfo &info, const WalletInfo &second) {
         QCOMPARE(i1.user, i2.user);
         QCOMPARE(i1.device, i2.device);
         QCOMPARE(i1.currency, i2.currency);
+        QCOMPARE(i1.type, i2.type);
     }
 }
 
@@ -80,30 +81,30 @@ void tst_WalletNamesDBStorage::testUpdateInfo() {
     WalletInfo wallet;
     wallet.address = "123";
     wallet.name = "name1";
-    wallet.infos.emplace_back("u1", "d1", "c1");
-    wallet.infos.emplace_back("u2", "d2", "c2");
-    wallet.infos.emplace_back("u3", "d3", "c3");
+    wallet.infos.emplace_back("u1", "d1", "c1", WalletInfo::Info::Type::Key);
+    wallet.infos.emplace_back("u2", "d2", "c2", WalletInfo::Info::Type::Watch);
+    wallet.infos.emplace_back("u3", "d3", "c3", WalletInfo::Info::Type::Key);
     db.updateWalletInfo(wallet.address, wallet.infos);
 
     WalletInfo wallet01;
     wallet01.address = "123";
     wallet01.name = "name1";
-    wallet01.infos.emplace_back("u1", "d1", "c1");
+    wallet01.infos.emplace_back("u1", "d1", "c1", WalletInfo::Info::Type::Key);
     db.updateWalletInfo(wallet01.address, wallet01.infos);
 
     db.giveNameWallet("345", "name2");
     WalletInfo wallet2;
     wallet2.address = "345";
     wallet2.name = "name2";
-    wallet2.infos.emplace_back("u4", "d4", "c4");
-    wallet2.infos.emplace_back("u5", "d5", "c5");
+    wallet2.infos.emplace_back("u4", "d4", "c4", WalletInfo::Info::Type::Key);
+    wallet2.infos.emplace_back("u5", "d5", "c5", WalletInfo::Info::Type::Key);
     db.updateWalletInfo(wallet2.address, wallet2.infos);
 
     WalletInfo wallet3;
     wallet3.address = "678";
     wallet3.name = "";
-    wallet3.infos.emplace_back("u7", "d7", "c7");
-    wallet3.infos.emplace_back("u8", "d8", "c8");
+    wallet3.infos.emplace_back("u7", "d7", "c7", WalletInfo::Info::Type::Watch);
+    wallet3.infos.emplace_back("u8", "d8", "c8", WalletInfo::Info::Type::Key);
     db.updateWalletInfo(wallet3.address, wallet3.infos);
 
     WalletInfo wallet4;
@@ -139,9 +140,9 @@ void tst_WalletNamesDBStorage::testRenameWallet() {
     WalletInfo wallet;
     wallet.address = "123";
     wallet.name = "name1";
-    wallet.infos.emplace_back("u1", "d1", "c1");
-    wallet.infos.emplace_back("u2", "d2", "c2");
-    wallet.infos.emplace_back("u3", "d3", "c3");
+    wallet.infos.emplace_back("u1", "d1", "c1", WalletInfo::Info::Type::Key);
+    wallet.infos.emplace_back("u2", "d2", "c2", WalletInfo::Info::Type::Key);
+    wallet.infos.emplace_back("u3", "d3", "c3", WalletInfo::Info::Type::Key);
     db.updateWalletInfo(wallet.address, wallet.infos);
 
     QCOMPARE(db.getNameWallet("123"), "name1");
@@ -170,23 +171,23 @@ void tst_WalletNamesDBStorage::testSelectForCurrency() {
     WalletInfo wallet;
     wallet.address = "123";
     wallet.name = "name1";
-    wallet.infos.emplace_back("u1", "d1", "c1");
-    wallet.infos.emplace_back("u2", "d2", "c2");
-    wallet.infos.emplace_back("u3", "d3", "c3");
+    wallet.infos.emplace_back("u1", "d1", "c1", WalletInfo::Info::Type::Key);
+    wallet.infos.emplace_back("u2", "d2", "c2", WalletInfo::Info::Type::Watch);
+    wallet.infos.emplace_back("u3", "d3", "c3", WalletInfo::Info::Type::Key);
     db.addOrUpdateWallet(wallet);
 
     WalletInfo wallet2;
     wallet2.address = "234";
     wallet2.name = "name2";
-    wallet2.infos.emplace_back("u4", "d4", "c4");
-    wallet2.infos.emplace_back("u2", "d2", "c2");
-    wallet2.infos.emplace_back("u5", "d5", "c5");
+    wallet2.infos.emplace_back("u4", "d4", "c4", WalletInfo::Info::Type::Watch);
+    wallet2.infos.emplace_back("u2", "d2", "c2", WalletInfo::Info::Type::Watch);
+    wallet2.infos.emplace_back("u5", "d5", "c5", WalletInfo::Info::Type::Key);
     db.addOrUpdateWallet(wallet2);
 
     WalletInfo wallet3;
     wallet3.address = "345";
     wallet3.name = "name3";
-    wallet3.infos.emplace_back("u2", "d1", "c1");
+    wallet3.infos.emplace_back("u2", "d1", "c1", WalletInfo::Info::Type::Key);
     db.addOrUpdateWallet(wallet3);
 
     WalletInfo wallet4;

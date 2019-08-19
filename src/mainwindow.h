@@ -7,11 +7,11 @@
 #include <QMainWindow>
 #include <QWebChannel>
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 #include "uploader.h"
 
 #include "PagesMappings.h"
-#include "CallbackWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
 
 class QSystemTrayIcon;
 class WebSocketClient;
@@ -39,6 +39,14 @@ class InitializerJavascript;
 
 namespace wallet_names {
 class WalletNamesJavascript;
+}
+
+namespace utils {
+class UtilsJavascript;
+}
+
+namespace wallets {
+class WalletsJavascript;
 }
 
 class EvFilter: public QObject {
@@ -80,15 +88,17 @@ public:
 
     using SetWalletNamesJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetUtilsJavascriptCallback = CallbackWrapper<void()>;
+
+    using SetWalletsJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
-    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = 0);
+    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
 
-    ~MainWindow();
+    ~MainWindow() override;
 
     void showExpanded();
-
-
 
     QString getServerIp(const QString &text, const std::set<QString> &excludesIps);
 
@@ -113,9 +123,15 @@ signals:
 
     void setWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 
+    void setUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
+
+    void setWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
+
     void initFinished();
 
     void processExternalUrl(const QUrl &url);
+
+    void showNotification(const QString &title, const QString &message);
 
 protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
@@ -138,9 +154,15 @@ private slots:
 
     void onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 
+    void onSetUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
+
+    void onSetWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
+
     void onInitFinished();
 
     void onProcessExternalUrl(const QUrl &url);
+
+    void onShowNotification(const QString &title, const QString &message);
 
 private:
 
@@ -191,8 +213,6 @@ private slots:
     void onShowContextMenu(const QPoint &point);
 
     void onJsRun(QString jsString);
-
-    void onSetHasNativeToolbarVariable();
 
     void onSetCommandLineText(QString text);
 

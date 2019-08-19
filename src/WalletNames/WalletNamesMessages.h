@@ -10,9 +10,17 @@ namespace wallet_names {
 
 QString makeRenameMessage(const QString &address, const QString &name, size_t id, const QString &token, const QString &hwid);
 
+QString makeRenameMessageHttp(const QString &address, const QString &name, const QString &currency, size_t id, const QString &token, const QString &hwid);
+
 QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, const QString &token, const QString &hwid);
 
 QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hwid);
+
+QString makeGetWalletsAppsMessage(size_t id, const QString &token, const QString &hwid);
+
+QString makeCreateWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc);
+
+QString makeRemoveWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc);
 
 enum METHOD: int {
     RENAME = 0, SET_WALLETS = 1, GET_WALLETS = 2,
@@ -36,6 +44,8 @@ struct ResponseType {
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response);
 
 std::vector<WalletInfo> parseGetWalletsMessage(const QJsonDocument &response);
+
+std::vector<WalletInfo> parseAddressListResponse(const QString &response);
 
 } // namespace wallet_names
 

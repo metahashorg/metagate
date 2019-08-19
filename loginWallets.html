@@ -1,0 +1,102 @@
+<link rel="stylesheet" type="text/css" href="example3.css" media="screen" />
+
+<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+<script>
+    
+    function calkKeys() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.calkKeys(false, document.createWalletForm.path.value, "callback") ;
+        });
+    }
+
+   function importKeys() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.importKeys(false, document.createWalletForm.path.value, "callback") ;
+        });
+    }
+    
+    function calkKeysEth() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.calkKeysEth(document.createWalletForm.path.value, "callback") ;
+        });
+    }
+
+   function importKeysEth() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.importKeysEth(document.createWalletForm.path.value, "callback") ;
+        });
+    }
+    
+    function calkKeysBtc() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.calkKeysBtc(document.createWalletForm.path.value, "callback") ;
+        });
+    }
+
+   function importKeysBtc() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.importKeysBtc(document.createWalletForm.path.value, "callback") ;
+        });
+    }
+    
+   function getRawPrivateKey() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.getRawPrivateKey((document.createWalletForm.isMhc.value === 'true'), document.createWalletForm.path.value, document.createWalletForm.password.value, "callback") ;
+        });
+    }
+    
+   function saveRawPrivateKey() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.saveRawPrivateKey((document.createWalletForm.isMhc.value === 'true'), document.createWalletForm.path.value, document.createWalletForm.password.value, "callback") ;
+        });
+    }
+    
+</script>
+
+<body onload="generateAllWalletsJs();"></body>
+
+<div class="back">
+
+  <div id="two" class="abs block">
+    <a href="#one">создание счета</a>
+    <b><a href="#two">подпись данных</a></b>
+    <p class="abs">
+        <left>
+            <FORM name="sign">
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+  <div id="one" class="abs block">
+    <b><a href="#one">создание счета</a></b>
+    <a href="#two">подпись данных</a>
+    <p class="abs">
+        <left>
+            <FORM name="createWalletForm">
+            <input name="isMhc" type="text" value="true" size="60"><label for="isMhc">isMhc</label><br>
+            <input name="path" type="text" value="https://en.cppreference.com/w/cpp/utility/apply" size="60"><label for="path">path/name/data</label><br>
+            <input name="password" type="text" value="123" size="60"><label for="password">password</label><br>
+            <input type="button" value="calkKeys" onclick="calkKeys()"><br>
+            <input type="button" value="importKeys" onclick="importKeys()"><br>
+            <input type="button" value="calkKeysEth" onclick="calkKeysEth()"><br>
+            <input type="button" value="importKeysEth" onclick="importKeysEth()"><br>
+            <input type="button" value="calkKeysBtc" onclick="calkKeysBtc()"><br>
+            <input type="button" value="importKeysBtc" onclick="importKeysBtc()"><br>
+            <input type="button" value="getRawPrivateKey" onclick="getRawPrivateKey()"><br>
+            <input type="button" value="saveRawPrivateKey" onclick="saveRawPrivateKey()"><br>
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+</div>

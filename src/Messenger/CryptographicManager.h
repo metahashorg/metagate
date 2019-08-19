@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-#include "TimerClass.h"
-#include "CallbackWrapper.h"
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
 
 #include "Message.h"
 
@@ -15,17 +15,25 @@ struct TypedException;
 
 namespace messenger {
 
-class CryptographicManager : public TimerClass {
+class CryptographicManager : public QObject, public TimerClass {
     Q_OBJECT
 public:
 
     explicit CryptographicManager(QObject *parent = nullptr);
 
-    ~CryptographicManager();
+    ~CryptographicManager() override;
 
     bool isSaveDecrypted() const {
         return isSaveDecrypted_;
     }
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 public:
 
@@ -65,7 +73,7 @@ signals:
 
     void encryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback);
 
-    void unlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
+    void unlockWallet(const QString &folder, bool isMhc, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
 
     void lockWallet(const LockWalletCallback &callback);
 
@@ -89,15 +97,11 @@ private slots:
 
     void onEncryptDataPrivateKey(const QString &dataHex, const QString &address, const EncryptMessageCallback &callback);
 
-    void onUnlockWallet(const QString &folder, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
+    void onUnlockWallet(const QString &folder, bool isMhc, const QString &address, const QString &password, const QString &passwordRsa, const seconds &time_, const UnlockWalletCallback &callbackWrapper);
 
     void onLockWallet(const LockWalletCallback &callback);
 
     void onRemainingTime(const RemainingTimeCallback &callback);
-
-private slots:
-
-    void onResetWallets();
 
 private:
 
@@ -107,7 +111,7 @@ private:
 
     WalletRsa* getWalletRsaWithoutCheck(const std::string &address) const;
 
-    void unlockWalletImpl(const QString &folder, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_);
+    void unlockWalletImpl(const QString &folder, bool isMhc, const std::string &address, const std::string &password, const std::string &passwordRsa, const seconds &time_);
 
     void lockWalletImpl();
 

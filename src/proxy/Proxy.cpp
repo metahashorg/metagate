@@ -9,8 +9,9 @@
 #include "UPnPRouter.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Paths.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("PRX");
 
@@ -42,22 +43,22 @@ Proxy::Proxy(ProxyJavascript &javascriptWrapper, QObject *parent)
     CHECK(settings.contains("mgproxy/port"), "mgproxy/port not found setting");
     proxyServer->setPort(settings.value("mgproxy/port").toUInt());
 
-    CHECK(connect(this, &Proxy::proxyStart, this, &Proxy::onProxyStart), "not connect onProxyStart");
-    CHECK(connect(this, &Proxy::proxyStop, this, &Proxy::onProxyStop), "not connect onProxyStop");
-    CHECK(connect(this, &Proxy::geProxyStatus, this, &Proxy::onGeProxyStatus), "not connect onGeProxyStatus");
-    CHECK(connect(this, &Proxy::getPort, this, &Proxy::onGetPort), "not connect onGetPort");
-    CHECK(connect(this, &Proxy::setPort, this, &Proxy::onSetPort), "not connect onSetPort");
-    CHECK(connect(this, &Proxy::getRouters, this, &Proxy::onGetRouters), "not connect onGetRouters");
-    CHECK(connect(this, &Proxy::discoverRouters, this, &Proxy::onDiscoverRouters), "not connect onDiscoverRouters");
-    CHECK(connect(this, &Proxy::addPortMapping, this, &Proxy::onAddPortMapping), "not connect onAddPortMapping");
-    CHECK(connect(this, &Proxy::deletePortMapping, this, &Proxy::onDeletePortMapping), "not connect onDeletePortMapping");
-    CHECK(connect(this, &Proxy::autoStart, this, &Proxy::onAutoStart), "not connect onAutoStart");
-    CHECK(connect(this, &Proxy::autoStop, this, &Proxy::onAutoStop), "not connect onAutoStop");
-    CHECK(connect(this, &Proxy::autoStartResend, this, &Proxy::onAutoStartResend), "not connect onAutoStartResend");
+    Q_CONNECT(this, &Proxy::proxyStart, this, &Proxy::onProxyStart);
+    Q_CONNECT(this, &Proxy::proxyStop, this, &Proxy::onProxyStop);
+    Q_CONNECT(this, &Proxy::geProxyStatus, this, &Proxy::onGeProxyStatus);
+    Q_CONNECT(this, &Proxy::getPort, this, &Proxy::onGetPort);
+    Q_CONNECT(this, &Proxy::setPort, this, &Proxy::onSetPort);
+    Q_CONNECT(this, &Proxy::getRouters, this, &Proxy::onGetRouters);
+    Q_CONNECT(this, &Proxy::discoverRouters, this, &Proxy::onDiscoverRouters);
+    Q_CONNECT(this, &Proxy::addPortMapping, this, &Proxy::onAddPortMapping);
+    Q_CONNECT(this, &Proxy::deletePortMapping, this, &Proxy::onDeletePortMapping);
+    Q_CONNECT(this, &Proxy::autoStart, this, &Proxy::onAutoStart);
+    Q_CONNECT(this, &Proxy::autoStop, this, &Proxy::onAutoStop);
+    Q_CONNECT(this, &Proxy::autoStartResend, this, &Proxy::onAutoStartResend);
 
-    CHECK(connect(upnp, &UPnPDevices::discovered, this, &Proxy::onRouterDiscovered), "not connect onRouterDiscovered");
+    Q_CONNECT(upnp, &UPnPDevices::discovered, this, &Proxy::onRouterDiscovered);
 
-    CHECK(connect(proxyServer, &ProxyServer::connectedPeersChanged, this, &Proxy::onConnedtedPeersChanged), "not connect onConnedtedPeersChanged");
+    Q_CONNECT(proxyServer, &ProxyServer::connectedPeersChanged, this, &Proxy::onConnedtedPeersChanged);
 
     javascriptWrapper.setProxyManager(*this);
     thread.start();

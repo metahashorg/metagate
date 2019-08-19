@@ -1,9 +1,11 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "TimerClass.h"
-#include "client.h"
-#include "CallbackWrapper.h"
+#include "Network/SimpleClient.h"
+
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 struct TypedException;
 
@@ -31,21 +33,30 @@ struct LoginInfo
     }
 };
 
-class Auth : public TimerClass
+class Auth : public ManagerWrapper, public TimerClass
 {
     Q_OBJECT
 public:
-    using Callback = std::function<void()>;
-
     using LoginInfoCallback = CallbackWrapper<void(const LoginInfo &info)>;
 public:
 
     explicit Auth(AuthJavascript &javascriptWrapper, QObject *parent = nullptr);
 
-    ~Auth();
+    ~Auth() override;
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 signals:
+
     void logined(bool isInit, const QString &login);
+
+    void logined2(bool isInit, const QString &login, const QString &token);
 
     void checkTokenFinished(const TypedException &error);
 
@@ -80,14 +91,6 @@ signals:
 public slots:
 
     void onGetLoginInfo(const LoginInfoCallback &callback);
-
-private slots:
-
-    void onCallbackCall(Callback callback);
-
-    void onStarted();
-
-    void onTimerEvent();
 
 private:
 

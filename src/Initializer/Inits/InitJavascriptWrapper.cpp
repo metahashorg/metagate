@@ -9,8 +9,8 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "check.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -23,7 +23,7 @@ QString InitJavascriptWrapper::stateName() {
 InitJavascriptWrapper::InitJavascriptWrapper(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitJavascriptWrapper::callbackCall, this, &InitJavascriptWrapper::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitJavascriptWrapper::callbackCall, this, &InitJavascriptWrapper::onCallbackCall);
     Q_REG(InitJavascriptWrapper::Callback, "InitJavascriptWrapper::Callback");
 
     registerStateType("init", "jsWrapper initialized", true, true);
@@ -46,16 +46,19 @@ void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
 }
 
 InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
-        std::shared_future<WebSocketClient*> wssClient,
-        std::shared_future<NsLookup*> nsLookup,
-        std::shared_future<MainWindow*> mainWindow,
-        std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
-        std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-        const QString &versionString
+    std::shared_future<WebSocketClient*> wssClient,
+    std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
+    std::shared_future<MainWindow*> mainWindow,
+    std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
+    std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
+    std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
+    std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+    const QString &versionString,
+    NetwrokTesting &nettest
 ) {
     const TypedException exception = apiVrapper2([&, this] {
         MainWindow &mw = *mainWindow.get();
-        jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get(), *transactions.get().second, *auth.get().first, versionString);
+        jsWrapper = std::make_unique<JavascriptWrapper>(mw, *wssClient.get(), *nsLookup.get().first, *transactions.get().second, *auth.get().first, nettest, *utils.get().first, *wallets.get().first, versionString);
         jsWrapper->mvToThread(mainThread);
         emit mw.setJavascriptWrapper(jsWrapper.get(), MainWindow::SetJavascriptWrapperCallback([this]() {
             sendInitSuccess(TypedException());

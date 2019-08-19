@@ -2,7 +2,7 @@
 
 #include <QTest>
 
-#include "qrcoder.h"
+#include "utilites/qrcoder.h"
 
 tst_QRCoder::tst_QRCoder(QObject *parent)
     : QObject(parent)

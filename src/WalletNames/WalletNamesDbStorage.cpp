@@ -62,6 +62,26 @@ std::vector<WalletInfo> WalletNamesDbStorage::getAllWallets() {
     return createWalletsList(query);
 }
 
+static WalletInfo::Info::Type intToType(int type) {
+    if (type == 1) {
+        return WalletInfo::Info::Type::Key;
+    } else if (type == 2) {
+        return WalletInfo::Info::Type::Watch;
+    } else {
+        return WalletInfo::Info::Type::Key;
+    }
+}
+
+static int typeToInt(const WalletInfo::Info::Type &type) {
+    if (type == WalletInfo::Info::Type::Key) {
+        return 1;
+    } else if (type == WalletInfo::Info::Type::Watch) {
+        return 2;
+    } else {
+        throwErr("Incorrect wallet type");
+    }
+}
+
 void WalletNamesDbStorage::updateWalletInfo(const QString &address, const std::vector<WalletInfo::Info> &infos) {
     QSqlQuery query(database());
     CHECK(query.prepare(insertWalletInfo), query.lastError().text().toStdString());
@@ -70,6 +90,7 @@ void WalletNamesDbStorage::updateWalletInfo(const QString &address, const std::v
         query.bindValue(":user", i.user);
         query.bindValue(":device", i.device);
         query.bindValue(":currency", i.currency);
+        query.bindValue(":type", typeToInt(i.type));
         CHECK(query.exec(), query.lastError().text().toStdString());
     }
 }
@@ -86,8 +107,9 @@ std::vector<WalletInfo> WalletNamesDbStorage::createWalletsList(QSqlQuery &query
         const QString user = query.value("user").toString();
         const QString device = query.value("device").toString();
         const QString currency = query.value("currency").toString();
+        const int type = query.value("type").toInt();
         if (!user.isEmpty() || !device.isEmpty() || !currency.isEmpty()) {
-            info.infos.emplace_back(user, device, currency);
+            info.infos.emplace_back(user, device, currency, intToType(type));
         }
     }
     std::vector<WalletInfo> res;

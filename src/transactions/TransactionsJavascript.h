@@ -5,9 +5,7 @@
 
 #include <functional>
 
-class QThread;
-
-struct TypedException;
+#include "qt_utilites/WrapperJavascript.h"
 
 namespace transactions {
 
@@ -16,27 +14,15 @@ class Transactions;
 struct BalanceInfo;
 struct Transaction;
 
-class TransactionsJavascript
-    : public QObject
-{
+class TransactionsJavascript: public WrapperJavascript {
     Q_OBJECT
 public:
 
-    using Callback = std::function<void()>;
-
-public:
-
-    explicit TransactionsJavascript(QObject *parent = nullptr);
+    explicit TransactionsJavascript();
 
     void setTransactions(Transactions &trans) {
         transactionsManager = &trans;
     }
-
-signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const TransactionsJavascript::Callback &callback);
 
 signals:
 
@@ -49,10 +35,6 @@ signals:
     void transactionStatusChangedSig(const QString &address, const QString &currency, const QString &txHash, const Transaction &tx);
 
     void transactionStatusChanged2Sig(const QString &txHash, const Transaction &tx);
-
-public slots:
-
-    void onCallbackCall(const TransactionsJavascript::Callback &callback);
 
 private slots:
 
@@ -76,38 +58,33 @@ public slots:
 
     Q_INVOKABLE void setCurrentGroup(QString group);
 
-    Q_INVOKABLE void getTxs(QString address, QString currency, QString fromTx, int count, bool asc);
-
-    Q_INVOKABLE void getTxsAll(QString currency, QString fromTx, int count, bool asc);
-
     Q_INVOKABLE void getTxs2(QString address, QString currency, int from, int count, bool asc);
 
     Q_INVOKABLE void getTxsAll2(QString currency, int from, int count, bool asc);
 
+    Q_INVOKABLE void getTxsFilters(QString address, QString currency, QString filtersJson, int from, int count, bool asc);
+
     Q_INVOKABLE void getForgingTxsAll(QString address, QString currency, int from, int count, bool asc);
+
+    Q_INVOKABLE void getDelegateTxsAll(QString address, QString currency, QString to, int from, int count, bool asc);
+
+    Q_INVOKABLE void getDelegateTxsAll2(QString address, QString currency, int from, int count, bool asc);
 
     Q_INVOKABLE void getLastForgingTx(QString address, QString currency);
 
-    Q_INVOKABLE void calcBalance(QString address, QString currency);
+    Q_INVOKABLE void calcBalance(const QString &address, const QString &currency, const QString &callback);
 
     Q_INVOKABLE void getTxFromServer(QString txHash, QString type);
 
     Q_INVOKABLE void getLastUpdatedBalance(QString currency);
 
+    Q_INVOKABLE void addCurrencyConformity(bool isMhc, QString currency);
+
     Q_INVOKABLE void clearDb(QString currency);
 
 private:
 
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
-
-private:
-
     Transactions *transactionsManager;
-
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 };
 
 }

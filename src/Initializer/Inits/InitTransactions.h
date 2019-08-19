@@ -17,8 +17,19 @@ class TransactionsJavascript;
 class Transactions;
 }
 
+namespace auth {
+class Auth;
+class AuthJavascript;
+}
+
+namespace wallets {
+class Wallets;
+class WalletsJavascript;
+}
+
 class MainWindow;
 class NsLookup;
+class InfrastructureNsLookup;
 
 namespace initializer {
 
@@ -40,7 +51,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<NsLookup*> nsLookup);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets);
 
     static int countEvents() {
         return 1;

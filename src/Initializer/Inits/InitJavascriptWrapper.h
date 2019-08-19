@@ -13,7 +13,9 @@ struct TypedException;
 class JavascriptWrapper;
 class MainWindow;
 class NsLookup;
+class InfrastructureNsLookup;
 class WebSocketClient;
+class NetwrokTesting;
 
 namespace transactions {
 class TransactionsJavascript;
@@ -23,6 +25,16 @@ class Transactions;
 namespace auth {
 class Auth;
 class AuthJavascript;
+}
+
+namespace utils {
+class Utils;
+class UtilsJavascript;
+}
+
+namespace wallets {
+class Wallets;
+class WalletsJavascript;
 }
 
 namespace initializer {
@@ -47,11 +59,14 @@ public:
 
     Return initialize(
         std::shared_future<WebSocketClient*> wssClient,
-        std::shared_future<NsLookup*> nsLookup,
+        std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
         std::shared_future<MainWindow*> mainWindow,
         std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-        const QString &versionString
+        std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
+        std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+        const QString &versionString,
+        NetwrokTesting &nettest
     );
 
     static int countEvents() {

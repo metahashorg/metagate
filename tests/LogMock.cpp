@@ -9,32 +9,38 @@
 
 PeriodicLog::PeriodicLog() = default;
 
-PeriodicLog::PeriodicLog(const std::string &str)
-    : str(str)
+PeriodicLog::PeriodicLog(const std::string &str, bool isAutoPeriodic)
+    : name(str)
+    , isAutoPeriodic(isAutoPeriodic)
 {}
 
 PeriodicLog PeriodicLog::make(const std::string &str) {
     CHECK(!str.empty(), "periodic name empty");
-    return PeriodicLog(str);
+    return PeriodicLog(str, false);
+}
+
+PeriodicLog PeriodicLog::makeAuto(const std::string &str) {
+    CHECK(!str.empty(), "periodic name empty");
+    return PeriodicLog(str, true);
 }
 
 bool PeriodicLog::notSet() const {
-    return str.empty();
+    return name.empty();
 }
 
-Log_::Log_(const std::string &fileName) {
+Log_::Log_(const std::string &/*fileName*/) {
 
 }
 
-bool Log_::processPeriodic(const std::string &s, std::string &addedStr) {
-    return false;
+bool Log_::processPeriodic(const std::string &/*s*/, std::string &/*periodicStrFirstLine*/, std::string &/*periodicStrOriginalLinePrefix*/) {
+    return true;
 }
 
-void Log_::finalize(std::ostream &(*pManip)(std::ostream &)) noexcept {
+void Log_::finalize() noexcept {
     try {
         const std::string &toCoutStr = ssCout.str();
 
-        std::cout << toCoutStr << *pManip;
+        std::cout << toCoutStr << std::endl;
     } catch (...) {
         std::cerr << "Error";
     }
@@ -44,7 +50,7 @@ void Log_::print(const QString &s) {
     print(s.toStdString());
 }
 
-void Log_::print(const PeriodicLog &p) {
+void Log_::print(const PeriodicLog &/*p*/) {
 
 }
 
@@ -59,5 +65,5 @@ void Log_::print(const std::string &t) {
 void initLog() {
 }
 
-AddFileNameAlias_::AddFileNameAlias_(const std::string &fileName, const std::string &alias) {
+AddFileNameAlias_::AddFileNameAlias_(const std::string &/*fileName*/, const std::string &/*alias*/) {
 }

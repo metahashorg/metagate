@@ -3,14 +3,16 @@
 
 #include <functional>
 
-#include "TimerClass.h"
-#include "CallbackWrapper.h"
+#include "qt_utilites/TimerClass.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
-#include "RequestId.h"
+#include "utilites/RequestId.h"
 
 #include "WalletInfo.h"
 
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
+#include "Network/SimpleClient.h"
 
 class JavascriptWrapper;
 
@@ -18,15 +20,17 @@ namespace auth {
 class Auth;
 }
 
+namespace wallets {
+class Wallets;
+}
+
 namespace wallet_names {
 
 class WalletNamesDbStorage;
 
-class WalletNames: public TimerClass {
-    Q_OBJECT   
+class WalletNames: public ManagerWrapper, public TimerClass {
+    Q_OBJECT
 public:
-
-    using Callback = std::function<void()>;
 
     using AddWalletsNamesCallback = CallbackWrapper<void()>;
 
@@ -38,9 +42,17 @@ public:
 
 public:
 
-    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client);
+    WalletNames(WalletNamesDbStorage &db, JavascriptWrapper &javascriptWrapper, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets);
 
-    ~WalletNames();
+    ~WalletNames() override;
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 signals:
 
@@ -68,21 +80,17 @@ signals:
 
     void walletsFlushed();
 
-signals:
-
-    void callbackCall(WalletNames::Callback callback);
-
 private slots:
-
-    void onCallbackCall(WalletNames::Callback callback);
-
-    void onRun();
-
-    void onTimerEvent();
 
     void onWssMessageReceived(QString message);
 
-    void onLogined(bool isInit, const QString login);
+    void onLogined(bool isInit, const QString &login, const QString &token);
+
+private slots:
+
+    void onMhcWatchWalletCreated(bool isMhc, const QString &address, const QString &username);
+
+    void onMhcWatchWalletRemoved(bool isMhc, const QString &address, const QString &username);
 
 private:
 
@@ -91,6 +99,8 @@ private:
     void getAllWallets();
 
     void sendAllWallets();
+
+    void getAllWalletsApps();
 
 private:
 
@@ -104,19 +114,25 @@ private:
 
     JavascriptWrapper &javascriptWrapper;
 
-    std::function<void(const std::function<void()> &callback)> signalFunc;
-
-    auth::Auth &authManager;
-
     WebSocketClient &client;
 
+    wallets::Wallets &wallets;
+
     QString token;
+
+    QString userName;
 
     QString hwid;
 
     RequestId id;
 
     StateRequest stateRequest = StateRequest::NotRequest;
+
+    QString serverName;
+
+    seconds timeout;
+
+    SimpleClient httpClient;
 
 };
 

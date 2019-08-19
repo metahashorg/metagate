@@ -13,7 +13,7 @@ INCLUDEPATH = ../../src ../../src/transactions
 SOURCES += \
     tst_transactionsdbstorage.cpp \
     ../../src/dbstorage.cpp \
-    ../../src/BigNumber.cpp \
+    ../../src/utilites/BigNumber.cpp \
     ../LogMock.cpp \
     ../../src/transactions/TransactionsDBStorage.cpp
 

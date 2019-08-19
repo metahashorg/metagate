@@ -7,11 +7,11 @@
 #include <QString>
 #include <QObject>
 
-#include "client.h"
+#include "Network/SimpleClient.h"
 
-#include "VersionWrapper.h"
+#include "utilites/VersionWrapper.h"
 
-#include "TimerClass.h"
+#include "qt_utilites/TimerClass.h"
 
 class MainWindow;
 struct TypedException;
@@ -30,13 +30,13 @@ struct LastHtmlVersion {
     QString fullPath;
 };
 
-class Uploader : public TimerClass {
+class Uploader : public QObject, public TimerClass {
 Q_OBJECT
 private:
 
     struct Servers {
-        std::string dev;
-        std::string prod;
+        QString dev;
+        QString prod;
     };
 
 public:
@@ -52,7 +52,15 @@ public:
 
     explicit Uploader(auth::Auth &auth, MainWindow &mainWindow);
 
-    ~Uploader();
+    ~Uploader() override;
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 signals:
 
@@ -68,6 +76,8 @@ public:
 
     static Servers getServers();
 
+    static QString getServerName();
+
     static LastHtmlVersion getLastHtmlVersion();
 
 signals:
@@ -76,11 +86,7 @@ signals:
 
 public slots:
 
-    void run();
-
     void onCallbackCall(Uploader::Callback callback);
-
-    void uploadEvent();
 
     void onLogined(bool isInit, const QString login);
 
@@ -89,6 +95,10 @@ signals:
     void generateUpdateHtmlsEvent();
 
     void generateUpdateApp(const QString version, const QString reference, const QString message);
+
+private:
+
+    void uploadEvent();
 
 private:
 

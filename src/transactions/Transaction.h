@@ -3,11 +3,15 @@
 
 #include <QString>
 
-#include "BigNumber.h"
+#include "utilites/BigNumber.h"
 #include "dbstorage.h"
 #include "duration.h"
 
 namespace transactions {
+
+const quint32 BNModule = 6;
+
+const int STATUS_TESTING = 0x1101;
 
 enum class DelegateStatus {
     NOT_FOUND, PENDING, ERROR, DELEGATE, UNDELEGATE
@@ -19,7 +23,7 @@ struct Transaction {
     };
 
     enum Type {
-        SIMPLE = 0, FORGING = 1, DELEGATE = 2
+        SIMPLE = 0, FORGING = 1, DELEGATE = 2, CONTRACT = 3
     };
 
     DBStorage::DbId id = -1;
@@ -33,12 +37,11 @@ struct Transaction {
     uint64_t timestamp;
     QString fee;
     int64_t nonce = 0;
-    bool isInput;
     int64_t blockNumber = 0;
+    int64_t blockIndex = 0;
     QString blockHash = "";
     int intStatus = 0;
 
-    bool isSetDelegate = false; // TODO после введения type стало избыточным полем. Удалить
     bool isDelegate;
     QString delegateValue;
     QString delegateHash;
@@ -50,17 +53,19 @@ struct Transaction {
 
 struct BalanceInfo {
     QString address;
-    BigNumber received;
-    BigNumber spent;
+    BigNumber received = QString("0");
+    BigNumber spent = QString("0");
     uint64_t countReceived = 0;
     uint64_t countSpent = 0;
+    uint64_t countTxs = 0;
     uint64_t currBlockNum = 0;
+    uint64_t savedTxs = 0;
 
-    uint64_t countDelegated;
-    BigNumber delegate;
-    BigNumber undelegate;
-    BigNumber delegated;
-    BigNumber undelegated;
+    uint64_t countDelegated = 0;
+    BigNumber delegate = QString("0");
+    BigNumber undelegate = QString("0");
+    BigNumber delegated = QString("0");
+    BigNumber undelegated = QString("0");
     BigNumber reserved = QString("0");
     BigNumber forged = QString("0");
 
@@ -72,18 +77,14 @@ struct BalanceInfo {
 struct AddressInfo {
     QString currency;
     QString address;
-    QString type;
     QString group;
-    QString name = "";
 
     BalanceInfo balance;
 
-    AddressInfo(const QString &currency, const QString &address, const QString &type, const QString &group, const QString &name)
+    AddressInfo(const QString &currency, const QString &address, const QString &group)
         : currency(currency)
         , address(address)
-        , type(type)
         , group(group)
-        , name(name)
     {}
 
     AddressInfo() = default;
@@ -99,6 +100,7 @@ struct SendParameters {
     size_t countServersGet;
     QString typeSend;
     QString typeGet;
+    QString currency;
     seconds timeout;
 };
 

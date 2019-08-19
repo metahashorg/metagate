@@ -4,22 +4,17 @@
 #include <QObject>
 #include <functional>
 
-struct TypedException;
+#include "qt_utilites/WrapperJavascript.h"
 
-namespace auth
-{
+namespace auth {
 
 class Auth;
 struct LoginInfo;
 
-class AuthJavascript : public QObject
-{
+class AuthJavascript: public WrapperJavascript {
     Q_OBJECT
 public:
-    using Callback = std::function<void()>;
-
-public:
-    explicit AuthJavascript(QObject *parent = nullptr);
+    explicit AuthJavascript();
 
     Auth *authManager() const {return m_authManager; }
 
@@ -38,27 +33,11 @@ public slots:
     Q_INVOKABLE void forceRefresh();
 
 signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const Callback &callback);
-
-signals:
     void sendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error);
 
 public slots:
 
     void onSendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error);
-
-    void onCallbackCall(const Callback &callback);
-
-
-private:
-
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
 
 private:
     Auth *m_authManager;

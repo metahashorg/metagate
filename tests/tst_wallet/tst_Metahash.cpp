@@ -2,12 +2,12 @@
 
 #include <QTest>
 
-#include "Wallet.h"
+#include "Wallets/Wallet.h"
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 Q_DECLARE_METATYPE(std::string)
 
@@ -112,8 +112,9 @@ void tst_Metahash::testCreateMth() {
     QFETCH(std::string, passwd);
     std::string tmp;
     std::string address;
-    Wallet::createWallet("./", passwd, tmp, address);
-    Wallet wallet("./", address, passwd);
+    createFolder("./mhc");
+    Wallet::createWallet("./", true, passwd, tmp, address);
+    Wallet wallet("./", true, address, passwd);
 }
 
 void tst_Metahash::testCreateFromRawMth_data() {
@@ -140,9 +141,10 @@ void tst_Metahash::testCreateFromRawMth() {
     QFETCH(std::string, answer);
     std::string tmp;
     std::string address;
-    Wallet::createWalletFromRaw("./", rawkey, passwd, tmp, address);
+    createFolder("./mhc");
+    Wallet::createWalletFromRaw("./", true, rawkey, passwd, tmp, address);
     QCOMPARE(address, answer);
-    Wallet wallet("./", address, passwd);
+    Wallet wallet("./", true, address, passwd);
     const std::string rawPrivate = wallet.getNotProtectedKeyHex();
     QCOMPARE(rawkey, rawPrivate);
 }
@@ -160,20 +162,21 @@ void tst_Metahash::testCreateRawMth() {
     QFETCH(std::string, passwd);
     std::string tmp;
     std::string address;
-    Wallet::createWallet("./", passwd, tmp, address);
-    Wallet wallet("./", address, passwd);
+    createFolder("./mhc");
+    Wallet::createWallet("./", true, passwd, tmp, address);
+    Wallet wallet("./", true, address, passwd);
 
     const std::string privKey = wallet.getNotProtectedKeyHex();
     std::string address2;
-    Wallet::createWalletFromRaw("./", privKey, passwd, tmp, address2);
+    Wallet::createWalletFromRaw("./", true, privKey, passwd, tmp, address2);
     QCOMPARE(address2, address);
-    Wallet wallet2("./", address, passwd);
+    Wallet wallet2("./", true, address, passwd);
 }
 
 void tst_Metahash::testNotCreateMth() {
     std::string tmp;
     std::string address;
-    QVERIFY_EXCEPTION_THROWN(Wallet::createWallet("./", "", tmp, address), TypedException);
+    QVERIFY_EXCEPTION_THROWN(Wallet::createWallet("./", true, "", tmp, address), TypedException);
 }
 
 void tst_Metahash::testMthSignTransaction_data() {
@@ -196,8 +199,9 @@ void tst_Metahash::testMthSignTransaction() {
     QFETCH(std::string, message);
     std::string tmp;
     std::string address;
-    Wallet::createWallet("./", "123", tmp, address);
-    Wallet wallet("./", address, "123");
+    createFolder("./mhc");
+    Wallet::createWallet("./", true, "123", tmp, address);
+    Wallet wallet("./", true, address, "123");
     std::string pubkey;
     const std::string result = wallet.sign(message, pubkey);
     const bool res = Wallet::verify(message, result, pubkey);
@@ -209,34 +213,42 @@ void tst_Metahash::testMthSignTransaction() {
 
 void tst_Metahash::testHashMth_data() {
     QTest::addColumn<std::string>("transaction");
+    QTest::addColumn<std::string>("sign");
+    QTest::addColumn<std::string>("pubkey");
     QTest::addColumn<std::string>("answer");
 
     QTest::newRow("hashMth 1")
-        << std::string("00e1c97266d97bf475ee6128f1ad1e8de33cfcc8da0927fc4bfb00286bee0000000000")
-        << std::string("c9b70ccdb83fce54a80038b32513b23b08152573c58efc48a24aea64a4a2e758");
+        << std::string("0037f57bab204dd99ebcc84ac9d46a23fa0561cd65c1782f24fbb01f3c00000900")
+        << std::string("3046022100da01c58a79391b611f4e20917917898017224edf2f8c75abf2dc81d4b19865d2022100c4532035b7646fdc166bac9ff120e0e799ef4c2ea24779c72e0291077c3c17e7")
+        << std::string("3056301006072a8648ce3d020106052b8104000a034200044978fd6cd003b92dbcd5a12a1fed463863f91c0cbac9693a5046efb2d28c14eb9d5ac3191d0d94378e38f2e8d92b1915d6f7f12546531bd085c2edae1d972897")
+        << std::string("bd022b12b2c20ff0182cffe4839880aec43fd4fd577a6d4b3a072e86aad83da6");
 
     QTest::newRow("hashMth 2")
-        << std::string("0052fa7e6e55c8cd2b7ed9552b57074e71c791352a601f7d1cfb00286bee0000000000")
-        << std::string("091ae3f829c28c0c158f5764592393a79d9f2cf62a9ced7250537fec32d04de9");
+        << std::string("0037f57bab204dd99ebcc84ac9d46a23fa0561cd65c1782f24fbb01f3c00003600")
+        << std::string("3046022100cc1e11d55e43856a8832fbba2e8250fbd5bad19c8850fad23befb08aeffaa64a022100fa5c2bd1bcc2673210c8fc05363ddbebf1bb6d529b07a3f598b59368d107b837")
+        << std::string("3059301306072a8648ce3d020106082a8648ce3d030107034200048d80fa0ba33af78fbd5e062f4f7eb9d26d3ce21714a58b3317ffb887e0981f82e137dbd802d6b376bf78ae010325cdf038d23e304e5771fee668c9ec19a5c512")
+        << std::string("c1e6d5ab0b4aea901d1aff8abc8109ac2bc684cec096f5512d7aa94b671dc19f");
 
     QTest::newRow("hashMth 3")
-        << std::string("008b09aaaa52cf75ef2cfb9dbfff27456d603580fa2b4b79d0fb00286bee0000000000")
-        << std::string("676c93644afd5715bf7d7d136b1157d66c346709bd3ba87a2f0b3792694502ca");
+        << std::string("004dd5169c91f8f67de32a9a8c3a6b7e037fd636ac4d4b32070100fac03600")
+        << std::string("304402207f5f01af8aeb2542c2d425eadebed06cd3cbdf3c7fc7060d3ad6cb4f0baabf98022056ba7b27a7ceef8cbb95e86240324e98c0340db77655077ae797e16fcbdab651")
+        << std::string("3056301006072a8648ce3d020106052b8104000a03420004c53fec74720da42b08d65f78e832de6f69a95bb18e9880910ab6609549c2ec0815f36b098946023327a58e41a7435bffb6ec31b0fb74926e019463d8f91c4972")
+        << std::string("fe80adc6bd96b227e4c96b7516c1065b38f62abe2f46d3f62631a53533d9e9d3");
 
     QTest::newRow("hashMth 4")
-        << std::string("00c44b358872bd6eba5d82f61769276e8954eb3c46bb3ba451fb00286bee0000000000")
-        << std::string("37193cede0bacfd28567fd4b8a87cff9474ffc846cd5fdba499ed8900b2876e1");
-
-    QTest::newRow("hashMth 5")
-        << std::string("0066433cf1d4ba40e8aac98d874447d6c1a4982ea56fc26a61fb00286bee0000000000")
-        << std::string("a4d0246668398310111e89b401cee3b028cf3dba3045f76d6d4488271685d47f");
+        << std::string("001b802a6ca466917d331a78827f32f1e6a6cce80589178c9700007f357b226d6574686f64223a2264656c6567617465222c22706172616d73223a7b2276616c7565223a2238343334303030303030227d7d")
+        << std::string("304402203a9f222f4a27930157fb3ba0ea9f5151e8f0d878f9bb4cc77e20c977f41ed193022049a97310e9209f7230302ec4a4c8c054fc3acd32d701f68dd0575d2590bca5c2")
+        << std::string("3059301306072a8648ce3d020106082a8648ce3d030107034200040e255c841b3b54c0a8e85c749e0f764b0bafd4bcf51fc160a93b06e40b77f47a1f0ee7330f1e249d9cad445cfe61a3a2b42e9155dd3f98e07dd5cfcda2846dba")
+        << std::string("ce10d1286dbe4b9ddf8a35d58fc247fca651708c1e6ec81356f67d511e7ceec8");
 }
 
 void tst_Metahash::testHashMth() {
     QFETCH(std::string, transaction);
+    QFETCH(std::string, sign);
+    QFETCH(std::string, pubkey);
     QFETCH(std::string, answer);
 
-    const std::string result = Wallet::calcHash(transaction);
+    const std::string result = Wallet::calcHash(transaction, sign, pubkey);
     QCOMPARE(result, answer);
 }
 

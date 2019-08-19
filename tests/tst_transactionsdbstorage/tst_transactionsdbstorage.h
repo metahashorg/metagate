@@ -15,6 +15,13 @@ private slots:
     void testBigNumSum();
     void testGetPayments();
     void testAddressInfos();
+    void testBlockNumer();
+
+    void tstFilterDelegate();
+
+    void tstBalance();
+
+    void tstCurrency();
 
 private:
 };

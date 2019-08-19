@@ -4,13 +4,14 @@
 #include <QObject>
 #include <QVariant>
 
-#include "TimerClass.h"
-#include "WebSocketClient.h"
+#include "qt_utilites/TimerClass.h"
+#include "Network/WebSocketClient.h"
 
-#include "RequestId.h"
+#include "utilites/RequestId.h"
 #include "Message.h"
 
-#include "CallbackWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include <map>
 #include <set>
@@ -18,6 +19,7 @@
 #include <functional>
 
 struct TypedException;
+class MainWindow;
 
 struct MessengerDeleteFromChannelVariant {
     QString address;
@@ -94,13 +96,9 @@ class MessengerDBStorage;
 struct ChannelInfo;
 class CryptographicManager;
 
-class Messenger : public TimerClass
+class Messenger : public ManagerWrapper, public TimerClass
 {
     Q_OBJECT
-public:
-
-    using Callback = std::function<void()>;
-
 private:
 
     class DeferredMessage {
@@ -179,17 +177,21 @@ public:
 
 public:
 
-    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent = nullptr);
+    explicit Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, MainWindow &mainWin, QObject *parent = nullptr);
 
-    ~Messenger();
+    ~Messenger() override;
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 signals:
 
-    void callbackCall(const Messenger::Callback &callback);
-
-public slots:
-
-    void onCallbackCall(const Messenger::Callback &callback);
+    void showNotification(const QString &title, const QString &message);
 
 public:
 
@@ -334,15 +336,11 @@ private slots:
 
 private slots:
 
-    void onRun();
-
-    void onTimerEvent();
-
     void onWssMessageReceived(QString message);
 
 private:
 
-    void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to);
+    void getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to, bool missed = false);
 
     void getMessagesFromChannelFromWss(const QString &fromAddress, const QString &channelSha, Message::Counter from, Message::Counter to);
 
@@ -350,13 +348,13 @@ private:
 
     void addAddressToMonitored(const QString &address);
 
-    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel);
+    void processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId);
 
     bool checkSignsAddress(const QString &address) const;
 
     QString getSignFromMethod(const QString &address, const QString &method) const;
 
-    std::vector<QString> getMonitoredAddresses() const;
+    std::vector<QString> getAddresses() const;
 
     void processMyChannels(const QString &address, const std::vector<ChannelInfo> &channels);
 
@@ -367,6 +365,14 @@ private:
 private:
 
     bool isDecryptDataSave = false;
+
+    // Retrieved new messages after login
+    int retrievedMissed = 0;
+    // Request ids for messages retrieve queries to count retrieved new messages
+    QSet<size_t> loginMessagesRetrieveReqs;
+
+    // Request ids for processing queries for current login to cancel for logout
+    QSet<size_t> messageRetrieves;
 
     MessengerDBStorage &db;
 

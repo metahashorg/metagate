@@ -1,17 +1,20 @@
 #include "Messenger.h"
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Log.h"
-#include "makeJsFunc.h"
+#include "qt_utilites/makeJsFunc.h"
 #include "Paths.h"
-#include "utils.h"
-#include "QRegister.h"
+#include "utilites/utils.h"
+#include "qt_utilites/QRegister.h"
 
+#include "mainwindow.h"
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
 #include "CryptographicManager.h"
 #include "MessengerDBStorage.h"
+
+#include "qt_utilites/ManagerWrapperImpl.h"
 
 #include <functional>
 using namespace std::placeholders;
@@ -104,7 +107,7 @@ static QString getWssServer() {
     return settings.value("web_socket/messenger").toString();
 };
 
-Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, QObject *parent)
+Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage &db, CryptographicManager &cryptManager, MainWindow &mainWin, QObject *parent)
     : TimerClass(1s, parent)
     , db(db)
     , javascriptWrapper(javascriptWrapper)
@@ -115,40 +118,37 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
     CHECK(settings.contains("messenger/saveDecryptedMessage"), "settings timeout not found");
     isDecryptDataSave = settings.value("messenger/saveDecryptedMessage").toBool();
 
-    CHECK(connect(this, &Messenger::callbackCall, this, &Messenger::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &Messenger::showNotification, &mainWin, &MainWindow::showNotification);
 
-    CHECK(connect(this, &TimerClass::timerEvent, this, &Messenger::onTimerEvent), "not connect onTimerEvent");
-    CHECK(connect(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived), "not connect wssClient");
-    CHECK(connect(this, &TimerClass::startedEvent, this, &Messenger::onRun), "not connect run");
+    Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &Messenger::onWssMessageReceived);
 
-    CHECK(connect(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress), "not connect onRegisterAddress");
-    CHECK(connect(this, &Messenger::registerAddressFromBlockchain, this, &Messenger::onRegisterAddressFromBlockchain), "not connect onRegisterAddressFromBlockchain");
-    CHECK(connect(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress), "not connect onGetPubkeyAddress");
-    CHECK(connect(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress), "not connect onGetPubkeyAddress");
-    CHECK(connect(this, &Messenger::getUserInfo, this, &Messenger::onGetUserInfo), "not connect onGetUserInfo");
-    CHECK(connect(this, &Messenger::getCollocutorInfo, this, &Messenger::onGetCollocutorInfo), "not connect onGetCollocutorInfo");
-    CHECK(connect(this, &Messenger::sendMessage, this, &Messenger::onSendMessage), "not connect onSendMessage");
-    CHECK(connect(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings), "not connect onSignedStrings");
-    CHECK(connect(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage), "not connect onGetLastMessage");
-    CHECK(connect(this, &Messenger::getSavedPos, this, &Messenger::onGetSavedPos), "not connect onGetSavedPos");
-    CHECK(connect(this, &Messenger::getSavedsPos, this, &Messenger::onGetSavedsPos), "not connect onGetSavedsPos");
-    CHECK(connect(this, &Messenger::savePos, this, &Messenger::onSavePos), "not connect onGetSavedPos");
-    CHECK(connect(this, &Messenger::getCountMessages, this, &Messenger::onGetCountMessages), "not connect onGetCountMessages");
-    CHECK(connect(this, &Messenger::getHistoryAddress, this, &Messenger::onGetHistoryAddress), "not connect onGetHistoryAddress");
-    CHECK(connect(this, &Messenger::getHistoryAddressAddress, this, &Messenger::onGetHistoryAddressAddress), "not connect onGetHistoryAddressAddress");
-    CHECK(connect(this, &Messenger::getHistoryAddressAddressCount, this, &Messenger::onGetHistoryAddressAddressCount), "not connect onGetHistoryAddressAddressCount");
-    CHECK(connect(this, &Messenger::createChannel, this, &Messenger::onCreateChannel), "not connect onCreateChannel");
-    CHECK(connect(this, &Messenger::addWriterToChannel, this, &Messenger::onAddWriterToChannel), "not connect onAddWriterToChannel");
-    CHECK(connect(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel), "not connect onDelWriterFromChannel");
-    CHECK(connect(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList), "not connect onGetChannelList");
-    CHECK(connect(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages), "not connect onDecryptMessages");
-    CHECK(connect(this, &Messenger::isCompleteUser, this, &Messenger::onIsCompleteUser), "not connect onCompleteUser");
-    CHECK(connect(this, &Messenger::addAllAddressesInFolder, this, &Messenger::onAddAllAddressesInFolder), "not connect onAddAllAddressesInFolder");
-    CHECK(connect(this, &Messenger::wantToTalk, this, &Messenger::onWantToTalk), "not connect onWantToTalk");
-    CHECK(connect(this, &Messenger::reEmit, this, &Messenger::onReEmit), "not connect onReEmit");
+    Q_CONNECT(this, &Messenger::registerAddress, this, &Messenger::onRegisterAddress);
+    Q_CONNECT(this, &Messenger::registerAddressFromBlockchain, this, &Messenger::onRegisterAddressFromBlockchain);
+    Q_CONNECT(this, &Messenger::savePubkeyAddress, this, &Messenger::onSavePubkeyAddress);
+    Q_CONNECT(this, &Messenger::getPubkeyAddress, this, &Messenger::onGetPubkeyAddress);
+    Q_CONNECT(this, &Messenger::getUserInfo, this, &Messenger::onGetUserInfo);
+    Q_CONNECT(this, &Messenger::getCollocutorInfo, this, &Messenger::onGetCollocutorInfo);
+    Q_CONNECT(this, &Messenger::sendMessage, this, &Messenger::onSendMessage);
+    Q_CONNECT(this, &Messenger::signedStrings, this, &Messenger::onSignedStrings);
+    Q_CONNECT(this, &Messenger::getLastMessage, this, &Messenger::onGetLastMessage);
+    Q_CONNECT(this, &Messenger::getSavedPos, this, &Messenger::onGetSavedPos);
+    Q_CONNECT(this, &Messenger::getSavedsPos, this, &Messenger::onGetSavedsPos);
+    Q_CONNECT(this, &Messenger::savePos, this, &Messenger::onSavePos);
+    Q_CONNECT(this, &Messenger::getCountMessages, this, &Messenger::onGetCountMessages);
+    Q_CONNECT(this, &Messenger::getHistoryAddress, this, &Messenger::onGetHistoryAddress);
+    Q_CONNECT(this, &Messenger::getHistoryAddressAddress, this, &Messenger::onGetHistoryAddressAddress);
+    Q_CONNECT(this, &Messenger::getHistoryAddressAddressCount, this, &Messenger::onGetHistoryAddressAddressCount);
+    Q_CONNECT(this, &Messenger::createChannel, this, &Messenger::onCreateChannel);
+    Q_CONNECT(this, &Messenger::addWriterToChannel, this, &Messenger::onAddWriterToChannel);
+    Q_CONNECT(this, &Messenger::delWriterFromChannel, this, &Messenger::onDelWriterFromChannel);
+    Q_CONNECT(this, &Messenger::getChannelList, this, &Messenger::onGetChannelList);
+    Q_CONNECT(this, &Messenger::decryptMessages, this, &Messenger::onDecryptMessages);
+    Q_CONNECT(this, &Messenger::isCompleteUser, this, &Messenger::onIsCompleteUser);
+    Q_CONNECT(this, &Messenger::addAllAddressesInFolder, this, &Messenger::onAddAllAddressesInFolder);
+    Q_CONNECT(this, &Messenger::wantToTalk, this, &Messenger::onWantToTalk);
+    Q_CONNECT(this, &Messenger::reEmit, this, &Messenger::onReEmit);
 
     Q_REG2(uint64_t, "uint64_t", false);
-    Q_REG(Messenger::Callback, "Messenger::Callback");
     Q_REG(Message::Counter, "Message::Counter");
     Q_REG(GetMessagesCallback, "GetMessagesCallback");
     Q_REG(SavePosCallback, "SavePosCallback");
@@ -177,19 +177,13 @@ Messenger::Messenger(MessengerJavascript &javascriptWrapper, MessengerDBStorage 
         db.removeDecryptedData();
     }
 
-    moveToThread(&thread1);
+    moveToThread(TimerClass::getThread());
 
     wssClient.start();
 }
 
 Messenger::~Messenger() {
     TimerClass::exit();
-}
-
-void Messenger::onCallbackCall(const std::function<void()> &callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
 }
 
 void Messenger::invokeCallback(size_t requestId, const TypedException &exception) {
@@ -201,7 +195,11 @@ void Messenger::invokeCallback(size_t requestId, const TypedException &exception
     callback(exception);
 }
 
-std::vector<QString> Messenger::getMonitoredAddresses() const {
+void Messenger::finishMethod() {
+    // empty
+}
+
+std::vector<QString> Messenger::getAddresses() const {
     const QStringList res = db.getUsersList();
     std::vector<QString> result;
     for (const QString r: res) {
@@ -210,11 +208,16 @@ std::vector<QString> Messenger::getMonitoredAddresses() const {
     return result;
 }
 
-void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to) {
+void Messenger::getMessagesFromAddressFromWss(const QString &fromAddress, Message::Counter from, Message::Counter to, bool missed) {
     const QString pubkeyHex = db.getUserPublicKey(fromAddress);
     CHECK_TYPED(!pubkeyHex.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "user pubkey not found " + fromAddress.toStdString());
     const QString signHex = getSignFromMethod(fromAddress, makeTextForGetMyMessagesRequest());
-    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, id.get());
+    size_t requestId = id.get();
+    messageRetrieves.insert(requestId);
+    if (missed) {
+        loginMessagesRetrieveReqs.insert(requestId);
+    }
+    const QString message = makeGetMyMessagesRequest(pubkeyHex, signHex, from, to, requestId);
     emit wssClient.sendMessage(message);
 }
 
@@ -340,9 +343,8 @@ QString Messenger::getSignFromMethod(const QString &address, const QString &meth
     throwErrTyped(TypeErrors::INCOMPLETE_USER_INFO, ("Not found signed method " + method + " in address " + address).toStdString());
 }
 
-void Messenger::onRun() {
-BEGIN_SLOT_WRAPPER
-    const std::vector<QString> monitoredAddresses = getMonitoredAddresses();
+void Messenger::startMethod() {
+    const std::vector<QString> monitoredAddresses = getAddresses();
     LOG << "Monitored addresses: " << monitoredAddresses.size();
     clearAddressesToMonitored();
     for (const QString &address: monitoredAddresses) {
@@ -353,11 +355,9 @@ BEGIN_SLOT_WRAPPER
             LOG << "Monitored address exception: " << address << " " << exception.description;
         }
     }
-END_SLOT_WRAPPER
 }
 
-void Messenger::onTimerEvent() {
-BEGIN_SLOT_WRAPPER
+void Messenger::timerMethod() {
     for (auto &pairDeferred: deferredMessages) {
         const QString &address = pairDeferred.first.first;
         const QString &channel = pairDeferred.first.second;
@@ -373,12 +373,9 @@ BEGIN_SLOT_WRAPPER
             }
         }
     }
-END_SLOT_WRAPPER
 }
 
-void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel) {
-    CHECK(!messages.empty(), "Empty messages");
-
+void Messenger::processMessages(const QString &address, const std::vector<NewMessageResponse> &messages, bool isChannel, size_t requestId) {
     std::vector<Message> msgs;
     msgs.reserve(messages.size());
     std::transform(messages.begin(), messages.end(), std::back_inserter(msgs), [address, isChannel](const NewMessageResponse &m) {
@@ -402,7 +399,24 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         return message;
     });
 
-    const auto nextProcess = [this, isChannel, address](const std::vector<Message> &messages) {
+    bool showNotifies = true;
+    if (loginMessagesRetrieveReqs.contains(requestId)) {
+        loginMessagesRetrieveReqs.remove(requestId);
+        showNotifies = false;
+        for_each(msgs.begin(), msgs.end(), [this](const Message &m) {
+            if (m.isInput)
+                retrievedMissed++;
+        });
+
+        if (loginMessagesRetrieveReqs.isEmpty() && retrievedMissed != 0) {
+            emit showNotification(tr("Retrivied %1 messages").arg(retrievedMissed), QStringLiteral(""));
+        }
+    }
+    if (messages.empty())
+        return;
+
+
+    const auto nextProcess = [this, isChannel, address, showNotifies](const std::vector<Message> &messages) {
         CHECK(!messages.empty(), "Empty messages");
         const QString channel = isChannel ? messages.front().channel : "";
 
@@ -423,6 +437,8 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
 
             if (m.isInput) {
                 LOG << "Add message " << m.username << " " << channel << " " << m.collocutor << " " << m.counter;
+                if (showNotifies)
+                    emit showNotification(tr("Message from %1").arg(m.collocutor), QStringLiteral(""));
                 db.addMessage(m);
                 const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
                 const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
@@ -525,6 +541,7 @@ BEGIN_SLOT_WRAPPER
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
+        /*
         const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(responseType.address);
         const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
         if (currCounter < messagesInServer) {
@@ -532,7 +549,7 @@ BEGIN_SLOT_WRAPPER
             getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer);
         } else {
             LOG << "Count messages " << responseType.address << " " << currCounter << " " << messagesInServer;
-        }
+        }*/
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
         const KeyMessageResponse publicKeyResult = parsePublicKeyMessageResponse(messageJson);
         LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey << " " << publicKeyResult.txHash << " " << publicKeyResult.blockchain_name;
@@ -541,15 +558,19 @@ BEGIN_SLOT_WRAPPER
     } else if (responseType.method == METHOD::NEW_MSG) {
         const NewMessageResponse messages = parseNewMessageResponse(messageJson);
         LOG << "New msg " << responseType.address << " " << messages.collocutor << " " << messages.counter;
-        processMessages(responseType.address, {messages}, messages.isChannel);
+        processMessages(responseType.address, {messages}, messages.isChannel, responseType.id);
     } else if (responseType.method == METHOD::NEW_MSGS) {
         const std::vector<NewMessageResponse> messages = parseNewMessagesResponse(messageJson);
         LOG << "New msgs " << responseType.address << " " << messages.size();
-        processMessages(responseType.address, messages, false);
+        //qDebug() << requestId << messageRetrieves.toList();
+        if (messageRetrieves.contains(responseType.id)) {
+            messageRetrieves.remove(responseType.id);
+            processMessages(responseType.address, messages, false, responseType.id);
+        }
     } else if (responseType.method == METHOD::GET_CHANNEL) {
         const std::vector<NewMessageResponse> messages = parseGetChannelResponse(messageJson);
         LOG << "New msgs " << responseType.address << " " << messages.size();
-        processMessages(responseType.address, messages, true);
+        processMessages(responseType.address, messages, true, responseType.id);
     } else if (responseType.method == METHOD::SEND_TO_ADDR) {
         LOG << "Send to addr ok " << responseType.address;
         invokeCallback(responseType.id, TypedException());
@@ -610,7 +631,7 @@ END_SLOT_WRAPPER
 
 void Messenger::onRegisterAddress(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const RegisterAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const QString currPubkey = db.getUserPublicKey(address);
         const bool isNew = currPubkey.isEmpty();
         if (!isNew && !isForcibly) {
@@ -629,16 +650,13 @@ BEGIN_SLOT_WRAPPER
         };
         callbacks[idRequest] = callbackWrap;
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onRegisterAddressFromBlockchain(bool isForcibly, const QString &address, const QString &rsaPubkeyHex, const QString &pubkeyAddressHex, const QString &signHex, uint64_t fee, const QString &txHash, const QString &blockchain, const QString &blockchainName, const Messenger::RegisterAddressBlockchainCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const QString currPubkey = db.getUserPublicKey(address);
         const bool isNew = currPubkey.isEmpty();
         if (!isNew && !isForcibly) {
@@ -657,16 +675,13 @@ BEGIN_SLOT_WRAPPER
         };
         callbacks[idRequest] = callbackWrap;
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onSignedStrings(const QString &address, const std::vector<QString> &signedHexs, const SignedStringsCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         const std::vector<QString> keys = stringsForSign();
         CHECK(keys.size() == signedHexs.size(), "Incorrect signed strings");
 
@@ -685,15 +700,13 @@ BEGIN_SLOT_WRAPPER
         LOG << "Set user signature " << arr.size();
         db.setUserSignatures(address, arr);
         addAddressToMonitored(address);
-    });
-
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onSavePubkeyAddress(bool isForcibly, const QString &address, const QString &pubkeyHex, const QString &signHex, const SavePubkeyCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const QString currSign = db.getContactPublicKey(address);
         const bool isNew = currSign.isEmpty();
         if (!isNew && !isForcibly) {
@@ -704,50 +717,43 @@ BEGIN_SLOT_WRAPPER
         const QString message = makeGetPubkeyRequest(address, pubkeyHex, signHex, idRequest);
         callbacks[idRequest] = std::bind(callback, _1, isNew);
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetPubkeyAddress(const QString &address, const GetPubkeyAddressCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    QString pubkey = "";
-    const TypedException exception = apiVrapper2([&, this] {
-        pubkey = db.getContactPublicKey(address);
+    runAndEmitCallback([&, this] {
+        const QString pubkey = db.getContactPublicKey(address);
         CHECK_TYPED(!pubkey.isEmpty(), TypeErrors::INCOMPLETE_USER_INFO, "Collocutor pubkey not found " + address.toStdString());
         LOG << "Publickey found " << address << " " << pubkey;
-    });
-    callback.emitFunc(exception, pubkey);
+        return pubkey;
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetUserInfo(const QString &address, const UserInfoCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    ContactInfo info;
-    bool complete = false;
-    const TypedException exception = apiVrapper2([&, this] {
-        info = db.getUserInfo(address);
-        complete = checkSignsAddress(address);
-    });
-    callback.emitFunc(exception, complete, info);
+    runAndEmitCallback([&, this] {
+        const ContactInfo info = db.getUserInfo(address);
+        const bool complete = checkSignsAddress(address);
+        return std::make_tuple(complete, info);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetCollocutorInfo(const QString &address, const UserInfoCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    ContactInfo info;
-    const TypedException exception = apiVrapper2([&, this] {
-        info = db.getContactInfo(address);
-    });
-    callback.emitFunc(exception, true, info);
+    runAndEmitCallback([&, this] {
+        const ContactInfo info = db.getContactInfo(address);
+        return std::make_tuple(true, info);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onSendMessage(const QString &thisAddress, const QString &toAddress, bool isChannel, QString channel, const QString &dataHex, const QString &decryptedDataHex, const QString &pubkeyHex, const QString &signHex, uint64_t fee, uint64_t timestamp, const QString &encryptedDataHex, const SendMessageCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         if (!isChannel) {
             channel = "";
         }
@@ -772,102 +778,84 @@ BEGIN_SLOT_WRAPPER
         }
         callbacks[idRequest] = callback;
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetSavedPos(const QString &address, bool isChannel, const QString &collocutorOrChannel, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    Message::Counter lastCounter;
-    const TypedException exception = apiVrapper2([&, this] {
-        lastCounter = db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel);
-    });
-    callback.emitFunc(exception, lastCounter);
+    runAndEmitCallback([&, this] {
+        return db.getLastReadCounterForUserContact(address, collocutorOrChannel, isChannel);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetSavedsPos(const QString &address, bool isChannel, const GetSavedsPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<MessengerDBStorage::NameCounterPair> pos;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         if (isChannel) {
-            pos = db.getLastReadCountersForChannels(address);
+            return db.getLastReadCountersForChannels(address);
         } else {
-            pos = db.getLastReadCountersForContacts(address);
+            return db.getLastReadCountersForContacts(address);
         }
-    });
-    callback.emitFunc(exception, pos);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onSavePos(const QString &address, bool isChannel, const QString &collocutorOrChannel, Message::Counter pos, const SavePosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         db.setLastReadCounterForUserContact(address, collocutorOrChannel, pos, isChannel);
-    });
-    callback.emitFunc(exception);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetLastMessage(const QString &address, bool isChannel, QString channel, const GetSavedPosCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    Message::Counter lastCounter;
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         if (!isChannel) {
             channel = "";
         }
-        lastCounter = db.getMessageMaxCounter(address, channel);
-    });
-    callback.emitFunc(exception, lastCounter);
+        return db.getMessageMaxCounter(address, channel);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetCountMessages(const QString &address, const QString &collocutor, Message::Counter from, const GetCountMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    Message::Counter lastCounter = 0;
-    const TypedException exception = apiVrapper2([&, this] {
-        lastCounter = db.getMessagesCountForUserAndDest(address, collocutor, from);
-    });
-    callback.emitFunc(exception, lastCounter);
+    runAndEmitCallback([&, this] {
+        return db.getMessagesCountForUserAndDest(address, collocutor, from);
+    }, callback, 0);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddress(QString address, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Message> messages;
-    const TypedException exception = apiVrapper2([&, this] {
-        messages = db.getMessagesForUser(address, from, to);
-    });
-    callback.emitFunc(exception, messages);
+    runAndEmitCallback([&, this] {
+        return db.getMessagesForUser(address, from, to);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddressAddress(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter from, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Message> messages;
-    const TypedException exception = apiVrapper2([&, this] {
-        messages = db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to, isChannel);
-    });
-    callback.emitFunc(exception, messages);
+    runAndEmitCallback([&, this] {
+        return db.getMessagesForUserAndDest(address, collocutorOrChannel, from, to, isChannel);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetHistoryAddressAddressCount(QString address, bool isChannel, const QString &collocutorOrChannel, Message::Counter count, Message::Counter to, const GetMessagesCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<Message> messages;
-    const TypedException exception = apiVrapper2([&, this] {
-        messages = db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count, isChannel);
-    });
-    callback.emitFunc(exception, messages);
+    runAndEmitCallback([&, this] {
+        return db.getMessagesForUserAndDestNum(address, collocutorOrChannel, to, count, isChannel);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onCreateChannel(const QString &address, const QString &title, const QString &titleSha, const QString &pubkeyHex, const QString &signHex, uint64_t fee, const CreateChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeCreateChannelRequest(title, titleSha, fee, pubkeyHex, signHex, idRequest);
         const auto callbackWrap = [this, callback, address, title, titleSha](const TypedException &exception) {
@@ -881,48 +869,37 @@ BEGIN_SLOT_WRAPPER
         };
         callbacks[idRequest] = callbackWrap;
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onAddWriterToChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const AddWriterToChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeChannelAddWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
         callbacks[idRequest] = std::bind(callback, _1);
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onDelWriterFromChannel(const QString &titleSha, const QString &address, const QString &pubkeyHex, const QString &signHex, const DelWriterToChannelCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeChannelDelWriterRequest(titleSha, address, pubkeyHex, signHex, idRequest);
         callbacks[idRequest] = std::bind(callback, _1);
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onGetChannelList(const QString &address, const GetChannelListCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    std::vector<ChannelInfo> channels;
-    const TypedException exception = apiVrapper2([&, this] {
-        channels = db.getChannelsWithLastReadCounters(address);
-    });
-    callback.emitFunc(exception, channels);
+    runAndEmitCallback([&, this] {
+        return db.getChannelsWithLastReadCounters(address);
+    }, callback);
 END_SLOT_WRAPPER
 }
 
@@ -932,7 +909,7 @@ BEGIN_SLOT_WRAPPER
         callback.emitCallback();
         return;
     }
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const auto notDecryptedMessagesPair = db.getNotDecryptedMessage(address);
         CHECK(notDecryptedMessagesPair.first.size() == notDecryptedMessagesPair.second.size(), "Incorrect db.getNotDecryptedMessage");
         const std::vector<Message> &notDecryptedMessages = notDecryptedMessagesPair.second;
@@ -951,29 +928,25 @@ BEGIN_SLOT_WRAPPER
         }, [callback](const TypedException &exception) {
             callback.emitException(exception);
         }, std::bind(&Messenger::callbackCall, this, _1), true));
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onIsCompleteUser(const QString &address, const CompleteUserCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    bool isComplete;
-    const TypedException exception = apiVrapper2([&, this] {
-        isComplete = checkSignsAddress(address);
+    runAndEmitCallback([&, this] {
+        const bool isComplete = checkSignsAddress(address);
         if (!isComplete) {
             LOG << "Uncompleted signs";
         }
-    });
-    callback.emitFunc(exception, isComplete);
+        return isComplete;
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onAddAllAddressesInFolder(const QString &folder, const std::vector<QString> &addresses, const AddAllWalletsInFolderCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitCallback([&, this] {
         LOG << "Add address in folder " << folder << " " << addresses.size();
         currentWalletFolder = folder;
         for (const QString &address: addresses) {
@@ -983,22 +956,29 @@ BEGIN_SLOT_WRAPPER
         const QString messageGetMyChannels = makeAddAllKeysRequest(addresses, size_t(-1));
         emit wssClient.addHelloString(messageGetMyChannels, "Messenger");
         emit wssClient.sendMessage(messageGetMyChannels);
-    });
-    callback.emitFunc(exception);
+        // Get missed messages
+        messageRetrieves.clear();
+        loginMessagesRetrieveReqs.clear();
+        retrievedMissed = 0;
+        for (const QString &address: addresses) {
+            const QString pubkeyHex = db.getUserPublicKey(address);
+            if (pubkeyHex.isEmpty())
+                continue;
+            const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(address);
+            getMessagesFromAddressFromWss(address, currCounter + 1, -1, true);
+        }
+    }, callback);
 END_SLOT_WRAPPER
 }
 
 void Messenger::onWantToTalk(const QString &address, const QString &pubkey, const QString &sign, const WantToTalkCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
+    runAndEmitErrorCallback([&, this] {
         const size_t idRequest = id.get();
         const QString message = makeWantToTalkRequest(address, pubkey, sign, idRequest);
         callbacks[idRequest] = std::bind(callback, _1);
         emit wssClient.sendMessage(message);
-    });
-    if (exception.isSet()) {
-        callback.emitException(exception);
-    }
+    }, callback);
 END_SLOT_WRAPPER
 }
 

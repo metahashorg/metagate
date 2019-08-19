@@ -9,18 +9,31 @@
 #include <map>
 #include <set>
 
-#include "client.h"
-#include "HttpClient.h"
-#include "TimerClass.h"
+#include "Network/SimpleClient.h"
+#include "Network/HttpClient.h"
+#include "qt_utilites/TimerClass.h"
 
-#include "CallbackWrapper.h"
+#include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include "Transaction.h"
+#include "TransactionsFilter.h"
 
 class NsLookup;
+class InfrastructureNsLookup;
+
 struct TypedException;
 
 class JavascriptWrapper;
+class MainWindow;
+
+namespace wallets {
+class Wallets;
+}
+
+namespace auth {
+class Auth;
+}
 
 namespace transactions {
 
@@ -28,7 +41,7 @@ class TransactionsJavascript;
 class TransactionsDBStorage;
 enum class DelegateStatus;
 
-class Transactions : public TimerClass {
+class Transactions : public ManagerWrapper, public TimerClass {
     Q_OBJECT
 private:
 
@@ -43,10 +56,10 @@ private:
         SendedTransactionWatcher& operator=(SendedTransactionWatcher &&) = delete;
 
         SendedTransactionWatcher(Transactions &txManager, const QString &requestId, const TransactionHash &hash, const time_point &startTime, const std::vector<QString> &servers, const seconds &timeout)
-            : startTime(startTime)
+            : requestId(requestId)
+            , startTime(startTime)
             , timeout(timeout)
             , txManager(txManager)
-            , requestId(requestId)
             , hash(hash)
             , servers(servers.begin(), servers.end())
             , allServers(servers.begin(), servers.end())
@@ -115,8 +128,6 @@ private:
 
 public:
 
-    using SignalFunc = std::function<void(const std::function<void()> &callback)>;
-
     using RegisterAddressCallback = CallbackWrapper<void()>;
 
     using GetTxsCallback = CallbackWrapper<void(const std::vector<Transaction> &txs)>;
@@ -137,19 +148,24 @@ public:
 
     using ClearDbCallback = CallbackWrapper<void()>;
 
-    using Callback = std::function<void()>;
+    using AddCurrencyConformity = CallbackWrapper<void()>;
 
 public:
 
-    explicit Transactions(NsLookup &nsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, QObject *parent = nullptr);
+    explicit Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastructureNsLookup, TransactionsJavascript &javascriptWrapper, TransactionsDBStorage &db, auth::Auth &authManager, MainWindow &mainWin, wallets::Wallets &wallets, QObject *parent = nullptr);
 
-    ~Transactions();
+    ~Transactions() override;
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 signals:
-
-    void callbackCall(Transactions::Callback callback);
-
-signals:
+    void showNotification(const QString &title, const QString &message);
 
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
@@ -157,21 +173,23 @@ signals:
 
     void setCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
-    void getTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
-
     void getTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
-    void getTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
+    void getTxsFilters(const QString &address, const QString &currency, const Filters &filter, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void getTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void getForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
+    void getDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback);
+
+    void getDelegateTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
+
     void getLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback);
 
     void calcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void getNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+    void getNonce(const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
 
     void sendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
@@ -181,6 +199,8 @@ signals:
 
     void clearDb(const QString &currency, const ClearDbCallback &callback);
 
+    void addCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
+
 public slots:
 
     void onRegisterAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
@@ -189,21 +209,23 @@ public slots:
 
     void onSetCurrentGroup(const QString &group, const SetCurrentGroupCallback &callback);
 
-    void onGetTxs(const QString &address, const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
-
     void onGetTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
-    void onGetTxsAll(const QString &currency, const QString &fromTx, int count, bool asc, const GetTxsCallback &callback);
+    void onGetTxsFilters(const QString &address, const QString &currency, const Filters &filter, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onGetTxsAll2(const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
     void onGetForgingTxs(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
 
+    void onGetDelegateTxs(const QString &address, const QString &currency, const QString &to, int from, int count, bool asc, const GetTxsCallback &callback);
+
+    void onGetDelegateTxs2(const QString &address, const QString &currency, int from, int count, bool asc, const GetTxsCallback &callback);
+
     void onGetLastForgingTx(const QString &address, const QString &currency, const GetTxCallback &callback);
 
     void onCalcBalance(const QString &address, const QString &currency, const CalcBalanceCallback &callback);
 
-    void onGetNonce(const QString &requestId, const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
+    void onGetNonce(const QString &from, const SendParameters &sendParams, const GetNonceCallback &callback);
 
     void onSendTransaction(const QString &requestId, const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign, const SendParameters &sendParams, const SendTransactionCallback &callback);
 
@@ -213,15 +235,15 @@ public slots:
 
     void onClearDb(const QString &currency, const ClearDbCallback &callback);
 
+    void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
+
+    void onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
+
 private slots:
 
-    void onCallbackCall(Transactions::Callback callback);
-
-    void onRun();
-
-    void onTimerEvent();
-
     void onFindTxOnTorrentEvent();
+
+    void onLogined(bool isInit, const QString login);
 
 private:
 
@@ -231,13 +253,15 @@ private:
 
     void processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber);
 
-    void processAddressMth(const std::vector<std::pair<QString, std::vector<QString>>> &addressesAndUnconfirmedTxs, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
+    void processAddressMth(const std::vector<QString> &addresses, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
 
-    void processPendingsMth(const std::vector<QString> &servers);
+    void processPendings();
+
+    void processPendings(const QString &address, const QString &currency, const std::vector<Transaction> &txsPending, const std::vector<QString> &serversContract, const std::vector<QString> &serversSimple);
 
     uint64_t calcCountTxs(const QString &address, const QString &currency) const;
 
-    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, const BalanceInfo &balance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
+    void newBalance(const QString &address, const QString &currency, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const BalanceInfo &balance, const BalanceInfo &curBalance, const std::vector<Transaction> &txs, const std::shared_ptr<ServersStruct> &servStruct);
 
     void updateBalanceTime(const QString &currency, const std::shared_ptr<ServersStruct> &servStruct);
 
@@ -251,9 +275,19 @@ private:
 
     void fetchBalanceAddress(const QString &address);
 
+    void removeAddress(const QString &address, const QString &currency);
+
+    void addTrackedForCurrentLogin();
+
+    QString convertCurrency(const QString &currency) const;
+
 private:
 
     NsLookup &nsLookup;
+
+    InfrastructureNsLookup &infrastructureNsLookup;
+
+    wallets::Wallets &wallets;
 
     TransactionsJavascript &javascriptWrapper;
 
@@ -263,7 +297,9 @@ private:
 
     HttpSimpleClient tcpClient;
 
-    QString currentGroup;
+    QString currentUserName;
+
+    bool isUserNameSetted = false;
 
     QTimer timerSendTx;
 
@@ -271,7 +307,7 @@ private:
 
     std::map<QString, system_time_point> lastSuccessUpdateTimestamps;
 
-    std::vector<QString> pendingTxsAfterSend;
+    std::vector<std::pair<QString, std::set<QString>>> pendingTxsAfterSend;
 
     seconds timeout;
 

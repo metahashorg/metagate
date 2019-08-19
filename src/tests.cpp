@@ -7,18 +7,18 @@
 #include <QFile>
 #include <QTextStream>
 
-#include "Wallet.h"
-#include "EthWallet.h"
-#include "BtcWallet.h"
-#include "utils.h"
+#include "Wallets/Wallet.h"
+#include "Wallets/EthWallet.h"
+#include "Wallets/BtcWallet.h"
+#include "utilites/utils.h"
 
-#include "btctx/Base58.h"
+#include "Wallets/btctx/Base58.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
-#include "ethtx/utils2.h"
+#include "Wallets/ethtx/utils2.h"
 
-#include "btctx/wif.h"
+#include "Wallets/btctx/wif.h"
 
 void testCreateWallet() {
     QString password = "1";
@@ -26,9 +26,9 @@ void testCreateWallet() {
     std::string addr;
     const std::string exampleMessage = "Example message " + std::to_string(rand());
     std::string signature;
-    Wallet::createWallet("./", password.toStdString(), publicKey, addr);
+    Wallet::createWallet("./", false, password.toStdString(), publicKey, addr);
     publicKey.clear();
-    Wallet wallet("./", addr, password.toStdString());
+    Wallet wallet("./", false, addr, password.toStdString());
     signature = wallet.sign(exampleMessage, publicKey);
     std::cout << signature << std::endl;
 }
@@ -110,7 +110,7 @@ void testCreateMetahashWallet() {
     std::string pubkey;
     std::string address;
     createFolder("./mth");
-    Wallet::createWallet("./mth", "1", pubkey, address);
+    Wallet::createWallet("./", true, "1", pubkey, address);
     std::cout << address.substr(2) << std::endl;
 }
 

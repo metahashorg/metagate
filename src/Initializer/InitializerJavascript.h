@@ -4,7 +4,7 @@
 #include <QObject>
 #include <functional>
 
-struct TypedException;
+#include "qt_utilites/WrapperJavascript.h"
 
 namespace initializer {
 
@@ -12,13 +12,11 @@ class Initializer;
 
 struct InitState;
 
-class InitializerJavascript : public QObject {
+class InitializerJavascript: public WrapperJavascript {
     Q_OBJECT
-public:
-    using Callback = std::function<void()>;
 
 public:
-    explicit InitializerJavascript(QObject *parent = nullptr);
+    explicit InitializerJavascript();
 
     void setInitializerManager(Initializer &initializer) {
         m_initializer = &initializer;
@@ -33,16 +31,6 @@ public slots:
     Q_INVOKABLE void getAllTypes();
 
     Q_INVOKABLE void getAllSubTypes();
-
-signals:
-
-    void jsRunSig(QString jsString);
-
-    void callbackCall(const Callback &callback);
-
-public slots:
-
-    void onCallbackCall(const Callback &callback);
 
 signals:
 
@@ -62,16 +50,7 @@ private slots:
 
 private:
 
-    template<typename... Args>
-    void makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args);
-
-    void runJs(const QString &script);
-
-private:
-
     Initializer *m_initializer;
-
-    std::function<void(const std::function<void()> &callback)> signalFunc;
 };
 
 }

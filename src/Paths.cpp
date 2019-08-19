@@ -7,7 +7,7 @@
 
 #include <mutex>
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 #include "Log.h"
 
@@ -22,6 +22,8 @@ const static QString LOG_PATH = "logs/";
 const static QString PAGES_PATH = "pages/";
 
 const static QString SETTINGS_NAME = "settings.ini";
+
+const static QString RUNTIME_SETTINGS_NAME = "runtimeSettings.ini";
 
 const static QString SETTINGS_NAME_OLD = "settingsOld.ini";
 
@@ -175,6 +177,12 @@ QString getSettingsPath() {
 
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
     const QString settings = makePath(res, SETTINGS_NAME);
+    return settings;
+}
+
+QString getRuntimeSettingsPath() {
+    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+    const QString settings = makePath(res, RUNTIME_SETTINGS_NAME);
     return settings;
 }
 

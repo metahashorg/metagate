@@ -1,0 +1,243 @@
+Wallets регестрируется в javascript по имени wallets 
+
+walletsCreateWatchWalletsListResultJs(isMhc, result, errorNum, errorMessage)
+Возвращается при создании watch кошельков
+Аналог createWatchWalletsListMHCResultJs и createWatchWalletsListResultJs
+
+
+MTH
+
+
+Q_INVOKABLE void createWallet(bool isMhc, QString password, const QString &callback);
+# Generates Metahash wallet, puts this generated wallet to ~/.metahash_wallets/ named address. 
+# javascript is called after completion of this function
+callback(fullKeyPath, publickey, address, exampleMessage, signature, errorNum, errorMessage)
+
+Q_INVOKABLE void createWalletWatch(bool isMhc, const QString &address, const QString &callback);
+# Creates Metahash watch wallet with address, puts this file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+callback(fullKeyPath, address, errorNum, errorMessage)
+
+Q_INVOKABLE removeWalletWatch(bool isMhc, const QString &address, const QString &callback)
+# Removes Metahash watch wallet with address, file wallet to ~/.metahash_wallets/ named address with .watch suffix.
+# javascript is called after completion of this function
+callback(address, errorNum, errorMessage)
+
+Q_INVOKABLE void checkWalletExist(bool isMhc, const QString &address, const QString &callback);
+# Checks is wallet (any type) with address exists.
+# javascript is called after completion of this function res: true/false
+callback(address, res, errorNum, errorMessage)
+
+Q_INVOKABLE checkWalletPassword(bool isMhc, const QString &address, const QString &password, const QString &callback)
+# Проверяет правильность пароля от данного кошелька
+# javascript is called after completion of this function
+callback(requestid, address, "Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void checkAddress(QString address, const QString &callback);
+# To check the address for correctness. The result will return to the function:
+callback(address, "Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE createContractAddress(const QString &address, int nonce, const QString &callback)
+# Creates v8 contract address based on address and nonce
+# javascript is called after completion of this function 
+callback(result, errorNum, errorMessage)
+
+Q_INVOKABLE signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const QString &callback)
+# Message's signing.
+# javascript is called after completion of this function 
+callback(signature, publicKey, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &callback)
+# signs the transaction in a new binary format
+# value, fee, nonce - a string with decimal number
+# Result returns to 
+callback(signature, publicKey, txHex, errorNum, errorMessage)
+
+Q_INVOKABLE void signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const QString &callback)
+# Sends transaction with C++ (like signMessageDelegate, but differs because of the data field)
+# Result returns to 
+# if nonce empty, then calc nonce
+callback("Ok/Not ok", errorNum, errorMessage)
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
+
+Q_INVOKABLE signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const QString &callback)
+# signs the transaction in a new binary format with delegate data
+# if nonce empty, then calc nonce
+paramsJson - json of {"currency": "currency", "countServersSend": 3, "countServersGet": 3, "typeSend": "proxy", "typeGet": "torrent", "timeout_sec": 6} type
+# Result returns to 
+callback("Ok/Not ok", errorNum, errorMessage)
+# If Ok returns, events from transactions are to be expected (txsSendedTxJs etc.). Ok status doesn't guarantee that the transaction has been processed correctly on the server.
+
+Q_INVOKABLE void getOnePrivateKey(bool isMhc, const QString &address, bool isCompact, const QString &callback);
+# Returns private key to the function
+callback(key, errorNum, errorMessage)
+# The isCompact parameter is used if you need a more compact format.
+
+Q_INVOKABLE void savePrivateKey(bool isMhc, const QString &privateKey, const QString &password, const QString &callback);
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+callback(address, errorNum, errorMessage)
+
+Q_INVOKABLE void saveRawPrivateKey(bool isMhc, const QString &rawPrivateKey, const QString &password, const QString &callback)
+# Saves private key
+# rawPrivKey - unencrypted private key
+# javascript is called after completion of this function 
+callback(address, errorNum, errorMessage)
+
+Q_INVOKABLE void getRawPrivateKey(bool isMhc, const QString &address, const QString &password, const QString &callback)
+# Returns unencrypted  private key
+# javascript is called after completion of this function 
+callback(result, errorNum, errorMessage)
+
+Q_INVOKABLE void importKeys(bool isMhc, const QString &path, const QString &callback);
+# Импортирует кошельки из папки path в каталог приложения
+# javascript is called after completion of this function 
+callback(countKeys, errorNum, errorMessage)
+
+Q_INVOKABLE void calkKeys(bool isMhc, const QString &path, const QString &callback);
+# Ищет кошельки из папки path
+# javascript is called after completion of this function 
+callback(wallets, errorNum, errorMessage)
+где wallets - json вида ["address1", "address2"]
+
+
+
+RSA
+
+
+
+Q_INVOKABLE void createRsaKey(bool isMhc, const QString &address, const QString &password, const QString &callback)
+# Generates rsa key for specified address.
+# javascript is called after completion of this function 
+callback(publicKeyHex, errorNum, errorMessage)
+
+Q_INVOKABLE void getRsaPublicKey(bool isMhc, const QString &address, const QString &callback)
+# Returns public key from rsa key
+callback(publicKeyHex, errorNum, errorMessage)
+
+Q_INVOKABLE void copyRsaKey(bool isMhc, const QString &address, const QString &pathPub, const QString &pathPriv, const QString &callback)
+# Копирует ключи по указанному пути в свой каталог.
+# javascript is called after completion of this function 
+callback("Ok", errorNum, errorMessage)
+
+Q_INVOKABLE void copyRsaKeyToFolder(bool isMhc, const QString &address, const QString &path, const QString &callback)
+# Копирует rsa ключи в указанный каталог.
+# javascript is called after completion of this function 
+callback(requestId, "Ok", errorNum, errorMessage)
+
+
+
+ETHEREUM
+
+
+
+Q_INVOKABLE void createEthKey(const QString &password, const QString &callback)
+# Generates Ethereum wallet, puts the file to ~/.metahash_wallets/eth/
+# javascript is called after completion of this function 
+callback(address, fullKeyPath, errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageEth(const QString &address, const QString &password, const QString &nonce, const QString &gasPrice, const QString &gasLimit, const QString &to, const QString &value, const QString &data, const QString &callback)
+# Generates the signed Ethereum transaction
+# Parameters:
+  # address — address of the account
+  # password — password of the account
+  Further parameters are hexadecimal values prefixed with 0x
+# When transferring tokens, "to" should be the token address, "value" == 0x0 (commonly), recipient and amount of tokens must be encoded in the data parameter
+# Usually data parameter is equal to 0x
+# javascript is called after completion of this function 
+callback(result, errorNum, errorMessage)
+
+Q_INVOKABLE void checkAddressEth(const QString &address, const QString &callback)
+# To check the address for correctness. The result will return to the function:
+callback("Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyEth(const QString &privateKey, const QString &password, const QString &callback)
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+callback(address, errorNum, errorMessage)
+
+Q_INVOKABLE void getOnePrivateKeyEth(const QString &address, const QString &callback)
+# Returns private key to the function
+callback(key, errorNum, errorMessage)
+
+Q_INVOKABLE void importKeysEth(const QString &path, const QString &callback);
+# Импортирует кошельки из папки path в каталог приложения
+# javascript is called after completion of this function 
+callback(countKeys, errorNum, errorMessage)
+
+Q_INVOKABLE void calkKeysEth(const QString &path, const QString &callback);
+# Ищет кошельки из папки path
+# javascript is called after completion of this function 
+callback(wallets, errorNum, errorMessage)
+где wallets - json вида ["address1", "address2"]
+
+
+
+BITCOIN
+
+
+
+Q_INVOKABLE void createBtcKey(const QString &password, const QString &callback)
+# Generates Bitcoin wallet, puts file to ~/.metahash_wallets/btc/
+# javascript is called after completion of this function 
+callback(address, fullKeyPath, errorNum, errorMessage)
+
+Q_INVOKABLE void checkAddressBtc(const QString &address, const QString &callback)
+# To check the address for correctness. The result will return to the function:
+callback("Ok"/"Not ok", errorNum, errorMessage)
+
+Q_INVOKABLE void signMessageBtcUsedUtxos(QString address, QString password, QString jsonInputs, QString toAddress, QString value, QString estimateComissionInSatoshi, QString fees, QString jsonUsedUtxos, const QString &callback)
+# Generating Bitcoin transaction
+# Parameters:
+  # jsonInputs - utxos in the format [{"tx_hash": "string", "tx_index": figure, "scriptPubKey": "string", "value": "figure in the string in decimal format"}]
+  # value - is needed for sending. Possible variants: "all" or decimal number
+  # fees - Possible variants: "auto" or decimal number
+  # estimateComissionInSatoshi if there was "auto", here must be specified a decimal number
+  # jsonUsedUtxos performed transactions. Empty array or value from the previous function call result
+# javascript is called after completion of this function 
+callback(transaction, jsonUsedUtxos, transactionHash, errorNum, errorMessage)
+
+Q_INVOKABLE void savePrivateKeyBtc(const QString &privateKey, const QString &password, const QString &callback)
+# Tries to recognize a key type and saves it to the right place
+# After the operation is completed, it calls function
+callback(address, errorNum, errorMessage)
+
+Q_INVOKABLE void getOnePrivateKeyBtc(const QString &address, const QString &callback)
+# Returns private key to the function
+callback(key, errorNum, errorMessage)
+
+Q_INVOKABLE void importKeysBtc(const QString &path, const QString &callback);
+# Импортирует кошельки из папки path в каталог приложения
+# javascript is called after completion of this function 
+callback(countKeys, errorNum, errorMessage)
+
+Q_INVOKABLE void calkKeysBtc(const QString &path, const QString &callback);
+# Ищет кошельки из папки path
+# javascript is called after completion of this function 
+callback(wallets, errorNum, errorMessage)
+где wallets - json вида ["address1", "address2"]
+
+
+
+COMMON
+
+
+
+Q_INVOKABLE void getWalletFolders(const QString &callback);
+# Function calls javascript
+callback(walletDefaultPath, walletCurrentPath, userName, errorNum, errorMessage)
+
+Q_INVOKABLE QString backupKeys(QString caption, const QString &callback);
+# Backs up keys to the file. Before backup, user is shown a dialog box providing ability to select a path.
+caption # name of the dialog 
+# Function calls javascript
+callback(fileName, errorNum, errorMessage)
+
+Q_INVOKABLE QString restoreKeys(QString caption, const QString &callback);
+# Recovers keys from a file. Before recovery, user is shown a dialog box providing ability to select backup file.
+caption # name of the dialog
+# Function calls javascript
+callback(fileName, errorNum, errorMessage)
+
+Q_INVOKABLE void openWalletPathInStandartExplorer();
+# Open directory containing keys in standard explorer.

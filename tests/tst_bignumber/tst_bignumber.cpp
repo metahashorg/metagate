@@ -2,7 +2,7 @@
 
 #include <QTest>
 
-#include "BigNumber.h"
+#include "utilites/BigNumber.h"
 
 tst_BigNumber::tst_BigNumber(QObject *parent)
     : QObject(parent)
@@ -165,6 +165,35 @@ void tst_BigNumber::testBigNumberSub()
     num1 -= num2;
     QByteArray res2 = num1.getDecimal();
     QCOMPARE(sub, res2);
+}
+
+void tst_BigNumber::testBigNumberFracDecimal_data()
+{
+    QTest::addColumn<QByteArray>("dec");
+    QTest::addColumn<quint32>("size");
+    QTest::addColumn<QString>("res");
+    QTest::newRow("BigNumberFracDecimal 01") << QByteArray("13874877844") << 5U << QStringLiteral("138748.77844");
+    QTest::newRow("BigNumberFracDecimal 02") << QByteArray("12787328744987349849839843893434894894398") << 7U << QStringLiteral("1278732874498734984983984389343489.4894398");
+    QTest::newRow("BigNumberFracDecimal 03") << QByteArray("1") << 5U << QStringLiteral("0.00001");
+    QTest::newRow("BigNumberFracDecimal 04") << QByteArray("1") << 0U << QStringLiteral("1");
+    QTest::newRow("BigNumberFracDecimal 05") << QByteArray("1") << 1U << QStringLiteral("0.1");
+    QTest::newRow("BigNumberFracDecimal 06") << QByteArray("1000") << 3U << QStringLiteral("1");
+    QTest::newRow("BigNumberFracDecimal 07") << QByteArray("10000") << 5U << QStringLiteral("0.1");
+    QTest::newRow("BigNumberDecimal 08") << QByteArray("-656565") << 3U << QStringLiteral("-656.565");
+    QTest::newRow("BigNumberDecimal 09") << QByteArray("-1278732874498734984983984389343489489439812787328744987349849839843893434894894398") << 7U << QStringLiteral("-127873287449873498498398438934348948943981278732874498734984983984389343489.4894398");
+    QTest::newRow("BigNumberDecimal 10") << QByteArray("90709905498549865896096590095409590690659096090484388954895896896589658968968968968965989070990549854986589609659009540959069065909609048438895489589689658965896896896896896598") << 7U << QStringLiteral("9070990549854986589609659009540959069065909609048438895489589689658965896896896896896598907099054985498658960965900954095906906590960904843889548958968965896589689689689.6896598");
+
+}
+
+void tst_BigNumber::testBigNumberFracDecimal()
+{    QFETCH(QByteArray, dec);
+     QFETCH(quint32, size);
+     QFETCH(QString, res);
+
+     BigNumber num(dec);
+     QString res1 = num.getFracDecimal(size);
+     QCOMPARE(res, res1);
+
 }
 
 QTEST_MAIN(tst_BigNumber)

@@ -4,8 +4,9 @@
 #include <QFileOpenEvent>
 
 #include "check.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
 #include "Log.h"
+#include "qt_utilites/QRegister.h"
 
 #include "RunGuard.h"
 
@@ -18,7 +19,7 @@ MhPayEventHandler::MhPayEventHandler(RunGuard &runGuard)
     : runGuard(runGuard)
 {
     timer.setInterval(milliseconds(1s).count());
-    CHECK(connect(&timer, &QTimer::timeout, this, &MhPayEventHandler::timerEvent), "not connect timerEvent");
+    Q_CONNECT(&timer, &QTimer::timeout, this, &MhPayEventHandler::onTimerEvent);
     timer.start();
 }
 
@@ -60,7 +61,7 @@ bool MhPayEventHandler::eventFilter(QObject *object, QEvent *event) {
     }
 }
 
-void MhPayEventHandler::timerEvent() {
+void MhPayEventHandler::onTimerEvent() {
 BEGIN_SLOT_WRAPPER
     const std::string commandLine = runGuard.getValueAndReset();
     if (commandLine.empty()) {

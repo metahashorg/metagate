@@ -12,7 +12,7 @@ INCLUDEPATH = ../../src
 
 SOURCES += \
     tst_qrcoder.cpp \
-    ../../src/qrcoder.cpp
+    ../../src/utilites/qrcoder.cpp
 
 HEADERS += \
     tst_qrcoder.h

@@ -2,8 +2,8 @@ TEMPLATE = app
 
 TARGET = MetaGate
 
-DEFINES += VERSION_STRING=\\\"1.19.5\\\"
-DEFINES += VERSION_SETTINGS=\\\"10.4\\\"
+DEFINES += VERSION_STRING=\\\"1.20.0\\\"
+DEFINES += VERSION_SETTINGS=\\\"10.5\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -13,57 +13,41 @@ DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp mainwindow.cpp \
-    Wallet.cpp \
-    client.cpp \
-    machine_uid_win.cpp \
-    unzip.cpp \
     uploader.cpp \
-    EthWallet.cpp \
-    ethtx/scrypt/crypto_scrypt-nosse.cpp \
-    ethtx/scrypt/sha256.cpp \
-    ethtx/cert.cpp \
-    ethtx/rlp.cpp \
-    ethtx/ethtx.cpp \
-    ethtx/cert2.cpp \
-    ethtx/scrypt/crypto_scrypt_saltgen.cpp \
-    ethtx/crossguid/Guid.cpp \
-    btctx/Base58.cpp \
-    btctx/btctx.cpp \
-    btctx/wif.cpp \
-    BtcWallet.cpp \
-    VersionWrapper.cpp \
+    Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
+    Wallets/ethtx/scrypt/sha256.cpp \
+    Wallets/ethtx/cert.cpp \
+    Wallets/ethtx/rlp.cpp \
+    Wallets/ethtx/ethtx.cpp \
+    Wallets/ethtx/cert2.cpp \
+    Wallets/ethtx/scrypt/crypto_scrypt_saltgen.cpp \
+    Wallets/ethtx/crossguid/Guid.cpp \
+    Wallets/btctx/Base58.cpp \
+    Wallets/btctx/btctx.cpp \
+    Wallets/btctx/wif.cpp \
     StopApplication.cpp \
     tests.cpp \
-    Log.cpp \
-    openssl_wrapper/openssl_wrapper.cpp \
-    utils.cpp \
-    ethtx/utils2.cpp \
-    NsLookup.cpp \
-    dns/datatransformer.cpp \
-    dns/dnspacket.cpp \
-    dns/resourcerecord.cpp \
-    WebSocketClient.cpp \
+    Wallets/openssl_wrapper/openssl_wrapper.cpp \
+    Wallets/ethtx/utils2.cpp \
+    NsLookup/NsLookup.cpp \
+    NsLookup/dns/datatransformer.cpp \
+    NsLookup/dns/dnspacket.cpp \
+    NsLookup/dns/resourcerecord.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
     Paths.cpp \
-    BigNumber.cpp \
     RunGuard.cpp \
-    qrcoder.cpp \
     Messenger/Messenger.cpp \
-    TimerClass.cpp \
     Messenger/MessengerMessages.cpp \
     Messenger/MessengerJavascript.cpp \
     Messenger/CryptographicManager.cpp \
     dbstorage.cpp \
-    WalletRsa.cpp \
-    TypedException.cpp \
     Messenger/MessengerDBStorage.cpp \
     transactions/Transactions.cpp \
     transactions/TransactionsMessages.cpp \
     transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
-    HttpClient.cpp \
     proxy/UPnPDevices.cpp \
     proxy/UPnPRouter.cpp \
     proxy/ProxyServer.cpp \
@@ -72,7 +56,6 @@ SOURCES += main.cpp mainwindow.cpp \
     proxy/ProxyJavascript.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
-    machine_uid.cpp \
     Initializer/Initializer.cpp \
     Initializer/InitializerJavascript.cpp \
     Initializer/InitInterface.cpp \
@@ -85,84 +68,102 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitUploader.cpp \
     Module.cpp \
     proxy/WebSocketSender.cpp \
-    QRegister.cpp \
     Initializer/Inits/InitProxy.cpp \
     Initializer/Inits/InitMessenger.cpp \
-    UdpSocketClient.cpp \
     MhPayEventHandler.cpp \
     WalletNames/WalletNamesDbStorage.cpp \
     WalletNames/WalletNames.cpp \
     WalletNames/WalletNamesJavascript.cpp \
     Initializer/Inits/InitWalletsNames.cpp \
-    NetwrokTesting.cpp \
-    WalletNames/WalletNamesMessages.cpp
+    WalletNames/WalletNamesMessages.cpp \
+    Utils/UtilsJavascript.cpp \
+    Initializer/Inits/InitUtils.cpp \
+    Utils/UtilsManager.cpp \
+    NsLookup/TaskManager.cpp \
+    NsLookup/NslWorker.cpp \
+    NsLookup/Workers/FullWorker.cpp \
+    NsLookup/Workers/SimpleWorker.cpp \
+    NsLookup/Workers/RefreshIpWorker.cpp \
+    NsLookup/Workers/RefreshNodeWorker.cpp \
+    NsLookup/Workers/FindEmptyNodesWorker.cpp \
+    NsLookup/Workers/PrintNodesWorker.cpp \
+    NsLookup/Workers/MiddleWorker.cpp \
+    utilites/BigNumber.cpp \
+    utilites/machine_uid.cpp \
+    utilites/machine_uid_unix.cpp \
+    utilites/machine_uid_win.cpp \
+    utilites/qrcoder.cpp \
+    utilites/unzip.cpp \
+    utilites/utils.cpp \
+    utilites/VersionWrapper.cpp \
+    Log.cpp \
+    TypedException.cpp \
+    qt_utilites/CallbackCallWrapper.cpp \
+    qt_utilites/CallbackWrapper.cpp \
+    qt_utilites/ManagerWrapper.cpp \
+    qt_utilites/QRegister.cpp \
+    qt_utilites/TimerClass.cpp \
+    qt_utilites/WrapperJavascript.cpp \
+    Network/SimpleClient.cpp \
+    Network/HttpClient.cpp \
+    Network/NetwrokTesting.cpp \
+    Network/UdpSocketClient.cpp \
+    Network/WebSocketClient.cpp \
+    Wallets/BtcWallet.cpp \
+    Wallets/EthWallet.cpp \
+    Wallets/Wallet.cpp \
+    Wallets/WalletRsa.cpp \
+    Wallets/Wallets.cpp \
+    Wallets/WalletsJavascript.cpp \
+    Wallets/WalletInfo.cpp \
+    Initializer/Inits/InitWallets.cpp \
+    qt_utilites/EventWatcher.cpp \
+    Wallets/GetActualWalletsEvent.cpp \
+    NsLookup/InfrastructureNsLookup.cpp
 
-unix: SOURCES += machine_uid_unix.cpp
+unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
-    Wallet.h \
-    check.h \
-    machine_uid.h \
-    client.h \
-    unzip.h \
     uploader.h \
-    EthWallet.h \
-    ethtx/scrypt/libscrypt.h \
-    ethtx/scrypt/sha256.h \
-    ethtx/scrypt/sysendian.h \
-    ethtx/cert.h \
-    ethtx/const.h \
-    ethtx/rlp.h \
-    ethtx/ethtx.h \
-    ethtx/crossguid/Guid.hpp \
-    btctx/Base58.h \
-    btctx/btctx.h \
-    btctx/wif.h \
-    btctx/Base58.h \
-    btctx/btctx.h \
-    btctx/wif.h \
-    platform.h \
-    VersionWrapper.h \
-    BtcWallet.h \
+    Wallets/ethtx/scrypt/libscrypt.h \
+    Wallets/ethtx/scrypt/sha256.h \
+    Wallets/ethtx/scrypt/sysendian.h \
+    Wallets/ethtx/cert.h \
+    Wallets/ethtx/const.h \
+    Wallets/ethtx/rlp.h \
+    Wallets/ethtx/ethtx.h \
+    Wallets/ethtx/crossguid/Guid.hpp \
+    Wallets/btctx/Base58.h \
+    Wallets/btctx/btctx.h \
+    Wallets/btctx/wif.h \
+    Wallets/btctx/Base58.h \
+    Wallets/btctx/btctx.h \
+    Wallets/btctx/wif.h \
     StopApplication.h \
     tests.h \
-    Log.h \
-    TypedException.h \
-    openssl_wrapper/openssl_wrapper.h \
-    utils.h \
-    ethtx/utils2.h \
-    NsLookup.h \
-    dns/datatransformer.h \
-    dns/dnspacket.h \
-    dns/resourcerecord.h \
-    WebSocketClient.h \
+    Wallets/openssl_wrapper/openssl_wrapper.h \
+    Wallets/ethtx/utils2.h \
+    NsLookup/NsLookup.h \
+    NsLookup/dns/datatransformer.h \
+    NsLookup/dns/dnspacket.h \
+    NsLookup/dns/resourcerecord.h \
     JavascriptWrapper.h \
-    algorithms.h \
     PagesMappings.h \
-    SlotWrapper.h \
     mhurlschemehandler.h \
     Paths.h \
-    BigNumber.h \
     RunGuard.h \
-    makeJsFunc.h \
-    qrcoder.h \
     Messenger/Messenger.h \
-    TimerClass.h \
     Messenger/MessengerMessages.h \
     Messenger/MessengerJavascript.h \
     Messenger/Message.h \
-    RequestId.h \
     dbstorage.h \
-    WalletRsa.h \
     Messenger/MessengerDBStorage.h \
     transactions/Transactions.h \
     transactions/TransactionsMessages.h \
     transactions/Transaction.h \
     transactions/TransactionsDBStorage.h \
     transactions/TransactionsJavascript.h \
-    HttpClient.h \
-    duration.h \
     proxy/UPnPDevices.h \
     proxy/UPnPRouter.h \
     proxy/ProxyServer.h \
@@ -183,12 +184,9 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitUploader.h \
     Module.h \
     Messenger/CryptographicManager.h \
-    CallbackWrapper.h \
     proxy/WebSocketSender.h \
-    QRegister.h \
     Initializer/Inits/InitProxy.h \
     Initializer/Inits/InitMessenger.h \
-    UdpSocketClient.h \
     MhPayEventHandler.h \
     WalletNames/WalletNamesDbStorage.h \
     WalletNames/WalletNamesDbRes.h \
@@ -196,8 +194,60 @@ HEADERS += mainwindow.h \
     WalletNames/WalletNames.h \
     WalletNames/WalletNamesJavascript.h \
     Initializer/Inits/InitWalletsNames.h \
-    NetwrokTesting.h \
-    WalletNames/WalletNamesMessages.h
+    WalletNames/WalletNamesMessages.h \
+    Utils/UtilsJavascript.h \
+    Initializer/Inits/InitUtils.h \
+    Utils/UtilsManager.h \
+    NsLookup/TaskManager.h \
+    NsLookup/NslWorker.h \
+    NsLookup/Workers/FullWorker.h \
+    NsLookup/NsLookupStructs.h \
+    NsLookup/Workers/SimpleWorker.h \
+    NsLookup/Workers/RefreshIpWorker.h \
+    NsLookup/Workers/RefreshNodeWorker.h \
+    NsLookup/Workers/FindEmptyNodesWorker.h \
+    NsLookup/Workers/PrintNodesWorker.h \
+    NsLookup/Workers/MiddleWorker.h \
+    utilites/algorithms.h \
+    utilites/BigNumber.h \
+    utilites/machine_uid.h \
+    utilites/platform.h \
+    utilites/qrcoder.h \
+    utilites/RequestId.h \
+    utilites/unzip.h \
+    utilites/utils.h \
+    utilites/VersionWrapper.h \
+    check.h \
+    Log.h \
+    duration.h \
+    TypedException.h \
+    qt_utilites/CallbackCallWrapper.h \
+    qt_utilites/CallbackWrapper.h \
+    qt_utilites/makeJsFunc.h \
+    qt_utilites/ManagerWrapper.h \
+    qt_utilites/ManagerWrapperImpl.h \
+    qt_utilites/QRegister.h \
+    qt_utilites/SlotWrapper.h \
+    qt_utilites/TimerClass.h \
+    qt_utilites/WrapperJavascript.h \
+    qt_utilites/WrapperJavascriptImpl.h \
+    Network/SimpleClient.h \
+    Network/HttpClient.h \
+    Network/NetwrokTesting.h \
+    Network/UdpSocketClient.h \
+    Network/WebSocketClient.h \
+    Wallets/BtcWallet.h \
+    Wallets/EthWallet.h \
+    Wallets/Wallet.h \
+    Wallets/WalletRsa.h \
+    Wallets/Wallets.h \
+    Wallets/WalletsJavascript.h \
+    Wallets/WalletInfo.h \
+    Initializer/Inits/InitWallets.h \
+    qt_utilites/EventWatcher.h \
+    Wallets/GetActualWalletsEvent.h \
+    transactions/TransactionsFilter.h \
+    NsLookup/InfrastructureNsLookup.h
 
 FORMS += mainwindow.ui
 

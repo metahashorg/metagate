@@ -13,8 +13,8 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "check.h"
 #include "TypedException.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 SET_LOG_NAMESPACE("INIT");
 
@@ -27,7 +27,7 @@ QString InitMessenger::stateName() {
 InitMessenger::InitMessenger(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, false)
 {
-    CHECK(connect(this, &InitMessenger::callbackCall, this, &InitMessenger::onCallbackCall), "not connect onCallbackCall");
+    Q_CONNECT(this, &InitMessenger::callbackCall, this, &InitMessenger::onCallbackCall);
     Q_REG(InitMessenger::Callback, "InitMessenger::Callback");
 
     registerStateType("init", "messenger initialized", true, true);
@@ -52,15 +52,15 @@ void InitMessenger::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitMessenger::Return InitMessenger::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions, std::shared_future<JavascriptWrapper*> jsWrap) {
+InitMessenger::Return InitMessenger::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
     const TypedException exception = apiVrapper2([&, this] {
         crypto = std::make_unique<messenger::CryptographicManager>();
         crypto->start();
-        javascript = std::make_unique<messenger::MessengerJavascript>(*(auth.get().first), *crypto, *(trancactions.get().second), *(jsWrap.get()));
+        javascript = std::make_unique<messenger::MessengerJavascript>(*(auth.get().first), *crypto, *(trancactions.get().second), *wallets.get().first);
         javascript->moveToThread(mainThread);
         database = std::make_unique<messenger::MessengerDBStorage>(getDbPath());
         database->init();
-        manager = std::make_unique<messenger::Messenger>(*javascript, *database, *crypto);
+        manager = std::make_unique<messenger::Messenger>(*javascript, *database, *crypto, *(mainWindow.get()));
         manager->start();
         javascript->setMessenger(*manager);
 

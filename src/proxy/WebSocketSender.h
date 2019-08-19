@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 
 struct TypedException;
 

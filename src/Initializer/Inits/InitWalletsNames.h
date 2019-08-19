@@ -24,6 +24,11 @@ class Auth;
 class AuthJavascript;
 }
 
+namespace wallets {
+class Wallets;
+class WalletsJavascript;
+}
+
 class MainWindow;
 class WebSocketClient;
 
@@ -47,7 +52,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient);
+    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<JavascriptWrapper*> jsWrap, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets);
 
     static int countEvents() {
         return 1;

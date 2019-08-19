@@ -1,10 +1,11 @@
 #include "InitWebSocket.h"
 
-#include "WebSocketClient.h"
+#include "Network/WebSocketClient.h"
 
 #include "check.h"
 #include "Paths.h"
-#include "SlotWrapper.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 #include <QSettings>
 
@@ -25,7 +26,7 @@ QString InitWebSocket::stateName() {
 InitWebSocket::InitWebSocket(QThread *mainThread, Initializer &manager)
     : InitInterface(stateName(), mainThread, manager, true)
 {
-    CHECK(connect(this, &InitWebSocket::connectedSock, this, &InitWebSocket::onConnectedSock), "not connect onConnectedSock");
+    Q_CONNECT(this, &InitWebSocket::connectedSock, this, &InitWebSocket::onConnectedSock);
 
     registerStateType("init", "websocket initialized", true, true);
     registerStateType("connected", "websocket connected", false, false, 15s, "websocket connected updates");
@@ -50,7 +51,7 @@ END_SLOT_WRAPPER
 InitWebSocket::Return InitWebSocket::initialize() {
     const TypedException exception = apiVrapper2([&, this] {
         webSocket = std::make_unique<WebSocketClient>(getUrlToWss());
-        CHECK(connect(webSocket.get(), &WebSocketClient::connectedSock, this, &InitWebSocket::connectedSock), "not connect onConnectedSock");
+        Q_CONNECT(webSocket.get(), &WebSocketClient::connectedSock, this, &InitWebSocket::connectedSock);
         webSocket->start();
     });
     sendInitSuccess(exception);

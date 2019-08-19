@@ -1,0 +1,60 @@
+<link rel="stylesheet" type="text/css" href="example3.css" media="screen" />
+
+<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+<script>
+    
+    function openInBrowser() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.utils;
+        mainWindow.qtOpenInBrowser(document.createWalletForm.ff.value) ;
+        });
+    }
+
+    function qrDecode() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.utils;
+        mainWindow.qrDecode(document.createWalletForm.ff.value, "decoded") ;
+        });
+    }
+    
+    function qrEncode() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.utils;
+        mainWindow.qrEncode(document.createWalletForm.ff.value, "encoded") ;
+        });
+    }
+    
+</script>
+
+<body onload="generateAllWalletsJs();"></body>
+
+<div class="back">
+
+  <div id="two" class="abs block">
+    <a href="#one">создание счета</a>
+    <b><a href="#two">подпись данных</a></b>
+    <p class="abs">
+        <left>
+            <FORM name="sign">
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+  <div id="one" class="abs block">
+    <b><a href="#one">создание счета</a></b>
+    <a href="#two">подпись данных</a>
+    <p class="abs">
+        <left>
+            <FORM name="createWalletForm">
+            <input name="ff" type="text" value="https://en.cppreference.com/w/cpp/utility/apply" size="60"><label for="ff">ff</label><br>
+            <input type="button" value="openInBrowser" onclick="openInBrowser()"><br>
+            <input type="button" value="qrDecode" onclick="qrDecode()"><br>
+            <input type="button" value="qrEncode" onclick="qrEncode()"><br>
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+</div>

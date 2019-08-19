@@ -7,7 +7,7 @@ namespace wallet_names {
 
 static const QString databaseName = "wallet_names";
 static const QString databaseFileName = "wallet_names.db";
-static const int databaseVersion = 1;
+static const int databaseVersion = 2;
 
 static const QString createWalletsTable = "CREATE TABLE wallets ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -21,6 +21,7 @@ static const QString createInfoTable = "CREATE TABLE info ( "
                                                 "user TEXT NOT NULL DEFAULT '', "
                                                 "device TEXT NOT NULL DEFAULT '', "
                                                 "currency TEXT NOT NULL, "
+                                                "type INTEGER NOT NULL DEFAULT 0, "
                                                 "FOREIGN KEY (wallet_id) REFERENCES wallets(id)"
                                                 ")";
 
@@ -28,29 +29,29 @@ static const QString createWalletsUniqueIndex = "CREATE UNIQUE INDEX walletsUniq
                                                     "address ASC) ";
 
 static const QString createInfoUniqueIndex = "CREATE UNIQUE INDEX usersUniqueIdx ON info ( "
-                                                    "wallet_id ASC, user ASC, device ASC, currency ASC) ";
+                                                    "wallet_id ASC, user ASC, device ASC, currency ASC, type ASC) ";
 
 static const QString giveNameWalletAdd = "INSERT OR IGNORE INTO wallets (address, name) "
                                            "VALUES (:address, :name)";
 
 static const QString giveNameWalletRename = "UPDATE wallets SET name = :name WHERE address = :address";
 
-static const QString selectAll = "SELECT address, name, user, device, currency FROM wallets "
+static const QString selectAll = "SELECT address, name, user, device, currency, type FROM wallets "
                                  "LEFT JOIN info ON info.wallet_id == wallets.id ";
 
-static const QString insertWalletInfo = "INSERT OR IGNORE INTO info (wallet_id, user, device, currency) "
+static const QString insertWalletInfo = "INSERT OR IGNORE INTO info (wallet_id, user, device, currency, type) "
                                            "VALUES (("
                                                "SELECT id FROM wallets WHERE address = :address"
-                                           "), :user, :device, :currency)";
+                                           "), :user, :device, :currency, :type)";
 
 static const QString selectName = "SELECT name FROM wallets "
                                  "WHERE address = :address ";
 
-static const QString selectInfo = "SELECT address, name, user, device, currency FROM wallets "
+static const QString selectInfo = "SELECT address, name, user, device, currency, type FROM wallets "
                                  "LEFT JOIN info ON info.wallet_id == wallets.id "
                                  "WHERE wallets.address == :address";
 
-static const QString selectForCurrencyAndUser = "SELECT address, name, user, device, currency FROM wallets "
+static const QString selectForCurrencyAndUser = "SELECT address, name, user, device, currency, type FROM wallets "
                                  "LEFT JOIN info ON info.wallet_id == wallets.id "
                                  "WHERE wallets.id IN (SELECT wallet_id FROM info "
                                  "WHERE user == :user AND currency == :currency)";

@@ -19,15 +19,17 @@
 
 #include "check.h"
 #include "duration.h"
-#include "unzip.h"
-#include "platform.h"
-#include "VersionWrapper.h"
+#include "utilites/unzip.h"
+#include "utilites/platform.h"
+#include "utilites/VersionWrapper.h"
 #include "Log.h"
-#include "utils.h"
-#include "SlotWrapper.h"
+#include "utilites/utils.h"
+#include "utilites/machine_uid.h"
+
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
+
 #include "Paths.h"
-#include "QRegister.h"
-#include "machine_uid.h"
 
 using namespace std::placeholders;
 
@@ -92,11 +94,25 @@ Uploader::Servers Uploader::getServers() {
     Servers servers;
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("servers/production"), "settings production server not found");
-    servers.prod = settings.value("servers/production").toString().toStdString();
+    servers.prod = settings.value("servers/production").toString();
     CHECK(settings.contains("servers/development"), "settings development server not found");
-    servers.dev = settings.value("servers/development").toString().toStdString();
+    servers.dev = settings.value("servers/development").toString();
 
     return servers;
+}
+
+QString Uploader::getServerName()
+{
+    const Servers servers = Uploader::getServers();
+    if (isProductionSetup) {
+        LOG << "Set production server " << servers.prod;
+        CHECK(!servers.prod.isEmpty(), "Empty server name");
+        return servers.prod;
+    } else {
+        LOG << "Set development server " << servers.dev;
+        CHECK(!servers.dev.isEmpty(), "Empty server name");
+        return servers.dev;
+    }
 }
 
 static milliseconds getTimerInterval() {
@@ -113,29 +129,17 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     , auth(auth)
     , mainWindow(mainWindow)
 {
-    const Servers servers = getServers();
-    if (isProductionSetup) {
-        LOG << "Set production server " << servers.prod;
-        CHECK(!servers.prod.empty(), "Empty server name");
-        serverName = QString::fromStdString(servers.prod);
-    } else {
-        LOG << "Set development server " << servers.dev;
-        CHECK(!servers.dev.empty(), "Empty server name");
-        serverName = QString::fromStdString(servers.dev);
-    }
+    serverName = getServerName();
 
-    CHECK(connect(this, &Uploader::timerEvent, this, &Uploader::uploadEvent), "not connect onTimerEvent");
-    CHECK(connect(this, &Uploader::startedEvent, this, &Uploader::run), "not connect run");
+    Q_CONNECT(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent);
+    Q_CONNECT(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent);
 
-    CHECK(connect(this, &Uploader::generateUpdateHtmlsEvent, &mainWindow, &MainWindow::updateHtmlsEvent), "not connect processEvent");
-    CHECK(connect(this, &Uploader::generateUpdateApp, &mainWindow, &MainWindow::updateAppEvent), "not connect updateAppEvent");
-
-    CHECK(connect(&auth, &auth::Auth::logined, this, &Uploader::onLogined), "not connect onLogined");
+    Q_CONNECT(&auth, &auth::Auth::logined, this, &Uploader::onLogined);
 
     client.setParent(this);
 
-    CHECK(connect(this, &Uploader::callbackCall, this, &Uploader::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall), "not connect callbackCall");
+    Q_CONNECT(this, &Uploader::callbackCall, this, &Uploader::onCallbackCall);
+    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall);
 
     Q_REG(Uploader::Callback, "Uploader::Callback");
 
@@ -150,11 +154,11 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
 
-    client.moveToThread(&thread1);
+    client.moveToThread(TimerClass::getThread());
 
     emit auth.reEmit();
 
-    moveToThread(&thread1);
+    moveToThread(TimerClass::getThread());
 }
 
 Uploader::~Uploader() {
@@ -162,15 +166,21 @@ Uploader::~Uploader() {
 }
 
 void Uploader::onCallbackCall(Uploader::Callback callback) {
-    BEGIN_SLOT_WRAPPER
-            callback();
-    END_SLOT_WRAPPER
+BEGIN_SLOT_WRAPPER
+    callback();
+END_SLOT_WRAPPER
 }
 
-void Uploader::run() {
-    BEGIN_SLOT_WRAPPER
-            emit uploadEvent();
-    END_SLOT_WRAPPER
+void Uploader::startMethod() {
+    uploadEvent();
+}
+
+void Uploader::timerMethod() {
+    uploadEvent();
+}
+
+void Uploader::finishMethod() {
+    // empty
 }
 
 static void removeOlderFolders(const QString &folderHtmls, const QString &currentVersion) {
@@ -187,8 +197,8 @@ static void removeOlderFolders(const QString &folderHtmls, const QString &curren
 }
 
 void Uploader::onLogined(bool isInit, const QString login) {
-    BEGIN_SLOT_WRAPPER
-            if (isInit && !login.isEmpty()) {
+BEGIN_SLOT_WRAPPER
+    if (isInit && !login.isEmpty()) {
         emit auth.getLoginInfo(auth::Auth::LoginInfoCallback([this](const auth::LoginInfo &info){
             apiToken = info.token;
             emit uploadEvent();
@@ -196,18 +206,17 @@ void Uploader::onLogined(bool isInit, const QString login) {
             LOG << "Error: " << e.description;
         }, std::bind(&Uploader::callbackCall, this, _1)));
     }
-    END_SLOT_WRAPPER
+END_SLOT_WRAPPER
 }
 
 void Uploader::uploadEvent() {
-    BEGIN_SLOT_WRAPPER
-            if (serverName == "") {
+    if (serverName == "") {
         return;
     }
 
-    const auto callbackGetHtmls = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
-        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
+    const auto callbackGetHtmls = [this](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const auto &dataJson = root.value("data").toObject();
@@ -233,27 +242,27 @@ void Uploader::uploadEvent() {
             return;
         }
 
-        const auto interfaceGetCallback = [this, version, hash, folderServer](const std::string &result, const SimpleClient::ServerException &exception) {
+        const auto interfaceGetCallback = [this, version, hash, folderServer](const SimpleClient::Response &response) {
             versionHtmlForUpdate = "";
-            CHECK(!exception.isSet(), "Server error: " + exception.toString());
+            CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
             if (version == lastVersion && folderServer == currFolder) { // Так как это callback, то проверим еще раз
                 return;
             }
 
             QCryptographicHash hashAlg(QCryptographicHash::Md5);
-            hashAlg.addData(result.data(), result.size());
+            hashAlg.addData(response.response.data(), response.response.size());
             const QString hashStr(hashAlg.result().toHex());
-            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash + ", response size " + QString::number(result.size())).toStdString());
+            CHECK(hashStr == hash, ("hash zip not equal response hash: hash zip: " + hashStr + ", hash response: " + hash + ", response size " + QString::number(response.response.size())).toStdString());
 
             removeOlderFolders(makePath(currentBeginPath, mainWindow.getCurrentHtmls().folderName), mainWindow.getCurrentHtmls().lastVersion);
 
             const QString archiveFilePath = makePath(currentBeginPath, version + ".zip");
-            writeToFileBinary(archiveFilePath, result, false);
+            writeToFileBinary(archiveFilePath, response.response, false);
 
             const QString extractedPath = makePath(currentBeginPath, folderServer, version);
             extractDir(archiveFilePath, extractedPath);
-            LOG << "Extracted " << extractedPath << "." << "Size: " << result.size();
+            LOG << "Extracted " << extractedPath << "." << "Size: " << response.response.size();
             removeFile(archiveFilePath);
 
             Uploader::setLastVersion(currentBeginPath, folderServer, version);
@@ -274,48 +283,69 @@ void Uploader::uploadEvent() {
         id++;
     };
     client.sendMessagePost(
-                QUrl(serverName),
-                QString::fromStdString("{\"id\": \"" + std::to_string(id) +
-                                       "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"" + apiToken.toStdString() +
-                                       "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}")
-                , callbackGetHtmls, timeout
-                );
+        QUrl(serverName),
+        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
+        "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"" + apiToken.toStdString() +
+        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}")
+        , callbackGetHtmls, timeout
+    );
     id++;
 
-    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        qDebug() << "!!!!" << QString::fromStdString(result);
+    ////////////////
+
+
+    const auto checkUpdates = [this](const QString &url) {
+        QProcess checkPrc;
+        const QStringList args{QStringLiteral("--checkupdates"),
+                         QStringLiteral("--addRepository"), url};
+        checkPrc.start(Uploader::getMaintenanceToolExe(), args);
+
+        CHECK(checkPrc.waitForStarted(), std::string("Process waitForStarted error ") + std::to_string(checkPrc.error()));
+        CHECK(checkPrc.waitForFinished(), std::string("Process waitForFinished error ") + std::to_string(checkPrc.error()));
+
+        QByteArray errStr = checkPrc.readAllStandardError();
+        qDebug() << "res " << errStr;
+
+        QByteArray result = checkPrc.readAll();
+        qDebug() << "res " << result;
+
+        QDomDocument document;
+        document.setContent(result);
+        ;
+
+        if (!document.isNull() && document.firstChildElement().hasChildNodes()) {
+            emit generateUpdateApp(QStringLiteral(""), QStringLiteral(""), "");
+        }
+    };
+
+    const auto callbackRepo = [checkUpdates](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
+
+        qDebug() << QString::fromStdString(response.response);
+
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
+        const QJsonObject root = document.object();
+        CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
+        const auto &dataJson = root.value("data").toObject();
+        CHECK(dataJson.contains("url") && dataJson.value("url").isString(), "url field not found");
+        const QString url = dataJson.value("url").toString();
+        checkUpdates(url);
     };
 
     client.sendMessagePost(
         QUrl(serverName),
         QString::fromStdString("{\"id\": \"" + std::to_string(id) +
-        "\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"" + apiToken.toStdString() +
-        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}"),
-        callbackAppVersion, timeout
+        "\",\"version\":\"1.0.0\",\"method\":\"app.repo\", \"token\":\"" + apiToken.toStdString() +
+        "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
+        callbackRepo, timeout
     );
+    id++;
+    ////////////////
+/*
+    const auto callbackAppVersion = [this](const SimpleClient::Response &response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
-    QProcess checkPrc;
-    checkPrc.start(Uploader::getMaintenanceToolExe(), QStringList() << "--checkupdates");
-    if (!checkPrc.waitForStarted())
-        return;
-
-    if (!checkPrc.waitForFinished())
-        return;
-
-    QByteArray result = checkPrc.readAll();
-    //qDebug() << "res " << result;
-
-    QDomDocument document;
-    document.setContent(result);
-
-    if (!document.isNull() && document.firstChildElement().hasChildNodes()) {
-        emit generateUpdateApp(QStringLiteral(""), QStringLiteral(""), "");
-    }
-    /*
-    const auto callbackAppVersion = [this](const std::string &result, const SimpleClient::ServerException &exception) {
-        CHECK(!exception.isSet(), "Server error: " + exception.toString());
-
-        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(result).toUtf8());
+        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const auto &dataJson = root.value("data").toObject();
@@ -337,15 +367,15 @@ void Uploader::uploadEvent() {
             return;
         }
 
-        const auto autoupdateGetCallback = [this, version, reference](const std::string &result, const SimpleClient::ServerException &exception) {
+        const auto autoupdateGetCallback = [this, version, reference](const SimpleClient::Response &response) {
             versionForUpdate.clear();
             LOG << "autoupdater callback";
-            CHECK(!exception.isSet(), "Server error: " + exception.toString());
+            CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
             clearAutoupdatersPath();
             const QString autoupdaterPath = getAutoupdaterPath();
             const QString archiveFilePath = makePath(autoupdaterPath, version + ".zip");
-            writeToFileBinary(archiveFilePath, result, false);
+            writeToFileBinary(archiveFilePath, response.response, false);
 
             extractDir(archiveFilePath, getTmpAutoupdaterPath());
             LOG << "Extracted autoupdater " << getTmpAutoupdaterPath();
@@ -369,7 +399,6 @@ void Uploader::uploadEvent() {
         "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
         callbackAppVersion, timeout
     );
-    */
     id++;
-    END_SLOT_WRAPPER
+*/
 }

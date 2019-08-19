@@ -55,7 +55,7 @@ Q_INVOKABLE void getUserInfo(QString address);
 Результат вернется в функцию
 getUserInfoResultJs(address, result, errorNum, errorMessage)
 где result json вида {\"pubkey\":\"pubkey\",\"txHash\":\"txHash\",\"blockchain_name\":\"blockchain_name\",\"is_complete\":true}
-Если не is_complete, то необходимо разблокировать кошелек для того, чтобы довершить его инициализацию. Для метода getCollocutorInfo смысла не имеет
+Если не is_complete, то необходимо разблокировать кошелек для того, чтобы довершить его инициализацию. Для метода getCollocutorInfo поле смысла не имеет
 
 Q_INVOKABLE void getCollocutorInfo(QString address);
 Получить информацию о собеседнике

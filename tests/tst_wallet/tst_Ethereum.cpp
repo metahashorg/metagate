@@ -2,13 +2,13 @@
 
 #include <QTest>
 
-#include "EthWallet.h"
-#include "btctx/wif.h"
+#include "Wallets/EthWallet.h"
+#include "Wallets/btctx/wif.h"
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 Q_DECLARE_METATYPE(std::string)
 
@@ -29,13 +29,15 @@ void tst_Ethereum::testCreateEth_data() {
 
 void tst_Ethereum::testCreateEth() {
     QFETCH(std::string, passwd);
+    createFolder("./eth");
     const std::string address = EthWallet::genPrivateKey("./", passwd);
     EthWallet wallet("./", address, passwd);
 }
 
 void tst_Ethereum::testEthWalletTransaction()
 {
-    writeToFile("./0x05cf594f12bba9430e34060498860abc69554cb1", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
+    createFolder("./eth");
+    writeToFile("./eth/0x05cf594f12bba9430e34060498860abc69554cb1", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
     const std::string password = "1";
     EthWallet wallet("./", "0x05cf594f12bba9430e34060498860abc69554cb1", password);
     const std::string result = wallet.SignTransaction(
@@ -84,7 +86,8 @@ void tst_Ethereum::testNotCreateEthTransaction() {
     QFETCH(std::string, value);
     QFETCH(std::string, data);
 
-    writeToFile("./0x05cf594f12bba9430e34060498860abc69554cb1", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
+    createFolder("./eth");
+    writeToFile("./eth/0x05cf594f12bba9430e34060498860abc69554cb1", "{\"address\": \"05cf594f12bba9430e34060498860abc69554cb1\",\"crypto\": {\"cipher\": \"aes-128-ctr\",\"ciphertext\": \"694283a4a2f3da99186e2321c24cf1b427d81a273e7bc5c5a54ab624c8930fb8\",\"cipherparams\": {\"iv\": \"5913da2f0f6cd00b9b62ff2bc0a8b9d3\"},\"kdf\": \"scrypt\",\"kdfparams\": {\"dklen\": 32,\"n\": 262144,\"p\": 1,\"r\": 8,\"salt\": \"ca45d433267bd6a50ace149d6b317b9d8f8a39f43621bad2a3108981bf533ee7\"},\"mac\": \"0a8d581e8c60553970301603ea35b0fc56cbccd5913b12f62c690acb98d111c8\"},\"id\": \"6406896a-2ec9-4dd7-b98e-5fbfc0984e6f\",\"version\": 3}", false);
     const std::string password = "1";
     EthWallet wallet("./", "0x05cf594f12bba9430e34060498860abc69554cb1", password);
     QVERIFY_EXCEPTION_THROWN(wallet.SignTransaction(

@@ -2,13 +2,13 @@
 
 #include <QTest>
 
-#include "BtcWallet.h"
-#include "btctx/wif.h"
+#include "Wallets/BtcWallet.h"
+#include "Wallets/btctx/wif.h"
 
-#include "utils.h"
+#include "utilites/utils.h"
 #include "check.h"
 
-#include "openssl_wrapper/openssl_wrapper.h"
+#include "Wallets/openssl_wrapper/openssl_wrapper.h"
 
 Q_DECLARE_METATYPE(std::string)
 
@@ -68,6 +68,7 @@ void tst_Bitcoin::testCreateBtc_data() {
 
 void tst_Bitcoin::testCreateBtc() {
     QFETCH(QString, passwd);
+    createFolder("./btc");
     const std::string address = BtcWallet::genPrivateKey("./", passwd).first;
     BtcWallet wallet("./", address, passwd);
     QCOMPARE(address, wallet.getAddress());

@@ -2,15 +2,16 @@
 
 #include "Log.h"
 #include "check.h"
-#include "SlotWrapper.h"
-#include "QRegister.h"
-#include "makeJsFunc.h"
+#include "qt_utilites/SlotWrapper.h"
+#include "qt_utilites/QRegister.h"
 
 #include "WalletNames.h"
 
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+
+#include "qt_utilites/WrapperJavascriptImpl.h"
 
 using namespace std::placeholders;
 
@@ -40,34 +41,22 @@ static std::vector<WalletInfo> parseWalletNames(const QString &walletsJson) {
     return result;
 }
 
-WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames, QObject *parent)
-    : QObject(parent)
+WalletNamesJavascript::WalletNamesJavascript(WalletNames &walletNames)
+    : WrapperJavascript(false, LOG_FILE)
     , manager(walletNames)
 {
-    CHECK(connect(this, &WalletNamesJavascript::callbackCall, this, &WalletNamesJavascript::onCallbackCall), "not connect onCallbackCall");
-    CHECK(connect(&manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName), "not connect onUpdatedWalletName");
-    CHECK(connect(&manager, &WalletNames::walletsFlushed, this, &WalletNamesJavascript::onWalletsFlushed), "not connect onWalletsFlushed");
-
-    Q_REG(WalletNamesJavascript::Callback, "WalletNamesJavascript::Callback");
-
-    signalFunc = std::bind(&WalletNamesJavascript::callbackCall, this, _1);
+    Q_CONNECT(&manager, &WalletNames::updatedWalletName, this, &WalletNamesJavascript::onUpdatedWalletName);
+    Q_CONNECT(&manager, &WalletNames::walletsFlushed, this, &WalletNamesJavascript::onWalletsFlushed);
 }
 
-template<typename... Args>
-void WalletNamesJavascript::makeAndRunJsFuncParams(const QString &function, const TypedException &exception, Args&& ...args) {
-    const QString res = makeJsFunc3<false>(function, "", exception, std::forward<Args>(args)...);
-    runJs(res);
-}
-
-void WalletNamesJavascript::runJs(const QString &script) {
-    LOG << "Javascript " << script;
-    emit jsRunSig(script);
-}
-
-void WalletNamesJavascript::onCallbackCall(const std::function<void()> &callback) {
-BEGIN_SLOT_WRAPPER
-    callback();
-END_SLOT_WRAPPER
+static int typeToInt(const WalletInfo::Info::Type &type) {
+    if (type == WalletInfo::Info::Type::Key) {
+        return 1;
+    } else if (type == WalletInfo::Info::Type::Watch) {
+        return 2;
+    } else {
+        throwErr("Unknown type");
+    }
 }
 
 static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
@@ -77,6 +66,8 @@ static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, c
             QJsonObject walletJson;
             walletJson.insert("address", wallet.address);
             walletJson.insert("name", wallet.name);
+            walletJson.insert("currency", wallet.currentInfo.currency);
+            walletJson.insert("type", typeToInt(wallet.currentInfo.type));
 
             QJsonArray infosJosn;
             for (const WalletInfo::Info &info: wallet.infos) {
@@ -84,6 +75,7 @@ static QJsonDocument walletsToJson(const std::vector<WalletInfo> &thisWallets, c
                 infoJson.insert("currency", info.currency);
                 infoJson.insert("device", info.device);
                 infoJson.insert("user", info.user);
+                infoJson.insert("type", typeToInt(info.type));
 
                 infosJosn.append(infoJson);
             }
@@ -110,23 +102,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "save key name " << address << " " << name;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address));
 
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address);
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
-        emit manager.saveWalletName(address, name, WalletNames::SaveWalletNameCallback([address, makeFunc, errorFunc] {
-            makeFunc(TypedException(), address);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+    wrapOperation([&, this](){
+        emit manager.saveWalletName(address, name, WalletNames::SaveWalletNameCallback([address, makeFunc] {
+            makeFunc.func(TypedException(), address);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -136,23 +118,13 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get key name " << address;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &address, const QString &name) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, address, name);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QString>(""));
 
-    const auto errorFunc = [address, makeFunc](const TypedException &exception) {
-        makeFunc(exception, address, "");
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
-        emit manager.getWalletName(address, WalletNames::GetWalletNameCallback([address, makeFunc, errorFunc] (const QString &name) {
-            makeFunc(TypedException(), address, name);
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+    wrapOperation([&, this](){
+        emit manager.getWalletName(address, WalletNames::GetWalletNameCallback([address, makeFunc] (const QString &name) {
+            makeFunc.func(TypedException(), address, name);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -162,23 +134,14 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "get wallets in currency " << currency;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &currency, const QJsonDocument &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, currency, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 
-    const auto errorFunc = [currency, makeFunc](const TypedException &exception) {
-        makeFunc(exception, currency, QJsonDocument());
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
-        emit manager.getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc, errorFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
-            makeFunc(TypedException(), currency, walletsToJson(thisWallets, otherWallets));
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+    wrapOperation([&, this](){
+        emit manager.getAllWalletsCurrency(currency, WalletNames::GetAllWalletsCurrencyCallback([currency, makeFunc] (const std::vector<WalletInfo> &thisWallets, const std::vector<WalletInfo> &otherWallets) {
+            LOG << PeriodicLog::make("wn_" + currency.toStdString()) << "get wallets in currency ok " << currency << " " << QString(walletsToJson(thisWallets, otherWallets).toJson(QJsonDocument::Compact));
+            makeFunc.func(TypedException(), currency, walletsToJson(thisWallets, otherWallets));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
@@ -188,25 +151,15 @@ BEGIN_SLOT_WRAPPER
 
     LOG << "Advance fill " << jsonNames;
 
-    const auto makeFunc = [JS_NAME_RESULT, this](const TypedException &exception, const QString &result) {
-        makeAndRunJsFuncParams(JS_NAME_RESULT, exception, result);
-    };
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
-    const auto errorFunc = [makeFunc](const TypedException &exception) {
-        makeFunc(exception, "Not ok");
-    };
-
-    const TypedException exception = apiVrapper2([&, this](){
+    wrapOperation([&, this](){
         const std::vector<WalletInfo> wallets = parseWalletNames(jsonNames);
 
         emit manager.addOrUpdateWallets(wallets, WalletNames::AddWalletsNamesCallback([makeFunc] {
-            makeFunc(TypedException(), "Ok");
-        }, errorFunc, signalFunc));
-    });
-
-    if (exception.isSet()) {
-        errorFunc(exception);
-    }
+            makeFunc.func(TypedException(), "Ok");
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 
