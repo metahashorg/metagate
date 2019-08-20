@@ -40,6 +40,11 @@ constexpr bool IsPair() {
     return IsPairImpl<std::decay_t<T>>::value;
 }
 
+template <typename T>
+constexpr bool IsVoid() {
+    return std::is_void<std::decay_t<T>>::value;
+}
+
 template<typename F>
 constexpr bool IsTupleFunc() {
     return IsTuple<typename std::result_of<F()>::type>();
@@ -52,7 +57,7 @@ constexpr bool IsPairFunc() {
 
 template<typename F>
 constexpr bool IsVoidFunc() {
-    return std::is_void<typename std::result_of<F()>::type>::value;
+    return IsVoid<typename std::result_of<F()>::type>();
 }
 
 template<int> struct ChoiseTag {};

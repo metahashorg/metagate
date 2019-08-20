@@ -16,9 +16,6 @@ private:
         using type = typename std::conditional<IsTuple<Arg>(), TupleChoiseTag, typename std::conditional<IsPair<Arg>(), PairChoiseTag, OtherChoiseTag>::type>::type;
     };
 
-    template<typename Tag, typename T1, typename Arg>
-    static T1 getImpl(Tag, Arg &&arg);
-
     template<typename T1, typename Arg>
     static T1 getImpl(OtherChoiseTag, Arg &&arg) {
         return arg;
@@ -42,8 +39,8 @@ private:
 
 public:
 
-    template<typename Shared>
-    SharedFuture(Shared sharedFuture) {
+    template<typename StdSharedFuture>
+    SharedFuture(StdSharedFuture sharedFuture) {
         getter = [sharedFuture]() -> T& {
             return *get<T*>(sharedFuture.get());
         };
