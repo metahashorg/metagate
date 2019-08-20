@@ -247,7 +247,9 @@ HEADERS += mainwindow.h \
     qt_utilites/EventWatcher.h \
     Wallets/GetActualWalletsEvent.h \
     transactions/TransactionsFilter.h \
-    NsLookup/InfrastructureNsLookup.h
+    NsLookup/InfrastructureNsLookup.h \
+    utilites/template_helpers.h \
+    Initializer/SharedFuture.h
 
 FORMS += mainwindow.ui
 

@@ -3,6 +3,8 @@
 
 #include "../InitInterface.h"
 
+#include "../SharedFuture.h"
+
 #include <QObject>
 
 #include <memory>
@@ -13,7 +15,6 @@ struct TypedException;
 class JavascriptWrapper;
 class MainWindow;
 class NsLookup;
-class InfrastructureNsLookup;
 class WebSocketClient;
 class NetwrokTesting;
 
@@ -58,8 +59,8 @@ public:
     void completeImpl() override;
 
     Return initialize(
-        std::shared_future<WebSocketClient*> wssClient,
-        std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
+        SharedFuture<WebSocketClient> wssClient,
+        SharedFuture<NsLookup> nsLookup,
         std::shared_future<MainWindow*> mainWindow,
         std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
         std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,

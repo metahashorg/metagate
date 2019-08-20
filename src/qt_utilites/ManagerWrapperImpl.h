@@ -3,62 +3,16 @@
 
 #include "TypedException.h"
 
-#include <tuple>
-
-namespace detail {
-template <class F, class Tuple, std::size_t... I>
-constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
-{
-    return std::forward<F>(f)(std::get<I>(std::forward<Tuple>(t))...);
-}
-}  // namespace detail
-
-template <class F, class Tuple>
-constexpr decltype(auto) apply(F&& f, Tuple&& t) {
-    return detail::apply_impl(
-        std::forward<F>(f), std::forward<Tuple>(t),
-        std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
-}
-
-template <typename T>
-struct IsTupleImpl : std::false_type {};
-
-template <typename... U>
-struct IsTupleImpl<std::tuple <U...>> : std::true_type {};
-
-template <typename T>
-constexpr bool IsTuple() {
-    return IsTupleImpl<std::decay_t<T>>::value;
-}
-
-template<typename F>
-constexpr bool IsTupleFunc() {
-    return IsTuple<typename std::result_of<F()>::type>();
-}
-
-template<typename F>
-constexpr bool IsVoidFunc() {
-    return std::is_void<typename std::result_of<F()>::type>::value;
-}
-
-template<typename F>
-constexpr bool IsOneParamFunc() {
-    return !IsTupleFunc<F>() && !IsVoidFunc<F>();
-}
-
-template<int> struct ChoiseRunAndEmitCallback {};
-using VoidChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<0>;
-using TupleChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<1>;
-using OtherChoiseRunAndEmitCallback = ChoiseRunAndEmitCallback<2>;
+#include "utilites/template_helpers.h"
 
 template<typename F, typename Callback>
-void runAndEmitCallbackImpl(VoidChoiseRunAndEmitCallback, const F &f, const Callback &callback) {
+void runAndEmitCallbackImpl(VoidChoiseTag, const F &f, const Callback &callback) {
     const TypedException exception = apiVrapper2(f);
     callback.emitFunc(exception);
 }
 
 template<typename F, typename Callback>
-void runAndEmitCallbackImpl(TupleChoiseRunAndEmitCallback, const F &f, const Callback &callback, const typename std::result_of<F()>::type& defaultParams = typename std::result_of<F()>::type{}) {
+void runAndEmitCallbackImpl(TupleChoiseTag, const F &f, const Callback &callback, const typename std::result_of<F()>::type& defaultParams = typename std::result_of<F()>::type{}) {
     typename std::result_of<F()>::type tuple(defaultParams);
     const TypedException exception = apiVrapper2([&tuple, &f](){
         tuple = f();
@@ -69,7 +23,7 @@ void runAndEmitCallbackImpl(TupleChoiseRunAndEmitCallback, const F &f, const Cal
 }
 
 template<typename F, typename Callback>
-void runAndEmitCallbackImpl(OtherChoiseRunAndEmitCallback, const F &f, const Callback &callback, const std::tuple<typename std::result_of<F()>::type>& defaultParams = std::tuple<typename std::result_of<F()>::type>{}) {
+void runAndEmitCallbackImpl(OtherChoiseTag, const F &f, const Callback &callback, const std::tuple<typename std::result_of<F()>::type>& defaultParams = std::tuple<typename std::result_of<F()>::type>{}) {
     typename std::result_of<F()>::type param(std::get<0>(defaultParams));
     const TypedException exception = apiVrapper2([&param, &f](){
         param = f();
@@ -79,7 +33,7 @@ void runAndEmitCallbackImpl(OtherChoiseRunAndEmitCallback, const F &f, const Cal
 
 template<typename F>
 struct RunAndEmitTagType{
-    using type = typename std::conditional<IsVoidFunc<F>(), VoidChoiseRunAndEmitCallback, typename std::conditional<IsTupleFunc<F>(), TupleChoiseRunAndEmitCallback, OtherChoiseRunAndEmitCallback>::type>::type;
+    using type = typename std::conditional<IsVoidFunc<F>(), VoidChoiseTag, typename std::conditional<IsTupleFunc<F>(), TupleChoiseTag, OtherChoiseTag>::type>::type;
 };
 
 template<typename F, typename Callback, typename Val, typename... Vals>
