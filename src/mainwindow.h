@@ -228,7 +228,7 @@ private slots:
 
 private:
 
-    void correctWindowSize();
+    void correctWindowSize(int iteration);
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
