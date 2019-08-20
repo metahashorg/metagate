@@ -21,6 +21,7 @@
 #include <QDesktopServices>
 #include <QSettings>
 #include <QSystemTrayIcon>
+#include <QDesktopWidget>
 
 #include "ui_mainwindow.h"
 
@@ -173,9 +174,29 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     //Q_CONNECT(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished);
 
     Q_CONNECT(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged);
+
+    correctWindowSize();
 }
 
 MainWindow::~MainWindow() = default;
+
+void MainWindow::correctWindowSize() {
+    QRect rec = QApplication::desktop()->availableGeometry();
+    const QSize screenSize(rec.width(), rec.height());
+    LOG << "Screen size " << screenSize.width() << " " << screenSize.height();
+
+    const QRect geometry = this->geometry();
+    const QSize windowSize = geometry.size();
+    if (screenSize.width() >= windowSize.width() && screenSize.height() >= windowSize.height()) {
+        return;
+    }
+    const QSize correct(std::max(0, windowSize.width() - screenSize.width()), std::max(0, windowSize.height() - screenSize.height()));
+
+    ui->webView->setMinimumSize(ui->webView->minimumSize() - correct);
+    ui->centralWidget->setMinimumSize(ui->centralWidget->minimumSize() - correct);
+    setGeometry(geometry.x(), geometry.y(), geometry.width() - correct.width(), geometry.height() - correct.height());
+    updateGeometry();
+}
 
 void MainWindow::loadPagesMappings() {
     pagesMappings.clearMappings();
