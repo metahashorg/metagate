@@ -57,6 +57,8 @@ public:
 
     using CreateContractAddressCallback = CallbackWrapper<void(const QString &address)>;
 
+    using CreateTokenAddressCallback = CallbackWrapper<void(const QString &address)>;
+
     using SignMessageCallback = CallbackWrapper<void(const QString &signature, const QString &pubkey)>;
 
     using SignMessage2Callback = CallbackWrapper<void(const QString &signature, const QString &pubkey, const QString &tx)>;
@@ -143,6 +145,8 @@ signals:
 
     void createContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
 
+    void createTokenAddress(const QString &address, int nonce, const CreateTokenAddressCallback &callback);
+
     void signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const wallets::Wallets::SignMessageCallback &callback);
 
     void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const SignMessage2Callback &callback);
@@ -180,6 +184,8 @@ private slots:
     void onCheckAddress(const QString &address, const CheckAddressCallback &callback);
 
     void onCreateContractAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback);
+
+    void onCreateTokenAddress(const QString &address, int nonce, const CreateTokenAddressCallback &callback);
 
     void onSignMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const wallets::Wallets::SignMessageCallback &callback);
 

@@ -158,6 +158,18 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void WalletsJavascript::createTokenAddress(const QString &address, int nonce, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""));
+
+    wrapOperation([&, this](){
+        emit wallets.createTokenAddress(address, nonce, wallets::Wallets::CreateContractAddressCallback([makeFunc, address](const QString &result){
+            makeFunc.func(TypedException(), result);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
 void WalletsJavascript::signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const QString &callback) {
 BEGIN_SLOT_WRAPPER
     LOG << "Sign message " << isMhc << " " << address << " " << text;

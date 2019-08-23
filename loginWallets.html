@@ -60,6 +60,20 @@
         });
     }
     
+    function createTokenKey() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.createTokenAddress("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56", 13, "callback") ;
+        });
+    }
+    
+    function createContractKey() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.wallets;
+        mainWindow.createContractAddress("0x0034d209107371745c6f5634d6ed87199bac872c310091ca56", 13, "callback") ;
+        });
+    }
+    
 </script>
 
 <body onload="generateAllWalletsJs();"></body>
@@ -94,6 +108,8 @@
             <input type="button" value="importKeysBtc" onclick="importKeysBtc()"><br>
             <input type="button" value="getRawPrivateKey" onclick="getRawPrivateKey()"><br>
             <input type="button" value="saveRawPrivateKey" onclick="saveRawPrivateKey()"><br>
+            <input type="button" value="createTokenKey" onclick="createTokenKey()"><br>
+            <input type="button" value="createContractKey" onclick="createContractKey()"><br>
             </FORM>
         </left>
     </p>

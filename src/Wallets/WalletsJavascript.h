@@ -33,6 +33,8 @@ public:
 
     Q_INVOKABLE void createContractAddress(const QString &address, int nonce, const QString &callback);
 
+    Q_INVOKABLE void createTokenAddress(const QString &address, int nonce, const QString &callback);
+
     Q_INVOKABLE void signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const QString &callback);
 
     Q_INVOKABLE void signMessage2(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &callback);
