@@ -43,6 +43,7 @@ public:
     const static QString MAINTENANCETOOL;
 
     static QString getMaintenanceToolExe();
+    static QString getRepoUrl();
 
 public:
 

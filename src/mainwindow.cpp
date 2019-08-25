@@ -646,7 +646,7 @@ BEGIN_SLOT_WRAPPER
     const QString currentVersion = VERSION_STRING;
     const QString jsScript = "window.onQtAppUpdate  && window.onQtAppUpdate(\"" + appVersion + "\", \"" + reference + "\", \"" + currentVersion + "\", \"" + message + "\");";
     LOG << "Update script " << jsScript;
-    showNotification(tr("New MetaGate version %1 available").arg(appVersion), tr("Current version %1").arg(currentVersion));
+    showNotification(tr("New %1 update(s) are available").arg(reference), tr("Current MetaGate version %1").arg(currentVersion));
     ui->webView->page()->runJavaScript(jsScript);
 END_SLOT_WRAPPER
 }
