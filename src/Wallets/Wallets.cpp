@@ -49,6 +49,7 @@ Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     Q_CONNECT(this, &Wallets::checkWalletPassword, this, &Wallets::onCheckWalletPassword);
     Q_CONNECT(this, &Wallets::checkAddress, this, &Wallets::onCheckAddress);
     Q_CONNECT(this, &Wallets::createContractAddress, this, &Wallets::onCreateContractAddress);
+    Q_CONNECT(this, &Wallets::createTokenAddress, this, &Wallets::onCreateTokenAddress);
     Q_CONNECT(this, &Wallets::signMessage, this, &Wallets::onSignMessage);
     Q_CONNECT(this, &Wallets::signMessage2, this, &Wallets::onSignMessage2);
     Q_CONNECT(this, &Wallets::signAndSendMessage, this, &Wallets::onSignAndSendMessage);
@@ -93,6 +94,7 @@ Wallets::Wallets(auth::Auth &auth, utils::Utils &utils, QObject *parent)
     Q_REG(CheckWalletPasswordCallback, "CheckWalletPasswordCallback");
     Q_REG(CheckAddressCallback, "CheckAddressCallback");
     Q_REG(CreateContractAddressCallback, "CreateContractAddressCallback");
+    Q_REG(CreateTokenAddressCallback, "CreateTokenAddressCallback");
     Q_REG(wallets::Wallets::SignMessageCallback, "wallets::Wallets::SignMessageCallback");
     Q_REG(SignMessage2Callback, "SignMessage2Callback");
     Q_REG(GettedNonceCallback, "GettedNonceCallback");
@@ -262,6 +264,14 @@ void Wallets::onCreateContractAddress(const QString &address, int nonce, const C
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
         return QString::fromStdString(Wallet::createV8Address(address.toStdString(), nonce));
+    }, callback);
+END_SLOT_WRAPPER
+}
+
+void Wallets::onCreateTokenAddress(const QString &address, int nonce, const CreateContractAddressCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return QString::fromStdString(Wallet::createTokenAddress(address.toStdString(), nonce));
     }, callback);
 END_SLOT_WRAPPER
 }

@@ -37,6 +37,9 @@ private slots:
     void testCreateV8Address_data();
     void testCreateV8Address();
 
+    void testCreateTokenAddress_data();
+    void testCreateTokenAddress();
+
 };
 
 #endif // TST_METAHASH_H

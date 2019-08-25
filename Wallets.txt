@@ -42,6 +42,11 @@ Q_INVOKABLE createContractAddress(const QString &address, int nonce, const QStri
 # javascript is called after completion of this function 
 callback(result, errorNum, errorMessage)
 
+Q_INVOKABLE createTokenAddress(const QString &address, int nonce, const QString &callback)
+# Creates token address based on address and nonce
+# javascript is called after completion of this function 
+callback(result, errorNum, errorMessage)
+
 Q_INVOKABLE signMessage(bool isMhc, const QString &address, const QString &text, const QString &password, const QString &callback)
 # Message's signing.
 # javascript is called after completion of this function 
