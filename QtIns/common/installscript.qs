@@ -45,14 +45,12 @@ Component.prototype.createOperations = function()
     component.addElevatedOperation("Execute", "launchctl", "start", "com.adsniper.desktopproxy", "UNDOEXECUTE", "launchctl", "stop", "com.adsniper.desktopproxy");
         
     } else if (systemInfo.kernelType === "linux") {
-        component.createOperations();
-        component.addElevatedOperation("Execute", "@TargetDir@/systemd-install.sh", "com.adsniper.desktopproxy", "@TargetDir@", "asdesktopproxyservice", "UNDOEXECUTE", "rm", "/etc/systemd/system/com.adsniper.desktopproxy.service");
+        //component.addElevatedOperation("Execute", "@TargetDir@/install.sh", "UNDOEXECUTE", "@TargetDir@/uninstall.sh");
+        component.addElevatedOperation("Execute", "@TargetDir@/systemd-install.sh", "com.adsniper.desktopproxy", "@TargetDir@", "asdesktopproxyservice.sh", "UNDOEXECUTE", "rm", "/etc/systemd/system/com.adsniper.desktopproxy.service");
         component.addElevatedOperation("Execute", "systemctl", "enable", "com.adsniper.desktopproxy", "UNDOEXECUTE", "systemctl", "disable", "com.adsniper.desktopproxy");
         component.addElevatedOperation("Execute", "systemctl", "start", "com.adsniper.desktopproxy", "UNDOEXECUTE", "systemctl", "stop", "com.adsniper.desktopproxy");
-        
     }
 
-    //component.addElevatedOperation("Execute", "@TargetDir@\\AutoUpdater.exe", "-install", "UNDOEXECUTE", "@TargetDir@\\AutoUpdater.exe", "-remove");
 }
 
 Component.prototype.IntroductionPageCallback = function() {
