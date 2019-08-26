@@ -37,6 +37,7 @@ Component.prototype.createOperations = function()
     //component.addElevatedOperation("GlobalConfig", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"@TargetDir@\\MetaGate.exe\" \"-t\"");
         component.addElevatedOperation("GlobalConfig", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"@TargetDir@\\MetaGate.exe\" \"-t\"");
         // Autostart proxy
+	component.addElevatedOperation("Execute", "@TargetDir@\\disablessdp.cmd", "@TargetDir@\\asdesktopproxyservice.exe");
         component.addElevatedOperation("Execute", "@TargetDir@\\asdesktopproxyservice.exe", "-i", "UNDOEXECUTE", "@TargetDir@\\asdesktopproxyservice.exe", "-u");
         component.addElevatedOperation("Execute", "@TargetDir@\\asdesktopproxyservice.exe", "", "UNDOEXECUTE", "@TargetDir@\\asdesktopproxyservice.exe", "-t");
     } else if (systemInfo.productType === "osx") {
