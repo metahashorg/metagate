@@ -3,9 +3,11 @@ function Component()
     // default constructor
 }
 
+/*
 function Controller()
 {
 }
+*/
 
 Component.prototype.beginInstallation = function()
 {
@@ -24,6 +26,9 @@ Component.prototype.createOperations = function()
     component.createOperations();
 
     if (systemInfo.productType === "windows") {
+	var mgpath = installer.value("TargetDir");
+	mgpath = mgpath.replace(/\//g, "\\");
+
         component.addOperation("CreateShortcut", "@TargetDir@/MetaGate.exe", "@StartMenuDir@/MetaGate.lnk",
             "workingDirectory=@TargetDir@", "iconPath=@TargetDir@/MetaGate.exe",
             "iconId=0", "description=Launch Metahash Wallet");
@@ -32,12 +37,11 @@ Component.prototype.createOperations = function()
                 "iconId=0", "description=Launch Metahash Wallet");
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "Default", "URL:Mh pay protocol");
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "URL Protocol", "");
-        component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\shell\\open\\command", "Default", "\"@TargetDir@\\MetaGate.exe\" \"%1\"");
-        component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\DefaultIcon", "Default", "@TargetDir@\\MetaGate.exe,1");
-    //component.addElevatedOperation("GlobalConfig", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"@TargetDir@\\MetaGate.exe\" \"-t\"");
-        component.addElevatedOperation("GlobalConfig", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"@TargetDir@\\MetaGate.exe\" \"-t\"");
+        component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\shell\\open\\command", "Default", "\"" + mgpath + "\\MetaGate.exe\" \"%1\"");
+        component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\DefaultIcon", "Default", mgpath+ "\\MetaGate.exe,1");
+        component.addElevatedOperation("GlobalConfig", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"" + mgpath + "\\MetaGate.exe\" \"-t\"");
         // Autostart proxy
-	component.addElevatedOperation("Execute", "@TargetDir@\\disablessdp.cmd", "@TargetDir@\\asdesktopproxyservice.exe");
+	component.addElevatedOperation("Execute", "@TargetDir@\\disablessdp.cmd", mgpath + "\\asdesktopproxyservice.exe");
         component.addElevatedOperation("Execute", "@TargetDir@\\asdesktopproxyservice.exe", "-i", "UNDOEXECUTE", "@TargetDir@\\asdesktopproxyservice.exe", "-u");
         component.addElevatedOperation("Execute", "@TargetDir@\\asdesktopproxyservice.exe", "", "UNDOEXECUTE", "@TargetDir@\\asdesktopproxyservice.exe", "-t");
     } else if (systemInfo.productType === "osx") {
@@ -54,6 +58,7 @@ Component.prototype.createOperations = function()
 
 }
 
+/*
 Component.prototype.IntroductionPageCallback = function() {
     var result = QMessageBox.question("quit.question", "Start Program", "Do you want to start the installed application?",QMessageBox.Yes | QMessageBox.No);
    // if (installer.isUpdater()) {
@@ -72,8 +77,6 @@ Component.prototype.IntroductionPageCallback = function() {
     // }
 }
 
-
-/*
 function Controller()
 {
     installer.installationFinished.connect(function() {
