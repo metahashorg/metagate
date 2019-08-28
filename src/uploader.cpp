@@ -39,9 +39,9 @@ SET_LOG_NAMESPACE("UPL");
 std::mutex Uploader::lastVersionMut;
 
 #ifdef Q_OS_WINDOWS
-const QString Uploader::MAINTENANCETOOL = QStringLiteral("maintenancetool.exe");
+const QString Uploader::MAINTENANCETOOL = QStringLiteral("MGInstaller.exe");
 #else
-const QString Uploader::MAINTENANCETOOL = QStringLiteral("maintenancetool");
+const QString Uploader::MAINTENANCETOOL = QStringLiteral("MGInstaller");
 #endif
 
 QString Uploader::getMaintenanceToolExe()

@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
     <Name>MetaGate</Name>
-    <Version>%MAINTENANCE_TOOL_VERSION%</Version>
     <Title>MetaGate</Title>
     <Publisher>MetaHash</Publisher>
 	<WizardDefaultHeight>560</WizardDefaultHeight>
     <WizardDefaultWidth>860</WizardDefaultWidth>
+    <MaintenanceToolName>MGInstaller</MaintenanceToolName>
     <StartMenuDir>MetaGate</StartMenuDir>
     <AllowNonAsciiCharacters>true</AllowNonAsciiCharacters>
     <AllowSpaceInPath>true</AllowSpaceInPath>
     <TargetDir>@HomeDir@/MetaGate</TargetDir>
     <RemoteRepositories>
     </RemoteRepositories>
-	<RunProgram>@TargetDir@/run.sh</RunProgram>
+	<RunProgram>@TargetDir@/MetaGate</RunProgram>
+	<ControlScript>controller.qs</ControlScript>
 </Installer>
