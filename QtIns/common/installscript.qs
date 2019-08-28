@@ -26,8 +26,8 @@ Component.prototype.createOperations = function()
     component.createOperations();
 
     if (systemInfo.productType === "windows") {
-	var mgpath = installer.value("TargetDir");
-	mgpath = mgpath.replace(/\//g, "\\");
+		var mgpath = installer.value("TargetDir");
+		mgpath = mgpath.replace(/\//g, "\\");
 
         component.addOperation("CreateShortcut", "@TargetDir@/MetaGate.exe", "@StartMenuDir@/MetaGate.lnk",
             "workingDirectory=@TargetDir@", "iconPath=@TargetDir@/MetaGate.exe",
@@ -41,13 +41,13 @@ Component.prototype.createOperations = function()
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\DefaultIcon", "Default", mgpath+ "\\MetaGate.exe,1");
         component.addElevatedOperation("GlobalConfig", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"" + mgpath + "\\MetaGate.exe\" \"-t\"");
         // Autostart proxy
-	component.addElevatedOperation("Execute", "@TargetDir@\\disablessdp.cmd", mgpath + "\\mhdesktopproxyservice.exe");
-        component.addElevatedOperation("Execute", "@TargetDir@\\mhdesktopproxyservice.exe", "-i", "UNDOEXECUTE", "@TargetDir@\\mhdesktopproxyservice.exe", "-u");
+		component.addElevatedOperation("Execute", "@TargetDir@\\mhdesktopproxyservice.exe", "-i", "UNDOEXECUTE", "@TargetDir@\\mhdesktopproxyservice.exe", "-u");
         component.addElevatedOperation("Execute", "@TargetDir@\\mhdesktopproxyservice.exe", "", "UNDOEXECUTE", "@TargetDir@\\mhdesktopproxyservice.exe", "-t");
     } else if (systemInfo.productType === "osx") {
-        component.addElevatedOperation("Execute", "@TargetDir@/launchd-install.sh", "metahash.desktopproxy", "@TargetDir@/MetaGate.app/Contents/MacOS/mhdesktopproxyservice", "UNDOEXECUTE", "rm", "-f", "/Library/LaunchDaemons/metahash.desktopproxy.plist");
-    component.addElevatedOperation("Execute", "launchctl", "load", "/Library/LaunchDaemons/metahash.desktopproxy.plist", "UNDOEXECUTE", "launchctl", "unload", "/Library/LaunchDaemons/metahash.desktopproxy.plist");
-    component.addElevatedOperation("Execute", "launchctl", "start", "metahash.desktopproxy", "UNDOEXECUTE", "launchctl", "stop", "metahash.desktopproxy");
+    	component.addElevatedOperation("Execute", "@TargetDir@/install.sh", "UNDOEXECUTE", "rm", "-f", "~/Library/LaunchAgents/com.metahash.metagate.plist");
+        component.addElevatedOperation("Execute", "@TargetDir@/launchd-install.sh", "metahash.desktopproxy", "@TargetDir@/MetaGate.app/Contents/MacOS/mhdesktopproxyservice", "UNDOEXECUTE", "@TargetDir@/launchd-uninstall.sh", "metahash.desktopproxy", "mhdesktopproxyservice");
+    	component.addElevatedOperation("Execute", "launchctl", "load", "/Library/LaunchDaemons/metahash.desktopproxy.plist", "UNDOEXECUTE", "launchctl", "unload", "/Library/LaunchDaemons/metahash.desktopproxy.plist");
+    	component.addElevatedOperation("Execute", "launchctl", "start", "metahash.desktopproxy", "UNDOEXECUTE", "launchctl", "stop", "metahash.desktopproxy");
         
     } else if (systemInfo.kernelType === "linux") {
         //component.addElevatedOperation("Execute", "@TargetDir@/install.sh", "UNDOEXECUTE", "@TargetDir@/uninstall.sh");
