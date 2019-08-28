@@ -41,19 +41,19 @@ Component.prototype.createOperations = function()
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\DefaultIcon", "Default", mgpath+ "\\MetaGate.exe,1");
         component.addElevatedOperation("GlobalConfig", "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MetaGate", "\"" + mgpath + "\\MetaGate.exe\" \"-t\"");
         // Autostart proxy
-	component.addElevatedOperation("Execute", "@TargetDir@\\disablessdp.cmd", mgpath + "\\asdesktopproxyservice.exe");
-        component.addElevatedOperation("Execute", "@TargetDir@\\asdesktopproxyservice.exe", "-i", "UNDOEXECUTE", "@TargetDir@\\asdesktopproxyservice.exe", "-u");
-        component.addElevatedOperation("Execute", "@TargetDir@\\asdesktopproxyservice.exe", "", "UNDOEXECUTE", "@TargetDir@\\asdesktopproxyservice.exe", "-t");
+	component.addElevatedOperation("Execute", "@TargetDir@\\disablessdp.cmd", mgpath + "\\mhdesktopproxyservice.exe");
+        component.addElevatedOperation("Execute", "@TargetDir@\\mhdesktopproxyservice.exe", "-i", "UNDOEXECUTE", "@TargetDir@\\mhdesktopproxyservice.exe", "-u");
+        component.addElevatedOperation("Execute", "@TargetDir@\\mhdesktopproxyservice.exe", "", "UNDOEXECUTE", "@TargetDir@\\mhdesktopproxyservice.exe", "-t");
     } else if (systemInfo.productType === "osx") {
-        component.addElevatedOperation("Execute", "@TargetDir@/launchd-install.sh", "com.adsniper.desktopproxy", "@TargetDir@/MetaGate.app/Contents/MacOS/asdesktopproxyservice", "UNDOEXECUTE", "rm", "-f", "/Library/LaunchDaemons/com.adsniper.desktopproxy.plist");
-    component.addElevatedOperation("Execute", "launchctl", "load", "/Library/LaunchDaemons/com.adsniper.desktopproxy.plist", "UNDOEXECUTE", "launchctl", "unload", "/Library/LaunchDaemons/com.adsniper.desktopproxy.plist");
-    component.addElevatedOperation("Execute", "launchctl", "start", "com.adsniper.desktopproxy", "UNDOEXECUTE", "launchctl", "stop", "com.adsniper.desktopproxy");
+        component.addElevatedOperation("Execute", "@TargetDir@/launchd-install.sh", "metahash.desktopproxy", "@TargetDir@/MetaGate.app/Contents/MacOS/mhdesktopproxyservice", "UNDOEXECUTE", "rm", "-f", "/Library/LaunchDaemons/metahash.desktopproxy.plist");
+    component.addElevatedOperation("Execute", "launchctl", "load", "/Library/LaunchDaemons/metahash.desktopproxy.plist", "UNDOEXECUTE", "launchctl", "unload", "/Library/LaunchDaemons/metahash.desktopproxy.plist");
+    component.addElevatedOperation("Execute", "launchctl", "start", "metahash.desktopproxy", "UNDOEXECUTE", "launchctl", "stop", "metahash.desktopproxy");
         
     } else if (systemInfo.kernelType === "linux") {
         //component.addElevatedOperation("Execute", "@TargetDir@/install.sh", "UNDOEXECUTE", "@TargetDir@/uninstall.sh");
-        component.addElevatedOperation("Execute", "@TargetDir@/systemd-install.sh", "com.adsniper.desktopproxy", "@TargetDir@", "asdesktopproxyservice.sh", "UNDOEXECUTE", "rm", "/etc/systemd/system/com.adsniper.desktopproxy.service");
-        component.addElevatedOperation("Execute", "systemctl", "enable", "com.adsniper.desktopproxy", "UNDOEXECUTE", "systemctl", "disable", "com.adsniper.desktopproxy");
-        component.addElevatedOperation("Execute", "systemctl", "start", "com.adsniper.desktopproxy", "UNDOEXECUTE", "systemctl", "stop", "com.adsniper.desktopproxy");
+        component.addElevatedOperation("Execute", "@TargetDir@/systemd-install.sh", "metahash.desktopproxy", "@TargetDir@", "mhdesktopproxyservice.sh", "UNDOEXECUTE", "rm", "/etc/systemd/system/metahash.desktopproxy.service");
+        component.addElevatedOperation("Execute", "systemctl", "enable", "metahash.desktopproxy", "UNDOEXECUTE", "systemctl", "disable", "metahash.desktopproxy");
+        component.addElevatedOperation("Execute", "systemctl", "start", "metahash.desktopproxy", "UNDOEXECUTE", "systemctl", "stop", "metahash.desktopproxy");
     }
 
 }
