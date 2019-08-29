@@ -239,7 +239,7 @@ void Wallet::checkAddress(const std::string &address, bool isCheckHash) {
     }
 }
 
-std::string Wallet::createV8Address(const std::string &addr, int nonce) {
+std::string Wallet::createCustomAddress(const std::string &addr, int nonce, char number) {
     checkAddress(addr, true);
     std::string hexowner = addr.substr(2, addr.size()-2);
     std::string binowner = HexStringToDump(hexowner);
@@ -254,10 +254,18 @@ std::string Wallet::createV8Address(const std::string &addr, int nonce) {
     std::string rlpenc = RLP(fields);
     const std::string hs = keccak(rlpenc);
     std::string address;
-    address += 0x08;
+    address += number;
     address += hs.substr(12, 20);
     address += doubleSha(address).substr(0, 4);
     return "0x" + toHex(address);
+}
+
+std::string Wallet::createV8Address(const std::string &addr, int nonce) {
+    return createCustomAddress(addr, nonce, 0x08);
+}
+
+std::string Wallet::createTokenAddress(const std::string &addr, int nonce) {
+    return createCustomAddress(addr, nonce, 0x06);
 }
 
 bool Wallet::isCorrectFilenameWallet(const QString &filePath) {
