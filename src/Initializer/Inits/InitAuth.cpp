@@ -58,14 +58,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-InitAuth::Return InitAuth::initialize(std::shared_future<MainWindow*> mainWindow) {
+InitAuth::Return InitAuth::initialize(SharedFuture<MainWindow> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
         authJavascript = std::make_unique<auth::AuthJavascript>();
         authJavascript->moveToThread(mainThread);
         authManager = std::make_unique<auth::Auth>(*authJavascript);
         Q_CONNECT(authManager.get(), &auth::Auth::checkTokenFinished, this, &InitAuth::checkTokenFinished);
         authManager->start();
-        MainWindow &mw = *mainWindow.get();
+        MainWindow &mw = mainWindow.get();
         emit mw.setAuth(authJavascript.get(), authManager.get(), MainWindow::SetAuthCallback([this]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitAuth::sendInitSuccess, this, _1), std::bind(&InitAuth::callbackCall, this, _1)));       

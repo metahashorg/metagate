@@ -52,19 +52,19 @@ void InitMessenger::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitMessenger::Return InitMessenger::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> trancactions, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
+InitMessenger::Return InitMessenger::initialize(SharedFuture<MainWindow> mainWindow, SharedFuture<auth::Auth> auth, SharedFuture<transactions::Transactions> trancactions, SharedFuture<wallets::Wallets> wallets) {
     const TypedException exception = apiVrapper2([&, this] {
         crypto = std::make_unique<messenger::CryptographicManager>();
         crypto->start();
-        javascript = std::make_unique<messenger::MessengerJavascript>(*(auth.get().first), *crypto, *(trancactions.get().second), *wallets.get().first);
+        javascript = std::make_unique<messenger::MessengerJavascript>(auth.get(), *crypto, trancactions.get(), wallets.get());
         javascript->moveToThread(mainThread);
         database = std::make_unique<messenger::MessengerDBStorage>(getDbPath());
         database->init();
-        manager = std::make_unique<messenger::Messenger>(*javascript, *database, *crypto, *(mainWindow.get()));
+        manager = std::make_unique<messenger::Messenger>(*javascript, *database, *crypto, mainWindow.get());
         manager->start();
         javascript->setMessenger(*manager);
 
-        MainWindow &mw = *mainWindow.get();
+        MainWindow &mw = mainWindow.get();
         emit mw.setMessengerJavascript(javascript.get(), MainWindow::SetMessengerJavascriptCallback([this]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitMessenger::sendInitSuccess, this, _1), std::bind(&InitMessenger::callbackCall, this, _1)));

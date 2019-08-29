@@ -19,28 +19,23 @@ class WebSocketClient;
 class NetwrokTesting;
 
 namespace transactions {
-class TransactionsJavascript;
 class Transactions;
 }
 
 namespace auth {
 class Auth;
-class AuthJavascript;
 }
 
 namespace utils {
 class Utils;
-class UtilsJavascript;
 }
 
 namespace wallets {
 class Wallets;
-class WalletsJavascript;
 }
 
 namespace metagate {
 class MetaGate;
-class MetaGateJavascript;
 }
 
 namespace initializer {
@@ -66,12 +61,12 @@ public:
     Return initialize(
         SharedFuture<WebSocketClient> wssClient,
         SharedFuture<NsLookup> nsLookup,
-        std::shared_future<MainWindow*> mainWindow,
-        std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
-        std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-        std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
-        std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
-        std::shared_future<std::pair<metagate::MetaGate*, metagate::MetaGateJavascript*>> metagate,
+        SharedFuture<MainWindow> mainWindow,
+        SharedFuture<transactions::Transactions> transactions,
+        SharedFuture<auth::Auth> auth,
+        SharedFuture<utils::Utils> utils,
+        SharedFuture<wallets::Wallets> wallets,
+        SharedFuture<metagate::MetaGate> metagate,
         const QString &versionString,
         NetwrokTesting &nettest
     );

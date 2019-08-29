@@ -9,6 +9,8 @@
 #include <future>
 #include <functional>
 
+#include "../SharedFuture.h"
+
 struct TypedException;
 
 namespace utils {
@@ -38,7 +40,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow);
+    Return initialize(SharedFuture<MainWindow> mainWindow);
 
     static int countEvents() {
         return 1;

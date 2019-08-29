@@ -47,15 +47,15 @@ void InitUtils::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitUtils::Return InitUtils::initialize(std::shared_future<MainWindow*> mainWindow) {
+InitUtils::Return InitUtils::initialize(SharedFuture<MainWindow> mainWindow) {
     const TypedException exception = apiVrapper2([&, this] {
         utilsManager = std::make_unique<utils::Utils>();
         utilsManager->mvToThread(mainThread);
         utilsJavascript = std::make_unique<utils::UtilsJavascript>(*utilsManager);
         utilsJavascript->moveToThread(mainThread);
-        MainWindow &mw = *mainWindow.get();
+        MainWindow &mw = mainWindow.get();
         utilsManager->setWidget(&mw);
-        emit mw.setUtilsJavascript(utilsJavascript.get(), MainWindow::SetUtilsJavascriptCallback([this, mainWindow]() {
+        emit mw.setUtilsJavascript(utilsJavascript.get(), MainWindow::SetUtilsJavascriptCallback([this]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitUtils::sendInitSuccess, this, _1), std::bind(&InitUtils::callbackCall, this, _1)));
     });

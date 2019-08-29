@@ -8,13 +8,14 @@
 #include <memory>
 #include <future>
 
+#include "../SharedFuture.h"
+
 class MainWindow;
 class Uploader;
 struct TypedException;
 
 namespace auth {
 class Auth;
-class AuthJavascript;
 }
 
 namespace initializer {
@@ -35,7 +36,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth);
+    Return initialize(SharedFuture<MainWindow> mainWindow, SharedFuture<auth::Auth> auth);
 
     static int countEvents() {
         return 2;

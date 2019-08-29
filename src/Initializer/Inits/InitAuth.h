@@ -8,6 +8,8 @@
 #include <memory>
 #include <future>
 
+#include "../SharedFuture.h"
+
 struct TypedException;
 
 namespace auth {
@@ -37,7 +39,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow);
+    Return initialize(SharedFuture<MainWindow> mainWindow);
 
     static int countEvents() {
         return 2;

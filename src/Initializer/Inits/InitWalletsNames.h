@@ -9,6 +9,8 @@
 #include <future>
 #include <functional>
 
+#include "../SharedFuture.h"
+
 struct TypedException;
 
 namespace wallet_names {
@@ -19,12 +21,10 @@ class WalletNamesDbStorage;
 
 namespace auth {
 class Auth;
-class AuthJavascript;
 }
 
 namespace wallets {
 class Wallets;
-class WalletsJavascript;
 }
 
 class MainWindow;
@@ -50,7 +50,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<WebSocketClient*> wssClient, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets);
+    Return initialize(SharedFuture<MainWindow> mainWindow, SharedFuture<auth::Auth> auth, SharedFuture<WebSocketClient> wssClient, SharedFuture<wallets::Wallets> wallets);
 
     static int countEvents() {
         return 1;

@@ -48,18 +48,18 @@ void InitJavascriptWrapper::sendInitSuccess(const TypedException &exception) {
 InitJavascriptWrapper::Return InitJavascriptWrapper::initialize(
     SharedFuture<WebSocketClient> wssClient,
     SharedFuture<NsLookup> nsLookup,
-    std::shared_future<MainWindow*> mainWindow,
-    std::shared_future<std::pair<transactions::TransactionsJavascript*, transactions::Transactions*>> transactions,
-    std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-    std::shared_future<std::pair<utils::Utils*, utils::UtilsJavascript*>> utils,
-    std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
-    std::shared_future<std::pair<metagate::MetaGate*, metagate::MetaGateJavascript*>> metagate,
+    SharedFuture<MainWindow> mainWindow,
+    SharedFuture<transactions::Transactions> transactions,
+    SharedFuture<auth::Auth> auth,
+    SharedFuture<utils::Utils> utils,
+    SharedFuture<wallets::Wallets> wallets,
+    SharedFuture<metagate::MetaGate> metagate,
     const QString &versionString,
     NetwrokTesting &nettest
 ) {
     const TypedException exception = apiVrapper2([&, this] {
-        MainWindow &mw = *mainWindow.get();
-        jsWrapper = std::make_unique<JavascriptWrapper>(mw, wssClient.get(), nsLookup.get(), *transactions.get().second, *auth.get().first, nettest, *utils.get().first, *wallets.get().first, *metagate.get().first, versionString);
+        MainWindow &mw = mainWindow.get();
+        jsWrapper = std::make_unique<JavascriptWrapper>(mw, wssClient.get(), nsLookup.get(), transactions.get(), auth.get(), nettest, utils.get(), wallets.get(), metagate.get(), versionString);
         jsWrapper->mvToThread(mainThread);
         emit mw.setJavascriptWrapper(jsWrapper.get(), MainWindow::SetJavascriptWrapperCallback([this]() {
             sendInitSuccess(TypedException());

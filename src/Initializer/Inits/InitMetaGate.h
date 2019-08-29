@@ -9,23 +9,22 @@
 #include <future>
 #include <functional>
 
+#include "../SharedFuture.h"
+
 struct TypedException;
 
 class MainWindow;
 
 class NsLookup;
-class InfrastructureNsLookup;
 class WebSocketClient;
 class NetwrokTesting;
 
 namespace auth {
 class Auth;
-class AuthJavascript;
 }
 
 namespace wallets {
 class Wallets;
-class WalletsJavascript;
 }
 
 namespace metagate {
@@ -54,11 +53,11 @@ public:
     void completeImpl() override;
 
     Return initialize(
-        std::shared_future<WebSocketClient*> wssClient,
-        std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
-        std::shared_future<MainWindow*> mainWindow,
-        std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-        std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+        SharedFuture<WebSocketClient> wssClient,
+        SharedFuture<NsLookup> nsLookup,
+        SharedFuture<MainWindow> mainWindow,
+        SharedFuture<auth::Auth> auth,
+        SharedFuture<wallets::Wallets> wallets,
         const QString &versionString,
         NetwrokTesting &nettest
     );

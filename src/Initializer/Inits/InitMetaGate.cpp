@@ -49,20 +49,20 @@ void InitMetaGate::sendInitSuccess(const TypedException &exception) {
 }
 
 InitMetaGate::Return InitMetaGate::initialize(
-    std::shared_future<WebSocketClient*> wssClient,
-    std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup,
-    std::shared_future<MainWindow*> mainWindow,
-    std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth,
-    std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets,
+    SharedFuture<WebSocketClient> wssClient,
+    SharedFuture<NsLookup> nsLookup,
+    SharedFuture<MainWindow> mainWindow,
+    SharedFuture<auth::Auth> auth,
+    SharedFuture<wallets::Wallets> wallets,
     const QString &versionString,
     NetwrokTesting &nettest
 ) {
     const TypedException exception = apiVrapper2([&, this] {
-        managerMetagate = std::make_unique<metagate::MetaGate>(*mainWindow.get(), *auth.get().first, *wallets.get().first, *wssClient.get(), *nsLookup.get().first, nettest, versionString);
+        managerMetagate = std::make_unique<metagate::MetaGate>(mainWindow.get(), auth.get(), wallets.get(), wssClient.get(), nsLookup.get(), nettest, versionString);
         managerMetagate->moveToThread(mainThread);
         javascript = std::make_unique<metagate::MetaGateJavascript>(*managerMetagate);
         javascript->moveToThread(mainThread);
-        MainWindow &mw = *mainWindow.get();
+        MainWindow &mw = mainWindow.get();
         emit mw.setMetaGateJavascript(managerMetagate.get(), javascript.get(), MainWindow::SetMetaGateJavascriptCallback([this, mainWindow]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitMetaGate::sendInitSuccess, this, _1), std::bind(&InitMetaGate::callbackCall, this, _1)));

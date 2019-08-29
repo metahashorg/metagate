@@ -49,15 +49,15 @@ void InitTransactions::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitTransactions::Return InitTransactions::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth, std::shared_future<std::pair<wallets::Wallets*, wallets::WalletsJavascript*>> wallets) {
+InitTransactions::Return InitTransactions::initialize(SharedFuture<MainWindow> mainWindow, std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup, SharedFuture<auth::Auth> auth, SharedFuture<wallets::Wallets> wallets) {
     const TypedException exception = apiVrapper2([&, this] {
         database = std::make_unique<transactions::TransactionsDBStorage>(getDbPath());
         database->init();
         txJavascript = std::make_unique<transactions::TransactionsJavascript>();
         txJavascript->moveToThread(mainThread);
-        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get().first, *nsLookup.get().second, *txJavascript, *database, *auth.get().first, *(mainWindow.get()), *wallets.get().first);
+        txManager = std::make_unique<transactions::Transactions>(*nsLookup.get().first, *nsLookup.get().second, *txJavascript, *database, auth.get(), mainWindow.get(), wallets.get());
         txManager->start();
-        MainWindow &mw = *mainWindow.get();
+        MainWindow &mw = mainWindow.get();
         emit mw.setTransactionsJavascript(txJavascript.get(), MainWindow::SetTransactionsJavascriptCallback([this, mainWindow]() {
             sendInitSuccess(TypedException());
         }, std::bind(&InitTransactions::sendInitSuccess, this, _1), std::bind(&InitTransactions::callbackCall, this, _1)));

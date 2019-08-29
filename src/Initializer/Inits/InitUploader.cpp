@@ -39,9 +39,9 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-InitUploader::Return InitUploader::initialize(std::shared_future<MainWindow*> mainWindow, std::shared_future<std::pair<auth::Auth*, auth::AuthJavascript*>> auth) {
+InitUploader::Return InitUploader::initialize(SharedFuture<MainWindow> mainWindow, SharedFuture<auth::Auth> auth) {
     const TypedException exception = apiVrapper2([&, this] {
-        uploader = std::make_unique<Uploader>(*auth.get().first, *mainWindow.get());
+        uploader = std::make_unique<Uploader>(auth.get(), mainWindow.get());
         Q_CONNECT(uploader.get(), &Uploader::checkedUpdatesHtmls, this, &InitUploader::checkedUpdatesHtmls);
         uploader->start();
     });
