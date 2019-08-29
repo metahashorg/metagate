@@ -78,6 +78,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
 
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletCreated, this, &Transactions::onMthWalletCreated);
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletCreated, this, &Transactions::onMthWalletCreated);
+    Q_CONNECT(&wallets, &wallets::Wallets::watchWalletsAdded, this, &Transactions::onMthWatchWalletsAdded);
 
     Q_REG(RegisterAddressCallback, "RegisterAddressCallback");
     Q_REG(GetTxsCallback, "GetTxsCallback");
@@ -808,6 +809,21 @@ BEGIN_SLOT_WRAPPER
     }
     for (const QString &currency: found->second) {
         db.addTracked(currency, address, makeGroupName(userName));
+    }
+END_SLOT_WRAPPER
+}
+
+void Transactions::onMthWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created, const QString &username) {
+BEGIN_SLOT_WRAPPER
+    const std::map<bool, std::set<QString>> currencyList = db.getAllCurrencys();
+    const auto found = currencyList.find(isMhc);
+    if (found == currencyList.end()) {
+        return;
+    }
+    for (const QString &currency: found->second) {
+        for (const auto &pair: created) {
+            db.addTracked(currency, pair.first, makeGroupName(username));
+        }
     }
 END_SLOT_WRAPPER
 }

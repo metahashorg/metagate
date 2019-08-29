@@ -236,6 +236,8 @@ public slots:
 
     void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
 
+    void onMthWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created, const QString &username);
+
     void onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
 
 private slots:
