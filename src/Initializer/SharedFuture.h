@@ -54,8 +54,8 @@ public:
         );
     }
 
-    template<bool B = true>
-    typename std::enable_if<sizeof...(T) == 0 && B, T0&>::type get() {
+    template<bool B = true, typename Dummy = typename std::enable_if<sizeof...(T) == 0 && B>::type>
+    T0& get() {
         return std::get<0>(getter)();
     }
 
