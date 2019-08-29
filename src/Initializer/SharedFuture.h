@@ -37,14 +37,14 @@ private:
         return getImpl<T1>(t, std::forward<Arg>(arg));
     }
 
-public:
-
     template<typename StdSharedFuture, typename M>
     static auto makeLambda(StdSharedFuture sharedFuture) {
         return [sharedFuture]() -> M& {
             return *get<M*>(sharedFuture.get());
         };
     }
+
+public:
 
     template<typename StdSharedFuture>
     SharedFuture(StdSharedFuture sharedFuture) {
