@@ -15,6 +15,15 @@
 
 #include <iostream>
 
+void updateAndRestart()
+{
+    LOG << "Start update tool and close app " << Uploader::getRepoUrl();
+    const QStringList args{QStringLiteral("--updater"),
+                     QStringLiteral("--addRepository"), Uploader::getRepoUrl()};
+    QProcess::startDetached(Uploader::getMaintenanceToolExe(), args);
+    QApplication::exit(SIMPLE_EXIT);
+}
+/*
 #ifdef TARGET_WINDOWS
 
 #include <shlobj.h>
@@ -161,4 +170,6 @@ void updateAndRestart() {
     CHECK(process.startDetached(updaterPath + " --install-dir \"" + thisPath + "\" --package-dir " + newAppPath + " --script " + scriptPatch), "dont start updater process");
     QApplication::exit(SIMPLE_EXIT);
 }
+
 #endif
+*/

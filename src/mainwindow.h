@@ -238,6 +238,10 @@ private slots:
     void onLogined(bool isInit, const QString &login);
 
 private:
+
+    void correctWindowSize(int iteration);
+
+private:
     std::unique_ptr<Ui::MainWindow> ui;
 
     QSystemTrayIcon *systemTray;

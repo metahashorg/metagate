@@ -48,6 +48,8 @@ public:
 
     static std::string createV8Address(const std::string &address, int nonce);
 
+    static std::string createTokenAddress(const std::string &address, int nonce);
+
     static bool isCorrectFilenameWallet(const QString &filePath);
 
 public:
@@ -81,6 +83,8 @@ public:
 public:
 
     static std::string createAddress(const std::string &publicKeyBinary);
+
+    static std::string createCustomAddress(const std::string &addr, int nonce, char number);
 
 private:
 

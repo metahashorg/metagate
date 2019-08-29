@@ -21,6 +21,7 @@
 #include <QDesktopServices>
 #include <QSettings>
 #include <QSystemTrayIcon>
+#include <QDesktopWidget>
 
 #include "ui_mainwindow.h"
 
@@ -177,9 +178,48 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     //Q_CONNECT(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished);
 
     Q_CONNECT(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged);
+
+    correctWindowSize(0);
 }
 
 MainWindow::~MainWindow() = default;
+
+void MainWindow::correctWindowSize(int iteratiion) {
+    const QRect rec = QApplication::desktop()->availableGeometry();
+    const QSize screenSize(rec.width(), rec.height());
+
+    const QRect geometry = this->geometry();
+    const QSize windowSize = geometry.size();
+    const QSize windowSizeFrame = this->frameGeometry().size();
+    if (windowSize == windowSizeFrame && iteratiion <= 10) {
+        QTimer::singleShot(200, std::bind(&MainWindow::correctWindowSize, this, iteratiion + 1));
+        return;
+    }
+    LOG << "Screen size " << screenSize.width() << " " << screenSize.height() << " " << windowSizeFrame.width() << " " << windowSizeFrame.height();
+    if (screenSize.width() >= windowSizeFrame.width() && screenSize.height() >= windowSizeFrame.height()) {
+        return;
+    }
+    const QSize correct(std::max(0, windowSizeFrame.width() - screenSize.width()), std::max(0, windowSizeFrame.height() - screenSize.height()));
+
+    ui->webView->setMinimumSize(ui->webView->minimumSize() - correct);
+    ui->webView->resize(ui->webView->size() - correct);
+    ui->centralWidget->setMinimumSize(ui->centralWidget->minimumSize() - correct);
+    ui->centralWidget->resize(ui->centralWidget->size() - correct);
+    this->resize(windowSize - correct);
+
+    ui->webView->adjustSize();
+    ui->centralWidget->adjustSize();
+    this->adjustSize();
+
+    ui->webView->updateGeometry();
+    ui->centralWidget->updateGeometry();
+    this->updateGeometry();
+
+    if (this->isVisible()) {
+        this->showFullScreen();
+        this->showNormal();
+    }
+}
 
 void MainWindow::loadPagesMappings() {
     pagesMappings.clearMappings();
@@ -662,7 +702,7 @@ BEGIN_SLOT_WRAPPER
     const QString currentVersion = VERSION_STRING;
     const QString jsScript = "window.onQtAppUpdate  && window.onQtAppUpdate(\"" + appVersion + "\", \"" + reference + "\", \"" + currentVersion + "\", \"" + message + "\");";
     LOG << "Update script " << jsScript;
-    showNotification(tr("New MetaGate version %1 available").arg(appVersion), tr("Current version %1").arg(currentVersion));
+    showNotification(tr("New %1 update(s) are available").arg(reference), tr("Current MetaGate version %1").arg(currentVersion));
     ui->webView->page()->runJavaScript(jsScript);
 END_SLOT_WRAPPER
 }
