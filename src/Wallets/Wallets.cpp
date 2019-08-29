@@ -805,7 +805,7 @@ END_SLOT_WRAPPER
 void Wallets::onGetListWallets2(const wallets::WalletCurrency &type, const QString &expectedUsername, const WalletsListCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
-        if (expectedUsername == userName) {
+        if (expectedUsername == userName && !walletPath.isEmpty()) {
             emit getListWallets(type, callback);
         } else {
             std::unique_ptr<GetActualWalletsEvent> event = std::make_unique<GetActualWalletsEvent>(TimerClass::getThread(), *this, expectedUsername, type, callback);
