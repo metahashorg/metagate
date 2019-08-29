@@ -51,7 +51,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(SharedFuture<MainWindow> mainWindow, std::shared_future<std::pair<NsLookup*, InfrastructureNsLookup*>> nsLookup, SharedFuture<auth::Auth> auth, SharedFuture<wallets::Wallets> wallets);
+    Return initialize(SharedFuture<MainWindow> mainWindow, SharedFuture<NsLookup, InfrastructureNsLookup> nsLookup, SharedFuture<auth::Auth> auth, SharedFuture<wallets::Wallets> wallets);
 
     static int countEvents() {
         return 1;

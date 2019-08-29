@@ -7,7 +7,7 @@
 
 namespace initializer {
 
-template<typename T>
+template<typename T0, typename ...T>
 class SharedFuture {
 private:
 
@@ -39,20 +39,34 @@ private:
 
 public:
 
-    template<typename StdSharedFuture>
-    SharedFuture(StdSharedFuture sharedFuture) {
-        getter = [sharedFuture]() -> T& {
-            return *get<T*>(sharedFuture.get());
+    template<typename StdSharedFuture, typename M>
+    static auto makeLambda(StdSharedFuture sharedFuture) {
+        return [sharedFuture]() -> M& {
+            return *get<M*>(sharedFuture.get());
         };
     }
 
-    T& get() {
-        return getter();
+    template<typename StdSharedFuture>
+    SharedFuture(StdSharedFuture sharedFuture) {
+        getter = std::make_tuple(
+            makeLambda<StdSharedFuture, T0>(sharedFuture),
+            makeLambda<StdSharedFuture, T>(sharedFuture)...
+        );
+    }
+
+    template<bool B = true>
+    typename std::enable_if<sizeof...(T) == 0 && B, T0&>::type get() {
+        return std::get<0>(getter)();
+    }
+
+    template<typename M>
+    M& get() {
+        return std::get<std::function<M&()>>(getter)();
     }
 
 private:
 
-    std::function<T&()> getter;
+    std::tuple<std::function<T0&()>, std::function<T&()>...> getter;
 };
 
 } // namespace initializer
