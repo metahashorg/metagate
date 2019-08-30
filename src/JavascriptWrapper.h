@@ -14,6 +14,8 @@
 
 #include "Wallets/Wallet.h"
 
+#include "Network/LocalServer.h"
+
 class NsLookup;
 class WebSocketClient;
 struct TypedException;
@@ -415,6 +417,8 @@ private:
     QFileSystemWatcher fileSystemWatcher;
 
     std::function<void(const std::function<void()> &callback)> signalFunc;
+
+    LocalServer localServer;
 
 };
 

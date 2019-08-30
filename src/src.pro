@@ -119,7 +119,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitWallets.cpp \
     qt_utilites/EventWatcher.cpp \
     Wallets/GetActualWalletsEvent.cpp \
-    NsLookup/InfrastructureNsLookup.cpp
+    NsLookup/InfrastructureNsLookup.cpp \
+    Network/LocalServer.cpp
 
 unix: SOURCES +=
 SOURCES +=  proxy/http_parser.c
@@ -247,7 +248,8 @@ HEADERS += mainwindow.h \
     qt_utilites/EventWatcher.h \
     Wallets/GetActualWalletsEvent.h \
     transactions/TransactionsFilter.h \
-    NsLookup/InfrastructureNsLookup.h
+    NsLookup/InfrastructureNsLookup.h \
+    Network/LocalServer.h
 
 FORMS += mainwindow.ui
 

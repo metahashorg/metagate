@@ -165,6 +165,7 @@ JavascriptWrapper::JavascriptWrapper(
     , utilsManager(utilsManager)
     , wallets(wallets)
     , applicationVersion(applicationVersion)
+    , localServer("unknown")
 {
     hardwareId = QString::fromStdString(::getMachineUid());
     utmData = QString::fromLatin1(getUtmData());
@@ -190,6 +191,11 @@ JavascriptWrapper::JavascriptWrapper(
 
     signalFunc = std::bind(&JavascriptWrapper::callbackCall, this, _1);
 
+    Q_CONNECT3(&localServer, &LocalServer::request, [](std::shared_ptr<LocalServerRequest> request) {
+        LOG << "Request: " << request->request();
+        request->response("Ya tuta");
+    });
+
     emit authManager.reEmit();
 }
 
@@ -203,6 +209,7 @@ void JavascriptWrapper::mvToThread(QThread *thread) {
     moveToThread(thread);
     client.moveToThread(thread);
     fileSystemWatcher.moveToThread(thread);
+    localServer.mvToThread(thread);
 }
 
 void JavascriptWrapper::onCallbackCall(ReturnCallback callback) {
