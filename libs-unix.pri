@@ -8,6 +8,8 @@ LIBS += -L$$PWD/secp256k1/lib/linux/ -lsecp256k1 -lgmp -luuid
 INCLUDEPATH += $$PWD/3rdparty/QrCode/include/ $$PWD/3rdparty/ZBar/include/
 LIBS += -L$$PWD/3rdparty/QrCode/linux/ -L$$PWD/3rdparty/ZBar/linux/ -lQrCode -lzbar
 
+QMAKE_LFLAGS += -static-libstdc++
+
 #ubuntu18 flags
 DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 QMAKE_CXXFLAGS += -no-pie
