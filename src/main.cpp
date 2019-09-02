@@ -126,12 +126,6 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-#ifdef Q_OS_MACX
-    QProcess proc;
-    QDir dir(qApp->applicationDirPath());
-    proc.start("/bin/sh", QStringList() << dir.filePath(QStringLiteral("install.sh")));
-#endif
-
     try {
         /*for (int i = 1; i < argc; i++) {
             if (argv[i] == std::string("--version")) {
