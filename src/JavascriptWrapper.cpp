@@ -36,8 +36,6 @@ using namespace std::placeholders;
 #include "qt_utilites/makeJsFunc.h"
 #include "qt_utilites/QRegister.h"
 
-#include "Module.h"
-
 #include "utilites/machine_uid.h"
 
 #include "Wallets/WalletInfo.h"
@@ -1455,42 +1453,6 @@ BEGIN_SLOT_WRAPPER
     }, [this, JS_NAME_RESULT](const TypedException &e) {
         makeAndRunJsFuncParams(JS_NAME_RESULT, e, Opt<QJsonDocument>());
     }, signalFunc));
-END_SLOT_WRAPPER
-}
-
-void JavascriptWrapper::getAppModules(const QString requestId) {
-BEGIN_SLOT_WRAPPER
-    const QString JS_NAME_RESULT = "getAppModulesResultJs";
-
-    LOG << "app modules";
-
-    Opt<QJsonDocument> result;
-    const TypedException exception = apiVrapper2([&](){
-        const std::vector<std::pair<std::string, StatusModule>> modules = getStatusModules();
-        QJsonArray allJson;
-        for (const auto &module: modules) {
-            QJsonObject moduleJson;
-            moduleJson.insert("module", QString::fromStdString(module.first));
-            const StatusModule &state = module.second;
-            std::string stateStr;
-            if (state == StatusModule::wait) {
-                stateStr = "wait";
-            } else if (state == StatusModule::notFound) {
-                stateStr = "not_found";
-            } else if (state == StatusModule::found) {
-                stateStr = "found";
-            } else {
-                throwErr("Incorrect status module");
-            }
-            moduleJson.insert("state", QString::fromStdString(stateStr));
-            allJson.append(moduleJson);
-        }
-        result = QJsonDocument(allJson);
-
-        LOG << "app modules ok " << QString(result.get().toJson(QJsonDocument::Compact));
-    });
-
-    makeAndRunJsFuncParams(JS_NAME_RESULT, exception, Opt<QString>(requestId), result);
 END_SLOT_WRAPPER
 }
 

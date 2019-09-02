@@ -58,10 +58,6 @@ websocket connected. Некритичный. Модуль websocket прикон
 jsWrapper init. Критичный. Закончена загрузка модуля mainWindow. Можно совершать к нему запросы по javascript
 uploader init. Критичный. Закончена загрузка модуля uploader.
 uploader check_updates_htmls. Некритичный. Модуль updater проверил и загрузил новые html страницы
-proxy init. Критичный. Закончена загрузка модуля proxy. Можно совершать к нему запросы по javascript
-proxy upnp_started
-proxy proxy_started
-proxy proxy_completed. Полностью закончена инициализация и тестирование proxy
 wallet_names init. Критичный. Закончена загрузка модуля wallet_names. Можно совершать к нему запросы по javascript
 utils init. Критичный. Закончена загрузка модуля utils. Можно совершать к нему запросы по javascript
 wallets init. Критичный. Закончена загрузка модуля wallets. Можно совершать к нему запросы по javascript

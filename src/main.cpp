@@ -38,15 +38,11 @@
 #include "Initializer/Inits/InitWebSocket.h"
 #include "Initializer/Inits/InitJavascriptWrapper.h"
 #include "Initializer/Inits/InitUploader.h"
-#include "Initializer/Inits/InitProxy.h"
 #include "Initializer/Inits/InitMessenger.h"
 #include "Initializer/Inits/InitWalletsNames.h"
 #include "Initializer/Inits/InitUtils.h"
 #include "Initializer/Inits/InitWallets.h"
 #include "Initializer/Inits/InitMetaGate.h"
-
-#include "Module.h"
-#include "proxy/Proxy.h"
 
 #include "MhPayEventHandler.h"
 #include <QDebug>
@@ -150,7 +146,6 @@ int main(int argc, char *argv[]) {
         InitOpenSSL();
         initializeAllPaths();
         initializeMachineUid();
-        initModules();
 
         if (!supposedMhPayUrl.empty()) {
             mhPayEventHandler.processCommandLine(QString::fromStdString(supposedMhPayUrl));
@@ -199,9 +194,6 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitWebSocket::Return> webSocketClient = initManager.addInit<InitWebSocket>();
 
         const std::shared_future<InitUploader::Return> uploader = initManager.addInit<InitUploader>(mainWindow, auth);
-
-        //addModule(proxy::Proxy::moduleName());
-        //const std::shared_future<InitProxy::Return> proxy = initManager.addInit<InitProxy>(mainWindow);
 
         const std::shared_future<InitMessenger::Return> messenger = initManager.addInit<InitMessenger>(mainWindow, auth, transactions, wallets);
 

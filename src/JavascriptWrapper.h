@@ -271,8 +271,6 @@ public slots:
 
     Q_INVOKABLE void metaOnline();
 
-    Q_INVOKABLE void getAppModules(const QString requestId);
-
     Q_INVOKABLE void clearNsLookup();
 
     Q_INVOKABLE void sendMessageToWss(QString message);

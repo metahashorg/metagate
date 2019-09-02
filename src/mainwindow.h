@@ -25,9 +25,6 @@ class Auth;
 namespace messenger {
 class MessengerJavascript;
 }
-namespace proxy {
-class ProxyJavascript;
-}
 
 namespace Ui {
 class MainWindow;
@@ -89,8 +86,6 @@ public:
 
     using SetTransactionsJavascriptCallback = CallbackWrapper<void()>;
 
-    using SetProxyJavascriptCallback = CallbackWrapper<void()>;
-
     using SetWalletNamesJavascriptCallback = CallbackWrapper<void()>;
 
     using SetUtilsJavascriptCallback = CallbackWrapper<void()>;
@@ -126,8 +121,6 @@ signals:
 
     void setTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
 
-    void setProxyJavascript(proxy::ProxyJavascript *transactionsJavascript, const SetProxyJavascriptCallback &callback);
-
     void setWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 
     void setUtilsJavascript(utils::UtilsJavascript *utilsJavascript, const SetUtilsJavascriptCallback &callback);
@@ -158,8 +151,6 @@ private slots:
     void onSetMessengerJavascript(messenger::MessengerJavascript *messengerJavascript, const SetMessengerJavascriptCallback &callback);
 
     void onSetTransactionsJavascript(transactions::TransactionsJavascript *transactionsJavascript, const SetTransactionsJavascriptCallback &callback);
-
-    void onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback);
 
     void onSetWalletNamesJavascript(wallet_names::WalletNamesJavascript *walletNamesJavascript, const SetWalletNamesJavascriptCallback &callback);
 

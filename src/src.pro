@@ -48,12 +48,6 @@ SOURCES += main.cpp mainwindow.cpp \
     transactions/TransactionsMessages.cpp \
     transactions/TransactionsDBStorage.cpp \
     transactions/TransactionsJavascript.cpp \
-    proxy/UPnPDevices.cpp \
-    proxy/UPnPRouter.cpp \
-    proxy/ProxyServer.cpp \
-    proxy/ProxyClient.cpp \
-    proxy/Proxy.cpp \
-    proxy/ProxyJavascript.cpp \
     auth/Auth.cpp \
     auth/AuthJavascript.cpp \
     Initializer/Initializer.cpp \
@@ -66,9 +60,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Initializer/Inits/InitWebSocket.cpp \
     Initializer/Inits/InitJavascriptWrapper.cpp \
     Initializer/Inits/InitUploader.cpp \
-    Module.cpp \
-    proxy/WebSocketSender.cpp \
-    Initializer/Inits/InitProxy.cpp \
     Initializer/Inits/InitMessenger.cpp \
     MhPayEventHandler.cpp \
     WalletNames/WalletNamesDbStorage.cpp \
@@ -126,7 +117,6 @@ SOURCES += main.cpp mainwindow.cpp \
     MetaGate/MetaGateMessages.cpp
 
 unix: SOURCES +=
-SOURCES +=  proxy/http_parser.c
 
 HEADERS += mainwindow.h \
     uploader.h \
@@ -168,12 +158,6 @@ HEADERS += mainwindow.h \
     transactions/Transaction.h \
     transactions/TransactionsDBStorage.h \
     transactions/TransactionsJavascript.h \
-    proxy/UPnPDevices.h \
-    proxy/UPnPRouter.h \
-    proxy/ProxyServer.h \
-    proxy/ProxyClient.h \
-    proxy/Proxy.h \
-    proxy/ProxyJavascript.h \
     auth/Auth.h \
     auth/AuthJavascript.h \
     Initializer/Initializer.h \
@@ -186,10 +170,7 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitWebSocket.h \
     Initializer/Inits/InitJavascriptWrapper.h \
     Initializer/Inits/InitUploader.h \
-    Module.h \
     Messenger/CryptographicManager.h \
-    proxy/WebSocketSender.h \
-    Initializer/Inits/InitProxy.h \
     Initializer/Inits/InitMessenger.h \
     MhPayEventHandler.h \
     WalletNames/WalletNamesDbStorage.h \

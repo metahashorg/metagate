@@ -45,7 +45,6 @@
 #include "Messenger/MessengerJavascript.h"
 #include "transactions/TransactionsJavascript.h"
 #include "Initializer/InitializerJavascript.h"
-#include "proxy/ProxyJavascript.h"
 #include "WalletNames/WalletNamesJavascript.h"
 #include "Utils/UtilsJavascript.h"
 #include "Wallets/WalletsJavascript.h"
@@ -127,7 +126,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_CONNECT(this, &MainWindow::setAuth, this, &MainWindow::onSetAuth);
     Q_CONNECT(this, &MainWindow::setMessengerJavascript, this, &MainWindow::onSetMessengerJavascript);
     Q_CONNECT(this, &MainWindow::setTransactionsJavascript, this, &MainWindow::onSetTransactionsJavascript);
-    Q_CONNECT(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript);
     Q_CONNECT(this, &MainWindow::setWalletNamesJavascript, this, &MainWindow::onSetWalletNamesJavascript);
     Q_CONNECT(this, &MainWindow::setUtilsJavascript, this, &MainWindow::onSetUtilsJavascript);
     Q_CONNECT(this, &MainWindow::setWalletsJavascript, this, &MainWindow::onSetWalletsJavascript);
@@ -140,7 +138,6 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetAuthCallback, "SetAuthCallback");
     Q_REG(SetMessengerJavascriptCallback, "SetMessengerJavascriptCallback");
     Q_REG(SetTransactionsJavascriptCallback, "SetTransactionsJavascriptCallback");
-    Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
     Q_REG(SetWalletNamesJavascriptCallback, "SetWalletNamesJavascriptCallback");
     Q_REG(SetUtilsJavascriptCallback, "SetUtilsJavascriptCallback");
     Q_REG(SetWalletsJavascriptCallback, "SetWalletsJavascriptCallback");
@@ -316,17 +313,6 @@ BEGIN_SLOT_WRAPPER
         CHECK(transactionsJavascript != nullptr, "Incorrect transactionsJavascript");
         Q_CONNECT(transactionsJavascript, &transactions::TransactionsJavascript::jsRunSig, this, &MainWindow::onJsRun);
         registerWebChannel(QString("transactions"), transactionsJavascript);
-    });
-    callback.emitFunc(exception);
-END_SLOT_WRAPPER
-}
-
-void MainWindow::onSetProxyJavascript(proxy::ProxyJavascript *proxyJavascript, const SetProxyJavascriptCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    const TypedException exception = apiVrapper2([&, this] {
-        CHECK(proxyJavascript != nullptr, "Incorrect proxyJavascript");
-        Q_CONNECT(proxyJavascript, &proxy::ProxyJavascript::jsRunSig, this, &MainWindow::onJsRun);
-        registerWebChannel(QString("proxy"), proxyJavascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER
