@@ -114,7 +114,8 @@ SOURCES += main.cpp mainwindow.cpp \
     MetaGate/MetaGate.cpp \
     MetaGate/MetaGateJavascript.cpp \
     Initializer/Inits/InitMetaGate.cpp \
-    MetaGate/MetaGateMessages.cpp
+    MetaGate/MetaGateMessages.cpp \
+    Network/LocalClient.cpp
 
 unix: SOURCES +=
 
@@ -239,7 +240,8 @@ HEADERS += mainwindow.h \
     MetaGate/MetaGateMessages.h \
     Network/NetworkTestingTestResult.h \
     utilites/template_helpers.h \
-    Initializer/SharedFuture.h
+    Initializer/SharedFuture.h \
+    Network/LocalClient.h
 
 FORMS += mainwindow.ui
 
