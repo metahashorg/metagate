@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QLocalSocket>
+#include <QDataStream>
 
 #include <functional>
 #include <unordered_map>
@@ -73,9 +74,18 @@ private:
 
 private:
 
+    struct Buffer {
+        QDataStream dataStream;
+        quint32 size = 0;
+    };
+
+private:
+
     QString localServerName;
 
     std::unordered_map<size_t, ClientCallback> callbacks;
+
+    std::unordered_map<size_t, Buffer> buffers;
 
     RequestId id;
 };

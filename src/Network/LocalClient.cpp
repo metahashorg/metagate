@@ -30,9 +30,18 @@ void LocalClient::sendMessage(const std::string &message, const LocalClient::Cli
     Q_CONNECT(socket, &QLocalSocket::readyRead, this, std::bind(&LocalClient::onTextMessageReceived, this, currId));
     Q_CONNECT(socket, QOverload<QLocalSocket::LocalSocketError>::of(&QLocalSocket::error), this, std::bind(&LocalClient::onErrorMessageReceived, this, currId, _1));
 
+    QDataStream &outStream = buffers[currId].dataStream;
+    outStream.setVersion(QDataStream::Qt_5_10);
+    outStream.setDevice(socket);
+
     socket->connectToServer(localServerName);
     if (socket->isValid()) {
-        socket->write(message.data(), message.size());
+        QByteArray block;
+        QDataStream inStream(&block, QIODevice::WriteOnly);
+        inStream << (qint32)(message.size());
+        inStream.writeRawData(message.data(), message.size());
+        socket->write(block);
+        socket->flush();
     }
 }
 
@@ -43,23 +52,41 @@ void LocalClient::runCallback(size_t id, Message&&... messages) {
     const auto callback = std::bind(foundCallback->second, std::forward<Message>(messages)...);
     emit callbackCall(callback);
     callbacks.erase(foundCallback);
+    buffers.erase(id);
 }
 
 void LocalClient::onTextMessageReceived(size_t id) {
+BEGIN_SLOT_WRAPPER
     QLocalSocket *socket = qobject_cast<QLocalSocket *>(sender());
-    if (socket->bytesAvailable() < (int)sizeof(quint32))
+
+    Buffer &currentBuffer = buffers[id];
+
+    if (currentBuffer.size == 0) {
+        if (socket->bytesAvailable() < (int)sizeof(quint32)) {
+            return;
+        }
+
+        currentBuffer.dataStream >> currentBuffer.size;
+    }
+
+    if (socket->bytesAvailable() < currentBuffer.size || currentBuffer.dataStream.atEnd()) {
         return;
-    QByteArray ss = socket->readAll();
+    }
+
+    QByteArray data;
+    currentBuffer.dataStream >> data;
 
     Response resp;
-    resp.response = std::string(ss.data(), ss.size());
+    resp.response = std::string(data.data(), data.size());
 
     runCallback(id, resp);
 
     socket->deleteLater();
+END_SLOT_WRAPPER
 }
 
 void LocalClient::onErrorMessageReceived(size_t id, QLocalSocket::LocalSocketError socketError) {
+BEGIN_SLOT_WRAPPER
     QLocalSocket *socket = qobject_cast<QLocalSocket *>(sender());
 
     Response resp;
@@ -82,4 +109,5 @@ void LocalClient::onErrorMessageReceived(size_t id, QLocalSocket::LocalSocketErr
     runCallback(id, resp);
 
     socket->deleteLater();
+END_SLOT_WRAPPER
 }
