@@ -9,8 +9,6 @@
 #include <QFileInfo>
 #include <QDir>
 
-#include "../Wallets/btctx/Base58.h"
-
 #include "check.h"
 
 std::string toHex(const std::string &data) {
@@ -41,13 +39,6 @@ std::string fromBase64(const std::string &value) {
 QString fromBase64(const QString &value) {
     QByteArray pubKeyArray(value.toUtf8());
     return QByteArray::fromBase64(pubKeyArray);
-}
-
-std::string base58ToHex(const std::string &value) {
-    std::vector<unsigned char> decoded;
-    DecodeBase58(value.data(), decoded);
-    std::string decodedStr(decoded.begin(), decoded.end());
-    return toHex(decodedStr);
 }
 
 std::string fromHex(const std::string &value) {

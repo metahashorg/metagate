@@ -18,8 +18,6 @@ std::string fromBase64(const std::string &value);
 
 QString fromBase64(const QString &value);
 
-std::string base58ToHex(const std::string &value);
-
 std::string fromHex(const std::string &value);
 
 QString fromHex(const QString &data);
