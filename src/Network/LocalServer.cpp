@@ -43,11 +43,9 @@ LocalServerRequest::~LocalServerRequest() {
 LocalServer::LocalServer(const QString &nameServer)
     : QObject(nullptr)
 {
-    const QString listen = "/tmp/" + nameServer;
-#ifndef TARGET_WINDOWS
-    removeFile(listen);
-#endif // TARGET_WINDOWS
-    CHECK(server.listen(listen), "Error listen local server: " + server.errorString().toStdString());
+    QLocalServer::removeServer(nameServer);
+    server.setSocketOptions(QLocalServer::WorldAccessOption);
+    CHECK(server.listen(nameServer), "Error listen local server: " + server.errorString().toStdString());
 
     Q_CONNECT(&server, &QLocalServer::newConnection, this, &LocalServer::newConnection);
 
