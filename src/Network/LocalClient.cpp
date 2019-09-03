@@ -38,8 +38,10 @@ void LocalClient::sendMessage(const std::string &message, const LocalClient::Cli
     if (socket->isValid()) {
         QByteArray block;
         QDataStream inStream(&block, QIODevice::WriteOnly);
+        inStream.setVersion(QDataStream::Qt_5_10);
         inStream << (qint32)(message.size());
-        inStream.writeRawData(message.data(), message.size());
+        const int res = inStream.writeRawData(message.data(), message.size());
+        CHECK(res != -1, "Dont write request to localServer");
         socket->write(block);
         socket->flush();
     }
@@ -59,6 +61,7 @@ void LocalClient::onTextMessageReceived(size_t id) {
 BEGIN_SLOT_WRAPPER
     QLocalSocket *socket = qobject_cast<QLocalSocket *>(sender());
 
+    CHECK(buffers.find(id) != buffers.end(), "Incorrect response");
     Buffer &currentBuffer = buffers[id];
 
     if (currentBuffer.size == 0) {
@@ -73,8 +76,8 @@ BEGIN_SLOT_WRAPPER
         return;
     }
 
-    QByteArray data;
-    currentBuffer.dataStream >> data;
+    QByteArray data(currentBuffer.size, 0);
+    currentBuffer.dataStream.readRawData(data.data(), data.size());
 
     Response resp;
     resp.response = std::string(data.data(), data.size());
