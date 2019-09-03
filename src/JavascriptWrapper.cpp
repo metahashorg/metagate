@@ -165,7 +165,7 @@ JavascriptWrapper::JavascriptWrapper(
     , utilsManager(utilsManager)
     , wallets(wallets)
     , applicationVersion(applicationVersion)
-    , localServer("unknown")
+    , localServer("metagate_proxy")
 {
     hardwareId = QString::fromStdString(::getMachineUid());
     utmData = QString::fromLatin1(getUtmData());

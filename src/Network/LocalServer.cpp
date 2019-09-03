@@ -7,11 +7,10 @@
 #include "check.h"
 #include "Log.h"
 #include "qt_utilites/QRegister.h"
+#include "qt_utilites/SlotWrapper.h"
 
 std::string LocalServerRequest::request() const {
-    CHECK(connection != nullptr, "Connection nullptr");
-    const QByteArray data = connection->readAll();
-    return std::string(data.data(), data.size());
+    return std::string(requestData.data(), requestData.size());
 }
 
 void LocalServerRequest::response(const std::string &data) {
@@ -19,15 +18,23 @@ void LocalServerRequest::response(const std::string &data) {
 
     CHECK(!sended, "Already sended");
 
-    connection->write(data.data(), data.size());
+    QByteArray block;
+    QDataStream inStream(&block, QIODevice::WriteOnly);
+    inStream.setVersion(QDataStream::Qt_5_10);
+    inStream << (qint32)(data.size());
+    const int res = inStream.writeRawData(data.data(), data.size());
+    CHECK(res != -1, "Dont write response to localserver");
+
+    connection->write(block);
     connection->flush();
     connection->disconnectFromServer();
 
     sended = true;
 }
 
-LocalServerRequest::LocalServerRequest(QLocalSocket *connection)
-    : connection(connection)
+LocalServerRequest::LocalServerRequest(QLocalSocket *connection, const QByteArray &data)
+    : requestData(data)
+    , connection(connection)
 {}
 
 LocalServerRequest::~LocalServerRequest() {
@@ -47,7 +54,7 @@ LocalServer::LocalServer(const QString &nameServer)
     server.setSocketOptions(QLocalServer::WorldAccessOption);
     CHECK(server.listen(nameServer), "Error listen local server: " + server.errorString().toStdString());
 
-    Q_CONNECT(&server, &QLocalServer::newConnection, this, &LocalServer::newConnection);
+    Q_CONNECT(&server, &QLocalServer::newConnection, this, &LocalServer::onNewConnection);
 
     Q_REG(std::shared_ptr<LocalServerRequest>, "std::shared_ptr<LocalServerRequest>");
 }
@@ -57,14 +64,48 @@ void LocalServer::mvToThread(QThread *th) {
     server.moveToThread(th);
 }
 
-void LocalServer::newConnection() {
+void LocalServer::onNewConnection() {
+BEGIN_SLOT_WRAPPER
     QLocalSocket *clientConnection = server.nextPendingConnection();
     if (clientConnection == nullptr) {
         return;
     }
+
+    const size_t currId = id.get();
+    QDataStream &outStream = buffers[currId].dataStream;
+    outStream.setVersion(QDataStream::Qt_5_10);
+    outStream.setDevice(clientConnection);
+
     Q_CONNECT(clientConnection, &QLocalSocket::disconnected, clientConnection, &QLocalSocket::deleteLater);
 
-    Q_CONNECT3(clientConnection, &QLocalSocket::readyRead, ([this, clientConnection](){
-        emit request(std::make_shared<LocalServerRequest>(clientConnection));
-    }));
+    Q_CONNECT3(clientConnection, &QLocalSocket::readyRead, std::bind(&LocalServer::onTextMessageReceived, this, currId));
+END_SLOT_WRAPPER
+}
+
+void LocalServer::onTextMessageReceived(size_t id) {
+BEGIN_SLOT_WRAPPER
+    QLocalSocket *socket = qobject_cast<QLocalSocket *>(sender());
+
+    CHECK(buffers.find(id) != buffers.end(), "Incorrect request from client");
+    Buffer &currentBuffer = buffers[id];
+
+    if (currentBuffer.size == 0) {
+        if (socket->bytesAvailable() < (int)sizeof(quint32)) {
+            return;
+        }
+
+        currentBuffer.dataStream >> currentBuffer.size;
+    }
+
+    if (socket->bytesAvailable() < currentBuffer.size || currentBuffer.dataStream.atEnd()) {
+        return;
+    }
+
+    QByteArray data;
+    currentBuffer.dataStream >> data;
+
+    emit request(std::make_shared<LocalServerRequest>(socket, data));
+
+    buffers.erase(id);
+END_SLOT_WRAPPER
 }

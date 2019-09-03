@@ -3,18 +3,22 @@
 
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 #include "utilites/OopUtils.h"
+#include "utilites/RequestId.h"
 
 #include <QObject>
 #include <QtNetwork/QLocalServer>
+#include <QDataStream>
+#include <QByteArray>
 
 class QLocalSocket;
 
 class LocalServerRequest: public no_copyable, public no_moveable {
 public:
 
-    LocalServerRequest(QLocalSocket *connection);
+    LocalServerRequest(QLocalSocket *connection, const QByteArray &data);
 
     ~LocalServerRequest();
 
@@ -25,6 +29,7 @@ public:
 private:
 
     bool sended = false;
+    QByteArray requestData;
     QLocalSocket *connection = nullptr;
 };
 
@@ -41,11 +46,24 @@ signals:
 
 private slots:
 
-    void newConnection();
+    void onNewConnection();
+
+    void onTextMessageReceived(size_t id);
 
 private:
 
+    struct Buffer {
+        QDataStream dataStream;
+        quint32 size = 0;
+    };
+
+private:
+
+    std::unordered_map<size_t, Buffer> buffers;
+
     QLocalServer server;
+
+    RequestId id;
 };
 
 #endif // LOCALSERVER_H
