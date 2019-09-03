@@ -115,7 +115,10 @@ SOURCES += main.cpp mainwindow.cpp \
     MetaGate/MetaGateJavascript.cpp \
     Initializer/Inits/InitMetaGate.cpp \
     MetaGate/MetaGateMessages.cpp \
-    Network/LocalClient.cpp
+    Network/LocalClient.cpp \
+    ProxyClient/ProxyClient.cpp \
+    ProxyClient/ProxyClientJavascript.cpp \
+    Initializer/Inits/InitProxyClient.cpp
 
 unix: SOURCES +=
 
@@ -241,7 +244,11 @@ HEADERS += mainwindow.h \
     Network/NetworkTestingTestResult.h \
     utilites/template_helpers.h \
     Initializer/SharedFuture.h \
-    Network/LocalClient.h
+    Network/LocalClient.h \
+    ProxyClient/ProxyClient.h \
+    ProxyClient/ProxyStatus.h \
+    ProxyClient/ProxyClientJavascript.h \
+    Initializer/Inits/InitProxyClient.h
 
 FORMS += mainwindow.ui
 

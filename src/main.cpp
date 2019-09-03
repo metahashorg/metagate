@@ -43,6 +43,7 @@
 #include "Initializer/Inits/InitUtils.h"
 #include "Initializer/Inits/InitWallets.h"
 #include "Initializer/Inits/InitMetaGate.h"
+#include "Initializer/Inits/InitProxyClient.h"
 
 #include "MhPayEventHandler.h"
 #include <QDebug>
@@ -196,6 +197,8 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitMetaGate::Return> metagate = initManager.addInit<InitMetaGate>(webSocketClient, nsLookup, mainWindow, auth, wallets, QString::fromStdString(versionString), std::ref(nettesting));
 
         const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, metagate, QString::fromStdString(versionString), std::ref(nettesting));
+
+        const std::shared_future<InitProxyClient::Return> proxyClient = initManager.addInit<InitProxyClient>(mainWindow);
 
         initManager.complete();
 

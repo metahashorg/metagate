@@ -50,6 +50,7 @@
 #include "Wallets/WalletsJavascript.h"
 #include "MetaGate/MetaGateJavascript.h"
 #include "MetaGate/MetaGate.h"
+#include "ProxyClient/ProxyClientJavascript.h"
 
 #include "utilites/machine_uid.h"
 
@@ -130,6 +131,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_CONNECT(this, &MainWindow::setUtilsJavascript, this, &MainWindow::onSetUtilsJavascript);
     Q_CONNECT(this, &MainWindow::setWalletsJavascript, this, &MainWindow::onSetWalletsJavascript);
     Q_CONNECT(this, &MainWindow::setMetaGateJavascript, this, &MainWindow::onSetMetaGateJavascript);
+    Q_CONNECT(this, &MainWindow::setProxyJavascript, this, &MainWindow::onSetProxyJavascript);
     Q_CONNECT(this, &MainWindow::initFinished, this, &MainWindow::onInitFinished);
     Q_CONNECT(this, &MainWindow::processExternalUrl, this, &MainWindow::onProcessExternalUrl);
     Q_CONNECT(this, &MainWindow::showNotification, this, &MainWindow::onShowNotification);
@@ -142,6 +144,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetUtilsJavascriptCallback, "SetUtilsJavascriptCallback");
     Q_REG(SetWalletsJavascriptCallback, "SetWalletsJavascriptCallback");
     Q_REG(SetMetaGateJavascriptCallback, "SetMetaGateJavascriptCallback");
+    Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
 
     shemeHandler = new MHUrlSchemeHandler(this);
@@ -360,6 +363,17 @@ BEGIN_SLOT_WRAPPER
         Q_CONNECT(javascript, &metagate::MetaGateJavascript::jsRunSig, this, &MainWindow::onJsRun);
         Q_CONNECT(manager, &metagate::MetaGate::lineEditReturnPressedSig, this, &MainWindow::onEnterCommandAndAddToHistory);
         registerWebChannel(QString("metagate"), javascript);
+    });
+    callback.emitFunc(exception);
+END_SLOT_WRAPPER
+}
+
+void MainWindow::onSetProxyJavascript(proxy_client::ProxyClientJavascript *javascript, const SetProxyJavascriptCallback &callback) {
+BEGIN_SLOT_WRAPPER
+    const TypedException exception = apiVrapper2([&, this] {
+        CHECK(javascript != nullptr, "Incorrect proxyJavascript");
+        Q_CONNECT(javascript, &proxy_client::ProxyClientJavascript::jsRunSig, this, &MainWindow::onJsRun);
+        registerWebChannel(QString("proxy"), javascript);
     });
     callback.emitFunc(exception);
 END_SLOT_WRAPPER

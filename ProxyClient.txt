@@ -1,0 +1,7 @@
+ProxyClient регестрируется в javascript по имени proxy 
+
+Q_INVOKABLE void refreshStatus(const QString &callback)
+# Узнать статус Proxy
+# Result returns to the function:
+callback(result, errorNum, errorMessage);
+# result в формате {"status": "status", "description": "description"}, где status: not_set, connect_to_server_error

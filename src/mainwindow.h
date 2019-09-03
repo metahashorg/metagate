@@ -51,6 +51,11 @@ class MetaGateJavascript;
 class MetaGate;
 }
 
+namespace proxy_client {
+class ProxyClient;
+class ProxyClientJavascript;
+}
+
 class EvFilter: public QObject {
     Q_OBJECT
 public:
@@ -94,6 +99,8 @@ public:
 
     using SetMetaGateJavascriptCallback = CallbackWrapper<void()>;
 
+    using SetProxyJavascriptCallback = CallbackWrapper<void()>;
+
 public:
 
     explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
@@ -129,6 +136,8 @@ signals:
 
     void setMetaGateJavascript(metagate::MetaGate *manager, metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
 
+    void setProxyJavascript(proxy_client::ProxyClientJavascript *javascript, const SetProxyJavascriptCallback &callback);
+
     void initFinished();
 
     void processExternalUrl(const QUrl &url);
@@ -159,6 +168,8 @@ private slots:
     void onSetWalletsJavascript(wallets::WalletsJavascript *javascript, const SetWalletsJavascriptCallback &callback);
 
     void onSetMetaGateJavascript(metagate::MetaGate *manager, metagate::MetaGateJavascript *javascript, const SetMetaGateJavascriptCallback &callback);
+
+    void onSetProxyJavascript(proxy_client::ProxyClientJavascript *javascript, const SetProxyJavascriptCallback &callback);
 
     void onInitFinished();
 

@@ -24,8 +24,6 @@ public:
 
         std::string description;
 
-        std::string content;
-
         bool isSet() const {
             return code != 0;
         }
