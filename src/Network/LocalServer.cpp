@@ -78,14 +78,12 @@ BEGIN_SLOT_WRAPPER
 
     Q_CONNECT(clientConnection, &QLocalSocket::disconnected, clientConnection, &QLocalSocket::deleteLater);
 
-    Q_CONNECT3(clientConnection, &QLocalSocket::readyRead, std::bind(&LocalServer::onTextMessageReceived, this, currId));
+    Q_CONNECT3(clientConnection, &QLocalSocket::readyRead, std::bind(&LocalServer::onTextMessageReceived, this, currId, clientConnection));
 END_SLOT_WRAPPER
 }
 
-void LocalServer::onTextMessageReceived(size_t id) {
+void LocalServer::onTextMessageReceived(size_t id, QLocalSocket *socket) {
 BEGIN_SLOT_WRAPPER
-    QLocalSocket *socket = qobject_cast<QLocalSocket *>(sender());
-
     CHECK(buffers.find(id) != buffers.end(), "Incorrect request from client");
     Buffer &currentBuffer = buffers[id];
 
@@ -101,8 +99,8 @@ BEGIN_SLOT_WRAPPER
         return;
     }
 
-    QByteArray data;
-    currentBuffer.dataStream >> data;
+    QByteArray data(currentBuffer.size, 0);
+    currentBuffer.dataStream.readRawData(data.data(), data.size());
 
     emit request(std::make_shared<LocalServerRequest>(socket, data));
 

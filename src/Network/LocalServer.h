@@ -48,7 +48,7 @@ private slots:
 
     void onNewConnection();
 
-    void onTextMessageReceived(size_t id);
+    void onTextMessageReceived(size_t id, QLocalSocket *socket);
 
 private:
 
