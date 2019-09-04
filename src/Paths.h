@@ -25,6 +25,8 @@ QString getAutoupdaterPath();
 
 QString getTmpAutoupdaterPath();
 
+QString getProxyConfigPath();
+
 void clearAutoupdatersPath();
 
 void initializeAllPaths();

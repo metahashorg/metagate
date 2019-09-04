@@ -12,6 +12,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+SET_LOG_NAMESPACE("PXC");
+
 namespace proxy_client {
 
 ProxyClientJavascript::ProxyClientJavascript(ProxyClient &proxyClient)
@@ -46,6 +48,33 @@ BEGIN_SLOT_WRAPPER
         emit proxyClient.refreshStatus(ProxyClient::RefreshStatusCallback([makeFunc](const ProxyStatus &status){
             LOG << "Status proxy: " << status.description;
             makeFunc.func(TypedException(), statusToJson(status));
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void ProxyClientJavascript::getEnabledSetting(const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<bool>(false));
+
+    wrapOperation([&, this](){
+        emit proxyClient.getEnabledSetting(ProxyClient::GetEnabledSettingCallback([makeFunc](bool enabled){
+            LOG << "Enabled proxy: " << enabled;
+            makeFunc.func(TypedException(), enabled);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
+END_SLOT_WRAPPER
+}
+
+void ProxyClientJavascript::changeEnabledSetting(bool enabled, const QString &callback) {
+BEGIN_SLOT_WRAPPER
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback);
+
+    LOG << "Change enabled proxy: " << enabled;
+
+    wrapOperation([&, this](){
+        emit proxyClient.changeEnabledSetting(enabled, ProxyClient::ChangeEnabledSettingCallback([makeFunc](){
+            makeFunc.func(TypedException());
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER

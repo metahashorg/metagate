@@ -37,9 +37,15 @@ const static QString AUTOUPDATER_PATH = "autoupdater/";
 
 const static QString NS_LOOKUP_PATH = "./";
 
+const static QString PROXY_CONFIG_NAME = "proxy.ini";
+
 static bool isInitializePagesPath = false;
 
 static bool isInitializeSettingsPath = false;
+
+static QString getCommonMetagatePath() {
+    return makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+}
 
 QString getWalletPath() {
     const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), WALLET_PATH_DEFAULT);
@@ -48,20 +54,20 @@ QString getWalletPath() {
 }
 
 QString getLogPath() {
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, LOG_PATH);
+    const QString res = makePath(getCommonMetagatePath(), LOG_PATH);
     createFolder(res);
     return res;
 }
 
 QString getDbPath() {
-    removeFolder(makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, "bd"));
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, DB_PATH);
+    removeFolder(makePath(getCommonMetagatePath(), "bd"));
+    const QString res = makePath(getCommonMetagatePath(), DB_PATH);
     createFolder(res);
     return res;
 }
 
 QString getNsLookupPath() {
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, NS_LOOKUP_PATH);
+    const QString res = makePath(getCommonMetagatePath(), NS_LOOKUP_PATH);
     createFolder(res);
     return res;
 }
@@ -92,7 +98,7 @@ static void initializePagesPath() {
 
     const QString oldPagesPath = getOldPagesPath();
 
-    const QString newPagesPath = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, PAGES_PATH);
+    const QString newPagesPath = makePath(getCommonMetagatePath(), PAGES_PATH);
 
     if (!isExistFolder(newPagesPath)) {
         LOG << "Create pages folder: " << newPagesPath << " " << oldPagesPath;
@@ -106,7 +112,7 @@ static void initializePagesPath() {
 QString getPagesPath() {
     CHECK(isInitializePagesPath, "Not initialize page path");
 
-    return makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, PAGES_PATH);
+    return makePath(getCommonMetagatePath(), PAGES_PATH);
 }
 
 static void initializeSettingsPath() {
@@ -115,7 +121,7 @@ static void initializeSettingsPath() {
     const QString oldPagesPath = getOldPagesPath();
     const QString oldSettingsPath = makePath(oldPagesPath, SETTINGS_NAME);
 
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+    const QString res = getCommonMetagatePath();
     createFolder(res);
     const QString settings = makePath(res, SETTINGS_NAME);
 
@@ -175,33 +181,33 @@ static void initializeSettingsPath() {
 QString getSettingsPath() {
     CHECK(isInitializeSettingsPath, "Not initialize settings path");
 
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+    const QString res = getCommonMetagatePath();
     const QString settings = makePath(res, SETTINGS_NAME);
     return settings;
 }
 
 QString getRuntimeSettingsPath() {
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+    const QString res = getCommonMetagatePath();
     const QString settings = makePath(res, RUNTIME_SETTINGS_NAME);
     return settings;
 }
 
 QString getStoragePath() {
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+    const QString res = getCommonMetagatePath();
     createFolder(res);
     const QString storage = makePath(res, STORAGE_NAME);
     return storage;
 }
 
 QString getMacFilePath() {
-    const QString res = makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH);
+    const QString res = getCommonMetagatePath();
     createFolder(res);
     const QString storage = makePath(res, MAC_ADDRESS_NAME);
     return storage;
 }
 
 QString getAutoupdaterPath() {
-    const QString path1(makePath(QStandardPaths::writableLocation(QStandardPaths::HomeLocation), METAGATE_COMMON_PATH, AUTOUPDATER_PATH));
+    const QString path1(makePath(getCommonMetagatePath(), AUTOUPDATER_PATH));
     QDir dirTmp(path1);
     if (!dirTmp.exists()) {
         CHECK(dirTmp.mkpath(path1), "dont create autoupdater path");
@@ -211,6 +217,10 @@ QString getAutoupdaterPath() {
 
 QString getTmpAutoupdaterPath() {
     return makePath(getAutoupdaterPath(), "folder/");
+}
+
+QString getProxyConfigPath() {
+    return makePath(getCommonMetagatePath(), PROXY_CONFIG_NAME);
 }
 
 void clearAutoupdatersPath() {

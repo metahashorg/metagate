@@ -4,10 +4,35 @@
 
 <script>
         
+    function callback(message, code, error) {
+        alert(message)
+    }
+    
     function getStatus() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
         mainWindow.refreshStatus("callback") ;
+        });
+    }
+    
+    function getEnabled() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.getEnabledSetting("callback") ;
+        });
+    }
+    
+    function enable() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.changeEnabledSetting(true, "callback") ;
+        });
+    }
+    
+    function disable() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.changeEnabledSetting(false, "callback") ;
         });
     }
     
@@ -35,6 +60,9 @@
         <left>
             <FORM name="createWalletForm">
             <input type="button" value="getStatus" onclick="getStatus()"><br>
+            <input type="button" value="getEnabled" onclick="getEnabled()"><br>
+            <input type="button" value="enable" onclick="enable()"><br>
+            <input type="button" value="disable" onclick="disable()"><br>
             </FORM>
         </left>
     </p>

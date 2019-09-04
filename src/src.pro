@@ -118,7 +118,8 @@ SOURCES += main.cpp mainwindow.cpp \
     Network/LocalClient.cpp \
     ProxyClient/ProxyClient.cpp \
     ProxyClient/ProxyClientJavascript.cpp \
-    Initializer/Inits/InitProxyClient.cpp
+    Initializer/Inits/InitProxyClient.cpp \
+    ProxyClient/ProxyClientMessage.cpp
 
 unix: SOURCES +=
 
@@ -248,7 +249,8 @@ HEADERS += mainwindow.h \
     ProxyClient/ProxyClient.h \
     ProxyClient/ProxyStatus.h \
     ProxyClient/ProxyClientJavascript.h \
-    Initializer/Inits/InitProxyClient.h
+    Initializer/Inits/InitProxyClient.h \
+    ProxyClient/ProxyClientMessage.h
 
 FORMS += mainwindow.ui
 

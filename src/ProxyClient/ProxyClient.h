@@ -16,6 +16,10 @@ public:
 
     using RefreshStatusCallback = CallbackWrapper<void(const ProxyStatus &result)>;
 
+    using GetEnabledSettingCallback = CallbackWrapper<void(bool enabled)>;
+
+    using ChangeEnabledSettingCallback = CallbackWrapper<void()>;
+
 public:
 
     ProxyClient();
@@ -26,9 +30,17 @@ signals:
 
     void refreshStatus(const RefreshStatusCallback &callback);
 
+    void getEnabledSetting(const GetEnabledSettingCallback &callback);
+
+    void changeEnabledSetting(bool enabled, const ChangeEnabledSettingCallback &callback);
+
 private slots:
 
     void onRefreshStatus(const RefreshStatusCallback &callback);
+
+    void onGetEnabledSetting(const GetEnabledSettingCallback &callback);
+
+    void onCangeEnabledSetting(bool enabled, const ChangeEnabledSettingCallback &callback);
 
 private:
 

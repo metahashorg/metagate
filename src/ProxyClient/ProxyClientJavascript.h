@@ -17,6 +17,10 @@ public:
 
     Q_INVOKABLE void refreshStatus(const QString &callback);
 
+    Q_INVOKABLE void getEnabledSetting(const QString &callback);
+
+    Q_INVOKABLE void changeEnabledSetting(bool enabled, const QString &callback);
+
 private:
 
     ProxyClient &proxyClient;

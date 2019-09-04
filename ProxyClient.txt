@@ -5,3 +5,13 @@ Q_INVOKABLE void refreshStatus(const QString &callback)
 # Result returns to the function:
 callback(result, errorNum, errorMessage);
 # result в формате {"status": "status", "description": "description"}, где status: not_set, connect_to_server_error
+
+Q_INVOKABLE void getEnabledSetting(const QString &callback)
+# Узнать разрешен ли запуск Proxy
+# Result returns to the function:
+callback(enabled, errorNum, errorMessage);
+
+Q_INVOKABLE void changeEnabledSetting(bool enabled, const QString &callback)
+# Изменить статус enabled Proxy
+# Result returns to the function:
+callback(errorNum, errorMessage);
