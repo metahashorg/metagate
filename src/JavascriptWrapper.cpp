@@ -373,8 +373,8 @@ QString JavascriptWrapper::getAllMTHSWalletsAndPathsJson(bool isMhc, QString nam
         LOG << PeriodicLog::make("w2_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
@@ -389,8 +389,8 @@ QString JavascriptWrapper::getAllMTHSWalletsJson(bool isMhc, QString name) {
         LOG << PeriodicLog::make("w_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
@@ -405,8 +405,8 @@ QString JavascriptWrapper::getAllMTHSWalletsInfoJson(bool isMhc, QString name) {
         LOG << PeriodicLog::make("w3_" + name.toStdString()) << "get " << name << " wallets json " << jsonStr << " " << walletPath;
         return jsonStr;
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
@@ -804,8 +804,8 @@ QString JavascriptWrapper::getAllEthWalletsJson() {
         LOG << "Error: " + e.description;
         return "Error: " + QString::fromStdString(e.description);
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (const std::exception &e) {
         LOG << "Error: " << e.what();
         return "Error: " + QString::fromStdString(e.what());
@@ -826,8 +826,8 @@ QString JavascriptWrapper::getAllEthWalletsAndPathsJson() {
         LOG << "Error: " + e.description;
         return "Error: " + QString::fromStdString(e.description);
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (const std::exception &e) {
         LOG << "Error: " << e.what();
         return "Error: " + QString::fromStdString(e.what());
@@ -1009,8 +1009,8 @@ QString JavascriptWrapper::getAllBtcWalletsJson() {
         LOG << PeriodicLog::make("w_btc") << "get btc wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
@@ -1025,8 +1025,8 @@ QString JavascriptWrapper::getAllBtcWalletsAndPathsJson() {
         LOG << PeriodicLog::make("w2_btc") << "get btc wallets json " << jsonStr;
         return jsonStr;
     } catch (const Exception &e) {
-        LOG << "Error: " + e;
-        return "Error: " + QString::fromStdString(e);
+        LOG << "Error: " << e;
+        return "Error: " + QString::fromStdString(e.message);
     } catch (...) {
         LOG << "Unknown error";
         return "Unknown error";
@@ -1187,7 +1187,7 @@ QString JavascriptWrapper::backupKeys(QString caption) {
         ::backupKeys(walletPath, file);
         return "";
     } catch (const Exception &e) {
-        return QString::fromStdString(e);
+        return QString::fromStdString(e.message);
     } catch (const std::exception &e) {
         return e.what();
     } catch (...) {
@@ -1209,7 +1209,7 @@ QString JavascriptWrapper::restoreKeys(QString caption) {
         }
         return "";
     } catch (const Exception &e) {
-        return QString::fromStdString(e);
+        return QString::fromStdString(e.message);
     } catch (const std::exception &e) {
         return e.what();
     } catch (...) {

@@ -4,6 +4,8 @@
 #include <functional>
 #include <string>
 
+struct Exception;
+
 enum TypeErrors {
     NOT_ERROR = 0,
     DONT_CREATE_FOLDER = 1,
@@ -51,16 +53,20 @@ enum TypeErrors {
 struct TypedException {
     TypeErrors numError;
     std::string description;
+    std::string file;
 
     TypedException()
         : numError(TypeErrors::NOT_ERROR)
         , description("")
     {}
 
-    TypedException(const TypeErrors &numError, const std::string &description)
+    TypedException(const TypeErrors &numError, const std::string &description, const std::string &file="")
         : numError(numError)
         , description(description)
+        , file(file)
     {}
+
+    TypedException(const TypeErrors &numError, const Exception &exception);
 
     bool isSet() const {
         return numError != TypeErrors::NOT_ERROR;
@@ -70,7 +76,7 @@ struct TypedException {
 #define throwErrTyped(type, s) { \
 { \
     throw ::TypedException(type, s + std::string(". Error at file ") \
-        + std::string(__FILE__) + std::string(" line ") + std::to_string(__LINE__)); \
+        + std::string(__FILE__) + std::string(" line ") + std::to_string(__LINE__), std::string(__FILE__)); \
 } \
 }
 

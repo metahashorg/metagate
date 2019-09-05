@@ -333,6 +333,10 @@ void Log_::print(const bool &b) {
     ssCout << (b ? "true" : "false");
 }
 
+void Log_::print(const Exception &e) {
+    print(e.message);
+}
+
 void initLog() {
     const QString logPath = getLogPath();
 
