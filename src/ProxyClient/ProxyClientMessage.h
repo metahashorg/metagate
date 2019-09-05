@@ -3,6 +3,8 @@
 
 #include <QString>
 
+#include "ProxyStatus.h"
+
 namespace proxy_client {
 
 struct RefreshConfigResponse {
@@ -13,6 +15,8 @@ struct RefreshConfigResponse {
 QString makeGetStatusMessage();
 
 QString makeRefreshConfigMessage();
+
+ProxyStatus parseStatusMessage(const std::string &message);
 
 RefreshConfigResponse parseRefreshConfigMessage(const std::string &message);
 

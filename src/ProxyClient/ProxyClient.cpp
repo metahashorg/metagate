@@ -43,7 +43,7 @@ BEGIN_SLOT_WRAPPER
                     status.status = ProxyStatus::Status::connect_to_server_error;
                     status.description = QString::fromStdString(response.exception.description);
                 } else {
-
+                    status = parseStatusMessage(response.response);
                 }
             });
             callback.emitFunc(exception, status);

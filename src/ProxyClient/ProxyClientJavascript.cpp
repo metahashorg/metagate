@@ -30,6 +30,16 @@ static QJsonDocument statusToJson(const ProxyStatus &status) {
         statusJson = "not_set";
     } else if (status.status == ProxyStatus::Status::connect_to_server_error) {
         statusJson = "connect_to_server_error";
+    } else if (status.status == ProxyStatus::Status::started) {
+        statusJson = "started";
+    } else if (status.status == ProxyStatus::Status::begin_test) {
+        statusJson = "begin_test";
+    } else if (status.status == ProxyStatus::Status::error_begin_test) {
+        statusJson = "error_begin_test";
+    } else if (status.status == ProxyStatus::Status::success_test) {
+        statusJson = "success_test";
+    } else if (status.status == ProxyStatus::Status::failure_test) {
+        statusJson = "failure_test";
     } else {
         throwErr("Unknown status");
     }
