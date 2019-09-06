@@ -14,11 +14,11 @@ class ProxyClient: public ManagerWrapper {
     Q_OBJECT
 public:
 
-    using RefreshStatusCallback = CallbackWrapper<void(const ProxyStatus &result)>;
+    using GetStatusCallback = CallbackWrapper<void(const QString &result)>;
 
     using GetEnabledSettingCallback = CallbackWrapper<void(bool enabled)>;
 
-    using ChangeEnabledSettingCallback = CallbackWrapper<void()>;
+    using SetProxyConfigAndRestartCallback = CallbackWrapper<void()>;
 
 public:
 
@@ -28,22 +28,24 @@ public:
 
 signals:
 
-    void refreshStatus(const RefreshStatusCallback &callback);
+    void getStatus(const GetStatusCallback &callback);
 
     void getEnabledSetting(const GetEnabledSettingCallback &callback);
 
-    void changeEnabledSetting(bool enabled, const ChangeEnabledSettingCallback &callback);
+    void setProxyConfigAndRestart(bool enabled, int port, const SetProxyConfigAndRestartCallback &callback);
 
 private slots:
 
-    void onRefreshStatus(const RefreshStatusCallback &callback);
+    void onGetStatus(const GetStatusCallback &callback);
 
     void onGetEnabledSetting(const GetEnabledSettingCallback &callback);
 
-    void onCangeEnabledSetting(bool enabled, const ChangeEnabledSettingCallback &callback);
+    void onSetProxyConfigAndRestart(bool enabled, int port, const SetProxyConfigAndRestartCallback &callback);
 
 private:
+    void generateProxyConfig(bool enabled, int port);
 
+private:
     LocalClient proxyClient;
 
 };

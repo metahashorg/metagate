@@ -12,44 +12,41 @@ SET_LOG_NAMESPACE("PXC");
 
 namespace proxy_client {
 
-struct ErrorResponse {
-    int code;
-    QString message;
-};
-
-QString makeGetStatusMessage() {
-    return "{\"method\": \"status\"}";
+QByteArray makeGetStatusMessage() {
+    return QByteArray("{\"method\": \"status\"}");
 }
 
-QString makeRefreshConfigMessage() {
-    return "{\"method\": \"refreshConfig\"}";
+QByteArray makeRefreshConfigMessage() {
+    return QByteArray("{\"method\": \"restart\"}");
 }
 
-static ErrorResponse parseErrorResponse(const QJsonObject &json) {
-    CHECK(json.contains("error") && json.value("error").isObject(), "error field not found");
-    ErrorResponse result;
+ProxyResponse parseProxyResponse(const QByteArray &message)
+{
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(message);
+    CHECK(jsonResponse.isObject(), "Incorrect json");
+    const QJsonObject &root = jsonResponse.object();
 
-    const QJsonObject errorJson = json.value("error").toObject();
-    CHECK(errorJson.contains("message") && errorJson.value("message").isString(), "Incorrect json: error/message field not found");
-    result.message = errorJson.value("message").toString();
-    CHECK(errorJson.contains("code") && errorJson.value("code").isDouble(), "Incorrect json: error/code field not found");
-    result.code = errorJson.value("code").toInt();
+    ProxyResponse result;
 
+    CHECK(root.contains(QLatin1String("result")) && root.value(QLatin1String("result")).isString(), "result field not found");
+    const QString rt = root.value(QLatin1String("result")).toString();
+    if (rt == QStringLiteral("OK"))
+        result.error = false;
+    else
+        result.error = true;
     return result;
 }
 
-RefreshConfigResponse parseRefreshConfigMessage(const std::string &message) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(QByteArray(message.data(), message.size()));
-    CHECK(jsonResponse.isObject(), "Incorrect json ");
-    const QJsonObject &json1 = jsonResponse.object();
+QString parseProxyStatusResponse(const QByteArray &message)
+{
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(message);
+    CHECK(jsonResponse.isObject(), "Incorrect json");
 
-    RefreshConfigResponse result;
-    if (json1.contains("error") && json1.value("error").isObject()) {
-        const ErrorResponse errorJson = parseErrorResponse(json1);
-        result.isError = true;
-        result.error = errorJson.message;
-    }
-    return result;
+    const QJsonObject root = jsonResponse.object();
+    CHECK(root.contains("params") && root.value("params").isObject(), "params field not found");
+    const QJsonObject params = root.value("params").toObject();
+
+    return QString(QJsonDocument(params).toJson(QJsonDocument::Compact));
 }
 
 } // namespace proxy_client

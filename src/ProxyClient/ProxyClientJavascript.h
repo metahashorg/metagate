@@ -15,11 +15,11 @@ public:
 
 public:
 
-    Q_INVOKABLE void refreshStatus(const QString &callback);
+    Q_INVOKABLE void getStatus(const QString &callback);
 
     Q_INVOKABLE void getEnabledSetting(const QString &callback);
 
-    Q_INVOKABLE void changeEnabledSetting(bool enabled, const QString &callback);
+    Q_INVOKABLE void setProxyConfigAndRestart(bool enabled, int port, const QString &callback);
 
 private:
 

@@ -23,31 +23,14 @@ ProxyClientJavascript::ProxyClientJavascript(ProxyClient &proxyClient)
 
 }
 
-static QJsonDocument statusToJson(const ProxyStatus &status) {
-    QJsonObject result;
-    QString statusJson;
-    if (status.status == ProxyStatus::Status::not_set) {
-        statusJson = "not_set";
-    } else if (status.status == ProxyStatus::Status::connect_to_server_error) {
-        statusJson = "connect_to_server_error";
-    } else {
-        throwErr("Unknown status");
-    }
-
-    result.insert("status", statusJson);
-    result.insert("description", status.description);
-
-    return QJsonDocument(result);
-}
-
-void ProxyClientJavascript::refreshStatus(const QString &callback) {
+void ProxyClientJavascript::getStatus(const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QJsonDocument>(QJsonDocument()));
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(QString()));
 
     wrapOperation([&, this](){
-        emit proxyClient.refreshStatus(ProxyClient::RefreshStatusCallback([makeFunc](const ProxyStatus &status){
-            LOG << "Status proxy: " << status.description;
-            makeFunc.func(TypedException(), statusToJson(status));
+        emit proxyClient.getStatus(ProxyClient::GetStatusCallback([makeFunc](QString status){
+            LOG << "Status proxy: " << status;
+            makeFunc.func(TypedException(), status);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
 END_SLOT_WRAPPER
@@ -66,14 +49,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void ProxyClientJavascript::changeEnabledSetting(bool enabled, const QString &callback) {
+void ProxyClientJavascript::setProxyConfigAndRestart(bool enabled, int port, const QString &callback) {
 BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback);
 
-    LOG << "Change enabled proxy: " << enabled;
+    LOG << "Set proxy config: " << enabled << port;
 
     wrapOperation([&, this](){
-        emit proxyClient.changeEnabledSetting(enabled, ProxyClient::ChangeEnabledSettingCallback([makeFunc](){
+        emit proxyClient.setProxyConfigAndRestart(enabled, port, ProxyClient::SetProxyConfigAndRestartCallback([makeFunc](){
             makeFunc.func(TypedException());
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);

@@ -8,10 +8,14 @@
         alert(message)
     }
     
+    function statusCallback(message, code, error) {
+        document.getElementById("status").innerHTML = message
+    }
+    
     function getStatus() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
-        mainWindow.refreshStatus("callback") ;
+        mainWindow.getStatus("statusCallback") ;
         });
     }
     
@@ -25,14 +29,16 @@
     function enable() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
-        mainWindow.changeEnabledSetting(true, "callback") ;
+        var port = document.proxyConfigForm.port.value
+        mainWindow.setProxyConfigAndRestart(true, port, "callback") ;
         });
     }
     
     function disable() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
-        mainWindow.changeEnabledSetting(false, "callback") ;
+        var port = document.proxyConfigForm.port.value
+        mainWindow.setProxyConfigAndRestart(false, port, "callback") ;
         });
     }
     
@@ -42,25 +48,17 @@
 
 <div class="back">
 
-  <div id="two" class="abs block">
-    <a href="#one">создание счета</a>
-    <b><a href="#two">подпись данных</a></b>
-    <p class="abs">
-        <left>
-            <FORM name="sign">
-            </FORM>
-        </left>
-    </p>
-  </div>
-
   <div id="one" class="abs block">
     <b><a href="#one">создание счета</a></b>
     <a href="#two">подпись данных</a>
-    <p class="abs">
+    <div id="status"></div>
+    <div class="back">
         <left>
-            <FORM name="createWalletForm">
+            <FORM name="proxyConfigForm">
             <input type="button" value="getStatus" onclick="getStatus()"><br>
-            <input type="button" value="getEnabled" onclick="getEnabled()"><br>
+            <input type="button" value="getStatus" onclick="getStatus()"><br>
+            <input type="button" value="getEnabled" onclick="getEnabled()"><br><br>
+            <input name="port" type="text" value="12347" size="30"><label for="port">port</label><br>
             <input type="button" value="enable" onclick="enable()"><br>
             <input type="button" value="disable" onclick="disable()"><br>
             </FORM>

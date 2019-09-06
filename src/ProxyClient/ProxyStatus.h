@@ -10,9 +10,10 @@ struct ProxyStatus {
         not_set, connect_to_server_error
     };
 
-    Status status = Status::not_set;
+    //Status status = Status::not_set;
 
-    QString description;
+    //QString description;
+    QString wanIp;
 };
 
 } // namespace proxy_client

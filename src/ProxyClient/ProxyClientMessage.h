@@ -3,18 +3,22 @@
 
 #include <QString>
 
+#include "ProxyStatus.h"
+
 namespace proxy_client {
 
-struct RefreshConfigResponse {
-    bool isError = false;
-    QString error;
+struct ProxyResponse {
+    bool error = false;
+    QString text;
 };
 
-QString makeGetStatusMessage();
+QByteArray makeGetStatusMessage();
 
-QString makeRefreshConfigMessage();
+QByteArray makeRefreshConfigMessage();
 
-RefreshConfigResponse parseRefreshConfigMessage(const std::string &message);
+ProxyResponse parseProxyResponse(const QByteArray &message);
+
+QString parseProxyStatusResponse(const QByteArray &message);
 
 } // namespace proxy_client
 

@@ -21,7 +21,7 @@ void LocalClient::mvToThread(QThread *thread) {
     this->moveToThread(thread);
 }
 
-void LocalClient::sendMessage(const std::string &message, const LocalClient::ClientCallback &callback) {
+void LocalClient::sendRequest(const QByteArray &request, const LocalClient::ClientCallback &callback) {
     const size_t currId = id.get();
     callbacks[currId] = callback;
 
@@ -37,11 +37,10 @@ void LocalClient::sendMessage(const std::string &message, const LocalClient::Cli
     socket->connectToServer(localServerName);
     if (socket->isValid()) {
         QByteArray block;
-        QDataStream inStream(&block, QIODevice::WriteOnly);
-        inStream.setVersion(QDataStream::Qt_5_10);
-        inStream << (qint32)(message.size());
-        const int res = inStream.writeRawData(message.data(), message.size());
-        CHECK(res != -1, "Dont write request to localServer");
+        QDataStream outStream(&block, QIODevice::WriteOnly);
+        outStream.setVersion(QDataStream::Qt_5_10);
+        outStream << static_cast<quint32>(request.size());
+        outStream << request;
         socket->write(block);
         socket->flush();
     }
@@ -65,7 +64,7 @@ BEGIN_SLOT_WRAPPER
     Buffer &currentBuffer = buffers[id];
 
     if (currentBuffer.size == 0) {
-        if (socket->bytesAvailable() < (int)sizeof(quint32)) {
+        if (socket->bytesAvailable() < (qint64)sizeof(quint32)) {
             return;
         }
 
@@ -76,11 +75,9 @@ BEGIN_SLOT_WRAPPER
         return;
     }
 
-    QByteArray data(currentBuffer.size, 0);
-    currentBuffer.dataStream.readRawData(data.data(), data.size());
-
     Response resp;
-    resp.response = std::string(data.data(), data.size());
+    resp.response.resize(currentBuffer.size);
+    currentBuffer.dataStream >> resp.response;
 
     runCallback(id, resp);
 

@@ -37,7 +37,7 @@ public:
     };
 
     struct Response {
-        std::string response;
+        QByteArray response;
         ServerException exception;
     };
 
@@ -55,7 +55,7 @@ public:
 
 public:
 
-    void sendMessage(const std::string &message, const LocalClient::ClientCallback &callback);
+    void sendRequest(const QByteArray &request, const LocalClient::ClientCallback &callback);
 
 signals:
 
