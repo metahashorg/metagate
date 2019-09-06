@@ -6,6 +6,8 @@
 
 class QString;
 
+struct Exception;
+
 class PeriodicLog {
     friend struct Log_;
 public:
@@ -72,6 +74,8 @@ private:
     void print(const QString &s);
 
     void print(const PeriodicLog &p);
+
+    void print(const Exception &e);
 
     void print(const bool &b);
 

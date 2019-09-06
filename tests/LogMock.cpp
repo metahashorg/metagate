@@ -54,6 +54,10 @@ void Log_::print(const PeriodicLog &/*p*/) {
 
 }
 
+void Log_::print(const Exception &e) {
+    print(e.message);
+}
+
 void Log_::print(const std::string &t) {
     if (t.empty()) {
         ssCout << "<empty>";

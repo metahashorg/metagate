@@ -728,7 +728,7 @@ BEGIN_SLOT_WRAPPER
                         found->second.okServer(server);
                         return;
                     } catch (const Exception &e) {
-                        found->second.setError(server, QString::fromStdString(e));
+                        found->second.setError(server, QString::fromStdString(e.message));
                     } catch (...) {
                         // empty;
                     }

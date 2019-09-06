@@ -8,10 +8,10 @@ TypedException apiVrapper2(const std::function<void()> &func) {
         func();
         return TypedException();
     } catch (const TypedException &e) {
-        LOG << "Error " << std::to_string(e.numError) << ". " << e.description;
+        LOG2(e.file) << "Error " << std::to_string(e.numError) << ". " << e.description;
         return e;
     } catch (const Exception &e) {
-        LOG << "Error " << e;
+        LOG2(e.file) << "Error " << e;
         return TypedException(TypeErrors::OTHER_ERROR, e);
     } catch (const std::exception &e) {
         LOG << "Error " << e.what();
@@ -21,6 +21,12 @@ TypedException apiVrapper2(const std::function<void()> &func) {
         return TypedException(TypeErrors::OTHER_ERROR, "Unknown error");
     }
 }
+
+TypedException::TypedException(const TypeErrors &numError, const Exception &exception)
+    : numError(numError)
+    , description(exception.message)
+    , file(exception.file)
+{}
 
 TypedException apiVrapper2(const TypedException &exception, const std::function<void()> &func) {
     if (exception.isSet()) {
