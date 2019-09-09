@@ -1,7 +1,6 @@
 #include "NetwrokTesting.h"
 
 #include <QTime>
-#include <QTcpSocket>
 
 #include "check.h"
 #include "Log.h"
@@ -22,6 +21,9 @@ NetwrokTesting::NetwrokTesting(QObject *parent)
 
     Q_REG(GetTestResultsCallback, "GetTestResultsCallback");
 
+    Q_CONNECT(&client, &HttpSimpleClient::callbackCall, this, &NetwrokTesting::callbackCall);
+
+    client.moveToThread(TimerClass::getThread());
     moveToThread(TimerClass::getThread());
 }
 
@@ -41,39 +43,44 @@ void NetwrokTesting::finishMethod() {
     // empty
 }
 
-void NetwrokTesting::testHosts() {
-    lastResults.clear();
-    for (const HostPort &hp : testsHostPort) {
-        const NetworkTestingTestResult r = testHostAndPort(hp.first, hp.second);
-        lastResults.emplace_back(r);
-    }
+void NetwrokTesting::processTest() {
+    if (index >= testsHostPort.size()) {
+        index = 0;
 
-    const auto resultToString = [](const NetworkTestingTestResult &r) {
-        if (r.isTimeout) {
-            return r.host.toStdString() + " not connected 10s timeout";
-        } else {
-            return r.host.toStdString() + " connected " + std::to_string(r.timeMs) + " ms";
+        const auto resultToString = [](const NetworkTestingTestResult &r) {
+            if (r.isTimeout) {
+                return r.host.toStdString() + " not connected 10s timeout";
+            } else {
+                return r.host.toStdString() + " connected " + std::to_string(r.timeMs) + " ms";
+            }
+        };
+
+        for (const NetworkTestingTestResult &r: lastResults) {
+            LOG << "NetworkTesting: " + resultToString(r);
         }
-    };
 
-    for (const NetworkTestingTestResult &r: lastResults) {
-        LOG << "NetworkTesting: " + resultToString(r);
+        return;
     }
+
+    const HostPort &hp = testsHostPort[index];
+    const static seconds timeout = 10s;
+    const time_point startTime = ::now();
+    client.sendMessagePing("http://" + hp.first + ":" + QString::number(hp.second), HttpSimpleClient::ClientCallback([this, startTime, address=hp.first](const std::string &response, const TypedException &e) {
+        const time_point stopTime = ::now();
+        const milliseconds time = std::chrono::duration_cast<milliseconds>(stopTime - startTime);
+        NetworkTestingTestResult res(address, time.count(), time >= timeout);
+
+        lastResults.emplace_back(res);
+
+        index++;
+
+        processTest();
+    }), timeout);
 }
 
-NetworkTestingTestResult NetwrokTesting::testHostAndPort(const QString &host, quint16 port) {
-    QTime timer;
-    timer.start();
-    QTcpSocket socket(this);
-    socket.connectToHost(host, port);
-    NetworkTestingTestResult result;
-    if (socket.waitForConnected(10000)) {
-        result = NetworkTestingTestResult(host + ":" + QString::fromStdString(std::to_string(port)), timer.elapsed(), false);
-        socket.disconnectFromHost();
-    } else {
-        result = NetworkTestingTestResult(host + ":" + QString::fromStdString(std::to_string(port)), 0, true);
-    }
-    return result;
+void NetwrokTesting::testHosts() {
+    lastResults.clear();
+    processTest();
 }
 
 void NetwrokTesting::onGetTestResults(const GetTestResultsCallback &callback) {

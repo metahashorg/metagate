@@ -2,11 +2,15 @@
 #define NETWROKTESTING_H
 
 #include "qt_utilites/TimerClass.h"
+
 #include "qt_utilites/CallbackWrapper.h"
+#include "qt_utilites/ManagerWrapper.h"
 
 #include "NetworkTestingTestResult.h"
 
-class NetwrokTesting : public QObject, public TimerClass {
+#include "HttpClient.h"
+
+class NetwrokTesting : public ManagerWrapper, public TimerClass {
     Q_OBJECT
 public:
 
@@ -35,11 +39,16 @@ protected:
 
 private:
     void testHosts();
-    NetworkTestingTestResult testHostAndPort(const QString &host, quint16 port);
+
+    void processTest();
 
 private:
 
+    size_t index = 0;
+
     std::vector<NetworkTestingTestResult> lastResults;
+
+    HttpSimpleClient client;
 };
 
 #endif // NETWROKTESTING_H
