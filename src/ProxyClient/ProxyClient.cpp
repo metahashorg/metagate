@@ -23,7 +23,7 @@ ProxyClient::ProxyClient()
     Q_CONNECT(this, &ProxyClient::getEnabledSetting, this, &ProxyClient::onGetEnabledSetting);
     Q_CONNECT(this, &ProxyClient::setProxyConfigAndRestart, this, &ProxyClient::onSetProxyConfigAndRestart);
 
-    Q_REG(GetStatusCallback, "ProxyClient::GetStatusCallback");
+    Q_REG(ProxyClient::GetStatusCallback, "ProxyClient::GetStatusCallback");
     Q_REG(SetProxyConfigAndRestartCallback, "SetProxyConfigAndRestartCallback");
     Q_REG(GetEnabledSettingCallback, "GetEnabledSettingCallback");
 }

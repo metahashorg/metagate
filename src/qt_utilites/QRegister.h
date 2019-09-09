@@ -15,11 +15,13 @@ void qRegister1(const std::string &name, const std::string &tag, bool isControl=
 
 #define Q_REG(type, name) { \
     const std::string filePos = std::string(__FILE__) + std::string(":") + std::to_string(__LINE__); \
+    CHECK(name == std::string(#type), "Ups " + std::string(name) + " " + std::string(#type)); \
     qRegister1<type>(name, filePos); \
 }
 
 #define Q_REG2(type, name, isControl) { \
     const std::string filePos = std::string(__FILE__) + std::string(":") + std::to_string(__LINE__); \
+    CHECK(name == std::string(#type), "Ups " + std::string(name) + " " + std::string(#type)); \
     qRegister1<type>(name, filePos, isControl); \
 }
 
