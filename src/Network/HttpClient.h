@@ -15,13 +15,21 @@
 
 struct TypedException;
 
-class HttpSocket : public QTcpSocket
-{
+class AbstractSocket: public QTcpSocket {
     Q_OBJECT
 public:
-    explicit HttpSocket(const QUrl &url, const QString &message, QObject *parent = nullptr);
 
-    void start();
+    AbstractSocket(QObject *parent)
+        : QTcpSocket(parent)
+    {}
+
+    virtual ~AbstractSocket() = default;
+
+signals:
+    void finished();
+
+public:
+
     void stop();
 
     int requestId() const;
@@ -42,8 +50,27 @@ public:
         return errorCode;
     }
 
-signals:
-    void finished();
+private:
+    int m_requestId;
+    time_point m_timePoint;
+    milliseconds m_timeOut;
+    bool m_hasTimeOut = false;
+
+protected:
+
+    QByteArray m_reply;
+
+    bool m_error = false;
+    int errorCode = 0;
+};
+
+class HttpSocket : public AbstractSocket
+{
+    Q_OBJECT
+public:
+    explicit HttpSocket(const QUrl &url, const QString &message, QObject *parent = nullptr);
+
+    void start();
 
 private slots:
     void onConnected();
@@ -54,20 +81,31 @@ private:
     QByteArray getHttpPostHeader() const;
     void parseResponseHeader();
 
-    int m_requestId;
-    time_point m_timePoint;
-    milliseconds m_timeOut;
-    bool m_hasTimeOut = false;
-
     QUrl m_url;
     QString m_message;
     QByteArray m_data;
     bool m_headerParsed = false;
     int m_contentLength = -1;
-    QByteArray m_reply;
-    bool m_error = false;
     bool m_firstHeaderStringParsed = false;
-    int errorCode = 0;
+};
+
+class PingSocket : public AbstractSocket
+{
+    Q_OBJECT
+public:
+    explicit PingSocket(const QUrl &url, QObject *parent = nullptr);
+
+    void start();
+
+private slots:
+    void onConnected();
+    void onError(QAbstractSocket::SocketError socketError);
+    void onReadyRead();
+
+private:
+
+    QUrl m_url;
+    QByteArray m_data;
 };
 
 /*
@@ -86,6 +124,8 @@ public:
 
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
     void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout);
+
+    void sendMessagePing(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
     void moveToThread(QThread *thread);
 
@@ -110,7 +150,7 @@ private:
 
 private:
     std::map<int, ClientCallback> callbacks;
-    std::map<int, HttpSocket *> sockets;
+    std::map<int, AbstractSocket *> sockets;
 
     QTimer* timer = nullptr;
     QThread *thread1 = nullptr;

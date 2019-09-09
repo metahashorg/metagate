@@ -35,32 +35,32 @@ void HttpSimpleClient::startTimer1()
     }
 }
 
-static void addRequestId(HttpSocket *socket, const int id)
+static void addRequestId(AbstractSocket *socket, const int id)
 {
     socket->setRequestId(id);
 }
 
-static int getRequestId(HttpSocket *socket)
+static int getRequestId(AbstractSocket *socket)
 {
     return socket->requestId();
 }
 
-static void addBeginTime(HttpSocket *socket, time_point tp)
+static void addBeginTime(AbstractSocket *socket, time_point tp)
 {
     socket->setTimePoint(tp);
 }
 
-static time_point getBeginTime(HttpSocket *socket)
+static time_point getBeginTime(AbstractSocket *socket)
 {
     return socket->timePoint();
 }
 
-static void addTimeout(HttpSocket *socket, milliseconds timeout)
+static void addTimeout(AbstractSocket *socket, milliseconds timeout)
 {
     socket->setTimeOut(timeout);
 }
 
-static milliseconds getTimeout(HttpSocket *socket)
+static milliseconds getTimeout(AbstractSocket *socket)
 {
     return  socket->timeOut();
 }
@@ -68,10 +68,10 @@ static milliseconds getTimeout(HttpSocket *socket)
 void HttpSimpleClient::onTimerEvent()
 {
 BEGIN_SLOT_WRAPPER
-    std::vector<HttpSocket *> toStop;
+    std::vector<AbstractSocket *> toStop;
     const time_point timeEnd = ::now();
     for (auto &iter: sockets) {
-        HttpSocket *socket = iter.second;
+        AbstractSocket *socket = iter.second;
         if (socket->hasTimeOut()) {
             const milliseconds timeout = getTimeout(socket);
             const time_point timeBegin = getBeginTime(socket);
@@ -83,7 +83,7 @@ BEGIN_SLOT_WRAPPER
         }
     }
 
-    for (HttpSocket *socket: toStop) {
+    for (AbstractSocket *socket: toStop) {
         socket->stop();
     }
     END_SLOT_WRAPPER
@@ -103,7 +103,7 @@ void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, 
         addBeginTime(socket.get(), time);
         addTimeout(socket.get(), timeout);
     }
-    connect(socket.get(), &HttpSocket::finished, this, &HttpSimpleClient::onSocketFinished);
+    Q_CONNECT(socket.get(), &HttpSocket::finished, this, &HttpSimpleClient::onSocketFinished);
     socket.release()->start();
 }
 
@@ -114,6 +114,21 @@ void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, 
 
 void HttpSimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout) {
     sendMessagePost(url, message, callback, true, timeout);
+}
+
+void HttpSimpleClient::sendMessagePing(const QUrl &url, const ClientCallback &callback, milliseconds timeout) {
+    startTimer1();
+
+    std::unique_ptr<PingSocket> socket(new PingSocket(url));
+    callbacks[id] = callback;
+    sockets[id] = socket.get();
+    addRequestId(socket.get(), id);
+    id++;
+    const time_point time = ::now();
+    addBeginTime(socket.get(), time);
+    addTimeout(socket.get(), timeout);
+    Q_CONNECT(socket.get(), &PingSocket::finished, this, &HttpSimpleClient::onSocketFinished);
+    socket.release()->start();
 }
 
 template<class Callbacks, typename... Message>
@@ -131,7 +146,7 @@ void HttpSimpleClient::runCallback(Callbacks &callbacks, const int id, Message&&
 void HttpSimpleClient::onSocketFinished()
 {
 BEGIN_SLOT_WRAPPER
-    HttpSocket *socket = qobject_cast<HttpSocket *>(sender());
+    AbstractSocket *socket = qobject_cast<AbstractSocket *>(sender());
     CHECK(socket, "Not socket object");
     const int requestId = getRequestId(socket);
     if (socket->hasError()) {
@@ -146,90 +161,80 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-HttpSocket::HttpSocket(const QUrl &url, const QString &message, QObject *parent)
-    : QTcpSocket(parent)
-    , m_url(url)
-    , m_message(message)
-{
-    connect(this, &QAbstractSocket::connected, this, &HttpSocket::onConnected);
-    connect(this, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), this, &HttpSocket::onError);
-    connect(this, &QIODevice::readyRead, this, &HttpSocket::onReadyRead);
-}
-
-void HttpSocket::start()
-{
-    connectToHost(m_url.host(), m_url.port(80));
-}
-
-void HttpSocket::stop()
+void AbstractSocket::stop()
 {
     abort();
     m_error = true;
     emit finished();
 }
 
-int HttpSocket::requestId() const
+int AbstractSocket::requestId() const
 {
     return m_requestId;
 }
 
-void HttpSocket::setRequestId(const int s)
+void AbstractSocket::setRequestId(const int s)
 {
     m_requestId = s;
 }
 
-bool HttpSocket::hasTimeOut() const
+bool AbstractSocket::hasTimeOut() const
 {
     return m_hasTimeOut;
 }
 
-bool HttpSocket::hasError() const
+bool AbstractSocket::hasError() const
 {
     return m_error;
 }
 
-time_point HttpSocket::timePoint() const
+time_point AbstractSocket::timePoint() const
 {
     return m_timePoint;
 }
 
-void HttpSocket::setTimePoint(time_point s)
+void AbstractSocket::setTimePoint(time_point s)
 {
     m_timePoint = s;
     m_hasTimeOut = true;
 }
 
-milliseconds HttpSocket::timeOut() const
+milliseconds AbstractSocket::timeOut() const
 {
     return m_timeOut;
 }
 
-void HttpSocket::setTimeOut(milliseconds s)
+void AbstractSocket::setTimeOut(milliseconds s)
 {
     m_timeOut = s;
 }
 
-QByteArray HttpSocket::getReply() const
+QByteArray AbstractSocket::getReply() const
 {
     return m_reply;
 }
 
 void HttpSocket::onConnected()
 {
+BEGIN_SLOT_WRAPPER
     QByteArray d = getHttpPostHeader();
     d += m_message.toLatin1();
     write(d);
+END_SLOT_WRAPPER
 }
 
 void HttpSocket::onError(QAbstractSocket::SocketError socketError)
 {
+BEGIN_SLOT_WRAPPER
     errorCode = socketError;
     m_error = true;
     emit finished();
+END_SLOT_WRAPPER
 }
 
 void HttpSocket::onReadyRead()
 {
+BEGIN_SLOT_WRAPPER
     QByteArray d = readAll();
     m_data += d;
     parseResponseHeader();
@@ -250,6 +255,22 @@ void HttpSocket::onReadyRead()
         }
 
     }
+END_SLOT_WRAPPER
+}
+
+HttpSocket::HttpSocket(const QUrl &url, const QString &message, QObject *parent)
+    : AbstractSocket(parent)
+    , m_url(url)
+    , m_message(message)
+{
+    Q_CONNECT(this, &QAbstractSocket::connected, this, &HttpSocket::onConnected);
+    Q_CONNECT(this, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), this, &HttpSocket::onError);
+    Q_CONNECT(this, &QIODevice::readyRead, this, &HttpSocket::onReadyRead);
+}
+
+void HttpSocket::start()
+{
+    connectToHost(m_url.host(), m_url.port(80));
 }
 
 QByteArray HttpSocket::getHttpPostHeader() const
@@ -296,4 +317,39 @@ void HttpSocket::parseResponseHeader()
             m_contentLength = s.toInt();
         }
     }
+}
+
+PingSocket::PingSocket(const QUrl &url, QObject *parent)
+    : AbstractSocket(parent)
+    , m_url(url)
+{
+    Q_CONNECT(this, &QAbstractSocket::connected, this, &PingSocket::onConnected);
+    Q_CONNECT(this, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error), this, &PingSocket::onError);
+    Q_CONNECT(this, &QIODevice::readyRead, this, &PingSocket::onReadyRead);
+}
+
+void PingSocket::start() {
+    connectToHost(m_url.host(), m_url.port(80));
+}
+
+void PingSocket::onConnected() {
+BEGIN_SLOT_WRAPPER
+    write("GET / HTTP/1.1\r\n\r\n");
+END_SLOT_WRAPPER
+}
+
+void PingSocket::onError(QAbstractSocket::SocketError socketError) {
+BEGIN_SLOT_WRAPPER
+    errorCode = socketError;
+    m_error = true;
+    emit finished();
+END_SLOT_WRAPPER
+}
+
+void PingSocket::onReadyRead() {
+BEGIN_SLOT_WRAPPER
+    QByteArray d = readAll();
+    m_data += d;
+    emit finished();
+END_SLOT_WRAPPER
 }
