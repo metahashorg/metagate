@@ -28,6 +28,9 @@ Component.prototype.createOperations = function()
     if (systemInfo.productType === "windows") {
 		var mgpath = installer.value("TargetDir");
 		mgpath = mgpath.replace(/\//g, "\\");
+		var mgconfigpath = installer.value("HomeDir") + "\\.metagate"
+		mgconfigpath = mgconfigpath.replace(/\//g, "\\");
+		mgconfigpath = mgconfigpath.replace(/\\/g, "\\\\");
 
         component.addOperation("CreateShortcut", "@TargetDir@/MetaGate.exe", "@StartMenuDir@/MetaGate.lnk",
             "workingDirectory=@TargetDir@", "iconPath=@TargetDir@/MetaGate.exe",
@@ -35,6 +38,7 @@ Component.prototype.createOperations = function()
         component.addOperation("CreateShortcut", "@TargetDir@/MetaGate.exe", "@DesktopDir@/MetaGate.lnk",
                 "workingDirectory=@TargetDir@", "iconPath=@TargetDir@/MetaGate.exe",
                 "iconId=0", "description=Launch Metahash Wallet");
+	component.addElevatedOperation("Execute", "@TargetDir@\\init.cmd", mgconfigpath);
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "Default", "URL:Mh pay protocol");
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay", "URL Protocol", "");
         component.addElevatedOperation("GlobalConfig", "HKEY_CLASSES_ROOT\\metapay\\shell\\open\\command", "Default", "\"" + mgpath + "\\MetaGate.exe\" \"%1\"");
