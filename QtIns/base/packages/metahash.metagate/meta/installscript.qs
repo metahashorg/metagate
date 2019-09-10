@@ -25,10 +25,10 @@ Component.prototype.createOperations = function()
     // call default implementation to actually install MetaGate.exe
     component.createOperations();
 
+	var mgconfigpath = installer.value("HomeDir") + "/.metagate"
     if (systemInfo.productType === "windows") {
 		var mgpath = installer.value("TargetDir");
 		mgpath = mgpath.replace(/\//g, "\\");
-		var mgconfigpath = installer.value("HomeDir") + "\\.metagate"
 		mgconfigpath = mgconfigpath.replace(/\//g, "\\");
 		mgconfigpath = mgconfigpath.replace(/\\/g, "\\\\");
 
@@ -49,7 +49,7 @@ Component.prototype.createOperations = function()
         component.addElevatedOperation("Execute", "@TargetDir@\\mhdesktopproxyservice.exe", "", "UNDOEXECUTE", "@TargetDir@\\mhdesktopproxyservice.exe", "-t");
     } else if (systemInfo.productType === "osx") {
     	component.addOperation("Execute", "@TargetDir@/install.sh", "UNDOEXECUTE", "rm", "-f", "~/Library/LaunchAgents/com.metahash.metagate.plist");
-        component.addElevatedOperation("Execute", "@TargetDir@/launchd-install.sh", "metahash.desktopproxy", "@TargetDir@/MetaGate.app/Contents/MacOS/mhdesktopproxyservice", "UNDOEXECUTE", "@TargetDir@/launchd-uninstall.sh", "metahash.desktopproxy", "mhdesktopproxyservice");
+        component.addElevatedOperation("Execute", "@TargetDir@/launchd-install.sh", "metahash.desktopproxy", "@TargetDir@/MetaGate.app/Contents/MacOS/mhdesktopproxyservice", mgconfigpath, "UNDOEXECUTE", "@TargetDir@/launchd-uninstall.sh", "metahash.desktopproxy", "mhdesktopproxyservice");
     	component.addElevatedOperation("Execute", "launchctl", "load", "/Library/LaunchDaemons/metahash.desktopproxy.plist", "UNDOEXECUTE", "launchctl", "unload", "/Library/LaunchDaemons/metahash.desktopproxy.plist");
     	component.addElevatedOperation("Execute", "launchctl", "start", "metahash.desktopproxy", "UNDOEXECUTE", "launchctl", "stop", "metahash.desktopproxy");
         

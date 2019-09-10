@@ -8,8 +8,12 @@ cat <<EOT >> $FN
 <dict>
 <key>Label</key>
 <string>$1</string>
-<key>Program</key>
+<key>ProgramArguments</key>
+<array>
 <string>$2</string>
+<string>-m</string>
+<string>$3</string>
+</array>
 <key>RunAtLoad</key>
 <true/>
 </dict>
