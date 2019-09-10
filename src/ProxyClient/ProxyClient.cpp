@@ -15,7 +15,7 @@ SET_LOG_NAMESPACE("PXC");
 namespace proxy_client {
 
 ProxyClient::ProxyClient()
-    : proxyClient(QStringLiteral("metahash.metagate"))
+    : proxyClient(getLocalServerPath())
 {
     Q_CONNECT(&proxyClient, &LocalClient::callbackCall, this, &ProxyClient::callbackCall);
 

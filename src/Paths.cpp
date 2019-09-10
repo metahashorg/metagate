@@ -39,6 +39,8 @@ const static QString NS_LOOKUP_PATH = "./";
 
 const static QString PROXY_CONFIG_NAME = "proxy.ini";
 
+const static QString LOCALSERVER_NAME = "metahash.metagate";
+
 static bool isInitializePagesPath = false;
 
 static bool isInitializeSettingsPath = false;
@@ -221,6 +223,15 @@ QString getTmpAutoupdaterPath() {
 
 QString getProxyConfigPath() {
     return makePath(getCommonMetagatePath(), PROXY_CONFIG_NAME);
+}
+
+QString getLocalServerPath()
+{
+#ifdef Q_OS_UNIX
+    return makePath(getCommonMetagatePath(), LOCALSERVER_NAME);
+#else
+    return LOCALSERVER_NAME;
+#endif
 }
 
 void clearAutoupdatersPath() {
