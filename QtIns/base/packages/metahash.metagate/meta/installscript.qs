@@ -55,7 +55,7 @@ Component.prototype.createOperations = function()
         
     } else if (systemInfo.kernelType === "linux") {
         //component.addOperation("Execute", "@TargetDir@/install.sh", "UNDOEXECUTE", "@TargetDir@/uninstall.sh");
-        component.addElevatedOperation("Execute", "@TargetDir@/systemd-install.sh", "metahash.desktopproxy", "@TargetDir@", "mhdesktopproxyservice.sh", "UNDOEXECUTE", "rm", "/etc/systemd/system/metahash.desktopproxy.service");
+        component.addElevatedOperation("Execute", "@TargetDir@/systemd-install.sh", "metahash.desktopproxy", "@TargetDir@", "mhdesktopproxyservice.sh", mgconfigpath, "UNDOEXECUTE", "rm", "/etc/systemd/system/metahash.desktopproxy.service");
         component.addElevatedOperation("Execute", "systemctl", "enable", "metahash.desktopproxy", "UNDOEXECUTE", "systemctl", "disable", "metahash.desktopproxy");
         component.addElevatedOperation("Execute", "systemctl", "start", "metahash.desktopproxy", "UNDOEXECUTE", "systemctl", "stop", "metahash.desktopproxy");
     }

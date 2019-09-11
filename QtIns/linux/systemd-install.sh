@@ -11,7 +11,7 @@ After=network.target
 [Service]
 Type=forking
 WorkingDirectory=$2
-ExecStart=$2/$3
+ExecStart=$2/$3 $4
 ExecStop=$2/$3 -t
 
 [Install]
