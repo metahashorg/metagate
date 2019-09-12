@@ -342,7 +342,9 @@ void PingSocket::onError(QAbstractSocket::SocketError socketError) {
 BEGIN_SLOT_WRAPPER
     errorCode = socketError;
     m_error = true;
-    emit finished();
+    if (!isEmited) {
+        emit finished();
+    }
 END_SLOT_WRAPPER
 }
 
@@ -350,6 +352,7 @@ void PingSocket::onReadyRead() {
 BEGIN_SLOT_WRAPPER
     QByteArray d = readAll();
     m_data += d;
+    isEmited = true;
     emit finished();
 END_SLOT_WRAPPER
 }

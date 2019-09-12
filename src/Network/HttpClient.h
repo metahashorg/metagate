@@ -106,6 +106,7 @@ private:
 
     QUrl m_url;
     QByteArray m_data;
+    bool isEmited = false;
 };
 
 /*
