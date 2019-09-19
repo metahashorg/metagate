@@ -1,10 +1,12 @@
+Сейчас деплой и инсталляция приложения идет из репозитория инсталлятора
+
 Сборка приложения:
 0. готовим плацдарм: закрываем проект в куте,сносим папку с проектом, сносим папку сборки, очищаем папку WalletMetahash, в которую потом будем копировать  MetaGate.app для пункта 5
 1. открыли проект в qt
 2. поменяли тип сборки на выпуск
 3. собрали проект
 4. скопировали из папки с проектом папку startSettings в папку, которую qt создает при сборке рядом с исполняемым файлом (в build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/MetaGate.app/Contents/MacOS/)
-4.1 скопировать туда же к бинарнику install.sh и mgtemp.plist
+4.1 скопировать туда же к бинарнику install_old.sh как install.sh и mgtemp.plist
 4.2 Копировать каталог ~/.metagate/pages/folder + ~/.metagate/pages/lastVersion.txt с заменой в startSettings
 5. скорировали из build-MetaGate-Desktop_Qt_5_9_1_clang_64bit-Release/  MetaGate.app” в отдельную произвольную папку WalletMetahash
 6. запустили macdeployqt. 
