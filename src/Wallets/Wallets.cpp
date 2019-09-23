@@ -315,7 +315,9 @@ BEGIN_SLOT_WRAPPER
         const QString tx2 = QString::fromStdString(tx);
         const QString signature2 = QString::fromStdString(signature);
 
-        return std::make_tuple(signature2, publicKey2, tx2);
+        const QString txHash = QString::fromStdString(Wallet::calcHash(tx, signature, publicKey));
+
+        return std::make_tuple(signature2, publicKey2, tx2, txHash);
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -364,8 +366,9 @@ BEGIN_SLOT_WRAPPER
             wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex.toStdString(), tx, signature, publicKey);
 
             CHECK(txs != nullptr, "Transactions manager not setted");
-            emit txs->sendTransaction("", toAddress, value, nonce, dataHex, realFee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([address, callback](){
-                callback.emitCallback(true);
+            const QString txHash = QString::fromStdString(Wallet::calcHash(tx, signature, publicKey));
+            emit txs->sendTransaction("", toAddress, value, nonce, dataHex, realFee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([address, callback, txHash](){
+                callback.emitCallback(true, txHash);
             }, callback, signalFunc));
         };
 
@@ -408,8 +411,9 @@ BEGIN_SLOT_WRAPPER
             wallet.sign(toAddress.toStdString(), valueInt, feeInt, nonce, dataHex, tx, signature, publicKey, false);
 
             CHECK(txs != nullptr, "Transactions manager not setted");
-            emit txs->sendTransaction("", toAddress, value, nonce, QString::fromStdString(dataHex), realFee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([address, callback](){
-                callback.emitCallback(true);
+            const QString txHash = QString::fromStdString(Wallet::calcHash(tx, signature, publicKey));
+            emit txs->sendTransaction("", toAddress, value, nonce, QString::fromStdString(dataHex), realFee, QString::fromStdString(publicKey), QString::fromStdString(signature), sendParams, transactions::Transactions::SendTransactionCallback([address, callback, txHash](){
+                callback.emitCallback(true, txHash);
             }, callback, signalFunc));
         };
 

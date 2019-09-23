@@ -431,6 +431,7 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
     LOG << "Sign message " << requestId << " " << keyName << " " << isMhc << " " << text;
 
     wallets.signMessage(isMhc, keyName, text, password, wallets::Wallets::SignMessageCallback([this, jsNameResult, requestId, keyName](const QString &signature, const QString &pubkey) {
+        LOG << "Sign message ok ";
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(signature), Opt<QString>(pubkey));
     }, [this, jsNameResult, requestId](const TypedException &e) {
         makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>(""), Opt<QString>(""));
@@ -440,8 +441,8 @@ void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QStr
 void JavascriptWrapper::signMessageMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, bool isMhc, QString jsNameResult) {
     LOG << "Sign message " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
 
-    wallets.signMessage2(isMhc, keyName, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([this, jsNameResult, requestId, keyName](const QString &signature, const QString &pubkey, const QString &tx) {
-        LOG << "Sign message ok " << Wallet::calcHash(tx.toStdString(), signature.toStdString(), pubkey.toStdString());
+    wallets.signMessage2(isMhc, keyName, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([this, jsNameResult, requestId, keyName](const QString &signature, const QString &pubkey, const QString &tx, const QString &hash) {
+        LOG << "Sign message ok " << hash;
 
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>(signature), Opt<QString>(pubkey), Opt<QString>(tx));
     }, [this, jsNameResult, requestId](const TypedException &e) {
@@ -458,10 +459,10 @@ void JavascriptWrapper::createV8AddressImpl(QString requestId, const QString jsN
 }
 
 void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString dataHex, QString paramsJson, bool isMhc, QString jsNameResult) {
-    LOG << "Sign messagev3 " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+    LOG << "Sign messagev3 " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex << " " << paramsJson;
 
-    wallets.signAndSendMessage(isMhc, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool /*success*/) {
-        LOG << "Sign messagev3 ok " << keyName;
+    wallets.signAndSendMessage(isMhc, keyName, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool /*success*/, const QString &hash) {
+        LOG << "Sign messagev3 ok " << keyName << " " << hash;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
         makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>("Not ok"));
@@ -469,10 +470,10 @@ void JavascriptWrapper::signMessageMTHSV3(QString requestId, QString keyName, QS
 }
 
 void JavascriptWrapper::signMessageDelegateMTHS(QString requestId, QString keyName, QString password, QString toAddress, QString value, QString fee, QString nonce, QString valueDelegate, bool isDelegate, QString paramsJson, bool isMhc, QString jsNameResult) {
-    LOG << "Sign message delegate " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate;
+    LOG << "Sign message delegate " << requestId << " " << keyName << " " << isMhc << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << "is_delegate: " << (isDelegate ? "true" : "false") << " " << valueDelegate << " " << paramsJson;
 
-    wallets.signAndSendMessageDelegate(isMhc, keyName, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool /*success*/) {
-        LOG << "Sign messagev delegate ok " << keyName;
+    wallets.signAndSendMessageDelegate(isMhc, keyName, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([this, jsNameResult, requestId, keyName](bool /*success*/, const QString &hash) {
+        LOG << "Sign messagev delegate ok " << keyName << " " << hash;
         makeAndRunJsFuncParams(jsNameResult, TypedException(), Opt<QString>(requestId), Opt<QString>("Ok"));
     }, [this, jsNameResult, requestId](const TypedException &e) {
         makeAndRunJsFuncParams(jsNameResult, e, Opt<QString>(requestId), Opt<QString>("Not ok"));

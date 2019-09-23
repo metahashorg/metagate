@@ -61,11 +61,11 @@ public:
 
     using SignMessageCallback = CallbackWrapper<void(const QString &signature, const QString &pubkey)>;
 
-    using SignMessage2Callback = CallbackWrapper<void(const QString &signature, const QString &pubkey, const QString &tx)>;
+    using SignMessage2Callback = CallbackWrapper<void(const QString &signature, const QString &pubkey, const QString &tx, const QString &hash)>;
 
     using GettedNonceCallback = CallbackWrapper<void(size_t nonce)>;
 
-    using SignAndSendMessageCallback = CallbackWrapper<void(bool success)>;
+    using SignAndSendMessageCallback = CallbackWrapper<void(bool success, const QString &hash)>;
 
     using GetPrivateKeyCallback = CallbackWrapper<void(const QString &result)>;
 

@@ -192,8 +192,8 @@ BEGIN_SLOT_WRAPPER
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>(""), JsTypeReturn<QString>(""), JsTypeReturn<QString>(""));
 
     wrapOperation([&, this](){
-        emit wallets.signMessage2(isMhc, address, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey, const QString &tx){
-            LOG << "Sign message2 ok " << isMhc << " " << address;
+        emit wallets.signMessage2(isMhc, address, password, toAddress, value, fee, nonce, dataHex, wallets::Wallets::SignMessage2Callback([makeFunc, isMhc, address](const QString &signature, const QString &pubkey, const QString &tx, const QString &hash){
+            LOG << "Sign message2 ok " << isMhc << " " << address << " " << hash;
             makeFunc.func(TypedException(), signature, pubkey, tx);
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
@@ -202,13 +202,13 @@ END_SLOT_WRAPPER
 
 void WalletsJavascript::signAndSendMessage(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &nonce, const QString &dataHex, const QString &paramsJson, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    LOG << "Sign message3 " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex;
+    LOG << "Sign message3 " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << dataHex << " " << paramsJson;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
-        emit wallets.signAndSendMessage(isMhc, address, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success){
-            LOG << "Sign message3 ok " << isMhc << " " << address;
+        emit wallets.signAndSendMessage(isMhc, address, password, toAddress, value, fee, nonce, dataHex, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success, const QString &hash){
+            LOG << "Sign message3 ok " << isMhc << " " << address << " " << hash;
             if (success) {
                 makeFunc.func(TypedException(), "Ok");
             } else {
@@ -221,13 +221,13 @@ END_SLOT_WRAPPER
 
 void WalletsJavascript::signAndSendMessageDelegate(bool isMhc, const QString &address, const QString &password, const QString &toAddress, const QString &value, const QString &fee, const QString &valueDelegate, const QString &nonce, bool isDelegate, const QString &paramsJson, const QString &callback) {
 BEGIN_SLOT_WRAPPER
-    LOG << "Sign message delegate " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate;
+    LOG << "Sign message delegate " << isMhc << " " << address << " " << toAddress << " " << value << " " << fee << " " << nonce << " " << isDelegate << " " << valueDelegate << " " << paramsJson;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<QString>("Not ok"));
 
     wrapOperation([&, this](){
-        emit wallets.signAndSendMessageDelegate(isMhc, address, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success){
-            LOG << "Sign message delegate ok " << isMhc << " " << address;
+        emit wallets.signAndSendMessageDelegate(isMhc, address, password, toAddress, value, fee, valueDelegate, nonce, isDelegate, paramsJson, wallets::Wallets::SignAndSendMessageCallback([makeFunc, isMhc, address](bool success, const QString &hash){
+            LOG << "Sign message delegate ok " << isMhc << " " << address << " " << hash;
             if (success) {
                 makeFunc.func(TypedException(), "Ok");
             } else {
