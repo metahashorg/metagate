@@ -1016,6 +1016,7 @@ END_SLOT_WRAPPER
 
 void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url, const std::vector<QString> &addresses)
 {
+BEGIN_SLOT_WRAPPER
     const auto getBalanceCallback = [this, id, addresses](const SimpleClient::Response &response) {
         const std::string &resp = response.response;
         const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(resp));
@@ -1023,9 +1024,9 @@ void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url,
         emit getBalancesFromTorrentResult(id, balancesResponse);
     };
 
-
     const QString requestBalance = makeGetBalancesRequest(addresses);
     client.sendMessagePost(url, requestBalance, getBalanceCallback, timeout);
+END_SLOT_WRAPPER
 }
 
 void Transactions::onClearDb(const QString &currency, const ClearDbCallback &callback) {
