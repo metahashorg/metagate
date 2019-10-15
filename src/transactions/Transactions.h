@@ -166,6 +166,10 @@ protected:
 signals:
     void showNotification(const QString &title, const QString &message);
 
+    void getBalancesFromTorrentResult(const QString &id, const std::vector<BalanceInfo> &result);
+
+signals:
+
     void registerAddresses(const std::vector<AddressInfo> &addresses, const RegisterAddressCallback &callback);
 
     void getAddresses(const QString &group, const GetAddressesCallback &callback);
@@ -199,6 +203,8 @@ signals:
     void clearDb(const QString &currency, const ClearDbCallback &callback);
 
     void addCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
+
+    void getBalancesFromTorrent(const QString &id, const QUrl &url, const std::vector<QString> &addresses);
 
 public slots:
 
@@ -239,6 +245,8 @@ public slots:
     void onMthWatchWalletsAdded(bool isMhc, const std::vector<std::pair<QString, QString>> &created, const QString &username);
 
     void onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
+
+    void onGetBalancesFromTorrent(const QString &id, const QUrl &url, const std::vector<QString> &addresses);
 
 private slots:
 

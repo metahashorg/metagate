@@ -2,8 +2,13 @@
 #define METAGATEMESSAGES_H
 
 #include <QString>
+#include <QUrl>
 
 #include <vector>
+
+namespace transactions {
+class BalanceInfo;
+}
 
 class QJsonDocument;
 
@@ -15,9 +20,15 @@ QString makeMessageApplicationForWss(const QString &hardwareId, const QString &u
 
 QString metaOnlineMessage();
 
+QString makeTestTorrentResponse(const QString &id, const std::vector<transactions::BalanceInfo> &result);
+
+QString parseAppType(const QJsonDocument &response);
+
 QString parseMetaOnlineResponse(const QJsonDocument &response);
 
 std::pair<QString, QString> parseShowExchangePopupResponse(const QJsonDocument &response);
+
+QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::vector<QString> &addresses);
 
 } // namespace metagate
 

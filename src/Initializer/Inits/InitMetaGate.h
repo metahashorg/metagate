@@ -27,6 +27,10 @@ namespace wallets {
 class Wallets;
 }
 
+namespace transactions {
+class Transactions;
+}
+
 namespace metagate {
 class MetaGate;
 class MetaGateJavascript;
@@ -58,6 +62,7 @@ public:
         SharedFuture<MainWindow> mainWindow,
         SharedFuture<auth::Auth> auth,
         SharedFuture<wallets::Wallets> wallets,
+        SharedFuture<transactions::Transactions> transactions,
         const QString &versionString,
         NetwrokTesting &nettest
     );

@@ -5,7 +5,10 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include "transactions/Transaction.h"
+
 #include "Log.h"
+#include "check.h"
 
 SET_LOG_NAMESPACE("MG");
 
@@ -62,6 +65,37 @@ QString metaOnlineMessage() {
     return "{\"app\":\"MetaOnline\"}";
 }
 
+
+QString makeTestTorrentResponse(const QString &id, const std::vector<transactions::BalanceInfo> &result)
+{
+    QJsonObject allJson;
+    allJson.insert(QStringLiteral("app"), QStringLiteral("TestTorrent"));
+    QJsonObject data;
+    data.insert(QStringLiteral("id"), id);
+    QJsonArray res;
+    foreach (const transactions::BalanceInfo &balance, result) {
+        QJsonObject obj;
+        obj.insert(QStringLiteral("address"), balance.address);
+        obj.insert(QStringLiteral("spent"), QString::fromLatin1(balance.spent.getDecimal()));
+        obj.insert(QStringLiteral("received"), QString::fromLatin1(balance.received.getDecimal()));
+        res.push_back(obj);
+    }
+    data.insert(QStringLiteral("data"), res);
+    QJsonDocument json(allJson);
+
+    return json.toJson(QJsonDocument::Compact);
+}
+
+
+QString parseAppType(const QJsonDocument &response)
+{
+    const QJsonObject root = response.object();
+    if (!root.contains(QLatin1String("app")) || !root.value(QLatin1String("app")).isString()) {
+        return QString();
+    }
+    return root.value(QLatin1String("app")).toString();
+}
+
 QString parseMetaOnlineResponse(const QJsonDocument &response) {
     const QJsonObject root = response.object();
     if (!root.contains("app") || !root.value("app").isString()) {
@@ -93,6 +127,29 @@ std::pair<QString, QString> parseShowExchangePopupResponse(const QJsonDocument &
         }
     }
     return std::make_pair("", "");
+}
+
+QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::vector<QString> &addresses)
+{
+    QString id;
+    const QJsonObject root = response.object();
+    if (!root.contains("app") || !root.value("app").isString()) {
+        return id;
+    }
+    const QString appType = root.value("app").toString();
+    if (appType == QLatin1String("TestTorrent")) {
+        CHECK(root.contains(QLatin1String("id")) && root.value(QLatin1String("id")).isString(), "id field not found");
+        id = root.value(QLatin1String("id")).toString();
+        CHECK(root.contains(QLatin1String("url")) && root.value(QLatin1String("url")).isString(), "url field not found");
+        url = QUrl(root.value(QLatin1String("url")).toString());
+        CHECK(root.contains(QLatin1String("addresses")) && root.value(QLatin1String("addresses")).isArray(), "addresses field not found");
+        const QJsonArray addrs = root.value(QLatin1String("addresses")).toArray();
+        for (int i = 0; i < addrs.count(); i++) {
+            CHECK(addrs[i].isString(), "address field is not string");
+            addresses.emplace_back(addrs[i].toString());
+        }
+    }
+    return  id;
 }
 
 } // namespace metagate

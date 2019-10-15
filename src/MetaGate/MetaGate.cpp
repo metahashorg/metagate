@@ -15,6 +15,7 @@
 
 #include "Wallets/Wallets.h"
 #include "auth/Auth.h"
+#include "transactions/Transactions.h"
 
 #include "Network/WebSocketClient.h"
 #include "Network/NetwrokTesting.h"
@@ -31,9 +32,10 @@ SET_LOG_NAMESPACE("MG");
 
 namespace metagate {
 
-MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion)
+MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, transactions::Transactions &transactions, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion)
     : mainWindow(mainWindow)
     , wallets(wallets)
+    , transactions(transactions)
     , wssClient(wssClient)
     , nsLookup(nsLookup)
     , networkTesting(networkTesting)
@@ -48,6 +50,8 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
     Q_CONNECT(&wallets, &wallets::Wallets::watchWalletsAdded, this, &MetaGate::onMhcWatchWalletsChanged);
 
     Q_CONNECT(&authManager, &auth::Auth::logined2, this, &MetaGate::onLogined);
+
+    Q_CONNECT(&transactions, &transactions::Transactions::getBalancesFromTorrentResult, this, &MetaGate::onTestTorrentResult);
 
     Q_CONNECT(this, &MetaGate::sendCommandLineMessageToWss, this, &MetaGate::onSendCommandLineMessageToWss);
 
@@ -180,6 +184,15 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void MetaGate::onTestTorrentResult(const QString &id, const std::vector<transactions::BalanceInfo> &result)
+{
+BEGIN_SLOT_WRAPPER
+    const QString message = makeTestTorrentResponse(id, result);
+    LOG << message;
+    emit wssClient.sendMessage(message);
+END_SLOT_WRAPPER
+}
+
 QByteArray MetaGate::getUtmData() {
     QDir dir(qApp->applicationDirPath());
 
@@ -273,9 +286,19 @@ END_SLOT_WRAPPER
 
 void MetaGate::onWssMessageReceived(const QString &message) {
 BEGIN_SLOT_WRAPPER
+    qDebug() << message;
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
     CHECK(document.isObject(), "Message not is object");
 
+    const QString appType = parseAppType(document);
+
+    if (appType == QLatin1String("TestTorrent")) {
+        QUrl url;
+        std::vector<QString> addresses;
+        const QString id = parseTestTorrentRequest(document, url, addresses);
+        emit transactions.getBalancesFromTorrent(id, url, addresses);
+        return;
+    }
     const QString metaOnlineResponse = parseMetaOnlineResponse(document);
     if (!metaOnlineResponse.isEmpty()) {
         emit this->metaOnlineResponse(metaOnlineResponse);

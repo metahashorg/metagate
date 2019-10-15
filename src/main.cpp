@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitWalletsNames::Return> walletNames = initManager.addInit<InitWalletsNames>(mainWindow, auth, webSocketClient, wallets);
 
-        const std::shared_future<InitMetaGate::Return> metagate = initManager.addInit<InitMetaGate>(webSocketClient, nsLookup, mainWindow, auth, wallets, QString::fromStdString(versionString), std::ref(nettesting));
+        const std::shared_future<InitMetaGate::Return> metagate = initManager.addInit<InitMetaGate>(webSocketClient, nsLookup, mainWindow, auth, wallets, transactions, QString::fromStdString(versionString), std::ref(nettesting));
 
         const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, metagate, QString::fromStdString(versionString), std::ref(nettesting));
 

@@ -75,6 +75,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
     Q_CONNECT(this, &Transactions::addCurrencyConformity, this, &Transactions::onAddCurrencyConformity);
+    Q_CONNECT(this, &Transactions::getBalancesFromTorrent, this, &Transactions::onGetBalancesFromTorrent);
 
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWalletCreated, this, &Transactions::onMthWalletCreated);
     Q_CONNECT(&wallets, &wallets::Wallets::mhcWatchWalletCreated, this, &Transactions::onMthWalletCreated);
@@ -1011,6 +1012,20 @@ BEGIN_SLOT_WRAPPER
         }
     }, callback);
 END_SLOT_WRAPPER
+}
+
+void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url, const std::vector<QString> &addresses)
+{
+    const auto getBalanceCallback = [this, id, addresses](const SimpleClient::Response &response) {
+        const std::string &resp = response.response;
+        const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(resp));
+        CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
+        emit getBalancesFromTorrentResult(id, balancesResponse);
+    };
+
+
+    const QString requestBalance = makeGetBalancesRequest(addresses);
+    client.sendMessagePost(url, requestBalance, getBalanceCallback, timeout);
 }
 
 void Transactions::onClearDb(const QString &currency, const ClearDbCallback &callback) {

@@ -13,6 +13,11 @@ namespace auth {
 class Auth;
 }
 
+namespace transactions {
+class Transactions;
+class BalanceInfo;
+}
+
 class WebSocketClient;
 class MainWindow;
 class NsLookup;
@@ -46,7 +51,7 @@ public:
 
 public:
 
-    MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion);
+    MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, transactions::Transactions &transactions, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion);
 
 signals:
 
@@ -104,6 +109,9 @@ private slots:
 
     void onGetNetworkStatus(const GetNetworkStatusCallback &callback);
 
+    void onTestTorrentResult(const QString &id, const std::vector<transactions::BalanceInfo> &result);
+
+
 private:
 
     QByteArray getUtmData();
@@ -137,6 +145,8 @@ private:
     MainWindow &mainWindow;
 
     wallets::Wallets &wallets;
+
+    transactions::Transactions &transactions;
 
     WebSocketClient &wssClient;
 
