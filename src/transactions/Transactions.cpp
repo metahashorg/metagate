@@ -1018,10 +1018,16 @@ void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url,
 {
 BEGIN_SLOT_WRAPPER
     const auto getBalanceCallback = [this, id, addresses](const SimpleClient::Response &response) {
-        const std::string &resp = response.response;
-        const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(resp));
-        CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
-        emit getBalancesFromTorrentResult(id, balancesResponse);
+        if (response.exception.isSet()) {
+            std::vector<BalanceInfo> balancesResponse;
+            emit getBalancesFromTorrentResult(id, false, QString::fromStdString(response.exception.toString()), balancesResponse);
+
+        } else {
+            const std::string &resp = response.response;
+            const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(resp));
+            CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
+            emit getBalancesFromTorrentResult(id, true, QString(), balancesResponse);
+        }
     };
 
     const QString requestBalance = makeGetBalancesRequest(addresses);

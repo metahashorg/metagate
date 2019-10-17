@@ -166,7 +166,7 @@ protected:
 signals:
     void showNotification(const QString &title, const QString &message);
 
-    void getBalancesFromTorrentResult(const QString &id, const std::vector<BalanceInfo> &result);
+    void getBalancesFromTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<BalanceInfo> &result);
 
 signals:
 

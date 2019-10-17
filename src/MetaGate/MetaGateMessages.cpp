@@ -66,21 +66,26 @@ QString metaOnlineMessage() {
 }
 
 
-QString makeTestTorrentResponse(const QString &id, const std::vector<transactions::BalanceInfo> &result)
+QString makeTestTorrentResponse(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result)
 {
     QJsonObject allJson;
     allJson.insert(QStringLiteral("app"), QStringLiteral("TestTorrent"));
     QJsonObject data;
     data.insert(QStringLiteral("id"), id);
-    QJsonArray res;
-    foreach (const transactions::BalanceInfo &balance, result) {
-        QJsonObject obj;
-        obj.insert(QStringLiteral("address"), balance.address);
-        obj.insert(QStringLiteral("spent"), QString::fromLatin1(balance.spent.getDecimal()));
-        obj.insert(QStringLiteral("received"), QString::fromLatin1(balance.received.getDecimal()));
-        res.push_back(obj);
+    data.insert(QStringLiteral("res"), res);
+    if (res) {
+        QJsonArray a;
+        foreach (const transactions::BalanceInfo &balance, result) {
+            QJsonObject obj;
+            obj.insert(QStringLiteral("address"), balance.address);
+            obj.insert(QStringLiteral("spent"), QString::fromLatin1(balance.spent.getDecimal()));
+            obj.insert(QStringLiteral("received"), QString::fromLatin1(balance.received.getDecimal()));
+            a.push_back(obj);
+        }
+        data.insert(QStringLiteral("data"), a);
+    } else {
+        data.insert(QStringLiteral("data"), descr);
     }
-    data.insert(QStringLiteral("data"), res);
     QJsonDocument json(allJson);
 
     return json.toJson(QJsonDocument::Compact);

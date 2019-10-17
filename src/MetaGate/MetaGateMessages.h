@@ -20,7 +20,7 @@ QString makeMessageApplicationForWss(const QString &hardwareId, const QString &u
 
 QString metaOnlineMessage();
 
-QString makeTestTorrentResponse(const QString &id, const std::vector<transactions::BalanceInfo> &result);
+QString makeTestTorrentResponse(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result);
 
 QString parseAppType(const QJsonDocument &response);
 

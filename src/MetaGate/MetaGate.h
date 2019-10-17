@@ -109,7 +109,7 @@ private slots:
 
     void onGetNetworkStatus(const GetNetworkStatusCallback &callback);
 
-    void onTestTorrentResult(const QString &id, const std::vector<transactions::BalanceInfo> &result);
+    void onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result);
 
 
 private:

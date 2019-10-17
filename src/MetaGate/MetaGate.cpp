@@ -184,10 +184,10 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MetaGate::onTestTorrentResult(const QString &id, const std::vector<transactions::BalanceInfo> &result)
+void MetaGate::onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result)
 {
 BEGIN_SLOT_WRAPPER
-    const QString message = makeTestTorrentResponse(id, result);
+    const QString message = makeTestTorrentResponse(id, res, descr, result);
     LOG << message;
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
