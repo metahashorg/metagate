@@ -100,6 +100,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_REG(Filters, "Filters");
 
     Q_REG(std::vector<AddressInfo>, "std::vector<AddressInfo>");
+    Q_REG(std::vector<IdBalancePair>, "std::vector<IdBalancePair>");
 
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/transactions"), "settings timeout not found");
@@ -1014,23 +1015,45 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url, const std::vector<QString> &addresses)
+#include <map>
+
+void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url, const std::vector<std::pair<QString, QString>> &addresses)
 {
 BEGIN_SLOT_WRAPPER
     const auto getBalanceCallback = [this, id, addresses](const SimpleClient::Response &response) {
+        std::vector<std::pair<QString, BalanceInfo>> res;
         if (response.exception.isSet()) {
-            std::vector<BalanceInfo> balancesResponse;
-            emit getBalancesFromTorrentResult(id, false, QString::fromStdString(response.exception.toString()), balancesResponse);
+            res.reserve(addresses.size());
+            //CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
+            std::transform(addresses.begin(), addresses.end(), std::back_inserter(res), [](const auto &pair) {
+                return std::make_pair(pair.first, BalanceInfo());
+            });
+            emit getBalancesFromTorrentResult(id, false, QString::fromStdString(response.exception.toString()), res);
 
         } else {
             const std::string &resp = response.response;
             const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(resp));
-            CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
-            emit getBalancesFromTorrentResult(id, true, QString(), balancesResponse);
+            std::map<QString, BalanceInfo> infos;
+            foreach (const BalanceInfo &info, balancesResponse) {
+                infos[info.address] = info;
+            }
+            res.reserve(addresses.size());
+            //CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
+            std::transform(addresses.begin(), addresses.end(), std::back_inserter(res), [infos](const auto &pair) {
+                return std::make_pair(pair.first, infos.at(pair.second));
+            });
+
+            emit getBalancesFromTorrentResult(id, true, QString(), res);
         }
     };
 
-    const QString requestBalance = makeGetBalancesRequest(addresses);
+    std::vector<QString> addrs;
+    addrs.reserve(addresses.size());
+    std::transform(addresses.begin(), addresses.end(), std::back_inserter(addrs), [](const auto &pair) {
+        return pair.second;
+    });
+
+    const QString requestBalance = makeGetBalancesRequest(addrs);
     client.sendMessagePost(url, requestBalance, getBalanceCallback, timeout);
 END_SLOT_WRAPPER
 }

@@ -66,26 +66,27 @@ QString metaOnlineMessage() {
 }
 
 
-QString makeTestTorrentResponse(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result)
+QString makeTestTorrentResponse(const QString &id, bool res, const QString &descr, const std::vector<std::pair<QString, transactions::BalanceInfo>> &result)
 {
     QJsonObject allJson;
     allJson.insert(QStringLiteral("app"), QStringLiteral("TestTorrent"));
-    QJsonObject data;
-    data.insert(QStringLiteral("id"), id);
-    data.insert(QStringLiteral("res"), res);
-    if (res) {
-        QJsonArray a;
-        foreach (const transactions::BalanceInfo &balance, result) {
-            QJsonObject obj;
-            obj.insert(QStringLiteral("address"), balance.address);
-            obj.insert(QStringLiteral("spent"), QString::fromLatin1(balance.spent.getDecimal()));
-            obj.insert(QStringLiteral("received"), QString::fromLatin1(balance.received.getDecimal()));
-            a.push_back(obj);
-        }
-        data.insert(QStringLiteral("data"), a);
-    } else {
-        data.insert(QStringLiteral("data"), descr);
+    allJson.insert(QStringLiteral("id"), id);
+    if (!res) {
+        allJson.insert(QStringLiteral("res"), descr);
     }
+    QJsonArray a;
+    for (const std::pair<QString, transactions::BalanceInfo> &balance : result) {
+        QJsonObject obj;
+        obj.insert(QStringLiteral("id"), balance.first);
+        if (res) {
+            obj.insert(QStringLiteral("addr"), balance.second.address);
+            obj.insert(QStringLiteral("spent"), QString::fromLatin1(balance.second.spent.getDecimal()));
+            obj.insert(QStringLiteral("received"), QString::fromLatin1(balance.second.received.getDecimal()));
+            obj.insert(QStringLiteral("transactions"), QString::number(balance.second.countTxs));
+        }
+        a.push_back(obj);
+    }
+    allJson.insert(QStringLiteral("data"), a);
     QJsonDocument json(allJson);
 
     return json.toJson(QJsonDocument::Compact);
@@ -134,7 +135,7 @@ std::pair<QString, QString> parseShowExchangePopupResponse(const QJsonDocument &
     return std::make_pair("", "");
 }
 
-QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::vector<QString> &addresses)
+QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::vector<std::pair<QString, QString>> &addresses)
 {
     QString id;
     const QJsonObject root = response.object();
@@ -150,8 +151,13 @@ QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::v
         CHECK(root.contains(QLatin1String("addresses")) && root.value(QLatin1String("addresses")).isArray(), "addresses field not found");
         const QJsonArray addrs = root.value(QLatin1String("addresses")).toArray();
         for (int i = 0; i < addrs.count(); i++) {
-            CHECK(addrs[i].isString(), "address field is not string");
-            addresses.emplace_back(addrs[i].toString());
+            CHECK(addrs[i].isObject(), "address array field is not object");
+            const QJsonObject o = addrs[i].toObject();
+            CHECK(o.contains(QLatin1String("id")) && o.value(QLatin1String("id")).isString(), "id field not found");
+            CHECK(o.contains(QLatin1String("addr")) && o.value(QLatin1String("addr")).isString(), "addr field not found");
+            const QString id = o.value(QLatin1String("id")).toString();
+            const QString addr = o.value(QLatin1String("addr")).toString();
+            addresses.emplace_back(std::make_pair(id, addr));
         }
     }
     return  id;

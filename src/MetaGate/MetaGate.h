@@ -4,6 +4,8 @@
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/ManagerWrapper.h"
 
+#include "transactions/Transactions.h"
+
 namespace wallets {
 class Wallets;
 struct WalletInfo;
@@ -109,7 +111,7 @@ private slots:
 
     void onGetNetworkStatus(const GetNetworkStatusCallback &callback);
 
-    void onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result);
+    void onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::Transactions::IdBalancePair> &result);
 
 
 private:

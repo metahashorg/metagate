@@ -20,7 +20,7 @@ QString makeMessageApplicationForWss(const QString &hardwareId, const QString &u
 
 QString metaOnlineMessage();
 
-QString makeTestTorrentResponse(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result);
+QString makeTestTorrentResponse(const QString &id, bool res, const QString &descr, const std::vector<std::pair<QString, transactions::BalanceInfo>> &result);
 
 QString parseAppType(const QJsonDocument &response);
 
@@ -28,7 +28,7 @@ QString parseMetaOnlineResponse(const QJsonDocument &response);
 
 std::pair<QString, QString> parseShowExchangePopupResponse(const QJsonDocument &response);
 
-QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::vector<QString> &addresses);
+QString parseTestTorrentRequest(const QJsonDocument &response, QUrl &url, std::vector<std::pair<QString, QString>> &addresses);
 
 } // namespace metagate
 

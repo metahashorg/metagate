@@ -184,11 +184,13 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void MetaGate::onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::BalanceInfo> &result)
+void MetaGate::onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::Transactions::IdBalancePair> &result)
 {
 BEGIN_SLOT_WRAPPER
+    qDebug() << id << res << descr;
     const QString message = makeTestTorrentResponse(id, res, descr, result);
     LOG << message;
+    qDebug() << message;
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -292,10 +294,13 @@ BEGIN_SLOT_WRAPPER
 
     const QString appType = parseAppType(document);
 
+    qDebug() << appType;
+
     if (appType == QLatin1String("TestTorrent")) {
         QUrl url;
-        std::vector<QString> addresses;
+        std::vector<std::pair<QString, QString>> addresses;
         const QString id = parseTestTorrentRequest(document, url, addresses);
+        qDebug() << id << url << addresses;
         emit transactions.getBalancesFromTorrent(id, url, addresses);
         return;
     }

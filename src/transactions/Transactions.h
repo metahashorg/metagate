@@ -42,8 +42,10 @@ enum class DelegateStatus;
 
 class Transactions : public ManagerWrapper, public TimerClass {
     Q_OBJECT
-private:
+public:
+    using IdBalancePair = std::pair<QString, BalanceInfo>;
 
+private:
     using TransactionHash = std::string;
 
     class SendedTransactionWatcher {
@@ -166,7 +168,7 @@ protected:
 signals:
     void showNotification(const QString &title, const QString &message);
 
-    void getBalancesFromTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<BalanceInfo> &result);
+    void getBalancesFromTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<IdBalancePair> &result);
 
 signals:
 
@@ -204,7 +206,7 @@ signals:
 
     void addCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
 
-    void getBalancesFromTorrent(const QString &id, const QUrl &url, const std::vector<QString> &addresses);
+    void getBalancesFromTorrent(const QString &id, const QUrl &url, const std::vector<std::pair<QString, QString>> &addresses);
 
 public slots:
 
@@ -246,7 +248,7 @@ public slots:
 
     void onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
 
-    void onGetBalancesFromTorrent(const QString &id, const QUrl &url, const std::vector<QString> &addresses);
+    void onGetBalancesFromTorrent(const QString &id, const QUrl &url, const std::vector<std::pair<QString, QString>> &addresses);
 
 private slots:
 
