@@ -86,7 +86,8 @@ BalanceInfo parseBalanceResponse(const QString &response) {
     return parseBalanceResponseInternal(json);
 }
 
-std::vector<BalanceInfo> parseBalancesResponse(const QString &response) {
+void parseBalancesResponseWithHandler(const QString &response, const std::function<void(const BalanceInfo &info)> &handler)
+{
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
@@ -96,9 +97,27 @@ std::vector<BalanceInfo> parseBalancesResponse(const QString &response) {
     std::vector<BalanceInfo> result;
     for (const auto &j: json) {
         CHECK(j.isObject(), "result field not found");
-        result.emplace_back(parseBalanceResponseInternal(j.toObject()));
+        BalanceInfo info = parseBalanceResponseInternal(j.toObject());
+        handler(info);
     }
+}
 
+std::vector<BalanceInfo> parseBalancesResponse(const QString &response)
+{
+    std::vector<BalanceInfo> result;
+    parseBalancesResponseWithHandler(response, [&result](const BalanceInfo &info) {
+        result.emplace_back(info);
+    });
+
+    return result;
+}
+
+std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QString &response)
+{
+    std::map<QString, BalanceInfo> result;
+    parseBalancesResponseWithHandler(response, [&result](const BalanceInfo &info) {
+        result[info.address] = info;
+    });
     return result;
 }
 

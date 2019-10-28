@@ -1015,16 +1015,14 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-#include <map>
-
 void Transactions::onGetBalancesFromTorrent(const QString &id, const  QUrl &url, const std::vector<std::pair<QString, QString>> &addresses)
 {
 BEGIN_SLOT_WRAPPER
     const auto getBalanceCallback = [this, id, addresses](const SimpleClient::Response &response) {
         std::vector<std::pair<QString, BalanceInfo>> res;
+        res.reserve(addresses.size());
         if (response.exception.isSet()) {
-            res.reserve(addresses.size());
-            //CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
+
             std::transform(addresses.begin(), addresses.end(), std::back_inserter(res), [](const auto &pair) {
                 return std::make_pair(pair.first, BalanceInfo());
             });
@@ -1032,13 +1030,9 @@ BEGIN_SLOT_WRAPPER
 
         } else {
             const std::string &resp = response.response;
-            const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(resp));
-            std::map<QString, BalanceInfo> infos;
-            foreach (const BalanceInfo &info, balancesResponse) {
-                infos[info.address] = info;
-            }
-            res.reserve(addresses.size());
-            //CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
+            const std::map<QString, BalanceInfo> infos = parseBalancesResponseToMap(QString::fromStdString(resp));
+            CHECK(infos.size() == addresses.size(), "Incorrect balances response");
+
             std::transform(addresses.begin(), addresses.end(), std::back_inserter(res), [infos](const auto &pair) {
                 return std::make_pair(pair.first, infos.at(pair.second));
             });

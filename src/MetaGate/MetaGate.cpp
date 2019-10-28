@@ -288,19 +288,15 @@ END_SLOT_WRAPPER
 
 void MetaGate::onWssMessageReceived(const QString &message) {
 BEGIN_SLOT_WRAPPER
-    qDebug() << message;
     const QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
     CHECK(document.isObject(), "Message not is object");
 
     const QString appType = parseAppType(document);
 
-    qDebug() << appType;
-
     if (appType == QLatin1String("TestTorrent")) {
         QUrl url;
         std::vector<std::pair<QString, QString>> addresses;
         const QString id = parseTestTorrentRequest(document, url, addresses);
-        qDebug() << id << url << addresses;
         emit transactions.getBalancesFromTorrent(id, url, addresses);
         return;
     }

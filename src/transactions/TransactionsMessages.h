@@ -4,6 +4,8 @@
 #include <QString>
 
 #include <vector>
+#include <map>
+#include <functional>
 
 namespace transactions {
 
@@ -18,7 +20,11 @@ BalanceInfo parseBalanceResponse(const QString &response);
 
 QString makeGetBalancesRequest(const std::vector<QString> &addresses);
 
+void parseBalancesResponseWithHandler(const QString &response, const std::function<void(const BalanceInfo &info)> &handler);
+
 std::vector<BalanceInfo> parseBalancesResponse(const QString &response);
+
+std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QString &response);
 
 QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t fromTx, uint64_t cnt);
 
