@@ -133,6 +133,11 @@ private:
         milliseconds elapse_;
     };
 
+    struct NotifiedCache {
+        std::set<QString> hashes;
+        time_point tp;
+    };
+
 public:
 
     using GetMessagesCallback = CallbackWrapper<void(const std::vector<Message> &messages)>;
@@ -395,6 +400,8 @@ private:
     std::map<QString, std::set<QString>> walletFolders;
 
     std::vector<QVariant> events;
+
+    NotifiedCache notifiedCache;
 
 };
 

@@ -399,13 +399,23 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
         return message;
     });
 
+    const time_point now = ::now();
+    if (now - notifiedCache.tp >= 2min) {
+        notifiedCache.hashes.clear();
+        notifiedCache.tp = now;
+    }
+
     bool showNotifies = true;
     if (loginMessagesRetrieveReqs.contains(requestId)) {
         loginMessagesRetrieveReqs.remove(requestId);
         showNotifies = false;
         for_each(msgs.begin(), msgs.end(), [this](const Message &m) {
-            if (m.isInput)
-                retrievedMissed++;
+            if (m.isInput) {
+                if (notifiedCache.hashes.find(m.hash) == notifiedCache.hashes.end()) {
+                    retrievedMissed++;
+                    notifiedCache.hashes.insert(m.hash);
+                }
+            }
         });
 
         if (loginMessagesRetrieveReqs.isEmpty() && retrievedMissed != 0) {
@@ -437,8 +447,12 @@ void Messenger::processMessages(const QString &address, const std::vector<NewMes
 
             if (m.isInput) {
                 LOG << "Add message " << m.username << " " << channel << " " << m.collocutor << " " << m.counter;
-                if (showNotifies)
-                    emit showNotification(tr("Message from %1").arg(m.collocutor), QStringLiteral(""));
+                if (showNotifies) {
+                    if (notifiedCache.hashes.find(m.hash) == notifiedCache.hashes.end()) {
+                        notifiedCache.hashes.insert(m.hash);
+                        emit showNotification(tr("Message from %1").arg(m.collocutor), QStringLiteral(""));
+                    }
+                }
                 db.addMessage(m);
                 const QString collocutorOrChannel = isChannel ? channel : m.collocutor;
                 const Message::Counter savedPos = db.getLastReadCounterForUserContact(m.username, collocutorOrChannel, isChannel); // TODO вместо метода get сделать метод is
@@ -541,7 +555,6 @@ BEGIN_SLOT_WRAPPER
     if (responseType.method == METHOD::APPEND_KEY_TO_ADDR) {
         invokeCallback(responseType.id, TypedException());
     } else if (responseType.method == METHOD::COUNT_MESSAGES) {
-        /*
         const Message::Counter currCounter = db.getMessageMaxConfirmedCounter(responseType.address);
         const Message::Counter messagesInServer = parseCountMessagesResponse(messageJson);
         if (currCounter < messagesInServer) {
@@ -549,7 +562,7 @@ BEGIN_SLOT_WRAPPER
             getMessagesFromAddressFromWss(responseType.address, currCounter + 1, messagesInServer);
         } else {
             LOG << "Count messages " << responseType.address << " " << currCounter << " " << messagesInServer;
-        }*/
+        }
     } else if (responseType.method == METHOD::GET_KEY_BY_ADDR) {
         const KeyMessageResponse publicKeyResult = parsePublicKeyMessageResponse(messageJson);
         LOG << "Save pubkey " << publicKeyResult.addr << " " << publicKeyResult.publicKey << " " << publicKeyResult.txHash << " " << publicKeyResult.blockchain_name;
