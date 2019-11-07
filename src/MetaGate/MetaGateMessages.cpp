@@ -72,7 +72,7 @@ QString makeTestTorrentResponse(const QString &id, bool res, const QString &desc
     allJson.insert(QStringLiteral("app"), QStringLiteral("TestTorrent"));
     allJson.insert(QStringLiteral("id"), id);
     if (!res) {
-        allJson.insert(QStringLiteral("res"), descr);
+        allJson.insert(QStringLiteral("error"), descr);
     }
     QJsonArray a;
     for (const std::pair<QString, transactions::BalanceInfo> &balance : result) {
