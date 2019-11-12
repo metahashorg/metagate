@@ -299,18 +299,21 @@ BEGIN_SLOT_WRAPPER
         const QString id = parseTestTorrentRequest(document, url, addresses);
         emit transactions.getBalancesFromTorrent(id, url, addresses);
         return;
-    }
-    const QString metaOnlineResponse = parseMetaOnlineResponse(document);
-    if (!metaOnlineResponse.isEmpty()) {
-        emit this->metaOnlineResponse(metaOnlineResponse);
-        return;
-    }
-    const std::pair<QString, QString> showExchangeResponse = parseShowExchangePopupResponse(document);
-    if (!showExchangeResponse.first.isEmpty() && !showExchangeResponse.second.isEmpty()) {
-        if (showExchangeResponse.first == currentUserName) {
-            emit showExchangePopup(showExchangeResponse.second);
+    } else if (appType == QLatin1String("MetaOnline")) {
+        qDebug() << "META ONLINE!!!";
+        const QString metaOnlineResponse = parseMetaOnlineResponse(document);
+        if (!metaOnlineResponse.isEmpty()) {
+            emit this->metaOnlineResponse(metaOnlineResponse);
+            return;
         }
-        return;
+    } else if (appType == QLatin1String("InEvent")) {
+        const std::pair<QString, QString> showExchangeResponse = parseShowExchangePopupResponse(document);
+        if (!showExchangeResponse.first.isEmpty() && !showExchangeResponse.second.isEmpty()) {
+            if (showExchangeResponse.first == currentUserName) {
+                emit showExchangePopup(showExchangeResponse.second);
+            }
+            return;
+        }
     }
 END_SLOT_WRAPPER
 }

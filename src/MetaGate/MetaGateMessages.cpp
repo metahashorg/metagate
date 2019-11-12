@@ -78,8 +78,8 @@ QString makeTestTorrentResponse(const QString &id, bool res, const QString &desc
     for (const std::pair<QString, transactions::BalanceInfo> &balance : result) {
         QJsonObject obj;
         obj.insert(QStringLiteral("id"), balance.first);
+        obj.insert(QStringLiteral("addr"), balance.second.address);
         if (res) {
-            obj.insert(QStringLiteral("addr"), balance.second.address);
             obj.insert(QStringLiteral("spent"), QString::fromLatin1(balance.second.spent.getDecimal()));
             obj.insert(QStringLiteral("received"), QString::fromLatin1(balance.second.received.getDecimal()));
             obj.insert(QStringLiteral("transactions"), QString::number(balance.second.countTxs));
