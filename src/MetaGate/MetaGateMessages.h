@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace transactions {
-class BalanceInfo;
+struct BalanceInfo;
 }
 
 class QJsonDocument;
