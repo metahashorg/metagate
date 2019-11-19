@@ -2,8 +2,8 @@
 <Package>
     <DisplayName>MetaGate Wallet</DisplayName>
     <Description>MetaGate Wallet</Description>
-    <Version>1.20.0</Version>
-    <ReleaseDate>2019-08-28</ReleaseDate>
+    <Version>1.20.1</Version>
+    <ReleaseDate>2019-11-20</ReleaseDate>
     <ForcedInstallation>true</ForcedInstallation>
     <Default>true</Default>
     <Licenses>

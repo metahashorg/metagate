@@ -2,12 +2,13 @@ function Controller() {
 }
 
 Controller.prototype.IntroductionPageCallback = function() {
-/*	var widget = gui.currentPageWidget(); // get the current wizard page
+    return;
+	var widget = gui.currentPageWidget(); // get the current wizard page
     if (widget != null) {
     	if (installer.isOfflineOnly()) {
-        	widget.MessageLabel.setText("<font size='+1'><h2><font color='red'>Please note:</font></h2><p>MetaGate installer has been changed. It was made to improve the work of the app and add new features in the future. The old version of MetaGate is deleted automatically. You need to install a new one only. All wallets and settings won't be changed. Don't forget to have a copy of the private keys/QR-code of the wallet at a safe place like a USB flash drive.</p></font>");
+        	//widget.MessageLabel.setText("<font size='+1'><h2><font color='red'>Please note:</font></h2><p>This is test build.</p></font>");
         }
-    }*/
+    }
 }
 
 
