@@ -187,10 +187,8 @@ END_SLOT_WRAPPER
 void MetaGate::onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::Transactions::IdBalancePair> &result)
 {
 BEGIN_SLOT_WRAPPER
-    qDebug() << id << res << descr;
     const QString message = makeTestTorrentResponse(id, res, descr, result);
-    LOG << message;
-    qDebug() << message;
+    LOG << "Test torrent result: " << message;
     emit wssClient.sendMessage(message);
 END_SLOT_WRAPPER
 }
@@ -300,7 +298,6 @@ BEGIN_SLOT_WRAPPER
         emit transactions.getBalancesFromTorrent(id, url, addresses);
         return;
     } else if (appType == QLatin1String("MetaOnline")) {
-        qDebug() << "META ONLINE!!!";
         const QString metaOnlineResponse = parseMetaOnlineResponse(document);
         if (!metaOnlineResponse.isEmpty()) {
             emit this->metaOnlineResponse(metaOnlineResponse);
