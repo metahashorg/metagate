@@ -1024,7 +1024,7 @@ BEGIN_SLOT_WRAPPER
         if (response.exception.isSet()) {
 
             std::transform(addresses.begin(), addresses.end(), std::back_inserter(res), [](const auto &pair) {
-                return std::make_pair(pair.first, BalanceInfo());
+                return std::make_pair(pair.first, BalanceInfo(pair.second));
             });
             emit getBalancesFromTorrentResult(id, false, QString::fromStdString(response.exception.toString()), res);
 

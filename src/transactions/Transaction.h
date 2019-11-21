@@ -69,6 +69,11 @@ struct BalanceInfo {
     BigNumber reserved = QString("0");
     BigNumber forged = QString("0");
 
+    BalanceInfo(const QString &addr = QString())
+        : address(addr)
+    {
+    }
+
     BigNumber calcBalance() const {
         return received - spent - reserved;
     }
