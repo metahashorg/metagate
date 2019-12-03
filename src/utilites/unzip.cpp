@@ -8,7 +8,7 @@
 #include "check.h"
 #include "utils.h"
 
-#include <quazip/JlCompress.h>
+#include <JlCompress.h>
 
 void extractDir(QString fileCompressed, QString dir) {
     const QStringList lst = JlCompress::extractDir(fileCompressed, dir);
