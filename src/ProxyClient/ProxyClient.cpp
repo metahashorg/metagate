@@ -2,6 +2,8 @@
 
 #include "ProxyClientMessage.h"
 
+#include "MetaGate/MetaGate.h"
+
 #include "qt_utilites/SlotWrapper.h"
 #include "qt_utilites/QRegister.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
@@ -14,7 +16,7 @@ SET_LOG_NAMESPACE("PXC");
 
 namespace proxy_client {
 
-ProxyClient::ProxyClient()
+ProxyClient::ProxyClient(metagate::MetaGate &metagate)
     : proxyClient(getLocalServerPath())
 {
     Q_CONNECT(&proxyClient, &LocalClient::callbackCall, this, &ProxyClient::callbackCall);
@@ -22,6 +24,8 @@ ProxyClient::ProxyClient()
     Q_CONNECT(this, &ProxyClient::getStatus, this, &ProxyClient::onGetStatus);
     Q_CONNECT(this, &ProxyClient::getEnabledSetting, this, &ProxyClient::onGetEnabledSetting);
     Q_CONNECT(this, &ProxyClient::setProxyConfigAndRestart, this, &ProxyClient::onSetProxyConfigAndRestart);
+
+    Q_CONNECT(&metagate, &metagate::MetaGate::forgingActiveChanged, this, &ProxyClient::onForgingActiveChanged);
 
     Q_REG(ProxyClient::GetStatusCallback, "ProxyClient::GetStatusCallback");
     Q_REG(SetProxyConfigAndRestartCallback, "SetProxyConfigAndRestartCallback");
@@ -68,6 +72,20 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void ProxyClient::onForgingActiveChanged(bool active)
+{
+BEGIN_SLOT_WRAPPER
+    if (active == isProxyEnabled())
+        return;
+    generateProxyConfig(active, 12000);
+    proxyClient.sendRequest(makeRefreshConfigMessage(), [](const LocalClient::Response &response) {
+                CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
+                const ProxyResponse result = parseProxyResponse(response.response);
+                CHECK_TYPED(!result.error, TypeErrors::PROXY_RESTART_ERROR, result.text.toStdString());
+    });
+END_SLOT_WRAPPER
+}
+
 void ProxyClient::generateProxyConfig(bool enabled, int port)
 {
     QSettings settings(getProxyConfigPath(), QSettings::IniFormat);
@@ -75,6 +93,13 @@ void ProxyClient::generateProxyConfig(bool enabled, int port)
     settings.setValue("proxy/port", port);
     settings.sync();
 }
+
+bool ProxyClient::isProxyEnabled() const
+{
+    QSettings settings(getProxyConfigPath(), QSettings::IniFormat);
+    return settings.value("proxy/enabled", false).toBool();
+}
+
 
 void ProxyClient::onGetEnabledSetting(const GetEnabledSettingCallback &callback) {
 BEGIN_SLOT_WRAPPER
@@ -86,3 +111,4 @@ END_SLOT_WRAPPER
 }
 
 } // namespace proxy_client
+

@@ -8,6 +8,11 @@
 
 #include "ProxyStatus.h"
 
+
+namespace metagate {
+class MetaGate;
+}
+
 namespace proxy_client {
 
 class ProxyClient: public ManagerWrapper {
@@ -22,7 +27,7 @@ public:
 
 public:
 
-    ProxyClient();
+    ProxyClient(metagate::MetaGate &metagate);
 
     void mvToThread(QThread *th);
 
@@ -42,8 +47,14 @@ private slots:
 
     void onSetProxyConfigAndRestart(bool enabled, int port, const SetProxyConfigAndRestartCallback &callback);
 
+private slots:
+
+    void onForgingActiveChanged(bool active);
+
 private:
     void generateProxyConfig(bool enabled, int port);
+
+    bool isProxyEnabled() const;
 
 private:
     LocalClient proxyClient;

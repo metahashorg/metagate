@@ -20,6 +20,10 @@ class ProxyClient;
 class ProxyClientJavascript;
 }
 
+namespace metagate {
+class MetaGate;
+}
+
 namespace initializer {
 
 class InitializerJavascript;
@@ -41,7 +45,7 @@ public:
     void completeImpl() override;
 
     Return initialize(
-        SharedFuture<MainWindow> mainWindow
+        SharedFuture<MainWindow> mainWindow, SharedFuture<metagate::MetaGate> metagate
     );
 
     static int countEvents() {

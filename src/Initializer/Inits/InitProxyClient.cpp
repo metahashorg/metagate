@@ -49,10 +49,10 @@ void InitProxyClient::sendInitSuccess(const TypedException &exception) {
 }
 
 InitProxyClient::Return InitProxyClient::initialize(
-    SharedFuture<MainWindow> mainWindow
+    SharedFuture<MainWindow> mainWindow, SharedFuture<metagate::MetaGate> metagate
 ) {
     const TypedException exception = apiVrapper2([&, this] {
-        managerProxy = std::make_unique<proxy_client::ProxyClient>();
+        managerProxy = std::make_unique<proxy_client::ProxyClient>(metagate.get());
         managerProxy->mvToThread(mainThread);
         javascript = std::make_unique<proxy_client::ProxyClientJavascript>(*managerProxy);
         javascript->moveToThread(mainThread);
