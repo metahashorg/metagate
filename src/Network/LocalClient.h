@@ -49,9 +49,7 @@ public:
 
 public:
 
-    explicit LocalClient(const QString &localServerName);
-
-    void mvToThread(QThread *thread);
+    explicit LocalClient(const QString &localServerName, QObject *parent = nullptr);
 
 public:
 

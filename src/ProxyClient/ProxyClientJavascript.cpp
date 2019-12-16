@@ -92,6 +92,21 @@ BEGIN_SLOT_WRAPPER
             makeFunc.func(TypedException());
         }, makeFunc.error, signalFunc));
     }, makeFunc.error);
+    END_SLOT_WRAPPER
+}
+
+void ProxyClientJavascript::getMHProxyStatus(const QString &callback)
+{
+BEGIN_SLOT_WRAPPER
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(callback, JsTypeReturn<bool>(false));
+    LOG << "Get MHProxy status";
+
+    wrapOperation([&, this](){
+        emit proxyClient.getMHProxyStatus(ProxyClient::GetMHProxyStatusCallback([makeFunc](bool status){
+            LOG << "MHProxyStatus proxy: " << status;
+            makeFunc.func(TypedException(), status);
+        }, makeFunc.error, signalFunc));
+    }, makeFunc.error);
 END_SLOT_WRAPPER
 }
 

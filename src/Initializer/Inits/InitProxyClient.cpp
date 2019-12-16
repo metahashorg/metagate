@@ -53,7 +53,9 @@ InitProxyClient::Return InitProxyClient::initialize(
 ) {
     const TypedException exception = apiVrapper2([&, this] {
         managerProxy = std::make_unique<proxy_client::ProxyClient>(metagate.get());
-        managerProxy->mvToThread(mainThread);
+        managerProxy->start();
+
+        //managerProxy->moveToThread(mainThread);
         javascript = std::make_unique<proxy_client::ProxyClientJavascript>(*managerProxy);
         javascript->moveToThread(mainThread);
         MainWindow &mw = mainWindow.get();

@@ -3,6 +3,7 @@
 
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/ManagerWrapper.h"
+#include "qt_utilites/TimerClass.h"
 
 #include "Network/LocalClient.h"
 
@@ -15,7 +16,8 @@ class MetaGate;
 
 namespace proxy_client {
 
-class ProxyClient: public ManagerWrapper {
+class ProxyClient: public ManagerWrapper, public TimerClass
+{
     Q_OBJECT
 public:
 
@@ -25,11 +27,24 @@ public:
 
     using SetProxyConfigAndRestartCallback = CallbackWrapper<void()>;
 
+    using GetMHProxyStatusCallback = CallbackWrapper<void(bool status)>;
+
+
 public:
 
-    ProxyClient(metagate::MetaGate &metagate);
+    ProxyClient(metagate::MetaGate &metagate, QObject *parent = nullptr);
 
-    void mvToThread(QThread *th);
+    ~ProxyClient();
+
+    //void mvToThread(QThread *th);
+
+protected:
+
+    void startMethod() override;
+
+    void timerMethod() override;
+
+    void finishMethod() override;
 
 signals:
 
@@ -39,6 +54,8 @@ signals:
 
     void setProxyConfigAndRestart(bool enabled, int port, const SetProxyConfigAndRestartCallback &callback);
 
+    void getMHProxyStatus(const GetMHProxyStatusCallback &callback);
+
 private slots:
 
     void onGetStatus(const GetStatusCallback &callback);
@@ -46,6 +63,8 @@ private slots:
     void onGetEnabledSetting(const GetEnabledSettingCallback &callback);
 
     void onSetProxyConfigAndRestart(bool enabled, int port, const SetProxyConfigAndRestartCallback &callback);
+
+    void onGetMHProxyStatus(const GetMHProxyStatusCallback &callback);
 
 private slots:
 
@@ -57,7 +76,8 @@ private:
     bool isProxyEnabled() const;
 
 private:
-    LocalClient proxyClient;
+    LocalClient *proxyClient;
+    bool mhProxyStatus;
 
 };
 

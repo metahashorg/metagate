@@ -10,15 +10,11 @@ using namespace std::placeholders;
 #include "qt_utilites/SlotWrapper.h"
 #include "qt_utilites/QRegister.h"
 
-LocalClient::LocalClient(const QString &localServerName)
-    : QObject(nullptr)
+LocalClient::LocalClient(const QString &localServerName, QObject *parent)
+    : QObject(parent)
     , localServerName(localServerName)
 {
     Q_REG(LocalClient::ReturnCallback, "LocalClient::ReturnCallback");
-}
-
-void LocalClient::mvToThread(QThread *thread) {
-    this->moveToThread(thread);
 }
 
 void LocalClient::sendRequest(const QByteArray &request, const LocalClient::ClientCallback &callback) {

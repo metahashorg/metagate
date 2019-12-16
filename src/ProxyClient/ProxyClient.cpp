@@ -16,31 +16,64 @@ SET_LOG_NAMESPACE("PXC");
 
 namespace proxy_client {
 
-ProxyClient::ProxyClient(metagate::MetaGate &metagate)
-    : proxyClient(getLocalServerPath())
+ProxyClient::ProxyClient(metagate::MetaGate &metagate, QObject *parent)
+    : TimerClass(10s, parent)
+    , proxyClient(new LocalClient(getLocalServerPath(), this))
+    , mhProxyStatus(false)
 {
-    Q_CONNECT(&proxyClient, &LocalClient::callbackCall, this, &ProxyClient::callbackCall);
+    Q_CONNECT(proxyClient, &LocalClient::callbackCall, this, &ProxyClient::callbackCall);
 
     Q_CONNECT(this, &ProxyClient::getStatus, this, &ProxyClient::onGetStatus);
     Q_CONNECT(this, &ProxyClient::getEnabledSetting, this, &ProxyClient::onGetEnabledSetting);
     Q_CONNECT(this, &ProxyClient::setProxyConfigAndRestart, this, &ProxyClient::onSetProxyConfigAndRestart);
+    Q_CONNECT(this, &ProxyClient::getMHProxyStatus, this, &ProxyClient::onGetMHProxyStatus);
 
     Q_CONNECT(&metagate, &metagate::MetaGate::forgingActiveChanged, this, &ProxyClient::onForgingActiveChanged);
 
     Q_REG(ProxyClient::GetStatusCallback, "ProxyClient::GetStatusCallback");
     Q_REG(SetProxyConfigAndRestartCallback, "SetProxyConfigAndRestartCallback");
     Q_REG(GetEnabledSettingCallback, "GetEnabledSettingCallback");
+    Q_REG(GetMHProxyStatusCallback, "GetMHProxyStatusCallback");
+
+    moveToThread(TimerClass::getThread());
 }
 
-void ProxyClient::mvToThread(QThread *th) {
-    proxyClient.mvToThread(th);
-    this->moveToThread(th);
+ProxyClient::~ProxyClient()
+{
+    TimerClass::exit();
+}
+
+//void ProxyClient::mvToThread(QThread *th) {
+//    proxyClient.mvToThread(th);
+//    this->moveToThread(th);
+//}
+
+void ProxyClient::startMethod()
+{
+
+}
+
+void ProxyClient::timerMethod()
+{
+    proxyClient->sendRequest(makeGetStatusMessage(), [](const LocalClient::Response &response) {
+        QString status;
+            CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
+        const ProxyResponse result = parseProxyResponse(response.response);
+        CHECK_TYPED(!result.error, TypeErrors::PROXY_RESTART_ERROR, result.text.toStdString());
+            if (!response.exception.isSet()) {
+                status = parseProxyStatusResponse(response.response);
+            }
+    });
+}
+
+void ProxyClient::finishMethod()
+{
 }
 
 void ProxyClient::onGetStatus(const GetStatusCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
-        proxyClient.sendRequest(makeGetStatusMessage(), [callback](const LocalClient::Response &response) {
+        proxyClient->sendRequest(makeGetStatusMessage(), [callback](const LocalClient::Response &response) {
             QString status;
             const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
@@ -60,7 +93,7 @@ void ProxyClient::onSetProxyConfigAndRestart(bool enabled, int port, const SetPr
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
         generateProxyConfig(enabled, port);
-        proxyClient.sendRequest(makeRefreshConfigMessage(), [callback](const LocalClient::Response &response) {
+        proxyClient->sendRequest(makeRefreshConfigMessage(), [callback](const LocalClient::Response &response) {
             const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
                 const ProxyResponse result = parseProxyResponse(response.response);
@@ -72,13 +105,22 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
+void ProxyClient::onGetMHProxyStatus(const ProxyClient::GetMHProxyStatusCallback &callback)
+{
+BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&]{
+        return mhProxyStatus;
+    }, callback);
+END_SLOT_WRAPPER
+}
+
 void ProxyClient::onForgingActiveChanged(bool active)
 {
 BEGIN_SLOT_WRAPPER
     if (active == isProxyEnabled())
         return;
     generateProxyConfig(active, 12000);
-    proxyClient.sendRequest(makeRefreshConfigMessage(), [](const LocalClient::Response &response) {
+    proxyClient->sendRequest(makeRefreshConfigMessage(), [](const LocalClient::Response &response) {
                 CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
                 const ProxyResponse result = parseProxyResponse(response.response);
                 CHECK_TYPED(!result.error, TypeErrors::PROXY_RESTART_ERROR, result.text.toStdString());

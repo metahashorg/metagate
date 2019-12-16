@@ -19,6 +19,17 @@
         });
     }
     
+    function statusMHCallback(res, code, error) {
+        document.getElementById("status").innerHTML = res
+    }
+    
+    function getMHStatus() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.proxy;
+        mainWindow.getMHProxyStatus("statusMHCallback") ;
+        });
+    }
+    
     function getEnabled() {
         new QWebChannel(qt.webChannelTransport, function (channel) {
         var mainWindow = channel.objects.proxy;
@@ -55,7 +66,7 @@
     <div class="back">
         <left>
             <FORM name="proxyConfigForm">
-            <input type="button" value="getStatus" onclick="getStatus()"><br>
+            <input type="button" value="get MHProxy Status" onclick="getMHStatus()"><br>
             <input type="button" value="getStatus" onclick="getStatus()"><br>
             <input type="button" value="getEnabled" onclick="getEnabled()"><br><br>
             <input name="port" type="text" value="12347" size="30"><label for="port">port</label><br>
