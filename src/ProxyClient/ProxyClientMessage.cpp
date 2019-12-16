@@ -4,6 +4,7 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+#include <QDebug>
 
 #include "check.h"
 #include "Log.h"
@@ -37,7 +38,7 @@ ProxyResponse parseProxyResponse(const QByteArray &message)
     return result;
 }
 
-QString parseProxyStatusResponse(const QByteArray &message)
+QString parseProxyStatusResponse(const QByteArray &message, QString &hardwareId, bool &mhProxyActive)
 {
     const QJsonDocument jsonResponse = QJsonDocument::fromJson(message);
     CHECK(jsonResponse.isObject(), "Incorrect json");
@@ -45,6 +46,15 @@ QString parseProxyStatusResponse(const QByteArray &message)
     const QJsonObject root = jsonResponse.object();
     CHECK(root.contains("params") && root.value("params").isObject(), "params field not found");
     const QJsonObject params = root.value("params").toObject();
+
+    CHECK(params.contains("hardwareId") && params.value("hardwareId").isString(), "hardwareId field not found");
+    hardwareId = params.value("hardwareId").toString();
+
+    CHECK(params.contains("mhProxy") && params.value("mhProxy").isObject(), "mhProxy field not found");
+    const QJsonObject mhProxy = params.value("mhProxy").toObject();
+    CHECK(mhProxy.contains("active") && mhProxy.value("active").isBool(), "active field not found");
+    mhProxyActive = mhProxy.value("active").toBool(false);
+
 
     return QString(QJsonDocument(params).toJson(QJsonDocument::Compact));
 }

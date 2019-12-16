@@ -18,7 +18,7 @@ QByteArray makeRefreshConfigMessage();
 
 ProxyResponse parseProxyResponse(const QByteArray &message);
 
-QString parseProxyStatusResponse(const QByteArray &message);
+QString parseProxyStatusResponse(const QByteArray &message, QString &hardwareId, bool &mhProxyActive);
 
 } // namespace proxy_client
 

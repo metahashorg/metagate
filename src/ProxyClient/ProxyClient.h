@@ -71,6 +71,7 @@ private slots:
     void onForgingActiveChanged(bool active);
 
 private:
+    void checkServiceState();
     void generateProxyConfig(bool enabled, int port);
 
     bool isProxyEnabled() const;
@@ -78,7 +79,7 @@ private:
 private:
     LocalClient *proxyClient;
     bool mhProxyStatus;
-
+    QString hardwareId;
 };
 
 } // namespace proxy_client

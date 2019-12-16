@@ -8,6 +8,8 @@
 #include "qt_utilites/QRegister.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
 
+#include "utilites/machine_uid.h"
+
 #include "Paths.h"
 
 #include <QSettings>
@@ -17,10 +19,12 @@ SET_LOG_NAMESPACE("PXC");
 namespace proxy_client {
 
 ProxyClient::ProxyClient(metagate::MetaGate &metagate, QObject *parent)
-    : TimerClass(10s, parent)
+    : TimerClass(20s, parent)
     , proxyClient(new LocalClient(getLocalServerPath(), this))
     , mhProxyStatus(false)
 {
+    hardwareId = QString::fromStdString(::getMachineUid());
+
     Q_CONNECT(proxyClient, &LocalClient::callbackCall, this, &ProxyClient::callbackCall);
 
     Q_CONNECT(this, &ProxyClient::getStatus, this, &ProxyClient::onGetStatus);
@@ -50,20 +54,12 @@ ProxyClient::~ProxyClient()
 
 void ProxyClient::startMethod()
 {
-
+    checkServiceState();
 }
 
 void ProxyClient::timerMethod()
 {
-    proxyClient->sendRequest(makeGetStatusMessage(), [](const LocalClient::Response &response) {
-        QString status;
-            CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
-        const ProxyResponse result = parseProxyResponse(response.response);
-        CHECK_TYPED(!result.error, TypeErrors::PROXY_RESTART_ERROR, result.text.toStdString());
-            if (!response.exception.isSet()) {
-                status = parseProxyStatusResponse(response.response);
-            }
-    });
+    checkServiceState();
 }
 
 void ProxyClient::finishMethod()
@@ -74,16 +70,20 @@ void ProxyClient::onGetStatus(const GetStatusCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
         proxyClient->sendRequest(makeGetStatusMessage(), [callback](const LocalClient::Response &response) {
+            BEGIN_SLOT_WRAPPER
             QString status;
             const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
                 const ProxyResponse result = parseProxyResponse(response.response);
                 CHECK_TYPED(!result.error, TypeErrors::PROXY_RESTART_ERROR, result.text.toStdString());
                 if (!response.exception.isSet()) {
-                    status = parseProxyStatusResponse(response.response);
+                    QString hwid;
+                    bool active;
+                    status = parseProxyStatusResponse(response.response, hwid, active);
                 }
             });
             callback.emitFunc(exception, status);
+            END_SLOT_WRAPPER
         });
     }, callback);
 END_SLOT_WRAPPER
@@ -142,6 +142,24 @@ bool ProxyClient::isProxyEnabled() const
     return settings.value("proxy/enabled", false).toBool();
 }
 
+
+void ProxyClient::checkServiceState()
+{
+BEGIN_SLOT_WRAPPER
+    proxyClient->sendRequest(makeGetStatusMessage(), [this](const LocalClient::Response &response) {
+        if (response.exception.isSet()) {
+            mhProxyStatus = false;
+        } else {
+            QString status;
+            QString hwid;
+            status = parseProxyStatusResponse(response.response, hwid, mhProxyStatus);
+            if (hwid != hardwareId) {
+                LOG << "HW ids are not same: " << hardwareId << " - " << hwid;
+            }
+        }
+    });
+END_SLOT_WRAPPER
+}
 
 void ProxyClient::onGetEnabledSetting(const GetEnabledSettingCallback &callback) {
 BEGIN_SLOT_WRAPPER
