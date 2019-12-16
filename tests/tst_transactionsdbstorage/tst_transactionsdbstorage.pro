@@ -21,7 +21,7 @@ SOURCES += \
 HEADERS += \
     tst_transactionsdbstorage.h \
     ../../src/dbstorage.h \
-    ../../src/BigNumber.h \
+    ../../src/utilites/BigNumber.h \
     ../../src/Log.h \
     ../../src/transactions/TransactionsDBStorage.h
 
