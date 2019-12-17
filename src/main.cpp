@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitJavascriptWrapper::Return> jsWrapper = initManager.addInit<InitJavascriptWrapper>(webSocketClient, nsLookup, mainWindow, transactions, auth, utils, wallets, metagate, QString::fromStdString(versionString), std::ref(nettesting));
 
-        const std::shared_future<InitProxyClient::Return> proxyClient = initManager.addInit<InitProxyClient>(mainWindow);
+        const std::shared_future<InitProxyClient::Return> proxyClient = initManager.addInit<InitProxyClient>(mainWindow, metagate);
 
         initManager.complete();
 

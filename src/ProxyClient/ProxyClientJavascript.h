@@ -21,6 +21,9 @@ public:
 
     Q_INVOKABLE void setProxyConfigAndRestart(bool enabled, int port, const QString &callback);
 
+    Q_INVOKABLE void getMHProxyStatus(const QString &callback);
+
+
 private:
 
     ProxyClient &proxyClient;

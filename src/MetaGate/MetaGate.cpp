@@ -80,6 +80,10 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
 
     sendAppInfoToWss1();
 
+    QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+    const bool isForgingActive = settings.value(QStringLiteral("forging/enabled"), false).toBool();
+    emit forgingActiveChanged(isForgingActive);
+
     emit authManager.reEmit();
 }
 
@@ -156,6 +160,9 @@ BEGIN_SLOT_WRAPPER
         settings.sync();
 
         sendAppInfoToWss1();
+
+        emit forgingActiveChanged(isActive);
+
         return true;
     }, callback);
 END_SLOT_WRAPPER

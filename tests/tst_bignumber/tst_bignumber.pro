@@ -16,7 +16,7 @@ SOURCES += \
 
 HEADERS += \
     tst_bignumber.h \
-    ../../src/BigNumber.h
+    ../../src/utilites/BigNumber.h
 
 QMAKE_LFLAGS += -rdynamic
 unix:!macx: include(../../libs-unix.pri)

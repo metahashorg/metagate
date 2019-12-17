@@ -63,6 +63,8 @@ signals:
 
     void showExchangePopup(const QString &type);
 
+    void forgingActiveChanged(bool active);
+
 signals:
 
     void updateAndReloadApplication(const UpdateAndReloadApplicationCallback &callback);
