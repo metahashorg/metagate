@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2018 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -548,7 +548,7 @@ struct ssl_session_st {
     const SSL_CIPHER *cipher;
     unsigned long cipher_id;    /* when ASN.1 loaded, this needs to be used
                                  * to load the 'cipher' structure */
-    STACK_OF(SSL_CIPHER) *ciphers; /* ciphers offered by the client */
+    STACK_OF(SSL_CIPHER) *ciphers; /* shared ciphers? */
     CRYPTO_EX_DATA ex_data;     /* application specific data */
     /*
      * These are used to make removal of session-ids more efficient and to
@@ -567,9 +567,6 @@ struct ssl_session_st {
     unsigned char *tlsext_tick; /* Session ticket */
     size_t tlsext_ticklen;      /* Session ticket length */
     long tlsext_tick_lifetime_hint; /* Session lifetime hint in seconds */
-#  endif
-#  ifndef OPENSSL_NO_SRP
-    char *srp_username;
 #  endif
 };
 
@@ -842,40 +839,6 @@ void SSL_set_msg_callback(SSL *ssl,
 # define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 # define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 
-# ifndef OPENSSL_NO_SRP
-
-#  ifndef OPENSSL_NO_SSL_INTERN
-
-typedef struct srp_ctx_st {
-    /* param for all the callbacks */
-    void *SRP_cb_arg;
-    /* set client Hello login callback */
-    int (*TLS_ext_srp_username_callback) (SSL *, int *, void *);
-    /* set SRP N/g param callback for verification */
-    int (*SRP_verify_param_callback) (SSL *, void *);
-    /* set SRP client passwd callback */
-    char *(*SRP_give_srp_client_pwd_callback) (SSL *, void *);
-    char *login;
-    BIGNUM *N, *g, *s, *B, *A;
-    BIGNUM *a, *b, *v;
-    char *info;
-    int strength;
-    unsigned long srp_Mask;
-} SRP_CTX;
-
-#  endif
-
-/* see tls_srp.c */
-int SSL_SRP_CTX_init(SSL *s);
-int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
-int SSL_SRP_CTX_free(SSL *ctx);
-int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
-int SSL_srp_server_param_with_username(SSL *s, int *ad);
-int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key);
-int SRP_Calc_A_param(SSL *s);
-int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key);
-
-# endif
 
 # if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
 #  define SSL_MAX_CERT_LIST_DEFAULT 1024*30
@@ -1113,9 +1076,6 @@ struct ssl_ctx_st {
     unsigned int freelist_max_len;
     struct ssl3_buf_freelist_st *wbuf_freelist;
     struct ssl3_buf_freelist_st *rbuf_freelist;
-#  endif
-#  ifndef OPENSSL_NO_SRP
-    SRP_CTX srp_ctx;            /* ctx for SRP authentication */
 #  endif
 
 #  ifndef OPENSSL_NO_TLSEXT
@@ -1673,10 +1633,6 @@ struct ssl_st {
      * (i.e. not just sending a HelloRequest)
      */
     int renegotiate;
-#  ifndef OPENSSL_NO_SRP
-    /* ctx for SRP authentication */
-    SRP_CTX srp_ctx;
-#  endif
 #  ifndef OPENSSL_NO_TLSEXT
     /*
      * For a client, this contains the list of supported protocols in wire
@@ -2149,7 +2105,7 @@ int SSL_get_fd(const SSL *s);
 int SSL_get_rfd(const SSL *s);
 int SSL_get_wfd(const SSL *s);
 const char *SSL_get_cipher_list(const SSL *s, int n);
-char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size);
+char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len);
 int SSL_get_read_ahead(const SSL *s);
 int SSL_pending(const SSL *s);
 # ifndef OPENSSL_NO_SOCK
@@ -2303,29 +2259,6 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 
-# ifndef OPENSSL_NO_SRP
-int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);
-int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password);
-int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength);
-int SSL_CTX_set_srp_client_pwd_callback(SSL_CTX *ctx,
-                                        char *(*cb) (SSL *, void *));
-int SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx,
-                                          int (*cb) (SSL *, void *));
-int SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
-                                      int (*cb) (SSL *, int *, void *));
-int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
-
-int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
-                             BIGNUM *sa, BIGNUM *v, char *info);
-int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
-                                const char *grp);
-
-BIGNUM *SSL_get_srp_g(SSL *s);
-BIGNUM *SSL_get_srp_N(SSL *s);
-
-char *SSL_get_srp_username(SSL *s);
-char *SSL_get_srp_userinfo(SSL *s);
-# endif
 
 void SSL_certs_clear(SSL *s);
 void SSL_free(SSL *ssl);
@@ -2954,7 +2887,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_KRB5_S_TKT_NYV                             294
 # define SSL_R_KRB5_S_TKT_SKEW                            295
 # define SSL_R_LENGTH_MISMATCH                            159
-# define SSL_R_LENGTH_TOO_LONG                            404
 # define SSL_R_LENGTH_TOO_SHORT                           160
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161

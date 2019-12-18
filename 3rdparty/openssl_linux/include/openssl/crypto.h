@@ -600,24 +600,29 @@ int FIPS_mode_set(int r);
 void OPENSSL_init(void);
 
 # define fips_md_init(alg) fips_md_init_ctx(alg, alg)
+# define nonfips_md_init(alg) nonfips_md_init_ctx(alg, alg)
+# define fips_md_init_ctx(alg, cx) \
+        int alg##_Init(cx##_CTX *c)
 
 # ifdef OPENSSL_FIPS
-#  define fips_md_init_ctx(alg, cx) \
+#  define nonfips_md_init_ctx(alg, cx) \
         int alg##_Init(cx##_CTX *c) \
         { \
         if (FIPS_mode()) OpenSSLDie(__FILE__, __LINE__, \
-                "Low level API call to digest " #alg " forbidden in FIPS mode!"); \
+                "Digest " #alg " forbidden in FIPS mode!"); \
         return private_##alg##_Init(c); \
         } \
         int private_##alg##_Init(cx##_CTX *c)
 
 #  define fips_cipher_abort(alg) \
         if (FIPS_mode()) OpenSSLDie(__FILE__, __LINE__, \
-                "Low level API call to cipher " #alg " forbidden in FIPS mode!")
+                "Cipher " #alg " forbidden in FIPS mode!")
+
+/* die if FIPS selftest failed */
+void FIPS_selftest_check(void);
 
 # else
-#  define fips_md_init_ctx(alg, cx) \
-        int alg##_Init(cx##_CTX *c)
+#  define nonfips_md_init_ctx(alg, cx) fips_md_init_ctx(alg, cx)
 #  define fips_cipher_abort(alg) while(0)
 # endif
 
@@ -636,6 +641,9 @@ int CRYPTO_memcmp(const volatile void *a, const volatile void *b, size_t len);
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_CRYPTO_strings(void);
+
+# define OPENSSL_HAVE_INIT       1
+void OPENSSL_init_library(void);
 
 /* Error codes for the CRYPTO functions. */
 
