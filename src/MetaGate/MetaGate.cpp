@@ -68,6 +68,7 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
     Q_CONNECT(this, &MetaGate::setForgingActive, this, &MetaGate::onSetForgingActive);
     Q_CONNECT(this, &MetaGate::getForgingIsActive, this, &MetaGate::onGetForgingIsActive);
     Q_CONNECT(this, &MetaGate::getNetworkStatus, this, &MetaGate::onGetNetworkStatus);
+    Q_CONNECT(this, &MetaGate::activeForgingreEmit, this, &MetaGate::onActiveForgingreEmit);
 
     Q_REG(UpdateAndReloadApplicationCallback, "UpdateAndReloadApplicationCallback");
     Q_REG(GetAppInfoCallback, "GetAppInfoCallback");
@@ -79,10 +80,6 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
     Q_REG(GetNetworkStatusCallback, "GetNetworkStatusCallback");
 
     sendAppInfoToWss1();
-
-    QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
-    const bool isForgingActive = settings.value(QStringLiteral("forging/enabled"), false).toBool();
-    emit forgingActiveChanged(isForgingActive);
 
     emit authManager.reEmit();
 }
@@ -197,7 +194,14 @@ BEGIN_SLOT_WRAPPER
     const QString message = makeTestTorrentResponse(id, res, descr, result);
     LOG << "Test torrent result: " << message;
     emit wssClient.sendMessage(message);
-END_SLOT_WRAPPER
+    END_SLOT_WRAPPER
+}
+
+void MetaGate::onActiveForgingreEmit()
+{
+    QSettings settings(getRuntimeSettingsPath(), QSettings::IniFormat);
+    const bool isForgingActive = settings.value(QStringLiteral("forging/enabled"), false).toBool();
+    emit forgingActiveChanged(isForgingActive);
 }
 
 QByteArray MetaGate::getUtmData() {

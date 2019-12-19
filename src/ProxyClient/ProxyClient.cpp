@@ -40,6 +40,8 @@ ProxyClient::ProxyClient(metagate::MetaGate &metagate, QObject *parent)
     Q_REG(GetMHProxyStatusCallback, "GetMHProxyStatusCallback");
 
     moveToThread(TimerClass::getThread());
+
+    emit metagate.activeForgingreEmit();
 }
 
 ProxyClient::~ProxyClient()

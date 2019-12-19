@@ -89,6 +89,8 @@ signals:
 
     void getNetworkStatus(const GetNetworkStatusCallback &callback);
 
+    void activeForgingreEmit();
+
 private slots:
 
     void onUpdateAndReloadApplication(const UpdateAndReloadApplicationCallback &callback);
@@ -114,6 +116,8 @@ private slots:
     void onGetNetworkStatus(const GetNetworkStatusCallback &callback);
 
     void onTestTorrentResult(const QString &id, bool res, const QString &descr, const std::vector<transactions::Transactions::IdBalancePair> &result);
+
+    void onActiveForgingreEmit();
 
 
 private:
