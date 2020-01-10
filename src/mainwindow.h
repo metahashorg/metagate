@@ -8,7 +8,7 @@
 #include <QWebChannel>
 
 #include "Network/SimpleClient.h"
-#include "uploader.h"
+#include "Uploader.h"
 
 #include "PagesMappings.h"
 #include "qt_utilites/CallbackWrapper.h"

@@ -43,7 +43,6 @@ public:
     const static QString MAINTENANCETOOL;
 
     static QString getMaintenanceToolExe();
-    static QString getRepoUrl();
 
 public:
 
@@ -91,6 +90,8 @@ public slots:
 
     void onLogined(bool isInit, const QString login);
 
+    void startUpdate();
+
 signals:
 
     void generateUpdateHtmlsEvent();
@@ -130,6 +131,8 @@ private:
     std::map<QString, int> countDownloads;
 
     QString apiToken;
+
+    QString repoUrl;
 
 private:
 

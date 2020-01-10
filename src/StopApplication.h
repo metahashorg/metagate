@@ -5,6 +5,6 @@ const int RESTART_BROWSER = 100500;
 
 const int SIMPLE_EXIT = 500;
 
-void updateAndRestart();
+//void updateAndRestart();
 
 #endif // STOPAPPLICATION_H

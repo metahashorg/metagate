@@ -18,6 +18,7 @@ class MainWindow;
 class NsLookup;
 class WebSocketClient;
 class NetwrokTesting;
+class Uploader;
 
 namespace auth {
 class Auth;
@@ -63,6 +64,7 @@ public:
         SharedFuture<auth::Auth> auth,
         SharedFuture<wallets::Wallets> wallets,
         SharedFuture<transactions::Transactions> transactions,
+        SharedFuture<Uploader> uploader,
         const QString &versionString,
         NetwrokTesting &nettest
     );

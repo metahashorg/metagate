@@ -11,6 +11,7 @@
 #include "utilites/machine_uid.h"
 #include "Paths.h"
 #include "utilites/platform.h"
+#include "Uploader.h"
 #include "StopApplication.h"
 
 #include "Wallets/Wallets.h"
@@ -32,7 +33,7 @@ SET_LOG_NAMESPACE("MG");
 
 namespace metagate {
 
-MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, transactions::Transactions &transactions, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion)
+MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, transactions::Transactions &transactions, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, Uploader &uploader, const QString &applicationVersion)
     : mainWindow(mainWindow)
     , wallets(wallets)
     , transactions(transactions)
@@ -56,6 +57,9 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
     Q_CONNECT(this, &MetaGate::sendCommandLineMessageToWss, this, &MetaGate::onSendCommandLineMessageToWss);
 
     Q_CONNECT(&wssClient, &WebSocketClient::messageReceived, this, &MetaGate::onWssMessageReceived);
+
+    Q_CONNECT(this, &MetaGate::startUpdate, &uploader, &Uploader::startUpdate);
+
 
     Q_CONNECT(this, &MetaGate::updateAndReloadApplication, this, &MetaGate::onUpdateAndReloadApplication);
     Q_CONNECT(this, &MetaGate::exitApplication, this, &MetaGate::onExitApplication);
@@ -87,7 +91,7 @@ MetaGate::MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wal
 void MetaGate::onUpdateAndReloadApplication(const UpdateAndReloadApplicationCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
-        updateAndRestart();
+        emit startUpdate();
         return true;
     }, callback);
 END_SLOT_WRAPPER

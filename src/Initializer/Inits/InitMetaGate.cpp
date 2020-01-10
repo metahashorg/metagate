@@ -55,11 +55,12 @@ InitMetaGate::Return InitMetaGate::initialize(
     SharedFuture<auth::Auth> auth,
     SharedFuture<wallets::Wallets> wallets,
     SharedFuture<transactions::Transactions> transactions,
+    SharedFuture<Uploader> uploader,
     const QString &versionString,
     NetwrokTesting &nettest
 ) {
     const TypedException exception = apiVrapper2([&, this] {
-        managerMetagate = std::make_unique<metagate::MetaGate>(mainWindow.get(), auth.get(), wallets.get(), transactions.get(), wssClient.get(), nsLookup.get(), nettest, versionString);
+        managerMetagate = std::make_unique<metagate::MetaGate>(mainWindow.get(), auth.get(), wallets.get(), transactions.get(), wssClient.get(), nsLookup.get(), nettest, uploader.get(), versionString);
         managerMetagate->moveToThread(mainThread);
         javascript = std::make_unique<metagate::MetaGateJavascript>(*managerMetagate);
         javascript->moveToThread(mainThread);

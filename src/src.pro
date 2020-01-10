@@ -13,7 +13,7 @@ DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp mainwindow.cpp \
-    uploader.cpp \
+    Uploader.cpp \
     Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
     Wallets/ethtx/scrypt/sha256.cpp \
     Wallets/ethtx/cert.cpp \
@@ -25,7 +25,6 @@ SOURCES += main.cpp mainwindow.cpp \
     Wallets/btctx/Base58.cpp \
     Wallets/btctx/btctx.cpp \
     Wallets/btctx/wif.cpp \
-    StopApplication.cpp \
     tests.cpp \
     Wallets/openssl_wrapper/openssl_wrapper.cpp \
     Wallets/ethtx/utils2.cpp \
@@ -124,7 +123,7 @@ SOURCES += main.cpp mainwindow.cpp \
 unix: SOURCES +=
 
 HEADERS += mainwindow.h \
-    uploader.h \
+    Uploader.h \
     Wallets/ethtx/scrypt/libscrypt.h \
     Wallets/ethtx/scrypt/sha256.h \
     Wallets/ethtx/scrypt/sysendian.h \

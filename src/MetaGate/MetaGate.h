@@ -24,6 +24,7 @@ class WebSocketClient;
 class MainWindow;
 class NsLookup;
 class NetwrokTesting;
+class Uploader;
 
 struct NodeTypeStatus;
 struct DnsErrorDetails;
@@ -53,7 +54,7 @@ public:
 
 public:
 
-    MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, transactions::Transactions &transactions, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, const QString &applicationVersion);
+    MetaGate(MainWindow &mainWindow, auth::Auth &authManager, wallets::Wallets &wallets, transactions::Transactions &transactions, WebSocketClient &wssClient, NsLookup &nsLookup, NetwrokTesting &networkTesting, Uploader &uploader, const QString &applicationVersion);
 
 signals:
 
@@ -64,6 +65,8 @@ signals:
     void showExchangePopup(const QString &type);
 
     void forgingActiveChanged(bool active);
+
+    void startUpdate();
 
 signals:
 

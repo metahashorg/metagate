@@ -1,4 +1,4 @@
-#include "uploader.h"
+#include "Uploader.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -30,6 +30,9 @@
 #include "qt_utilites/SlotWrapper.h"
 #include "qt_utilites/QRegister.h"
 
+#include "StopApplication.h"
+
+
 #include "Paths.h"
 
 using namespace std::placeholders;
@@ -58,11 +61,13 @@ QString Uploader::getMaintenanceToolExe()
     return dir.filePath(MAINTENANCETOOL);
 }
 
-// TODO change that
-static QString m_repoUrl;
-QString Uploader::getRepoUrl()
+void Uploader::startUpdate()
 {
-    return m_repoUrl;
+    LOG << "Start update tool and close app " << repoUrl;
+    const QStringList args{QStringLiteral("--updater"),
+                     QStringLiteral("--addRepository"), repoUrl};
+    QProcess::startDetached(Uploader::getMaintenanceToolExe(), args);
+    QApplication::exit(SIMPLE_EXIT);
 }
 
 static QString toHash(const QString &valueQ) {
@@ -342,7 +347,8 @@ void Uploader::uploadEvent() {
         }
     };
 
-    const auto callbackRepo = [checkUpdates](const SimpleClient::Response &response) {
+
+    const auto callbackRepo = [this, checkUpdates](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
 
         LOG << response.response;
@@ -353,16 +359,23 @@ void Uploader::uploadEvent() {
         const auto &dataJson = root.value("data").toObject();
         CHECK(dataJson.contains("url") && dataJson.value("url").isString(), "url field not found");
         const QString url = dataJson.value("url").toString();
-        m_repoUrl = url;
+        repoUrl = url;
         checkUpdates(url);
     };
 
-    client.sendMessagePost(
-        QUrl(serverName),
-        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
-           "\",\"version\":\"1.0.0\",\"method\":\"app.repo\", \"token\":\"" + apiToken.toStdString() +
-           "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
-        callbackRepo, timeout
-        );
-    id++;
+
+    qDebug() << "UPDATE" << repoUrl;
+    if (repoUrl.isEmpty()) {
+        client.sendMessagePost(
+            QUrl(serverName),
+            QString::fromStdString("{\"id\": \"" + std::to_string(id) +
+               "\",\"version\":\"1.0.0\",\"method\":\"app.repo\", \"token\":\"" + apiToken.toStdString() +
+               "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
+            callbackRepo, timeout
+            );
+        id++;
+    } else {
+        checkUpdates(repoUrl);
+    }
+
 }

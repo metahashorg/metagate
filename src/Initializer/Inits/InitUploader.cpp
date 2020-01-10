@@ -1,6 +1,6 @@
 ﻿#include "InitUploader.h"
 
-#include "uploader.h"
+#include "Uploader.h"
 
 #include "check.h"
 #include "qt_utilites/SlotWrapper.h"

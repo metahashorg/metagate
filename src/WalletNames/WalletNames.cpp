@@ -16,7 +16,7 @@
 
 #include "utilites/machine_uid.h"
 
-#include "uploader.h"
+#include "Uploader.h"
 #include "utilites/platform.h"
 #include "Wallets/Wallet.h"
 #include "WalletNamesDbStorage.h"

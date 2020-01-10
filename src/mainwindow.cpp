@@ -28,7 +28,7 @@
 #include "Network/WebSocketClient.h"
 #include "JavascriptWrapper.h"
 
-#include "uploader.h"
+#include "Uploader.h"
 #include "check.h"
 #include "StopApplication.h"
 #include "duration.h"
