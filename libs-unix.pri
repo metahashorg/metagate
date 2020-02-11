@@ -1,8 +1,8 @@
 INCLUDEPATH += /usr/local/include/c++/7.1/
 INCLUDEPATH += $$PWD/3rdparty $$PWD/3rdparty/quazip/include $$PWD
-INCLUDEPATH += $$PWD/3rdparty/openssl_linux/include/
+INCLUDEPATH += $$PWD/3rdparty/openssl/include/
 INCLUDEPATH += $$PWD/3rdparty/cryptopp/include/
-LIBS += -L$$PWD/3rdparty/openssl_linux/lib -lssl -lcrypto
+LIBS += -L$$PWD/3rdparty/openssl/linux -lssl -lcrypto
 LIBS += -L$$PWD/3rdparty/cryptopp/linux/ -lcryptopp -L$$PWD/3rdparty/quazip/linux/ -lquazip -lz
 LIBS += -L$$PWD/3rdparty/secp256k1/linux/ -lsecp256k1 -lgmp -luuid
 #QR coder libs

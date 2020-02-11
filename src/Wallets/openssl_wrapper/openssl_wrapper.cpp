@@ -331,5 +331,11 @@ RsaKey getPrivateRsa(const std::string &privkey, const std::string &password) {
 }
 
 bool validatePublicKey(const RsaKey &privateKey, const RsaKey &publicKey) {
-    return BN_cmp(publicKey->n, privateKey->n) == 0;
+
+    const BIGNUM *n1;
+    const BIGNUM *n2;
+    RSA_get0_key(privateKey.get(), &n1, NULL, NULL);
+    RSA_get0_key(publicKey.get(), &n2, NULL, NULL);
+
+    return BN_cmp(n1, n2) == 0;
 }
