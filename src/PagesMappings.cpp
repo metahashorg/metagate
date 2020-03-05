@@ -77,10 +77,18 @@ void PagesMappings::addMappingsMh(QString mapping) {
         const QString name = element.value("name").toString();
         CHECK(element.contains("isExternal") && element.value("isExternal").isBool(), "isExternal field not found");
         const bool isExternal = element.value("isExternal").toBool();
+        bool directLink = false;
+        if (element.contains("directAddress") && element.value("directAddress").isBool()) {
+            directLink = element.value("directAddress").toBool();
+        }
 
         std::shared_ptr<PageInfo> page = std::make_shared<PageInfo>(url, isExternal, isDefault, false);
         page->isApp = false;
-        page->printedName = METAHASH_URL + name;
+        if (!directLink) {
+            page->printedName = METAHASH_URL + name;
+        } else {
+            page->printedName = name;
+        }
 
         if (element.contains("ip") && element.value("ip").isArray()) {
             for (const QJsonValue &ip: element.value("ip").toArray()) {
