@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonValue>
 #include <QJsonObject>
+#include <QDebug>
 
 #include "check.h"
 #include "qt_utilites/SlotWrapper.h"
@@ -19,10 +20,11 @@ namespace auth {
 
 static QJsonDocument loginInfoToJson(const LoginInfo &info) {
     QJsonObject obj;
-    obj["login"] = info.login;
-    obj["token"] = info.token;
-    obj["is_auth"] = info.isAuth;
-    obj["is_test"] = info.isTest;
+    obj[QLatin1String("login")] = info.login;
+    obj[QLatin1String("type")] = info.type;
+    obj[QLatin1String("token")] = info.token;
+    obj[QLatin1String("is_auth")] = info.isAuth;
+    obj[QLatin1String("is_test")] = info.isTest;
     return QJsonDocument(obj);
 }
 
@@ -30,6 +32,7 @@ AuthJavascript::AuthJavascript()
     : WrapperJavascript(false, LOG_FILE)
 {
     Q_CONNECT(this, &AuthJavascript::sendLoginInfoResponseSig, this, &AuthJavascript::onSendLoginInfoResponseSig);
+    Q_CONNECT(this, &AuthJavascript::sendParnerIdLoginResponseSig, this, &AuthJavascript::onSendParnerIdLoginResponseSig);
 }
 
 void AuthJavascript::login(const QString &login, const QString &password) {
@@ -38,6 +41,20 @@ BEGIN_SLOT_WRAPPER
     LOG << "Login " << login;
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_authManager->login(login, password);
+    });
+    if (exception.isSet()) {
+        emit sendLoginInfoResponseSig(LoginInfo(), exception);
+    }
+END_SLOT_WRAPPER
+}
+
+void AuthJavascript::partnerIdLogin()
+{
+BEGIN_SLOT_WRAPPER
+    CHECK(m_authManager, "auth not set");
+    LOG << "Partner id login";
+    const TypedException exception = apiVrapper2([&, this]() {
+        emit m_authManager->partnerIdLogin();
     });
     if (exception.isSet()) {
         emit sendLoginInfoResponseSig(LoginInfo(), exception);
@@ -95,9 +112,20 @@ BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "authLoginInfoJs";
 
     LOG << "Logined: " << response.login << ". Is test: " << response.isTest;
+    qDebug() << loginInfoToJson(response).toJson();
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, loginInfoToJson(response));
 END_SLOT_WRAPPER
 }
+
+void AuthJavascript::onSendParnerIdLoginResponseSig(int response, const TypedException &error)
+{
+BEGIN_SLOT_WRAPPER
+    const QString JS_NAME_RESULT = "authPartnerIdLoginResponseJs";
+    makeAndRunJsFuncParams(JS_NAME_RESULT, error, response);
+END_SLOT_WRAPPER
+
+}
+
 
 }

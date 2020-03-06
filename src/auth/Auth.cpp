@@ -5,6 +5,10 @@
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QSettings>
+#include <QDir>
+#include <QFile>
+#include <QApplication>
+#include <QDebug>
 
 #include "check.h"
 #include "qt_utilites/SlotWrapper.h"
@@ -35,6 +39,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     readLoginInfo();
 
     Q_CONNECT(this, &Auth::login, this, &Auth::onLogin);
+    Q_CONNECT(this, &Auth::partnerIdLogin, this, &Auth::onPartnerIdLogin);
     Q_CONNECT(this, &Auth::logout, this, &Auth::onLogout);
     Q_CONNECT(this, &Auth::check, this, &Auth::onCheck);
     Q_CONNECT(this, &Auth::forceRefresh, this, &Auth::onForceRefresh);
@@ -59,6 +64,19 @@ Auth::~Auth() {
     TimerClass::exit();
 }
 
+QString Auth::getParnerId()
+{
+    QDir dir(qApp->applicationDirPath());
+
+    QFile file(dir.filePath(QStringLiteral("installer.ath")));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return QString();
+    }
+    const QByteArray data = QByteArray::fromBase64(file.read(1024));
+    file.close();
+    return QString::fromLatin1(data);
+}
+
 void Auth::onLogin(const QString &login, const QString &password) {
 BEGIN_SLOT_WRAPPER
     const QString request = makeLoginRequest(login, password);
@@ -77,6 +95,22 @@ BEGIN_SLOT_WRAPPER
            emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
        }
     }, timeout, true);
+END_SLOT_WRAPPER
+}
+
+void Auth::onPartnerIdLogin()
+{
+BEGIN_SLOT_WRAPPER
+    const QString token = getParnerId();
+    if (token.isEmpty())
+        return;
+        qDebug() << token;
+        qDebug() << "PARTHNER ID LOGIN " << token;
+
+        const TypedException exception = apiVrapper2([&, this] {
+            partnerIdLoginInternal(token);
+        });
+    emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
 END_SLOT_WRAPPER
 }
 
@@ -108,6 +142,14 @@ void auth::Auth::finishMethod() {
 }
 
 void auth::Auth::startMethod() {
+    const QString token = getParnerId();
+    qDebug() << token;
+    if (!info.isAuth && !token.isEmpty()) {
+        qDebug() << "PARTHNER ID LOGIN " << token;
+        info.type = LoginInfo::PATNERID;
+        partnerIdLoginInternal(token);
+        return;
+    }
     const bool isChecked = checkToken();
     if (isChecked) {
         emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException());
@@ -127,6 +169,7 @@ void auth::Auth::readLoginInfo() {
     info.refresh = settings.value("refresh", QString()).toString();
     info.isAuth = settings.value("isAuth", false).toBool();
     info.isTest = settings.value("isTest", false).toBool();
+    info.type = static_cast<LoginInfo::Type>(settings.value("type", static_cast<int>(LoginInfo::LOGIN)).toInt());
     info.expire = seconds(settings.value("expire", 0).toInt());
     settings.endGroup();
 }
@@ -139,6 +182,7 @@ void Auth::writeLoginInfo() {
     settings.setValue("refresh", info.refresh);
     settings.setValue("isAuth", info.isAuth);
     settings.setValue("isTest", info.isTest);
+    settings.setValue("type", info.type);
     settings.setValue("expire", (int)info.expire.count());
     settings.endGroup();
 }
@@ -150,7 +194,7 @@ END_SLOT_WRAPPER
 }
 
 void Auth::forceRefreshInternal() {
-    LOG << "Try refresh token ";
+    LOG << "Try refresh token ";void onPartnerIdLogin(const QString &token);
     const QString request = makeRefreshTokenRequest(info.refresh);
     const QString token = info.token;
 
@@ -203,7 +247,7 @@ void Auth::forceRefreshInternal() {
             emit checkTokenFinished(except);
         } else if (!response.exception.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response.response), info.login, info.isTest);
+                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response.response), info.login, info.isTest, info.type);
                 if (!newLogin.isAuth) {
                     LOG << "Refresh token failed";
                     logoutImpl();
@@ -270,6 +314,33 @@ bool Auth::checkToken() {
     return false;
 }
 
+void Auth::partnerIdLoginInternal(const QString &token)
+{
+    const QString request = makePartnerIdLoginRequest(token);
+    tcpClient.sendMessagePost(authUrl, request, [this, token](const SimpleClient::Response &response) {
+        if (response.exception.isSet()) {
+           QString content = QString::fromStdString(response.exception.content);
+           AuthResult res = parsePartnerIdLoginErrorResponse(content);
+           if (res == AuthResult::USER_NOT_FOUND)
+               info.type = LoginInfo::LOGIN;
+           emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description));
+           emit javascriptWrapper.sendParnerIdLoginResponseSig(res, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description));
+       } else {
+           const TypedException exception = apiVrapper2([&] {
+               info = parsePartnerIdLoginResponse(QString::fromStdString(response.response));
+               writeLoginInfo();
+               isInitialize = true;
+               emit logined(isInitialize, info.login);
+               emit logined2(isInitialize, info.login, info.token);
+           });
+           emit javascriptWrapper.sendLoginInfoResponseSig(info, exception);
+           emit javascriptWrapper.sendParnerIdLoginResponseSig(AuthResult::OK, exception);
+           //emit javascriptWrapper.sendParnerIdLoginResponseSig(1, exception);
+       }
+    }, timeout, true);
+
+}
+
 void Auth::onReEmit() {
 BEGIN_SLOT_WRAPPER
     LOG << "Auth Reemit";
@@ -298,6 +369,23 @@ QString Auth::makeLoginRequest(const QString &login, const QString &password) co
     request.insert("params", params);
     return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
+
+QString Auth::makePartnerIdLoginRequest(const QString &token) const
+{
+    QJsonObject request;
+    request.insert(QStringLiteral("id"), QStringLiteral("1"));
+    request.insert(QStringLiteral("version"), QStringLiteral("1.0.0"));
+    request.insert(QStringLiteral("method"), QStringLiteral("user.authPartnerToken"));
+    request.insert(QStringLiteral("uid"), hardwareId);
+    QJsonArray params;
+    QJsonObject p;
+    p.insert(QStringLiteral("token"), token);
+    params.append(p);
+
+    request.insert(QStringLiteral("params"), params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
 
 QString Auth::makeCheckTokenRequest(const QString &token) const {
     QJsonObject request;
@@ -360,10 +448,81 @@ LoginInfo Auth::parseLoginResponse(const QString &response, const QString &login
     return result;
 }
 
-LoginInfo Auth::parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const {
+LoginInfo Auth::parsePartnerIdLoginResponse(const QString &response) const
+{
+    LoginInfo result;
+    result.type = LoginInfo::PATNERID;
+    result.saveTime = ::now();
+    result.saveTimeSystem = ::system_now();
+    result.prevCheck = ::now();
+
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json");
+    const QJsonObject &json1 = jsonResponse.object();
+
+    CHECK(json1.contains("result") && json1.value("result").isString(), "Incorrect json: result field not found");
+
+    CHECK(json1.contains("data") && json1.value("data").isObject(), "Incorrect json: data field not found");
+    const QJsonObject &json = json1.value("data").toObject();
+
+
+    if (json1.value("result").toString() != "OK") {
+        return result;
+    }
+
+    CHECK(json.contains("login") && json.value("login").isString(), "Incorrect json: login field not found");
+    result.login = json.value("login").toString();
+
+    CHECK(json.contains("token") && json.value("token").isString(), "Incorrect json: token field not found");
+    result.token = json.value("token").toString();
+
+    CHECK(json.contains("refresh_token") && json.value("refresh_token").isString(), "Incorrect json: refresh_token field not found");
+    result.refresh = json.value("refresh_token").toString();
+
+    CHECK(json.contains("is_test_user") && json.value("is_test_user").isBool(), "Incorrect json: is_test_user field not found");
+    result.isTest = json.value("is_test_user").toBool();
+
+    CHECK(json.contains("expire") && json.value("expire").isDouble(), "Incorrect json: expire field not found");
+    result.expire = seconds(json.value("expire").toInt());
+
+    result.isAuth = !result.token.isEmpty();
+
+    return result;
+}
+
+AuthResult Auth::parsePartnerIdLoginErrorResponse(const QString &response) const
+{
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    CHECK(jsonResponse.isObject(), "Incorrect json");
+    const QJsonObject &json1 = jsonResponse.object();
+
+    CHECK(json1.contains("result") && json1.value("result").isString(), "Incorrect json: result field not found");
+
+    if (json1.value("result").toString() == QLatin1String("OK")) {
+        return AuthResult::OK;
+    }
+
+    CHECK(json1.contains("data") && json1.value("data").isObject(), "Incorrect json: data field not found");
+    const QJsonObject &json = json1.value("data").toObject();
+
+    if (json1.value("result").toString() == "ERROR") {
+        CHECK(json.contains("code") && json.value("code").isString(), "Incorrect json: code field not found");
+        if (json.value("code").toString() == QLatin1String("USER_NOT_FOUND")) {
+            return AuthResult::USER_NOT_FOUND;
+        }
+        if (json.value("code").toString() == QLatin1String("REPEAT_REQUEST")) {
+            return AuthResult::REPEAT_REQUEST;
+        }
+    }
+    return AuthResult::NET_ERROR;
+}
+
+
+LoginInfo Auth::parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest, LoginInfo::Type type) const {
     LoginInfo result;
     result.login = login;
     result.isTest = isTest;
+    result.type = type;
     result.saveTime = ::now();
     result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();

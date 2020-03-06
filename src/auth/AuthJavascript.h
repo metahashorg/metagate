@@ -26,6 +26,8 @@ public:
 public slots:
     Q_INVOKABLE void login(const QString &login, const QString &password);
 
+    Q_INVOKABLE void partnerIdLogin();
+
     Q_INVOKABLE void logout();
 
     Q_INVOKABLE void check();
@@ -35,9 +37,13 @@ public slots:
 signals:
     void sendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error);
 
+    void sendParnerIdLoginResponseSig(int response, const TypedException &error);
+
 public slots:
 
     void onSendLoginInfoResponseSig(const LoginInfo &response, const TypedException &error);
+
+    void onSendParnerIdLoginResponseSig(int response, const TypedException &error);
 
 private:
     Auth *m_authManager;

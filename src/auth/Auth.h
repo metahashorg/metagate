@@ -14,7 +14,12 @@ namespace auth
 class AuthJavascript;
 struct LoginInfo
 {
+    enum Type {
+        LOGIN = 0, PATNERID = 1
+    };
+
     QString login = QString();
+    Type type = LOGIN;
     QString token = QString();
     QString refresh = QString();
     bool isAuth = false;
@@ -33,6 +38,10 @@ struct LoginInfo
     }
 };
 
+enum AuthResult {
+    OK = 0, REPEAT_REQUEST = 1, USER_NOT_FOUND = 2, NET_ERROR = 3
+};
+
 class Auth : public ManagerWrapper, public TimerClass
 {
     Q_OBJECT
@@ -43,6 +52,8 @@ public:
     explicit Auth(AuthJavascript &javascriptWrapper, QObject *parent = nullptr);
 
     ~Auth() override;
+
+    static QString getParnerId();
 
 protected:
 
@@ -64,6 +75,8 @@ signals:
 
     void login(const QString &login, const QString &password);
 
+    void partnerIdLogin();
+
     void logout();
 
     void check();
@@ -75,6 +88,8 @@ signals:
 public slots:
 
     void onLogin(const QString &login, const QString &password);
+
+    void onPartnerIdLogin();
 
     void onLogout();
 
@@ -105,10 +120,14 @@ private:
 
     void forceRefreshInternal();
 
+    void partnerIdLoginInternal(const QString &token);
+
     template<typename Func>
     void runCallback(const Func &callback);
 
     QString makeLoginRequest(const QString &login, const QString &password) const;
+
+    QString makePartnerIdLoginRequest(const QString &token) const;
 
     QString makeCheckTokenRequest(const QString &token) const;
 
@@ -116,9 +135,13 @@ private:
 
     LoginInfo parseLoginResponse(const QString &response, const QString &login) const;
 
+    LoginInfo parsePartnerIdLoginResponse(const QString &response) const;
+
+    AuthResult parsePartnerIdLoginErrorResponse(const QString &response) const;
+
     bool parseCheckTokenResponse(const QString &response) const;
 
-    LoginInfo parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const;
+    LoginInfo parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest, LoginInfo::Type type) const;
 
 private:
     AuthJavascript &javascriptWrapper;
