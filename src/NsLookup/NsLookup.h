@@ -116,9 +116,9 @@ protected:
 
     void finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew);
 
-    void finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew);
+    void finalizeLookup(bool isFullFill);
 
-    void saveAll(bool isFullFill);
+    void finalizeLookup(const NodeType::Node &node, const std::vector<NodeInfo> &allNodesForTypesNew);
 
 
 
@@ -146,6 +146,8 @@ protected:
     void printNodes() const;
 
 private:
+
+    void saveAll(bool isFullFill);
 
     void process();
 

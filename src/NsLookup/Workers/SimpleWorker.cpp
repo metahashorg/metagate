@@ -83,7 +83,7 @@ void SimpleWorker::continueResolve(const WorkerGuard &workerGuard, std::map<QStr
 }
 
 void SimpleWorker::finalizeLookup(const WorkerGuard &workerGuard) {
-    ns.saveAll(false);
+    ns.finalizeLookup(false);
     endWork(workerGuard);
 }
 
