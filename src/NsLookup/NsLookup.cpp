@@ -235,8 +235,17 @@ void NsLookup::saveAll(bool isFullFill) {
     saveToFile(savedNodesPath, filledFileTp, nodes);
 }
 
+void NsLookup::finalizeLookup(bool isFullFill) {
+    emit serversFlushed(TypedException());
+
+    saveAll(isFullFill);
+}
+
 void NsLookup::finalizeLookup(bool isFullFill, std::map<NodeType::Node, std::vector<NodeInfo>> &allNodesForTypesNew) {
     allNodesForTypes.swap(allNodesForTypesNew);
+
+    emit serversFlushed(TypedException());
+
     saveAll(isFullFill);
 
     defectiveTorrents.clear();

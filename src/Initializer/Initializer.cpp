@@ -116,7 +116,7 @@ BEGIN_SLOT_WRAPPER
                 if (states[i].isCritical) {
                     cCritical++;
                 }
-                sendStateToJs(states[i], (int)i, cCritical);
+                sendStateToJs(states[i], (int)(i + 1), cCritical);
             }
             if (isCriticalInitFinished) {
                 sendCriticalInitializedToJs(isErrorCritical);
