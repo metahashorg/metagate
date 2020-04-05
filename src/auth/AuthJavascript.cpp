@@ -25,6 +25,7 @@ static QJsonDocument loginInfoToJson(const LoginInfo &info) {
     obj[QLatin1String("token")] = info.token;
     obj[QLatin1String("is_auth")] = info.isAuth;
     obj[QLatin1String("is_test")] = info.isTest;
+    obj[QLatin1String("error")] = info.error;
     return QJsonDocument(obj);
 }
 
@@ -111,7 +112,7 @@ void AuthJavascript::onSendLoginInfoResponseSig(const LoginInfo &response, const
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "authLoginInfoJs";
 
-    LOG << "Logined: " << response.login << ". Is test: " << response.isTest;
+    LOG << "Logined: " << response.login << ". Is test: " << response.type << " " << response.isAuth;
     qDebug() << loginInfoToJson(response).toJson();
 
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, loginInfoToJson(response));
@@ -121,6 +122,7 @@ END_SLOT_WRAPPER
 void AuthJavascript::onSendParnerIdLoginResponseSig(int response, const TypedException &error)
 {
 BEGIN_SLOT_WRAPPER
+    LOG << "!!!! " << response;
     const QString JS_NAME_RESULT = "authPartnerIdLoginResponseJs";
     makeAndRunJsFuncParams(JS_NAME_RESULT, error, response);
 END_SLOT_WRAPPER

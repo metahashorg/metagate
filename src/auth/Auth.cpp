@@ -72,7 +72,7 @@ QString Auth::getParnerId()
     if (!file.open(QIODevice::ReadOnly)) {
         return QString();
     }
-    const QByteArray data = QByteArray::fromBase64(file.read(1024));
+    const QByteArray data = QByteArray::fromBase64(file.readLine(1024));
     file.close();
     return QString::fromLatin1(data);
 }
@@ -102,10 +102,10 @@ void Auth::onPartnerIdLogin()
 {
 BEGIN_SLOT_WRAPPER
     const QString token = getParnerId();
+LOG << "PARTHNER ID LOGIN " << token;
     if (token.isEmpty())
         return;
         qDebug() << token;
-        qDebug() << "PARTHNER ID LOGIN " << token;
 
         const TypedException exception = apiVrapper2([&, this] {
             partnerIdLoginInternal(token);
@@ -145,7 +145,7 @@ void auth::Auth::startMethod() {
     const QString token = getParnerId();
     qDebug() << token;
     if (!info.isAuth && !token.isEmpty()) {
-        qDebug() << "PARTHNER ID LOGIN " << token;
+        LOG << "PARTHNER ID LOGIN " << token;
         info.type = LoginInfo::PATNERID;
         partnerIdLoginInternal(token);
         return;
@@ -194,7 +194,7 @@ END_SLOT_WRAPPER
 }
 
 void Auth::forceRefreshInternal() {
-    LOG << "Try refresh token ";void onPartnerIdLogin(const QString &token);
+    LOG << "Try refresh token ";
     const QString request = makeRefreshTokenRequest(info.refresh);
     const QString token = info.token;
 
@@ -317,17 +317,24 @@ bool Auth::checkToken() {
 void Auth::partnerIdLoginInternal(const QString &token)
 {
     const QString request = makePartnerIdLoginRequest(token);
+    LOG << "partnerIdLoginInternal " << token;
     tcpClient.sendMessagePost(authUrl, request, [this, token](const SimpleClient::Response &response) {
+        LOG << "resp";
         if (response.exception.isSet()) {
+            LOG << "error " << response.exception.content;
            QString content = QString::fromStdString(response.exception.content);
            AuthResult res = parsePartnerIdLoginErrorResponse(content);
+           info.error = res;
            if (res == AuthResult::USER_NOT_FOUND)
                info.type = LoginInfo::LOGIN;
+           LOG << res;
            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description));
            emit javascriptWrapper.sendParnerIdLoginResponseSig(res, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description));
        } else {
+            LOG << "OK " << response.response;
            const TypedException exception = apiVrapper2([&] {
                info = parsePartnerIdLoginResponse(QString::fromStdString(response.response));
+               info.error = OK;
                writeLoginInfo();
                isInitialize = true;
                emit logined(isInitialize, info.login);
@@ -465,28 +472,29 @@ LoginInfo Auth::parsePartnerIdLoginResponse(const QString &response) const
     CHECK(json1.contains("data") && json1.value("data").isObject(), "Incorrect json: data field not found");
     const QJsonObject &json = json1.value("data").toObject();
 
+    LOG << "1";
 
     if (json1.value("result").toString() != "OK") {
         return result;
     }
-
+LOG << "2";
     CHECK(json.contains("login") && json.value("login").isString(), "Incorrect json: login field not found");
     result.login = json.value("login").toString();
-
+LOG << "3";
     CHECK(json.contains("token") && json.value("token").isString(), "Incorrect json: token field not found");
     result.token = json.value("token").toString();
-
+LOG << "4";
     CHECK(json.contains("refresh_token") && json.value("refresh_token").isString(), "Incorrect json: refresh_token field not found");
     result.refresh = json.value("refresh_token").toString();
-
+LOG << "5";
     CHECK(json.contains("is_test_user") && json.value("is_test_user").isBool(), "Incorrect json: is_test_user field not found");
     result.isTest = json.value("is_test_user").toBool();
-
+LOG << "6";
     CHECK(json.contains("expire") && json.value("expire").isDouble(), "Incorrect json: expire field not found");
     result.expire = seconds(json.value("expire").toInt());
-
+LOG << "7 " << result.token;
     result.isAuth = !result.token.isEmpty();
-
+LOG << "8 " << result.isAuth;
     return result;
 }
 

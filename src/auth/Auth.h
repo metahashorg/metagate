@@ -12,6 +12,10 @@ struct TypedException;
 namespace auth
 {
 class AuthJavascript;
+enum AuthResult {
+    OK = 0, REPEAT_REQUEST = 1, USER_NOT_FOUND = 2, NET_ERROR = 3
+};
+
 struct LoginInfo
 {
     enum Type {
@@ -20,6 +24,7 @@ struct LoginInfo
 
     QString login = QString();
     Type type = LOGIN;
+    AuthResult error = OK;
     QString token = QString();
     QString refresh = QString();
     bool isAuth = false;
@@ -38,9 +43,7 @@ struct LoginInfo
     }
 };
 
-enum AuthResult {
-    OK = 0, REPEAT_REQUEST = 1, USER_NOT_FOUND = 2, NET_ERROR = 3
-};
+
 
 class Auth : public ManagerWrapper, public TimerClass
 {
