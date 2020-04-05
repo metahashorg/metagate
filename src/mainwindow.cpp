@@ -23,6 +23,8 @@
 #include <QSystemTrayIcon>
 #include <QDesktopWidget>
 
+#include <QWebEngineUrlRequestInterceptor>
+
 #include "ui_mainwindow.h"
 
 #include "Network/WebSocketClient.h"
@@ -39,6 +41,7 @@
 #include "qt_utilites/QRegister.h"
 
 #include "mhurlschemehandler.h"
+#include "TorUrlSchemeHandler.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
@@ -75,6 +78,19 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     }
 
     return false;
+}
+
+
+void WebUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
+{
+    qDebug() << info.requestUrl();
+    QUrl url = info.requestUrl();
+    if (url.scheme() == QLatin1String("http"))
+        if (url.host().endsWith(QLatin1String(".onion"))) {
+            url.setScheme(QStringLiteral("tor"));
+            qDebug() << url;
+            info.redirect(url);
+        }
 }
 
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
@@ -146,6 +162,13 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetMetaGateJavascriptCallback, "SetMetaGateJavascriptCallback");
     Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
+
+
+    WebUrlRequestInterceptor *wuri = new WebUrlRequestInterceptor(this);
+    QWebEngineProfile::defaultProfile()->setRequestInterceptor(wuri);
+
+    TorUrlSchemeHandler *torShemeHandler = new TorUrlSchemeHandler(this);
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArrayLiteral("tor"), torShemeHandler);
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -570,6 +593,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     const static QString HTTP_1_PREFIX = "http://";
     const static QString HTTP_2_PREFIX = "https://";
 
+    const static QString TOR_1_PREFIX = "tor://";
+    const static QString TOR_2_PREFIX = "tors://";
+
     QString text = text1;
     if (text.endsWith('/')) {
         text = text.left(text.size() - 1);
@@ -579,6 +605,11 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         return;
     }
 
+/*    if (text.startsWith("tor://") || text.startsWith("http://")) {
+        loadUrl(text);
+        return;
+    }
+*/
     const auto doProcessCommand = [this, isAddToHistory, text](const PageInfo &pageInfo) {
         const QString &reference = pageInfo.page;
 
@@ -641,11 +672,20 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     if (pageInfo.isApp || pageInfo.isRedirectShemeHandler) {
         doProcessCommand(pageInfo);
         return;
+    } else if (text.startsWith(HTTP_1_PREFIX) || text.startsWith(HTTP_2_PREFIX) ||
+               text.startsWith(TOR_1_PREFIX) || text.startsWith(TOR_2_PREFIX)) {
+        addElementToHistoryAndCommandLine(text, isAddToHistory, true);
+        unregisterAllWebChannels();
+        loadUrl(text);
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
-        const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\", \"net\": \"" + netDns + "\"}}";
+        const QString host = PagesMappings::getHost(text);
+        qDebug() << host;
+        const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + host + "\", \"net\": \"" + netDns + "\"}}";
+        qDebug() << postRequest;
         client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const SimpleClient::Response &response) {
             CHECK(!response.exception.isSet(), "Dns error " + response.exception.toString());
+            qDebug() << QString::fromStdString(response.response);
             pagesMappings.addMappingsMh(QString::fromStdString(response.response));
             const PageInfo pageInfo = pagesMappings.find(text);
             doProcessCommand(pageInfo);

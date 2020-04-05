@@ -35,6 +35,7 @@ SOURCES += main.cpp mainwindow.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
     mhurlschemehandler.cpp \
+    TorUrlSchemeHandler.cpp \
     Paths.cpp \
     RunGuard.cpp \
     Messenger/Messenger.cpp \
@@ -148,6 +149,7 @@ HEADERS += mainwindow.h \
     NsLookup/dns/resourcerecord.h \
     JavascriptWrapper.h \
     PagesMappings.h \
+    TorUrlSchemeHandler.h \
     mhurlschemehandler.h \
     Paths.h \
     RunGuard.h \

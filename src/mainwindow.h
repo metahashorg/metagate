@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 #include <QWebChannel>
+#include <QWebEngineUrlRequestInterceptor>
 
 #include "Network/SimpleClient.h"
 #include "Uploader.h"
@@ -77,6 +78,16 @@ struct TypedException;
 namespace transactions {
 class TransactionsJavascript;
 }
+
+class WebUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor
+{
+    Q_OBJECT
+
+public:
+    WebUrlRequestInterceptor(QObject *p)
+        : QWebEngineUrlRequestInterceptor(p) {}
+    void interceptRequest(QWebEngineUrlRequestInfo &info);
+};
 
 class MainWindow : public QMainWindow
 {
