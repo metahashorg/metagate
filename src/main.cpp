@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDateTime>
+#include <QNetworkProxy>
 
 #include "RunGuard.h"
 
@@ -28,6 +29,8 @@
 #include "TypedException.h"
 #include "Paths.h"
 #include "Network/NetwrokTesting.h"
+
+#include "TorProxy.h"
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"
@@ -89,6 +92,14 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName("MetaGate");
     QCoreApplication::setApplicationVersion(QStringLiteral(VERSION_STRING));
     app.setQuitOnLastWindowClosed(false);
+
+//    QNetworkProxy proxy;
+//    //proxy.setType(QNetworkProxy::DefaultProxy);
+//    proxy.setHostName("127.0.0.1");
+//    proxy.setPort(9050);
+//    proxy.setCapabilities(QNetworkProxy::HostNameLookupCapability | proxy.capabilities()) ;
+//    proxy.setType(QNetworkProxy::Socks5Proxy);
+//    QNetworkProxy::setApplicationProxy(proxy);
 
     QCommandLineParser parser;
     parser.setApplicationDescription("MetaGate");
@@ -163,6 +174,9 @@ int main(int argc, char *argv[]) {
         LOG << "Machine uid " << getMachineUid();
         LOG << "Is virtual machine " << isVirtualMachine();
         printCurrentYear();
+
+        tor::TorProxy tor;
+        tor.start();
 
         NetwrokTesting nettesting;
         nettesting.start();
