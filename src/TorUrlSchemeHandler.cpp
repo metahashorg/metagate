@@ -88,7 +88,10 @@ void TorUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
 {
     const QUrl url = job->requestUrl();
     QUrl newurl(url);
-    newurl.setScheme(QStringLiteral("http"));
+    if (newurl.scheme() == QLatin1String("tors"))
+        newurl.setScheme(QStringLiteral("https"));
+    else
+        newurl.setScheme(QStringLiteral("http"));
     qDebug() << "Tes " << newurl;
     QNetworkRequest req(newurl);
     quint64 reqId = 0;
