@@ -583,7 +583,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         const QString &reference = pageInfo.page;
 
         if (reference.isNull() || reference.isEmpty()) {
-            QString text2;
+            QString text2 = text;
             if (text2.startsWith(APP_URL)) {
                 text2 = text2.mid(APP_URL.size());
             }
