@@ -41,6 +41,12 @@ const static QString PROXY_CONFIG_NAME = "proxy.ini";
 
 const static QString LOCALSERVER_NAME = "metahash.metagate";
 
+const static QString TOR_PATH = QLatin1String("tor/");
+
+const static QString TORDATA_PATH = QLatin1String("data/");
+
+const static QString TORCONFIG_NAME = QLatin1String("torrc");
+
 static bool isInitializePagesPath = false;
 
 static bool isInitializeSettingsPath = false;
@@ -232,6 +238,21 @@ QString getLocalServerPath()
 #else
     return LOCALSERVER_NAME;
 #endif
+}
+
+QString getTorConfigPath()
+{
+    const QString res = makePath(getCommonMetagatePath(), TOR_PATH);
+    createFolder(res);
+    const QString path = makePath(res, TORCONFIG_NAME);
+    return path;
+}
+
+QString getTorDataPath()
+{
+    const QString res = makePath(getCommonMetagatePath(), TOR_PATH, TORDATA_PATH);
+    createFolder(res);
+    return res;
 }
 
 void clearAutoupdatersPath() {

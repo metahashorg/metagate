@@ -67,18 +67,8 @@ static milliseconds getTimeout(const QNetworkReply &reply)
 
 TorUrlSchemeHandler::TorUrlSchemeHandler(QObject *parent)
     : QWebEngineUrlSchemeHandler(parent)
+    , m_manager(new QNetworkAccessManager(this))
 {
-    m_manager = new QNetworkAccessManager(this);
-    //proxy.setType(QNetworkProxy::DefaultProxy);
-    proxy.setHostName("127.0.0.1");
-    proxy.setPort(9050);
-    proxy.setCapabilities(QNetworkProxy::HostNameLookupCapability | proxy.capabilities()) ;
-    proxy.setType(QNetworkProxy::Socks5Proxy);
-    //QNetworkProxy::setApplicationProxy(proxy);
-
-    m_manager->setProxy(proxy);
-    qDebug() << "TestTest";
-
     Q_CONNECT(&timer, &QTimer::timeout, this, &TorUrlSchemeHandler::onTimerEvent);
     timer.setInterval(milliseconds(1s).count());
     timer.start();
@@ -101,6 +91,17 @@ void TorUrlSchemeHandler::requestStarted(QWebEngineUrlRequestJob *job)
     QNetworkReply *reply = m_manager->get(req);
     reply->setParent(job);
     Q_CONNECT(reply, &QNetworkReply::finished, this, &TorUrlSchemeHandler::onRequestFinished);
+}
+
+void TorUrlSchemeHandler::setProxy(quint16 port)
+{
+    LOG << "Set local proxy port " << port;
+    QNetworkProxy proxy;
+    proxy.setHostName(QStringLiteral("127.0.0.1"));
+    proxy.setPort(port);
+    proxy.setCapabilities(QNetworkProxy::HostNameLookupCapability | proxy.capabilities()) ;
+    proxy.setType(QNetworkProxy::Socks5Proxy);
+    m_manager->setProxy(proxy);
 }
 
 void TorUrlSchemeHandler::onRequestFinished()

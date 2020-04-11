@@ -19,6 +19,11 @@ class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
 class MHPayUrlSchemeHandler;
+
+namespace tor {
+class TorProxy;
+}
+
 namespace auth {
 class AuthJavascript;
 class Auth;
@@ -114,7 +119,7 @@ public:
 
 public:
 
-    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
+    explicit MainWindow(initializer::InitializerJavascript &initializerJs, tor::TorProxy &torProxy, QWidget *parent = nullptr);
 
     ~MainWindow() override;
 

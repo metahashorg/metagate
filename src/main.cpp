@@ -176,7 +176,6 @@ int main(int argc, char *argv[]) {
         printCurrentYear();
 
         tor::TorProxy tor;
-        tor.start();
 
         NetwrokTesting nettesting;
         nettesting.start();
@@ -187,7 +186,7 @@ int main(int argc, char *argv[]) {
 
         using namespace initializer;
 
-        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), std::ref(tor), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
         const std::shared_future<InitUtils::Return> utils = initManager.addInit<InitUtils>(mainWindow);
@@ -215,6 +214,7 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitProxyClient::Return> proxyClient = initManager.addInit<InitProxyClient>(mainWindow, metagate);
 
         initManager.complete();
+        tor.start();
 
         const int returnCode = app.exec();
         LOG << "Return code " << returnCode;

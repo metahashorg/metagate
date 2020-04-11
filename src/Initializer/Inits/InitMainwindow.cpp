@@ -32,9 +32,9 @@ void InitMainWindow::sendInitSuccess(const TypedException &exception) {
     sendState("init", false, exception);
 }
 
-InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler, bool hide) {
+InitMainWindow::Return InitMainWindow::initialize(InitializerJavascript &initializerJs, tor::TorProxy &torProxy, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler, bool hide) {
     const TypedException exception = apiVrapper2([&, this] {
-        mainWindow = std::make_unique<MainWindow>(initializerJs);
+        mainWindow = std::make_unique<MainWindow>(initializerJs, torProxy);
         mainWindow->setWindowTitle(APPLICATION_NAME + QString::fromStdString(" -- " + versionString + " " + typeString + " " + gitString));
         if (!hide)
             mainWindow->showExpanded();

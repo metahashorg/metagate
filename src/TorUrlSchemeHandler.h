@@ -14,11 +14,16 @@ class QWebEngineUrlRequestJob;
 class MainWindow;
 class QNetworkReply;
 
-class TorUrlSchemeHandler : public QWebEngineUrlSchemeHandler {
+class TorUrlSchemeHandler : public QWebEngineUrlSchemeHandler
+{
+    Q_OBJECT
 public:
     explicit TorUrlSchemeHandler(QObject *parent = nullptr);
 
     void requestStarted(QWebEngineUrlRequestJob *job) override;
+
+public slots:
+    void setProxy(quint16 port);
 
 private slots:
     void onRequestFinished();
@@ -33,8 +38,6 @@ private:
 
 private:
     QNetworkAccessManager *m_manager;
-    QNetworkProxy proxy;
-
 //    bool isFirstRun = false;
 
     std::vector<QNetworkReply*> requests;

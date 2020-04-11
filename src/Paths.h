@@ -29,6 +29,10 @@ QString getProxyConfigPath();
 
 QString getLocalServerPath();
 
+QString getTorConfigPath();
+
+QString getTorDataPath();
+
 void clearAutoupdatersPath();
 
 void initializeAllPaths();

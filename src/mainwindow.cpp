@@ -42,6 +42,7 @@
 
 #include "mhurlschemehandler.h"
 #include "TorUrlSchemeHandler.h"
+#include "TorProxy.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
@@ -93,7 +94,7 @@ void WebUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
         }
 }
 
-MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
+MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, tor::TorProxy &torProxy, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.png"), this))
@@ -169,6 +170,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     TorUrlSchemeHandler *torShemeHandler = new TorUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArrayLiteral("tor"), torShemeHandler);
+    Q_CONNECT(&torProxy, &tor::TorProxy::torProxyStarted, torShemeHandler, &TorUrlSchemeHandler::setProxy);
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -590,11 +592,11 @@ END_SLOT_WRAPPER
 void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
     LOG << "command line " << text1;
 
-    const static QString HTTP_1_PREFIX = "http://";
-    const static QString HTTP_2_PREFIX = "https://";
+    const static QString HTTP_1_PREFIX = QLatin1String("http://");
+    const static QString HTTP_2_PREFIX = QLatin1String("https://");
 
-    const static QString TOR_1_PREFIX = "tor://";
-    const static QString TOR_2_PREFIX = "tors://";
+    const static QString TOR_1_PREFIX = QLatin1String("tor://");
+    const static QString TOR_2_PREFIX = QLatin1String("tors://");
 
     QString text = text1;
     if (text.endsWith('/')) {
