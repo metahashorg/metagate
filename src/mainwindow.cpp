@@ -86,12 +86,19 @@ void WebUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
 {
     qDebug() << info.requestUrl();
     QUrl url = info.requestUrl();
-    if (url.scheme() == QLatin1String("http"))
-        if (url.host().endsWith(QLatin1String(".onion"))) {
+    if (url.host().endsWith(QLatin1String(".onion"))) {
+        if (url.scheme() == QLatin1String("http"))
+        {
             url.setScheme(QStringLiteral("tor"));
             qDebug() << url;
             info.redirect(url);
+        } else if (url.scheme() == QLatin1String("https"))
+        {
+            url.setScheme(QStringLiteral("tors"));
+            qDebug() << url;
+            info.redirect(url);
         }
+    }
 }
 
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, tor::TorProxy &torProxy, QWidget *parent)
@@ -170,6 +177,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, tor::T
 
     TorUrlSchemeHandler *torShemeHandler = new TorUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArrayLiteral("tor"), torShemeHandler);
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArrayLiteral("tors"), torShemeHandler);
     Q_CONNECT(&torProxy, &tor::TorProxy::torProxyStarted, torShemeHandler, &TorUrlSchemeHandler::setProxy);
 
     shemeHandler = new MHUrlSchemeHandler(this);
