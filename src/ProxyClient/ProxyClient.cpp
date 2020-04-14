@@ -21,7 +21,7 @@ namespace proxy_client {
 ProxyClient::ProxyClient(metagate::MetaGate &metagate, QObject *parent)
     : TimerClass(20s, parent)
     , proxyClient(new LocalClient(getLocalServerPath(), this))
-    , mhProxyStatus(false)
+    , mhProxyActive(false)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 
@@ -111,7 +111,7 @@ void ProxyClient::onGetMHProxyStatus(const ProxyClient::GetMHProxyStatusCallback
 {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
-        return mhProxyStatus;
+        return mhProxyActive;
     }, callback);
 END_SLOT_WRAPPER
 }
@@ -150,13 +150,17 @@ void ProxyClient::checkServiceState()
 BEGIN_SLOT_WRAPPER
     proxyClient->sendRequest(makeGetStatusMessage(), [this](const LocalClient::Response &response) {
         if (response.exception.isSet()) {
-            mhProxyStatus = false;
+            mhProxyActive = false;
         } else {
             QString status;
             QString hwid;
-            status = parseProxyStatusResponse(response.response, hwid, mhProxyStatus);
+            bool active = mhProxyActive;
+            status = parseProxyStatusResponse(response.response, hwid, mhProxyActive);
             if (hwid != hardwareId) {
                 LOG << "HW ids are not same: " << hardwareId << " - " << hwid;
+            }
+            if (active != mhProxyActive) {
+                LOG << "Proxy status changed: " << mhProxyActive;
             }
         }
     });
