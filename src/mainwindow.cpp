@@ -569,10 +569,15 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
 
     const static QString HTTP_1_PREFIX = "http://";
     const static QString HTTP_2_PREFIX = "https://";
+    const static QLatin1String  SEARCH_PREFIX = QLatin1String("app://Search:");
 
     QString text = text1;
     if (text.endsWith('/')) {
         text = text.left(text.size() - 1);
+    }
+
+    if (text.startsWith(SEARCH_PREFIX)) {
+        text = text.mid(SEARCH_PREFIX.size());
     }
 
     if (isNoEnterDuplicate && text == currentTextCommandLine) {
@@ -592,7 +597,8 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             const QString plained = td.toPlainText();
             const PageInfo &searchPage = pagesMappings.getSearchPage();
             QString link = searchPage.page;
-            link += plained;
+            qDebug() << link;
+            link += QString::fromLatin1(QUrl::toPercentEncoding(plained));
             LOG << "Search page " << link;
             addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text2, isAddToHistory, true);
             registerAllWebChannels();
