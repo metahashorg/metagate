@@ -78,7 +78,7 @@ private:
 
 private:
     LocalClient *proxyClient;
-    bool mhProxyStatus;
+    bool mhProxyActive;
     QString hardwareId;
 };
 
