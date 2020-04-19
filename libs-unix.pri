@@ -1,4 +1,3 @@
-INCLUDEPATH += /usr/local/include/c++/7.1/
 INCLUDEPATH += $$PWD/3rdparty $$PWD/3rdparty/quazip/include $$PWD
 INCLUDEPATH += $$PWD/3rdparty/openssl/include/
 INCLUDEPATH += $$PWD/3rdparty/cryptopp/include/

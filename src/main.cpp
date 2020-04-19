@@ -46,6 +46,7 @@
 #include "Initializer/Inits/InitProxyClient.h"
 
 #include "MhPayEventHandler.h"
+#include <QSslSocket>
 #include <QDebug>
 #include <QProcess>
 #include <QDir>
@@ -89,6 +90,9 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName("MetaGate");
     QCoreApplication::setApplicationVersion(QStringLiteral(VERSION_STRING));
     app.setQuitOnLastWindowClosed(false);
+
+    LOG << "Build SSL version: " << QSslSocket::sslLibraryBuildVersionString();
+    LOG << "Current SSL version: " << QSslSocket::sslLibraryVersionString();
 
     QCommandLineParser parser;
     parser.setApplicationDescription("MetaGate");
