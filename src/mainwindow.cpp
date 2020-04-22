@@ -647,6 +647,10 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     if (pageInfo.isApp || pageInfo.isRedirectShemeHandler) {
         doProcessCommand(pageInfo);
         return;
+    } else if (text.startsWith(HTTP_1_PREFIX) || text.startsWith(HTTP_2_PREFIX)) {
+        addElementToHistoryAndCommandLine(text, isAddToHistory, true);
+        unregisterAllWebChannels();
+        loadUrl(text);
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
         const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\", \"net\": \"" + netDns + "\"}}";
