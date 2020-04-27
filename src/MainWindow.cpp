@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include <map>
 #include <mutex>
@@ -13,6 +13,7 @@
 #include <QTextDocument>
 #include <QLineEdit>
 #include <QWebEngineProfile>
+#include <QWebEngineSettings>
 #include <QKeyEvent>
 #include <QApplicationStateChangeEvent>
 #include <QMenu>
@@ -23,7 +24,7 @@
 #include <QSystemTrayIcon>
 #include <QDesktopWidget>
 
-#include "ui_mainwindow.h"
+#include "ui_MainWindow.h"
 
 #include "Network/WebSocketClient.h"
 #include "JavascriptWrapper.h"
@@ -76,6 +77,7 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
 
     return false;
 }
+
 
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
@@ -149,7 +151,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
-    channel = std::make_unique<QWebChannel>(ui->webView->page());
+
+    channel = std::make_unique<QWebChannel>(ui->webView);
     ui->webView->page()->setWebChannel(channel.get());
     registerWebChannel(QString("initializer"), &initializerJs);
 
@@ -248,25 +251,29 @@ void MainWindow::registerWebChannel(const QString &name, QObject *obj) {
 }
 
 void MainWindow::unregisterAllWebChannels() {
-    if (!isRegisteredWebChannels) {
+    if (!ui->webView->page()->webChannel()) {
         return;
     }
     LOG << "Unregister all channels";
-    for (const auto &pair: registeredWebChannels) {
-        channel->deregisterObject(pair.second);
-    }
-    isRegisteredWebChannels = false;
+    ui->webView->page()->setWebChannel(nullptr);
+
+    //for (const auto &pair: registeredWebChannels) {
+    //    channel->deregisterObject(pair.second);
+    //}
+    //isRegisteredWebChannels = false;
 }
 
 void MainWindow::registerAllWebChannels() {
-    if (isRegisteredWebChannels) {
+    //ui->webView->page()->setWebChannel(nullptr);
+    if (ui->webView->page()->webChannel()) {
         return;
     }
     LOG << "Register all channels";
-    for (const auto &pair: registeredWebChannels) {
-        channel->registerObject(pair.first, pair.second);
-    }
-    isRegisteredWebChannels = true;
+    ui->webView->page()->setWebChannel(channel.get());
+//    for (const auto &pair: registeredWebChannels) {
+//        channel->registerObject(pair.first, pair.second);
+//    }
+    //isRegisteredWebChannels = true;
 }
 
 void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SetJavascriptWrapperCallback &callback) {
@@ -795,6 +802,7 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
 
 void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
+        qDebug() << "URL new " << url2;
     const QString url = url2.toString();
     const Optional<PageInfo> found = pagesMappings.findName(url);
     if (found.has_value()) {
@@ -854,7 +862,8 @@ END_SLOT_WRAPPER
 
 void MainWindow::onJsRun(QString jsString) {
 BEGIN_SLOT_WRAPPER
-    if (isRegisteredWebChannels) {
+    //if (isRegisteredWebChannels) {
+    if (ui->webView->page()->webChannel()) {
         ui->webView->page()->runJavaScript(jsString);
     } else {
         LOG << "Revert javascript";

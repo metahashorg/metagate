@@ -929,7 +929,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QWebEngineView" name="webView" native="true">
+     <widget class="WebView" name="webView" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
@@ -964,9 +964,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QWebEngineView</class>
+   <class>WebView</class>
    <extends>QWidget</extends>
-   <header location="global">qwebengineview.h</header>
+   <header location="global">WebView.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 #include <QWebChannel>
+#include <QWebEnginePage>
 
 #include "Network/SimpleClient.h"
 #include "Uploader.h"
@@ -293,7 +294,7 @@ private:
     QUrl saveUrlToMove;
 
     std::vector<std::pair<QString, QObject*>> registeredWebChannels;
-    bool isRegisteredWebChannels = true;
+    //bool isRegisteredWebChannels = true;
 };
 
 #endif // MAINWINDOW_H
