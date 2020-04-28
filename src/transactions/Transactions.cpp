@@ -10,7 +10,7 @@ using namespace std::placeholders;
 #include "Paths.h"
 #include "qt_utilites/QRegister.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "auth/Auth.h"
 #include "Wallets/Wallet.h"
 #include "NsLookup/NsLookup.h"

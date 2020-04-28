@@ -6,7 +6,7 @@ using namespace std::placeholders;
 #include "transactions/TransactionsDBStorage.h"
 #include "transactions/TransactionsJavascript.h"
 #include "transactions/Transactions.h"
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"

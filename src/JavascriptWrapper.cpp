@@ -20,7 +20,7 @@ using namespace std::placeholders;
 #include "Wallets/EthWallet.h"
 #include "Wallets/BtcWallet.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "NsLookup/NsLookup.h"
 

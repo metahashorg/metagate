@@ -39,7 +39,7 @@
 #include "Paths.h"
 #include "qt_utilites/QRegister.h"
 
-#include "mhurlschemehandler.h"
+#include "MHUrlSchemeHandler.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"

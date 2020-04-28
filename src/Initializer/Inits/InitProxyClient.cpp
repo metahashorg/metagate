@@ -6,7 +6,7 @@ using namespace std::placeholders;
 #include "ProxyClient/ProxyClient.h"
 #include "ProxyClient/ProxyClientJavascript.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"
