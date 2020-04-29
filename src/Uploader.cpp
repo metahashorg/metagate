@@ -15,7 +15,7 @@
 #include <QApplication>
 #include <QDebug>
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "auth/Auth.h"
 
 #include "check.h"

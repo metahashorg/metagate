@@ -1,6 +1,6 @@
 #include "InitMainwindow.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "MhPayEventHandler.h"
 

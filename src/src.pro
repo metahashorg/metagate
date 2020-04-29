@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = MetaGate
 
 DEFINES += VERSION_STRING=\\\"1.20.3\\\"
-DEFINES += VERSION_SETTINGS=\\\"10.5\\\"
+DEFINES += VERSION_SETTINGS=\\\"11.0\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -35,7 +35,7 @@ SOURCES += main.cpp MainWindow.cpp \
     NsLookup/dns/resourcerecord.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
-    mhurlschemehandler.cpp \
+    MHUrlSchemeHandler.cpp \
     Paths.cpp \
     RunGuard.cpp \
     Messenger/Messenger.cpp \
@@ -150,7 +150,7 @@ HEADERS += MainWindow.h \
     NsLookup/dns/resourcerecord.h \
     JavascriptWrapper.h \
     PagesMappings.h \
-    mhurlschemehandler.h \
+    MHUrlSchemeHandler.h \
     Paths.h \
     RunGuard.h \
     Messenger/Messenger.h \

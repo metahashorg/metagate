@@ -39,7 +39,7 @@
 #include "Paths.h"
 #include "qt_utilites/QRegister.h"
 
-#include "mhurlschemehandler.h"
+#include "MHUrlSchemeHandler.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
@@ -180,7 +180,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     //Q_CONNECT(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished);
 
-    Q_CONNECT(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged);
+    Q_CONNECT(ui->webView, &WebView::urlChanged, this, &MainWindow::onUrlChanged);
 
     correctWindowSize(0);
 }
@@ -815,7 +815,10 @@ BEGIN_SLOT_WRAPPER
         prevIsApp = found.value().isApp;
         addElementToHistoryAndCommandLine(found.value().printedName, true, false);
     } else {
-        if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
+        if (url2.scheme() == QLatin1String("http") || url2.scheme() == QLatin1String("https")) {
+            unregisterAllWebChannels();
+            addElementToHistoryAndCommandLine(url, true, false);
+        } else if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
             const QString request = url.mid(prevUrl.size());
             LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
             if (!prevIsApp) {

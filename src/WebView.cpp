@@ -11,10 +11,10 @@ SET_LOG_NAMESPACE("MW");
 WebPage::WebPage(QObject *parent)
     : QWebEnginePage(parent)
 {
-    connect(this, &QWebEnginePage::urlChanged, [](const QUrl &url){
+/*    connect(this, &QWebEnginePage::urlChanged, [](const QUrl &url){
         qDebug() << "New URL " << url;
     });
-
+*/
     connect(this, &QWebEnginePage::loadStarted, [](){
         qDebug() << "LOAD started";
     });
