@@ -22,7 +22,7 @@
 #include "Network/NetwrokTesting.h"
 #include "NsLookup/NsLookup.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include <QDir>
 #include <QApplication>

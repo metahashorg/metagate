@@ -5,7 +5,7 @@ using namespace std::placeholders;
 
 #include "Wallets/Wallets.h"
 #include "Wallets/WalletsJavascript.h"
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"

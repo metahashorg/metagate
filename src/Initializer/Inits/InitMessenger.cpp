@@ -8,7 +8,7 @@ using namespace std::placeholders;
 #include "Messenger/MessengerDBStorage.h"
 #include "Messenger/CryptographicManager.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"

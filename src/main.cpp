@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #ifndef _WIN32
 #include <signal.h>

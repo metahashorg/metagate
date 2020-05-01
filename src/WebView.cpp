@@ -11,12 +11,15 @@ SET_LOG_NAMESPACE("MW");
 WebPage::WebPage(QObject *parent)
     : QWebEnginePage(parent)
 {
-    connect(this, &QWebEnginePage::urlChanged, [](const QUrl &url){
+/*    connect(this, &QWebEnginePage::urlChanged, [](const QUrl &url){
         qDebug() << "New URL " << url;
     });
-
-    connect(this, &QWebEnginePage::loadStarted, [](){
+*/
+    connect(this, &QWebEnginePage::loadStarted, [this](){
         qDebug() << "LOAD started";
+        WebView *view = qobject_cast<WebView *>(this->parent());
+        if (view)
+            view->setPage(this);
     });
 }
 
@@ -30,9 +33,6 @@ QWebEnginePage *WebPage::createWindow(QWebEnginePage::WebWindowType type)
     if (type != QWebEnginePage::WebBrowserTab)
         return nullptr;
     WebPage *page = new WebPage(this->parent());
-    WebView *view = qobject_cast<WebView *>(this->parent());
-    if (view)
-        view->setPage(page);
     return page;
 }
 

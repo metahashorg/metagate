@@ -4,7 +4,7 @@
 using namespace std::placeholders;
 
 #include "JavascriptWrapper.h"
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"
