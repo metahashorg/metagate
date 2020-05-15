@@ -599,13 +599,13 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             if (text2.startsWith(APP_URL)) {
                 text2 = text2.mid(APP_URL.size());
             }
-            QTextDocument td;
-            td.setHtml(text2);
-            const QString plained = td.toPlainText();
+            //QTextDocument td;
+            //td.setHtml(text2);
+            //const QString plained = td.toPlainText();
             const PageInfo &searchPage = pagesMappings.getSearchPage();
             QString link = searchPage.page;
             qDebug() << link;
-            link += QString::fromLatin1(QUrl::toPercentEncoding(plained));
+            link += QString::fromLatin1(QUrl::toPercentEncoding(text2));
             LOG << "Search page " << link;
             addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text2, isAddToHistory, true);
             registerAllWebChannels();
@@ -804,6 +804,9 @@ void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
         qDebug() << "URL new " << url2;
     const QString url = url2.toString();
+    const QString turl = QUrl::fromPercentEncoding(url.toUtf8());
+    //const QString url = url2.toDisplayString(QUrl::None);
+
     const Optional<PageInfo> found = pagesMappings.findName(url);
     if (found.has_value()) {
         LOG << "Set address after load " << found.value().printedName;
@@ -818,8 +821,8 @@ BEGIN_SLOT_WRAPPER
         if (url2.scheme() == QLatin1String("http") || url2.scheme() == QLatin1String("https")) {
             unregisterAllWebChannels();
             addElementToHistoryAndCommandLine(url, true, false);
-        } else if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
-            const QString request = url.mid(prevUrl.size());
+        } else if (!prevUrl.isNull() && !prevUrl.isEmpty() && turl.startsWith(prevUrl)) {
+            const QString request = turl.mid(prevUrl.size());
             LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
             if (!prevIsApp) {
                 unregisterAllWebChannels();
