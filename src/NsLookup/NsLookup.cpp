@@ -19,6 +19,7 @@
 #include "Paths.h"
 #include "qt_utilites/QRegister.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
+#include "Network/SimpleClient.h"
 
 #include "utilites/algorithms.h"
 
@@ -66,6 +67,7 @@ static QString getAddressWithoutHttp(const QString &address) {
 NsLookup::NsLookup(InfrastructureNsLookup &infrastructureNsl)
     : TimerClass(1s, nullptr)
     , infrastructureNsl(infrastructureNsl)
+    , client(new SimpleClient(this))
 {
     Q_CONNECT(this, &NsLookup::getStatus, this, &NsLookup::onGetStatus);
     Q_CONNECT(this, &NsLookup::rejectServer, this, &NsLookup::onRejectServer);
@@ -131,11 +133,9 @@ NsLookup::NsLookup(InfrastructureNsLookup &infrastructureNsl)
 
     Q_CONNECT(&udpClient, &UdpSocketClient::callbackCall, this, &NsLookup::callbackCall);
 
-    client.setParent(this);
-    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall);
+    Q_CONNECT(client, &SimpleClient::callbackCall, this, &NsLookup::callbackCall);
 
     udpClient.mvToThread(TimerClass::getThread());
-    client.moveToThread(TimerClass::getThread());
     moveToThread(TimerClass::getThread());
 
     udpClient.startTm();
@@ -356,8 +356,8 @@ static NodeInfo preParseNodeInfo(const QString &address, const SimpleClient::Res
     return info;
 }
 
-static NodeResponse defaultResponseParser(const std::string &response, const std::string &error) {
-    if (response.empty() && error.empty()) {
+static NodeResponse defaultResponseParser(const QByteArray &response, const std::string &error) {
+    if (response.isEmpty() && error.empty()) {
         return NodeResponse(false);
     } else {
         return NodeResponse(true);
@@ -376,8 +376,8 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
     CHECK(countSteps != 0, "Incorrect countSteps");
     std::vector<QString> currentIps(ipsIter, ipsIter + countSteps);
 
-    emit infrastructureNsl.getRequestFornode(node.type, InfrastructureNsLookup::GetFormatRequestCallback([this, currentIps, &allNodesForTypesNew, &ipsTemp, continueResolve, node, ipsIter, countSteps](bool found, const QString &get, const QString &post, const std::function<NodeResponse(const std::string &response, const std::string &error)> &processResponse){
-        std::function<NodeResponse(const std::string &response, const std::string &error)> pResponse = found ? processResponse : defaultResponseParser;
+    emit infrastructureNsl.getRequestFornode(node.type, InfrastructureNsLookup::GetFormatRequestCallback([this, currentIps, &allNodesForTypesNew, &ipsTemp, continueResolve, node, ipsIter, countSteps](bool found, const QString &get, const QByteArray &post, const std::function<NodeResponse(const QByteArray &response, const std::string &error)> &processResponse){
+        std::function<NodeResponse(const QByteArray &response, const std::string &error)> pResponse = found ? processResponse : defaultResponseParser;
         std::vector<QUrl> getRequests;
         getRequests.reserve(currentIps.size());
         std::transform(currentIps.begin(), currentIps.end(), std::back_inserter(getRequests), [&get](const QString &ip) {
@@ -385,7 +385,7 @@ void NsLookup::continuePing(std::vector<QString>::const_iterator ipsIter, const 
             getRequest.setPath(get);
             return getRequest;
         });
-        client.sendMessagesPost(node.node.str().toStdString(), getRequests, post, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, currentIps, ipsIter, countSteps, pResponse](const std::vector<SimpleClient::Response> &results) {
+        client->sendMessagesPost(node.node.str().toStdString(), getRequests, post, [this, &allNodesForTypesNew, &ipsTemp, continueResolve, node, currentIps, ipsIter, countSteps, pResponse](const std::vector<SimpleClient::Response> &results) {
             const TypedException exception = apiVrapper2([&]{
                 CHECK(currentIps.size() == results.size(), "Incorrect results");
                 for (size_t i = 0; i < results.size(); i++) {
@@ -441,8 +441,8 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
         continueResolve();
         return;
     }
-    emit infrastructureNsl.getRequestFornode(node.type, InfrastructureNsLookup::GetFormatRequestCallback([this, currentIps, continueResolve, node, processVectPos](bool found, const QString &get, const QString &post, const std::function<NodeResponse(const std::string &response, const std::string &error)> &processResponse){
-        std::function<NodeResponse(const std::string &response, const std::string &error)> pResponse = found ? processResponse : defaultResponseParser;
+    emit infrastructureNsl.getRequestFornode(node.type, InfrastructureNsLookup::GetFormatRequestCallback([this, currentIps, continueResolve, node, processVectPos](bool found, const QString &get, const QByteArray &post, const std::function<NodeResponse(const QByteArray &response, const std::string &error)> &processResponse){
+        std::function<NodeResponse(const QByteArray &response, const std::string &error)> pResponse = found ? processResponse : defaultResponseParser;
         std::vector<QUrl> getRequests;
         getRequests.reserve(currentIps.size());
         std::transform(currentIps.begin(), currentIps.end(), std::back_inserter(getRequests), [&get](const QString &ip) {
@@ -450,7 +450,7 @@ void NsLookup::continuePingSafe(const NodeType &node, const std::vector<QString>
             getRequest.setPath(get);
             return getRequest;
         });
-        client.sendMessagesPost(node.node.str().toStdString(), getRequests, post, [this, continueResolve, node, currentIps, processVectPos, pResponse](const std::vector<SimpleClient::Response> &results) {
+        client->sendMessagesPost(node.node.str().toStdString(), getRequests, post, [this, continueResolve, node, currentIps, processVectPos, pResponse](const std::vector<SimpleClient::Response> &results) {
             const TypedException exception = apiVrapper2([&]{
                 CHECK(processVectPos.size() == results.size(), "Incorrect result");
                 for (size_t i = 0; i < results.size(); i++) {

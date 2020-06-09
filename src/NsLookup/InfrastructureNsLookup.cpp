@@ -81,16 +81,16 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-static NodeResponse proxyResponseParser(const std::string &response, const std::string &error) {
-    if (response.empty() && error.empty()) {
+static NodeResponse proxyResponseParser(const QByteArray &response, const std::string &error) {
+    if (response.isEmpty() && error.empty()) {
         return NodeResponse(false);
     } else {
         return NodeResponse(true);
     }
 }
 
-static NodeResponse torrentResponseParser(const std::string &response, const std::string &/*error*/) {
-    if (response.empty()) {
+static NodeResponse torrentResponseParser(const QByteArray &response, const std::string &/*error*/) {
+    if (response.isEmpty()) {
         return NodeResponse(false);
     } else {
         if (response.front() == '{' && response.back() == '}') {
@@ -103,16 +103,16 @@ static NodeResponse torrentResponseParser(const std::string &response, const std
 
 void InfrastructureNsLookup::onGetRequestFornode(const QString &type, const GetFormatRequestCallback &callback) {
 BEGIN_SLOT_WRAPPER
-    runAndEmitCallback([&]() -> std::tuple<bool, QString, QString, std::function<NodeResponse(const std::string &response, const std::string &error)>>{
+    runAndEmitCallback([&]() -> std::tuple<bool, QString, QByteArray, std::function<NodeResponse(const QByteArray &response, const std::string &error)>>{
         for (const auto &pair: infrastructure) {
             const Nodes &node = pair.second;
             if (type == node.proxy) {
-                return std::make_tuple(true, "", "", proxyResponseParser);
+                return std::make_tuple(true, "", QByteArray(), proxyResponseParser);
             } else if (type == node.torrent || type == node.contractTorrent) {
-                return std::make_tuple(true, "/status", "", torrentResponseParser);
+                return std::make_tuple(true, "/status", QByteArray(), torrentResponseParser);
             }
         }
-        return std::make_tuple(false, "", "", nullptr);
+        return std::make_tuple(false, "", QByteArray(), nullptr);
     }, callback);
 END_SLOT_WRAPPER
 }

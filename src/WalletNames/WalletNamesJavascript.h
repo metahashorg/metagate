@@ -24,7 +24,7 @@ public slots:
 
     Q_INVOKABLE void getKeyName(QString address);
 
-    Q_INVOKABLE void getAllWalletsInCurrency(QString currency);
+    Q_INVOKABLE void getAllWalletsInCurrency(QString currency, QString empty);
 
     Q_INVOKABLE void advanceFill(QString jsonNames);
 

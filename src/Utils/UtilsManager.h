@@ -6,8 +6,7 @@
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/ManagerWrapper.h"
 
-#include "Network/SimpleClient.h"
-
+class SimpleClient;
 struct TypedException;
 
 namespace utils {
@@ -105,7 +104,7 @@ private:
 
     QWidget *widget_ = nullptr;
 
-    SimpleClient client;
+    SimpleClient *client;
 
 };
 

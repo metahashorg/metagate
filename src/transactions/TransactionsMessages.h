@@ -14,39 +14,39 @@ struct Transaction;
 struct BlockInfo;
 struct SendParameters;
 
-QString makeGetBalanceRequest(const QString &address);
+QByteArray makeGetBalanceRequest(const QString &address);
 
-BalanceInfo parseBalanceResponse(const QString &response);
+BalanceInfo parseBalanceResponse(const QByteArray &response);
 
-QString makeGetBalancesRequest(const std::vector<QString> &addresses);
+QByteArray makeGetBalancesRequest(const std::vector<QString> &addresses);
 
-void parseBalancesResponseWithHandler(const QString &response, const std::function<void(const BalanceInfo &info)> &handler);
+void parseBalancesResponseWithHandler(const QByteArray &response, const std::function<void(const BalanceInfo &info)> &handler);
 
-std::vector<BalanceInfo> parseBalancesResponse(const QString &response);
+std::vector<BalanceInfo> parseBalancesResponse(const QByteArray &response);
 
-std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QString &response);
+std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QByteArray &response);
 
-QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t fromTx, uint64_t cnt);
+QByteArray makeGetHistoryRequest(const QString &address, bool isCnt, qulonglong fromTx, qulonglong cnt);
 
-QString makeGetTxRequest(const QString &hash);
+QByteArray makeGetTxRequest(const QString &hash);
 
-std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &currency, const QString &response);
+std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &currency, const QByteArray &response);
 
-QString makeSendTransactionRequest(const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign);
+QByteArray makeSendTransactionRequest(const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign);
 
-QString parseSendTransactionResponse(const QString &response);
+QString parseSendTransactionResponse(const QByteArray &response);
 
-Transaction parseGetTxResponse(const QString &response, const QString &address, const QString &currency);
+Transaction parseGetTxResponse(const QByteArray &response, const QString &address, const QString &currency);
 
-QString makeGetBlockInfoRequest(int64_t blockNumber);
+QByteArray makeGetBlockInfoRequest(int64_t blockNumber);
 
-BlockInfo parseGetBlockInfoResponse(const QString &response);
+BlockInfo parseGetBlockInfoResponse(const QByteArray &response);
 
-QString makeGetCountBlocksRequest();
+QByteArray makeGetCountBlocksRequest();
 
-int64_t parseGetCountBlocksResponse(const QString &response);
+int64_t parseGetCountBlocksResponse(const QByteArray &response);
 
-SendParameters parseSendParamsInternal(const QString &paramsJson);
+SendParameters parseSendParamsInternal(const QByteArray &paramsJson);
 
 }
 

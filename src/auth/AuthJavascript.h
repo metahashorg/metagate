@@ -28,7 +28,7 @@ public slots:
 
     Q_INVOKABLE void logout();
 
-    Q_INVOKABLE void check();
+    Q_INVOKABLE void check(const QString &empty);
 
     Q_INVOKABLE void forceRefresh();
 

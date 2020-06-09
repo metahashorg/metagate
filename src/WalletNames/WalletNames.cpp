@@ -22,6 +22,7 @@
 #include "WalletNamesDbStorage.h"
 #include "WalletNamesMessages.h"
 #include "qt_utilites/ManagerWrapperImpl.h"
+#include "Network/SimpleClient.h"
 
 #include "Wallets/WalletInfo.h"
 #include "Wallets/Wallets.h"
@@ -39,6 +40,7 @@ const QString WALLET_CURRENCY_ETH = "eth";
 
 WalletNames::WalletNames(WalletNamesDbStorage &db, auth::Auth &authManager, WebSocketClient &client, wallets::Wallets &wallets)
     : TimerClass(5min, nullptr)
+    , httpClient(new SimpleClient(this))
     , db(db)
     , client(client)
     , wallets(wallets)
@@ -68,9 +70,7 @@ WalletNames::WalletNames(WalletNamesDbStorage &db, auth::Auth &authManager, WebS
 
     emit authManager.reEmit();
 
-    httpClient.setParent(this);
-    Q_CONNECT(&httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall);
-    httpClient.moveToThread(TimerClass::getThread());
+    Q_CONNECT(httpClient, &SimpleClient::callbackCall, this, &WalletNames::callbackCall);
 
     hwid = QString::fromStdString(getMachineUid());
 
@@ -112,7 +112,7 @@ void WalletNames::getAllWalletsApps() {
     LOG << "Sync wallets";
     const auto callbackAppVersion = [this](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const std::vector<WalletInfo> wallets = parseAddressListResponse(QString::fromStdString(response.response));
+        const std::vector<WalletInfo> wallets = parseAddressListResponse(response.response);
         std::vector<QString> tmhs;
         std::vector<QString> mhcs;
         for (const WalletInfo &wallet: wallets) {
@@ -138,8 +138,8 @@ void WalletNames::getAllWalletsApps() {
 
     stateRequest = StateRequest::Requested;
 
-    const QString req = makeGetWalletsAppsMessage(id.get(), token, hwid);
-    httpClient.sendMessagePost(QUrl(serverName), req, callbackAppVersion, timeout);
+    const QByteArray req = makeGetWalletsAppsMessage(id.get(), token, hwid);
+    httpClient->sendMessagePost(QUrl(serverName), req, callbackAppVersion, timeout);
 }
 
 void WalletNames::onAddOrUpdateWallets(const std::vector<WalletInfo> &infos, const AddWalletsNamesCallback &callback) {
@@ -162,8 +162,8 @@ BEGIN_SLOT_WRAPPER
         }
         emit client.sendMessage(message);
 
-        const QString message2 = makeRenameMessageHttp(address, name, WALLET_CURRENCY_MTH, id.get(), token, hwid);
-        emit httpClient.sendMessagePost(serverName, message2, [](const SimpleClient::Response &response) {
+        const QByteArray message2 = makeRenameMessageHttp(address, name, WALLET_CURRENCY_MTH, id.get(), token, hwid);
+        emit httpClient->sendMessagePost(serverName, message2, [](const SimpleClient::Response &response) {
             CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
         });
     }, callback);
@@ -386,9 +386,9 @@ BEGIN_SLOT_WRAPPER
     if (userName != username) {
         return;
     }
-    const QString message = makeCreateWatchWalletMessage(id.get(), token, hwid, address, isMhc);
+    const QByteArray message = makeCreateWatchWalletMessage(id.get(), token, hwid, address, isMhc);
 
-    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const SimpleClient::Response &response) {
+    httpClient->sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), response.exception.toString());
     }));
 END_SLOT_WRAPPER
@@ -399,9 +399,9 @@ BEGIN_SLOT_WRAPPER
     if (userName != username) {
         return;
     }
-    const QString message = makeRemoveWatchWalletMessage(id.get(), token, hwid, address, isMhc);
+    const QByteArray message = makeRemoveWatchWalletMessage(id.get(), token, hwid, address, isMhc);
 
-    httpClient.sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const SimpleClient::Response &response) {
+    httpClient->sendMessagePost(serverName, message, SimpleClient::ClientCallback([](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), response.exception.toString());
     }));
 END_SLOT_WRAPPER

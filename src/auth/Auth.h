@@ -1,12 +1,11 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "Network/SimpleClient.h"
-
 #include "qt_utilites/TimerClass.h"
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/ManagerWrapper.h"
 
+class SimpleClient;
 struct TypedException;
 
 namespace auth
@@ -108,21 +107,21 @@ private:
     template<typename Func>
     void runCallback(const Func &callback);
 
-    QString makeLoginRequest(const QString &login, const QString &password) const;
+    QByteArray makeLoginRequest(const QString &login, const QString &password) const;
 
-    QString makeCheckTokenRequest(const QString &token) const;
+    QByteArray makeCheckTokenRequest(const QString &token) const;
 
-    QString makeRefreshTokenRequest(const QString &token) const;
+    QByteArray makeRefreshTokenRequest(const QString &token) const;
 
-    LoginInfo parseLoginResponse(const QString &response, const QString &login) const;
+    LoginInfo parseLoginResponse(const QByteArray &response, const QString &login) const;
 
-    bool parseCheckTokenResponse(const QString &response) const;
+    bool parseCheckTokenResponse(const QByteArray &response) const;
 
-    LoginInfo parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const;
+    LoginInfo parseRefreshTokenResponse(const QByteArray &response, const QString &login, bool isTest) const;
 
 private:
     AuthJavascript &javascriptWrapper;
-    SimpleClient tcpClient;
+    SimpleClient *tcpClient;
 
     QString authUrl;
     QString hardwareId;

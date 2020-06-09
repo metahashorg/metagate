@@ -29,7 +29,7 @@ public:
 
     using GetServersCallback = CallbackWrapper<void(const std::vector<QString> &servers)>;
 
-    using GetFormatRequestCallback = CallbackWrapper<void(bool found, const QString &get, const QString &post, const std::function<NodeResponse(const std::string &response, const std::string &error)> &processResponse)>;
+    using GetFormatRequestCallback = CallbackWrapper<void(bool found, const QString &get, const QByteArray &post, const std::function<NodeResponse(const QByteArray &response, const std::string &error)> &processResponse)>;
 
 public:
 

@@ -16,6 +16,7 @@
 #include <QDebug>
 
 #include "MainWindow.h"
+#include "Network/SimpleClient.h"
 #include "auth/Auth.h"
 
 #include "check.h"
@@ -143,6 +144,7 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     : TimerClass(getTimerInterval(), nullptr)
     , auth(auth)
     , mainWindow(mainWindow)
+    , client(new SimpleClient(this))
 {
     serverName = getServerName();
 
@@ -151,10 +153,9 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
 
     Q_CONNECT(&auth, &auth::Auth::logined, this, &Uploader::onLogined);
 
-    client.setParent(this);
 
     Q_CONNECT(this, &Uploader::callbackCall, this, &Uploader::onCallbackCall);
-    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Uploader::callbackCall);
+    Q_CONNECT(client, &SimpleClient::callbackCall, this, &Uploader::callbackCall);
 
     Q_REG(Uploader::Callback, "Uploader::Callback");
 
@@ -168,8 +169,6 @@ Uploader::Uploader(auth::Auth &auth, MainWindow &mainWindow)
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
     CHECK(settings.contains("timeouts_sec/uploader"), "settings timeouts not found");
     timeout = seconds(settings.value("timeouts_sec/uploader").toInt());
-
-    client.moveToThread(TimerClass::getThread());
 
     emit auth.reEmit();
 
@@ -231,7 +230,7 @@ void Uploader::uploadEvent() {
 
     const auto callbackGetHtmls = [this](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
+        const QJsonDocument document = QJsonDocument::fromJson(response.response);
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const auto &dataJson = root.value("data").toObject();
@@ -294,14 +293,14 @@ void Uploader::uploadEvent() {
         countDownloads["html_" + version]++;
         CHECK(countDownloads["html_" + version] < 3, "Maximum download");
         versionHtmlForUpdate = version;
-        client.sendMessageGet(url, interfaceGetCallback); // Без таймаута, так как загрузка большого бинарника
+        client->sendMessageGet(url, interfaceGetCallback); // Без таймаута, так как загрузка большого бинарника
         id++;
     };
-    client.sendMessagePost(
+    client->sendMessagePost(
         QUrl(serverName),
-        QString::fromStdString("{\"id\": \"" + std::to_string(id) +
-           "\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"" + apiToken.toStdString() +
-           "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[]}")
+        QByteArrayLiteral("{\"id\": \"") + QByteArray::number(id) +
+           QByteArrayLiteral("\",\"version\":\"1.0.0\",\"method\":\"interface.get.url\", \"token\":\"") + apiToken.toUtf8() +
+           QByteArrayLiteral("\", \"uid\": \"") + QByteArray::fromStdString(getMachineUid()) + QByteArrayLiteral("\", \"params\":[]}")
         , callbackGetHtmls, timeout
     );
     id++;
@@ -353,7 +352,7 @@ void Uploader::uploadEvent() {
 
         LOG << response.response;
 
-        const QJsonDocument document = QJsonDocument::fromJson(QString::fromStdString(response.response).toUtf8());
+        const QJsonDocument document = QJsonDocument::fromJson(response.response);
         const QJsonObject root = document.object();
         CHECK(root.contains("data") && root.value("data").isObject(), "data field not found");
         const auto &dataJson = root.value("data").toObject();
@@ -366,11 +365,11 @@ void Uploader::uploadEvent() {
 
     qDebug() << "UPDATE" << repoUrl;
     if (repoUrl.isEmpty()) {
-        client.sendMessagePost(
+        client->sendMessagePost(
             QUrl(serverName),
-            QString::fromStdString("{\"id\": \"" + std::to_string(id) +
-               "\",\"version\":\"1.0.0\",\"method\":\"app.repo\", \"token\":\"" + apiToken.toStdString() +
-               "\", \"uid\": \"" + getMachineUid() + "\", \"params\":[{\"platform\": \"" + osName.toStdString() + "\"}]}"),
+            QByteArrayLiteral("{\"id\": \"") + QByteArray::number(id) +
+               QByteArrayLiteral("\",\"version\":\"1.0.0\",\"method\":\"app.repo\", \"token\":\"") + apiToken.toUtf8() +
+               QByteArrayLiteral("\", \"uid\": \"") + QByteArray::fromStdString(getMachineUid()) + QByteArrayLiteral("\", \"params\":[{\"platform\": \"") + osName.toUtf8() + QByteArrayLiteral("\"}]}"),
             callbackRepo, timeout
             );
         id++;

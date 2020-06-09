@@ -12,7 +12,6 @@
 #include "duration.h"
 
 #include "qt_utilites/TimerClass.h"
-#include "Network/SimpleClient.h"
 
 #include "Network/UdpSocketClient.h"
 
@@ -23,6 +22,7 @@
 
 #include "NsLookupStructs.h"
 
+class SimpleClient;
 struct TypedException;
 
 namespace nslookup {
@@ -180,6 +180,8 @@ private:
 
     UdpSocketClient udpClient;
 
+    SimpleClient *client;
+
     QString savedNodesPath;
 
     system_time_point filledFileTp;
@@ -189,8 +191,6 @@ private:
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypes;
 
     std::map<NodeType::Node, std::vector<NodeInfo>> allNodesForTypesBackup;
-
-    SimpleClient client;
 
     std::atomic<bool> isResetFilledFile{false};
 

@@ -15,11 +15,11 @@ SET_LOG_NAMESPACE("TXS");
 
 namespace transactions {
 
-QString makeGetBalanceRequest(const QString &address) {
-    return "{\"id\":1,\"params\":{\"address\": \"" + address + "\"},\"method\":\"fetch-balance\", \"pretty\": false}";
+QByteArray makeGetBalanceRequest(const QString &address) {
+    return QByteArrayLiteral("{\"id\":1,\"params\":{\"address\": \"") + address.toUtf8() + QByteArrayLiteral("\"},\"method\":\"fetch-balance\", \"pretty\": false}");
 }
 
-QString makeGetBalancesRequest(const std::vector<QString> &addresses) {
+QByteArray makeGetBalancesRequest(const std::vector<QString> &addresses) {
     QJsonObject request;
     request.insert("jsonrpc", "2.0");
     request.insert("method", "fetch-balances");
@@ -30,7 +30,7 @@ QString makeGetBalancesRequest(const std::vector<QString> &addresses) {
     }
     params.insert("addresses", addressesJson);
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
 static QString getIntOrString(const QJsonObject &json, const QString &key) {
@@ -76,8 +76,8 @@ static BalanceInfo parseBalanceResponseInternal(const QJsonObject &json) {
     return result;
 }
 
-BalanceInfo parseBalanceResponse(const QString &response) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+BalanceInfo parseBalanceResponse(const QByteArray &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(json1.contains("result") && json1.value("result").isObject(), "Incorrect json: result field not found");
@@ -86,9 +86,9 @@ BalanceInfo parseBalanceResponse(const QString &response) {
     return parseBalanceResponseInternal(json);
 }
 
-void parseBalancesResponseWithHandler(const QString &response, const std::function<void(const BalanceInfo &info)> &handler)
+void parseBalancesResponseWithHandler(const QByteArray &response, const std::function<void(const BalanceInfo &info)> &handler)
 {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(json1.contains("result") && json1.value("result").isArray(), "Incorrect json: result field not found");
@@ -102,7 +102,7 @@ void parseBalancesResponseWithHandler(const QString &response, const std::functi
     }
 }
 
-std::vector<BalanceInfo> parseBalancesResponse(const QString &response)
+std::vector<BalanceInfo> parseBalancesResponse(const QByteArray &response)
 {
     std::vector<BalanceInfo> result;
     parseBalancesResponseWithHandler(response, [&result](const BalanceInfo &info) {
@@ -112,7 +112,7 @@ std::vector<BalanceInfo> parseBalancesResponse(const QString &response)
     return result;
 }
 
-std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QString &response)
+std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QByteArray &response)
 {
     std::map<QString, BalanceInfo> result;
     parseBalancesResponseWithHandler(response, [&result](const BalanceInfo &info) {
@@ -121,16 +121,16 @@ std::map<QString, BalanceInfo> parseBalancesResponseToMap(const QString &respons
     return result;
 }
 
-QString makeGetHistoryRequest(const QString &address, bool isCnt, uint64_t fromTx, uint64_t cnt) {
+QByteArray makeGetHistoryRequest(const QString &address, bool isCnt, qulonglong fromTx, qulonglong cnt) {
     if (!isCnt) {
-        return "{\"id\":1,\"params\":{\"address\": \"" + address + "\"},\"method\":\"fetch-history\", \"pretty\": false}";
+        return QByteArrayLiteral("{\"id\":1,\"params\":{\"address\": \"") + address.toUtf8() + QByteArrayLiteral("\"},\"method\":\"fetch-history\", \"pretty\": false}");
     } else {
-        return "{\"id\":1,\"params\":{\"address\": \"" + address + "\", \"beginTx\": " + QString::number(fromTx) + ", \"countTxs\": " + QString::number(cnt) + "},\"method\":\"fetch-history\", \"pretty\": false}";
+        return QByteArrayLiteral("{\"id\":1,\"params\":{\"address\": \"") + address.toUtf8() + QByteArrayLiteral("\", \"beginTx\": ") + QByteArray::number(fromTx) + QByteArrayLiteral(", \"countTxs\": ") + QByteArray::number(cnt) + QByteArrayLiteral("},\"method\":\"fetch-history\", \"pretty\": false}");
     }
 }
 
-QString makeGetTxRequest(const QString &hash) {
-    return "{\"id\":1,\"params\":{\"hash\": \"" + hash + "\"},\"method\":\"get-tx\", \"pretty\": false}";
+QByteArray makeGetTxRequest(const QString &hash) {
+    return QByteArrayLiteral("{\"id\":1,\"params\":{\"hash\": \"") + hash.toUtf8() + QByteArrayLiteral("\"},\"method\":\"get-tx\", \"pretty\": false}");
 }
 
 static Transaction parseTransaction(const QJsonObject &txJson, const QString &address, const QString &currency) {
@@ -191,8 +191,8 @@ static Transaction parseTransaction(const QJsonObject &txJson, const QString &ad
     return res;
 }
 
-std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &currency, const QString &response) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+std::vector<Transaction> parseHistoryResponse(const QString &address, const QString &currency, const QByteArray &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(json1.contains("result") && json1.value("result").isArray(), "Incorrect json: result field not found");
@@ -212,7 +212,7 @@ std::vector<Transaction> parseHistoryResponse(const QString &address, const QStr
     return result;
 }
 
-QString makeSendTransactionRequest(const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign) {
+QByteArray makeSendTransactionRequest(const QString &to, const QString &value, size_t nonce, const QString &data, const QString &fee, const QString &pubkey, const QString &sign) {
     QJsonObject request;
     request.insert("jsonrpc", "2.0");
     request.insert("method", "mhc_send");
@@ -225,11 +225,11 @@ QString makeSendTransactionRequest(const QString &to, const QString &value, size
     params.insert("pubkey", pubkey);
     params.insert("sign", sign);
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
-QString parseSendTransactionResponse(const QString &response) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+QString parseSendTransactionResponse(const QByteArray &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK_TYPED(!json1.contains("error") || !json1.value("error").isString(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, json1.value("error").toString().toStdString());
@@ -238,8 +238,8 @@ QString parseSendTransactionResponse(const QString &response) {
     return json1.value("params").toString();
 }
 
-Transaction parseGetTxResponse(const QString &response, const QString &address, const QString &currency) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+Transaction parseGetTxResponse(const QByteArray &response, const QString &address, const QString &currency) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(!json1.contains("error") || !json1.value("error").isObject(), json1.value("error").toObject().value("message").toString().toStdString());
@@ -251,7 +251,7 @@ Transaction parseGetTxResponse(const QString &response, const QString &address, 
     return parseTransaction(transaction, address, currency);
 }
 
-QString makeGetBlockInfoRequest(int64_t blockNumber) {
+QByteArray makeGetBlockInfoRequest(int64_t blockNumber) {
     QJsonObject request;
     request.insert("jsonrpc", "2.0");
     request.insert("method", "get-block-by-number");
@@ -259,11 +259,11 @@ QString makeGetBlockInfoRequest(int64_t blockNumber) {
     params.insert("number", (int)blockNumber);
     params.insert("type", 0); // TODO заменить на small
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
-BlockInfo parseGetBlockInfoResponse(const QString &response) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+BlockInfo parseGetBlockInfoResponse(const QByteArray &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(!json1.contains("error") || !json1.value("error").isObject(), json1.value("error").toObject().value("message").toString().toStdString());
@@ -280,17 +280,17 @@ BlockInfo parseGetBlockInfoResponse(const QString &response) {
     return result;
 }
 
-QString makeGetCountBlocksRequest() {
+QByteArray makeGetCountBlocksRequest() {
     QJsonObject request;
     request.insert("jsonrpc", "2.0");
     request.insert("method", "get-count-blocks");
     QJsonObject params;
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
-int64_t parseGetCountBlocksResponse(const QString &response) {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+int64_t parseGetCountBlocksResponse(const QByteArray &response) {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json ");
     const QJsonObject &json1 = jsonResponse.object();
     CHECK(!json1.contains("error") || !json1.value("error").isObject(), json1.value("error").toObject().value("message").toString().toStdString());
@@ -302,9 +302,9 @@ int64_t parseGetCountBlocksResponse(const QString &response) {
     return obj.value("count_blocks").toInt();
 }
 
-SendParameters parseSendParamsInternal(const QString &paramsJson) {
+SendParameters parseSendParamsInternal(const QByteArray &paramsJson) {
     SendParameters result;
-    const QJsonDocument doc = QJsonDocument::fromJson(paramsJson.toUtf8());
+    const QJsonDocument doc = QJsonDocument::fromJson(paramsJson);
     CHECK_TYPED(doc.isObject(), TypeErrors::INCORRECT_USER_DATA, "params json incorrect");
     const QJsonObject docParams = doc.object();
     CHECK_TYPED(docParams.contains("countServersSend") && docParams.value("countServersSend").isDouble(), TypeErrors::INCORRECT_USER_DATA, "countServersSend not found in params");

@@ -14,7 +14,7 @@
 #include "AuthJavascript.h"
 
 #include "qt_utilites/ManagerWrapperImpl.h"
-
+#include "Network/SimpleClient.h"
 #include "utilites/machine_uid.h"
 
 SET_LOG_NAMESPACE("AUTH");
@@ -23,6 +23,7 @@ namespace auth {
 
 Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     : TimerClass(1s, parent)
+    , tcpClient(new SimpleClient(this))
     , javascriptWrapper(javascriptWrapper)
 {
     QSettings settings(getSettingsPath(), QSettings::IniFormat);
@@ -46,9 +47,7 @@ Auth::Auth(AuthJavascript &javascriptWrapper, QObject *parent)
     Q_REG2(TypedException, "TypedException", false);
     Q_REG(LoginInfo, "LoginInfo");
 
-    tcpClient.setParent(this);
-    Q_CONNECT(&tcpClient, &SimpleClient::callbackCall, this, &Auth::callbackCall);
-    tcpClient.moveToThread(TimerClass::getThread());
+    Q_CONNECT(tcpClient, &SimpleClient::callbackCall, this, &Auth::callbackCall);
 
     javascriptWrapper.setAuthManager(*this);
 
@@ -61,14 +60,14 @@ Auth::~Auth() {
 
 void Auth::onLogin(const QString &login, const QString &password) {
 BEGIN_SLOT_WRAPPER
-    const QString request = makeLoginRequest(login, password);
-    tcpClient.sendMessagePost(authUrl, request, [this, login](const SimpleClient::Response &response) {
+    const QByteArray request = makeLoginRequest(login, password);
+    tcpClient->sendMessagePost(authUrl, request, [this, login](const SimpleClient::Response &response) {
        if (response.exception.isSet()) {
            QString content = QString::fromStdString(response.exception.content);
            emit javascriptWrapper.sendLoginInfoResponseSig(info, TypedException(TypeErrors::CLIENT_ERROR, !content.isEmpty() ? content.toStdString() : response.exception.description));
        } else {
            const TypedException exception = apiVrapper2([&] {
-               info = parseLoginResponse(QString::fromStdString(response.response), login);
+               info = parseLoginResponse(response.response, login);
                writeLoginInfo();
                isInitialize = true;
                emit logined(isInitialize, info.login);
@@ -151,7 +150,7 @@ END_SLOT_WRAPPER
 
 void Auth::forceRefreshInternal() {
     LOG << "Try refresh token ";
-    const QString request = makeRefreshTokenRequest(info.refresh);
+    const QByteArray request = makeRefreshTokenRequest(info.refresh);
     const QString token = info.token;
 
     class GuardRefresh {
@@ -188,7 +187,7 @@ void Auth::forceRefreshInternal() {
 
     std::shared_ptr<GuardRefresh> guard = std::make_shared<GuardRefresh>(guardRefresh);
 
-    tcpClient.sendMessagePost(authUrl, request, [this, token, guard](const SimpleClient::Response &response) {
+    tcpClient->sendMessagePost(authUrl, request, [this, token, guard](const SimpleClient::Response &response) {
         guard->unlock();
 
         if (info.token != token) {
@@ -203,7 +202,7 @@ void Auth::forceRefreshInternal() {
             emit checkTokenFinished(except);
         } else if (!response.exception.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                const LoginInfo newLogin = parseRefreshTokenResponse(QString::fromStdString(response.response), info.login, info.isTest);
+                const LoginInfo newLogin = parseRefreshTokenResponse(response.response, info.login, info.isTest);
                 if (!newLogin.isAuth) {
                     LOG << "Refresh token failed";
                     logoutImpl();
@@ -243,9 +242,9 @@ bool Auth::checkToken() {
 
     LOG << "Check token";
     info.prevCheck = now;
-    const QString request = makeCheckTokenRequest(info.token);
+    const QByteArray request = makeCheckTokenRequest(info.token);
     const QString token = info.token;
-    tcpClient.sendMessagePost(authUrl, request, [this, token](const SimpleClient::Response &response) {
+    tcpClient->sendMessagePost(authUrl, request, [this, token](const SimpleClient::Response &response) {
         if (info.token != token) {
             return;
         }
@@ -254,7 +253,7 @@ bool Auth::checkToken() {
             forceRefreshInternal();
         } else if (!response.exception.isSet()) {
             const TypedException exception = apiVrapper2([&] {
-                const bool res = parseCheckTokenResponse(QString::fromStdString(response.response));
+                const bool res = parseCheckTokenResponse(response.response);
                 if (!res) {
                     forceRefreshInternal();
                 }
@@ -283,7 +282,7 @@ void Auth::runCallback(const Func &callback) {
     emit javascriptWrapper.callbackCall(callback);
 }
 
-QString Auth::makeLoginRequest(const QString &login, const QString &password) const {
+QByteArray Auth::makeLoginRequest(const QString &login, const QString &password) const {
     QJsonObject request;
     request.insert("id", "1");
     request.insert("version", "1.0.0");
@@ -296,10 +295,10 @@ QString Auth::makeLoginRequest(const QString &login, const QString &password) co
     params.append(p);
 
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
-QString Auth::makeCheckTokenRequest(const QString &token) const {
+QByteArray Auth::makeCheckTokenRequest(const QString &token) const {
     QJsonObject request;
     request.insert("id", "1");
     request.insert("version", "1.0.0");
@@ -308,10 +307,10 @@ QString Auth::makeCheckTokenRequest(const QString &token) const {
     request.insert("uid", hardwareId);
     QJsonObject params;
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
-QString Auth::makeRefreshTokenRequest(const QString &token) const {
+QByteArray Auth::makeRefreshTokenRequest(const QString &token) const {
     QJsonObject request;
     request.insert("id", "1");
     request.insert("version", "1.0.0");
@@ -320,17 +319,17 @@ QString Auth::makeRefreshTokenRequest(const QString &token) const {
     request.insert("uid", hardwareId);
     QJsonObject params;
     request.insert("params", params);
-    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+    return QJsonDocument(request).toJson(QJsonDocument::Compact);
 }
 
-LoginInfo Auth::parseLoginResponse(const QString &response, const QString &login) const {
+LoginInfo Auth::parseLoginResponse(const QByteArray &response, const QString &login) const {
     LoginInfo result;
     result.login = login;
     result.saveTime = ::now();
     result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();
 
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();
 
@@ -360,7 +359,7 @@ LoginInfo Auth::parseLoginResponse(const QString &response, const QString &login
     return result;
 }
 
-LoginInfo Auth::parseRefreshTokenResponse(const QString &response, const QString &login, bool isTest) const {
+LoginInfo Auth::parseRefreshTokenResponse(const QByteArray &response, const QString &login, bool isTest) const {
     LoginInfo result;
     result.login = login;
     result.isTest = isTest;
@@ -368,7 +367,7 @@ LoginInfo Auth::parseRefreshTokenResponse(const QString &response, const QString
     result.saveTimeSystem = ::system_now();
     result.prevCheck = ::now();
 
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json1 = jsonResponse.object();
 
@@ -395,8 +394,8 @@ LoginInfo Auth::parseRefreshTokenResponse(const QString &response, const QString
     return result;
 }
 
-bool auth::Auth::parseCheckTokenResponse(const QString &response) const {
-    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+bool auth::Auth::parseCheckTokenResponse(const QByteArray &response) const {
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response);
     CHECK(jsonResponse.isObject(), "Incorrect json");
     const QJsonObject &json = jsonResponse.object();
 

@@ -60,11 +60,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void AuthJavascript::check() {
+void AuthJavascript::check(const QString &empty) {
 BEGIN_SLOT_WRAPPER
     CHECK(m_authManager, "auth not set");
 
-    LOG << "get token";
+    LOG << "get token " << empty;
 
     const TypedException exception = apiVrapper2([&, this]() {
         emit m_authManager->check();

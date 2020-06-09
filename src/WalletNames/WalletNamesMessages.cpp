@@ -21,7 +21,7 @@ static void addHeaderToJson(QJsonObject &json, size_t id, const QString &token, 
     json.insert("request_id", QString::fromStdString(std::to_string(id)));
 }
 
-QString makeRenameMessage(const QString &address, const QString &name, size_t id, const QString &token, const QString &hwid) {
+QByteArray makeRenameMessage(const QString &address, const QString &name, size_t id, const QString &token, const QString &hwid) {
     QJsonObject json;
     addHeaderToJson(json, id, token, hwid);
     json.insert("method", RENAME_METHOD);
@@ -32,7 +32,7 @@ QString makeRenameMessage(const QString &address, const QString &name, size_t id
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeRenameMessageHttp(const QString &address, const QString &name, const QString &currency, size_t id, const QString &token, const QString &hwid) {
+QByteArray makeRenameMessageHttp(const QString &address, const QString &name, const QString &currency, size_t id, const QString &token, const QString &hwid) {
     QJsonObject json;
     json.insert("jsonrpc", "2.0");
     json.insert("token", token);
@@ -78,7 +78,7 @@ static WalletInfo::Info::Type stringToType(const QString &type) {
     }
 }
 
-QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, const QString &token, const QString &hwid) {
+QByteArray makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, const QString &token, const QString &hwid) {
     QJsonObject json;
     addHeaderToJson(json, id, token, hwid);
     json.insert("method", SET_WALLETS_METHOD);
@@ -105,24 +105,23 @@ QString makeSetWalletsMessage(const std::vector<WalletInfo> &infos, size_t id, c
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeGetWalletsMessage(size_t id, const QString &token, const QString &hwid) {
+QByteArray makeGetWalletsMessage(size_t id, const QString &token, const QString &hwid) {
     QJsonObject json;
     addHeaderToJson(json, id, token, hwid);
     json.insert("method", GET_WALLETS_METHOD);
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
-QString makeGetWalletsAppsMessage(size_t id, const QString &token, const QString &hwid) {
-    return QStringLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"%1\", \"uid\": \"%2\", \"params\":[]}")
-            .arg(token).arg(hwid);
+QByteArray makeGetWalletsAppsMessage(size_t id, const QString &token, const QString &hwid) {
+    return QByteArrayLiteral("{\"id\": \"0\",\"version\":\"1.0.0\",\"method\":\"address.list\", \"token\":\"") + token.toUtf8() + QByteArrayLiteral("\", \"uid\": \"") + hwid.toUtf8() + QByteArrayLiteral("\", \"params\":[]}");
 }
 
-QString makeCreateWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc) {
-    return "{\"id\":" + QString::number(id) + ", \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hwid + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": true}]}";
+QByteArray makeCreateWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc) {
+    return QByteArrayLiteral("{\"id\":") + QByteArray::number(static_cast<uint>(id)) + QByteArrayLiteral(", \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"") + token.toUtf8() + QByteArrayLiteral("\", \"uid\": \"") + hwid.toUtf8() + QByteArrayLiteral("\", \"params\":[{\"address\": \"") + address.toUtf8() + QByteArrayLiteral("\", \"currency\": ") + (isMhc ? QByteArrayLiteral("4") : QByteArrayLiteral("1")) + QByteArrayLiteral(", \"flag\": true}]}");
 }
 
-QString makeRemoveWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc) {
-    return "{\"id\":" + QString::number(id) + ", \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"" + token + "\", \"uid\": \"" + hwid + "\", \"params\":[{\"address\": \"" + address + "\", \"currency\": " + (isMhc ? "4" : "1") + ", \"flag\": false}]}";
+QByteArray makeRemoveWatchWalletMessage(size_t id, const QString &token, const QString &hwid, const QString &address, bool isMhc) {
+    return QByteArrayLiteral("{\"id\":") + QByteArray::number(static_cast<uint>(id)) + QByteArrayLiteral(", \"version\":\"1.0.0\",\"method\":\"address.setSync\", \"token\":\"") + token.toUtf8() + QByteArrayLiteral("\", \"uid\": \"") + hwid.toUtf8() + QByteArrayLiteral("\", \"params\":[{\"address\": \"") + address.toUtf8() + QByteArrayLiteral("\", \"currency\": ") + (isMhc ? QByteArrayLiteral("4") : QByteArrayLiteral("1")) + QByteArrayLiteral(", \"flag\": false}]}");
 }
 
 ResponseType getMethodAndAddressResponse(const QJsonDocument &response) {

@@ -57,7 +57,7 @@ public:
     };
 
     struct Response {
-        std::string response;
+        QByteArray response;
         ServerException exception;
         milliseconds time;
     };
@@ -72,19 +72,19 @@ public:
 
 public:
 
-    explicit SimpleClient();
+    explicit SimpleClient(QObject *parent = nullptr);
 
     ~SimpleClient();
 
-    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback);
-    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache=false);
-    void sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout);
+    void sendMessagePost(const QUrl &url, const QByteArray &message, const ClientCallback &callback);
+    void sendMessagePost(const QUrl &url, const QByteArray &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache=false);
+    void sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QByteArray &message, const ClientCallbacks &callback, milliseconds timeout);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, milliseconds timeout);
 
-    void setParent(QObject *obj);
+    //void setParent(QObject *obj);
 
-    void moveToThread(QThread *thread);
+    //void moveToThread(QThread *thread);
 
 Q_SIGNALS:
 
@@ -115,7 +115,7 @@ private:
     void sendMessageInternal(
         bool isPost,
         const QUrl &url,
-        const QString &message,
+        const QByteArray &message,
         const Callback &callback,
         bool isTimeout,
         milliseconds timeout,
@@ -123,7 +123,7 @@ private:
         bool isQueuedConnection
     );
 
-    void sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache);
+    void sendMessagePost(const QUrl &url, const QByteArray &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache);
     void sendMessageGet(const QUrl &url, const ClientCallback &callback, bool isTimeout, milliseconds timeout);
 
     template<typename... Message>

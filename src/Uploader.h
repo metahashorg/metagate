@@ -7,13 +7,12 @@
 #include <QString>
 #include <QObject>
 
-#include "Network/SimpleClient.h"
-
 #include "utilites/VersionWrapper.h"
 
 #include "qt_utilites/TimerClass.h"
 
 class MainWindow;
+class SimpleClient;
 struct TypedException;
 
 namespace auth {
@@ -112,7 +111,7 @@ private:
 
     int id = 1;
 
-    SimpleClient client;
+    SimpleClient *client;
 
     QString currentBeginPath;
 

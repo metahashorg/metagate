@@ -105,22 +105,23 @@ bool SimpleClient::ServerException::isTimeout() const {
     return code == QNetworkReply::OperationCanceledError || code == QNetworkReply::TimeoutError;
 }
 
-SimpleClient::SimpleClient()
-    : manager(new QNetworkAccessManager(this))
+SimpleClient::SimpleClient(QObject *parent)
+    : QObject(parent)
+    , manager(new QNetworkAccessManager(this))
 {
     Q_REG(SimpleClient::ReturnCallback, "SimpleClient::ReturnCallback");
 }
 
 SimpleClient::~SimpleClient() = default;
 
-void SimpleClient::setParent(QObject *obj) {
-    manager->setParent(obj);
-}
+//void SimpleClient::setParent(QObject *obj) {
+//    manager->setParent(obj);
+//}
 
-void SimpleClient::moveToThread(QThread *thread) {
-    thread1 = thread;
-    QObject::moveToThread(thread);
-}
+//void SimpleClient::moveToThread(QThread *thread) {
+//    thread1 = thread;
+//    QObject::moveToThread(thread);
+//}
 
 void SimpleClient::startTimer1() {
     if (timer == nullptr) {
@@ -163,7 +164,7 @@ template<typename Callback>
 void SimpleClient::sendMessageInternal(
     bool isPost,
     const QUrl &url,
-    const QString &message,
+    const QByteArray &message,
     const Callback &callback,
     bool isTimeout,
     milliseconds timeout,
@@ -188,7 +189,7 @@ void SimpleClient::sendMessageInternal(
     }
     QNetworkReply* reply;
     if (isPost) {
-        reply = manager->post(request, message.toUtf8());
+        reply = manager->post(request, message);
     } else {
         reply = manager->get(request);
     }
@@ -201,19 +202,19 @@ void SimpleClient::sendMessageInternal(
     requests[requestId] = r;
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache) {
+void SimpleClient::sendMessagePost(const QUrl &url, const QByteArray &message, const ClientCallback &callback, bool isTimeout, milliseconds timeout, bool isClearCache) {
     sendMessageInternal(true, url, message, callback, isTimeout, timeout, isClearCache, false);
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback) {
+void SimpleClient::sendMessagePost(const QUrl &url, const QByteArray &message, const ClientCallback &callback) {
     sendMessagePost(url, message, callback, false, milliseconds(0), false);
 }
 
-void SimpleClient::sendMessagePost(const QUrl &url, const QString &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache) {
+void SimpleClient::sendMessagePost(const QUrl &url, const QByteArray &message, const ClientCallback &callback, milliseconds timeout, bool isClearCache) {
     sendMessagePost(url, message, callback, true, timeout, isClearCache);
 }
 
-void SimpleClient::sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QString &message, const ClientCallbacks &callback, milliseconds timeout) {
+void SimpleClient::sendMessagesPost(const std::string printedName, const std::vector<QUrl> &urls, const QByteArray &message, const ClientCallbacks &callback, milliseconds timeout) {
     if (urls.empty()) {
         callback({});
         return;
@@ -263,13 +264,13 @@ BEGIN_SLOT_WRAPPER
             content = reply->readAll();
         }
         Response resp;
-        resp.response = std::string(content.data(), content.size());
+        resp.response = content.data();
         resp.time = duration;
         runCallback(id, resp);
     } else {
         std::string errorStr;
         if (reply->isReadable()) {
-            errorStr = QString(reply->readAll()).toStdString();
+            errorStr = reply->readAll().toStdString();
         }
 
         Response resp;

@@ -32,7 +32,7 @@ std::string trim(const std::string &str);
 
 void writeToFile(const QString &pathToFile, const std::string &data, bool isCheck);
 
-void writeToFileBinary(const QString &pathToFile, const std::string &data, bool isCheck);
+void writeToFileBinary(const QString &pathToFile, const QByteArray &data, bool isCheck);
 
 std::string readFile(const QString &pathToFile);
 

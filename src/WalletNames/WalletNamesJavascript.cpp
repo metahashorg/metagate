@@ -128,11 +128,11 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void WalletNamesJavascript::getAllWalletsInCurrency(QString currency) {
+void WalletNamesJavascript::getAllWalletsInCurrency(QString currency, QString empty) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "wnsGetAllWalletsInCurrencyResultJs";
 
-    LOG << "get wallets in currency " << currency;
+    LOG << "get wallets in currency " << currency << empty;
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(currency), JsTypeReturn<QJsonDocument>(QJsonDocument()));
 

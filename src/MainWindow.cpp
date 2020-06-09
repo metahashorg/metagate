@@ -78,10 +78,10 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-
 MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
+    , client(new SimpleClient(this))
     , systemTray(new QSystemTrayIcon(QIcon(":/resources/svg/systemtray.png"), this))
     , trayMenu(new QMenu(this))
     , last_htmls(Uploader::getLastHtmlVersion())
@@ -170,8 +170,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
 
     loadFile("core/loader/index.html");
 
-    client.setParent(this);
-    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall);
+    Q_CONNECT(client, &SimpleClient::callbackCall, this, &MainWindow::onCallbackCall);
 
     Q_CONNECT(&initializerJs, &initializer::InitializerJavascript::jsRunSig, this, &MainWindow::onJsRun);
 
@@ -661,9 +660,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
         const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + PagesMappings::getHost(text) + "\", \"net\": \"" + netDns + "\"}}";
-        client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const SimpleClient::Response &response) {
+        client->sendMessagePost(urlDns, postRequest.toUtf8(), [this, text, doProcessCommand](const SimpleClient::Response &response) {
             CHECK(!response.exception.isSet(), "Dns error " + response.exception.toString());
-            pagesMappings.addMappingsMh(QString::fromStdString(response.response));
+            pagesMappings.addMappingsMh(response.response);
             const PageInfo pageInfo = pagesMappings.find(text);
             doProcessCommand(pageInfo);
         }, 2s);

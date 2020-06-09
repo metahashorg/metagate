@@ -12,7 +12,8 @@
 #include "WalletInfo.h"
 
 #include "Network/WebSocketClient.h"
-#include "Network/SimpleClient.h"
+
+class SimpleClient;
 
 namespace auth {
 class Auth;
@@ -107,6 +108,7 @@ private:
     };
 
 private:
+    SimpleClient *httpClient;
 
     WalletNamesDbStorage &db;
 
@@ -127,9 +129,6 @@ private:
     QString serverName;
 
     seconds timeout;
-
-    SimpleClient httpClient;
-
 };
 
 } // namespace wallet_names

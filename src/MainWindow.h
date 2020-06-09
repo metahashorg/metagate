@@ -8,8 +8,8 @@
 #include <QWebChannel>
 #include <QWebEnginePage>
 
-#include "Network/SimpleClient.h"
 #include "Uploader.h"
+#include "Network/SimpleClient.h"
 
 #include "PagesMappings.h"
 #include "qt_utilites/CallbackWrapper.h"
@@ -247,6 +247,8 @@ private:
 private:
     std::unique_ptr<Ui::MainWindow> ui;
 
+    SimpleClient *client;
+
     QSystemTrayIcon *systemTray;
     QMenu *trayMenu;
     QAction *hideAction;
@@ -273,8 +275,6 @@ private:
 
     std::vector<QString> history;
     size_t historyPos = 0;
-
-    SimpleClient client;
 
     QString prevUrl;
     bool prevIsApp = true;

@@ -9,7 +9,6 @@
 #include <map>
 #include <set>
 
-#include "Network/SimpleClient.h"
 #include "Network/HttpClient.h"
 #include "qt_utilites/TimerClass.h"
 
@@ -19,6 +18,7 @@
 #include "Transaction.h"
 #include "TransactionsFilter.h"
 
+class SimpleClient;
 class NsLookup;
 class InfrastructureNsLookup;
 
@@ -304,7 +304,7 @@ private:
 
     TransactionsDBStorage &db;
 
-    SimpleClient client;
+    SimpleClient *client;
 
     HttpSimpleClient tcpClient;
 

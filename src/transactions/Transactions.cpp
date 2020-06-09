@@ -17,6 +17,7 @@ using namespace std::placeholders;
 #include "NsLookup/InfrastructureNsLookup.h"
 
 #include "qt_utilites/ManagerWrapperImpl.h"
+#include "Network/SimpleClient.h"
 
 #include "TransactionsMessages.h"
 #include "TransactionsJavascript.h"
@@ -53,6 +54,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     , wallets(wallets)
     , javascriptWrapper(javascriptWrapper)
     , db(db)
+    , client(new SimpleClient(this))
 {
     wallets.setTransactions(this);
 
@@ -106,9 +108,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     CHECK(settings.contains("timeouts_sec/transactions"), "settings timeout not found");
     timeout = seconds(settings.value("timeouts_sec/transactions").toInt());
 
-    client.setParent(this);
-    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Transactions::callbackCall);
-    client.moveToThread(TimerClass::getThread());
+    Q_CONNECT(client, &SimpleClient::callbackCall, this, &Transactions::callbackCall);
 
     Q_CONNECT(&tcpClient, &HttpSimpleClient::callbackCall, this, &Transactions::callbackCall);
     tcpClient.moveToThread(TimerClass::getThread());
@@ -192,7 +192,7 @@ void Transactions::updateBalanceTime(const QString &currency, const std::shared_
 void Transactions::processPendings() {
     const auto processPendingTx = [this](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const Transaction tx = parseGetTxResponse(QString::fromStdString(response.response), "", "");
+        const Transaction tx = parseGetTxResponse(response.response, "", "");
         if (tx.status != Transaction::PENDING) {
             const auto foundIter = std::remove_if(pendingTxsAfterSend.begin(), pendingTxsAfterSend.end(), [txHash=tx.tx](const auto &pair){
                 return pair.first == txHash;
@@ -209,9 +209,9 @@ void Transactions::processPendings() {
 
     const auto copyPending = pendingTxsAfterSend;
     for (const auto &pair: copyPending) {
-        const QString message = makeGetTxRequest(pair.first);
+        const QByteArray message = makeGetTxRequest(pair.first);
         for (const QString &server: pair.second) {
-            client.sendMessagePost(server, message, processPendingTx, timeout);
+            client->sendMessagePost(server, message, processPendingTx, timeout);
         }
     }
 }
@@ -219,7 +219,7 @@ void Transactions::processPendings() {
 void Transactions::processPendings(const QString &address, const QString &currency, const std::vector<Transaction> &txsPending, const std::vector<QString> &serversContract, const std::vector<QString> &serversSimple) {
     const auto processPendingTx = [this, currency, address](const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const Transaction tx = parseGetTxResponse(QString::fromStdString(response.response), address, currency);
+        const Transaction tx = parseGetTxResponse(response.response, address, currency);
         if (tx.status != Transaction::PENDING) {
             db.updatePayment(address, currency, tx.tx, tx.blockNumber, tx.blockIndex, tx);
             emit javascriptWrapper.transactionStatusChangedSig(address, currency, tx.tx, tx);
@@ -245,8 +245,8 @@ void Transactions::processPendings(const QString &address, const QString &curren
         if (servers.empty()) {
             continue;
         }
-        const QString message = makeGetTxRequest(tx.tx);
-        client.sendMessagePost(servers[0], message, std::bind(processPendingTx, _1), timeout);
+        const QByteArray message = makeGetTxRequest(tx.tx);
+        client->sendMessagePost(servers[0], message, std::bind(processPendingTx, _1), timeout);
     }
 }
 
@@ -260,7 +260,7 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
 
     const auto getBlockHeaderCallback = [this, currency, servStruct](const QString &address, const BalanceInfo &balance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, std::vector<Transaction> txs, const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response.response));
+        const BlockInfo bi = parseGetBlockInfoResponse(response.response);
         for (Transaction &tx: txs) {
             if (tx.blockNumber == bi.number) {
                 tx.blockHash = bi.hash;
@@ -276,13 +276,13 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
         });
         CHECK(maxElement != txs.end(), "Incorrect max element");
         const int64_t blockNumber = maxElement->blockNumber;
-        const QString request = makeGetBlockInfoRequest(blockNumber);
-        client.sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, confirmedCountTxsInThisLoop, txs, _1), timeout);
+        const QByteArray request = makeGetBlockInfoRequest(blockNumber);
+        client->sendMessagePost(server, request, std::bind(getBlockHeaderCallback, address, balance, savedCountTxs, confirmedCountTxsInThisLoop, txs, _1), timeout);
     };
 
     const auto getBalanceConfirmeCallback = [currency, processNewTransactions](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const std::vector<Transaction> &txs, const QUrl &server, const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const BalanceInfo balance = parseBalanceResponse(QString::fromStdString(response.response));
+        const BalanceInfo balance = parseBalanceResponse(response.response);
         const uint64_t countInServer = balance.countTxs;
         const uint64_t countSave = serverBalance.countTxs;
         if (countInServer - countSave <= ADD_TO_COUNT_TXS) {
@@ -293,13 +293,13 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
 
     const auto getHistoryCallback = [this, currency, getBalanceConfirmeCallback](const QString &address, const BalanceInfo &serverBalance, uint64_t savedCountTxs, uint64_t confirmedCountTxsInThisLoop, const QUrl &server, const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, QString::fromStdString(response.response));
+        const std::vector<Transaction> txs = parseHistoryResponse(address, currency, response.response);
 
         LOG << "geted with duplicates " << address << " " << txs.size();
 
-        const QString requestBalance = makeGetBalanceRequest(address);
+        const QByteArray requestBalance = makeGetBalanceRequest(address);
 
-        client.sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server, _1), timeout);
+        client->sendMessagePost(server, requestBalance, std::bind(getBalanceConfirmeCallback, address, serverBalance, savedCountTxs, confirmedCountTxsInThisLoop, txs, server, _1), timeout);
     };
 
     const auto getBalanceCallback = [this, servStruct, addresses, currency, getHistoryCallback](const std::vector<QUrl> &servers, const std::vector<SimpleClient::Response> &responses) {
@@ -310,10 +310,10 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
         for (size_t i = 0; i < responses.size(); i++) {
             const auto &r = responses[i];
             const auto &exception = r.exception;
-            const std::string &response = r.response;
+            const QByteArray &response = r.response;
             const QUrl &server = servers[i];
             if (!exception.isSet()) {
-                const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(QString::fromStdString(response));
+                const std::vector<BalanceInfo> balancesResponse = parseBalancesResponse(response);
                 CHECK(balancesResponse.size() == addresses.size(), "Incorrect balances response");
                 for (size_t j = 0; j < balancesResponse.size(); j++) {
                     const BalanceInfo &balanceResponse = balancesResponse[j];
@@ -351,9 +351,9 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
                 const uint64_t countMissingTxs = countInServer - countAll;
                 const uint64_t beginTx = countMissingTxs >= MAX_TXS_IN_RESPONSE ? countMissingTxs - MAX_TXS_IN_RESPONSE : 0;
                 const uint64_t requestCountTxs = std::min(countMissingTxs, MAX_TXS_IN_RESPONSE) + ADD_TO_COUNT_TXS;
-                const QString requestForTxs = makeGetHistoryRequest(address, true, beginTx, requestCountTxs);
+                const QByteArray requestForTxs = makeGetHistoryRequest(address, true, beginTx, requestCountTxs);
 
-                client.sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, requestCountTxs + countAll, bestServer, _1), timeout);
+                client->sendMessagePost(bestServer, requestForTxs, std::bind(getHistoryCallback, address, serverBalance, countAll, requestCountTxs + countAll, bestServer, _1), timeout);
             } else if (countAll > countInServer) {
                 //removeAddress(address, currency); Не удаляем, так как при перевыкачки базы начнется свистопляска
             } else {
@@ -367,9 +367,9 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
         }
     };
 
-    const QString requestBalance = makeGetBalancesRequest(addresses);
+    const QByteArray requestBalance = makeGetBalancesRequest(addresses);
     const std::vector<QUrl> urls(servers.begin(), servers.end());
-    client.sendMessagesPost(addresses[0].toStdString(), urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
+    client->sendMessagesPost(addresses[0].toStdString(), urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
 }
 
 std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
@@ -391,13 +391,13 @@ void Transactions::processCheckTxsOneServer(const QString &address, const QStrin
     const auto countBlocksCallback = [this, address, currency, lastTx](const QUrl &server, const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server exception: " + response.exception.toString());
 
-        const int64_t blockNumber = parseGetCountBlocksResponse(QString::fromStdString(response.response));
+        const int64_t blockNumber = parseGetCountBlocksResponse(response.response);
 
         processCheckTxsInternal(address, currency, server, lastTx, blockNumber);
     };
 
-    const QString countBlocksRequest = makeGetCountBlocksRequest();
-    client.sendMessagePost(server, countBlocksRequest, std::bind(countBlocksCallback, server, _1), timeout);
+    const QByteArray countBlocksRequest = makeGetCountBlocksRequest();
+    client->sendMessagePost(server, countBlocksRequest, std::bind(countBlocksCallback, server, _1), timeout);
 }
 
 void Transactions::removeAddress(const QString &address, const QString &currency) {
@@ -409,7 +409,7 @@ void Transactions::removeAddress(const QString &address, const QString &currency
 void Transactions::processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber) {
     const auto getBlockInfoCallback = [address, currency, this] (const QString &hash, const SimpleClient::Response &response) {
         CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
-        const BlockInfo bi = parseGetBlockInfoResponse(QString::fromStdString(response.response));
+        const BlockInfo bi = parseGetBlockInfoResponse(response.response);
         if (bi.hash != hash) {
             removeAddress(address, currency);
         }
@@ -420,8 +420,8 @@ void Transactions::processCheckTxsInternal(const QString &address, const QString
         return;
     }
 
-    const QString blockInfoRequest = makeGetBlockInfoRequest(tx.blockNumber);
-    client.sendMessagePost(server, blockInfoRequest, std::bind(getBlockInfoCallback, tx.blockHash, _1));
+    const QByteArray blockInfoRequest = makeGetBlockInfoRequest(tx.blockNumber);
+    client->sendMessagePost(server, blockInfoRequest, std::bind(getBlockInfoCallback, tx.blockHash, _1));
 }
 
 void Transactions::processCheckTxs(const QString &address, const QString &currency, const std::vector<QString> &servers) {
@@ -443,8 +443,8 @@ void Transactions::processCheckTxs(const QString &address, const QString &curren
             const SimpleClient::ServerException &exception = responses[i].exception;
             if (!exception.isSet()) {
                 const QUrl &server = urls[i];
-                const std::string &response = responses[i].response;
-                const int64_t blockNumber = parseGetCountBlocksResponse(QString::fromStdString(response));
+                const QByteArray &response = responses[i].response;
+                const int64_t blockNumber = parseGetCountBlocksResponse(response);
                 if (blockNumber > maxBlockNumber) {
                     maxBlockNumber = blockNumber;
                     maxServer = server;
@@ -458,9 +458,9 @@ void Transactions::processCheckTxs(const QString &address, const QString &curren
         }
     };
 
-    const QString countBlocksRequest = makeGetCountBlocksRequest();
+    const QByteArray countBlocksRequest = makeGetCountBlocksRequest();
     const std::vector<QUrl> urls(servers.begin(), servers.end());
-    client.sendMessagesPost(address.toStdString(), urls, countBlocksRequest, std::bind(countBlocksCallback, urls, _1), timeout);
+    client->sendMessagesPost(address.toStdString(), urls, countBlocksRequest, std::bind(countBlocksCallback, urls, _1), timeout);
 }
 
 void Transactions::timerMethod() {
@@ -706,19 +706,19 @@ BEGIN_SLOT_WRAPPER
         SendedTransactionWatcher &watcher = iter->second;
 
         std::shared_ptr<bool> isFirst = std::make_shared<bool>(true);
-        const QString message = makeGetTxRequest(QString::fromStdString(hash));
+        const QByteArray message = makeGetTxRequest(QString::fromStdString(hash));
         const auto serversCopy = watcher.getServersCopy();
         for (const QString &server: serversCopy) {
             // Удаляем, чтобы не заддосить сервер на следующей итерации
             watcher.removeServer(server);
-            client.sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId, serversCopy](const SimpleClient::Response &response) {
+            client->sendMessagePost(server, message, [this, server, hash, isFirst, requestId=watcher.requestId, serversCopy](const SimpleClient::Response &response) {
                 auto found = sendTxWathcers.find(hash);
                 if (found == sendTxWathcers.end()) {
                     return;
                 }
                 if (!response.exception.isSet()) {
                     try {
-                        const Transaction tx = parseGetTxResponse(QString::fromStdString(response.response), "", "");
+                        const Transaction tx = parseGetTxResponse(response.response, "", "");
                         emit javascriptWrapper.transactionInTorrentSig(requestId, server, QString::fromStdString(hash), tx, TypedException());
                         if (tx.status == Transaction::Status::PENDING) {
                             pendingTxsAfterSend.emplace_back(tx.tx, serversCopy);
@@ -868,7 +868,7 @@ BEGIN_SLOT_WRAPPER
                                 nsLookup.rejectServer(server);
                             }
                             CHECK_TYPED(!error.isSet(), TypeErrors::TRANSACTIONS_SERVER_SEND_ERROR, error.description + ". " + server.toStdString());
-                            result = parseSendTransactionResponse(QString::fromStdString(response));
+                            result = parseSendTransactionResponse(QByteArray::fromStdString(response));
                             addToSendTxWatcher(requestId, result.toStdString(), sendParams.countServersGet, serversGet, sendParams.timeout);
                         });
                         emit javascriptWrapper.sendedTransactionsResponseSig(requestId, server, result, exception);
@@ -916,7 +916,7 @@ BEGIN_SLOT_WRAPPER
                 nonceStruct->count--;
 
                 if (!response.exception.isSet()) {
-                    const BalanceInfo balanceResponse = parseBalanceResponse(QString::fromStdString(response.response));
+                    const BalanceInfo balanceResponse = parseBalanceResponse(response.response);
                     nonceStruct->isSet = true;
                     nonceStruct->nonce = std::max(nonceStruct->nonce, balanceResponse.countSpent);
                 } else {
@@ -933,9 +933,9 @@ BEGIN_SLOT_WRAPPER
                 }
             };
 
-            const QString requestBalance = makeGetBalanceRequest(from);
+            const QByteArray requestBalance = makeGetBalanceRequest(from);
             for (const QString &server: servers) {
-                client.sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1), timeout);
+                client->sendMessagePost(server, requestBalance, std::bind(getBalanceCallback, server, _1), timeout);
             }
         };
 
@@ -951,17 +951,17 @@ END_SLOT_WRAPPER
 void Transactions::onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&, this] {
-        const QString message = makeGetTxRequest(txHash);
+        const QByteArray message = makeGetTxRequest(txHash);
 
         nsLookup.getRandomServers(type, 1, 1, NsLookup::GetServersCallback([this, message, callback](const std::vector<QString> &servers){
             CHECK(!servers.empty(), "Not enough servers");
             const QString &server = servers[0];
 
-            client.sendMessagePost(server, message, [callback](const SimpleClient::Response &response) mutable {
+            client->sendMessagePost(server, message, [callback](const SimpleClient::Response &response) mutable {
                 Transaction tx;
                 const TypedException exception = apiVrapper2([&] {
                     CHECK_TYPED(!response.exception.isSet(), TypeErrors::CLIENT_ERROR, response.exception.description);
-                    tx = parseGetTxResponse(QString::fromStdString(response.response), "", "");
+                    tx = parseGetTxResponse(response.response, "", "");
                 });
                 callback.emitFunc(exception, tx);
             }, timeout);
@@ -1029,8 +1029,8 @@ BEGIN_SLOT_WRAPPER
             emit getBalancesFromTorrentResult(id, false, QString::fromStdString(response.exception.toString()), res);
 
         } else {
-            const std::string &resp = response.response;
-            const std::map<QString, BalanceInfo> infos = parseBalancesResponseToMap(QString::fromStdString(resp));
+            const QByteArray &resp = response.response;
+            const std::map<QString, BalanceInfo> infos = parseBalancesResponseToMap(resp);
             CHECK(infos.size() == addresses.size(), "Incorrect balances response");
 
             std::transform(addresses.begin(), addresses.end(), std::back_inserter(res), [infos](const auto &pair) {
@@ -1047,8 +1047,8 @@ BEGIN_SLOT_WRAPPER
         return pair.second;
     });
 
-    const QString requestBalance = makeGetBalancesRequest(addrs);
-    client.sendMessagePost(url, requestBalance, getBalanceCallback, timeout);
+    const QByteArray requestBalance = makeGetBalancesRequest(addrs);
+    client->sendMessagePost(url, requestBalance, getBalanceCallback, timeout);
 END_SLOT_WRAPPER
 }
 
@@ -1062,7 +1062,7 @@ END_SLOT_WRAPPER
 }
 
 SendParameters parseSendParams(const QString &paramsJson) {
-    return parseSendParamsInternal(paramsJson);
+    return parseSendParamsInternal(paramsJson.toUtf8());
 }
 
 }

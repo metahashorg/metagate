@@ -104,14 +104,13 @@ void writeToFile(const QString &pathToFile, const std::string &data, bool isChec
     file.close();
 }
 
-void writeToFileBinary(const QString &pathToFile, const std::string &data, bool isCheck) {
+void writeToFileBinary(const QString &pathToFile, const QByteArray &data, bool isCheck) {
     QFile file(pathToFile);
     if (isCheck) {
         CHECK(!file.exists(), "File " + pathToFile.toStdString() + " is exist");
     }
     CHECK(file.open(QIODevice::WriteOnly), "File not open " + pathToFile.toStdString());
-    const QByteArray byteArray(data.data(), data.size());
-    file.write(byteArray);
+    file.write(data);
     file.close();
 }
 

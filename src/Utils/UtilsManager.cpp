@@ -7,6 +7,7 @@
 #include "qt_utilites/SlotWrapper.h"
 #include "utilites/utils.h"
 #include "utilites/qrcoder.h"
+#include "Network/SimpleClient.h"
 
 #include <QDesktopServices>
 #include <QUrl>
@@ -20,7 +21,10 @@ SET_LOG_NAMESPACE("UTIL");
 
 namespace utils {
 
-Utils::Utils() {
+Utils::Utils()
+    : ManagerWrapper()
+    , client(new SimpleClient(this))
+{
     Q_CONNECT(this, &Utils::openInBrowser, this, &Utils::onOpenInBrowser);
     Q_CONNECT(this, &Utils::openFolderDialog, this, &Utils::onOpenFolderDialog);
     Q_CONNECT(this, &Utils::saveFileFromUrl, this, &Utils::onSaveFileFromUrl);
@@ -44,8 +48,7 @@ Utils::Utils() {
     Q_REG(ChooseFileCallback, "ChooseFileCallback");
     Q_REG(QuestionCallback, "QuestionCallback");
 
-    client.setParent(this);
-    Q_CONNECT(&client, &SimpleClient::callbackCall, this, &Utils::callbackCall);
+    Q_CONNECT(client, &SimpleClient::callbackCall, this, &Utils::callbackCall);
 }
 
 Utils::~Utils() = default;
@@ -56,7 +59,6 @@ void Utils::setWidget(QWidget *widget) {
 
 void Utils::mvToThread(QThread *th) {
     this->moveToThread(th);
-    client.moveToThread(th);
 }
 
 void Utils::onOpenInBrowser(const QString &url, const OpenInBrowserCallback &callback) {
@@ -82,7 +84,7 @@ BEGIN_SLOT_WRAPPER
         const QString file = QFileDialog::getSaveFileName(widget_, saveFileWindowCaption, beginPath);
         CHECK(!file.isNull() && !file.isEmpty(), "File not changed");
 
-        client.sendMessageGet(url, [this, file, openAfterSave](const SimpleClient::Response &response) {
+        client->sendMessageGet(url, [this, file, openAfterSave](const SimpleClient::Response &response) {
             CHECK(!response.exception.isSet(), "Error load image: " + response.exception.description);
             writeToFileBinary(file, response.response, false);
             if (openAfterSave) {
@@ -96,7 +98,7 @@ END_SLOT_WRAPPER
 void Utils::onPrintUrl(const QString &url, const QString &printWindowCaption, const QString &text, const PrintUrlCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitCallback([&]{
-        client.sendMessageGet(url, [printWindowCaption, text](const SimpleClient::Response &response) {
+        client->sendMessageGet(url, [printWindowCaption, text](const SimpleClient::Response &response) {
             CHECK(!response.exception.isSet(), "Error load image: " + response.exception.description);
 
             QImage image;
