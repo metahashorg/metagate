@@ -5,6 +5,7 @@
 #include <string>
 
 class QString;
+class QByteArray;
 
 struct Exception;
 
@@ -72,6 +73,8 @@ private:
     void print(const std::string &t);
 
     void print(const QString &s);
+
+    void print(const QByteArray &t);
 
     void print(const PeriodicLog &p);
 

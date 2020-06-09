@@ -237,7 +237,7 @@ bool Log_::processPeriodic(const std::string &s, std::string &periodicStrFirstLi
                 periodicStrOriginalLinePrefix = periodicStr + LogImplVars::makeChangedPeriodic(p);
                 return true;
             }
-        } else {            
+        } else {
             LogImplVars::PeriodicStruct p;
 
             periodicStrOriginalLinePrefix = periodicStr + LogImplVars::makeChangedPeriodic(p);
@@ -313,6 +313,11 @@ void Log_::finalize() noexcept {
 
 void Log_::print(const QString &s) {
     print(s.toStdString());
+}
+
+void Log_::print(const QByteArray &t)
+{
+    print(t.toStdString());
 }
 
 void Log_::print(const PeriodicLog &p) {
