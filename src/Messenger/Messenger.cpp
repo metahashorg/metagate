@@ -8,7 +8,7 @@
 #include "utilites/utils.h"
 #include "qt_utilites/QRegister.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "MessengerMessages.h"
 #include "MessengerJavascript.h"
 #include "CryptographicManager.h"

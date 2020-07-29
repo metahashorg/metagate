@@ -10,7 +10,7 @@
 
 #include "RunGuard.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "PagesMappings.h"
 
 SET_LOG_NAMESPACE("MW");

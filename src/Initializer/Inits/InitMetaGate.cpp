@@ -6,7 +6,7 @@ using namespace std::placeholders;
 #include "MetaGate/MetaGate.h"
 #include "MetaGate/MetaGateJavascript.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"

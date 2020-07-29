@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include <map>
 #include <mutex>
@@ -13,6 +13,7 @@
 #include <QTextDocument>
 #include <QLineEdit>
 #include <QWebEngineProfile>
+#include <QWebEngineSettings>
 #include <QKeyEvent>
 #include <QApplicationStateChangeEvent>
 #include <QMenu>
@@ -23,9 +24,7 @@
 #include <QSystemTrayIcon>
 #include <QDesktopWidget>
 
-#include <QWebEngineUrlRequestInterceptor>
-
-#include "ui_mainwindow.h"
+#include "ui_MainWindow.h"
 
 #include "Network/WebSocketClient.h"
 #include "JavascriptWrapper.h"
@@ -40,9 +39,9 @@
 #include "Paths.h"
 #include "qt_utilites/QRegister.h"
 
-#include "mhurlschemehandler.h"
 #include "TorUrlSchemeHandler.h"
 #include "TorProxy.h"
+#include "MHUrlSchemeHandler.h"
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
@@ -182,7 +181,8 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, tor::T
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
-    channel = std::make_unique<QWebChannel>(ui->webView->page());
+
+    channel = std::make_unique<QWebChannel>(ui->webView);
     ui->webView->page()->setWebChannel(channel.get());
     registerWebChannel(QString("initializer"), &initializerJs);
 
@@ -210,7 +210,7 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, tor::T
 
     //Q_CONNECT(ui->webView->page(), &QWebEnginePage::loadFinished, this, &MainWindow::onBrowserLoadFinished);
 
-    Q_CONNECT(ui->webView->page(), &QWebEnginePage::urlChanged, this, &MainWindow::onUrlChanged);
+    Q_CONNECT(ui->webView, &WebView::urlChanged, this, &MainWindow::onUrlChanged);
 
     correctWindowSize(0);
 }
@@ -281,25 +281,29 @@ void MainWindow::registerWebChannel(const QString &name, QObject *obj) {
 }
 
 void MainWindow::unregisterAllWebChannels() {
-    if (!isRegisteredWebChannels) {
+    if (!ui->webView->page()->webChannel()) {
         return;
     }
     LOG << "Unregister all channels";
-    for (const auto &pair: registeredWebChannels) {
-        channel->deregisterObject(pair.second);
-    }
-    isRegisteredWebChannels = false;
+    ui->webView->page()->setWebChannel(nullptr);
+
+    //for (const auto &pair: registeredWebChannels) {
+    //    channel->deregisterObject(pair.second);
+    //}
+    //isRegisteredWebChannels = false;
 }
 
 void MainWindow::registerAllWebChannels() {
-    if (isRegisteredWebChannels) {
+    //ui->webView->page()->setWebChannel(nullptr);
+    if (ui->webView->page()->webChannel()) {
         return;
     }
     LOG << "Register all channels";
-    for (const auto &pair: registeredWebChannels) {
-        channel->registerObject(pair.first, pair.second);
-    }
-    isRegisteredWebChannels = true;
+    ui->webView->page()->setWebChannel(channel.get());
+//    for (const auto &pair: registeredWebChannels) {
+//        channel->registerObject(pair.first, pair.second);
+//    }
+    //isRegisteredWebChannels = true;
 }
 
 void MainWindow::onSetJavascriptWrapper(JavascriptWrapper *jsWrapper1, const SetJavascriptWrapperCallback &callback) {
@@ -605,10 +609,15 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
 
     const static QString TOR_1_PREFIX = QLatin1String("tor://");
     const static QString TOR_2_PREFIX = QLatin1String("tors://");
+    const static QLatin1String  SEARCH_PREFIX = QLatin1String("app://Search:");
 
     QString text = text1;
     if (text.endsWith('/')) {
         text = text.left(text.size() - 1);
+    }
+
+    if (text.startsWith(SEARCH_PREFIX)) {
+        text = text.mid(SEARCH_PREFIX.size());
     }
 
     if (isNoEnterDuplicate && text == currentTextCommandLine) {
@@ -628,12 +637,13 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             if (text2.startsWith(APP_URL)) {
                 text2 = text2.mid(APP_URL.size());
             }
-            QTextDocument td;
-            td.setHtml(text2);
-            const QString plained = td.toPlainText();
+            //QTextDocument td;
+            //td.setHtml(text2);
+            //const QString plained = td.toPlainText();
             const PageInfo &searchPage = pagesMappings.getSearchPage();
             QString link = searchPage.page;
-            link += plained;
+            qDebug() << link;
+            link += QString::fromLatin1(QUrl::toPercentEncoding(text2));
             LOG << "Search page " << link;
             addElementToHistoryAndCommandLine(searchPage.printedName + ":" + text2, isAddToHistory, true);
             registerAllWebChannels();
@@ -835,7 +845,11 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
 
 void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
+        qDebug() << "URL new " << url2;
     const QString url = url2.toString();
+    const QString turl = QUrl::fromPercentEncoding(url.toUtf8());
+    //const QString url = url2.toDisplayString(QUrl::None);
+
     const Optional<PageInfo> found = pagesMappings.findName(url);
     if (found.has_value()) {
         LOG << "Set address after load " << found.value().printedName;
@@ -847,8 +861,11 @@ BEGIN_SLOT_WRAPPER
         prevIsApp = found.value().isApp;
         addElementToHistoryAndCommandLine(found.value().printedName, true, false);
     } else {
-        if (!prevUrl.isNull() && !prevUrl.isEmpty() && url.startsWith(prevUrl)) {
-            const QString request = url.mid(prevUrl.size());
+        if (url2.scheme() == QLatin1String("http") || url2.scheme() == QLatin1String("https")) {
+            unregisterAllWebChannels();
+            addElementToHistoryAndCommandLine(url, true, false);
+        } else if (!prevUrl.isNull() && !prevUrl.isEmpty() && turl.startsWith(prevUrl)) {
+            const QString request = turl.mid(prevUrl.size());
             LOG << "Set address after load2 " << prevTextCommandLine << " " << request << " " << prevUrl;
             if (!prevIsApp) {
                 unregisterAllWebChannels();
@@ -894,7 +911,8 @@ END_SLOT_WRAPPER
 
 void MainWindow::onJsRun(QString jsString) {
 BEGIN_SLOT_WRAPPER
-    if (isRegisteredWebChannels) {
+    //if (isRegisteredWebChannels) {
+    if (ui->webView->page()->webChannel()) {
         ui->webView->page()->runJavaScript(jsString);
     } else {
         LOG << "Revert javascript";

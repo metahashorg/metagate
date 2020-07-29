@@ -5,7 +5,7 @@ using namespace std::placeholders;
 
 #include "auth/AuthJavascript.h"
 #include "auth/Auth.h"
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "check.h"
 #include "TypedException.h"
@@ -68,7 +68,7 @@ InitAuth::Return InitAuth::initialize(SharedFuture<MainWindow> mainWindow) {
         MainWindow &mw = mainWindow.get();
         emit mw.setAuth(authJavascript.get(), authManager.get(), MainWindow::SetAuthCallback([this]() {
             sendInitSuccess(TypedException());
-        }, std::bind(&InitAuth::sendInitSuccess, this, _1), std::bind(&InitAuth::callbackCall, this, _1)));       
+        }, std::bind(&InitAuth::sendInitSuccess, this, _1), std::bind(&InitAuth::callbackCall, this, _1)));
     });
 
     if (exception.isSet()) {

@@ -2,8 +2,8 @@ TEMPLATE = app
 
 TARGET = MetaGate
 
-DEFINES += VERSION_STRING=\\\"1.20.2\\\"
-DEFINES += VERSION_SETTINGS=\\\"10.5\\\"
+DEFINES += VERSION_STRING=\\\"1.20.3\\\"
+DEFINES += VERSION_SETTINGS=\\\"11.0\\\"
 #DEFINES += DEVELOPMENT
 DEFINES += PRODUCTION
 DEFINES += APPLICATION_NAME=\\\"MetaGate\\\"
@@ -12,7 +12,7 @@ DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 
 QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
-SOURCES += main.cpp mainwindow.cpp \
+SOURCES += main.cpp MainWindow.cpp \
     TorProxy.cpp \
     Uploader.cpp \
     Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
@@ -26,6 +26,7 @@ SOURCES += main.cpp mainwindow.cpp \
     Wallets/btctx/Base58.cpp \
     Wallets/btctx/btctx.cpp \
     Wallets/btctx/wif.cpp \
+    WebView.cpp \
     tests.cpp \
     Wallets/openssl_wrapper/openssl_wrapper.cpp \
     Wallets/ethtx/utils2.cpp \
@@ -35,8 +36,8 @@ SOURCES += main.cpp mainwindow.cpp \
     NsLookup/dns/resourcerecord.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
-    mhurlschemehandler.cpp \
     TorUrlSchemeHandler.cpp \
+    MHUrlSchemeHandler.cpp \
     Paths.cpp \
     RunGuard.cpp \
     Messenger/Messenger.cpp \
@@ -124,7 +125,7 @@ SOURCES += main.cpp mainwindow.cpp \
 
 unix: SOURCES +=
 
-HEADERS += mainwindow.h \
+HEADERS += MainWindow.h \
     TorProxy.h \
     Uploader.h \
     Wallets/ethtx/scrypt/libscrypt.h \
@@ -142,6 +143,7 @@ HEADERS += mainwindow.h \
     Wallets/btctx/btctx.h \
     Wallets/btctx/wif.h \
     StopApplication.h \
+    WebView.h \
     tests.h \
     Wallets/openssl_wrapper/openssl_wrapper.h \
     Wallets/ethtx/utils2.h \
@@ -152,7 +154,7 @@ HEADERS += mainwindow.h \
     JavascriptWrapper.h \
     PagesMappings.h \
     TorUrlSchemeHandler.h \
-    mhurlschemehandler.h \
+    MHUrlSchemeHandler.h \
     Paths.h \
     RunGuard.h \
     Messenger/Messenger.h \
@@ -255,9 +257,10 @@ HEADERS += mainwindow.h \
     Initializer/Inits/InitProxyClient.h \
     ProxyClient/ProxyClientMessage.h
 
-FORMS += mainwindow.ui
+FORMS += MainWindow.ui
 
-QT += webengine webenginewidgets network websockets sql xml
+QT += webengine webenginewidgets network websockets sql xml \
+    widgets
 
 CONFIG += static
 CONFIG += c++14

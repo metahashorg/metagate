@@ -5,7 +5,7 @@ using namespace std::placeholders;
 
 #include "Utils/UtilsManager.h"
 #include "Utils/UtilsJavascript.h"
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"

@@ -7,7 +7,7 @@ using namespace std::placeholders;
 #include "WalletNames/WalletNames.h"
 #include "WalletNames/WalletNamesDbStorage.h"
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 
 #include "Paths.h"
 #include "check.h"
