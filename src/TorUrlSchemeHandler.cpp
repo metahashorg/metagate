@@ -5,7 +5,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 
-#include "mainwindow.h"
+#include "MainWindow.h"
 #include "qt_utilites/SlotWrapper.h"
 #include "qt_utilites/QRegister.h"
 #include "check.h"

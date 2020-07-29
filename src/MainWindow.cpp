@@ -845,8 +845,29 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
 
 void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
-        qDebug() << "URL new " << url2;
+    qDebug() << "URL new " << url2;
     const QString url = url2.toString();
+
+//////////////////// Hack for metapay internal redirects
+    if (url2.scheme() == QLatin1String("metapay")) {
+        const PageInfo pageInfo = pagesMappings.find(url);
+
+        const QString &reference = pageInfo.page;
+
+            QString clText;
+            if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
+                clText = url;
+            } else {
+                clText = pageInfo.printedName;
+            }
+
+                addElementToHistoryAndCommandLine(clText, false, true);
+                registerAllWebChannels();
+                loadFile(reference);
+
+        return;
+    }
+////////////////////
     const QString turl = QUrl::fromPercentEncoding(url.toUtf8());
     //const QString url = url2.toDisplayString(QUrl::None);
 
