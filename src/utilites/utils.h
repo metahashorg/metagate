@@ -70,6 +70,8 @@ inline QString makePath(const QString &arg) {
     return arg;
 }
 
+bool isPathInDir(const QString &path, const QString &dirpath);
+
 template<typename... Args>
 inline QString makePath(const QString &arg, const Args& ...args) {
     auto removeSlash = [](const QString &str) {

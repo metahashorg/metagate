@@ -236,3 +236,14 @@ QStringList getFilesForDir(const QString &path) {
     const QDir dir(path);
     return dir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
 }
+
+bool isPathInDir(const QString &path, const QString &dirpath)
+{
+    QDir dir(path);
+    const QDir odir(dirpath);
+    while (dir != odir) {
+        if (!dir.cdUp())
+            return false;
+    }
+    return true;
+}
