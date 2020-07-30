@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 #include <QWebChannel>
+#include <QWebEngineUrlRequestInterceptor>
 #include <QWebEnginePage>
 
 #include "Uploader.h"
@@ -19,6 +20,11 @@ class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
 class MHPayUrlSchemeHandler;
+
+namespace tor {
+class TorProxy;
+}
+
 namespace auth {
 class AuthJavascript;
 class Auth;
@@ -79,6 +85,16 @@ namespace transactions {
 class TransactionsJavascript;
 }
 
+class WebUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor
+{
+    Q_OBJECT
+
+public:
+    WebUrlRequestInterceptor(QObject *p)
+        : QWebEngineUrlRequestInterceptor(p) {}
+    void interceptRequest(QWebEngineUrlRequestInfo &info);
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -104,7 +120,7 @@ public:
 
 public:
 
-    explicit MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent = nullptr);
+    explicit MainWindow(initializer::InitializerJavascript &initializerJs, tor::TorProxy &torProxy, QWidget *parent = nullptr);
 
     ~MainWindow() override;
 

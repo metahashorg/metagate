@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDateTime>
+#include <QNetworkProxy>
 
 #include "RunGuard.h"
 
@@ -28,6 +29,8 @@
 #include "TypedException.h"
 #include "Paths.h"
 #include "Network/NetwrokTesting.h"
+
+#include "TorProxy.h"
 
 #include "Initializer/Initializer.h"
 #include "Initializer/InitializerJavascript.h"
@@ -93,6 +96,13 @@ int main(int argc, char *argv[]) {
 
     LOG << "Build SSL version: " << QSslSocket::sslLibraryBuildVersionString();
     LOG << "Current SSL version: " << QSslSocket::sslLibraryVersionString();
+//    QNetworkProxy proxy;
+//    //proxy.setType(QNetworkProxy::DefaultProxy);
+//    proxy.setHostName("127.0.0.1");
+//    proxy.setPort(9050);
+//    proxy.setCapabilities(QNetworkProxy::HostNameLookupCapability | proxy.capabilities()) ;
+//    proxy.setType(QNetworkProxy::Socks5Proxy);
+//    QNetworkProxy::setApplicationProxy(proxy);
 
     QCommandLineParser parser;
     parser.setApplicationDescription("MetaGate");
@@ -168,6 +178,8 @@ int main(int argc, char *argv[]) {
         LOG << "Is virtual machine " << isVirtualMachine();
         printCurrentYear();
 
+        tor::TorProxy tor;
+
         NetwrokTesting nettesting;
         nettesting.start();
 
@@ -177,7 +189,7 @@ int main(int argc, char *argv[]) {
 
         using namespace initializer;
 
-        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
+        const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), std::ref(tor), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
 
         const std::shared_future<InitUtils::Return> utils = initManager.addInit<InitUtils>(mainWindow);
@@ -205,6 +217,7 @@ int main(int argc, char *argv[]) {
         const std::shared_future<InitProxyClient::Return> proxyClient = initManager.addInit<InitProxyClient>(mainWindow, metagate);
 
         initManager.complete();
+        tor.start();
 
         const int returnCode = app.exec();
         LOG << "Return code " << returnCode;

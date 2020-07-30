@@ -9,6 +9,9 @@
 class MainWindow;
 class MhPayEventHandler;
 
+namespace tor {
+class TorProxy;
+}
 struct TypedException;
 
 namespace initializer {
@@ -28,7 +31,7 @@ public:
 
     void completeImpl() override;
 
-    Return initialize(InitializerJavascript &initializerJs, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler, bool hide);
+    Return initialize(InitializerJavascript &initializerJs, tor::TorProxy &torProxy, const std::string &versionString, const std::string &typeString, const std::string &gitString, MhPayEventHandler &eventHandler, bool hide);
 
     static int countEvents() {
         return 1;

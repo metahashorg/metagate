@@ -14,6 +14,7 @@ QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp MainWindow.cpp \
 #    AppUrlSchemeHandler.cpp \
+    TorProxy.cpp \
     Uploader.cpp \
     Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
     Wallets/ethtx/scrypt/sha256.cpp \
@@ -36,6 +37,7 @@ SOURCES += main.cpp MainWindow.cpp \
     NsLookup/dns/resourcerecord.cpp \
     JavascriptWrapper.cpp \
     PagesMappings.cpp \
+    TorUrlSchemeHandler.cpp \
     MHUrlSchemeHandler.cpp \
     Paths.cpp \
     RunGuard.cpp \
@@ -126,6 +128,7 @@ unix: SOURCES +=
 
 HEADERS += MainWindow.h \
 #    AppUrlSchemeHandler.h \
+    TorProxy.h \
     Uploader.h \
     Wallets/ethtx/scrypt/libscrypt.h \
     Wallets/ethtx/scrypt/sha256.h \
@@ -152,6 +155,7 @@ HEADERS += MainWindow.h \
     NsLookup/dns/resourcerecord.h \
     JavascriptWrapper.h \
     PagesMappings.h \
+    TorUrlSchemeHandler.h \
     MHUrlSchemeHandler.h \
     Paths.h \
     RunGuard.h \

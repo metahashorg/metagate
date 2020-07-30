@@ -39,6 +39,8 @@
 #include "Paths.h"
 #include "qt_utilites/QRegister.h"
 
+#include "TorUrlSchemeHandler.h"
+#include "TorProxy.h"
 #include "MHUrlSchemeHandler.h"
 
 #include "auth/AuthJavascript.h"
@@ -78,7 +80,26 @@ bool EvFilter::eventFilter(QObject * watched, QEvent * event) {
     return false;
 }
 
-MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidget *parent)
+void WebUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
+{
+    qDebug() << info.requestUrl();
+    QUrl url = info.requestUrl();
+    if (url.host().endsWith(QLatin1String(".onion"))) {
+        if (url.scheme() == QLatin1String("http"))
+        {
+            url.setScheme(QStringLiteral("tor"));
+            qDebug() << url;
+            info.redirect(url);
+        } else if (url.scheme() == QLatin1String("https"))
+        {
+            url.setScheme(QStringLiteral("tors"));
+            qDebug() << url;
+            info.redirect(url);
+        }
+    }
+}
+
+MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, tor::TorProxy &torProxy, QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , client(new SimpleClient(this))
@@ -148,6 +169,15 @@ MainWindow::MainWindow(initializer::InitializerJavascript &initializerJs, QWidge
     Q_REG(SetMetaGateJavascriptCallback, "SetMetaGateJavascriptCallback");
     Q_REG(SetProxyJavascriptCallback, "SetProxyJavascriptCallback");
     Q_REG2(QUrl, "QUrl", false);
+
+
+    WebUrlRequestInterceptor *wuri = new WebUrlRequestInterceptor(this);
+    QWebEngineProfile::defaultProfile()->setRequestInterceptor(wuri);
+
+    TorUrlSchemeHandler *torShemeHandler = new TorUrlSchemeHandler(this);
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArrayLiteral("tor"), torShemeHandler);
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArrayLiteral("tors"), torShemeHandler);
+    Q_CONNECT(&torProxy, &tor::TorProxy::torProxyStarted, torShemeHandler, &TorUrlSchemeHandler::setProxy);
 
     shemeHandler = new MHUrlSchemeHandler(this);
     QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(QByteArray("mh"), shemeHandler);
@@ -573,8 +603,11 @@ END_SLOT_WRAPPER
 void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
     LOG << "command line " << text1;
 
-    const static QString HTTP_1_PREFIX = "http://";
-    const static QString HTTP_2_PREFIX = "https://";
+    const static QString HTTP_1_PREFIX = QLatin1String("http://");
+    const static QString HTTP_2_PREFIX = QLatin1String("https://");
+
+    const static QString TOR_1_PREFIX = QLatin1String("tor://");
+    const static QString TOR_2_PREFIX = QLatin1String("tors://");
     const static QLatin1String  SEARCH_PREFIX = QLatin1String("app://Search:");
 
     QString text = text1;
@@ -590,6 +623,11 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
         return;
     }
 
+/*    if (text.startsWith("tor://") || text.startsWith("http://")) {
+        loadUrl(text);
+        return;
+    }
+*/
     const auto doProcessCommand = [this, isAddToHistory, text](const PageInfo &pageInfo) {
         const QString &reference = pageInfo.page;
 
@@ -653,7 +691,8 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     if (pageInfo.isApp || pageInfo.isRedirectShemeHandler) {
         doProcessCommand(pageInfo);
         return;
-    } else if (text.startsWith(HTTP_1_PREFIX) || text.startsWith(HTTP_2_PREFIX)) {
+    } else if (text.startsWith(HTTP_1_PREFIX) || text.startsWith(HTTP_2_PREFIX) ||
+               text.startsWith(TOR_1_PREFIX) || text.startsWith(TOR_2_PREFIX)) {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
         unregisterAllWebChannels();
         loadUrl(text);
@@ -801,8 +840,29 @@ void MainWindow::addElementToHistoryAndCommandLine(const QString &text, bool isA
 
 void MainWindow::onUrlChanged(const QUrl &url2) {
 BEGIN_SLOT_WRAPPER
-        qDebug() << "URL new " << url2;
+    qDebug() << "URL new " << url2;
     const QString url = url2.toString();
+
+//////////////////// Hack for metapay internal redirects
+    if (url2.scheme() == QLatin1String("metapay")) {
+        const PageInfo pageInfo = pagesMappings.find(url);
+
+        const QString &reference = pageInfo.page;
+
+            QString clText;
+            if (pageInfo.printedName.isNull() || pageInfo.printedName.isEmpty()) {
+                clText = url;
+            } else {
+                clText = pageInfo.printedName;
+            }
+
+                addElementToHistoryAndCommandLine(clText, false, true);
+                registerAllWebChannels();
+                loadFile(reference);
+
+        return;
+    }
+////////////////////
     const QString turl = QUrl::fromPercentEncoding(url.toUtf8());
     //const QString url = url2.toDisplayString(QUrl::None);
 
