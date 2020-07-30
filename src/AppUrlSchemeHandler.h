@@ -1,5 +1,5 @@
-#ifndef MHURLSCHEMEHANDLER_H
-#define MHURLSCHEMEHANDLER_H
+#ifndef APPURLSCHEMEHANDLER_H
+#define APPURLSCHEMEHANDLER_H
 
 #include <set>
 #include <unordered_map>
@@ -8,20 +8,15 @@
 #include <QTimer>
 #include <QWebEngineUrlSchemeHandler>
 
-class QNetworkAccessManager;
 class QWebEngineUrlRequestJob;
 class MainWindow;
 class QNetworkReply;
 
-class MHUrlSchemeHandler : public QWebEngineUrlSchemeHandler {
+class AppUrlSchemeHandler : public QWebEngineUrlSchemeHandler {
 public:
-    explicit MHUrlSchemeHandler(QObject *parent = nullptr);
+    explicit AppUrlSchemeHandler(QObject *parent = nullptr);
 
     void requestStarted(QWebEngineUrlRequestJob *job) override;
-
-    void setLog();
-
-    void setFirstRun();
 
 private slots:
     void onRequestFinished();
@@ -30,23 +25,17 @@ private slots:
 
 private:
 
-    void processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, const std::set<QString> &excludesIps);
+    //void processRequest(QWebEngineUrlRequestJob *job, MainWindow *win, const QUrl &url, const QString &host, const std::set<QString> &excludesIps);
 
     void removeOnRequestId(const std::string &requestId);
 
 private:
-    QNetworkAccessManager *m_manager;
-
-    bool isLog = false;
-
-    bool isFirstRun = false;
 
     std::vector<QNetworkReply*> requests;
 
     QTimer timer;
 
-    std::atomic<size_t> requestId{0};
-
+    std::atomic<quint64> requestId{0};
 };
 
-#endif // MHURLSCHEMEHANDLER_H
+#endif // APPURLSCHEMEHANDLER_H

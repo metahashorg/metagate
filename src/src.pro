@@ -13,6 +13,7 @@ DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp MainWindow.cpp \
+#    AppUrlSchemeHandler.cpp \
     Uploader.cpp \
     Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
     Wallets/ethtx/scrypt/sha256.cpp \
@@ -124,6 +125,7 @@ SOURCES += main.cpp MainWindow.cpp \
 unix: SOURCES +=
 
 HEADERS += MainWindow.h \
+#    AppUrlSchemeHandler.h \
     Uploader.h \
     Wallets/ethtx/scrypt/libscrypt.h \
     Wallets/ethtx/scrypt/sha256.h \
