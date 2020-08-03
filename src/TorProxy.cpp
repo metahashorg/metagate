@@ -50,6 +50,10 @@ TorProxy::TorProxy(QObject *parent)
 
     torProc->setReadChannel(QProcess::StandardOutput);
 
+    connect(torProc, &QProcess::errorOccurred, [this](QProcess::ProcessError error) {
+        LOG << "TOR start error " << error;
+    });
+
     connect(torProc, &QProcess::readyReadStandardOutput, [this](){
         QTextStream stream(torProc);
         while (!stream.atEnd()) {
@@ -70,6 +74,12 @@ void TorProxy::start()
 {
     LOG << "Tor working dir " << getTorDir().absolutePath();
     torProc->setWorkingDirectory(getTorDir().absolutePath());
+
+#ifdef Q_OS_LINUX
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert("LD_LIBRARY_PATH", getTorDir().absolutePath());
+    torProc->setProcessEnvironment(env);
+#endif
 
     const QString torconfig = getTorConfigPath();
     saveConfig(torconfig, getTorDataPath());
