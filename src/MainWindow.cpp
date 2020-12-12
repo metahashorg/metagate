@@ -462,6 +462,8 @@ void MainWindow::doConfigureMenu() {
         countFocusLineEditChanged++;
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        qDebug() << "EDIT:" << text;
+        emit urlChanged(text);
         lineEditUserChanged = true;
         emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
     });

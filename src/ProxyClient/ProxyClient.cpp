@@ -20,12 +20,12 @@ namespace proxy_client {
 
 ProxyClient::ProxyClient(metagate::MetaGate &metagate, QObject *parent)
     : TimerClass(20s, parent)
-    , proxyClient(new LocalClient(getLocalServerPath(), this))
+    , proxyClient(new localconnection::LocalClient(getLocalServerPath(), this))
     , mhProxyActive(false)
 {
     hardwareId = QString::fromStdString(::getMachineUid());
 
-    Q_CONNECT(proxyClient, &LocalClient::callbackCall, this, &ProxyClient::callbackCall);
+    Q_CONNECT(proxyClient, &localconnection::LocalClient::callbackCall, this, &ProxyClient::callbackCall);
 
     Q_CONNECT(this, &ProxyClient::getStatus, this, &ProxyClient::onGetStatus);
     Q_CONNECT(this, &ProxyClient::getEnabledSetting, this, &ProxyClient::onGetEnabledSetting);
@@ -71,7 +71,7 @@ void ProxyClient::finishMethod()
 void ProxyClient::onGetStatus(const GetStatusCallback &callback) {
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
-        proxyClient->sendRequest(makeGetStatusMessage(), [callback](const LocalClient::Response &response) {
+        proxyClient->sendRequest(makeGetStatusMessage(), [callback](const localconnection::LocalClient::Response &response) {
             BEGIN_SLOT_WRAPPER
             QString status;
             const TypedException exception = apiVrapper2([&] {
@@ -95,7 +95,7 @@ void ProxyClient::onSetProxyConfigAndRestart(bool enabled, int port, const SetPr
 BEGIN_SLOT_WRAPPER
     runAndEmitErrorCallback([&]{
         generateProxyConfig(enabled, port);
-        proxyClient->sendRequest(makeRefreshConfigMessage(), [callback](const LocalClient::Response &response) {
+        proxyClient->sendRequest(makeRefreshConfigMessage(), [callback](const localconnection::LocalClient::Response &response) {
             const TypedException exception = apiVrapper2([&] {
                 CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
                 const ProxyResponse result = parseProxyResponse(response.response);
@@ -122,7 +122,7 @@ BEGIN_SLOT_WRAPPER
     if (active == isProxyEnabled())
         return;
     generateProxyConfig(active, 12000);
-    proxyClient->sendRequest(makeRefreshConfigMessage(), [](const LocalClient::Response &response) {
+    proxyClient->sendRequest(makeRefreshConfigMessage(), [](const localconnection::LocalClient::Response &response) {
                 CHECK_TYPED(!response.exception.isSet(), TypeErrors::PROXY_SERVER_ERROR, response.exception.toString());
                 const ProxyResponse result = parseProxyResponse(response.response);
                 CHECK_TYPED(!result.error, TypeErrors::PROXY_RESTART_ERROR, result.text.toStdString());
@@ -148,7 +148,7 @@ bool ProxyClient::isProxyEnabled() const
 void ProxyClient::checkServiceState()
 {
 BEGIN_SLOT_WRAPPER
-    proxyClient->sendRequest(makeGetStatusMessage(), [this](const LocalClient::Response &response) {
+    proxyClient->sendRequest(makeGetStatusMessage(), [this](const localconnection::LocalClient::Response &response) {
         if (response.exception.isSet()) {
             mhProxyActive = false;
         } else {

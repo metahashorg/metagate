@@ -10,6 +10,9 @@ using namespace std::placeholders;
 #include "qt_utilites/SlotWrapper.h"
 #include "qt_utilites/QRegister.h"
 
+namespace localconnection
+{
+
 LocalClient::LocalClient(const QString &localServerName, QObject *parent)
     : QObject(parent)
     , localServerName(localServerName)
@@ -106,4 +109,6 @@ BEGIN_SLOT_WRAPPER
 
     socket->deleteLater();
 END_SLOT_WRAPPER
+}
+
 }

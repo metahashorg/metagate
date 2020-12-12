@@ -29,6 +29,8 @@
 #include "TypedException.h"
 #include "Paths.h"
 #include "Network/NetwrokTesting.h"
+#include "ExternalConnector/ExternalConnector.h"
+#include "ExternalConnector/ExternalConnectorManager.h"
 
 #include "TorProxy.h"
 
@@ -188,6 +190,10 @@ int main(int argc, char *argv[]) {
 
         const std::shared_future<InitMainWindow::Return> mainWindow = initManager.addInit<InitMainWindow, true>(std::ref(initJavascript), std::ref(tor), versionString, typeString, GIT_CURRENT_SHA1, std::ref(mhPayEventHandler), hide);
         mainWindow.get(); // Сразу делаем здесь получение, чтобы инициализация происходила в этом потоке
+
+        ExternalConnector extConn(*mainWindow.get());
+        ExternalConnectorManager extConnMngr(extConn);
+        extConnMngr.start();
 
         const std::shared_future<InitUtils::Return> utils = initManager.addInit<InitUtils>(mainWindow);
 
