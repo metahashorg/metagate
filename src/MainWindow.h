@@ -131,6 +131,9 @@ public:
 
     LastHtmlVersion getCurrentHtmls() const;
 
+    QString getCurrenttUrl() const;
+    void setCurrentUrl(const QString &url);
+
 public slots:
     void showOnTop();
 

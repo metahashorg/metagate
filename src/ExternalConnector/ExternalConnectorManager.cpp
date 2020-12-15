@@ -10,9 +10,12 @@
 
 #include "Paths.h"
 #include "check.h"
+#include "Log.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
+
+SET_LOG_NAMESPACE("EXTCONN");
 
 namespace
 {
@@ -115,6 +118,7 @@ ExternalConnectorManager::~ExternalConnectorManager()
 
 void ExternalConnectorManager::startMethod()
 {
+    LOG << "Start ExternalConnectorManager";
 }
 
 void ExternalConnectorManager::timerMethod()

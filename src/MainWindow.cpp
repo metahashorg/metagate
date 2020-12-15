@@ -974,6 +974,16 @@ LastHtmlVersion MainWindow::getCurrentHtmls() const {
     return last_htmls;
 }
 
+QString MainWindow::getCurrenttUrl() const
+{
+    return ui->commandLine->lineEdit()->text();
+}
+
+void MainWindow::setCurrentUrl(const QString &url)
+{
+    ui->commandLine->lineEdit()->setText(url);
+}
+
 void MainWindow::setVisible(bool visible)
 {
     hideAction->setEnabled(visible);

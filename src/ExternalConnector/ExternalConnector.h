@@ -1,6 +1,7 @@
 #ifndef EXTERNALCONNECTOR_H
 #define EXTERNALCONNECTOR_H
 
+#include "ExternalConnectorList.h"
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/CallbackCallWrapper.h"
 
@@ -27,6 +28,7 @@ private slots:
 
 private:
     MainWindow &mainWindow;
+    ExternalConnectorList extConnList;
 };
 
 #endif // EXTERNALCONNECTOR_H
