@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ExternalConnectorList.txt</file>
+    </qresource>
+</RCC>

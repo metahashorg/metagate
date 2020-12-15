@@ -29,6 +29,7 @@ protected:
 
 public slots:
     void urlChanged(const QString &url);
+    void urlEntered(const QString &url);
 
 private slots:
     void onRequest(std::shared_ptr<localconnection::LocalServerRequest> request);

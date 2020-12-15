@@ -131,6 +131,9 @@ public:
 
     LastHtmlVersion getCurrentHtmls() const;
 
+    QString getCurrenttUrl() const;
+    void setCurrentUrl(const QString &url);
+
 public slots:
     void showOnTop();
 
@@ -164,6 +167,7 @@ signals:
 
     // External Connector
     void urlChanged(const QString &url);
+    void urlEntered(const QString &url);
 
 protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;

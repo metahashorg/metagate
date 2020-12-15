@@ -14,6 +14,7 @@ QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp MainWindow.cpp \
     ExternalConnector/ExternalConnector.cpp \
+    ExternalConnector/ExternalConnectorList.cpp \
     ExternalConnector/ExternalConnectorManager.cpp \
     TorProxy.cpp \
     Uploader.cpp \
@@ -130,6 +131,7 @@ unix: SOURCES +=
 
 HEADERS += MainWindow.h \
     ExternalConnector/ExternalConnector.h \
+    ExternalConnector/ExternalConnectorList.h \
     ExternalConnector/ExternalConnectorManager.h \
     TorProxy.h \
     Uploader.h \
@@ -298,4 +300,5 @@ DISTFILES +=
 
 RESOURCES += \
     ../svg1.qrc \
-    ../dbupdates/dbupdates.qrc
+    ../dbupdates/dbupdates.qrc \
+    ./ExternalConnector/ExternalConnectorList.qrc

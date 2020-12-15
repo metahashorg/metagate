@@ -1,6 +1,6 @@
-INCLUDEPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib $$PWD/3rdparty/openssl-1.0.2o-x64/include
+INCLUDEPATH += $$PWD/3rdparty/QtZlib $$PWD/3rdparty/openssl-1.0.2o-x64/include
 INCLUDEPATH += $$PWD/3rdparty $$PWD/3rdparty/quazip/include $$PWD
-DEPENDPATH += C:/Qt/5.10.1/msvc2015_64/include/QtZlib $$PWD/openssl-1.0.2o-x64/include
+DEPENDPATH += $$PWD/3rdparty/QtZlib $$PWD/openssl-1.0.2o-x64/include
 DEFINES += TARGET_WINDOWS
 INCLUDEPATH += $$PWD/3rdparty/cryptopp/include/
 #QR coder libs

@@ -249,7 +249,7 @@ QString getExternalConnectionInLocalServerPath()
     const QString basePath = "/tmp";
     return makePath(basePath, LOCALSERVERIN_NAME);
 #else
-    return LOCALSERVER_NAME;
+    return LOCALSERVERIN_NAME;
 #endif
 }
 
@@ -259,7 +259,7 @@ QString getExternalConnectionOutLocalServerPath()
     const QString basePath = "/tmp";
     return makePath(basePath, LOCALSERVEROUT_NAME);
 #else
-    return LOCALSERVER_NAME;
+    return LOCALSERVEROUT_NAME;
 #endif
 }
 

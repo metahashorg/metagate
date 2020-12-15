@@ -1,6 +1,7 @@
 #ifndef EXTERNALCONNECTOR_H
 #define EXTERNALCONNECTOR_H
 
+#include "ExternalConnectorList.h"
 #include "qt_utilites/CallbackWrapper.h"
 #include "qt_utilites/CallbackCallWrapper.h"
 
@@ -17,6 +18,7 @@ public:
 
 signals:
     void urlChanged(const QString &url);
+    void urlEntered(const QString &url);
 
     void getUrl(const GetUrlCallback &callback);
     void setUrl(const QString &url, const SetUrlCallback &callback);
@@ -27,6 +29,7 @@ private slots:
 
 private:
     MainWindow &mainWindow;
+    ExternalConnectorList extConnList;
 };
 
 #endif // EXTERNALCONNECTOR_H
