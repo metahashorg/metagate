@@ -18,6 +18,7 @@ public:
 
 signals:
     void urlChanged(const QString &url);
+    void urlEntered(const QString &url);
 
     void getUrl(const GetUrlCallback &callback);
     void setUrl(const QString &url, const SetUrlCallback &callback);

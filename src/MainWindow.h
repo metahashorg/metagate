@@ -167,6 +167,7 @@ signals:
 
     // External Connector
     void urlChanged(const QString &url);
+    void urlEntered(const QString &url);
 
 protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;

@@ -473,6 +473,7 @@ void MainWindow::doConfigureMenu() {
         }
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+        emit urlEntered(ui->commandLine->lineEdit()->text());
         emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     });

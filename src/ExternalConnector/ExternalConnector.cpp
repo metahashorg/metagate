@@ -13,6 +13,10 @@ ExternalConnector::ExternalConnector(MainWindow &mainWindow, QObject *parent)
         if (extConnList.checkUrl(url))
             emit urlChanged(url);
     });
+    Q_CONNECT3(&mainWindow, &MainWindow::urlEntered, [this](const QString &url){
+        if (extConnList.checkUrl(url))
+            emit urlEntered(url);
+    });
 
     Q_CONNECT(this, &ExternalConnector::getUrl, this, &ExternalConnector::onGetUrl);
     Q_CONNECT(this, &ExternalConnector::setUrl, this, &ExternalConnector::onSetUrl);
