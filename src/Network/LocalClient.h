@@ -10,6 +10,9 @@
 
 #include "utilites/RequestId.h"
 
+namespace localconnection
+{
+
 class LocalClient: public QObject {
     Q_OBJECT
 public:
@@ -87,5 +90,7 @@ private:
 
     RequestId id;
 };
+
+}
 
 #endif // LOCALCLIENT_H

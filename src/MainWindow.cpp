@@ -462,6 +462,8 @@ void MainWindow::doConfigureMenu() {
         countFocusLineEditChanged++;
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::textEdited, [this](const QString &text){
+        qDebug() << "EDIT:" << text;
+        emit urlChanged(text);
         lineEditUserChanged = true;
         emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, text, false, true);
     });
@@ -471,6 +473,7 @@ void MainWindow::doConfigureMenu() {
         }
     });
     Q_CONNECT3(ui->commandLine->lineEdit(), &QLineEdit::returnPressed, [this]{
+        emit urlEntered(ui->commandLine->lineEdit()->text());
         emit metagate->sendCommandLineMessageToWss(hardwareId, ui->userButton->text(), countFocusLineEditChanged, ui->commandLine->lineEdit()->text(), true, true);
         ui->commandLine->lineEdit()->setText(currentTextCommandLine);
     });
@@ -970,6 +973,16 @@ QString MainWindow::getServerIp(const QString &text, const std::set<QString> &ex
 LastHtmlVersion MainWindow::getCurrentHtmls() const {
     std::lock_guard<std::mutex> lock(mutLastHtmls);
     return last_htmls;
+}
+
+QString MainWindow::getCurrenttUrl() const
+{
+    return ui->commandLine->lineEdit()->text();
+}
+
+void MainWindow::setCurrentUrl(const QString &url)
+{
+    ui->commandLine->lineEdit()->setText(url);
 }
 
 void MainWindow::setVisible(bool visible)

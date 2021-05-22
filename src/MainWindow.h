@@ -20,6 +20,7 @@ class WebSocketClient;
 class JavascriptWrapper;
 class MHUrlSchemeHandler;
 class MHPayUrlSchemeHandler;
+class ExternalConnectorManager;
 
 namespace tor {
 class TorProxy;
@@ -130,6 +131,9 @@ public:
 
     LastHtmlVersion getCurrentHtmls() const;
 
+    QString getCurrenttUrl() const;
+    void setCurrentUrl(const QString &url);
+
 public slots:
     void showOnTop();
 
@@ -160,6 +164,10 @@ signals:
     void processExternalUrl(const QUrl &url);
 
     void showNotification(const QString &title, const QString &message);
+
+    // External Connector
+    void urlChanged(const QString &url);
+    void urlEntered(const QString &url);
 
 protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;

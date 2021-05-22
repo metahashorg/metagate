@@ -77,7 +77,7 @@ private:
     bool isProxyEnabled() const;
 
 private:
-    LocalClient *proxyClient;
+    localconnection::LocalClient *proxyClient;
     bool mhProxyActive;
     QString hardwareId;
 };

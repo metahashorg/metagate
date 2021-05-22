@@ -41,6 +41,9 @@ const static QString PROXY_CONFIG_NAME = "proxy.ini";
 
 const static QString LOCALSERVER_NAME = "metahash.metagate";
 
+const static QString LOCALSERVERIN_NAME = "metahash.externalconnector.in";
+const static QString LOCALSERVEROUT_NAME = "metahash.externalconnector.out";
+
 const static QString TOR_PATH = QLatin1String("tor/");
 
 const static QString TORDATA_PATH = QLatin1String("data/");
@@ -237,6 +240,26 @@ QString getLocalServerPath()
     return makePath(getCommonMetagatePath(), LOCALSERVER_NAME);
 #else
     return LOCALSERVER_NAME;
+#endif
+}
+
+QString getExternalConnectionInLocalServerPath()
+{
+#ifdef Q_OS_UNIX
+    const QString basePath = "/tmp";
+    return makePath(basePath, LOCALSERVERIN_NAME);
+#else
+    return LOCALSERVERIN_NAME;
+#endif
+}
+
+QString getExternalConnectionOutLocalServerPath()
+{
+#ifdef Q_OS_UNIX
+    const QString basePath = "/tmp";
+    return makePath(basePath, LOCALSERVEROUT_NAME);
+#else
+    return LOCALSERVEROUT_NAME;
 #endif
 }
 

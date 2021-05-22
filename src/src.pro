@@ -13,6 +13,9 @@ DEFINES += GIT_CURRENT_SHA1="\\\"$$system(git rev-parse --short HEAD)\\\""
 QMAKE_INFO_PLIST +=  ../deploy/mac/default.plist
 
 SOURCES += main.cpp MainWindow.cpp \
+    ExternalConnector/ExternalConnector.cpp \
+    ExternalConnector/ExternalConnectorList.cpp \
+    ExternalConnector/ExternalConnectorManager.cpp \
     TorProxy.cpp \
     Uploader.cpp \
     Wallets/ethtx/scrypt/crypto_scrypt-nosse.cpp \
@@ -118,6 +121,7 @@ SOURCES += main.cpp MainWindow.cpp \
     Initializer/Inits/InitMetaGate.cpp \
     MetaGate/MetaGateMessages.cpp \
     Network/LocalClient.cpp \
+    Network/LocalServer.cpp \
     ProxyClient/ProxyClient.cpp \
     ProxyClient/ProxyClientJavascript.cpp \
     Initializer/Inits/InitProxyClient.cpp \
@@ -126,6 +130,9 @@ SOURCES += main.cpp MainWindow.cpp \
 unix: SOURCES +=
 
 HEADERS += MainWindow.h \
+    ExternalConnector/ExternalConnector.h \
+    ExternalConnector/ExternalConnectorList.h \
+    ExternalConnector/ExternalConnectorManager.h \
     TorProxy.h \
     Uploader.h \
     Wallets/ethtx/scrypt/libscrypt.h \
@@ -251,6 +258,7 @@ HEADERS += MainWindow.h \
     utilites/template_helpers.h \
     Initializer/SharedFuture.h \
     Network/LocalClient.h \
+    Network/LocalServer.h \
     ProxyClient/ProxyClient.h \
     ProxyClient/ProxyStatus.h \
     ProxyClient/ProxyClientJavascript.h \
@@ -292,4 +300,5 @@ DISTFILES +=
 
 RESOURCES += \
     ../svg1.qrc \
-    ../dbupdates/dbupdates.qrc
+    ../dbupdates/dbupdates.qrc \
+    ./ExternalConnector/ExternalConnectorList.qrc

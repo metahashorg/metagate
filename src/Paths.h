@@ -29,6 +29,10 @@ QString getProxyConfigPath();
 
 QString getLocalServerPath();
 
+QString getExternalConnectionInLocalServerPath();
+
+QString getExternalConnectionOutLocalServerPath();
+
 QString getTorConfigPath();
 
 QString getTorDataPath();
