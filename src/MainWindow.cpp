@@ -681,7 +681,12 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
                 qtOpenInBrowser(reference);
             } else if (reference.startsWith(HTTP_1_PREFIX) || reference.startsWith(HTTP_2_PREFIX) || !pageInfo.isLocalFile) {
                 addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
-                unregisterAllWebChannels();
+                const QUrl url(reference);
+                if (url.host() == QLatin1String("localhost") || url.host() == QLatin1String("127.0.0.1")) {
+                    registerAllWebChannels();
+                } else {
+                    unregisterAllWebChannels();
+                }
                 loadUrl(reference);
             } else {
                 addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
@@ -698,7 +703,12 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     } else if (text.startsWith(HTTP_1_PREFIX) || text.startsWith(HTTP_2_PREFIX) ||
                text.startsWith(TOR_1_PREFIX) || text.startsWith(TOR_2_PREFIX)) {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
-        unregisterAllWebChannels();
+        const QUrl url(text);
+        if (url.host() == QLatin1String("localhost") || url.host() == QLatin1String("127.0.0.1")) {
+            registerAllWebChannels();
+        } else {
+            unregisterAllWebChannels();
+        }
         loadUrl(text);
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
