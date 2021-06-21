@@ -221,8 +221,10 @@ private:
     void doConfigureMenu();
 
     void registerCommandLine();
-
     void unregisterCommandLine();
+
+    void registerUrlChangedHandler();
+    void unregisterUrlChangedHandler();
 
     void enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate);
 

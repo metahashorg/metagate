@@ -12,6 +12,8 @@
 #include <QJsonValue>
 #include <QJsonObject>
 
+#include <QDebug>
+
 SET_LOG_NAMESPACE("MW");
 
 const QString METAHASH_URL = "mh://";
@@ -72,7 +74,7 @@ void PagesMappings::addMappingsMh(QString mapping) {
     const bool isDefault = type == "defaultGateway";
     if (!isDefault) {
         CHECK(element.contains("url") && element.value("url").isString(), "url field not found");
-        const QString url = element.value("url").toString();
+        QString url = element.value("url").toString();
         CHECK(element.contains("name") && element.value("name").isString(), "name field not found");
         const QString name = element.value("name").toString();
         CHECK(element.contains("isExternal") && element.value("isExternal").isBool(), "isExternal field not found");
@@ -114,6 +116,18 @@ void PagesMappings::addMappingsMh(QString mapping) {
                 map[name] = page;
             }
         };
+
+        if (url.startsWith(APP_URL)) {
+            const PageInfo pageInfo = find(url);
+            if (pageInfo.isApp || pageInfo.isRedirectShemeHandler) {
+                page->isApp = pageInfo.isApp;
+                page->isDefault = pageInfo.isDefault;
+                page->isExternal = pageInfo.isExternal;
+                page->isLocalFile = pageInfo.isLocalFile;
+                url = pageInfo.page;
+                page->page = pageInfo.page;
+            }
+        }
 
         addToMap(mappingsPages, name, page);
         addToMap(mappingsPages, url, page);

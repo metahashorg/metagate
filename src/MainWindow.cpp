@@ -584,27 +584,43 @@ void MainWindow::configureMenu() {
     });
 }
 
-void MainWindow::registerCommandLine() {
+void MainWindow::registerCommandLine()
+{
     Q_CONNECT(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate);
 }
 
-void MainWindow::unregisterCommandLine() {
+void MainWindow::unregisterCommandLine()
+{
     CHECK(disconnect(ui->commandLine, QOverload<const QString&>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onEnterCommandAndAddToHistoryNoDuplicate), "not disconnect currentIndexChanged");
 }
 
-void MainWindow::onEnterCommandAndAddToHistory(const QString &text) {
+void MainWindow::registerUrlChangedHandler()
+{
+    Q_CONNECT(ui->webView, &WebView::urlChanged, this, &MainWindow::onUrlChanged);
+
+}
+
+void MainWindow::unregisterUrlChangedHandler()
+{
+    disconnect(ui->webView, &WebView::urlChanged, this, &MainWindow::onUrlChanged);
+}
+
+void MainWindow::onEnterCommandAndAddToHistory(const QString &text)
+{
 BEGIN_SLOT_WRAPPER
     enterCommandAndAddToHistory(text, true, false);
 END_SLOT_WRAPPER
 }
 
-void MainWindow::onEnterCommandAndAddToHistoryNoDuplicate(const QString &text) {
+void MainWindow::onEnterCommandAndAddToHistoryNoDuplicate(const QString &text)
+{
 BEGIN_SLOT_WRAPPER
     enterCommandAndAddToHistory(text, true, true);
 END_SLOT_WRAPPER
 }
 
-void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate) {
+void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToHistory, bool isNoEnterDuplicate)
+{
     LOG << "command line " << text1;
 
     const static QString HTTP_1_PREFIX = QLatin1String("http://");
@@ -691,7 +707,9 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
             } else {
                 addElementToHistoryAndCommandLine(clText, isAddToHistory, true);
                 registerAllWebChannels();
+                unregisterUrlChangedHandler();
                 loadFile(reference);
+                registerUrlChangedHandler();
             }
         }
     };
@@ -713,9 +731,7 @@ void MainWindow::enterCommandAndAddToHistory(const QString &text1, bool isAddToH
     } else {
         addElementToHistoryAndCommandLine(text, isAddToHistory, true);
         const QString host = PagesMappings::getHost(text);
-        qDebug() << host;
         const QString postRequest = "{\"id\":1, \"method\":\"custom\", \"params\":{\"name\": \"" + host + "\", \"net\": \"" + netDns + "\"}}";
-        qDebug() << postRequest;
         client.sendMessagePost(urlDns, postRequest, [this, text, doProcessCommand](const SimpleClient::Response &response) {
             CHECK(!response.exception.isSet(), "Dns error " + response.exception.toString());
             qDebug() << QString::fromStdString(response.response);
