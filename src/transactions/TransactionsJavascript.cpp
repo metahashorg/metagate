@@ -139,6 +139,37 @@ static QJsonDocument txInfoToJson(const Transaction &tx) {
     return QJsonDocument(txToJson(tx));
 }
 
+static QJsonObject tokenToJson(const TokenInfo& token)
+{
+    QJsonObject tokenJson;
+    tokenJson.insert("address", token.address);
+    tokenJson.insert("tokenAddress", token.tokenAddress);
+    tokenJson.insert("received", QString(token.received.getDecimal()));
+    tokenJson.insert("spent", QString(token.spent.getDecimal()));
+    tokenJson.insert("value", token.value);
+    tokenJson.insert("countReceived", QString::number(token.countReceived));
+    tokenJson.insert("countSpent", QString::number(token.countSpent));
+    tokenJson.insert("countTxs", QString::number(token.countTxs));
+    tokenJson.insert("type", token.type);
+    tokenJson.insert("symbol", token.symbol);
+    tokenJson.insert("name", token.name);
+    tokenJson.insert("decimals", QString::number(token.decimals));
+    tokenJson.insert("emission", QString::number(token.emission));
+    tokenJson.insert("owner", token.owner);
+    tokenJson.insert("balance", QString(token.calcBalance().getDecimal()));
+    return tokenJson;
+}
+
+static QJsonDocument tokensToJson(const std::vector<TokenInfo>& tokens)
+{
+    QJsonArray messagesTokensJson;
+    for (const auto& token : tokens) {
+        messagesTokensJson.push_back(tokenToJson(token));
+    }
+
+    return QJsonDocument(messagesTokensJson);
+}
+
 void TransactionsJavascript::onNewBalance(const QString &address, const QString &currency, const BalanceInfo &balance) {
 BEGIN_SLOT_WRAPPER
     const QString JS_NAME_RESULT = "txsNewBalanceJs";
@@ -487,13 +518,39 @@ BEGIN_SLOT_WRAPPER
 
     const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>("Not ok"));
 
-    wrapOperation([&, this](){
+    wrapOperation([&, this]() {
         emit transactionsManager->addCurrencyConformity(isMhc, currency, Transactions::AddCurrencyConformity([currency, makeFunc]() {
             LOG << "Add currency conformity ok";
             makeFunc.func(TypedException(), "Ok");
         }, makeFunc.error, signalFunc));
-    }, makeFunc.error);
-END_SLOT_WRAPPER
+    },
+        makeFunc.error);
+    END_SLOT_WRAPPER
+}
+
+void TransactionsJavascript::getTokensForAddress(QString address)
+{
+    BEGIN_SLOT_WRAPPER
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const QString JS_NAME_RESULT = "txsGetTokensJs";
+
+    LOG << "get tokens address " << address;
+
+    CHECK(transactionsManager != nullptr, "transactions not set");
+
+    const auto makeFunc = makeJavascriptReturnAndErrorFuncs(JS_NAME_RESULT, JsTypeReturn<QString>(address), JsTypeReturn<QJsonDocument>(QJsonDocument()));
+
+    wrapOperation([&, this]() {
+        emit transactionsManager->getTokensAddress(address, Transactions::GetTokensCallback([address, makeFunc](const std::vector<TokenInfo>& tokens) {
+            LOG << "get tokens address ok " << address << " " << tokens.size();
+            makeFunc.func(TypedException(), address, tokensToJson(tokens));
+        },
+                                                                makeFunc.error, signalFunc));
+    },
+        makeFunc.error);
+
+    END_SLOT_WRAPPER
 }
 
 void TransactionsJavascript::clearDb(QString currency) {

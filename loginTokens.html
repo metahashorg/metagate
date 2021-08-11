@@ -1,0 +1,215 @@
+<link rel="stylesheet" type="text/css" href="example3.css" media="screen" />
+
+<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+<script>
+    
+    function registerAddress() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.registerAddress(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.type.value, document.createWalletForm.group.value, document.createWalletForm.name.value) ;
+        });
+    }
+    
+    function setGroup() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.setCurrentGroup(document.createWalletForm.group.value) ;
+        });
+    }
+    
+    function getGroup() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getAddresses(document.createWalletForm.group.value) ;
+        });
+    }
+    
+    function getTxs() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxs(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.fromTx.value, parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+
+    function getTokens() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTokensForAddress(document.createWalletForm.address.value) ;
+        });
+    }
+    
+    
+    function txsGetTokensJs(data, errorNum, errorMessage) {
+        if (errorNum == 0) {
+            document.createWalletForm.fromTx.value = data;
+        }
+    }
+    
+    function getAllTxs() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxsAll(document.createWalletForm.currency.value, document.createWalletForm.fromTx.value, parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
+    function getTxs2() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxs2(document.createWalletForm.address.value, document.createWalletForm.currency.value, parseInt(document.createWalletForm.fromTx.value), parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
+    function getTxsFilter() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxsFilters(document.createWalletForm.address.value, document.createWalletForm.currency.value, '[{"name": "isSuccess", "value": true}, {"name": "isTest", "value": true}]', parseInt(document.createWalletForm.fromTx.value), parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
+    function getAllTxs2() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxsAll2(document.createWalletForm.currency.value, parseInt(document.createWalletForm.fromTx.value), parseInt(document.createWalletForm.count.value), (document.createWalletForm.ack.value === 'true')) ;
+        });
+    }
+    
+    function calcBalance() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.calcBalance(document.createWalletForm.address.value, document.createWalletForm.currency.value) ;
+        });
+    }
+    
+    function getTxFromServer() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getTxFromServer(document.createWalletForm.transaction.value, document.createWalletForm.type.value) ;
+        });
+    }
+    
+    function getLastUpdate() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getLastUpdatedBalance(document.createWalletForm.currency.value) ;
+        });
+    }
+    
+    function sendTx() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", document.createWalletForm.nonce.value, document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
+        });
+    }
+    
+    function createV8AddressMHCResultJs(requestId, result, errorCode, errorMessage) {
+        document.createWalletForm.to.value = result;
+    }
+    
+    function createV8() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.createV8AddressMHC("1", document.createWalletForm.address.value, document.createWalletForm.nonce.value) ;
+        });
+    }
+    
+    function sendTx2() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        mainWindow.signMessageDelegate("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, "0", "0", "", document.createWalletForm.value.value, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
+        });
+    }
+        
+    function sendTxData() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.mainWindow;
+        result='';
+        for (i = 0; i < document.createWalletForm.data.value.length; i++) {
+            hex = document.createWalletForm.data.value.charCodeAt(i).toString(16);
+            result += hex;
+        }
+        alert(result);
+        mainWindow.signMessageV3("1", document.createWalletForm.address.value, "123", document.createWalletForm.to.value, document.createWalletForm.value.value, "" + (document.createWalletForm.data.value.length + 0), "", result, '{"countServersSend": 3, "countServersGet": 3, "typeSend": "proxy_test", "typeGet": "torrent_test", "timeout_sec": 5}') ;
+        });
+    }
+        
+    function statusDelegate() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.getStatusDelegation(document.createWalletForm.address.value, document.createWalletForm.currency.value, document.createWalletForm.address.value, document.createWalletForm.to.value);
+        });
+    }
+        
+    function clearDb() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.clearDb(document.createWalletForm.currency.value);
+        });
+    }
+        
+    function addCurrencyC() {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+        var mainWindow = channel.objects.transactions;
+        mainWindow.addCurrencyConformity(true, "tmh") ;
+        });
+    }
+        
+</script>
+
+<body onload="generateAllWalletsJs();"></body>
+
+<div class="back">
+
+  <div id="two" class="abs block">
+    <a href="#one">создание счета</a>
+    <b><a href="#two">подпись данных</a></b>
+    <p class="abs">
+        <left>
+            <FORM name="sign">
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+  <div id="one" class="abs block">
+    <b><a href="#one">создание счета</a></b>
+    <a href="#two">подпись данных</a>
+    <p class="abs">
+        <left>
+            <FORM name="createWalletForm">
+            <input name="address" type="text" value="0x0034d209107371745c6f5634d6ed87199bac872c310091ca56" size="60"><label for="address">address</label><br>
+            <input name="name" type="text" value="name1" size="60"><label for="address">name</label><br>
+            <input name="currency" type="text" value="mth" size="60"><label for="currency">currency</label><br>
+            <input name="type" type="text" value="torrent_test" size="60"><label for="type">type</label><br>
+            <input name="group" type="text" value="g1" size="60"><label for="group">group</label><br>
+            <input name="fromTx" type="text" value="0" size="60"><label for="fromTx">fromTx/from</label><br>
+            <input name="count" type="text" value="10" size="60"><label for="count">count</label><br>
+            <input name="ack" type="text" value="true" size="60"><label for="ack">ack</label><br>
+            <input name="nonce" type="text" value="8" size="60"><label for="nonce">nonce</label><br>
+            <input name="value" type="text" value="100000000" size="60"><label for="value">value</label><br>
+            <input name="transaction" type="text" value="01cbd06593e093da63c836145e19083fe92899e8468696009a904d28cfd8bba9" size="60"><label for="transaction">transaction</label><br>
+            <input name="to" type="text" value="0x666174686572206f662077616c6c65747320666f7267696e67" size="60"><label for="to">to</label><br>
+           <input name="data" type="text" value="" size="3000"><label for="data">data</label><br>
+            <input type="button" value="register" onclick="registerAddress()"><br>
+            <input type="button" value="setGroup" onclick="setGroup()"><br>
+            <input type="button" value="getGroup" onclick="getGroup()"><br>
+            <input type="button" value="tokens" onclick="getTokens()"><br>
+            <input type="button" value="getTxs2" onclick="getTxs2()"><br>
+            <input type="button" value="getAllTxs2" onclick="getAllTxs2()"><br>
+            <input type="button" value="getTxsFilter" onclick="getTxsFilter()"><br>
+            <input type="button" value="calcBalance" onclick="calcBalance()"><br>
+            <input type="button" value="getTxFromServer" onclick="getTxFromServer()"><br>
+            <input type="button" value="getLastUpdate" onclick="getLastUpdate()"><br>
+            <input type="button" value="createV8" onclick="createV8()"><br>
+            <input type="button" value="sendTx" onclick="sendTx()"><br>
+            <input type="button" value="sendTxAutoCalcNonce" onclick="sendTx2()"><br>
+            <input type="button" value="sendTxData" onclick="sendTxData()"><br>
+            <input type="button" value="statusDelegate" onclick="statusDelegate()"><br>
+            <input type="button" value="addCurrencyC" onclick="addCurrencyC()"><br>
+            <input type="button" value="clearDb" onclick="clearDb()"><br>
+            </FORM>
+        </left>
+    </p>
+  </div>
+
+</div>

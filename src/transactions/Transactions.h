@@ -147,6 +147,8 @@ public:
 
     using SendTransactionCallback = CallbackWrapper<void()>;
 
+    using GetTokensCallback = CallbackWrapper<void(const std::vector<TokenInfo>& tokens)>;
+
     using ClearDbCallback = CallbackWrapper<void()>;
 
     using AddCurrencyConformity = CallbackWrapper<void()>;
@@ -200,9 +202,11 @@ signals:
 
     void getTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
-    void getLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
+    void getLastUpdateBalance(const QString& currency, const GetLastUpdateCallback& callback);
 
-    void clearDb(const QString &currency, const ClearDbCallback &callback);
+    void getTokensAddress(const QString& address, const GetTokensCallback& callback);
+
+    void clearDb(const QString& currency, const ClearDbCallback& callback);
 
     void addCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback);
 
@@ -238,9 +242,11 @@ public slots:
 
     void onGetTxFromServer(const QString &txHash, const QString &type, const GetTxCallback &callback);
 
-    void onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback);
+    void onGetLastUpdateBalance(const QString& currency, const GetLastUpdateCallback& callback);
 
-    void onClearDb(const QString &currency, const ClearDbCallback &callback);
+    void onGetTokensAddress(const QString& address, const GetTokensCallback& callback);
+
+    void onClearDb(const QString& currency, const ClearDbCallback& callback);
 
     void onMthWalletCreated(bool isMhc, const QString &name, const QString &userName);
 
@@ -264,7 +270,18 @@ private:
 
     void processCheckTxsInternal(const QString &address, const QString &currency, const QUrl &server, const Transaction &tx, int64_t serverBlockNumber);
 
-    void processAddressMth(const std::vector<QString> &addresses, const QString &currency, const std::vector<QString> &servers, const std::shared_ptr<ServersStruct> &servStruct);
+    void processAddressMth(const std::vector<QString>& addresses,
+        const QString& currency,
+        const std::vector<QString>& servers,
+        const std::shared_ptr<ServersStruct>& servStruct);
+
+    void processTokens(const QString& address,
+        const QUrl& server,
+        const BalanceInfo& serverBalance,
+        const BalanceInfo& dbBalance);
+
+    void updateTokenInfo(const QString& tokenAddress,
+        const QUrl& server);
 
     void processPendings();
 

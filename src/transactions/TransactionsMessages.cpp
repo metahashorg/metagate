@@ -69,6 +69,10 @@ static BalanceInfo parseBalanceResponseInternal(const QJsonObject &json) {
         }
     }
 
+    if (json.contains("token_block_number")) {
+        result.tokenBlockNum = getIntOrString(json, "token_block_number").toULong();
+    }
+
     if (json.contains("forged")) {
         result.forged = getIntOrString(json, "forged");
     }
@@ -323,4 +327,92 @@ SendParameters parseSendParamsInternal(const QString &paramsJson) {
     return result;
 }
 
+QString makeAddressGetTokensRequest(const QString& address)
+{
+    QJsonObject request;
+    request.insert("jsonrpc", "2.0");
+    request.insert("method", "address-get-tokens");
+    QJsonObject params;
+    params.insert("address", address);
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
 }
+
+static TokenBalance parseToken(const QString& address, const QJsonObject& json)
+{
+    TokenBalance result;
+
+    CHECK(json.contains("address") && json.value("address").isString(),
+        "Incorrect json: address field not found");
+    result.address = address;
+    result.tokenAddress = json.value("address").toString();
+    result.received = getIntOrString(json, "received");
+    result.spent = getIntOrString(json, "spent");
+    result.value = getIntOrString(json, "value");
+    result.countReceived = getIntOrString(json, "count_received").toULong();
+    result.countSpent = getIntOrString(json, "count_spent").toULong();
+    result.countTxs = getIntOrString(json, "count_txs").toULong();
+    return result;
+}
+
+std::vector<TokenBalance> parseAddressGetTokensResponse(const QString& address, const QString& response)
+{
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject& json1 = jsonResponse.object();
+    CHECK(json1.contains("result") && json1.value("result").isObject(),
+        "Incorrect json: result field not found");
+    const QJsonObject& json = json1.value("result").toObject();
+    // TODO
+    //    auto block_number = getIntOrString(json, "count_received").toULong();
+    //    auto currentBlock = getIntOrString(json, "currentBlock").toULong();
+    //    auto hash = json.value("hash").toString();
+    //    auto token_block_number = getIntOrString(json, "token_block_number").toULong();
+
+    std::vector<TokenBalance> result;
+    if (json.contains("tokens") && json.value("tokens").isArray()) {
+        const QJsonArray& tokens = json.value("tokens").toArray();
+
+        for (const auto& tjson : tokens) {
+            CHECK(tjson.isObject(), "token field not found");
+            TokenBalance token = parseToken(address, tjson.toObject());
+            result.emplace_back(token);
+        }
+    }
+    return result;
+}
+
+QString makeTokenGetInfoRequest(const QString& tokenAddress)
+{
+    QJsonObject request;
+    request.insert("jsonrpc", "2.0");
+    request.insert("method", "token-get-info");
+    QJsonObject params;
+    params.insert("address", tokenAddress);
+    request.insert("params", params);
+    return QString(QJsonDocument(request).toJson(QJsonDocument::Compact));
+}
+
+Token parseTokenGetInfoResponse(const QString& tokenAddress, const QString& response)
+{
+    Token result;
+    const QJsonDocument jsonResponse = QJsonDocument::fromJson(response.toUtf8());
+
+    CHECK(jsonResponse.isObject(), "Incorrect json ");
+    const QJsonObject& json1 = jsonResponse.object();
+    CHECK(json1.contains("result") && json1.value("result").isObject(),
+        "Incorrect json: result field not found");
+    const QJsonObject& json = json1.value("result").toObject();
+
+    result.tokenAddress = tokenAddress;
+    result.type = json.value("type").toString();
+    result.symbol = json.value("symbol").toString();
+    result.name = json.value("name").toString();
+    result.decimals = json.value("decimals").toInt();
+    result.emission = getIntOrString(json, "emission").toULong();
+    result.owner = json.value("owner").toString();
+    return result;
+}
+
+} // namespace transactions

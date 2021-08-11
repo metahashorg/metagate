@@ -7,7 +7,7 @@ namespace transactions {
 
 static const QString databaseName = "payments";
 static const QString databaseFileName = "payments.db";
-static const int databaseVersion = 7;
+static const int databaseVersion = 8;
 
 static const QString createPaymentsTable = "CREATE TABLE payments ( "
                                                 "id INTEGER PRIMARY KEY NOT NULL, "
@@ -36,23 +36,24 @@ static const QString createPaymentsUniqueIndex = "CREATE UNIQUE INDEX paymentsUn
                                                     "currency ASC, address ASC, txid ASC, blockNumber ASC, ind ASC ) ";
 
 static const QString createBalanceTable = "CREATE TABLE balance ( "
-                                                "id INTEGER PRIMARY KEY NOT NULL, "
-                                                "currency VARCHAR(100), "
-                                                "address TEXT NOT NULL, "
-                                                "received TEXT NOT NULL, "
-                                                "spent TEXT NOT NULL, "
-                                                "countReceived INT8 NOT NULL, "
-                                                "countSpent INT8 NOT NULL, "
-                                                "countTxs INT8 NOT NULL, "
-                                                "currBlockNum INT8 NOT NULL, "
-                                                "countDelegated INT8 NOT NULL, "
-                                                "delegate TEXT NOT NULL, "
-                                                "undelegate TEXT NOT NULL, "
-                                                "delegated TEXT NOT NULL, "
-                                                "undelegated TEXT NOT NULL, "
-                                                "reserved TEXT NOT NULL, "
-                                                "forged TEXT NOT NULL "
-                                                ")";
+                                          "id INTEGER PRIMARY KEY NOT NULL, "
+                                          "currency VARCHAR(100), "
+                                          "address TEXT NOT NULL, "
+                                          "received TEXT NOT NULL, "
+                                          "spent TEXT NOT NULL, "
+                                          "countReceived INT8 NOT NULL, "
+                                          "countSpent INT8 NOT NULL, "
+                                          "countTxs INT8 NOT NULL, "
+                                          "currBlockNum INT8 NOT NULL, "
+                                          "countDelegated INT8 NOT NULL, "
+                                          "delegate TEXT NOT NULL, "
+                                          "undelegate TEXT NOT NULL, "
+                                          "delegated TEXT NOT NULL, "
+                                          "undelegated TEXT NOT NULL, "
+                                          "reserved TEXT NOT NULL, "
+                                          "forged TEXT NOT NULL, "
+                                          "tokenBlockNum INT8 NOT NULL"
+                                          ")";
 
 static const QString createBalanceUniqueIndex = "CREATE UNIQUE INDEX balanceUniqueIdx ON balance ( "
                                                     "currency ASC, address ASC) ";
@@ -81,16 +82,41 @@ static const QString createCurrencyTable = "CREATE TABLE currency ( "
                                                 "currency VARCHAR(100) NOT NULL "
                                                 ")";
 
+static const QString createTokensTable = "CREATE TABLE tokens ( "
+                                         "tokenAddress TEXT PRIMARY KEY NOT NULL, "
+                                         "type TEXT NOT NULL, "
+                                         "symbol TEXT NOT NULL, "
+                                         "name TEXT NOT NULL, "
+                                         "decimals INTEGER NOT NULL, "
+                                         "emission INT8 NOT NULL, "
+                                         "owner TEXT NOT NULL "
+                                         ")";
+
+static const QString createTokenBalancesTable = "CREATE TABLE tokenBalances ( "
+                                                "id INTEGER PRIMARY KEY NOT NULL, "
+                                                "address TEXT NOT NULL, "
+                                                "tokenAddress TEXT NOT NULL, "
+                                                "received TEXT NOT NULL, "
+                                                "spent TEXT NOT NULL, "
+                                                "value TEXT NOT NULL, "
+                                                "countReceived INT8 NOT NULL, "
+                                                "countSpent INT8 NOT NULL, "
+                                                "countTxs INT8 NOT NULL, "
+                                                ")";
+
 static const QString createCurrencyUniqueIndex = "CREATE UNIQUE INDEX currencyUniqueIdx ON currency ( "
-                                                    "isMhc, currency) ";
+                                                 "isMhc, currency) ";
 
 static const QString createTrackedUniqueIndex = "CREATE UNIQUE INDEX trackedUniqueIdx ON tracked ( "
                                                     "tgroup, address, currency) ";
 
+static const QString createTokenBalancesUniqueIndex = "CREATE UNIQUE INDEX tokenBalancesUniqueIdx ON tokenBalances ( "
+                                                      "address, tokenAddress) ";
+
 static const QString deleteBalance = "DELETE FROM balance WHERE address = :address AND  currency = :currency ";
 
-static const QString insertBalance = "INSERT OR IGNORE INTO balance (currency, address, received, spent, countReceived, countSpent, countTxs, currBlockNum, countDelegated, delegate, undelegate, delegated, undelegated, reserved, forged) "
-                                        "VALUES (:currency, :address, :received, :spent, :countReceived, :countSpent, :countTxs, :currBlockNum, :countDelegated, :delegate, :undelegate, :delegated, :undelegated, :reserved, :forged)";
+static const QString insertBalance = "INSERT OR IGNORE INTO balance (currency, address, received, spent, countReceived, countSpent, countTxs, currBlockNum, countDelegated, delegate, undelegate, delegated, undelegated, reserved, forged, tokenBlockNum) "
+                                     "VALUES (:currency, :address, :received, :spent, :countReceived, :countSpent, :countTxs, :currBlockNum, :countDelegated, :delegate, :undelegate, :delegated, :undelegated, :reserved, :forged, :tokenBlockNum)";
 
 static const QString insertPayment = "INSERT OR IGNORE INTO payments (currency, txid, address, ind, ufrom, uto, value, ts, data, fee, nonce, isDelegate, delegateValue, delegateHash, status, type, blockNumber, blockHash, intStatus) "
                                         "VALUES (:currency, :txid, :address, :ind, :ufrom, :uto, :value, :ts, :data, :fee, :nonce, :isDelegate, :delegateValue, :delegateHash, :status, :type, :blockNumber, :blockHash, :intStatus)";
@@ -160,6 +186,17 @@ static const QString insertToCurrency = "INSERT OR IGNORE INTO currency (isMhc, 
                                         "VALUES (:isMhc, :currency)";
 
 static const QString selectAllCurrency = "SELECT * FROM currency";
+
+static const QString insertTokenInfo = "INSERT OR REPLACE INTO tokens (tokenAddress, type, symbol, name, decimals, emission, owner) "
+                                       "VALUES (:tokenAddress, :type, :symbol, :name, :decimals, :emission, :owner)";
+
+static const QString insertTokenBalanceInfo = "INSERT OR REPLACE INTO tokenBalances (address, tokenAddress, received , spent , value, countReceived, countSpent, countTxs) "
+                                              "VALUES (:address, :tokenAddress, :received , :spent , :value, :countReceived, :countSpent, :countTxs)";
+
+static const QString selectTokens = "SELECT * FROM tokenBalances b "
+                                    "LEFT JOIN tokens t ON t.tokenAddress = b.tokenAddress %1";
+
+static const QString selectTokensAddressWhere = "WHERE b.address = :address";
 
 };
 

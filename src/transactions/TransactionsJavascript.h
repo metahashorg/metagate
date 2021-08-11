@@ -80,11 +80,12 @@ public slots:
 
     Q_INVOKABLE void addCurrencyConformity(bool isMhc, QString currency);
 
+    Q_INVOKABLE void getTokensForAddress(QString address);
+
     Q_INVOKABLE void clearDb(QString currency);
 
 private:
-
-    Transactions *transactionsManager;
+    Transactions* transactionsManager;
 };
 
 }

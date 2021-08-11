@@ -77,6 +77,10 @@ public:
 
     std::map<bool, std::set<QString>> getAllCurrencys();
 
+    void updateToken(const Token& token);
+    void updateTokenBalance(const TokenBalance& tokenBalance);
+    std::vector<TokenInfo> getTokensForAddress(const QString& address = QString());
+
 protected:
     virtual void createDatabase() final;
 

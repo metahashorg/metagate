@@ -388,6 +388,7 @@ void TransactionsDBStorage::setBalance(const QString &currency, const QString &a
     query.bindValue(":undelegated", balance.undelegated.getDecimal());
     query.bindValue(":reserved", balance.reserved.getDecimal());
     query.bindValue(":forged", balance.forged.getDecimal());
+    query.bindValue(":tokenBlockNum", (qint64)balance.tokenBlockNum);
     CHECK(query.exec(), query.lastError().text().toStdString());
 }
 
@@ -415,6 +416,7 @@ BalanceInfo TransactionsDBStorage::getBalance(const QString &currency, const QSt
         balance.undelegated = query.value("undelegated").toByteArray();
         balance.reserved = query.value("reserved").toByteArray();
         balance.forged = query.value("forged").toByteArray();
+        balance.tokenBlockNum = static_cast<quint64>(query.value("tokenBlockNum").toLongLong());
     }
     return balance;
 }
@@ -450,11 +452,74 @@ std::map<bool, std::set<QString>> TransactionsDBStorage::getAllCurrencys() {
     return result;
 }
 
-void TransactionsDBStorage::createDatabase() {
+void TransactionsDBStorage::updateToken(const Token& token)
+{
+    QSqlQuery query(database());
+    CHECK(query.prepare(insertTokenInfo), query.lastError().text().toStdString());
+    query.bindValue(":tokenAddress", token.tokenAddress);
+    query.bindValue(":type", token.type);
+    query.bindValue(":symbol", token.symbol);
+    query.bindValue(":name", token.name);
+    query.bindValue(":decimals", token.decimals);
+    query.bindValue(":name", token.name);
+    query.bindValue(":emission", (qint64)token.emission);
+    query.bindValue(":owner", token.owner);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+void TransactionsDBStorage::updateTokenBalance(const TokenBalance& tokenBalance)
+{
+    QSqlQuery query(database());
+    CHECK(query.prepare(insertTokenBalanceInfo), query.lastError().text().toStdString());
+    query.bindValue(":address", tokenBalance.address);
+    query.bindValue(":tokenAddress", tokenBalance.tokenAddress);
+    query.bindValue(":received", tokenBalance.received.getDecimal());
+    query.bindValue(":spent", tokenBalance.spent.getDecimal());
+    query.bindValue(":value", tokenBalance.value);
+    query.bindValue(":countReceived", (qint64)tokenBalance.countReceived);
+    query.bindValue(":countSpent", (qint64)tokenBalance.countSpent);
+    query.bindValue(":countTxs", (qint64)tokenBalance.countTxs);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+}
+
+std::vector<TokenInfo> TransactionsDBStorage::getTokensForAddress(const QString& address)
+{
+    std::vector<TokenInfo> res;
+    QSqlQuery query(database());
+    CHECK(query.prepare(selectTokens.arg(address.isEmpty() ? QStringLiteral("") : selectTokensAddressWhere)), query.lastError().text().toStdString());
+    if (!address.isEmpty())
+        query.bindValue(":address", address);
+    CHECK(query.exec(), query.lastError().text().toStdString());
+    while (query.next()) {
+        TokenInfo token;
+        token.address = query.value("address").toString();
+        token.tokenAddress = query.value("tokenAddress").toString();
+        token.received = query.value("received").toByteArray();
+        token.spent = query.value("spent").toByteArray();
+        token.value = query.value("value").toString();
+        token.countReceived = static_cast<quint64>(query.value("countReceived").toLongLong());
+        token.countSpent = static_cast<quint64>(query.value("countSpent").toLongLong());
+        token.countTxs = static_cast<quint64>(query.value("countTxs").toLongLong());
+        token.type = query.value("type").toString();
+        token.symbol = query.value("symbol").toString();
+        token.name = query.value("name").toString();
+        token.decimals = query.value("decimals").toInt();
+        token.emission = static_cast<quint64>(query.value("emission").toLongLong());
+        token.owner = query.value("owner").toString();
+
+        res.push_back(token);
+    }
+    return res;
+}
+
+void TransactionsDBStorage::createDatabase()
+{
     createTable(QStringLiteral("payments"), createPaymentsTable);
     createTable(QStringLiteral("tracked"), createTrackedTable);
     createTable(QStringLiteral("balance"), createBalanceTable);
     createTable(QStringLiteral("currency"), createCurrencyTable);
+    createTable(QStringLiteral("tokens"), createTokensTable);
+    createTable(QStringLiteral("tokenBalances"), createTokenBalancesTable);
     createIndex(createPaymentsIndex1);
     createIndex(createPaymentsIndex2);
     createIndex(createPaymentsIndex3);
@@ -468,9 +533,10 @@ void TransactionsDBStorage::createDatabase() {
     createIndex(createPaymentsUniqueIndex);
     createIndex(createTrackedUniqueIndex);
     createIndex(createCurrencyUniqueIndex);
+    createIndex(createTokenBalancesUniqueIndex);
 }
 
-void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transaction &trans) const
+void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery& query, Transaction& trans) const
 {
     trans.id = query.value("id").toLongLong();
     trans.currency = query.value("currency").toString();
@@ -494,7 +560,7 @@ void TransactionsDBStorage::setTransactionFromQuery(QSqlQuery &query, Transactio
     trans.intStatus = query.value("intStatus").toInt();
 }
 
-void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Transaction> &payments) const
+void TransactionsDBStorage::createPaymentsList(QSqlQuery& query, std::vector<Transaction>& payments) const
 {
     while (query.next()) {
         Transaction trans;
@@ -502,5 +568,4 @@ void TransactionsDBStorage::createPaymentsList(QSqlQuery &query, std::vector<Tra
         payments.push_back(trans);
     }
 }
-
 }

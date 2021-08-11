@@ -69,6 +69,8 @@ struct BalanceInfo {
     BigNumber reserved = QString("0");
     BigNumber forged = QString("0");
 
+    uint64_t tokenBlockNum = 0;
+
     BalanceInfo(const QString &addr = QString())
         : address(addr)
     {
@@ -109,6 +111,49 @@ struct SendParameters {
     seconds timeout;
 };
 
-}
+struct TokenBalance {
+    QString address;
+    QString tokenAddress;
+    BigNumber received = QString("0");
+    BigNumber spent = QString("0");
+    QString value;
+    uint64_t countReceived = 0;
+    uint64_t countSpent = 0;
+    uint64_t countTxs = 0;
+};
+
+struct Token {
+    QString tokenAddress;
+    QString type;
+    QString symbol;
+    QString name;
+    int decimals;
+    uint64_t emission;
+    QString owner;
+};
+
+struct TokenInfo {
+    QString address;
+    QString tokenAddress;
+    BigNumber received = QString("0");
+    BigNumber spent = QString("0");
+    QString value;
+    uint64_t countReceived = 0;
+    uint64_t countSpent = 0;
+    uint64_t countTxs = 0;
+    QString type;
+    QString symbol;
+    QString name;
+    int decimals;
+    uint64_t emission;
+    QString owner;
+
+    BigNumber calcBalance() const
+    {
+        return received - spent;
+    }
+};
+
+} // namespace transactions
 
 #endif // TRANSACTION_H

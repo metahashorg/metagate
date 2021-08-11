@@ -13,6 +13,8 @@ struct BalanceInfo;
 struct Transaction;
 struct BlockInfo;
 struct SendParameters;
+struct TokenBalance;
+struct Token;
 
 QString makeGetBalanceRequest(const QString &address);
 
@@ -48,6 +50,12 @@ int64_t parseGetCountBlocksResponse(const QString &response);
 
 SendParameters parseSendParamsInternal(const QString &paramsJson);
 
-}
+QString makeAddressGetTokensRequest(const QString &address);
+std::vector<TokenBalance> parseAddressGetTokensResponse(const QString& address, const QString& response);
+
+QString makeTokenGetInfoRequest(const QString& tokenAddress);
+Token parseTokenGetInfoResponse(const QString& tokenAddress, const QString& response);
+
+} // namespace transactions
 
 #endif // TRANSACTIONSMESSAGES_H

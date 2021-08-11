@@ -73,6 +73,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_CONNECT(this, &Transactions::getTxFromServer, this, &Transactions::onGetTxFromServer);
     Q_CONNECT(this, &Transactions::getLastUpdateBalance, this, &Transactions::onGetLastUpdateBalance);
     Q_CONNECT(this, &Transactions::getNonce, this, &Transactions::onGetNonce);
+    Q_CONNECT(this, &Transactions::getTokensAddress, this, &Transactions::onGetTokensAddress);
     Q_CONNECT(this, &Transactions::clearDb, this, &Transactions::onClearDb);
     Q_CONNECT(this, &Transactions::addCurrencyConformity, this, &Transactions::onAddCurrencyConformity);
     Q_CONNECT(this, &Transactions::getBalancesFromTorrent, this, &Transactions::onGetBalancesFromTorrent);
@@ -90,6 +91,7 @@ Transactions::Transactions(NsLookup &nsLookup, InfrastructureNsLookup &infrastru
     Q_REG(GetLastUpdateCallback, "GetLastUpdateCallback");
     Q_REG(GetNonceCallback, "GetNonceCallback");
     Q_REG(SendTransactionCallback, "SendTransactionCallback");
+    Q_REG(GetTokensCallback, "GetTokensCallback");
     Q_REG(ClearDbCallback, "ClearDbCallback");
     Q_REG(AddCurrencyConformity, "AddCurrencyConformity");
 
@@ -336,11 +338,14 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
             const QUrl &bestServer = bestAnswers[i].first;
             const QString &address = addresses[i];
             const BalanceInfo &serverBalance = bestAnswers[i].second;
+            const BalanceInfo confirmedBalance = db.getBalance(currency, address);
 
             if (bestServer.isEmpty()) {
                 LOG << PeriodicLog::makeAuto("t_err") << "Best server with txs not found. Error: " << responses[0].exception.toString();
                 return;
             }
+
+            processTokens(address, bestServer, serverBalance, confirmedBalance);
 
             const uint64_t countAll = calcCountTxs(address, currency);
             const uint64_t countInServer = serverBalance.countTxs;
@@ -357,9 +362,18 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
             } else if (countAll > countInServer) {
                 //removeAddress(address, currency); Не удаляем, так как при перевыкачки базы начнется свистопляска
             } else {
-                const BalanceInfo confirmedBalance = db.getBalance(currency, address);
+                // TODO remove
+                // const BalanceInfo confirmedBalance = db.getBalance(currency,
+                // address);
                 if (confirmedBalance.countTxs != countInServer) {
-                    newBalance(address, currency, countAll, serverBalance.countTxs, serverBalance, confirmedBalance, {}, servStruct);
+                    newBalance(address,
+                        currency,
+                        countAll,
+                        serverBalance.countTxs,
+                        serverBalance,
+                        confirmedBalance,
+                        {},
+                        servStruct);
                 } else {
                     updateBalanceTime(currency, servStruct);
                 }
@@ -370,6 +384,46 @@ void Transactions::processAddressMth(const std::vector<QString> &addresses, cons
     const QString requestBalance = makeGetBalancesRequest(addresses);
     const std::vector<QUrl> urls(servers.begin(), servers.end());
     client.sendMessagesPost(addresses[0].toStdString(), urls, requestBalance, std::bind(getBalanceCallback, urls, _1), timeout);
+}
+
+void Transactions::processTokens(const QString& address,
+    const QUrl& server,
+    const BalanceInfo& serverBalance,
+    const BalanceInfo& dbBalance)
+{
+    LOG << "Transactions::processTokens" << serverBalance.tokenBlockNum << dbBalance.tokenBlockNum;
+    const auto getHistoryCallback = [this](const QString& address, const QUrl& server, const SimpleClient::Response& response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
+        std::vector<TokenBalance> tokens = parseAddressGetTokensResponse(address, QString::fromStdString(response.response));
+        //qDebug() << "Tk: " << QString::fromStdString(response.response);
+        for (const auto& tokenBalance : tokens) {
+            LOG << "TOKEN: " << tokenBalance.tokenAddress;
+            updateTokenInfo(tokenBalance.tokenAddress, server);
+            db.updateTokenBalance(tokenBalance);
+        }
+    };
+
+    if (serverBalance.tokenBlockNum > dbBalance.tokenBlockNum) {
+        LOG << "Request tokens: " << address;
+        const QString requestTokens = makeAddressGetTokensRequest(address);
+        client.sendMessagePost(server, requestTokens, std::bind(getHistoryCallback, address, server, _1), timeout);
+    }
+}
+
+void Transactions::updateTokenInfo(const QString& tokenAddress, const QUrl& server)
+{
+    LOG << "Transactions::updateTokenInfo" << tokenAddress;
+    const auto getHistoryCallback = [this](const QString& tokenAddress, const SimpleClient::Response& response) {
+        CHECK(!response.exception.isSet(), "Server error: " + response.exception.toString());
+        Token info = parseTokenGetInfoResponse(tokenAddress, QString::fromStdString(response.response));
+        //qDebug() << QString::fromStdString(response.response);
+        LOG << "Token: " << info.name << info.type;
+        db.updateToken(info);
+    };
+
+    const QString requestTokensInfo = makeTokenGetInfoRequest(tokenAddress);
+    //qDebug() << requestTokensInfo;
+    client.sendMessagePost(server, requestTokensInfo, std::bind(getHistoryCallback, tokenAddress, _1), timeout);
 }
 
 std::vector<AddressInfo> Transactions::getAddressesInfos(const QString &group) {
@@ -970,9 +1024,10 @@ BEGIN_SLOT_WRAPPER
 END_SLOT_WRAPPER
 }
 
-void Transactions::onGetLastUpdateBalance(const QString &currency, const GetLastUpdateCallback &callback) {
-BEGIN_SLOT_WRAPPER
-    runAndEmitCallback([&, this]{
+void Transactions::onGetLastUpdateBalance(const QString& currency, const GetLastUpdateCallback& callback)
+{
+    BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this] {
         const system_time_point now = ::system_now();
         auto found = lastSuccessUpdateTimestamps.find(currency);
         system_time_point result;
@@ -980,8 +1035,19 @@ BEGIN_SLOT_WRAPPER
             result = found->second;
         }
         return std::make_tuple(result, now);
-    }, callback);
-END_SLOT_WRAPPER
+    },
+        callback);
+    END_SLOT_WRAPPER
+}
+
+void Transactions::onGetTokensAddress(const QString& address, const GetTokensCallback& callback)
+{
+    BEGIN_SLOT_WRAPPER
+    runAndEmitCallback([&, this] {
+        return db.getTokensForAddress(address);
+    },
+        callback);
+    END_SLOT_WRAPPER
 }
 
 void Transactions::onAddCurrencyConformity(bool isMhc, const QString &currency, const AddCurrencyConformity &callback) {
