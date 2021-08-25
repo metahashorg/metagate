@@ -52,7 +52,7 @@ static const QString createBalanceTable = "CREATE TABLE balance ( "
                                           "undelegated TEXT NOT NULL, "
                                           "reserved TEXT NOT NULL, "
                                           "forged TEXT NOT NULL, "
-                                          "tokenBlockNum INT8 NOT NULL"
+                                          "tokenBlockNum INT8 NOT NULL DEFAULT 0"
                                           ")";
 
 static const QString createBalanceUniqueIndex = "CREATE UNIQUE INDEX balanceUniqueIdx ON balance ( "
@@ -77,10 +77,10 @@ static const QString createTrackedTable = "CREATE TABLE tracked ( "
                                                 ")";
 
 static const QString createCurrencyTable = "CREATE TABLE currency ( "
-                                                "id INTEGER PRIMARY KEY NOT NULL, "
-                                                "isMhc BOOLEAN NOT NULL, "
-                                                "currency VARCHAR(100) NOT NULL "
-                                                ")";
+                                           "id INTEGER PRIMARY KEY NOT NULL, "
+                                           "isMhc BOOLEAN NOT NULL, "
+                                           "currency VARCHAR(100) NOT NULL "
+                                           ")";
 
 static const QString createTokensTable = "CREATE TABLE tokens ( "
                                          "tokenAddress TEXT PRIMARY KEY NOT NULL, "
@@ -101,7 +101,7 @@ static const QString createTokenBalancesTable = "CREATE TABLE tokenBalances ( "
                                                 "value TEXT NOT NULL, "
                                                 "countReceived INT8 NOT NULL, "
                                                 "countSpent INT8 NOT NULL, "
-                                                "countTxs INT8 NOT NULL, "
+                                                "countTxs INT8 NOT NULL "
                                                 ")";
 
 static const QString createCurrencyUniqueIndex = "CREATE UNIQUE INDEX currencyUniqueIdx ON currency ( "
