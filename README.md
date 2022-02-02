@@ -1,4 +1,4 @@
-# MetaGate
+# MetaHashGate
 
 This repository contains Metahash wallet c++ source code. Wallet supports following currencies: MHC, BTC, ETC.
 
